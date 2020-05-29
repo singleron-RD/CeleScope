@@ -1,0 +1,37 @@
+    <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+      <h2>featureCounts summary</h2>
+      <div class="has_desc"></div>
+      <div class="box">
+        <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+          {% for item in featureCounts_summary %}
+            {% if loop.index <= (loop.length+1)/2 %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </table>
+
+        <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+          {% for item in featureCounts_summary %}
+            {% if loop.index > (loop.length+1)/2  %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </table>
+        <div class="clear" ></div>
+        <div class="description" style="display: none;">
+          <p>SampleName：样品名</p>
+          <p>Assigned：定位到基因上的Reads数目及比例</p>
+          <p>Unassigned_NoFeatures：未定位到基因上的reads数目及比例</p>
+          <p>Unassigned_Ambiguity：定位在多个基因上的reads数目及比例</p>
+        </div>
+      </div>
+    </div>
+

@@ -1,0 +1,173 @@
+    <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+      <h2>UMI summary</h2>
+      <div class="has_desc"></div>
+      <div class="box">
+        <table style="float: left; margin-left: 0%; margin-top: 3%; margin-right:3%; width: 47%">
+          {% for item in count_summary %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </table>
+        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+          <script>
+              var index1 = [];
+              for (var i = 0; i < {{ CB_num }}; i++) {
+                  index1.push(i + 1)
+              }
+
+              var index2 = [];
+              for (var i = 0; i < {{ UB_num }}; i++) {
+                  index2.push(i + 1 + {{ CB_num }})
+              }
+
+              var trace0 = {
+                  x: index1,
+                  y: {{ Cells }},
+                  mode: 'lines',
+                  name: 'Cells',
+                  line: {
+                      color: '#337bb6',
+                      width: 3
+                  }
+              };
+              var trace1 = {
+                  x: index2,
+                  y: {{ Background }},
+                  mode: 'lines',
+                  name: 'Background',
+                  line: {
+                      color: '#D3D3D3',
+                      width: 3
+                  }
+              };
+              var data = [ trace0, trace1 ];
+              var layout = {
+                  height: 313,
+                  width: 470,
+                  margin: {
+                        l: 50,
+                        r: 0,
+                        b: 30,
+                        t: 30,
+                  },
+                  title: 'Cells', 
+                  xaxis: {
+                      title: 'Barcodes',
+                      type: 'log'
+                  },
+                  yaxis: {
+                      title: 'UMI counts',
+                      type: 'log'
+                  },
+              }
+            var config = { 
+                modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", 
+                                         "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d" ], 
+                displaylogo: false, 
+                showTips: true ,
+                responsive: true,}
+              Plotly.newPlot('myDivUMI', data, layout, config);
+          </script>       
+        </div>
+        
+        <hr />
+        
+
+        <div id="myDivSaturation" style="float: left; margin-left: 0%; margin-top: 5%; margin-right:3%; width: 47%">
+          <script>
+            var data = [{
+              x: {{ percentile|safe }},
+              y: {{ Saturation|safe }},
+              mode: 'lines'
+            }];
+            var layout = {
+                height: 313,
+                width: 400,
+                margin: {
+                    l: 45,
+                    r: 35,
+                    b: 30,
+                    t: 30,
+                },
+                
+                title: {
+                    text: 'Sequencing Saturation',
+                    font: {
+                        color: '#555',
+                    }
+                },
+                yaxis: {
+                    title: 'Sequencing Saturation(%)',
+                    range: [0, 100]
+                },
+                
+                showlegend: false,
+
+            };
+            var config = { 
+                modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", 
+                                         "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d" ], 
+                displaylogo: false, 
+                showTips: true ,
+                responsive: true,}
+            Plotly.newPlot('myDivSaturation', data, layout, config);
+          </script>
+        </div>
+        
+        <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 5%; margin-right:0%; width: 47%">
+          <script>
+            var data = [{
+              x: {{ percentile|safe }},
+              y: {{ MedianGeneNum|safe }},
+              mode: 'lines'
+            }];
+            var layout = {
+                height: 313,
+                width: 400,
+                margin: {
+                    l: 45,
+                    r: 35,
+                    b: 30,
+                    t: 30,
+                },
+                title: 'Median Genes per Cell',
+                yaxis: {
+                    title: 'Median Genes per Cell',
+                },
+                showlegend: false,
+
+            };
+
+     //  Modebar Buttons names at https://github.com/plotly/plotly.js/blob/master/src/components/modebar/buttons.js
+     //  - sendDataToCloud 
+     //  - (2D): zoom2d, pan2d, select2d, lasso2d, zoomIn2d, zoomOut2d, autoScale2d, resetScale2d
+     //  - (Cartesian): hoverClosestCartesian, hoverCompareCartesian 
+     //  - (3D): zoom3d, pan3d, orbitRotation, tableRotation, handleDrag3d, resetCameraDefault3d, resetCameraLastSave3d, hoverClosest3d
+     //  - (Geo): zoomInGeo, zoomOutGeo, resetGeo, hoverClosestGeo
+     //  - hoverClosestGl2d, hoverClosestPie, toggleHover, resetViews 
+
+            var config = { 
+                modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", 
+                                         "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d" ], 
+                displaylogo: false, 
+                showTips: true ,
+                responsive: true,}
+            Plotly.newPlot('myDivMedianGeneNum', data, layout, config);
+          </script>
+        </div>
+
+        <div class="clear" ></div>
+        <div class="description" style="display: none;">
+            <p>SampleName：样品名</p>
+            <p>Cells_number：细胞数目</p>
+            <p>Saturation：所有细胞中，有多于2条Reads支持的UMI的数目占UMI总数目的比例</p>
+            <p>Mean_Reads：每个细胞测到的平均Reads数目</p>
+            <p>Median_UMIs：每个细胞的UMI数目的中位数</p>
+            <p>Total_Genes：所有细胞检测到的基因数目 (去重复)</p>
+            <p>Median_Genes：每个细胞检测基因数目的中位数</p>
+        </div>
+      </div>
+    </div>

@@ -1,0 +1,44 @@
+    <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+      <h2>Barcode summary</h2>
+      <div class="has_desc"></div>
+      <div class="box">
+        <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+          {% for item in barcode_summary %}
+            {% if loop.index <= (loop.length+1)/2 %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </table>
+
+        <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+          {% for item in barcode_summary %}
+            {% if loop.index > (loop.length+1)/2 %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </table>
+        <div class="clear" ></div>
+        <div class="description" style="display: none;">
+            <p>SampleName: 样品名</p>
+            <p>Number of Reads: 数据中的总Reads数</p>
+            <p>Valid Reads: 通过过滤的Reads数据</p>
+            <p>Valid Barcodes: 通过过滤的Reads中的Barcode数目</p>
+            <p>Q30 of Barocdes: Barocdes序列的Q30</p>
+            <p>Q30 of UMIs: UMIs序列的Q30</p>
+            <p>Reads without polyT: Read1序列中不包含polyT的Reads数目<p>
+            <p>Reads with lowQual: Barocde和UMI序列中包含2个及以上碱基质量值低于14的Reads数目</p>
+            <p>Reads without linker: Read1序列中不包含linker的Reads数目</p>
+            <p>Reads without Barcode: Read1序列中不包含Barcode的Reads数目</p>
+            <p>Reads with corrected Barcode: Read1的Barcode序列矫正后可用的Reads数目</p>
+        </div>
+      </div>
+    </div>
+
