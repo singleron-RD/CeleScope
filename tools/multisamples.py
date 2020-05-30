@@ -35,8 +35,8 @@ def parse_map(mapfile, cells=3000):
             if line.startswith('#'): continue
             tmp = line.split()
             try:
-                fq1 = glob.glob(tmp[1] + '/' + tmp[0] + '_*' + '_1.fq.gz')[0]
-                fq2 = glob.glob(tmp[1] + '/' + tmp[0] + '_*' + '_2.fq.gz')[0]
+                fq1 = glob.glob(tmp[1] + '/' + tmp[0] + '*' + '_1.fq.gz')[0]
+                fq2 = glob.glob(tmp[1] + '/' + tmp[0] + '*' + '_2.fq.gz')[0]
             except IndexError:
                 sys.exit('glob err with %s'%(tmp[1] + '/' + tmp[0] + '_*' + '_[12].fq.gz'))
                 

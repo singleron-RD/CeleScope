@@ -11,11 +11,13 @@ def get_opts6(parser,sub_program):
 def run(args):
     #tmp = vars(args)
     sample = args.sample
-    baseDir = args.outdir
-    
+    baseDir = args.outdir    
 
     steps_all = {'barcode', 'cutadapt', 'STAR', 'featureCounts', 'count'}
     steps_run = steps_all - set(args.skip.split(','))
+
+    from sample import sample
+    sample(args)
  
     args.outdir = baseDir + '/01.barcode'
     
@@ -50,5 +52,6 @@ def main():
     get_opts(parser)
     args = parser.parse_args()
     run(args)
+
 if __name__ == '__main__':
     main()

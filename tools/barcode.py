@@ -82,7 +82,7 @@ def parse_bc_type(bctype):
     # assign pattern based on bc type: scope, dropseq
     if bctype == 'scope':
         # place holder, may change, depending on the beads development progress
-        bc_pattern = 'C8L16C8L16C8U8T18'
+        bc_pattern = 'C8L16C8L16C8L1U8T18'
     elif bctype == 'dropseq':
         bc_pattern = 'C12U8T30'
     elif bctype == 'test':
@@ -112,8 +112,8 @@ def parse_pattern(pattern):
 
 def get_scope_bc():
     code_path = os.path.dirname(os.path.abspath(__file__))
-    linker_f = os.path.join(os.path.dirname(code_path), 'data/whitelist/scope2/linker')
-    whitelist_f = os.path.join(os.path.dirname(code_path), 'data/whitelist/scope2/bclist')
+    linker_f = os.path.join(os.path.dirname(code_path), 'data/1.0/linker_withC')
+    whitelist_f = os.path.join(os.path.dirname(code_path), 'data/1.0/bclist')
     return linker_f, whitelist_f
 
 def read_fastq(f):
@@ -177,10 +177,10 @@ def barcode(args):
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % args.outdir)
 
-    if hasattr(args,'pattern'):
-        bc_pattern = args.pattern
-    else:
+    if (args.bcType):
         bc_pattern = parse_bc_type(args.bcType)
+    else:
+        bc_pattern = args.pattern
     # parse pattern to dict, C8L10C8L10C8U8
     # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U': [[44, 52]], 'L': [[8, 18], [26, 36]]})
     pattern_dict = parse_pattern(bc_pattern)
@@ -196,13 +196,14 @@ def barcode(args):
     args.lowQual = ord2chr(args.lowQual)
 
     # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
-    if hasattr(args, 'linker') and hasattr(args, 'whitelist'):
+    if (args.bcType):
+        (linker, whitelist) = get_scope_bc()
+    elif (args.linker and args.whitelist):
         linker = args.linker
         whitelist = args.whitelist
-    elif hasattr(args, 'bcType'):
-        (linker, whitelist) = get_scope_bc()
     else:
-        pass
+        sys.exit("invalid bcType or [linker,whitelist]")
+
     
     barcode_dict = generate_seq_dict(whitelist, n=1)
     linker_dict = generate_seq_dict(linker, n=2)

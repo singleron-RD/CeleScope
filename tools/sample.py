@@ -1,0 +1,2 @@
+def sample(args):
+    pass
