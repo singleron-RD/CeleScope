@@ -1,0 +1,31 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>Sample</h2>
+
+    <div class="box">
+      <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+        {% for item in sample_summary %}
+          {% if loop.index <= (loop.length+1)/2 %}
+          <tr>
+            {% for i in item %} 
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+
+      <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+        {% for item in sample_summary %}
+          {% if loop.index > (loop.length+1)/2 %}
+          <tr>
+            {% for i in item %} 
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+      <div class="clear" ></div>
+
+    </div>
+  </div>

@@ -100,7 +100,12 @@
   </header>
 
   <div class="container">
-      <h1 align="center">scRNA-Seq Summary </h1>
+      <h1 align="center">scRNA-Seq scope report </h1>
+
+      {% if sample_summary is defined %}
+      {% include "sample_summary.html"%}
+      {% endif %}
+
       {% if barcode_summary is defined %}
       {% include "barcode_summary.html"%}
       {% endif %}

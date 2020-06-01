@@ -23,7 +23,6 @@ def get_opts2(parser,sub_program):
 def format_stat(cutadapt_log, samplename):
     fh = open(cutadapt_log, 'r') 
     with open(os.path.dirname(cutadapt_log) + '/stat.txt', 'w') as stat_fh:
-        stat_fh.write('%s: %s\n'%('SampleName', samplename))
         # Total reads processed:...Total written (filtered):
         content = islice(fh, 9, 16)
         for line in content:

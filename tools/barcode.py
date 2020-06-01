@@ -13,16 +13,11 @@ barcode_corrected_num = 0
 
 # 定义输出格式
 stat_info = '''
-    SampleName: %s
     Number of Reads: %s
     Valid Reads: %s(%s)
     Valid Barcodes: %s
     Q30 of Barcodes: %.2f%%
     Q30 of UMIs: %.2f%%
-    Reads without polyT: %s(%s)
-    Reads with lowQual: %s(%s)
-    Reads without linker: %s(%s)
-    Reads without Barcode: %s(%s)
     Reads with corrected Barcode: %s(%s)
 '''
 
@@ -305,11 +300,17 @@ def barcode(args):
     global stat_info
     cal_percent=lambda x: "{:.2%}".format((x+0.0)/total_num)
     with open(args.outdir + '/stat.txt', 'w') as fh:
-        stat_info = stat_info%(args.sample, total_num, clean_num, 
+        """
+        Number of Reads: %s
+        Valid Reads: %s(%s)
+        Valid Barcodes: %s
+        Q30 of Barcodes: %.2f%%
+        Q30 of UMIs: %.2f%%
+        Reads with corrected Barcode: %s(%s)
+        """
+        stat_info = stat_info%(total_num, clean_num, 
             cal_percent(clean_num), len(Barcode_dict.keys()), BarcodesQ30,
-            UMIsQ30, no_polyT_num, cal_percent(no_polyT_num), lowQual_num, 
-            cal_percent(lowQual_num), no_linker_num, cal_percent(no_linker_num),
-            no_barcode_num, cal_percent(no_barcode_num), barcode_corrected_num, 
+            UMIsQ30,  barcode_corrected_num, 
             cal_percent(barcode_corrected_num))
         stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
         fh.write(stat_info)

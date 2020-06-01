@@ -8,6 +8,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='fastq to matrix')
     subparsers = parser.add_subparsers()
 
+    from sampleInfo import sampleInfo,get_opts0
+    parser0 = subparsers.add_parser('sample', description='sample infomation')
+    get_opts0(parser0,True)
+    parser0.set_defaults(func=sampleInfo)
+
     from barcode import barcode, get_opts1
     parser1 = subparsers.add_parser('barcode', description='extract barcode and umi')
     get_opts1(parser1,True)
@@ -33,15 +38,15 @@ if __name__ == '__main__':
     get_opts5(parser5,True)
     parser5.set_defaults(func=count)
 
-    from run import run, get_opts6
-    parser6 = subparsers.add_parser('run',conflict_handler='resolve')
-    get_opts1(parser6,False)
-    get_opts2(parser6,False)
-    get_opts3(parser6,False)
-    get_opts4(parser6,False)
-    get_opts5(parser6,False)
-    get_opts6(parser6,False)
-    parser6.set_defaults(func=run)
+    from run import run
+    parser_run = subparsers.add_parser('run',conflict_handler='resolve')
+    get_opts0(parser_run,False)
+    get_opts1(parser_run,False)
+    get_opts2(parser_run,False)
+    get_opts3(parser_run,False)
+    get_opts4(parser_run,False)
+    get_opts5(parser_run,False)
+    parser_run.set_defaults(func=run)
 
     args = parser.parse_args()
     args.func(args)

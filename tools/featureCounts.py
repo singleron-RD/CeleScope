@@ -12,12 +12,12 @@ def get_opts4(parser,sub_program):
 
     parser.add_argument('--thread', default=2)
     parser.add_argument('--annot', required=True)
+    parser.add_argument('--type', help='Specify feature type in GTF annotation', default='exon')
     if sub_program:
         parser.add_argument('--input', required=True)
         #parser.add_argument('--format', default='BAM')
         parser.add_argument('--outdir', help='output dir',required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--type', help='Specify feature type in GTF annotation', default='exon')
 
 
 def format_stat(log, samplename):
