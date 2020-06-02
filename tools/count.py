@@ -186,26 +186,32 @@ def expression_matrix(df, validated_barcodes, matrix_file):
     return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) 
 
 def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
-         CB_reads_count, reads_mapped_to_transcriptome,stat_file):
-    summary = pd.Series([sample, 0, 0, 0, 0, 0, 0],
+         CB_reads_count, reads_mapped_to_transcriptome,stat_file, outdir):
+
+    #total read
+    json_file = outdir + '.data.json'
+    fh = open(json_file)
+    data = json.load(fh)
+    total_read_number = int(data['barcode_summary'][0][1])
+
+    summary = pd.Series([0, 0, 0, 0, 0, 0, 0],
                         index=[
-                            'SampleName', 'Cells_number', 'Saturation',
-                            'Mean_Reads', 'Median_UMIs', 'Total_Genes',
-                            'Median_Genes'
+                            'Estimated Number of Cells','Fraction Reads in Cells',
+                            'Mean Reads per Cell', 'Median UMI per Cell', 'Total Genes',
+                            'Median Genes per Cell','Saturation'
                         ])
 
     # 细胞数
-    summary['Cells_number'] = int(CB_describe.loc['count', 'readcount'])
-    
-    # 测序饱和度，认定为细胞中的reads中UMI>2的reads比例
-    summary['Saturation'] = '%.2f%%' % (Saturation)
-    summary['Mean_Reads'] = int(CB_describe.loc['mean', 'readcount'])
-    summary['fraction_reads_in_cells'] = '%.2f%%'% (float(
+    summary['Estimated Number of Cells'] = int(CB_describe.loc['count', 'readcount'])
+    summary['Fraction Reads in Cells'] = '%.2f%%'% (float(
         CB_reads_count) / reads_mapped_to_transcriptome * 100)
-    summary['mean_reads_per_cell'] = int(reads_mapped_to_transcriptome/summary['Cells_number'])
-    summary['Median_UMIs'] = int(CB_describe.loc['50%', 'UMI'])
-    summary['Total_Genes'] = int(CB_total_Genes)
-    summary['Median_Genes'] = int(CB_describe.loc['50%', 'geneID'])
+    summary['Mean Reads per Cell'] = int(total_read_number/summary['Estimated Number of Cells'])
+    summary['Median UMI per Cell'] = int(CB_describe.loc['50%', 'UMI'])
+    summary['Total Genes'] = int(CB_total_Genes)
+    summary['Median Genes per Cell'] = int(CB_describe.loc['50%', 'geneID'])
+    summary['Saturation'] = '%.2f%%' % (Saturation)
+    # 测序饱和度，认定为细胞中的reads中UMI>2的reads比例
+
     summary.to_csv(stat_file, header=False, sep=':')
 
 def sample(p, df, bc):
@@ -269,7 +275,7 @@ def count(args):
     # summary
     stat_file = args.outdir + '/stat.txt'
     get_summary(df, args.sample, Saturation, CB_describe, CB_total_Genes,
-                    CB_reads_count, reads_mapped_to_transcriptome,stat_file)
+                    CB_reads_count, reads_mapped_to_transcriptome,stat_file,args.outdir + '/../')
 
     report_prepare(marked_counts_file, downsample_file, args.outdir + '/..')
 

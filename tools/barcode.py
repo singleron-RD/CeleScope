@@ -306,7 +306,7 @@ def barcode(args):
         Valid Barcodes: %s
         Q30 of Barcodes: %.2f%%
         Q30 of UMIs: %.2f%%
-        Reads with corrected Barcode: %s(%s)
+        Reads with Corrected Barcode: %s(%s)
         """
         stat_info = stat_info%(total_num, clean_num, 
             cal_percent(clean_num), len(Barcode_dict.keys()), BarcodesQ30,

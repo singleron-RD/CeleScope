@@ -82,7 +82,8 @@ def STAR(args):
     region_txt = args.outdir + '/' + args.sample + '_region.log'
     cmd = ['picard', '-Xmx4G', '-XX:ParallelGCThreads=4', 'CollectRnaSeqMetrics', 'I=%s'%(outBam), 'O=%s'%(region_txt), 'REF_FLAT=%s'%(args.refFlat), 'STRAND=NONE', 'VALIDATION_STRINGENCY=SILENT']
     logging.info('%s'%(' '.join(cmd)))
-    subprocess.check_call(cmd )
+    res = subprocess.run(cmd,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+    logging.info(res.stdout)
     logging.info('stat mapping region done!')
 
     logging.info('generate report ...!')

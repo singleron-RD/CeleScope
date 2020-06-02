@@ -1,8 +1,8 @@
     <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
-      <h2>Cell</h2>
+      <h2>Cells</h2>
       <div class="has_desc"></div>
       <div class="box">
-        <table style="float: left; margin-left: 0%; margin-top: 3%; margin-right:3%; width: 47%">
+        <table style="float: left; margin-left: 0%; margin-top: 0%; margin-right:3%; width: 47%">
           {% for item in count_summary %}
             <tr>
               {% for i in item %} 
@@ -11,7 +11,7 @@
             </tr>
           {% endfor %}
         </table>
-        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
           <script>
               var index1 = [];
               for (var i = 0; i < {{ CB_num }}; i++) {
@@ -53,7 +53,7 @@
                         b: 30,
                         t: 30,
                   },
-                  title: 'Cells', 
+                  title: 'Barcode Rank', 
                   xaxis: {
                       title: 'Barcodes',
                       type: 'log'
@@ -76,7 +76,7 @@
         <hr />
         
 
-        <div id="myDivSaturation" style="float: left; margin-left: 0%; margin-top: 5%; margin-right:3%; width: 47%">
+        <div id="myDivSaturation" style="float: left; margin-left: 0%; margin-top: 2%; margin-right:3%; width: 47%">
           <script>
             var data = [{
               x: {{ percentile|safe }},
@@ -93,12 +93,7 @@
                     t: 30,
                 },
                 
-                title: {
-                    text: 'Sequencing Saturation',
-                    font: {
-                        color: '#555',
-                    }
-                },
+                title: 'Sequencing Saturation',
                 yaxis: {
                     title: 'Sequencing Saturation(%)',
                     range: [0, 100]
@@ -117,7 +112,7 @@
           </script>
         </div>
         
-        <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 5%; margin-right:0%; width: 47%">
+        <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
           <script>
             var data = [{
               x: {{ percentile|safe }},
