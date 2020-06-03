@@ -4,16 +4,22 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1" />
         <title>report</title>
-        
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> 
         <script> {% include "./js/jquery.min.js" %} </script>
         <script> {% include "./js/plotly-latest.min.js" %} </script>
+
         
         <script type="text/javascript">
-            $(function(){
-                $(".has_desc").click(function(){
-                    $(this).next().children(".description").toggle();
-                });
-            });
+            
+            function toggle1(dom){
+                var helpNode = dom.parentNode.parentNode.lastElementChild.lastElementChild
+                if (helpNode.style.display=="inline"){
+                    helpNode.style.display="none"
+                } else {
+                    helpNode.style.display="inline"
+                }
+            }
+
         </script>
         
         <style>
@@ -100,7 +106,7 @@
   </header>
 
   <div class="container">
-      <h1 align="center">scRNA-Seq scope report </h1>
+      <h1 align="center">scRNA-Seq Scope Report </h1>
 
       {% if sample_summary is defined %}
       {% include "sample_summary.html"%}
@@ -124,6 +130,10 @@
 
       {% if umi_summary is defined %}
       {% include "umi_summary.html"%}
+      {% endif %}
+
+      {% if analysis_summary is defined %}
+      {% include "analysis_summary.html"%}
       {% endif %}
 
     </div>

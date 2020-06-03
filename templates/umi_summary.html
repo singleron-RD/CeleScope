@@ -1,6 +1,5 @@
     <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
-      <h2>Cells</h2>
-      <div class="has_desc"></div>
+      <h2>Cells    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
       <div class="box">
         <table style="float: left; margin-left: 0%; margin-top: 0%; margin-right:3%; width: 47%">
           {% for item in count_summary %}
@@ -131,6 +130,7 @@
                 title: 'Median Genes per Cell',
                 yaxis: {
                     title: 'Median Genes per Cell',
+                    rangemode: 'tozero',
                 },
                 showlegend: false,
 
