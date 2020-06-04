@@ -25,7 +25,6 @@ def format_stat(log, samplename):
     tmp_arr = []
     fh = open(log, 'r')
     with open(os.path.dirname(log) + '/stat.txt', 'w') as stat_fh:
-        stat_fh.write('%s: %s\n'%('SampleName', samplename))
         p1 = re.compile(r'Assigned.*?(\d+)', flags=re.S)
         p2 = re.compile(r'Unassigned_NoFeatures.*?(\d+)', flags=re.S)
         p3 = re.compile(r'Unassigned_Ambiguity.*?(\d+)', flags=re.S)

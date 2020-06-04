@@ -75,7 +75,7 @@
         <hr />
         
 
-        <div id="myDivSaturation" style="float: left; margin-left: 0%; margin-top: 2%; margin-right:3%; width: 47%">
+        <div id="myDivSaturation" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
           <script>
             var data = [{
               x: {{ percentile|safe }},
@@ -93,6 +93,9 @@
                 },
                 
                 title: 'Sequencing Saturation',
+                xaxis: {
+                    title: 'Reads Fraction',
+                },
                 yaxis: {
                     title: 'Sequencing Saturation(%)',
                     range: [0, 100]
@@ -128,6 +131,9 @@
                     t: 30,
                 },
                 title: 'Median Genes per Cell',
+                xaxis: {
+                    title: 'Reads Fraction',
+                },
                 yaxis: {
                     title: 'Median Genes per Cell',
                     rangemode: 'tozero',

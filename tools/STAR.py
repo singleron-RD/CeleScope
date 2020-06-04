@@ -52,13 +52,12 @@ def format_stat(map_log, region_log, samplename):
     region_dict['Intergenic_Regions'] = "{}({:.2%})".format(Intergenic_Regions, Intergenic_Regions/Total)
 
     with open(os.path.dirname(map_log) + '/stat.txt', 'w') as stat_fh:
-        stat_fh.write('SampleName: %s\n'%(samplename))
-        stat_fh.write('%s: %s(%s)\n'%('Uniquely_mapped', UNIQUE_READS[0], UNIQUE_READS[1]))
-        stat_fh.write('%s: %s(%s)\n'%('Multiple_mapped', MULTI_MAPPING_READS[0], MULTI_MAPPING_READS[1]))
+        stat_fh.write('%s: %s(%s)\n'%('Reads Mapped to Unique Regions', UNIQUE_READS[0], UNIQUE_READS[1]))
+        stat_fh.write('%s: %s(%s)\n'%('Reads Mapped to Multiple Regions', MULTI_MAPPING_READS[0], MULTI_MAPPING_READS[1]))
 
-        stat_fh.write('%s: %s\n'%('Exonic_Regions', region_dict['Exonic_Regions']))
-        stat_fh.write('%s: %s\n'%('Intronic_Regions', region_dict['Intronic_Regions']))
-        stat_fh.write('%s: %s\n'%('Intergenic_Regions', region_dict['Intergenic_Regions']))
+        stat_fh.write('%s: %s\n'%('Base Pairs Mapped to Exonic Regions', region_dict['Exonic_Regions']))
+        stat_fh.write('%s: %s\n'%('Base Pairs Mapped to Intronic Regions', region_dict['Intronic_Regions']))
+        stat_fh.write('%s: %s\n'%('Base Pairs Mapped to Intergenic Regions', region_dict['Intergenic_Regions']))
     return {'region_labels': ['Exonic Regions','Intronic Regions','Intergenic Regions'], 
             'region_values': [Exonic_Regions, Intronic_Regions, Intergenic_Regions]}
 

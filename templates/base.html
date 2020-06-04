@@ -11,12 +11,12 @@
         
         <script type="text/javascript">
             
-            function toggle1(dom){
-                var helpNode = dom.parentNode.parentNode.lastElementChild.lastElementChild
+            function toggle1(node){
+                var helpNode = node.parentNode.parentNode.lastElementChild.lastElementChild;
                 if (helpNode.style.display=="inline"){
-                    helpNode.style.display="none"
+                    helpNode.style.display="none";
                 } else {
-                    helpNode.style.display="inline"
+                    helpNode.style.display="inline";
                 }
             }
 
@@ -69,8 +69,8 @@
                 text-align: left;
                 margin-top: 0px;
                 margin-bottom: 0px;
-                line-height: 16px !important;
-                font-size: 14px !important;
+                line-height: 28px !important;
+                font-size: 18px !important;
             }
             .has_desc:after {
                 position: relative;
@@ -132,7 +132,7 @@
       {% include "umi_summary.html"%}
       {% endif %}
 
-      {% if analysis_summary is defined %}
+      {% if cluster_tsne is defined %}
       {% include "analysis_summary.html"%}
       {% endif %}
 

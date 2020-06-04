@@ -1,0 +1,114 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>Analysis   <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+    <div class="box">
+      <div id="cluster_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+        <script>
+            var data = []
+            {% for cluster_item in cluster_tsne %}
+                var x_coord = {{cluster_item["tSNE_1"]}};
+                var y_coord = {{cluster_item["tSNE_2"]}};
+                var trace = {
+                    x: x_coord,
+                    y: y_coord,
+                    name: '{{cluster_item["name"]}}',
+                    mode: 'markers',
+                    marker: {"opacity": 0.9, "size": 4},
+                }
+                data.push(trace);
+            {% endfor %}
+
+            var layout = {
+
+                hovermode:"closest", 
+                title: 't-SNE plot Colored by Clusters', 
+                xaxis: {
+                    zeroline: true,
+                    showline: false,
+                    type: "linear",
+                    title: "t-SNE1"
+                },
+                yaxis: {
+                    zeroline: true,
+                    showline: false,
+                    type: "linear",
+                    title: "t-SNE2"
+                },
+            }
+
+            var config = { 
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            }
+            Plotly.newPlot('cluster_tsne', data, layout, config);
+        </script>       
+      </div>
+      
+      <div id="gene_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+        <script>
+            var data = []
+            var x_coord = {{gene_tsne["tSNE_1"]}};
+            var y_coord = {{gene_tsne["tSNE_2"]}};
+            var trace = {
+                x: x_coord,
+                y: y_coord,
+                text: {{gene_tsne["Gene_Counts"]}},
+                mode: 'markers',
+                marker: { 
+                    "opacity": 0.9, 
+                    "size": 4,
+                    "color":{{gene_tsne["Gene_Counts"]}},
+                    "colorscale": "Jet", 
+                    "colorbar": {"title": "Gene Counts"},
+                },
+            }
+            data.push(trace);
+
+            var layout = {
+
+                hovermode:"closest", 
+                title: 't-SNE plot Colored by Gene Counts', 
+                xaxis: {
+                    zeroline: true,
+                    showline: false,
+                    type: "linear",
+                    title: "t-SNE1"
+                },
+                yaxis: {
+                    zeroline: true,
+                    showline: false,
+                    type: "linear",
+                    title: "t-SNE2"
+                },
+            }
+
+            var config = { 
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            }
+            Plotly.newPlot('gene_tsne', data, layout, config);
+        </script>       
+      </div>
+
+      <hr />
+
+
+      <div class="clear" ></div>
+      <div class="description" style="display: none;">
+          <p>SampleName：样品名</p>
+          <p>Cells_number：细胞数目</p>
+          <p>Saturation：所有细胞中，有多于2条Reads支持的UMI的数目占UMI总数目的比例</p>
+          <p>Mean_Reads：每个细胞测到的平均Reads数目</p>
+          <p>Median_UMIs：每个细胞的UMI数目的中位数</p>
+          <p>Total_Genes：所有细胞检测到的基因数目 (去重复)</p>
+          <p>Median_Genes：每个细胞检测基因数目的中位数</p>
+      </div>
+    </div>
+  </div>

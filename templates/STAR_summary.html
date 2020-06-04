@@ -10,7 +10,7 @@
             </tr>
           {% endfor %}
         </table>
-        <div id="myDivPie" style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+        <div id="myDivPie" style="float: left; margin-left: 3%; margin-right:0%; margin-top: 2%;width: 47%">
           <script>
             var data = [{
               values: {{ STAR_plot.region_values|safe }},
@@ -20,7 +20,7 @@
             }];
             var layout = {
                 autosize:true,
-                height: 200,
+                height: 360,
                 width: 400,
                 margin: {
                     l: 50,
