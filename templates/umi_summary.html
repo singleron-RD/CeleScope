@@ -162,13 +162,13 @@
 
         <div class="clear" ></div>
         <div class="description" style="display: none;">
-            <p>SampleName：样品名</p>
-            <p>Cells_number：细胞数目</p>
-            <p>Saturation：所有细胞中，有多于2条Reads支持的UMI的数目占UMI总数目的比例</p>
-            <p>Mean_Reads：每个细胞测到的平均Reads数目</p>
-            <p>Median_UMIs：每个细胞的UMI数目的中位数</p>
-            <p>Total_Genes：所有细胞检测到的基因数目 (去重复)</p>
-            <p>Median_Genes：每个细胞检测基因数目的中位数</p>
+            <p>Estimated Number of Cells：the number of barcodes considered as cell-associated.</p>
+            <p>Fraction Reads in Cells：the fraction of valid-barcode, uniquely-mapped-to-transcriptome reads with cell-associated barcodes.</p>           
+            <p>Mean Reads per Cell：the total number of sequenced reads divided by the estimated number of cells.</p>
+            <p>Median UMI per Cell：the median number of UMI counts per cell-associated barcode.</p>
+            <p>Total Genes：the number of genes with at least one UMI count in any cell.</p>
+            <p>Median Genes per Cell：The median number of genes detected per cell-associated barcode.</p>
+            <p>Saturation: the fraction of UMI originating from an already-observed UMI.</p>
         </div>
       </div>
     </div>

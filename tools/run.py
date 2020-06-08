@@ -45,6 +45,11 @@ def run(args):
     from count import count
     count(args)
 
+    args.matrix_file = baseDir + '/05.count/' + sample + '_matrix.xls'
+    args.outdir = baseDir + '/06.analysis'
+    from analysis import analysis
+    analysis(args)
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='run all steps')

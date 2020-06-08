@@ -38,6 +38,11 @@ if __name__ == '__main__':
     get_opts5(parser5,True)
     parser5.set_defaults(func=count)
 
+    from analysis import analysis, get_opts6
+    parser6 = subparsers.add_parser('analysis')
+    get_opts6(parser6,True)
+    parser6.set_defaults(func=analysis)
+
     from run import run
     parser_run = subparsers.add_parser('run',conflict_handler='resolve')
     get_opts0(parser_run,False)
@@ -46,6 +51,7 @@ if __name__ == '__main__':
     get_opts3(parser_run,False)
     get_opts4(parser_run,False)
     get_opts5(parser_run,False)
+    get_opts6(parser_run,False)
     parser_run.set_defaults(func=run)
 
     args = parser.parse_args()
