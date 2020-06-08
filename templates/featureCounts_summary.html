@@ -1,6 +1,12 @@
     <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
       <h2>FeatureCounts    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+
       <div class="box">
+        <div class="description" style="display: none;">
+          <p><b>Assigned</b> : reads that can be successfully assigned without ambiguity.</p>
+          <p><b>Unassigned_NoFeatures</b> : alignments that do not overlap any feature.</p>
+          <p><b>Unassigned_Ambiguity</b> : alignments that overlap two or more features.</p>
+        </div>
         <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
           {% for item in featureCounts_summary %}
             {% if loop.index <= (loop.length+1)/2 %}
@@ -25,12 +31,6 @@
           {% endfor %}
         </table>
         <div class="clear" ></div>
-        <div class="description" style="display: none;">
-          <p>SampleName：样品名</p>
-          <p>Assigned：定位到基因上的Reads数目及比例</p>
-          <p>Unassigned_NoFeatures：未定位到基因上的reads数目及比例</p>
-          <p>Unassigned_Ambiguity：定位在多个基因上的reads数目及比例</p>
-        </div>
       </div>
     </div>
 

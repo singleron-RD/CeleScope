@@ -1,6 +1,15 @@
     <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
       <h2>Trimming    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+
       <div class="box">
+        <div class="description" style="display: none;">
+          <p><b>Reads with adapters</b> : reads with sequencing adapters.</p>
+          <p><b>Reads that were too short</b> : reads with read length less than 20bp after trimming.</p>
+          <p><b>Reads written (passing filters)</b> : reads pass filtering.</p>
+          <p><b>Total basepairs processed</b> : total processed base pairs.</p>
+          <p><b>Quality-trimmed</b> : base pairs trimmed due to low quality.</p>
+          <p><b>Total written (filtered)</b> : base pairs pass filtering.</p>
+        </div>
         <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
           {% for item in cutadapt_summary %}
             {% if loop.index <= (loop.length+1)/2 %}
@@ -25,14 +34,6 @@
           {% endfor %}
         </table>
         <div class="clear" ></div>
-        <div class="description" style="display: none;">
-          <p>Reads with adapters：number of reads with adapters.</p>
-          <p>Reads that were too short：number of reads with read length less than 20bp after trimming.</p>
-          <p>Reads written (passing filters)：number of reads pass filtering.</p>
-          <p>Total basepairs processed：number of total processed base pairs.</p>
-          <p>Quality-trimmed: number of base pairs trimmed due to low quality.</p>
-          <p>Total written (filtered)：number of base pairs pass filtering.</p>
-        </div>
       </div>
     </div>
 

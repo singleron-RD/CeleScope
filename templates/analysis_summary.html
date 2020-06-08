@@ -33,6 +33,13 @@
 <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
     <h2>Analysis   <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
     <div class="box">
+        <div class="description" style="display: none;">
+            <p><b>Top Marker Genes by Cluster</b> : differential expression analysis based on the non-parameteric Wilcoxon rank sum test.</p>
+            <p> avg_logFC : log fold-chage of the average expression between the cluster and the rest of the sample.</p>
+            <p> pct.1 : The percentage of cells where the gene is detected in the cluster.</p>
+            <p> pct.2 : The percentage of cells where the gene is detected in the rest of the sample.</p>
+            <p> p_val_adj : Adjusted p-value, based on bonferroni correction using all genes in the dataset.</p>
+        </div>
       <div id="cluster_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
         <script>
             var data = []
@@ -139,10 +146,5 @@
 
 
       <div class="clear" ></div>
-      <div class="description" style="display: none;">
-          <p>tSNE plot Colored by Clusters: </p>
-          <p>tSNE plot Colored by Gene Counts: </p>
-
-      </div>
     </div>
   </div>

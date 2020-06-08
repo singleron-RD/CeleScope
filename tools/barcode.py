@@ -301,7 +301,7 @@ def barcode(args):
     cal_percent=lambda x: "{:.2%}".format((x+0.0)/total_num)
     with open(args.outdir + '/stat.txt', 'w') as fh:
         """
-        Number of Reads: %s
+        Raw Reads: %s
         Valid Reads: %s(%s)
         Valid Barcodes: %s
         Q30 of Barcodes: %.2f%%

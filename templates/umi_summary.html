@@ -1,6 +1,16 @@
     <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
       <h2>Cells    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+
       <div class="box">
+        <div class="description" style="display: none;">
+          <p><b>Estimated Number of Cells</b> : the number of barcodes considered as cell-associated.</p>
+          <p><b>Fraction Reads in Cells</b> : the fraction of valid-barcode, uniquely-mapped-to-transcriptome reads with cell-associated barcodes.</p>           
+          <p><b>Mean Reads per Cell</b> : the total number of sequenced reads divided by the estimated number of cells.</p>
+          <p><b>Median UMI per Cell</b> : the median number of UMI counts per cell-associated barcode.</p>
+          <p><b>Total Genes</b> : the number of genes with at least one UMI count in any cell.</p>
+          <p><b>Median Genes per Cell</b> : the median number of genes detected per cell-associated barcode.</p>
+          <p><b>Saturation</b> : the fraction of UMI originating from an already-observed UMI.</p>
+      </div>
         <table style="float: left; margin-left: 0%; margin-top: 0%; margin-right:3%; width: 47%">
           {% for item in count_summary %}
             <tr>
@@ -61,13 +71,16 @@
                       title: 'UMI counts',
                       type: 'log'
                   },
-              }
-            var config = { 
-                modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", 
-                                         "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d" ], 
-                displaylogo: false, 
-                showTips: true ,
-                responsive: true,}
+              };
+
+              var config = { 
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            };
               Plotly.newPlot('myDivUMI', data, layout, config);
           </script>       
         </div>
@@ -104,12 +117,15 @@
                 showlegend: false,
 
             };
+
             var config = { 
-                modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", 
-                                         "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d" ], 
-                displaylogo: false, 
-                showTips: true ,
-                responsive: true,}
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            };
             Plotly.newPlot('myDivSaturation', data, layout, config);
           </script>
         </div>
@@ -150,25 +166,19 @@
      //  - (Geo): zoomInGeo, zoomOutGeo, resetGeo, hoverClosestGeo
      //  - hoverClosestGl2d, hoverClosestPie, toggleHover, resetViews 
 
+
             var config = { 
-                modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", 
-                                         "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d" ], 
-                displaylogo: false, 
-                showTips: true ,
-                responsive: true,}
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            };
             Plotly.newPlot('myDivMedianGeneNum', data, layout, config);
           </script>
         </div>
 
         <div class="clear" ></div>
-        <div class="description" style="display: none;">
-            <p>Estimated Number of Cells：the number of barcodes considered as cell-associated.</p>
-            <p>Fraction Reads in Cells：the fraction of valid-barcode, uniquely-mapped-to-transcriptome reads with cell-associated barcodes.</p>           
-            <p>Mean Reads per Cell：the total number of sequenced reads divided by the estimated number of cells.</p>
-            <p>Median UMI per Cell：the median number of UMI counts per cell-associated barcode.</p>
-            <p>Total Genes：the number of genes with at least one UMI count in any cell.</p>
-            <p>Median Genes per Cell：The median number of genes detected per cell-associated barcode.</p>
-            <p>Saturation: the fraction of UMI originating from an already-observed UMI.</p>
-        </div>
       </div>
     </div>

@@ -1,6 +1,14 @@
     <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
       <h2>Demultiplexing    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
       <div class="box">
+        <div class="description" style="display: none;">
+          <p><b>Raw Reads</b> : total reads from FASTQ files.</p>
+          <p><b>Valid Reads</b> : reads pass filtering.</p>
+          <p><b>Valid Barcodes</b> : barcodes pass filtering.</p>
+          <p><b>Q30 of Barocdes</b> : percent of barcode base pairs with quality scores over Q30.</p>
+          <p><b>Q30 of UMIs</b> : percent of UMI base pairs with quality scores over Q30.</p>
+          <p><b>Reads with corrected Barcode</b> : reads with barcode that can be corrected by the correction algorithm.</p>
+        </div>
         <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
           {% for item in barcode_summary %}
             {% if loop.index <= (loop.length+1)/2 %}
@@ -25,14 +33,6 @@
           {% endfor %}
         </table>
         <div class="clear" ></div>
-        <div class="description" style="display: none;">
-          <p>Number of Reads: number of raw reads.</p>
-          <p>Valid Reads: number of reads pass filtering.</p>
-          <p>Valid Barcodes: number of barcodes pass filtering.</p>
-          <p>Q30 of Barocdes: percent of barcode base pairs with quality scores over Q30.</p>
-          <p>Q30 of UMIs: percent of UMI base pairs with quality scores over Q30.</p>
-          <p>Reads with corrected Barcode: number of reads with corrected barcode.</p>
-        </div>
       </div>
     </div>
 

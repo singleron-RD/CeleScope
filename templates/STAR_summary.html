@@ -1,6 +1,13 @@
     <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
       <h2>Mapping    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
       <div class="box">
+        <div class="description" style="display: none;">
+          <p><b>Reads Mapped to Unique Regions</b> : reads that mapped uniquely to an region of the genome.</p>
+          <p><b>Reads Mapped to Multiple Regions</b> : reads that mapped to multiple regions of the genome.</p>
+          <p><b>Base Pairs Mapped to Exonic Regions</b> : bases in primary alignments that align to a coding base or a UTR base for some gene.</p>
+          <p><b>Base Pairs Mapped to Intronic Regions</b> : bases in primary alignments that align to an intronic base for some gene, and not a coding or UTR base.</p>
+          <p><b>Base Pairs Mapped to Intergenic Regions</b> : bases in primary alignments that do not align to any gene.</p>
+        </div>
         <table style="float: left; margin-left: 0%; margin-top: 0%; margin-right:3%; width: 47%">
           {% for item in STAR_summary %}
             <tr>
@@ -35,18 +42,22 @@
                 }
 
             };
-            Plotly.newPlot('myDivPie', data, layout, {responsive: true});
+            
+            var config = { 
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            }
+
+            Plotly.newPlot('myDivPie', data, layout, config);
           </script>
         </div>
 
         <div class="clear" ></div>
-        <div class="description" style="display: none;">
-          <p>Reads Mapped to Unique Regions：reads that mapped uniquely to an region of the genome.</p>
-          <p>Reads Mapped to Multiple Regions：reads that mapped to multiple regions of the genome.</p>
-          <p>Base Pairs Mapped to Exonic Regions：number of bases in primary alignments that align to a coding base or a UTR base for some gene.</p>
-          <p>Base Pairs Mapped to Intronic Regions：number of bases in primary alignments that align to an intronic base for some gene, and not a coding or UTR base.</p>
-          <p>Base Pairs Mapped to Intergenic Regions：number of bases in primary alignments that do not align to any gene.</p>
-        </div>
+
       </div>
     </div>
 
