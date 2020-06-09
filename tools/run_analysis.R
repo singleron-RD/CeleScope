@@ -27,7 +27,7 @@ rds <- NormalizeData(object = rds, normalization.method = "LogNormalize",scale.f
 rds <- FindVariableGenes(object = rds, mean.function = ExpMean, dispersion.function = LogVMR, x.low.cutoff = 0.1,  y.cutoff = 1)
 use.gene = rds@var.genes
 rds <- ScaleData(object = rds,vars.to.regress = c("nUMI", "percent.mito"),genes.use =use.gene)
-rds <- RunPCA(object = rds, pc.genes = use.gene, do.print = TRUE, pcs.print = 1:5, genes.print = 5)
+rds <- RunPCA(object = rds, pc.genes = use.gene, do.print = FALSE)
 rds <- FindClusters(object = rds, reduction.type = "pca", dims.use = 1:20, resolution = 0.6, print.output = 0, save.SNN = TRUE,force.recalc = TRUE)
 
 # Run Non-linear dimensional reduction (tSNE)

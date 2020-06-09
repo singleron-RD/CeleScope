@@ -3,12 +3,11 @@
 
       <div class="box">
         <div class="description" style="display: none;">
-          <p><b>Reads with adapters</b> : reads with sequencing adapters.</p>
-          <p><b>Reads that were too short</b> : reads with read length less than 20bp after trimming.</p>
-          <p><b>Reads written (passing filters)</b> : reads pass filtering.</p>
-          <p><b>Total basepairs processed</b> : total processed base pairs.</p>
-          <p><b>Quality-trimmed</b> : base pairs trimmed due to low quality.</p>
-          <p><b>Total written (filtered)</b> : base pairs pass filtering.</p>
+          <p><b>Reads with Adapters</b> : reads with sequencing adapters.</p>
+          <p><b>Reads too Short</b> : reads with read length less than 20bp after trimming.</p>
+          <p><b>Reads Written</b> : reads pass filtering.</p>
+          <p><b>Base Pairs Processed</b> : total processed base pairs.</p>
+          <p><b>Base Pairs Written</b> : base pairs pass filtering.</p>
         </div>
         <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
           {% for item in cutadapt_summary %}

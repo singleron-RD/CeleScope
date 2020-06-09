@@ -5,6 +5,7 @@ import os, sys, re
 import subprocess 
 import logging
 from itertools import islice
+import pandas as pd
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level = logging.INFO, format = FORMAT)
@@ -22,17 +23,27 @@ def get_opts2(parser,sub_program):
 
 def format_stat(cutadapt_log, samplename):
     fh = open(cutadapt_log, 'r') 
-    with open(os.path.dirname(cutadapt_log) + '/stat.txt', 'w') as stat_fh:
-        # Total reads processed:...Total written (filtered):
-        content = islice(fh, 9, 16)
-        for line in content:
-            if line.strip()=='': continue
-            line = re.sub(r',', r'', line)          
-            line = re.sub(r'\s{2,}', r'', line)          
-            line = re.sub(r' bp', r'', line)
-            line = re.sub(r'(?<=\d)\s+\(', r'(', line)
-
-            stat_fh.write(line)
+    stat_file = os.path.dirname(cutadapt_log) + '/stat.txt'
+    # Total reads processed:...Total written (filtered):
+    content = islice(fh, 9, 16)
+    p_list = []
+    for line in content:
+        if line.strip()=='': continue        
+        line = re.sub(r'\s{2,}', r'', line)          
+        line = re.sub(r' bp', r'', line)
+        line = re.sub(r'(?<=\d)\s+\(', r'(', line)
+        line = line.strip()
+        attr = line.split(":")
+        p_list.append({"item":attr[0],"value":attr[1]})
+    p_df = pd.DataFrame(p_list)
+    p_df.iloc[0,0] = 'Reads with Adapters'
+    p_df.iloc[1,0] = 'Reads too Short'
+    p_df.iloc[2,0] = 'Reads Written'
+    p_df.iloc[3,0] = 'Base Pairs Processed'
+    p_df.iloc[5,0] = 'Base Pairs Written'
+    p_df = p_df.iloc[[0,1,2,3,5],]
+    p_df.to_csv(stat_file,sep=':',index=False)
+            
     fh.close()
 
 def cutadapt(args):

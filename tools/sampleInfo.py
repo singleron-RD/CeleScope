@@ -34,5 +34,6 @@ def get_opts0(parser,sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir',required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-    parser.add_argument('--description', help='sample description',default="scRNA-Seq scope")
+        parser.add_argument('--genomeDir', help='genomeDir', required=True)
+    parser.add_argument('--description', help='sample description',default="scRNA-Seq")
     parser.add_argument('--version', help='software version',default=__VERSION__)

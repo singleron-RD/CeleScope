@@ -4,6 +4,7 @@
 import os, re
 import logging
 import subprocess
+from utils import format_number
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level = logging.INFO, format = FORMAT)
@@ -41,7 +42,7 @@ def format_stat(log, samplename):
             if m3: tmp_arr.append(int(m3.group(1)))
 
         total = sum(tmp_arr)
-        tmp_arr = ['%s(%.2f%%)'%(n, (n+0.0)/total*100) for n in tmp_arr]
+        tmp_arr = ['%s(%.2f%%)'%(format_number(n), (n+0.0)/total*100) for n in tmp_arr]
         for t, s in zip(['Assigned', 'Unassigned_NoFeatures', 'Unassigned_Ambiguity'], tmp_arr):
             stat_fh.write('%s: %s\n'%(t, s))
     fh.close()

@@ -3,6 +3,7 @@
 
 import os, re, sys, json, logging
 import subprocess 
+from utils import format_number
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level = logging.INFO, format = FORMAT)
@@ -47,14 +48,13 @@ def format_stat(map_log, region_log, samplename):
     Intronic_Regions = int(region_dict['INTRONIC_BASES'])
     Intergenic_Regions = int(region_dict['INTERGENIC_BASES'])
 
-    region_dict['Exonic_Regions'] = "{}({:.2%})".format(Exonic_Regions, Exonic_Regions/Total)
-    region_dict['Intronic_Regions'] = "{}({:.2%})".format(Intronic_Regions, Intronic_Regions/Total)
-    region_dict['Intergenic_Regions'] = "{}({:.2%})".format(Intergenic_Regions, Intergenic_Regions/Total)
+    region_dict['Exonic_Regions'] = "{}({:.2%})".format(format_number(Exonic_Regions), Exonic_Regions/Total)
+    region_dict['Intronic_Regions'] = "{}({:.2%})".format(format_number(Intronic_Regions), Intronic_Regions/Total)
+    region_dict['Intergenic_Regions'] = "{}({:.2%})".format(format_number(Intergenic_Regions), Intergenic_Regions/Total)
 
     with open(os.path.dirname(map_log) + '/stat.txt', 'w') as stat_fh:
-        stat_fh.write('%s: %s(%s)\n'%('Reads Mapped to Unique Regions', UNIQUE_READS[0], UNIQUE_READS[1]))
-        stat_fh.write('%s: %s(%s)\n'%('Reads Mapped to Multiple Regions', MULTI_MAPPING_READS[0], MULTI_MAPPING_READS[1]))
-
+        stat_fh.write('%s: %s(%s)\n'%('Uniquely Mapped Reads', format_number(int(UNIQUE_READS[0])), UNIQUE_READS[1]))
+        stat_fh.write('%s: %s(%s)\n'%('Multi-Mapped Reads', format_number(int(MULTI_MAPPING_READS[0])), MULTI_MAPPING_READS[1]))
         stat_fh.write('%s: %s\n'%('Base Pairs Mapped to Exonic Regions', region_dict['Exonic_Regions']))
         stat_fh.write('%s: %s\n'%('Base Pairs Mapped to Intronic Regions', region_dict['Intronic_Regions']))
         stat_fh.write('%s: %s\n'%('Base Pairs Mapped to Intergenic Regions', region_dict['Intergenic_Regions']))

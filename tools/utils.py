@@ -17,7 +17,10 @@ def getlogger():
     logger1 = logging.getLogger(__name__)
     logger2 = logging.getLogger(__name__)
 
-    return logger1,logger2
+    return logger1,logger2  
+
+def format_number(number:int) -> str:
+    return format(number,",")
 
 def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):
     # col can be readcount or UMI

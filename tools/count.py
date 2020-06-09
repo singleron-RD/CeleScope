@@ -14,6 +14,7 @@ import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
+from utils import format_number
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level = logging.INFO, format = FORMAT)
@@ -211,7 +212,9 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
     summary['Median Genes per Cell'] = int(CB_describe.loc['50%', 'geneID'])
     summary['Saturation'] = '%.2f%%' % (Saturation)
     # 测序饱和度，认定为细胞中的reads中UMI>2的reads比例
-
+    need_format = ['Estimated Number of Cells','Mean Reads per Cell','Median UMI per Cell','Total Genes','Median Genes per Cell']
+    for item in need_format:
+        summary[item] = format_number(summary[item])
     summary.to_csv(stat_file, header=False, sep=':')
 
 def sample(p, df, bc):
