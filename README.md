@@ -80,13 +80,13 @@ python3 /SGRNJ/Database/script/pipe/scope_tools_1.0/tools/scope.py run
  --sample R2005212
 ```
 
-`--fq1` gzipped FASTQ read 1 file path
-`--fq2` gzipped FASTQ read 2 file path
-`--bcType` barcode and UMI structure type,defalut=scope
-`--genomeDir` reference genome directory path
-`--refFlat` refFlat file path
-`--annot` annotation file path
-`--outdir` output directory path
-`--sample` sample ID
+`--fq1` gzipped FASTQ read 1 file path  
+`--fq2` gzipped FASTQ read 2 file path  
+`--bcType` barcode and UMI structure type,defalut=scope  
+`--genomeDir` reference genome directory path  
+`--refFlat` refFlat file path  
+`--annot` annotation file path  
+`--outdir` output directory path  
+`--sample` sample ID  
 
 
