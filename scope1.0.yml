@@ -62,6 +62,7 @@ dependencies:
   - mkl=2018.0.3=1
   - mkl_fft=1.0.10=py36_0
   - mkl_random=1.0.2=py36_0
+  - mysql-connector-c=6.1.11=h876a3cc_1006
   - ncurses=6.1=hf484d3e_1002
   - numpy=1.15.4=py36h1d66e8a_0
   - numpy-base=1.15.4=py36h81de0dd_0
@@ -264,6 +265,7 @@ dependencies:
   - tk=8.6.9=h84994c4_1000
   - tktable=2.10=h555a92e_3
   - tornado=5.1.1=py36h14c3975_1000
+  - ucsc-gtftogenepred=377=h35c10e6_2
   - wheel=0.33.1=py36_0
   - xopen=0.5.0=py_0
   - xorg-kbproto=1.0.7=h14c3975_1002
@@ -280,4 +282,5 @@ dependencies:
   - xz=5.2.4=h14c3975_1001
   - zlib=1.2.11=h14c3975_1004
   - zstd=1.4.4=h3b9ef0a_2
+
 
