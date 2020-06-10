@@ -1,4 +1,4 @@
-![issues](https://img.shields.io/github/issues/zhouyiqi91/scope_tools_1.0)
+[![issues](https://img.shields.io/github/issues/zhouyiqi91/scope_tools_1.0)](https://github.com/zhouyiqi91/scope_tools_1.0/issues)
 
 # Scope-tools
 
