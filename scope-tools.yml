@@ -1,8 +1,5 @@
 name: scope1.0
 channels:
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge
-  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda
   - conda-forge
   - bioconda
   - r
@@ -61,7 +58,7 @@ dependencies:
   - lz4-c=1.8.3=he1b5a44_1001
   - make=4.3=h516909a_0
   - markupsafe=1.1.1=py36h14c3975_0
-  - matplotlib=2.2.2=py36h8e2386c_2
+  - matplotlib=2.2.2
   - mkl=2018.0.3=1
   - mkl_fft=1.0.10=py36_0
   - mkl_random=1.0.2=py36_0
@@ -283,5 +280,4 @@ dependencies:
   - xz=5.2.4=h14c3975_1001
   - zlib=1.2.11=h14c3975_1004
   - zstd=1.4.4=h3b9ef0a_2
-prefix: /SGRNJ/Public/Software/conda_env/scope1.0
 

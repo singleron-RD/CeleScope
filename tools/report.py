@@ -63,6 +63,7 @@ if __name__ == "__main__":
         step = steps[i]
         outdir = basedir + '/{index}.{step}'.format(index=index,step=step)
         stat_file = outdir + "/stat.txt"
+        
         if step=="STAR":
             from STAR import format_stat
             region_txt = outdir + '/' + sample + '_region.log'
@@ -70,6 +71,7 @@ if __name__ == "__main__":
             t = reporter(name=step, stat_file=stat_file, outdir=outdir + '/..',plot=plot)
             t.get_report()
             continue
+
         if step == "featureCounts":
             from featureCounts import format_stat
             format_stat(outdir+'/'+sample+'.summary', sample)

@@ -194,6 +194,8 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
     fh = open(json_file)
     data = json.load(fh)
     total_read_number = int(data['barcode_summary'][0][1])
+    str_number = data['barcode_summary'][1][1].split("(")[0]
+    valid_read_number = int(str_number.replace(",",""))
 
     summary = pd.Series([0, 0, 0, 0, 0, 0, 0],
                         index=[
@@ -206,7 +208,7 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
     summary['Estimated Number of Cells'] = int(CB_describe.loc['count', 'readcount'])
     summary['Fraction Reads in Cells'] = '%.2f%%'% (float(
         CB_reads_count) / reads_mapped_to_transcriptome * 100)
-    summary['Mean Reads per Cell'] = int(total_read_number/summary['Estimated Number of Cells'])
+    summary['Mean Reads per Cell'] = int(valid_read_number/summary['Estimated Number of Cells'])
     summary['Median UMI per Cell'] = int(CB_describe.loc['50%', 'UMI'])
     summary['Total Genes'] = int(CB_total_Genes)
     summary['Median Genes per Cell'] = int(CB_describe.loc['50%', 'geneID'])

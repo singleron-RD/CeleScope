@@ -4,10 +4,8 @@
         <div class="description" style="display: none;">
           <p><b>Raw Reads</b> : total reads from FASTQ files.</p>
           <p><b>Valid Reads</b> : reads pass filtering.</p>
-          <p><b>Valid Barcodes</b> : barcodes pass filtering.</p>
           <p><b>Q30 of Barocdes</b> : percent of barcode base pairs with quality scores over Q30.</p>
           <p><b>Q30 of UMIs</b> : percent of UMI base pairs with quality scores over Q30.</p>
-          <p><b>Reads with corrected Barcode</b> : reads with barcode that can be corrected by the correction algorithm.</p>
         </div>
         <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
           {% for item in barcode_summary %}

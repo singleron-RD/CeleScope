@@ -40,9 +40,9 @@ def format_stat(cutadapt_log, samplename):
     p_df.iloc[1,0] = 'Reads too Short'
     p_df.iloc[2,0] = 'Reads Written'
     p_df.iloc[3,0] = 'Base Pairs Processed'
+    p_df.iloc[4,0] = 'Base Pairs Quality-Trimmed'
     p_df.iloc[5,0] = 'Base Pairs Written'
-    p_df = p_df.iloc[[0,1,2,3,5],]
-    p_df.to_csv(stat_file,sep=':',index=False)
+    p_df.to_csv(stat_file,sep=':',index=False,header=None)
             
     fh.close()
 

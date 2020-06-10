@@ -9,7 +9,7 @@
         </div>
         <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
           {% for item in featureCounts_summary %}
-            {% if loop.index <= (loop.length+1)/2 %}
+            {% if loop.index == 1 %}
             <tr>
               {% for i in item %} 
               <td>{{ i|e }}</td>
@@ -21,7 +21,7 @@
 
         <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
           {% for item in featureCounts_summary %}
-            {% if loop.index > (loop.length+1)/2  %}
+            {% if loop.index > 1  %}
             <tr>
               {% for i in item %} 
               <td>{{ i|e }}</td>

@@ -16,10 +16,8 @@ barcode_corrected_num = 0
 stat_info = '''
     Raw Reads: %s
     Valid Reads: %s(%s)
-    Valid Barcodes: %s
     Q30 of Barcodes: %.2f%%
     Q30 of UMIs: %.2f%%
-    Reads with Corrected Barcode: %s(%s)
 '''
 
 def ord2chr(q, offset=33):
@@ -304,15 +302,12 @@ def barcode(args):
         """
         Raw Reads: %s
         Valid Reads: %s(%s)
-        Valid Barcodes: %s
         Q30 of Barcodes: %.2f%%
         Q30 of UMIs: %.2f%%
-        Reads with Corrected Barcode: %s(%s)
         """
         stat_info = stat_info%(format_number(total_num), format_number(clean_num), 
-            cal_percent(clean_num), format_number(len(Barcode_dict.keys())), BarcodesQ30,
-            UMIsQ30,  format_number(barcode_corrected_num), 
-            cal_percent(barcode_corrected_num))
+            cal_percent(clean_num), BarcodesQ30,
+            UMIsQ30)
         stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
         fh.write(stat_info)
     logger1.info('extract barcode done!')
