@@ -11,7 +11,7 @@
 ## Installation
 
 ```
-git clone <github path>
+git clone https://github.com/SingleronBio/scope_tools_1.0.git
 conda env create -f scope1.0.yml
 ```
 
