@@ -67,7 +67,7 @@ STAR \
 
 ## Usage
 
-### example
+### Example
 
 ```
 conda activate scope1.0
