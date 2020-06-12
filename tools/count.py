@@ -193,7 +193,7 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
     json_file = outdir + '.data.json'
     fh = open(json_file)
     data = json.load(fh)
-    total_read_number = int(data['barcode_summary'][0][1])
+    #total_read_number = int(data['barcode_summary'][0][1])
     str_number = data['barcode_summary'][1][1].split("(")[0]
     valid_read_number = int(str_number.replace(",",""))
 

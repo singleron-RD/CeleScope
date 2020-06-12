@@ -35,10 +35,14 @@ def parse_map(mapfile, cells=3000):
             if line.startswith('#'): continue
             tmp = line.split()
             try:
-                fq1 = glob.glob(tmp[1] + '/' + tmp[0] + '*' + '_1.fq.gz')[0]
-                fq2 = glob.glob(tmp[1] + '/' + tmp[0] + '*' + '_2.fq.gz')[0]
-            except IndexError:
-                sys.exit('glob err with %s'%(tmp[1] + '/' + tmp[0] + '_*' + '_[12].fq.gz'))
+                pattern1_1 = tmp[1] + '/' + tmp[0] + '*' + '_1.fq.gz'
+                pattern1_2 = tmp[1] + '/' + tmp[0] + '*' + 'R1_*.fastq.gz'
+                pattern2_1 = tmp[1] + '/' + tmp[0] + '*' + '_2.fq.gz'
+                pattern2_2 = tmp[1] + '/' + tmp[0] + '*' + 'R2_*.fastq.gz'
+                fq1 = (glob.glob(pattern1_1) + glob.glob(pattern1_2))[0]
+                fq2 = (glob.glob(pattern2_1) + glob.glob(pattern2_2))[0]
+            except IndexError as e:
+                sys.exit("Error:"+str(e))
                 
             assert os.path.exists(fq1), '%s not exists!'%(fq1)
             assert os.path.exists(fq2), '%s not exists!'%(fq2)
