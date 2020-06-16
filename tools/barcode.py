@@ -330,7 +330,7 @@ def get_opts1(parser,sub_program):
     parser.add_argument('--sample', help='sample name', required=True)
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)
-    parser.add_argument('--bcType', help='choice of barcode types. Currently support scope and Drop-seq barcode designs',default="scope")
+    parser.add_argument('--bcType', help='choice of barcode types. Currently support scope and Drop-seq barcode designs')
     parser.add_argument('--pattern', help='')
     parser.add_argument('--whitelist', help='')
     parser.add_argument('--linker', help='')
