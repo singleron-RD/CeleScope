@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from utils import getlogger
 
-__VERSION__ = "1.0"
+__VERSION__ = "CeleScope V1.0"
 logger1, logger2 = getlogger()
 def sampleInfo(args):
     if not os.path.exists(args.outdir):
