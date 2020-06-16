@@ -63,7 +63,7 @@ def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0
     # determine validated barcodes
 
     df = df.sort_values(col, ascending=False)
-    idx = int(expected_cell_num*0.03) - 1
+    idx = int(expected_cell_num*0.01) - 1
     idx = max(0, idx)
 
     # calculate read counts threshold

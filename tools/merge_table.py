@@ -25,13 +25,13 @@ def pie_label(values, keys):
 
 for n, i in zip(samples, data_json):
     tmp = json.load(open(i))
-    for j in ['barcode_summary', 'cutadapt_summary', 'STAR_summary', 'featureCounts_summary', 'count_summary']:
+    for j in ['sample_summary','barcode_summary', 'cutadapt_summary', 'STAR_summary', 'featureCounts_summary', 'count_summary']:
         if n==samples[0]: 
             result_dict[j].append('\t'.join([x[0].replace(' ','') for x in tmp[j]]))
         result_dict[j].append('\t'.join([x[1].replace(' ','') for x in tmp[j]]))
     
 with open(args['workdir']+'/merge.xls', 'w') as fh:
-    for j in ['barcode_summary', 'cutadapt_summary', 'STAR_summary', 'featureCounts_summary', 'count_summary']:
+    for j in ['sample_summary','barcode_summary', 'cutadapt_summary', 'STAR_summary', 'featureCounts_summary', 'count_summary']:
         fh.write('##' + j + '\n')
         for k in result_dict[j]:
             fh.write(k + '\n')
