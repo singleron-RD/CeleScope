@@ -224,11 +224,11 @@ def sample(p, df, bc):
     format_str = "%.2f\t%.2f\t%.2f\n"
     tmp.reset_index(drop=True, inplace=True)
     tmp = tmp.loc[tmp['Barcode'].isin(bc),:]
-    total = tmp['UMI'].count()+0.0
     geneNum_median = tmp.groupby('Barcode').agg({
         'geneID': 'nunique'
     })['geneID'].median()
     tmp = tmp.groupby(['Barcode', 'geneID', 'UMI']).agg({'UMI': 'count'})
+    total = float(tmp['UMI'].count())
     saturation = (1 - tmp.loc[tmp['UMI'] == 1, :].shape[0] / total)*100
     return format_str % (p, geneNum_median, saturation), saturation
 
