@@ -110,14 +110,18 @@ def analysis(args):
         os.system('mkdir -p %s'%(outdir))
     
     # run
+    logging.info("convert expression matrix.")
     new_matrix = gene_convert(gtf_file,matrix_file)  
     new_matrix_file = "{outdir}/{sample}_matrix.tsv".format(outdir=outdir,sample=sample)
     new_matrix.to_csv(new_matrix_file,sep="\t",index=False)
+    logging.info("expression matrix written.")
 
     # run_R
+    logging.info("Seurat running")
     cmd = "Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {new_matrix_file}".format(
         app=toolsdir+"/run_analysis.R",sample = sample, outdir=outdir,new_matrix_file=new_matrix_file)
     os.system(cmd)
+    logging.info("Seurat done.")
 
     # report
     tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)

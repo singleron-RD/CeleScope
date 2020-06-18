@@ -31,7 +31,7 @@ rds <- RunPCA(object = rds, pc.genes = use.gene, do.print = FALSE)
 rds <- FindClusters(object = rds, reduction.type = "pca", dims.use = 1:20, resolution = 0.6, print.output = 0, save.SNN = TRUE,force.recalc = TRUE)
 
 # Run Non-linear dimensional reduction (tSNE)
-rds <- RunTSNE(object = rds, dims.use = 1:20, do.fast = TRUE)
+rds <- RunTSNE(object = rds, dims.use = 1:20, do.fast = TRUE,check_duplicates = FALSE)
 rds.markers <- FindAllMarkers(object = rds, genes.use = use.gene)
 rds.markers = dplyr::group_by(rds.markers,cluster) %>% dplyr::arrange(desc(avg_logFC))
 
