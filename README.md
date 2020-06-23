@@ -11,6 +11,7 @@
 
 ```
 git clone https://github.com/SingleronBio/CeleScope.git
+cd CeleScope
 conda env create -f scope1.0.yml
 ```
 
