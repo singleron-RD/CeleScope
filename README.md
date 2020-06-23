@@ -70,7 +70,7 @@ STAR \
 
 ```
 conda activate scope1.0
-python3 /SGRNJ/Database/script/pipe/scope_tools_1.0/tools/scope.py run  
+python3 {CeleScope_path}/tools/scope.py run  
  --fq1 ./data/R2005212_L1_1.fq.gz\
  --fq2 ./data/R2005212_L1_2.fq.gz\
  --bcType scope\
