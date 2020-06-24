@@ -24,7 +24,7 @@ def parse_map(mapfile):
     return dict
 '''
 
-def parse_map(mapfile, cells=3000):
+def parse_map(mapfile, cells):
     fq_dict = defaultdict(list)
     cells_dict = defaultdict(list)
     sample_arr = []
@@ -93,7 +93,7 @@ def main():
     parser.add_argument('--cells', type=int, help='cell number, default=3000', default=3000)
     args = vars(parser.parse_args())
 
-    fq_dict, sample_arr, cells_dict = parse_map(args['mapfile'])
+    fq_dict, sample_arr, cells_dict = parse_map(args['mapfile'],args['cells'])
 
     # 链接数据
     raw_dir = args['outdir'] + '/data_give/rawdata'
