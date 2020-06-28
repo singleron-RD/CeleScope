@@ -42,10 +42,12 @@ def cluster_tsne_list(tsne_df):
     return data list
     """
     tsne_df.cluster = tsne_df.cluster + 1
+    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:,0]
+    percent_df = sum_df.transform(lambda x:round(x/sum(x)*100,2))
     res = []
     for cluster in sorted(tsne_df.cluster.unique()):
         sub_df = tsne_df[tsne_df.cluster==cluster]
-        name = "cluster" + str(cluster)
+        name = "cluster {cluster}({percent}%)".format(cluster=cluster,percent=percent_df[cluster])
         tSNE_1 = list(sub_df.tSNE_1)
         tSNE_2 = list(sub_df.tSNE_2)
         res.append({"name":name,"tSNE_1":tSNE_1,"tSNE_2":tSNE_2})
