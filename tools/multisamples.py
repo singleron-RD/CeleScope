@@ -27,18 +27,24 @@ def parse_map(mapfile):
 def parse_map(mapfile, cells):
     fq_dict = defaultdict(list)
     cells_dict = defaultdict(list)
-    sample_arr = []
     with open(mapfile) as fh:
         for line in fh:
             line = line.strip()
             if not line: continue
             if line.startswith('#'): continue
             tmp = line.split()
+            library_id = tmp[0]
+            library_path = tmp[1]
+            sample_name = tmp[2]
+            if len(tmp)==4:
+                cell_number = int(tmp[3])
+            else:
+                cell_number = cells
             try:
-                pattern1_1 = tmp[1] + '/' + tmp[0] + '*' + '_1.fq.gz'
-                pattern1_2 = tmp[1] + '/' + tmp[0] + '*' + 'R1_*.fastq.gz'
-                pattern2_1 = tmp[1] + '/' + tmp[0] + '*' + '_2.fq.gz'
-                pattern2_2 = tmp[1] + '/' + tmp[0] + '*' + 'R2_*.fastq.gz'
+                pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
+                pattern1_2 = library_path + '/' + library_id + '*' + 'R1_*.fastq.gz'
+                pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
+                pattern2_2 = library_path + '/' + library_id + '*' + 'R2_*.fastq.gz'
                 fq1 = (glob.glob(pattern1_1) + glob.glob(pattern1_2))[0]
                 fq2 = (glob.glob(pattern2_1) + glob.glob(pattern2_2))[0]
             except IndexError as e:
@@ -46,15 +52,19 @@ def parse_map(mapfile, cells):
                 
             assert os.path.exists(fq1), '%s not exists!'%(fq1)
             assert os.path.exists(fq2), '%s not exists!'%(fq2)
-            fq_dict[tmp[2]] = [fq1, fq2]
-
-            if re.match(r'\d+$', tmp[-1]):
-                cells_dict[tmp[2]] = tmp[-1]
+            if sample_name in fq_dict:
+                fq_dict[sample_name][0].append(fq1)
+                fq_dict[sample_name][1].append(fq2)
             else:
-                cells_dict[tmp[2]] = cells
-            sample_arr.append(tmp[2])
+                fq_dict[sample_name] = [[fq1], [fq2]]
+            cells_dict[sample_name] = cell_number
+    
+    for sample_name in fq_dict:
+        fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
+        fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
 
-    return fq_dict, sample_arr, cells_dict
+    return fq_dict, cells_dict
+
 
 def generate_sjm(cmd, name, q='all.q', m=1, x=1):
     cmd = '''
@@ -93,7 +103,7 @@ def main():
     parser.add_argument('--cells', type=int, help='cell number, default=3000', default=3000)
     args = vars(parser.parse_args())
 
-    fq_dict, sample_arr, cells_dict = parse_map(args['mapfile'],args['cells'])
+    fq_dict, cells_dict = parse_map(args['mapfile'],args['cells'])
 
     # 链接数据
     raw_dir = args['outdir'] + '/data_give/rawdata'
@@ -110,7 +120,7 @@ def main():
     sjm_cmd = 'log_dir %s\n'%(logdir)
     sjm_order = ''
 
-    for n in sample_arr:
+    for n in fq_dict:
         # sample
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir = args['outdir'], sampledir = n, step='00.sample')
         cmd = '''source activate scope1.0; python {app} sample 
@@ -180,9 +190,9 @@ def main():
 
     # merged report 
     cmd = '''source activate scope1.0; python {app} --samples {samples} --workdir {workdir};'''.format(
-        app=toolsdir + '/merge_table.py', samples=','.join(sample_arr), workdir=args['outdir'])
+        app=toolsdir + '/merge_table.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
     sjm_cmd += generate_sjm(cmd, 'report')
-    sjm_order += ''.join(['order report after count_%s\n'%(n) for n in sample_arr])
+    sjm_order += ''.join(['order report after count_%s\n'%(n) for n in fq_dict])
     
 
     with open(logdir + '/sjm.job', 'w') as fh:

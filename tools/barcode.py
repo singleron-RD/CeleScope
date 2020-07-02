@@ -202,9 +202,28 @@ def barcode(args):
     barcode_dict = generate_seq_dict(whitelist, n=1)
     linker_dict = generate_seq_dict(linker, n=2)
 
+    fq1_list = args.fq1.split(",")
+    fq2_list = args.fq2.split(",")
+    if len(fq1_list)>1:
+        logger1.info("merge fastq with same sample name...")
+        fastq_dir = args.outdir+"/../merge_fastq"
+        if not os.path.exists(fastq_dir):
+            os.system('mkdir -p %s' % fastq_dir)
+        fastq1_file = "{fastq_dir}/{sample}_1.fq.gz".format(fastq_dir=fastq_dir,sample=args.sample)
+        fastq2_file = "{fastq_dir}/{sample}_2.fq.gz".format(fastq_dir=fastq_dir,sample=args.sample)
+        fq1_cmd = "cat {fq1_files} > {fastq1_file}".format(fq1_files = " ".join(fq1_list),fastq1_file=fastq1_file)
+        fq2_cmd = "cat {fq2_files} > {fastq2_file}".format(fq2_files = " ".join(fq2_list),fastq2_file=fastq2_file)
+        logger1.info(fq1_cmd)
+        os.system(fq1_cmd)
+        logger1.info(fq2_cmd)
+        os.system(fq2_cmd)
+        logger1.info("merge fastq done.") 
+    else:
+        fastq1_file = args.fq1
+        fastq2_file = args.fq2
 
-    fh1 = xopen(args.fq1)
-    fh2 = xopen(args.fq2)
+    fh1 = xopen(fastq1_file)
+    fh2 = xopen(fastq2_file)
     out_fq2 = args.outdir + '/' + args.sample + '_2.fq.gz'
     fh3 = xopen(out_fq2, 'w')
 
