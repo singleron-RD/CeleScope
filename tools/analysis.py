@@ -114,8 +114,8 @@ def analysis(args):
     # run
     logging.info("convert expression matrix.")
     new_matrix = gene_convert(gtf_file,matrix_file)  
-    new_matrix_file = "{outdir}/{sample}_matrix.tsv".format(outdir=outdir,sample=sample)
-    new_matrix.to_csv(new_matrix_file,sep="\t",index=False)
+    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(outdir=outdir,sample=sample)
+    new_matrix.to_csv(new_matrix_file,sep="\t",index=False,compression='gzip')
     logging.info("expression matrix written.")
 
     # run_R
