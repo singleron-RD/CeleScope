@@ -36,7 +36,7 @@ for (percent in percent_list){
 paste0(round(mito_df$cell_percent * 100,2),"%")
 mito_df$cell_percent = paste0(round(mito_df$cell_percent * 100,2),"%")
 mito_df$mito_percent = paste0("Fraction of cells have mito gene percent>",round(mito_df$mito_percent * 100,2),"%")
-write_tsv(mito_df,"mito.tsv",col_names = F)
+write_tsv(mito_df,mito.out,col_names = F)
 
 rds <- NormalizeData(object = rds, normalization.method = "LogNormalize",scale.factor = 10000)
 rds <- FindVariableGenes(object = rds, mean.function = ExpMean, dispersion.function = LogVMR, x.low.cutoff = 0.1,  y.cutoff = 1)
