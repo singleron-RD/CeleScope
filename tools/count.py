@@ -291,7 +291,7 @@ def count(args):
     logging.info('count done!')
     from report import reporter
     t = reporter(
-        name='count',
+        name='count',sample=args.sample, 
         stat_file=args.outdir + '/stat.txt',
         outdir=args.outdir + '/..')
     t.get_report()

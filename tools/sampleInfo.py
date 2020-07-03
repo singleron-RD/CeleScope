@@ -26,7 +26,7 @@ def sampleInfo(args):
     stat_file = outdir + "/stat.txt"
     stat.to_csv(stat_file,sep=":",header=None,index=False)
 
-    t = reporter(name='sample', stat_file=stat_file, outdir=outdir + '/..')
+    t = reporter(name='sample', sample = args.sample, stat_file=stat_file, outdir=outdir + '/..')
     t.get_report()
     logger1.info("Generating sample info done.")
 

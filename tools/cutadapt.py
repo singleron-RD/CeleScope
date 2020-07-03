@@ -69,7 +69,7 @@ def cutadapt(args):
     logging.info('generate report ...!')
     format_stat(args.outdir + '/cutadapt.log', args.sample)
     from report import reporter
-    t = reporter(name='cutadapt', stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
+    t = reporter(name='cutadapt', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
     logging.info('generate report done!')
 

@@ -75,7 +75,7 @@ def featureCounts(args):
     logging.info('generate report ...!')
     format_stat(args.outdir+'/'+args.sample+'.summary', args.sample)
     from report import reporter
-    t = reporter(name='featureCounts', stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
+    t = reporter(name='featureCounts', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
     logging.info('generate report done!')
 

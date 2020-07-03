@@ -134,7 +134,7 @@ def analysis(args):
 
     logging.info('generate report ...!')
     from report import reporter
-    t = reporter(name='analysis', outdir=args.outdir + '/..')
+    t = reporter(name='analysis', sample=args.sample, outdir=args.outdir + '/..')
     t.get_report()
     logging.info('generate report done!')
     
@@ -154,7 +154,7 @@ if __name__ == "__main__":
     report_prepare("./out",tsne_df,marker_df)
     from report import reporter
     t = reporter(
-        name='analysis',
+        name='analysis', 
         #stat_file=args.outdir + '/stat.txt',
         outdir= './out')
     t.get_report()

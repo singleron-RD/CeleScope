@@ -12,10 +12,11 @@ env = Environment(
 )
 
 class reporter:
-    def __init__(self, name, outdir, stat_file=None, plot=None):
+    def __init__(self, name, outdir, sample, stat_file=None, plot=None):
         self.name = name
         self.stat_file = stat_file
         self.outdir = outdir
+        self.sample = sample
         self.plot = plot
   
     def get_report(self):
@@ -38,7 +39,8 @@ class reporter:
         if self.plot:
             data[self.name + '_plot'] = self.plot
 
-        with io.open(self.outdir + '/report.html', 'w',encoding='utf8') as fh:
+        report_html = "{outdir}/{sample}_report.html".format(outdir=self.outdir,sample=self.sample)
+        with io.open(report_html, 'w',encoding='utf8') as fh:
             html = template.render(data)
             #fh.write(html.encode('utf-8'))
             fh.write(html)
