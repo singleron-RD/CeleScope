@@ -164,7 +164,7 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
     return validated_barcodes, threshold, cell_num, CB_describe
 
 
-def expression_matrix(df, validated_barcodes, matrix_file):
+def expression_matrix(df, validated_barcodes, matrix_prefix,matrix_10X_prefix):
     df.loc[:, 'mark'] = 'UB'
     df.loc[df['Barcode'].isin(validated_barcodes), 'mark'] = 'CB'
 
@@ -177,13 +177,13 @@ def expression_matrix(df, validated_barcodes, matrix_file):
         aggfunc=len).fillna(0).astype(int)
 
     #out_raw_matrix = outdir + '/' + sample + '_matrix.txt'
-    table.fillna(0).to_csv(matrix_file + '_matrix.xls', sep='\t')
+    table.fillna(0).to_csv(matrix_prefix + '_matrix.xls', sep='\t')
 
     table.columns.to_series().to_csv(
-        matrix_file + '_cellbarcode.tsv', index=False, sep='\t')
+        matrix_10X_prefix + '_cellbarcode.tsv', index=False, sep='\t')
     table.index.to_series().to_csv(
-        matrix_file + '_genes.tsv', index=False, sep='\t')
-    mmwrite(matrix_file, csr_matrix(table.fillna(0)))
+        matrix_10X_prefix + '_genes.tsv', index=False, sep='\t')
+    mmwrite(matrix_10X_prefix, csr_matrix(table.fillna(0)))
     return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) 
 
 def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
@@ -268,9 +268,13 @@ def count(args):
     (validated_barcodes, threshold, cell_num, CB_describe) = call_cells(df, args.cells, pdf, marked_counts_file)
 
     # 输出matrix
-    matrix_file = args.outdir + '/' + args.sample 
+    matrix_prefix = args.outdir + '/' + args.sample 
+    matrix_10X_dir = "{outdir}/matrix_10X/".format(outdir=args.outdir)
+    matrix_10X_prefix = "{matrix_10X_dir}/{sample}".format(matrix_10X_dir=matrix_10X_dir,sample=args.sample)
+    if not os.path.exists(matrix_10X_dir):
+        os.system('mkdir -p %s' % (matrix_10X_dir))
     (CB_total_Genes, CB_reads_count, 
-        reads_mapped_to_transcriptome)=expression_matrix(df, validated_barcodes, matrix_file)
+        reads_mapped_to_transcriptome)=expression_matrix(df, validated_barcodes, matrix_prefix, matrix_10X_prefix)
 
     # downsampling
     validated_barcodes = set(validated_barcodes)
