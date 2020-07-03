@@ -16,7 +16,7 @@ sample = argv$sample
 matrix = read.table(matrix_file,sep="\t",header=TRUE,row.names=1)
 tsne.out = paste(outdir,"tsne_coord.tsv",sep="/")
 marker.out = paste(outdir,"markers.tsv",sep="/")
-mito.out = paste(outdir,"mito.tsv",sep="/")
+mito.out = paste(outdir,"stat.txt",sep="/")
 
 
 rds = CreateSeuratObject(raw.data = matrix,project=sample)
@@ -35,8 +35,8 @@ for (percent in percent_list){
 }
 paste0(round(mito_df$cell_percent * 100,2),"%")
 mito_df$cell_percent = paste0(round(mito_df$cell_percent * 100,2),"%")
-mito_df$mito_percent = paste0(round(mito_df$mito_percent * 100,2),"%")
-write_tsv(mito_df,mito.out)
+mito_df$mito_percent = paste0("Fraction of cells have mito gene percent>",round(mito_df$mito_percent * 100,2),"%")
+write_tsv(mito_df,"mito.tsv",col_names = F)
 
 rds <- NormalizeData(object = rds, normalization.method = "LogNormalize",scale.factor = 10000)
 rds <- FindVariableGenes(object = rds, mean.function = ExpMean, dispersion.function = LogVMR, x.low.cutoff = 0.1,  y.cutoff = 1)
