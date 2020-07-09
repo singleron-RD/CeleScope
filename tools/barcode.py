@@ -301,7 +301,7 @@ def barcode(args):
             umi=umi, seq=seq2, qual=qual2))
         clean_num += 1
 
-        
+
         barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
         umi_qual_Counter.update(C_U_quals_ascii[C_len:])
         C_U_base_Counter.update(raw_cb + umi)
