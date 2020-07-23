@@ -259,8 +259,8 @@ def barcode(args):
             if no_polyT(polyT):
                 no_polyT_num += 1
                 if args.nopolyT:
-                    fh1_without_polyT.write('@%s%s+\n%s'%(header1, seq1, qual1))
-                    fh2_without_polyT.write('@%s%s+\n%s'%(header2, seq2, qual2))
+                    fh1_without_polyT.write('@%s\n%s\n+\n%s\n'%(header1, seq1, qual1))
+                    fh2_without_polyT.write('@%s\n%s\n+\n%s\n'%(header2, seq2, qual2))
                 continue
 
         # lowQual filter
@@ -279,8 +279,8 @@ def barcode(args):
                 no_linker_num += 1
                 
                 if args.noLinker:
-                    fh1_without_linker.write('@%s%s+\n%s'%(header1, seq1, qual1))
-                    fh2_without_linker.write('@%s%s+\n%s'%(header2, seq2, qual2))
+                    fh1_without_linker.write('@%s\n%s\n+\n%s\n'%(header1, seq1, qual1))
+                    fh2_without_linker.write('@%s\n%s\n+\n%s\n'%(header2, seq2, qual2))
                 continue
 
         # barcode filter
