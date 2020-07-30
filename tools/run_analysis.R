@@ -57,7 +57,8 @@ df.tsne = as.data.frame(df.tsne)
 meta = rds@meta.data
 dic = rds@meta.data$res.0.6
 names(dic) = rownames(rds@meta.data)
-df.tsne$cluster = as.character(dic[rownames(df.tsne)])
+df.tsne$cluster = as.numeric(dic[rownames(df.tsne)])
+df.tsne$cluster = df.tsne$cluster + 1
 df.gene = meta[,"nGene",drop=F]
 colnames(df.gene) = "Gene_Counts"
 df.all = cbind(df.tsne,df.gene)

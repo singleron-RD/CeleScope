@@ -41,7 +41,6 @@ def cluster_tsne_list(tsne_df):
     tSNE_1	tSNE_2	cluster Gene_Counts
     return data list
     """
-    tsne_df.cluster = tsne_df.cluster + 1
     sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:,0]
     percent_df = sum_df.transform(lambda x:round(x/sum(x)*100,2))
     res = []
