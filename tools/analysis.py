@@ -4,17 +4,12 @@
 import os
 import sys
 import json
-import functools
 import logging
-from collections import defaultdict
-from itertools import groupby
-import glob,re
-
+import re
 import numpy as np
 import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
-import pysam
 
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level = logging.INFO, format = FORMAT)
