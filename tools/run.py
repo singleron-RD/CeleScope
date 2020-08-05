@@ -30,13 +30,11 @@ def run(args):
 
     args.fq = baseDir + '/02.cutadapt/' + sample + '_clean_2.fq.gz'
     args.outdir = baseDir + '/03.STAR'
-    args.runThreadN = 6
     from STAR import STAR
     STAR(args)
 
     args.input = baseDir + '/03.STAR/' + sample + '_Aligned.sortedByCoord.out.bam'
     args.outdir = baseDir + '/04.featureCounts'
-    args.runThreadN = 6
     from featureCounts import featureCounts
     featureCounts(args)
 

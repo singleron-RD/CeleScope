@@ -360,6 +360,5 @@ def get_opts_barcode(parser,sub_program):
     parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
     parser.add_argument('--nopolyT', action='store_true', help='output nopolyT fq')
     parser.add_argument('--noLinker', action='store_true', help='output noLinker fq')
-    parser.add_argument('--thread', default=2)
     return parser
 
