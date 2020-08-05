@@ -8,7 +8,7 @@ from utils import getlogger
 
 __VERSION__ = "CeleScope V1.0.0"
 logger1, logger2 = getlogger()
-def sampleInfo(args):
+def sample_info(args):
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % args.outdir)
     sample = args.sample
@@ -30,7 +30,7 @@ def sampleInfo(args):
     t.get_report()
     logger1.info("Generating sample info done.")
 
-def get_opts0(parser,sub_program):
+def get_opts_sample(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir',required=True)
         parser.add_argument('--sample', help='sample name', required=True)

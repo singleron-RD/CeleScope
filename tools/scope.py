@@ -2,56 +2,57 @@
 #coding=utf8
 
 import argparse
+import sys
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='fastq to matrix')
+    parser = argparse.ArgumentParser(description='CeleScope-IR')
     subparsers = parser.add_subparsers()
 
-    from sampleInfo import sampleInfo,get_opts0
-    parser0 = subparsers.add_parser('sample', description='sample infomation')
-    get_opts0(parser0,True)
-    parser0.set_defaults(func=sampleInfo)
+    from sample_info import sample_info, get_opts_sample
+    parser_sample = subparsers.add_parser('sample', description='sample infomation')
+    get_opts_sample(parser_sample,True)
+    parser_sample.set_defaults(func=sample_info)
 
-    from barcode import barcode, get_opts1
-    parser1 = subparsers.add_parser('barcode', description='extract barcode and umi')
-    get_opts1(parser1,True)
-    parser1.set_defaults(func=barcode)
+    from barcode import barcode, get_opts_barcode
+    parser_barcode = subparsers.add_parser('barcode', description='extract barcode and umi')
+    get_opts_barcode(parser_barcode, True)
+    parser_barcode.set_defaults(func=barcode)
 
-    from cutadapt import cutadapt, get_opts2
-    parser2 = subparsers.add_parser('cutadapt', description='cutadapt')
-    get_opts2(parser2,True)
-    parser2.set_defaults(func=cutadapt)
+    from cutadapt import cutadapt, get_opts_cutadapt
+    parser_cutadapt = subparsers.add_parser('cutadapt', description='cutadapt')
+    get_opts_cutadapt(parser_cutadapt, True)
+    parser_cutadapt.set_defaults(func=cutadapt)
 
-    from STAR import STAR, get_opts3
-    parser3 = subparsers.add_parser('STAR')
-    get_opts3(parser3,True)
-    parser3.set_defaults(func=STAR)
+    from STAR import STAR, get_opts_STAR
+    parser_STAR = subparsers.add_parser('STAR')
+    get_opts_STAR(parser_STAR, True)
+    parser_STAR.set_defaults(func=STAR)
 
-    from featureCounts import featureCounts, get_opts4
-    parser4 = subparsers.add_parser('featureCounts')
-    get_opts4(parser4,True)
-    parser4.set_defaults(func=featureCounts)
+    from featureCounts import featureCounts, get_opts_featureCounts
+    parser_featureCounts = subparsers.add_parser('featureCounts')
+    get_opts_featureCounts(parser_featureCounts, True)
+    parser_featureCounts.set_defaults(func=featureCounts)
 
-    from count import count, get_opts5
-    parser5 = subparsers.add_parser('count')
-    get_opts5(parser5,True)
-    parser5.set_defaults(func=count)
+    from count import count, get_opts_count
+    parser_count = subparsers.add_parser('count')
+    get_opts_count(parser_count, True)
+    parser_count.set_defaults(func=count)
 
-    from analysis import analysis, get_opts6
-    parser6 = subparsers.add_parser('analysis')
-    get_opts6(parser6,True)
-    parser6.set_defaults(func=analysis)
+    from analysis import analysis, get_opts_analysis
+    parser_analysis = subparsers.add_parser('analysis')
+    get_opts_analysis(parser_analysis, True)
+    parser_analysis.set_defaults(func=analysis)
 
     from run import run
-    parser_run = subparsers.add_parser('run',conflict_handler='resolve')
-    get_opts0(parser_run,False)
-    get_opts1(parser_run,False)
-    get_opts2(parser_run,False)
-    get_opts3(parser_run,False)
-    get_opts4(parser_run,False)
-    get_opts5(parser_run,False)
-    get_opts6(parser_run,False)
+    parser_run = subparsers.add_parser('run', conflict_handler='resolve')
+    get_opts_sample(parser_run, False)
+    get_opts_barcode(parser_run, False)
+    get_opts_cutadapt(parser_run, False)
+    get_opts_STAR(parser_run, False)
+    get_opts_featureCounts(parser_run, False)
+    get_opts_count(parser_run, False)
+    get_opts_analysis(parser_run, False)
     parser_run.set_defaults(func=run)
 
     args = parser.parse_args()

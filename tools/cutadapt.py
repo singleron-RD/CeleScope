@@ -10,7 +10,7 @@ import pandas as pd
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level = logging.INFO, format = FORMAT)
 
-def get_opts2(parser,sub_program):
+def get_opts_cutadapt(parser,sub_program):
     if sub_program:
         parser.add_argument('--fq', help='fq file', required=True)
         parser.add_argument('--outdir', help='output dir',required=True)

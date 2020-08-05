@@ -346,8 +346,9 @@ def barcode(args):
 
 
 
-def get_opts1(parser,sub_program):
-    parser.add_argument('--outdir', help='output dir',required=True)
+def get_opts_barcode(parser,sub_program):
+    if sub_program:
+        parser.add_argument('--outdir', help='output dir',required=True)
     parser.add_argument('--sample', help='sample name', required=True)
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)

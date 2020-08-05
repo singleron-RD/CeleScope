@@ -13,11 +13,11 @@ def get_opts6(parser,sub_program):
 def run(args):
     #tmp = vars(args)
     sample = args.sample
-    baseDir = args.outdir    
+    baseDir = args.sample    
 
     args.outdir = baseDir + '/00.sample'
-    from sampleInfo import sampleInfo
-    sampleInfo(args)
+    from sample_info import sample_info
+    sample_info(args)
  
     args.outdir = baseDir + '/01.barcode'    
     from barcode import barcode

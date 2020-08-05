@@ -90,9 +90,9 @@ def gene_convert(gtf_file,matrix_file):
             return np.nan
     gene_name_col = matrix.geneID.apply(convert)
     matrix.geneID = gene_name_col
-    matrix = matrix.rename({"geneID":"gene_name"}, axis='columns') 
-    matrix = matrix.drop_duplicates(subset=["gene_name"],keep="first")
+    matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
     matrix = matrix.dropna()
+    matrix = matrix.rename({"geneID": ""}, axis='columns')
     return matrix    
 
 def analysis(args):
@@ -134,7 +134,7 @@ def analysis(args):
     
 
 
-def get_opts6(parser, sub_program):
+def get_opts_analysis(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
@@ -143,8 +143,8 @@ def get_opts6(parser, sub_program):
 
 
 if __name__ == "__main__":
-    tsne_df = pd.read_csv("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/scope_tools_1.0/out/06.analysis/tsne_coord.tsv",sep="\t")
-    marker_df = pd.read_csv("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/scope_tools_1.0/out/06.analysis/markers.tsv",sep="\t")
+    tsne_df = pd.read_csv("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/scope_tools_1.0/out/06.analysis/tsne_coord.tsv", sep="\t")
+    marker_df = pd.read_csv("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/scope_tools_1.0/out/06.analysis/markers.tsv", sep="\t")
     report_prepare("./out",tsne_df,marker_df)
     from report import reporter
     t = reporter(

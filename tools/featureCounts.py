@@ -9,12 +9,12 @@ from utils import format_number
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level = logging.INFO, format = FORMAT)
 
-def get_opts4(parser,sub_program): 
+def get_opts_featureCounts(parser,sub_program): 
 
-    parser.add_argument('--thread', default=2)
     parser.add_argument('--annot', required=True)
     parser.add_argument('--type', help='Specify feature type in GTF annotation', default='exon')
     if sub_program:
+        parser.add_argument('--thread', default=4)
         parser.add_argument('--input', required=True)
         #parser.add_argument('--format', default='BAM')
         parser.add_argument('--outdir', help='output dir',required=True)
