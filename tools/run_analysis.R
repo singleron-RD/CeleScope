@@ -49,8 +49,8 @@ rds <- FindClusters(object = rds, reduction.type = "pca", dims.use = 1:20, resol
 rds <- RunTSNE(object = rds, dims.use = 1:20, do.fast = TRUE,check_duplicates = FALSE)
 tryCatch({
   rds.markers <- FindAllMarkers(object = rds, genes.use = use.gene)
+  rds.markers$cluster = as.numeric(rds.markers$cluster) + 1
   rds.markers = dplyr::group_by(rds.markers,cluster) %>% dplyr::arrange(desc(avg_logFC))
-  rds.markers$cluster = rds.markers$cluster + 1
 }, error = function(e){
   print (paste0("no marker found: ", e))
   rds.markers <<- data.frame(cluster=double(),
