@@ -47,10 +47,22 @@ rds <- FindClusters(object = rds, reduction.type = "pca", dims.use = 1:20, resol
 
 # Run Non-linear dimensional reduction (tSNE)
 rds <- RunTSNE(object = rds, dims.use = 1:20, do.fast = TRUE,check_duplicates = FALSE)
-rds.markers <- FindAllMarkers(object = rds, genes.use = use.gene)
-rds.markers = dplyr::group_by(rds.markers,cluster) %>% dplyr::arrange(desc(avg_logFC))
+tryCatch({
+  rds.markers <- FindAllMarkers(object = rds, genes.use = use.gene)
+  rds.markers = dplyr::group_by(rds.markers,cluster) %>% dplyr::arrange(desc(avg_logFC))
+  rds.markers$cluster = rds.markers$cluster + 1
+}, error = function(e){
+  print (paste0("no marker found: ", e))
+  rds.markers <<- data.frame(cluster=double(),
+                  gene=double(),
+                  avg_logFC=double(),
+                  pct.1=double(),
+                  pct.2=double(),
+                  p_val_adj=double())
 
-write_tsv(rds.markers,marker.out)
+})
+print (rds.markers)
+write_tsv(rds.markers,marker.out,col_names = T)
 
 df.tsne = rds@dr$tsne@cell.embeddings
 df.tsne = as.data.frame(df.tsne)
