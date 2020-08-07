@@ -8,7 +8,7 @@ from utils import format_number
 FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 logging.basicConfig(level = logging.INFO, format = FORMAT)
 
-def get_opts_STAR(parser,sub_program):
+def get_opts_STAR(parser, sub_program):
     if sub_program:
         parser.add_argument('--fq', required=True)
         parser.add_argument('--readFilesCommand', default='zcat')

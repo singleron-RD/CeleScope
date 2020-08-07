@@ -24,7 +24,6 @@ def get_opts_count(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--bam', required=True)
-    parser.add_argument('--thread', default=2)
     parser.add_argument('--cells', type=int, default=3000)
 
 
