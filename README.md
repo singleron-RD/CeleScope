@@ -10,7 +10,7 @@
 ## Installation
 
 ```
-git clone https://github.com/SingleronBio/CeleScope.git
+git clone https://github.com/zhouyiqi91/CeleScope.git
 cd CeleScope
 conda env create -f scope1.0.yml
 ```
