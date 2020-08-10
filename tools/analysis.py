@@ -10,10 +10,10 @@ import numpy as np
 import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
+from utils import getlogger
 
-FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level = logging.INFO, format = FORMAT)
-toolsdir = os.path.realpath(sys.path[0] + '/../tools/')
+logger1 = getlogger()
+
 
 def report_prepare(outdir,tsne_df,marker_df):
     json_file = outdir + '/../.data.json'
@@ -31,6 +31,7 @@ def report_prepare(outdir,tsne_df,marker_df):
     with open(json_file, 'w') as fh:
         json.dump(data, fh)
 
+
 def cluster_tsne_list(tsne_df):
     """
     tSNE_1	tSNE_2	cluster Gene_Counts
@@ -47,6 +48,7 @@ def cluster_tsne_list(tsne_df):
         res.append({"name":name,"tSNE_1":tSNE_1,"tSNE_2":tSNE_2})
     return res
 
+
 def gene_tsne_list(tsne_df):
     """
     return data dic
@@ -57,6 +59,7 @@ def gene_tsne_list(tsne_df):
     res = {"tSNE_1":tSNE_1,"tSNE_2":tSNE_2,"Gene_Counts":Gene_Counts}
     return res
 
+
 def marker_table(marker_df):
     """
     return html code
@@ -65,7 +68,8 @@ def marker_table(marker_df):
     marker_gene_table = marker_df.to_html(escape=False,index=False,table_id="marker_gene_table",justify="center")
     return marker_gene_table
 
-def gene_convert(gtf_file,matrix_file):
+
+def gene_convert(gtf_file, matrix_file):
 
     gene_id_pattern = re.compile(r'gene_id "(\S+)";')
     gene_name_pattern = re.compile(r'gene_name "(\S+)"')
@@ -94,19 +98,24 @@ def gene_convert(gtf_file,matrix_file):
     matrix = matrix.rename({"geneID": ""}, axis='columns')
     return matrix    
 
+
 def analysis(args):
     logging.info('analysis ...!')
     # check dir
     outdir = args.outdir
     sample = args.sample
-    gtf_file = args.annot
     matrix_file = args.matrix_file
+    try:
+        gtf = glob.glob(args.genomeDir + "*.gtf")[0]
+    except IndexError:
+        logging.error('gtf file not found')
+        sys.exit()
     if not os.path.exists(outdir):
         os.system('mkdir -p %s'%(outdir))
     
     # run
     logging.info("convert expression matrix.")
-    new_matrix = gene_convert(gtf_file,matrix_file)  
+    new_matrix = gene_convert(gtf, matrix_file)  
     new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(outdir=outdir,sample=sample)
     new_matrix.to_csv(new_matrix_file,sep="\t",index=False,compression='gzip')
     logging.info("expression matrix written.")
@@ -132,13 +141,12 @@ def analysis(args):
     logging.info('generate report done!')
     
 
-
 def get_opts_analysis(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--matrix_file', help='matrix file',required=True)
-        parser.add_argument('--annot', help='gtf',required=True)
+        parser.add_argument('--matrix_file', help='matrix file', required=True)
+        parser.add_argument('--genomeDir', help='genome directory', required=True)
 
 
 if __name__ == "__main__":

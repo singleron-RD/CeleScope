@@ -4,16 +4,18 @@
 import os, re
 import logging
 import subprocess
+import glob
+import sys
 from utils import format_number
+from utils import getlogger
 
-FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level = logging.INFO, format = FORMAT)
+logger1 = getlogger()
 
 def get_opts_featureCounts(parser,sub_program): 
 
-    parser.add_argument('--annot', required=True)
     parser.add_argument('--type', help='Specify feature type in GTF annotation', default='exon')
     if sub_program:
+        parser.add_argument('--genomeDir', required=True)
         parser.add_argument('--thread', default=4)
         parser.add_argument('--input', required=True)
         #parser.add_argument('--format', default='BAM')
@@ -47,6 +49,7 @@ def format_stat(log, samplename):
             stat_fh.write('%s: %s\n'%(t, s))
     fh.close()
 
+
 def featureCounts(args):
     """
     """
@@ -57,7 +60,12 @@ def featureCounts(args):
 
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
-    cmd = ['featureCounts', '-a', args.annot, '-o', outPrefix, '-R', 'BAM', '-T', str(args.thread),'-t',args.type , args.input]
+    try:
+        gtf = glob.glob(args.genomeDir + "*.gtf")[0]
+    except IndexError:
+        logging.error('gtf file not found')
+        sys.exit()
+    cmd = ['featureCounts', '-a', gtf, '-o', outPrefix, '-R', 'BAM', '-T', str(args.thread),'-t',args.type , args.input]
     logging.info('%s'%(' '.join(cmd)))
     subprocess.check_call(cmd)
     logging.info('featureCounts done!')

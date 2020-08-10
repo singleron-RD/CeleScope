@@ -3,10 +3,12 @@
 
 import os, re, sys, json, logging
 import subprocess 
+import glob
 from utils import format_number
+from utils import getlogger
 
-FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level = logging.INFO, format = FORMAT)
+logger1 = getlogger()
+
 
 def get_opts_STAR(parser, sub_program):
     if sub_program:
@@ -15,8 +17,8 @@ def get_opts_STAR(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--thread', default=4)
-    parser.add_argument('--refFlat', help='refFlat, for stat mapping region', required=True)
-    parser.add_argument('--genomeDir')
+    parser.add_argument('--genomeDir', help='genome directory', required=True)
+
 
 def format_stat(map_log, region_log, samplename):
     fh1 = open(map_log, 'r')
@@ -72,16 +74,21 @@ def STAR(args):
     outBam =  args.outdir + '/' + args.sample + '_'
     # cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir, '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax', '1', '--outReadsUnmapped', 'Fastx', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']    
     cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir, '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax', '1', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']    
-    logging.info('%s'%(' '.join(cmd)))
+    logging.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd )
     logging.info('STAR done!')
 
     logging.info('stat mapping region ...!')
+    try:
+        refFlat = glob.glob(args.genomeDir + "*.refFlat")[0]
+    except IndexError:
+        logging.error('refFlat file not found')
+        sys.exit()
     outBam = outPrefix + 'Aligned.sortedByCoord.out.bam'
     region_txt = args.outdir + '/' + args.sample + '_region.log'
-    cmd = ['picard', '-Xmx4G', '-XX:ParallelGCThreads=4', 'CollectRnaSeqMetrics', 'I=%s'%(outBam), 'O=%s'%(region_txt), 'REF_FLAT=%s'%(args.refFlat), 'STRAND=NONE', 'VALIDATION_STRINGENCY=SILENT']
+    cmd = ['picard', '-Xmx4G', '-XX:ParallelGCThreads=4', 'CollectRnaSeqMetrics', 'I=%s'%(outBam), 'O=%s' % (region_txt), 'REF_FLAT=%s' % (refFlat), 'STRAND=NONE', 'VALIDATION_STRINGENCY=SILENT']
     logging.info('%s'%(' '.join(cmd)))
-    res = subprocess.run(cmd,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+    res = subprocess.run(cmd, stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
     logging.info(res.stdout)
     logging.info('stat mapping region done!')
 

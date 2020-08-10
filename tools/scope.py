@@ -50,7 +50,7 @@ if __name__ == '__main__':
     parser_analysis.set_defaults(func=analysis)
 
     from rna import rna
-    parser_run = subparsers.add_parser('RNA', conflict_handler='resolve')
+    parser_run = subparsers.add_parser('rna', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
     get_opts_barcode(parser_run, False)
     get_opts_cutadapt(parser_run, False)

@@ -2,6 +2,7 @@
 # coding=utf8
 import os, re, io, gzip
 import subprocess
+import sys
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from utils import getlogger
@@ -9,7 +10,7 @@ from report import reporter
 from xopen import xopen
 from utils import format_number
 
-logger1, logger2 = getlogger()	
+logger1 = getlogger()
 barcode_corrected_num = 0
 
 # 定义输出格式
@@ -52,7 +53,7 @@ def generate_mis_seq(seq, n=1, bases = 'ACGTN'):
                 raw_tmp.append(raw_base)
                 seq_tmp[g[i]] = new_base
 
-            if mis_num!=0:
+            if mis_num != 0:
                 res[''.join(seq_tmp)] = (seq, mis_num, ','.join([str(i) for i in g]), ','.join(raw_tmp), ','.join(b))
     return(res)
 
@@ -67,20 +68,16 @@ def generate_seq_dict(seqlist, n=1):
             for k, v in generate_mis_seq(seq, n).items():
                 # duplicate key
                 if k in seq_dict:
-                    logger2.warning('barcode %s, %s\n%s, %s' % (v, k, seq_dict[k], k))
+                    logger1.warning('barcode %s, %s\n%s, %s' % (v, k, seq_dict[k], k))
                 else:
                     seq_dict[k] = v
     return seq_dict
 
 def parse_bc_type(bctype):
     # assign pattern based on bc type: scope, dropseq
-    if bctype == 'scope':
+    if bctype == 'scopeV2':
         # place holder, may change, depending on the beads development progress
         bc_pattern = 'C8L16C8L16C8L1U8T18'
-    elif bctype == 'dropseq':
-        bc_pattern = 'C12U8T30'
-    elif bctype == 'test':
-        bc_pattern = 'C6L15C6L15C6U6T25'
     else:
         bc_pattern = None
     return bc_pattern
@@ -95,7 +92,7 @@ def parse_pattern(pattern):
     p = re.compile(r'([CLUNT])(\d+)')
     tmp = p.findall(pattern)
     if not tmp:
-        logger2.error('Can not recognise pattern! %s' % pattern)
+        logger1.error('Can not recognise pattern! %s' % pattern)
     start = 0
     for item in tmp:
         end = start + int(item[1])
@@ -104,11 +101,17 @@ def parse_pattern(pattern):
     return pattern_dict
 
 
-def get_scope_bc():
+def get_scope_bc(bctype):
     code_path = os.path.dirname(os.path.abspath(__file__))
-    linker_f = os.path.join(os.path.dirname(code_path), 'data/1.0/linker_withC')
-    whitelist_f = os.path.join(os.path.dirname(code_path), 'data/1.0/bclist')
+    root_path = os.path.dirname(code_path)
+    if bctype == "scopeV2":
+        linker_f = os.path.join(root_path, 'data/scopeV2/linker_withC')
+        whitelist_f = os.path.join(root_path, 'data/scopeV2/bclist')
+    else:
+        linker_f = None
+        whitelist_f = None
     return linker_f, whitelist_f
+
 
 def read_fastq(f):
     """
@@ -133,9 +136,11 @@ def read_fastq(f):
     if i % 4 != 3:
         raise FormatError("FASTQ file ended prematurely")
 
+
 def seq_ranges(seq, arr):
     # get subseq with intervals in arr and concatenate
     return ''.join([seq[x[0]:x[1]]for x in arr])
+
 
 def low_qual(quals, minQ='/', num=2):
     # print(ord('/')-33)           14
@@ -148,6 +153,7 @@ def no_polyT(seq, strictT=0, minT=10):
         return True
     else:
         return False
+
 
 def no_barcode(seq_arr, mis_dict, err_tolerance=1):
     global barcode_corrected_num
@@ -162,6 +168,7 @@ def no_barcode(seq_arr, mis_dict, err_tolerance=1):
         else:
             return "correct"
 
+
 def no_linker(seq, linker_dict):
     return False if seq in linker_dict else True
 
@@ -175,8 +182,14 @@ def barcode(args):
 
     if (args.bcType):
         bc_pattern = parse_bc_type(args.bcType)
+        (linker, whitelist) = get_scope_bc(args.bcType)
     else:
         bc_pattern = args.pattern
+        linker = args.linker
+        whitelist = args.whitelist
+    if (not linker) or (not whitelist) or (not bc_pattern):
+        sys.exit("invalid bcType or [linker,whitelist]")
+
     # parse pattern to dict, C8L10C8L10C8U8
     # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U': [[44, 52]], 'L': [[8, 18], [26, 36]]})
     pattern_dict = parse_pattern(bc_pattern)
@@ -191,16 +204,7 @@ def barcode(args):
     C_U_base_Counter = Counter()
     args.lowQual = ord2chr(args.lowQual)
 
-    # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
-    if (args.bcType=="scope"):
-        (linker, whitelist) = get_scope_bc()
-    elif (args.linker and args.whitelist):
-        linker = args.linker
-        whitelist = args.whitelist
-    else:
-        sys.exit("invalid bcType or [linker,whitelist]")
-
-    
+    # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G   
     barcode_dict = generate_seq_dict(whitelist, n=1)
     linker_dict = generate_seq_dict(linker, n=2)
 
@@ -290,7 +294,7 @@ def barcode(args):
         if res is True:
             no_barcode_num += 1
             continue
-        elif res=="correct":
+        elif res == "correct":
             cb = raw_cb
         else:
             cb = res
@@ -347,11 +351,11 @@ def barcode(args):
 
 def get_opts_barcode(parser,sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir',required=True)
+        parser.add_argument('--outdir', help='output dir', required=True)
     parser.add_argument('--sample', help='sample name', required=True)
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)
-    parser.add_argument('--bcType', help='choice of barcode types. Currently support scope and Drop-seq barcode designs')
+    parser.add_argument('--bcType', help='choice of barcode types. Currently support scopeV2.')
     parser.add_argument('--pattern', help='')
     parser.add_argument('--whitelist', help='')
     parser.add_argument('--linker', help='')

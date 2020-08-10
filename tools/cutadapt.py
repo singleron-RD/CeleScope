@@ -6,9 +6,10 @@ import subprocess
 import logging
 from itertools import islice
 import pandas as pd
+from utils import getlogger
 
-FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level = logging.INFO, format = FORMAT)
+logger1 = getlogger()
+
 
 def get_opts_cutadapt(parser,sub_program):
     if sub_program:
@@ -20,6 +21,7 @@ def get_opts_cutadapt(parser,sub_program):
     parser.add_argument('--nextseq-trim', dest='nextseq_trim', help='nextseq_trim, default=20', default=20)
     parser.add_argument('--overlap', help='minimum overlap length, default=5', default=5)
     parser.add_argument('--thread', default=2)
+
 
 def format_stat(cutadapt_log, samplename):
     fh = open(cutadapt_log, 'r') 

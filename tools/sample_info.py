@@ -7,7 +7,7 @@ import pandas as pd
 from utils import getlogger
 from scope import __VERSION__
 
-logger1, logger2 = getlogger()
+logger1 = getlogger()
 
 def sample_info(args):
     if not os.path.exists(args.outdir):
@@ -21,15 +21,15 @@ def sample_info(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % outdir)
 
-
-    stat = pd.DataFrame({"item":["Sample ID","Description","Transcriptome","Software Version"],"count":[sample,description,transcriptome,version]},
-    columns=["item","count"])
+    stat = pd.DataFrame({"item": ["Sample ID", "Description", "Transcriptome", "Software Version"],
+        "count": [sample, description, transcriptome, version]}, columns=["item", "count"])
     stat_file = outdir + "/stat.txt"
-    stat.to_csv(stat_file,sep=":",header=None,index=False)
+    stat.to_csv(stat_file, sep=":", header=None, index=False)
 
-    t = reporter(name='sample', sample = args.sample, stat_file=stat_file, outdir=outdir + '/..')
+    t = reporter(name='sample', sample=args.sample, stat_file=stat_file, outdir=outdir + '/..')
     t.get_report()
     logger1.info("Generating sample info done.")
+
 
 def get_opts_sample(parser, sub_program):
     if sub_program:

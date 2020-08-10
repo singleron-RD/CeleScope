@@ -12,15 +12,16 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+
 def getlogger():
-    logging.basicConfig(level = logging.INFO,format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    logger1 = logging.getLogger(__name__)
-    logger2 = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
+    return logger
 
-    return logger1,logger2  
 
-def format_number(number:int) -> str:
-    return format(number,",")
+def format_number(number: int) -> str:
+    return format(number, ",")
+
 
 def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):
     # col can be readcount or UMI
@@ -43,6 +44,7 @@ def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0
     plt.savefig(plot)
 
     return (validated_barcodes, threshold, len(validated_barcodes))
+
 
 def barcode_filter_with_kde(df, plot='kde.pdf', col='UMI'):
     # col can be readcount or UMI
@@ -91,6 +93,7 @@ def get_slope(x, y, window=200, step=10):
         start += step
     return res
 
+
 def barcode_filter_with_derivative(df, plot='derivative.pdf', col='UMI', window=500, step=5):
     # col can be readcount or UMI
     # filter low values
@@ -121,6 +124,7 @@ def barcode_filter_with_derivative(df, plot='derivative.pdf', col='UMI', window=
     plt.savefig(plot)
 
     return (validated_barcodes, threshold, len(validated_barcodes))
+
 
 def downsample(bam, barcodes, percent):
     """
@@ -182,10 +186,10 @@ def downsample(bam, barcodes, percent):
 
     return "%.2f\t%.2f\t%.2f\n"%(percent, median_geneNum, saturation), saturation
 
+
 if __name__ == '__main__':
 
     df = pd.read_table('SRR6954578_counts.txt', header=0)
-
     barcode_filter_with_magnitude(df)
     barcode_filter_with_kde(df)
     barcode_filter_with_derivative(df)

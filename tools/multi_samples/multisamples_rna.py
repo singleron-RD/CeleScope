@@ -8,7 +8,8 @@ import argparse
 import re
 from collections import defaultdict
 
-toolsdir = os.path.realpath(sys.path[0] + '/../tools')
+toolsdir = os.path.realpath(sys.path[0] + '/../../tools')
+multidir = os.path.realpath(sys.path[0] + '/../multi_samples')
 
 '''
 def parse_map(mapfile):
@@ -37,7 +38,7 @@ def parse_map(mapfile, cells):
             library_id = tmp[0]
             library_path = tmp[1]
             sample_name = tmp[2]
-            if len(tmp)==4:
+            if len(tmp) == 4:
                 cell_number = int(tmp[3])
             else:
                 cell_number = cells
@@ -86,20 +87,18 @@ def main():
     parser.add_argument('--mapfile', help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"', required=True)
     parser.add_argument('--whitelist', help='cellbarcode list')
     parser.add_argument('--linker', help='linker')
-    parser.add_argument('--pattern', help='read1 pattern, default=C8L16C8L16C8U8T18', default='C8L16C8L16C8U8T18')
+    parser.add_argument('--pattern', help='read1 pattern', default='C8L16C8L16C8U8T18')
     parser.add_argument('--bcType', help='choice of barcode types. Currently support scope and Drop-seq barcode designs')
-    parser.add_argument('--outdir', help='output dir', required=True)
+    parser.add_argument('--outdir', help='output dir', default="./")
     parser.add_argument('--adapt', action='append', help='adapter sequence', default=['polyT=A{15}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
-    parser.add_argument('--minimum-length', dest='minimum_length', help='minimum_length, default=20', default=20)
-    parser.add_argument('--nextseq-trim', dest='nextseq_trim', help='nextseq_trim, default=20', default=20)
+    parser.add_argument('--minimum-length', dest='minimum_length', help='minimum_length', default=20)
+    parser.add_argument('--nextseq-trim', dest='nextseq_trim', help='nextseq_trim', default=20)
     parser.add_argument('--overlap', help='minimum overlap length, default=5', default=5)
-    parser.add_argument('--lowQual', type=int, help='max phred of base as lowQual, default=0', default=0)
-    parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
-    parser.add_argument('--starMem', help='starMem, default=30', default=30)
+    parser.add_argument('--lowQual', type=int, help='max phred of base as lowQual', default=0)
+    parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed', default=2)
+    parser.add_argument('--starMem', help='starMem', default=30)
     parser.add_argument('--genomeDir', help='genome index dir', required=True)
-    parser.add_argument('--refFlat', help='refFlat,for stat mapping region', required=True)
-    parser.add_argument('--type', help='Specify attribute type in GTF annotation', default='exon')
-    parser.add_argument('--annot', help='gtf', required=True)
+    parser.add_argument('--gtf_type', help='Specify attribute type in GTF annotation, default=exon', default='exon')
     parser.add_argument('--cells', type=int, help='cell number, default=3000', default=3000)
     parser.add_argument('--conda', help='conda env name', default="scope1.0")
     args = vars(parser.parse_args())
@@ -127,7 +126,7 @@ def main():
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir = args['outdir'], sampledir = n, step='00.sample')
         cmd = '''source activate {conda}; python {app} sample 
         --sample {samplename} --outdir {outdir} --genomeDir {genomeDir};'''.format(
-            conda=conda, app=toolsdir + '/scope.py', samplename=n, outdir=outdir,genomeDir=args['genomeDir'])
+            conda=conda, app=toolsdir + '/scope.py', samplename=n, outdir=outdir, genomeDir=args['genomeDir'])
         sjm_cmd += generate_sjm(cmd, 'sample_'+n)
 
         # barcode
@@ -154,9 +153,9 @@ def main():
         # STAR
         fq = outdir + '/' + n + '_clean_2.fq.gz'
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='03.STAR')
-        cmd = '''source activate {conda}; python {app} STAR --fq {fq} --sample {samplename} --refFlat {refFlat} 
+        cmd = '''source activate {conda}; python {app} STAR --fq {fq} --sample {samplename} 
         --genomeDir {genomeDir} --thread 8 --outdir {outdir}'''.format(
-            conda=conda, app=toolsdir + '/scope.py', fq=fq, samplename=n, refFlat=args['refFlat'], genomeDir=args['genomeDir'],
+            conda=conda, app=toolsdir + '/scope.py', fq=fq, samplename=n, genomeDir=args['genomeDir'],
             outdir=outdir)
 
         sjm_cmd += generate_sjm(cmd, 'STAR_' + n, m=args['starMem'], x=8)
@@ -165,10 +164,10 @@ def main():
         # featureCounts
         bam = outdir + '/' + n + '_Aligned.sortedByCoord.out.bam'
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='04.featureCounts')
-        cmd = '''source activate {conda}; python {app} featureCounts --input {bam} --annot {annot} --type {type} --sample 
+        cmd = '''source activate {conda}; python {app} featureCounts --input {bam} --type {gtf_type} --sample 
                 {samplename} --thread 8 --outdir {outdir}'''.format(
-                conda=conda, app=toolsdir + '/scope.py', bam=bam, annot=args['annot'], 
-                samplename=n, type=args['type'], outdir=outdir)
+                conda=conda, app=toolsdir + '/scope.py', bam=bam,
+                samplename=n, gtf_type=args['gtf_type'], outdir=outdir)
         sjm_cmd += generate_sjm(cmd, 'featureCounts_' + n, m=8, x=8)
         sjm_order += 'order featureCounts_%s after STAR_%s\n'%(n, n)
 
@@ -185,15 +184,15 @@ def main():
         matrix_file = outdir + '/' + n + '_matrix.xls'
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='06.analysis')
         cmd = '''source activate {conda}; python {app} analysis --matrix_file {matrix_file} --sample {samplename}  
-            --outdir {outdir} --annot {annot} '''.format(conda=conda, app=toolsdir + '/scope.py', 
-            matrix_file=matrix_file, samplename=n,  outdir=outdir, annot=args['annot'])
+            --outdir {outdir} '''.format(conda=conda, app=toolsdir + '/scope.py', 
+            matrix_file=matrix_file, samplename=n,  outdir=outdir)
         sjm_cmd += generate_sjm(cmd, 'analysis_' + n, m=10)
         sjm_order += 'order analysis_%s after count_%s\n'%(n, n)
 
 
     # merged report 
     cmd = '''source activate {conda}; python {app} --samples {samples} --workdir {workdir};'''.format(
-        conda=conda, app=toolsdir + '/merge_table.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
+        conda=conda, app=multidir + '/merge_table.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
     sjm_cmd += generate_sjm(cmd, 'report')
     sjm_order += ''.join(['order report after count_%s\n'%(n) for n in fq_dict])
     with open(logdir + '/sjm.job', 'w') as fh:

@@ -15,9 +15,9 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
 from utils import format_number
+from utils import getlogger
 
-FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-logging.basicConfig(level = logging.INFO, format = FORMAT)
+logger1 = getlogger()
 
 def get_opts_count(parser, sub_program):
     if sub_program:
