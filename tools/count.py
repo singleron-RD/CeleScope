@@ -26,7 +26,6 @@ def get_opts_count(parser, sub_program):
         parser.add_argument('--bam', required=True)
     parser.add_argument('--cells', type=int, default=3000)
 
-
 def report_prepare(count_file, downsample_file, outdir):
 
     json_file = outdir + '/.data.json'
@@ -85,7 +84,6 @@ def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0
     plt.savefig(plot)
 
     return (validated_barcodes, threshold, len(validated_barcodes))
-
 
 
 def hd(x, y):

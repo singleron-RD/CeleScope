@@ -4,9 +4,14 @@
 import argparse
 import sys
 
+
+__VERSION__ = "CeleScope v1.0.1"
+
+
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='CeleScope-IR')
+    parser = argparse.ArgumentParser(description='CeleScope')
+    parser.add_argument('-v', '--version', action='version', version= __VERSION__)
     subparsers = parser.add_subparsers()
 
     from sample_info import sample_info, get_opts_sample

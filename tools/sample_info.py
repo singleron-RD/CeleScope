@@ -5,9 +5,10 @@ from report import reporter
 import os
 import pandas as pd
 from utils import getlogger
+from scope import __VERSION__
 
-__VERSION__ = "CeleScope V1.0.0"
 logger1, logger2 = getlogger()
+
 def sample_info(args):
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % args.outdir)
@@ -32,8 +33,8 @@ def sample_info(args):
 
 def get_opts_sample(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir',required=True)
+        parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--genomeDir', help='genomeDir', required=True)
-    parser.add_argument('--description', help='sample description',default="scRNA-Seq")
-    parser.add_argument('--version', help='software version',default=__VERSION__)
+    parser.add_argument('--description', help='sample description', default="scRNA-Seq")
+    parser.add_argument('--version', help='software version', default=__VERSION__)
