@@ -8,14 +8,15 @@ import logging
 import re
 import numpy as np
 import pandas as pd
+import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from utils import getlogger
 
 logger1 = getlogger()
+toolsdir = os.path.realpath(sys.path[0] + '/../tools')
 
-
-def report_prepare(outdir,tsne_df,marker_df):
+def report_prepare(outdir, tsne_df, marker_df):
     json_file = outdir + '/../.data.json'
     if not os.path.exists(json_file):
         data = {}
@@ -106,7 +107,7 @@ def analysis(args):
     sample = args.sample
     matrix_file = args.matrix_file
     try:
-        gtf = glob.glob(args.genomeDir + "*.gtf")[0]
+        gtf = glob.glob(args.genomeDir + "/*.gtf")[0]
     except IndexError:
         logging.error('gtf file not found')
         sys.exit()

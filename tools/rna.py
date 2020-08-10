@@ -3,8 +3,6 @@
 import os, re, io, logging, gzip, json
 import subprocess
 from collections import defaultdict, namedtuple
-logging.basicConfig(format='%(asctime)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
-
 
 def rna(args):
     #tmp = vars(args)
@@ -12,6 +10,7 @@ def rna(args):
     baseDir = args.sample    
 
     args.outdir = baseDir + '/00.sample'
+    args.description = "Single Cell RNA-Seq"
     from sample_info import sample_info
     sample_info(args)
 
@@ -47,9 +46,9 @@ def rna(args):
 
 def main():
     import argparse
-    parser = argparse.ArgumentParser(description='run all steps')
+    parser = argparse.ArgumentParser(description='Single cell RNA-Seq')
     args = parser.parse_args()
-    run(args)
+    rna(args)
 
 
 if __name__ == '__main__':

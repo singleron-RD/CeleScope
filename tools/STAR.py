@@ -80,7 +80,7 @@ def STAR(args):
 
     logging.info('stat mapping region ...!')
     try:
-        refFlat = glob.glob(args.genomeDir + "*.refFlat")[0]
+        refFlat = glob.glob(args.genomeDir + "/*.refFlat")[0]
     except IndexError:
         logging.error('refFlat file not found')
         sys.exit()

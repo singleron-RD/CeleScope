@@ -180,15 +180,15 @@ def barcode(args):
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % args.outdir)
 
-    if (args.bcType):
-        bc_pattern = parse_bc_type(args.bcType)
-        (linker, whitelist) = get_scope_bc(args.bcType)
+    if (args.chemistry):
+        bc_pattern = parse_bc_type(args.chemistry)
+        (linker, whitelist) = get_scope_bc(args.chemistry)
     else:
         bc_pattern = args.pattern
         linker = args.linker
         whitelist = args.whitelist
     if (not linker) or (not whitelist) or (not bc_pattern):
-        sys.exit("invalid bcType or [linker,whitelist]")
+        sys.exit("invalid chemistry or [pattern,linker,whitelist]")
 
     # parse pattern to dict, C8L10C8L10C8U8
     # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U': [[44, 52]], 'L': [[8, 18], [26, 36]]})
@@ -349,13 +349,13 @@ def barcode(args):
     logger1.info('generate report done!')
 
 
-def get_opts_barcode(parser,sub_program):
+def get_opts_barcode(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
     parser.add_argument('--sample', help='sample name', required=True)
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)
-    parser.add_argument('--bcType', help='choice of barcode types. Currently support scopeV2.')
+    parser.add_argument('--chemistry', choices=['scopeV2'], help='Currently support scopeV2.')
     parser.add_argument('--pattern', help='')
     parser.add_argument('--whitelist', help='')
     parser.add_argument('--linker', help='')

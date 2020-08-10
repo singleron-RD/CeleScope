@@ -82,13 +82,14 @@ job_end
 
 
 def main():
-    parser = argparse.ArgumentParser('scope-tools for multisample')
+
+    parser = argparse.ArgumentParser('CeleScope RNA multi-sample')
     #parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
     parser.add_argument('--mapfile', help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"', required=True)
+    parser.add_argument('--chemistry', help='choice of barcode types.', default='scopeV2')
     parser.add_argument('--whitelist', help='cellbarcode list')
     parser.add_argument('--linker', help='linker')
     parser.add_argument('--pattern', help='read1 pattern', default='C8L16C8L16C8U8T18')
-    parser.add_argument('--bcType', help='choice of barcode types. Currently support scope and Drop-seq barcode designs')
     parser.add_argument('--outdir', help='output dir', default="./")
     parser.add_argument('--adapt', action='append', help='adapter sequence', default=['polyT=A{15}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
     parser.add_argument('--minimum-length', dest='minimum_length', help='minimum_length', default=20)
@@ -103,7 +104,7 @@ def main():
     parser.add_argument('--conda', help='conda env name', default="scope1.0")
     args = vars(parser.parse_args())
 
-    fq_dict, cells_dict = parse_map(args['mapfile'],args['cells'])
+    fq_dict, cells_dict = parse_map(args['mapfile'], args['cells'])
 
     # 链接数据
     raw_dir = args['outdir'] + '/data_give/rawdata'
@@ -124,19 +125,21 @@ def main():
     for n in fq_dict:
         # sample
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir = args['outdir'], sampledir = n, step='00.sample')
-        cmd = '''source activate {conda}; python {app} sample 
+        cmd = '''source activate {conda}; python {app} sample --chemistry {chemistry} --description "{description}"
         --sample {samplename} --outdir {outdir} --genomeDir {genomeDir};'''.format(
-            conda=conda, app=toolsdir + '/scope.py', samplename=n, outdir=outdir, genomeDir=args['genomeDir'])
+            description="Single Cell RNA-Seq",
+            chemistry=args['chemistry'], conda=conda, app=toolsdir + '/scope.py', samplename=n, 
+            outdir=outdir, genomeDir=args['genomeDir'])
         sjm_cmd += generate_sjm(cmd, 'sample_'+n)
 
         # barcode
         arr = fq_dict[n]
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir = args['outdir'], sampledir = n, step='01.barcode')
-        cmd = '''source activate {conda}; python {app} barcode --fq1 {fq1} --fq2 {fq2} --pattern {pattern} 
-                --whitelist {whitelist} --linker {linker} --sample {samplename} --lowQual {lowQual} 
-                --lowNum {lowNum} --outdir {outdir} --thread 2;'''.format(
-            conda=conda, app=toolsdir + '/scope.py', fq1 = arr[0], fq2 =arr[1], pattern=args['pattern'], 
-            whitelist=args['whitelist'], linker=args['linker'], samplename=n, 
+        cmd = '''source activate {conda}; python {app} barcode --fq1 {fq1} --fq2 {fq2} --chemistry {chemistry} 
+            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {samplename} --lowQual {lowQual} 
+            --lowNum {lowNum} --outdir {outdir} --thread 2;'''.format(
+            conda=conda, app=toolsdir + '/scope.py', fq1 = arr[0], fq2 =arr[1], chemistry=args['chemistry'],
+            pattern=args['pattern'], whitelist=args['whitelist'], linker=args['linker'], samplename=n, 
             lowQual=args['lowQual'], lowNum=args['lowNum'], outdir=outdir
         )
         sjm_cmd += generate_sjm(cmd, 'barcode_'+n, m=5, x=2)
@@ -165,8 +168,8 @@ def main():
         bam = outdir + '/' + n + '_Aligned.sortedByCoord.out.bam'
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='04.featureCounts')
         cmd = '''source activate {conda}; python {app} featureCounts --input {bam} --type {gtf_type} --sample 
-                {samplename} --thread 8 --outdir {outdir}'''.format(
-                conda=conda, app=toolsdir + '/scope.py', bam=bam,
+                {samplename} --thread 8 --outdir {outdir} --genomeDir {genomeDir}'''.format(
+                conda=conda, app=toolsdir + '/scope.py', bam=bam, genomeDir=args['genomeDir'],
                 samplename=n, gtf_type=args['gtf_type'], outdir=outdir)
         sjm_cmd += generate_sjm(cmd, 'featureCounts_' + n, m=8, x=8)
         sjm_order += 'order featureCounts_%s after STAR_%s\n'%(n, n)
@@ -184,8 +187,8 @@ def main():
         matrix_file = outdir + '/' + n + '_matrix.xls'
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='06.analysis')
         cmd = '''source activate {conda}; python {app} analysis --matrix_file {matrix_file} --sample {samplename}  
-            --outdir {outdir} '''.format(conda=conda, app=toolsdir + '/scope.py', 
-            matrix_file=matrix_file, samplename=n,  outdir=outdir)
+            --outdir {outdir} --genomeDir {genomeDir}'''.format(conda=conda, app=toolsdir + '/scope.py', 
+            matrix_file=matrix_file, samplename=n,  outdir=outdir, genomeDir=args['genomeDir'])
         sjm_cmd += generate_sjm(cmd, 'analysis_' + n, m=10)
         sjm_order += 'order analysis_%s after count_%s\n'%(n, n)
 

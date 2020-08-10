@@ -61,7 +61,7 @@ def featureCounts(args):
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
     try:
-        gtf = glob.glob(args.genomeDir + "*.gtf")[0]
+        gtf = glob.glob(args.genomeDir + "/*.gtf")[0]
     except IndexError:
         logging.error('gtf file not found')
         sys.exit()
