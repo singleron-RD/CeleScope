@@ -5,12 +5,8 @@ import subprocess
 from collections import defaultdict, namedtuple
 logging.basicConfig(format='%(asctime)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
 
-"""
-def get_opts6(parser,sub_program): 
-    parser.add_argument('--skip', help='step and steps after will not run, eg. STAR,featureCounts,count', default='')
-"""
 
-def run(args):
+def rna(args):
     #tmp = vars(args)
     sample = args.sample
     baseDir = args.sample    
@@ -18,7 +14,7 @@ def run(args):
     args.outdir = baseDir + '/00.sample'
     from sample_info import sample_info
     sample_info(args)
- 
+
     args.outdir = baseDir + '/01.barcode'    
     from barcode import barcode
     barcode(args)
@@ -48,11 +44,13 @@ def run(args):
     from analysis import analysis
     analysis(args)
 
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='run all steps')
     args = parser.parse_args()
     run(args)
+
 
 if __name__ == '__main__':
     main()

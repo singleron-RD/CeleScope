@@ -34,7 +34,7 @@ def generate_mis_seq(seq, n=1, bases = 'ACGTN'):
     assert length >= n, "err number should not be larger than sequence length!"
     res = {}
     seq_arr = list(seq)
-    pos_group = list(combinations(range(0,length), n))
+    pos_group = list(combinations(range(0 ,length), n))
     bases_group = list(permutations(bases, n))
 
     for g in pos_group:
@@ -345,7 +345,6 @@ def barcode(args):
     logger1.info('generate report done!')
 
 
-
 def get_opts_barcode(parser,sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir',required=True)
@@ -360,5 +359,6 @@ def get_opts_barcode(parser,sub_program):
     parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
     parser.add_argument('--nopolyT', action='store_true', help='output nopolyT fq')
     parser.add_argument('--noLinker', action='store_true', help='output noLinker fq')
+    parser.add_argument('--thread', help='number of threads', default=1)
     return parser
 

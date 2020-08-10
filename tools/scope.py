@@ -5,7 +5,7 @@ import argparse
 import sys
 
 
-__VERSION__ = "CeleScope v1.0.1"
+__VERSION__ = "CeleScope v1.1.0"
 
 
 if __name__ == '__main__':
@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     from sample_info import sample_info, get_opts_sample
     parser_sample = subparsers.add_parser('sample', description='sample infomation')
-    get_opts_sample(parser_sample,True)
+    get_opts_sample(parser_sample, True)
     parser_sample.set_defaults(func=sample_info)
 
     from barcode import barcode, get_opts_barcode
@@ -49,8 +49,8 @@ if __name__ == '__main__':
     get_opts_analysis(parser_analysis, True)
     parser_analysis.set_defaults(func=analysis)
 
-    from run import run
-    parser_run = subparsers.add_parser('run', conflict_handler='resolve')
+    from rna import rna
+    parser_run = subparsers.add_parser('RNA', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
     get_opts_barcode(parser_run, False)
     get_opts_cutadapt(parser_run, False)
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     get_opts_featureCounts(parser_run, False)
     get_opts_count(parser_run, False)
     get_opts_analysis(parser_run, False)
-    parser_run.set_defaults(func=run)
+    parser_run.set_defaults(func=rna)
 
     args = parser.parse_args()
     args.func(args)

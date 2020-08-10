@@ -14,7 +14,7 @@ def get_opts_STAR(parser, sub_program):
         parser.add_argument('--readFilesCommand', default='zcat')
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-    parser.add_argument('--thread', default=4)
+        parser.add_argument('--thread', default=4)
     parser.add_argument('--refFlat', help='refFlat, for stat mapping region', required=True)
     parser.add_argument('--genomeDir')
 

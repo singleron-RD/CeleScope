@@ -11,6 +11,7 @@ env = Environment(
     autoescape=select_autoescape(['html', 'xml'])
 )
 
+
 class reporter:
     def __init__(self, name, outdir, sample, stat_file=None, plot=None):
         self.name = name
@@ -47,7 +48,8 @@ class reporter:
 
         with open(json_file, 'w') as fh:
             json.dump(data, fh)
-        
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='report')
     parser.add_argument('--basedir', help='output base dir',required=True)
