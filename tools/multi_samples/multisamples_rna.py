@@ -26,7 +26,7 @@ def parse_map(mapfile):
 '''
 
 
-def parse_map(mapfile, cells):
+def parse_map(mapfile):
     fq_dict = defaultdict(list)
     cells_dict = defaultdict(list)
     with open(mapfile) as fh:
@@ -41,7 +41,7 @@ def parse_map(mapfile, cells):
             if len(tmp) == 4:
                 cell_number = int(tmp[3])
             else:
-                cell_number = cells
+                cell_number = 0
             try:
                 pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
                 pattern1_2 = library_path + '/' + library_id + '*' + 'R1_*.fastq.gz'
@@ -50,10 +50,10 @@ def parse_map(mapfile, cells):
                 fq1 = (glob.glob(pattern1_1) + glob.glob(pattern1_2))[0]
                 fq2 = (glob.glob(pattern2_1) + glob.glob(pattern2_2))[0]
             except IndexError as e:
-                sys.exit("Error:"+str(e))
+                sys.exit("Mapfile Error:"+str(e))
                 
-            assert os.path.exists(fq1), '%s not exists!'%(fq1)
-            assert os.path.exists(fq2), '%s not exists!'%(fq2)
+            assert os.path.exists(fq1), '%s not exists!' % (fq1)
+            assert os.path.exists(fq2), '%s not exists!' % (fq2)
             if sample_name in fq_dict:
                 fq_dict[sample_name][0].append(fq1)
                 fq_dict[sample_name][1].append(fq2)
@@ -86,10 +86,10 @@ def main():
     parser = argparse.ArgumentParser('CeleScope RNA multi-sample')
     #parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
     parser.add_argument('--mapfile', help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"', required=True)
-    parser.add_argument('--chemistry', help='choice of barcode types.', default='scopeV2')
+    parser.add_argument('--chemistry', help='chemistry version', choices=['scopeV2', 'scopeV3'])
     parser.add_argument('--whitelist', help='cellbarcode list')
     parser.add_argument('--linker', help='linker')
-    parser.add_argument('--pattern', help='read1 pattern', default='C8L16C8L16C8U8T18')
+    parser.add_argument('--pattern', help='read1 pattern')
     parser.add_argument('--outdir', help='output dir', default="./")
     parser.add_argument('--adapt', action='append', help='adapter sequence', default=['polyT=A{15}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
     parser.add_argument('--minimum-length', dest='minimum_length', help='minimum_length', default=20)
@@ -100,11 +100,10 @@ def main():
     parser.add_argument('--starMem', help='starMem', default=30)
     parser.add_argument('--genomeDir', help='genome index dir', required=True)
     parser.add_argument('--gtf_type', help='Specify attribute type in GTF annotation, default=exon', default='exon')
-    parser.add_argument('--cells', type=int, help='cell number, default=3000', default=3000)
     parser.add_argument('--conda', help='conda env name', default="scope1.0")
     args = vars(parser.parse_args())
 
-    fq_dict, cells_dict = parse_map(args['mapfile'], args['cells'])
+    fq_dict, cells_dict = parse_map(args['mapfile'])
 
     # 链接数据
     raw_dir = args['outdir'] + '/data_give/rawdata'

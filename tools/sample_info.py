@@ -17,6 +17,8 @@ def sample_info(args):
     version = args.version
     outdir = args.outdir
     chemistry = args.chemistry
+    if not chemistry:
+        chemistry = "Customized"
     #transcriptome = args.genomeDir.split("/")[-1]
 
     if not os.path.exists(outdir):

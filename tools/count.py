@@ -24,7 +24,7 @@ def get_opts_count(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--bam', required=True)
-    parser.add_argument('--cells', type=int, default=3000)
+    parser.add_argument('--cells', help='expected number of cells', default="auto")
 
 def report_prepare(count_file, downsample_file, outdir):
 
@@ -56,21 +56,42 @@ def report_prepare(count_file, downsample_file, outdir):
     with open(json_file, 'w') as fh:
         json.dump(data, fh)
 
-def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):
+
+def barcode_filter_with_magnitude(df, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1):
     # col can be readcount or UMI
     # determine validated barcodes
 
     df = df.sort_values(col, ascending=False)
-    idx = int(expected_cell_num*0.01)
-    barcode_number = df.shape[0]
-    idx = min(barcode_number,idx)
-    if idx==0:
-        sys.exit("cell number equals zero!")
+    if expected_cell_num == "auto":
+        idx = 3000*0.01
+        barcode_number = df.shape[0]
+        idx = min(barcode_number, idx)
+        if idx == 0:
+            sys.exit("cell number equals zero!")
+        # calculate read counts threshold
+        threshold = int(df.iloc[idx-1, df.columns == col] * 0.1)
+        threshold = max(1, threshold)
+    else:
+        expected_cell_num = int(expected_cell_num)
+        cell_range = int(expected_cell_num * 0.1)
+        cell_low = expected_cell_num - cell_range
+        cell_high = expected_cell_num + cell_range
 
-    # calculate read counts threshold
-    threshold = int(df.iloc[idx-1, df.columns==col] * 0.1)
-    threshold = max(1, threshold)
-    validated_barcodes = df[df[col]>=threshold].index
+        df_barcode_count = df.groupby(['UMI']).size().reset_index(name='barcode_counts')
+        sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
+        sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
+        for i in range(sorted_df.shape[0]):
+            if sorted_df.iloc[i,:]["barcode_cumsum"] >= cell_low:
+                index_low = i-1
+                break
+        for i in range(sorted_df.shape[0]):
+            if sorted_df.iloc[i,:]["barcode_cumsum"] >= cell_high:
+                index_high = i
+                break            
+        df_sub=sorted_df.iloc[index_low:index_high + 1,:]
+        threshold = df_sub.iloc[np.argmax(np.diff(df_sub["barcode_cumsum"])),:]["UMI"]
+        logger1.info("UMI threshold: " + str(threshold))
+    validated_barcodes = df[df[col] >= threshold].index
 
     import matplotlib
     matplotlib.use('Agg')
@@ -103,7 +124,8 @@ def correct_umi(fh1, barcode, gene_umi_dict, percent=0.1):
             umi_low = umi_arr.pop()
 
             for u in umi_arr:
-                if float(_dict[umi_low]) / _dict[u] > percent: break
+                if float(_dict[umi_low]) / _dict[u] > percent:
+                    break
                 if hd(umi_low, u) == 1:
                     _dict[u] += _dict[umi_low]
                     del (_dict[umi_low])

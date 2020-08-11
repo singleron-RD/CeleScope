@@ -12,6 +12,7 @@ from utils import format_number
 
 logger1 = getlogger()
 barcode_corrected_num = 0
+PATTERN_DICT = {'scopeV2': 'C8L16C8L16C8L1U8T18', 'scopeV3': 'C8L16C8L16C8L1U12T18'}
 
 # 定义输出格式
 stat_info = '''
@@ -73,14 +74,6 @@ def generate_seq_dict(seqlist, n=1):
                     seq_dict[k] = v
     return seq_dict
 
-def parse_bc_type(bctype):
-    # assign pattern based on bc type: scope, dropseq
-    if bctype == 'scopeV2':
-        # place holder, may change, depending on the beads development progress
-        bc_pattern = 'C8L16C8L16C8L1U8T18'
-    else:
-        bc_pattern = None
-    return bc_pattern
 
 def parse_pattern(pattern):
     # 解析接头结构，返回接头结构字典
@@ -104,12 +97,8 @@ def parse_pattern(pattern):
 def get_scope_bc(bctype):
     code_path = os.path.dirname(os.path.abspath(__file__))
     root_path = os.path.dirname(code_path)
-    if bctype == "scopeV2":
-        linker_f = os.path.join(root_path, 'data/scopeV2/linker_withC')
-        whitelist_f = os.path.join(root_path, 'data/scopeV2/bclist')
-    else:
-        linker_f = None
-        whitelist_f = None
+    linker_f = os.path.join(root_path, 'data/' + bctype + '/linker_withC')
+    whitelist_f = os.path.join(root_path, 'data/' + bctype + '/bclist')
     return linker_f, whitelist_f
 
 
@@ -181,7 +170,7 @@ def barcode(args):
         os.system('mkdir -p %s' % args.outdir)
 
     if (args.chemistry):
-        bc_pattern = parse_bc_type(args.chemistry)
+        bc_pattern = PATTERN_DICT[args.chemistry]
         (linker, whitelist) = get_scope_bc(args.chemistry)
     else:
         bc_pattern = args.pattern
@@ -355,7 +344,7 @@ def get_opts_barcode(parser, sub_program):
     parser.add_argument('--sample', help='sample name', required=True)
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)
-    parser.add_argument('--chemistry', choices=['scopeV2'], help='Currently support scopeV2.')
+    parser.add_argument('--chemistry', choices=['scopeV2', 'scopeV3'], help='chemistry version')
     parser.add_argument('--pattern', help='')
     parser.add_argument('--whitelist', help='')
     parser.add_argument('--linker', help='')
