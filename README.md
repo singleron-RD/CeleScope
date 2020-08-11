@@ -71,7 +71,7 @@ STAR \
 
 ```
 conda activate celescope1.1
-python3 {CeleScope_path}/celescope.py rna  
+python3 {CeleScope_path}/celescope.py rna\   
  --fq1 ./data/R2005212_L1_1.fq.gz\
  --fq2 ./data/R2005212_L1_2.fq.gz\
  --chemistry scopeV2.0.1\
