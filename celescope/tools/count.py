@@ -63,9 +63,9 @@ def barcode_filter_with_magnitude(df, expected_cell_num, plot='magnitude.pdf', c
 
     df = df.sort_values(col, ascending=False)
     if expected_cell_num == "auto":
-        idx = 3000*0.01
+        idx = int(3000*0.01)
         barcode_number = df.shape[0]
-        idx = min(barcode_number, idx)
+        idx = int(min(barcode_number, idx))
         if idx == 0:
             sys.exit("cell number equals zero!")
         # calculate read counts threshold
@@ -186,7 +186,7 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
     return validated_barcodes, threshold, cell_num, CB_describe
 
 
-def expression_matrix(df, validated_barcodes, matrix_prefix,matrix_10X_prefix):
+def expression_matrix(df, validated_barcodes, matrix_prefix, matrix_10X_prefix):
     df.loc[:, 'mark'] = 'UB'
     df.loc[df['Barcode'].isin(validated_barcodes), 'mark'] = 'CB'
 

@@ -196,7 +196,7 @@ def main():
 
     # merged report 
     cmd = '''source activate {conda}; python {app} --samples {samples} --workdir {workdir};'''.format(
-        conda=conda, app=rnaDir + '/merge_table.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
+        conda=conda, app=rnaDir + '/merge_table_rna.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
     sjm_cmd += generate_sjm(cmd, 'report')
     sjm_order += ''.join(['order report after count_%s\n'%(n) for n in fq_dict])
     with open(logdir + '/sjm.job', 'w') as fh:

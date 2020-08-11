@@ -96,8 +96,8 @@ def parse_pattern(pattern):
 
 
 def get_scope_bc(bctype):
-    code_path = os.path.dirname(os.path.abspath(__file__))
-    root_path = os.path.dirname(code_path)
+    tools_path = os.path.dirname(os.path.abspath(__file__))
+    root_path = os.path.dirname(tools_path)
     linker_f = os.path.join(root_path, 'data/' + bctype + '/linker_withC')
     whitelist_f = os.path.join(root_path, 'data/' + bctype + '/bclist')
     return linker_f, whitelist_f

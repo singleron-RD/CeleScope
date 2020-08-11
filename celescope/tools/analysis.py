@@ -14,7 +14,8 @@ from scipy.sparse import csr_matrix
 from utils import getlogger
 
 logger1 = getlogger()
-toolsdir = os.path.realpath(sys.path[0] + '/../tools')
+# invoke by celescope.py under rootdir
+toolsdir = os.path.realpath(sys.path[0] + '/tools')
 
 def report_prepare(outdir, tsne_df, marker_df):
     json_file = outdir + '/../.data.json'
