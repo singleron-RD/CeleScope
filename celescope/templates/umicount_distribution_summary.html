@@ -1,0 +1,89 @@
+      <h2><img data-name="img1" src="./img1.png"/>UMI summary</h2>
+
+      <p>根据featureCounts的基因定量结果，结合Cellbarcode和UMI进行单细胞基因表达量统计，细胞数目和UMI的评估结果如下：</p>
+      <table id="example4" class="display" style="width:100%">
+        {% for item in count_summary %}
+          {% if loop.first %}
+        <thead>
+          <tr>
+            {% for i in item %}
+            <th>{{ i|e }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+          {% else %}
+        <tbody>
+          <tr>
+            {% for i in item %}
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+        </tbody>
+          {% endif %}
+        {% endfor %}
+      </table>
+      <div class="annotation">
+      <p>(1) SampleName：样品名</p>
+      <p>(2) Cells_number：细胞数目</p>
+      <p>(3) Saturation：所有细胞中，有多于2条Reads支持的UMI的数目占UMI总数目的比例</p>
+      <p>(4) Mean_Reads：每个细胞测到的平均Reads数目</p>
+      <p>(5) Median_UMIs：每个细胞的UMI数目的中位数</p>
+      <p>(6) Total_Genes：所有细胞检测到的基因数目 (去重复)</p>
+      <p>(7) Median_Genes：每个细胞检测基因数目的中位数</p>
+      </div>
+      <br>
+
+      <p>UMI数目分布图形展示如下：</p>
+      <div id="umicount_distribution"></div>
+      <script>
+          var index1 = [];
+          for (var i = 0; i < {{ CB_num }}; i++) {
+              index1.push(i + 1)
+          }
+
+          var index2 = [];
+          for (var i = 0; i < {{ UB_num }}; i++) {
+              index2.push(i + 1 + {{ CB_num }})
+          }
+
+          var trace0 = {
+              x: index1,
+              y: {{ Cells }},
+              mode: 'lines',
+              name: 'Cells',
+              line: {
+                  color: '#337bb6',
+                  width: 3
+              }
+          };
+          var trace1 = {
+              x: index2,
+              y: {{ Background }},
+              mode: 'lines',
+              name: 'Background',
+              line: {
+                  color: '#D3D3D3',
+                  width: 3
+              }
+          };
+          var data = [ trace0, trace1 ];
+          var layout = {
+              title: 'Cells', 
+              width: 800,
+              height: 600,
+              xaxis: {
+                  title: 'Barcodes',
+                  type: 'log'
+              },
+              yaxis: {
+                  title: 'UMI counts',
+                  type: 'log'
+              },
+              margin: {
+                  l: 100,
+                  r: 100,
+              }
+          }
+          Plotly.newPlot('umicount_distribution', data, layout);
+      </script>       
+

@@ -1,0 +1,39 @@
+    <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+      <h2>Trimming    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+
+      <div class="box">
+        <div class="description" style="display: none;">
+          <p><b>Reads with Adapters</b> : reads with sequencing adapters or reads two with poly A(read-through adpaters).</p>
+          <p><b>Reads too Short</b> : reads with read length less than 20bp after trimming.</p>
+          <p><b>Reads Written</b> : reads pass filtering.</p>
+          <p><b>Base Pairs Processed</b> : total processed base pairs.</p>
+          <p><b>Base Pairs Quality-Trimmed</b> :  bases pairs removed from the end of the read whose quality is smaller than the given threshold</p>
+          <p><b>Base Pairs Written</b> : base pairs pass filtering.</p>
+        </div>
+        <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+          {% for item in cutadapt_summary %}
+            {% if loop.index <= (loop.length+1)/2 %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </table>
+
+        <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+          {% for item in cutadapt_summary %}
+            {% if loop.index > (loop.length+1)/2  %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+            {% endif %}
+          {% endfor %}
+        </table>
+        <div class="clear" ></div>
+      </div>
+    </div>
+
