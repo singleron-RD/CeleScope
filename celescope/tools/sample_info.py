@@ -15,7 +15,7 @@ def sample_info(args):
         os.system('mkdir -p %s' % args.outdir)
     sample = args.sample
     description = args.description
-    version = args.version
+    version = __VERSION__
     outdir = args.outdir
     chemistry = args.chemistry
     if not chemistry:
@@ -42,4 +42,3 @@ def get_opts_sample(parser, sub_program):
         parser.add_argument('--genomeDir', help='genomeDir', required=True)
     parser.add_argument('--description', help='sample description', default="scRNA-Seq")
     parser.add_argument('--chemistry', help='chemistry')
-    parser.add_argument('--version', help='software version', default=__VERSION__)
