@@ -12,7 +12,7 @@
 ```
 git clone https://github.com/zhouyiqi91/CeleScope.git
 cd CeleScope
-conda env create -f scope1.0.yml
+conda env create -f celescope.yml
 ```
 
 ## Reference genome 
@@ -70,25 +70,21 @@ STAR \
 ### Example
 
 ```
-conda activate scope1.0
-python3 {CeleScope_path}/tools/scope.py run  
+conda activate celescope1.1
+python3 {CeleScope_path}/celescope.py rna  
  --fq1 ./data/R2005212_L1_1.fq.gz\
  --fq2 ./data/R2005212_L1_2.fq.gz\
- --bcType scope\
+ --chemistry scopeV2.0.1\
  --genomeDir /SGRNJ/Public/Database/genome/homo_mus\
- --refFlat /SGRNJ/Public/Database/genome/homo_mus/homo_mus.refFlat\
- --annot /SGRNJ/Public/Database/genome/homo_mus/homo_mus.gtf\
- --outdir R2005212\
- --sample R2005212
+ --sample R2005212\
+ --thread 4
 ```
 
 `--fq1` gzipped FASTQ read 1 file path  
 `--fq2` gzipped FASTQ read 2 file path  
-`--bcType` barcode and UMI structure type,defalut=scope  
+`--chemistry` chemistry version, choices=['scopeV2.0.0', 'scopeV2.0.1', 'scopeV2.1.0', 'scopeV2.1.1']  
 `--genomeDir` reference genome directory path  
-`--refFlat` refFlat file path  
-`--annot` annotation file path  
-`--outdir` output directory path  
-`--sample` sample ID  
+`--sample` sample name  
+`--thread` number of threads
 
 
