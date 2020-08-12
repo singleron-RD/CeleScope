@@ -170,7 +170,7 @@ def main():
         # featureCounts
         bam = outdir + '/' + n + '_Aligned.sortedByCoord.out.bam'
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='04.featureCounts')
-        cmd = '''source activate {conda}; python {app} featureCounts --input {bam} --type {gtf_type} --sample 
+        cmd = '''source activate {conda}; python {app} featureCounts --input {bam} --gtf_type {gtf_type} --sample 
                 {samplename} --thread {thread} --outdir {outdir} --genomeDir {genomeDir}'''.format(
                 conda=conda, app=app, bam=bam, genomeDir=args['genomeDir'],
                 samplename=n, gtf_type=args['gtf_type'], outdir=outdir, thread=thread)
@@ -184,7 +184,7 @@ def main():
             --outdir {outdir}'''.format(conda=conda, app=app,  
             bam=bam, samplename=n, cells=cells_dict[n], outdir=outdir)
         sjm_cmd += generate_sjm(cmd, 'count_' + n, m=30)
-        sjm_order += 'order count_%s after featureCounts_%s\n'%(n, n)
+        sjm_order += 'order count_%s after featureCounts_%s\n' % (n, n)
 
         # analysis
         matrix_file = outdir + '/' + n + '_matrix.xls'
