@@ -38,6 +38,11 @@ if __name__ == '__main__':
     get_opts_STAR(parser_STAR, True)
     parser_STAR.set_defaults(func=STAR)
 
+    from virus.STAR_virus import STAR_virus, get_opts_STAR_virus
+    parser_STAR_virus = subparsers.add_parser('STAR_virus')
+    get_opts_STAR_virus(parser_STAR_virus, True)
+    parser_STAR_virus.set_defaults(func=STAR_virus)
+
     from tools.featureCounts import featureCounts, get_opts_featureCounts
     parser_featureCounts = subparsers.add_parser('featureCounts')
     get_opts_featureCounts(parser_featureCounts, True)
