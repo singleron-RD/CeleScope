@@ -3,14 +3,15 @@
 import os, re, io, gzip
 import subprocess
 import sys
+import logging
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
 from tools.utils import format_number
-from tools.utils import getlogger
 from tools.report import reporter
 
-logger1 = getlogger()
+
+logger1 = logging.getLogger(__name__)
 barcode_corrected_num = 0
 PATTERN_DICT = {'scopeV2.0.0': 'C8L16C8L16C8U8T18', 'scopeV2.0.1': 'C8L16C8L16C8L1U8T18', 
                 'scopeV2.1.0': 'C8L16C8L16C8U12T18', 'scopeV2.1.1': 'C8L16C8L16C8L1U12T18'}

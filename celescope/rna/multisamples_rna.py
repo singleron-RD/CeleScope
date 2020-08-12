@@ -6,6 +6,7 @@ import glob
 import sys
 import argparse
 import re
+import logging
 from collections import defaultdict
 
 rootDir = os.path.realpath(sys.path[0] + '/../')

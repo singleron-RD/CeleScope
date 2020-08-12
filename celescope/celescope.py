@@ -4,6 +4,7 @@
 import argparse
 import sys
 import os 
+import logging
 """
 toolsdir = os.path.realpath(sys.path[0] + '/tools')
 rnadir = os.path.realpath(sys.path[0] + '/rna')
@@ -13,6 +14,7 @@ sys.path.append(rnadir)
 #sys.path.append(virusdir)
 """
 from tools.__version__ import __VERSION__
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 if __name__ == '__main__':

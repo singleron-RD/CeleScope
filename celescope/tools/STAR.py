@@ -4,11 +4,11 @@
 import os, re, sys, json, logging
 import subprocess 
 import glob
-from tools.utils import format_number, getlogger
+from tools.utils import format_number
 from tools.utils import glob_genomeDir
 from tools.report import reporter
 
-logger1 = getlogger()
+logger1 = logging.getLogger(__name__)
 
 
 def get_opts_STAR(parser, sub_program):

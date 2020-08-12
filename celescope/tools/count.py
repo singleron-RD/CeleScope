@@ -14,10 +14,9 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
 from tools.utils import format_number
-from tools.utils import getlogger
 from tools.report import reporter
 
-logger1 = getlogger()
+logger1 = logging.getLogger(__name__)
 
 
 def get_opts_count(parser, sub_program):

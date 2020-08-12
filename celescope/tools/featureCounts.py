@@ -6,12 +6,11 @@ import logging
 import subprocess
 import glob
 import sys
-from tools.utils import format_number, getlogger
+from tools.utils import format_number
 from tools.utils import glob_genomeDir
 from tools.report import reporter
 
-
-logger1 = getlogger()
+logger1 = logging.getLogger(__name__)
 
 
 def get_opts_featureCounts(parser, sub_program): 

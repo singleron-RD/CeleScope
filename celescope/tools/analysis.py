@@ -15,7 +15,7 @@ from tools.utils import getlogger
 from tools.report import reporter
 from tools.utils import glob_genomeDir
 
-logger1 = getlogger()
+logger1 = logging.getLogger(__name__)
 # invoke by celescope.py under rootdir
 toolsdir = os.path.realpath(sys.path[0] + '/tools')
 

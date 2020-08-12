@@ -4,11 +4,12 @@
 import os
 import pandas as pd
 import sys
-from tools.utils import getlogger
+import logging
 from tools.__version__ import __VERSION__
 from tools.report import reporter
 
-logger1 = getlogger()
+logger1 = logging.getLogger(__name__)
+
 
 def sample_info(args):
     if not os.path.exists(args.outdir):
