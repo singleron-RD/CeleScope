@@ -4,7 +4,7 @@
 import os
 from tools.utils import getlogger
 
-logger1, logger2 = getlogger()	
+logger1 = getlogger()	
 
 
 def STAR_virus(args):

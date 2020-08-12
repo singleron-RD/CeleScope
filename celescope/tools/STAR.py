@@ -96,7 +96,6 @@ def STAR(args):
     logging.info('generate report ...!')
     plot = format_stat(args.outdir+'/'+args.sample+'_Log.final.out', region_txt, args.sample)
 
-    from report import reporter
     t = reporter(name='STAR', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..', plot=plot)
     t.get_report()
     logging.info('generate report done!')

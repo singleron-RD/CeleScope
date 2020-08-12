@@ -12,9 +12,10 @@ from tools.report import reporter
 
 logger1 = getlogger()
 
+
 def get_opts_featureCounts(parser,sub_program): 
 
-    parser.add_argument('--type', help='Specify feature type in GTF annotation', default='exon')
+    parser.add_argument('--gtf_type', help='Specify feature type in GTF annotation', default='exon')
     if sub_program:
         parser.add_argument('--genomeDir', required=True)
         parser.add_argument('--thread', default=1)
@@ -66,7 +67,7 @@ def featureCounts(args):
     except IndexError:
         logging.error('gtf file not found')
         sys.exit()
-    cmd = ['featureCounts', '-a', gtf, '-o', outPrefix, '-R', 'BAM', '-T', str(args.thread),'-t',args.type , args.input]
+    cmd = ['featureCounts', '-a', gtf, '-o', outPrefix, '-R', 'BAM', '-T', str(args.thread),'-t',args.gtf_type , args.input]
     logging.info('%s'%(' '.join(cmd)))
     subprocess.check_call(cmd)
     logging.info('featureCounts done!')
@@ -83,7 +84,6 @@ def featureCounts(args):
 
     logging.info('generate report ...!')
     format_stat(args.outdir+'/'+args.sample+'.summary', args.sample)
-    from report import reporter
     t = reporter(name='featureCounts', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
     logging.info('generate report done!')

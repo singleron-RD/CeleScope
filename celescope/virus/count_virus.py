@@ -8,6 +8,7 @@ import functools
 import logging
 from collections import defaultdict
 from itertools import groupby
+
 import numpy as np
 import pandas as pd
 from scipy.io import mmwrite
@@ -20,12 +21,13 @@ from tools.report import reporter
 logger1 = getlogger()
 
 
-def get_opts_count(parser, sub_program):
+def get_opts_count_virus(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--bam', required=True)
     parser.add_argument('--cells', help='expected number of cells', default="auto")
+
 
 def report_prepare(count_file, downsample_file, outdir):
 
@@ -58,41 +60,21 @@ def report_prepare(count_file, downsample_file, outdir):
         json.dump(data, fh)
 
 
-def barcode_filter_with_magnitude(df, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1):
+def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):
     # col can be readcount or UMI
     # determine validated barcodes
 
     df = df.sort_values(col, ascending=False)
-    if expected_cell_num == "auto":
-        idx = int(3000*0.01)
-        barcode_number = df.shape[0]
-        idx = int(min(barcode_number, idx))
-        if idx == 0:
-            sys.exit("cell number equals zero!")
-        # calculate read counts threshold
-        threshold = int(df.iloc[idx-1, df.columns == col] * 0.1)
-        threshold = max(1, threshold)
-    else:
-        expected_cell_num = int(expected_cell_num)
-        cell_range = int(expected_cell_num * 0.1)
-        cell_low = expected_cell_num - cell_range
-        cell_high = expected_cell_num + cell_range
+    idx = int(expected_cell_num*0.01)
+    barcode_number = df.shape[0]
+    idx = min(barcode_number,idx)
+    if idx==0:
+        sys.exit("cell number equals zero!")
 
-        df_barcode_count = df.groupby(['UMI']).size().reset_index(name='barcode_counts')
-        sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
-        sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i,:]["barcode_cumsum"] >= cell_low:
-                index_low = i-1
-                break
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i,:]["barcode_cumsum"] >= cell_high:
-                index_high = i
-                break            
-        df_sub=sorted_df.iloc[index_low:index_high + 1,:]
-        threshold = df_sub.iloc[np.argmax(np.diff(df_sub["barcode_cumsum"])),:]["UMI"]
-        logger1.info("UMI threshold: " + str(threshold))
-    validated_barcodes = df[df[col] >= threshold].index
+    # calculate read counts threshold
+    threshold = int(df.iloc[idx-1, df.columns==col] * 0.1)
+    threshold = max(1, threshold)
+    validated_barcodes = df[df[col]>=threshold].index
 
     import matplotlib
     matplotlib.use('Agg')
@@ -125,8 +107,7 @@ def correct_umi(fh1, barcode, gene_umi_dict, percent=0.1):
             umi_low = umi_arr.pop()
 
             for u in umi_arr:
-                if float(_dict[umi_low]) / _dict[u] > percent:
-                    break
+                if float(_dict[umi_low]) / _dict[u] > percent: break
                 if hd(umi_low, u) == 1:
                     _dict[u] += _dict[umi_low]
                     del (_dict[umi_low])
@@ -187,7 +168,7 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
     return validated_barcodes, threshold, cell_num, CB_describe
 
 
-def expression_matrix(df, validated_barcodes, matrix_prefix, matrix_10X_prefix):
+def expression_matrix(df, validated_barcodes, matrix_prefix,matrix_10X_prefix):
     df.loc[:, 'mark'] = 'UB'
     df.loc[df['Barcode'].isin(validated_barcodes), 'mark'] = 'CB'
 
@@ -208,6 +189,7 @@ def expression_matrix(df, validated_barcodes, matrix_prefix, matrix_10X_prefix):
         matrix_10X_prefix + '_genes.tsv', index=False, sep='\t')
     mmwrite(matrix_10X_prefix, csr_matrix(table.fillna(0)))
     return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) 
+
 
 def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
          CB_reads_count, reads_mapped_to_transcriptome,stat_file, outdir):
@@ -242,6 +224,7 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
         summary[item] = format_number(summary[item])
     summary.to_csv(stat_file, header=False, sep=':')
 
+
 def sample(p, df, bc):
     tmp = df.sample(frac=p)
     format_str = "%.2f\t%.2f\t%.2f\n"
@@ -271,7 +254,43 @@ def downsample(detail_file, validated_barcodes, downsample_file):
             saturation = s
     return saturation
 
-def count(args):
+
+def genDict(dim=3):
+    if dim==1:
+        return defaultdict(int)
+    else:
+        return defaultdict(lambda: genDict(dim-1))
+
+
+def sum_virus(validated_barcodes, virus_bam, out_read_count_file, out_umi_count_file):
+    # process bam
+    samfile = pysam.AlignmentFile(virus_bam, "rb")
+    count_dic = genDict(dim=3)
+    for read in samfile:
+        tag = read.reference_name
+        attr = read.query_name.split('_')
+        barcode = attr[0]
+        umi = attr[1]
+        if barcode in validated_barcodes:
+            count_dic[barcode][tag][umi] += 1
+
+    # write dic to pandas df
+    rows = []
+    for barcode in count_dic:
+        for tag in count_dic[barcode]:
+            for umi in count_dic[barcode][tag]:
+                rows.append([barcode, tag, umi, count_dic[barcode][tag][umi]])
+    if len(rows) == 0:
+        logging.warning("No cell virus UMI found!")
+
+    df_read = df_read = pd.DataFrame(rows, columns=["barcode", "tag", "UMI", "read_count"])
+    df_read.to_csv(out_read_count_file, sep="\t", index=False)
+
+    df_umi = df_read.groupby(["barcode", "tag"]).agg({"UMI": "count"})
+    df_umi.to_csv(out_umi_count_file, sep="\t")
+
+
+def count_virus(args):
 
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
@@ -299,6 +318,11 @@ def count(args):
     (CB_total_Genes, CB_reads_count, 
         reads_mapped_to_transcriptome)=expression_matrix(df, validated_barcodes, matrix_prefix, matrix_10X_prefix)
 
+    # count virus
+    out_read_count_file = args.outdir + "/" + args.sample + "_virus_read_count.tsv"
+    out_umi_count_file = args.outdir + "/" + args.sample + "_virus_UMI_count.tsv"
+    sum_virus(validated_barcodes, args.virus_bam, out_read_count_file, out_umi_count_file)
+
     # downsampling
     validated_barcodes = set(validated_barcodes)
     downsample_file = args.outdir + '/' + args.sample + '_downsample.txt'
@@ -312,6 +336,7 @@ def count(args):
     report_prepare(marked_counts_file, downsample_file, args.outdir + '/..')
 
     logging.info('count done!')
+    from report import reporter
     t = reporter(
         name='count',sample=args.sample, 
         stat_file=args.outdir + '/stat.txt',
