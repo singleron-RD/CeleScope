@@ -114,7 +114,7 @@ def analysis(args):
         logging.error('gtf file not found')
         sys.exit()
     if not os.path.exists(outdir):
-        os.system('mkdir -p %s'%(outdir))
+        os.system('mkdir -p %s' % (outdir))
     
     # run
     logging.info("convert expression matrix.")
