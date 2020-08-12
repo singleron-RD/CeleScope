@@ -70,6 +70,7 @@ def marker_table(marker_df):
     return html code
     """
     marker_df = marker_df.loc[:,["cluster","gene","avg_logFC","pct.1","pct.2","p_val_adj"]]
+    marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
     marker_gene_table = marker_df.to_html(escape=False,index=False,table_id="marker_gene_table",justify="center")
     return marker_gene_table
 
