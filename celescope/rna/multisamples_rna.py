@@ -102,6 +102,7 @@ def main():
     parser.add_argument('--genomeDir', help='genome index dir', required=True)
     parser.add_argument('--gtf_type', help='Specify attribute type in GTF annotation, default=exon', default='exon')
     parser.add_argument('--conda', help='conda env name', default="celescope1.1")
+    parser.add_argument('--thread', help='thread', default=6)
     args = vars(parser.parse_args())
 
     fq_dict, cells_dict = parse_map(args['mapfile'])
@@ -122,6 +123,7 @@ def main():
     sjm_order = ''
     conda = args['conda']
     app = rootDir + '/celescope.py'
+    thread = args['thread']
 
     for n in fq_dict:
         # sample
@@ -138,12 +140,12 @@ def main():
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir = args['outdir'], sampledir = n, step='01.barcode')
         cmd = '''source activate {conda}; python {app} barcode --fq1 {fq1} --fq2 {fq2} --chemistry {chemistry} 
             --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {samplename} --lowQual {lowQual} 
-            --lowNum {lowNum} --outdir {outdir} --thread 2;'''.format(
+            --lowNum {lowNum} --outdir {outdir} --thread {thread};'''.format(
             conda=conda, app=app, fq1 = arr[0], fq2 =arr[1], chemistry=args['chemistry'],
             pattern=args['pattern'], whitelist=args['whitelist'], linker=args['linker'], samplename=n, 
-            lowQual=args['lowQual'], lowNum=args['lowNum'], outdir=outdir
+            lowQual=args['lowQual'], lowNum=args['lowNum'], outdir=outdir, thread=thread
         )
-        sjm_cmd += generate_sjm(cmd, 'barcode_'+n, m=5, x=2)
+        sjm_cmd += generate_sjm(cmd, 'barcode_'+n, m=5, x=thread)
         sjm_order += 'order barcode_%s after sample_%s\n'%(n, n)
 
         # adapt
@@ -158,21 +160,21 @@ def main():
         fq = outdir + '/' + n + '_clean_2.fq.gz'
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='03.STAR')
         cmd = '''source activate {conda}; python {app} STAR --fq {fq} --sample {samplename} 
-        --genomeDir {genomeDir} --thread 8 --outdir {outdir}'''.format(
+        --genomeDir {genomeDir} --thread {thread} --outdir {outdir}'''.format(
             conda=conda, app=app, fq=fq, samplename=n, genomeDir=args['genomeDir'],
-            outdir=outdir)
+            outdir=outdir, thread=thread)
 
-        sjm_cmd += generate_sjm(cmd, 'STAR_' + n, m=args['starMem'], x=8)
-        sjm_order += 'order STAR_%s after adapt_%s\n'%(n, n)
+        sjm_cmd += generate_sjm(cmd, 'STAR_' + n, m=args['starMem'], x=thread)
+        sjm_order += 'order STAR_%s after adapt_%s\n' % (n, n)
         
         # featureCounts
         bam = outdir + '/' + n + '_Aligned.sortedByCoord.out.bam'
         outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='04.featureCounts')
         cmd = '''source activate {conda}; python {app} featureCounts --input {bam} --type {gtf_type} --sample 
-                {samplename} --thread 8 --outdir {outdir} --genomeDir {genomeDir}'''.format(
+                {samplename} --thread {thread} --outdir {outdir} --genomeDir {genomeDir}'''.format(
                 conda=conda, app=app, bam=bam, genomeDir=args['genomeDir'],
-                samplename=n, gtf_type=args['gtf_type'], outdir=outdir)
-        sjm_cmd += generate_sjm(cmd, 'featureCounts_' + n, m=8, x=8)
+                samplename=n, gtf_type=args['gtf_type'], outdir=outdir, thread=thread)
+        sjm_cmd += generate_sjm(cmd, 'featureCounts_' + n, m=8, x=thread)
         sjm_order += 'order featureCounts_%s after STAR_%s\n'%(n, n)
 
         # count
