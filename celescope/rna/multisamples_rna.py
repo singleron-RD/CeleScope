@@ -41,7 +41,7 @@ def parse_map(mapfile):
             if len(tmp) == 4:
                 cell_number = int(tmp[3])
             else:
-                cell_number = 0
+                cell_number = "auto"
             try:
                 pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
                 pattern1_2 = library_path + '/' + library_id + '*' + 'R1_*.fastq.gz'
