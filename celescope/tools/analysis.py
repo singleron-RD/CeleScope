@@ -11,11 +11,12 @@ import pandas as pd
 import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
-from utils import getlogger
+from tools.utils import getlogger
 
 logger1 = getlogger()
 # invoke by celescope.py under rootdir
 toolsdir = os.path.realpath(sys.path[0] + '/tools')
+
 
 def report_prepare(outdir, tsne_df, marker_df):
     json_file = outdir + '/../.data.json'
@@ -151,13 +152,3 @@ def get_opts_analysis(parser, sub_program):
         parser.add_argument('--genomeDir', help='genome directory', required=True)
 
 
-if __name__ == "__main__":
-    tsne_df = pd.read_csv("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/scope_tools_1.0/out/06.analysis/tsne_coord.tsv", sep="\t")
-    marker_df = pd.read_csv("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/scope_tools_1.0/out/06.analysis/markers.tsv", sep="\t")
-    report_prepare("./out",tsne_df,marker_df)
-    from report import reporter
-    t = reporter(
-        name='analysis', 
-        #stat_file=args.outdir + '/stat.txt',
-        outdir= './out')
-    t.get_report()
