@@ -12,6 +12,8 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from tools.utils import getlogger
+from tools.report import reporter
+from tools.utils import glob_genomeDir
 
 logger1 = getlogger()
 # invoke by celescope.py under rootdir
@@ -88,12 +90,14 @@ def gene_convert(gtf_file, matrix_file):
                 gene_name = gene_name_pattern.findall(attributes)[-1]
                 id_name[gene_id] = gene_name
 
-    matrix = pd.read_csv(matrix_file,sep="\t")
+    matrix = pd.read_csv(matrix_file, sep="\t")
+
     def convert(gene_id):
         if gene_id in id_name:
             return id_name[gene_id]
         else:
             return np.nan
+
     gene_name_col = matrix.geneID.apply(convert)
     matrix.geneID = gene_name_col
     matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
@@ -103,45 +107,44 @@ def gene_convert(gtf_file, matrix_file):
 
 
 def analysis(args):
-    logging.info('analysis ...!')
+    logger1.info('analysis ...!')
+
+    # check
+    refFlat, gtf = glob_genomeDir(args.genomeDir, logger1)
+
     # check dir
     outdir = args.outdir
     sample = args.sample
     matrix_file = args.matrix_file
-    try:
-        gtf = glob.glob(args.genomeDir + "/*.gtf")[0]
-    except IndexError:
-        logging.error('gtf file not found')
-        sys.exit()
+
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
     
-    # run
-    logging.info("convert expression matrix.")
-    new_matrix = gene_convert(gtf, matrix_file)  
-    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(outdir=outdir,sample=sample)
-    new_matrix.to_csv(new_matrix_file,sep="\t",index=False,compression='gzip')
-    logging.info("expression matrix written.")
+    # runFalse
+    logger1.info("convert expression matrix.")
+    new_matrix = gene_convert(gtf, matrix_file)
+    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(outdir=outdir, sample=sample)
+    new_matrix.to_csv(new_matrix_file, sep="\t", index=False, compression='gzip')
+    logger1.info("expression matrix written.")
 
     # run_R
-    logging.info("Seurat running.")
+    logger1.info("Seurat running.")
     cmd = "Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {new_matrix_file}".format(
-        app=toolsdir+"/run_analysis.R",sample = sample, outdir=outdir,new_matrix_file=new_matrix_file)
+        app=toolsdir+"/run_analysis.R", sample=sample, outdir=outdir, new_matrix_file=new_matrix_file)
     os.system(cmd)
-    logging.info("Seurat done.")
+    logger1.info("Seurat done.")
 
     # report
     tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)
     marker_df_file = "{outdir}/markers.tsv".format(outdir=outdir)
-    tsne_df = pd.read_csv(tsne_df_file,sep="\t")
-    marker_df = pd.read_csv(marker_df_file,sep="\t")
-    report_prepare(outdir,tsne_df,marker_df)
+    tsne_df = pd.read_csv(tsne_df_file, sep="\t")
+    marker_df = pd.read_csv(marker_df_file, sep="\t")
+    report_prepare(outdir,tsne_df, marker_df)
 
-    logging.info('generate report ...!')
-    from report import reporter
+    logger1.info('generate report ...!')
     t = reporter(name='analysis', sample=args.sample, outdir=args.outdir + '/..')
     t.get_report()
-    logging.info('generate report done!')
+    logger1.info('generate report done!')
     
 
 def get_opts_analysis(parser, sub_program):

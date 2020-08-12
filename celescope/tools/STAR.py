@@ -4,8 +4,8 @@
 import os, re, sys, json, logging
 import subprocess 
 import glob
-from tools.utils import format_number
-from tools.utils import getlogger
+from tools.utils import format_number, getlogger
+from tools.utils import glob_genomeDir
 from tools.report import reporter
 
 logger1 = getlogger()
@@ -66,37 +66,35 @@ def format_stat(map_log, region_log, samplename):
 
 def STAR(args):
     logging.info('STAR ...!')
+    # check
+    refFlat, gtf = glob_genomeDir(args.genomeDir, logger1)
+
     # check dir
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s'%(args.outdir))
 
     # run STAR
     outPrefix = args.outdir + '/' + args.sample + '_'
-    outBam =  args.outdir + '/' + args.sample + '_'
+    outBam = args.outdir + '/' + args.sample + '_'
     # cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir, '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax', '1', '--outReadsUnmapped', 'Fastx', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']    
     cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir, '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax', '1', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']    
-    logging.info('%s' % (' '.join(cmd)))
+    logger1.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd )
-    logging.info('STAR done!')
+    logger1.info('STAR done!')
 
-    logging.info('stat mapping region ...!')
-    try:
-        refFlat = glob.glob(args.genomeDir + "/*.refFlat")[0]
-    except IndexError:
-        logging.error('refFlat file not found')
-        sys.exit()
+    logger1.info('stat mapping region ...!')
     outBam = outPrefix + 'Aligned.sortedByCoord.out.bam'
     region_txt = args.outdir + '/' + args.sample + '_region.log'
     cmd = ['picard', '-Xmx4G', '-XX:ParallelGCThreads=4', 'CollectRnaSeqMetrics', 'I=%s'%(outBam), 'O=%s' % (region_txt), 'REF_FLAT=%s' % (refFlat), 'STRAND=NONE', 'VALIDATION_STRINGENCY=SILENT']
-    logging.info('%s'%(' '.join(cmd)))
+    logger1.info('%s'%(' '.join(cmd)))
     res = subprocess.run(cmd, stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
-    logging.info(res.stdout)
-    logging.info('stat mapping region done!')
+    logger1.info(res.stdout)
+    logger1.info('stat mapping region done!')
 
-    logging.info('generate report ...!')
+    logger1.info('generate report ...!')
     plot = format_stat(args.outdir+'/'+args.sample+'_Log.final.out', region_txt, args.sample)
 
     t = reporter(name='STAR', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..', plot=plot)
     t.get_report()
-    logging.info('generate report done!')
+    logger1.info('generate report done!')
 

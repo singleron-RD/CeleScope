@@ -11,16 +11,46 @@ from collections import defaultdict
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import glob
+import sys
 
 
 def getlogger():
-    logging.basicConfig(level=logging.INFO,format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
     return logger
 
 
 def format_number(number: int) -> str:
     return format(number, ",")
+
+
+def glob_genomeDir(genomeDir, logger1):
+    refFlat = glob.glob(genomeDir + "/*.refFlat")
+    if (len(refFlat) > 1):
+        sys.exit("ERROR: Multiple refFlat file in " + genomeDir)
+    elif (len(refFlat) == 0):
+        sys.exit("ERROR: refFlat file not found in " + genomeDir)
+    else:
+        refFlat = refFlat[0]
+        logger1.info("refFlat file found: " + refFlat)
+    
+    gtf = glob.glob(genomeDir + "/*.gtf")
+    if (len(gtf) == 0):
+        sys.exit("ERROR: gtf file not found in " + genomeDir)
+    elif (len(gtf) > 1):
+        gtf = glob.glob(genomeDir + "/*.chr.gtf")
+        if (len(gtf) > 1):
+            sys.exit("ERROR: Multiple gtf file in " + genomeDir)
+        else:
+            gtf = gtf[0]
+            logger1.info("chr gtf file found: " + gtf)
+    else:
+        gtf = gtf[0]
+        logger1.info("gtf file found: " + gtf)
+
+    return refFlat, gtf
+
 
 
 def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):

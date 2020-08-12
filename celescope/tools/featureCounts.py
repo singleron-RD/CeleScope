@@ -6,14 +6,15 @@ import logging
 import subprocess
 import glob
 import sys
-from tools.utils import format_number
-from tools.utils import getlogger
+from tools.utils import format_number, getlogger
+from tools.utils import glob_genomeDir
 from tools.report import reporter
+
 
 logger1 = getlogger()
 
 
-def get_opts_featureCounts(parser,sub_program): 
+def get_opts_featureCounts(parser, sub_program): 
 
     parser.add_argument('--gtf_type', help='Specify feature type in GTF annotation', default='exon')
     if sub_program:
@@ -55,47 +56,37 @@ def format_stat(log, samplename):
 def featureCounts(args):
     """
     """
-    logging.info('featureCounts ...!')
+    logger1.info('featureCounts ...!')
+
+    # check
+    refFlat, gtf = glob_genomeDir(args.genomeDir, logger1)
+
     # check dir
     if not os.path.exists(args.outdir):
         os.mkdir(args.outdir)
 
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
-    try:
-        gtf = glob.glob(args.genomeDir + "/*.gtf")[0]
-    except IndexError:
-        logging.error('gtf file not found')
-        sys.exit()
     cmd = ['featureCounts', '-a', gtf, '-o', outPrefix, '-R', 'BAM', '-T', str(args.thread),'-t',args.gtf_type , args.input]
-    logging.info('%s'%(' '.join(cmd)))
+    logger1.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
-    logging.info('featureCounts done!')
+    logger1.info('featureCounts done!')
 
     subprocess.check_call(['which', 'samtools'])
 
     # sort by name:BC and umi 
-    logging.info('samtools sort ...!')
+    logger1.info('samtools sort ...!')
     bam_basename = os.path.basename(args.input)
     cmd = ['samtools', 'sort', '-n', '-@','3', '-o', outPrefix+'_name_sorted.bam', args.outdir + '/' + bam_basename + '.featureCounts.bam']
-    logging.info('%s'%(' '.join(cmd)))
+    logger1.info('%s'%(' '.join(cmd)))
     subprocess.check_call(cmd)
-    logging.info('samtools sort done!')
+    logger1.info('samtools sort done!')
 
-    logging.info('generate report ...!')
+    logger1.info('generate report ...!')
     format_stat(args.outdir+'/'+args.sample+'.summary', args.sample)
     t = reporter(name='featureCounts', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
-    logging.info('generate report done!')
-
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description='')
-    get_opts4(parser)
-    args = parser.parse_args() 
-    featureCounts(args)
+    logger1.info('generate report done!')
 
 
-if __name__ == '__main__':
-    main()
 
