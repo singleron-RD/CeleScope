@@ -91,5 +91,14 @@ if __name__ == '__main__':
     get_opts_analysis(parser_run, False)
     parser_run.set_defaults(func=virus)
 
+    from virus.capture_virus import capture_virus
+    parser_run = subparsers.add_parser('capture_virus', conflict_handler='resolve')
+    get_opts_sample(parser_run, False)
+    get_opts_barcode(parser_run, False)
+    get_opts_cutadapt(parser_run, False)
+    get_opts_STAR_virus(parser_run, False)
+    get_opts_count_virus(parser_run, False)
+    parser_run.set_defaults(func=virus)
+
     args = parser.parse_args()
     args.func(args)

@@ -12,20 +12,6 @@ from collections import defaultdict
 rootDir = os.path.realpath(sys.path[0] + '/../')
 rnaDir = os.path.realpath(sys.path[0] + '/../rna')
 
-'''
-def parse_map(mapfile):
-    dict = defaultdict(list)
-    with open(mapfile) as fh:
-        for line in fh:
-            line = line.strip()
-            if not line: continue
-            if line.startswith('#'): continue
-            tmp = line.split('\t')
-            dict[tmp[0]] = tmp[1:]
-
-    return dict
-'''
-
 
 def parse_map(mapfile):
     fq_dict = defaultdict(list)

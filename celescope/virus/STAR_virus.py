@@ -2,9 +2,8 @@
 # coding=utf8
 
 import os
-from tools.utils import getlogger
-
-logger1 = getlogger()	
+import logging
+logger1 = logging.getLogger(__name__)
 
 
 def STAR_virus(args):
@@ -13,7 +12,7 @@ def STAR_virus(args):
 
     sample = args.sample
     outdir = args.outdir
-    unmapped_read = args.unmapped_read
+    input_read = args.input_read
     virus_genomeDir = args.virus_genomeDir
     thread = args.thread
 
@@ -27,13 +26,13 @@ def STAR_virus(args):
     # host genome align
     cmd = "STAR \
  --genomeDir {genome} \
- --readFilesIn {unmapped_read}\
+ --readFilesIn {input_read}\
  --outFilterMatchNmin 35\
  --outSAMtype BAM SortedByCoordinate\
  --runThreadN {runThreadN}\
  --limitBAMsortRAM 1933647594\
  --outFileNamePrefix {out_prefix}".format(genome=virus_genomeDir,
-    unmapped_read=unmapped_read, runThreadN=thread, out_prefix=out_prefix)
+    input_read=input_read, runThreadN=thread, out_prefix=out_prefix)
 
     logger1.info(cmd)
     os.system(cmd)
@@ -49,6 +48,6 @@ def get_opts_STAR_virus(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument("--unmapped_read", required=True)
+        parser.add_argument("--input_read", required=True)
         parser.add_argument("--thread", help='STAR thread', default=1)
     parser.add_argument('--virus_genomeDir', help='virus genome dir', required=True)
