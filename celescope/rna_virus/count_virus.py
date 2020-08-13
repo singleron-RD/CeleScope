@@ -12,14 +12,6 @@ from tools.report import reporter
 logger1 = logging.getLogger(__name__)
 
 
-def get_opts_count_virus(parser, sub_program):
-    if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--virus_bam', required=True)
-        parser.add_argument('--barcode_file', required=True)
-
-
 def genDict(dim=3):
     if dim == 1:
         return defaultdict(int)
@@ -73,3 +65,12 @@ def count_virus(args):
     sum_virus(validated_barcodes, args.virus_bam, out_read_count_file, out_umi_count_file)
 
     logger1.info('virus count done!')
+
+
+def get_opts_count_virus(parser, sub_program):
+    if sub_program:
+        parser.add_argument('--outdir', help='output dir', required=True)
+        parser.add_argument('--sample', help='sample name', required=True)
+        parser.add_argument('--virus_bam', required=True)
+        parser.add_argument('--barcode_file', required=True)
+        parser.add_argument('--assay', help='assay', required=True)

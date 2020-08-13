@@ -10,8 +10,9 @@ from tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 ASSAY_DICT = {"rna": "Single Cell RNA-Seq",
-            "virus": "Single Cell RNA-Seq Virus",
+            "rna_virus": "Single Cell RNA-Seq Virus",
             }
+
 
 def sample_info(args):
     if not os.path.exists(args.outdir):

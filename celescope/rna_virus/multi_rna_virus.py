@@ -123,10 +123,11 @@ def main():
     lowNum = args['lowNum']
     starMem = args['starMem']
     gtf_type = args['gtf_type']
+    assay = "rna_virus"
 
     basedir = args['outdir']
     steps = ['sample', 'barcode', 'cutadapt', 'STAR', "STAR_virus", "featureCounts", "count", "count_virus",
-            'analysis']
+            'analysis_rna_virus']
 
     for sample in fq_dict:
         outdir_dic = {}
@@ -138,8 +139,8 @@ def main():
 
         # sample
         step = "sample"
-        cmd = f'''source activate {conda}; python {app} {step} --chemistry {chemistry} --description "{description}"
-        --sample {sample} --outdir {outdir_dic[step]} --genomeDir {genomeDir}'''
+        cmd = f'''source activate {conda}; python {app} {step} --chemistry {chemistry} 
+        --sample {sample} --outdir {outdir_dic[step]} --genomeDir {genomeDir} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}')
         last_step = step
 
@@ -148,7 +149,7 @@ def main():
         step = "barcode"
         cmd = f'''source activate {conda}; python {app} {step} --fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry} 
             --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {sample} --lowQual {lowQual} 
-            --lowNum {lowNum} --outdir {outdir_dic[step]} --thread {thread}'''
+            --lowNum {lowNum} --outdir {outdir_dic[step]} --thread {thread} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
@@ -157,7 +158,7 @@ def main():
         step = "cutadapt"
         fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
         cmd = f'''source activate {conda}; python {app} {step} --fq {fq} --sample {sample} --outdir 
-            {outdir_dic[step]}'''
+            {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
@@ -166,7 +167,7 @@ def main():
         step = 'STAR'
         fq = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
         cmd = f'''source activate {conda}; python {app} {step} --fq {fq} --sample {sample} 
-        --genomeDir {genomeDir} --thread {thread} --outdir {outdir_dic[step]}'''
+        --genomeDir {genomeDir} --thread {thread} --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=starMem, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
@@ -174,8 +175,8 @@ def main():
         # STAR_virus
         step = 'STAR_virus'
         input_read = f'{outdir_dic["STAR"]}/{sample}_Unmapped.out.mate1'
-        cmd = f'''source activate {conda}; python {app} STAR_virus --input_read {input_read} --sample {sample} 
-        --virus_genomeDir {virus_genomeDir} --thread {thread} --outdir {outdir_dic[step]}'''
+        cmd = f'''source activate {conda}; python {app} {step} --input_read {input_read} --sample {sample} 
+        --virus_genomeDir {virus_genomeDir} --thread {thread} --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=starMem, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
@@ -183,8 +184,8 @@ def main():
         # featureCounts
         step = 'featureCounts'
         input = f'{outdir_dic["STAR"]}/{sample}_Aligned.sortedByCoord.out.bam'
-        cmd = f'''source activate {conda}; python {app} featureCounts --input {input} --gtf_type {gtf_type} --sample 
-                {sample} --thread {thread} --outdir {outdir_dic[step]} --genomeDir {genomeDir}'''
+        cmd = f'''source activate {conda}; python {app} {step} --input {input} --gtf_type {gtf_type} --sample 
+                {sample} --thread {thread} --outdir {outdir_dic[step]} --genomeDir {genomeDir} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=8, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
@@ -192,8 +193,8 @@ def main():
         # count
         step = 'count'
         bam = f'{outdir_dic["featureCounts"]}/{sample}_name_sorted.bam'
-        cmd = f'''source activate {conda}; python {app} count --bam {bam} --sample {sample} --cells {cells_dict[sample]} 
-            --outdir {outdir_dic[step]}'''
+        cmd = f'''source activate {conda}; python {app} {step} --bam {bam} --sample {sample} --cells {cells_dict[sample]} 
+            --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=8, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
@@ -202,17 +203,18 @@ def main():
         step = 'count_virus'
         virus_bam = f'{outdir_dic["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
         barcode_file = f'{outdir_dic["count"]}/matrix_10X/{sample}_cellbarcode.tsv'
-        cmd = f'''source activate {conda}; python {app} count_virus --virus_bam {virus_bam} --sample {sample} 
-            --outdir {outdir_dic[step]} --barcode_file {barcode_file}'''        
+        cmd = f'''source activate {conda}; python {app} {step} --virus_bam {virus_bam} --sample {sample} 
+            --outdir {outdir_dic[step]} --barcode_file {barcode_file} --assay {assay}'''        
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=20, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
         # analysis
-        step = 'analysis'
+        step = 'analysis_rna_virus'
         matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.xls'
-        cmd = f'''source activate {conda}; python {app} analysis --matrix_file {matrix_file} --sample {sample}  
-            --outdir {outdir_dic[step]} --genomeDir {genomeDir}'''
+        virus_file = f'{outdir_dic["count_virus"]}/{sample}_virus_UMI_count.tsv'
+        cmd = f'''source activate {conda}; python {app} {step} --matrix_file {matrix_file} --sample {sample}  
+            --outdir {outdir_dic[step]} --genomeDir {genomeDir} --virus_file {virus_file} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=15, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step

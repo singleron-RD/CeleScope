@@ -6,11 +6,12 @@ from collections import defaultdict, namedtuple
 import sys
 
 
-def virus(args):
+def rna_virus(args):
     steps = ['sample', 'barcode', 'cutadapt', 'STAR', "STAR_virus", "featureCounts", "count", "count_virus",
         'analysis']
     sample = args.sample
-
+    args.assay = "rna_virus"
+    
     if not os.path.exists(baseDir):
         os.system('mkdir -p %s' % baseDir)   
 
@@ -70,6 +71,7 @@ def virus(args):
 
     step = 'analysis'
     args.matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.xls'
+    args.virus_file = f'{outdir_dic["virus_count"]}/{sample}_virus_UMI_count.tsv'
     args.outdir = f'{sample}/{outdir_dic["step"]}/' 
     from tools.analysis import analysis
     analysis(args)   

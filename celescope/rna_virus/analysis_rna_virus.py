@@ -11,9 +11,11 @@ import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from tools.report import reporter
+from tools.utils import glob_genomeDir
 
 logger1 = logging.getLogger(__name__)
-toolsdir = os.path.realpath(sys.path[0] + '/../tools/')
+# invoke by celescope
+toolsdir = os.path.realpath(sys.path[0] + '/tools/')
 
 
 def report_prepare(outdir, tsne_df, marker_df, virus_df):
@@ -103,12 +105,13 @@ def gene_convert(gtf_file, matrix_file):
     return matrix    
 
 
-def analysis(args):
+def analysis_rna_virus(args):
     logger1.info('virus_analysis ...!')
+
+    refFlat, gtf_file = glob_genomeDir(args.genomeDir, logger1)
     # check dir
     outdir = args.outdir
     sample = args.sample
-    gtf_file = args.annot
     matrix_file = args.matrix_file
     virus_file =args.virus_file
 
@@ -139,15 +142,16 @@ def analysis(args):
     report_prepare(outdir, tsne_df, marker_df, virus_df)
 
     logger1.info('generate report ...!')
-    t = reporter(name='analysis_virus', sample=args.sample, outdir=args.outdir + '/..')
+    t = reporter(name='analysis_rna_virus', assay=args.assay, sample=args.sample, outdir=args.outdir + '/..')
     t.get_report()
     logger1.info('generate report done!')    
 
 
-def get_opts_analysis(parser, sub_program):
+def get_opts_analysis_rna_virus(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--matrix_file', help='matrix file xls',required=True)
-        parser.add_argument('--annot', help='gtf',required=True)
+        parser.add_argument('--genomeDir', help='genome directory', required=True)
         parser.add_argument('--virus_file', help='virus UMI count file',required=True)
+        parser.add_argument('--assay', help='assay', required=True)

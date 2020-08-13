@@ -199,7 +199,7 @@ def main():
     # merged report 
     step = "merge_report"
     cmd = '''source activate {conda}; python {app} --samples {samples} --workdir {workdir};'''.format(
-        conda=conda, app=rnaDir + '/merge_table_virus.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
+        conda=conda, app=rnaDir + '/merge_table_rna.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
     sjm_cmd += generate_sjm(cmd, 'merge_report')
     for sample in fq_dict:
         sjm_order += f'order {step} after {last_step}_{sample}\n'

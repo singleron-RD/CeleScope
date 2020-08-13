@@ -10,7 +10,8 @@ sys.path.append('../tools')
 def rna(args):
     #tmp = vars(args)
     sample = args.sample
-    baseDir = args.sample    
+    baseDir = args.sample  
+    args.assay = "rna"  
 
     args.outdir = baseDir + '/00.sample'
     args.description = "Single Cell RNA-Seq"

@@ -335,7 +335,7 @@ def barcode(args):
     logger1.info('fastqc done!')
     
     logger1.info('generate report ...!')
-    t = reporter(name='barcode', assay=args.assy, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
+    t = reporter(name='barcode', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
     logger1.info('generate report done!')
 
