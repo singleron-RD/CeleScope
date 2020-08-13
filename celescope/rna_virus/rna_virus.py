@@ -10,15 +10,12 @@ def rna_virus(args):
     steps = ['sample', 'barcode', 'cutadapt', 'STAR', "STAR_virus", "featureCounts", "count", "count_virus",
         'analysis']
     sample = args.sample
-    args.assay = "rna_virus"
-    
-    if not os.path.exists(baseDir):
-        os.system('mkdir -p %s' % baseDir)   
+    args.assay = "rna_virus"   
 
     outdir_dic = {}
     index = 0
     for step in steps:
-        outdir = f"{baseDir}/{sample}/{index:02d}.{step}"
+        outdir = f"{sample}/{index:02d}.{step}"
         outdir_dic.update({step: outdir})
         index += 1
 
@@ -63,7 +60,7 @@ def rna_virus(args):
     count(args)
 
     step = 'count_virus'
-    args.virus_bam = f'{outdir_dic["STAR"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+    args.virus_bam = f'{outdir_dic["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
     args.barcode_file = f'{outdir_dic["count"]}/matrix_10X/{sample}_cellbarcode.tsv'
     args.outdir = f'{sample}/{outdir_dic["step"]}/' 
     from virus.count_virus import count_virus

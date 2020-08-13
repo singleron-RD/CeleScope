@@ -11,6 +11,7 @@ from tools.report import reporter
 logger1 = logging.getLogger(__name__)
 ASSAY_DICT = {"rna": "Single Cell RNA-Seq",
             "rna_virus": "Single Cell RNA-Seq Virus",
+            'capture_virus': "Single cell Capture Virus"
             }
 
 

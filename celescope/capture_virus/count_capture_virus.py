@@ -5,6 +5,7 @@ from scipy.sparse import csr_matrix
 import pysam
 import logging
 import os
+import glob
 from collections import defaultdict
 from tools.utils import format_number
 from tools.report import reporter
@@ -56,7 +57,9 @@ def count_virus(args):
         os.system('mkdir -p %s' % (args.outdir))
     
     # read barcodes
-    df_barcodes = pd.read_csv(args.barcode_file, header=None)
+    barcode_file = glob.glob(f'{args.match_dir}/*count/matrix_10X/*_cellbarcode.tsv')[0]
+    logger1.info(f'barcode file found: {barcode_file}')
+    df_barcodes = pd.read_csv(barcode_file, header=None)
     validated_barcodes = list(df_barcodes.iloc[:,0])
 
     # count virus
@@ -68,9 +71,9 @@ def count_virus(args):
 
 
 def get_opts_count_virus(parser, sub_program):
+    parser.add_argument('--match_dir', help='matched rna_virus directory', required=True)
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--virus_bam', required=True)
-        parser.add_argument('--barcode_file', required=True)
         parser.add_argument('--assay', help='assay', required=True)
