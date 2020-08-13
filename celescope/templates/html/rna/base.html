@@ -101,7 +101,7 @@
 <body>
   <header class="navbar navbar-fixed-top" style="background: #ffffff">
     <div class="navbar-brand">
-      {% include "logo.html"%}
+      {% include "html/common/logo.html"%}
     </div>
   </header>
 
@@ -109,31 +109,31 @@
       <h1 align="center">GEXSCOPE Report </h1>
 
       {% if sample_summary is defined %}
-      {% include "sample_summary.html"%}
+      {% include "html/common/sample_summary.html"%}
       {% endif %}
 
       {% if barcode_summary is defined %}
-      {% include "barcode_summary.html"%}
+      {% include "html/common/barcode_summary.html"%}
       {% endif %}
 
       {% if cutadapt_summary is defined %}
-      {% include "cutadapt_summary.html"%}
+      {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
 
       {% if STAR_summary is defined %}
-      {% include "STAR_summary.html"%}
+      {% include "html/rna/STAR_summary.html"%}
       {% endif %}
 
       {% if featureCounts_summary is defined%}
-      {% include "featureCounts_summary.html"%}
+      {% include "html/rna/featureCounts_summary.html"%}
       {% endif %}
 
       {% if umi_summary is defined %}
-      {% include "umi_summary.html"%}
+      {% include "html/rna/umi_summary.html"%}
       {% endif %}
 
       {% if cluster_tsne is defined %}
-      {% include "analysis_summary.html"%}
+      {% include "html/rna/analysis_summary.html"%}
       {% endif %}
 
     </div>

@@ -8,18 +8,15 @@ import logging
 import re
 import numpy as np
 import pandas as pd
-import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from tools.report import reporter
-from tools.utils import glob_genomeDir
 
 logger1 = logging.getLogger(__name__)
-# invoke by celescope.py under rootdir
-toolsdir = os.path.realpath(sys.path[0] + '/tools')
+toolsdir = os.path.realpath(sys.path[0] + '/../tools/')
 
 
-def report_prepare(outdir, tsne_df, marker_df):
+def report_prepare(outdir, tsne_df, marker_df, virus_df):
     json_file = outdir + '/../.data.json'
     if not os.path.exists(json_file):
         data = {}
@@ -29,7 +26,7 @@ def report_prepare(outdir, tsne_df, marker_df):
         fh.close()
 
     data["cluster_tsne"] = cluster_tsne_list(tsne_df)
-    data["gene_tsne"] = gene_tsne_list(tsne_df)
+    data["virus_tsne"] = virus_tsne_list(tsne_df, virus_df)
     data["marker_gene_table"] = marker_table(marker_df)
 
     with open(json_file, 'w') as fh:
@@ -53,14 +50,17 @@ def cluster_tsne_list(tsne_df):
     return res
 
 
-def gene_tsne_list(tsne_df):
+def virus_tsne_list(tsne_df, virus_df):
     """
     return data dic
     """
-    tSNE_1 = list(tsne_df.tSNE_1)
-    tSNE_2 = list(tsne_df.tSNE_2)
-    Gene_Counts = list(tsne_df.Gene_Counts)
-    res = {"tSNE_1":tSNE_1,"tSNE_2":tSNE_2,"Gene_Counts":Gene_Counts}
+    tsne_df.rename(columns={"Unnamed: 0":"barcode"},inplace=True)
+    df = pd.merge(tsne_df,virus_df,on="barcode",how="left")
+    df["UMI"] = df["UMI"].fillna(0)
+    tSNE_1 = list(df.tSNE_1)
+    tSNE_2 = list(df.tSNE_2)
+    virus_UMI = list(df.UMI)
+    res = {"tSNE_1":tSNE_1,"tSNE_2":tSNE_2,"virus_UMI":virus_UMI}
     return res
 
 
@@ -69,7 +69,6 @@ def marker_table(marker_df):
     return html code
     """
     marker_df = marker_df.loc[:,["cluster","gene","avg_logFC","pct.1","pct.2","p_val_adj"]]
-    marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
     marker_gene_table = marker_df.to_html(escape=False,index=False,table_id="marker_gene_table",justify="center")
     return marker_gene_table
 
@@ -90,14 +89,12 @@ def gene_convert(gtf_file, matrix_file):
                 gene_name = gene_name_pattern.findall(attributes)[-1]
                 id_name[gene_id] = gene_name
 
-    matrix = pd.read_csv(matrix_file, sep="\t")
-
+    matrix = pd.read_csv(matrix_file,sep="\t")
     def convert(gene_id):
         if gene_id in id_name:
             return id_name[gene_id]
         else:
             return np.nan
-
     gene_name_col = matrix.geneID.apply(convert)
     matrix.geneID = gene_name_col
     matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
@@ -107,30 +104,28 @@ def gene_convert(gtf_file, matrix_file):
 
 
 def analysis(args):
-    logger1.info('analysis ...!')
-
-    # check
-    refFlat, gtf = glob_genomeDir(args.genomeDir, logger1)
-
+    logger1.info('virus_analysis ...!')
     # check dir
     outdir = args.outdir
     sample = args.sample
+    gtf_file = args.annot
     matrix_file = args.matrix_file
+    virus_file =args.virus_file
 
     if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % (outdir))
+        os.system('mkdir -p %s'%(outdir))
     
-    # runFalse
+    # run
     logger1.info("convert expression matrix.")
-    new_matrix = gene_convert(gtf, matrix_file)
-    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(outdir=outdir, sample=sample)
-    new_matrix.to_csv(new_matrix_file, sep="\t", index=False, compression='gzip')
+    new_matrix = gene_convert(gtf_file, matrix_file)  
+    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(outdir=outdir,sample=sample)
+    new_matrix.to_csv(new_matrix_file,sep="\t",index=False,compression='gzip')
     logger1.info("expression matrix written.")
 
     # run_R
     logger1.info("Seurat running.")
     cmd = "Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {new_matrix_file}".format(
-        app=toolsdir+"/run_analysis.R", sample=sample, outdir=outdir, new_matrix_file=new_matrix_file)
+        app=toolsdir+"/run_analysis.R",sample = sample, outdir=outdir,new_matrix_file=new_matrix_file)
     os.system(cmd)
     logger1.info("Seurat done.")
 
@@ -139,20 +134,20 @@ def analysis(args):
     marker_df_file = "{outdir}/markers.tsv".format(outdir=outdir)
     tsne_df = pd.read_csv(tsne_df_file, sep="\t")
     marker_df = pd.read_csv(marker_df_file, sep="\t")
-    report_prepare(outdir, tsne_df, marker_df)
+    virus_df = pd.read_csv(virus_file, sep="\t")
+
+    report_prepare(outdir, tsne_df, marker_df, virus_df)
 
     logger1.info('generate report ...!')
-    t = reporter(name='analysis', assay="rna", sample=args.sample, outdir=args.outdir + '/..')
+    t = reporter(name='analysis_virus', sample=args.sample, outdir=args.outdir + '/..')
     t.get_report()
-    logger1.info('generate report done!')
-    
+    logger1.info('generate report done!')    
+
 
 def get_opts_analysis(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--matrix_file', help='matrix file', required=True)
-        parser.add_argument('--genomeDir', help='genome directory', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
-
-
+        parser.add_argument('--matrix_file', help='matrix file xls',required=True)
+        parser.add_argument('--annot', help='gtf',required=True)
+        parser.add_argument('--virus_file', help='virus UMI count file',required=True)

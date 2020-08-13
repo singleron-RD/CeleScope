@@ -63,7 +63,7 @@ def virus(args):
 
     step = 'count_virus'
     args.virus_bam = f'{outdir_dic["STAR"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
-    args.barcode_file = f'{outdir_dic["STAR"]}/matrix_10X/{sample}_cellbarcode.tsv'
+    args.barcode_file = f'{outdir_dic["count"]}/matrix_10X/{sample}_cellbarcode.tsv'
     args.outdir = f'{sample}/{outdir_dic["step"]}/' 
     from virus.count_virus import count_virus
     count_virus(args)

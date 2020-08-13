@@ -200,8 +200,8 @@ def main():
 
         # count_virus
         step = 'count_virus'
-        virus_bam = f'{outdir_dic["STAR"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
-        barcode_file = f'{outdir_dic["STAR"]}/matrix_10X/{sample}_cellbarcode.tsv'
+        virus_bam = f'{outdir_dic["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        barcode_file = f'{outdir_dic["count"]}/matrix_10X/{sample}_cellbarcode.tsv'
         cmd = f'''source activate {conda}; python {app} count_virus --virus_bam {virus_bam} --sample {sample} 
             --outdir {outdir_dic[step]} --barcode_file {barcode_file}'''        
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=20, x=thread)

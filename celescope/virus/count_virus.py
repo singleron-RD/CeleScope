@@ -4,6 +4,7 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
 import logging
+import os
 from collections import defaultdict
 from tools.utils import format_number
 from tools.report import reporter

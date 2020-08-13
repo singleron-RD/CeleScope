@@ -335,7 +335,7 @@ def barcode(args):
     logger1.info('fastqc done!')
     
     logger1.info('generate report ...!')
-    t = reporter(name='barcode', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
+    t = reporter(name='barcode', assay=args.assy, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
     logger1.info('generate report done!')
 
@@ -343,6 +343,7 @@ def barcode(args):
 def get_opts_barcode(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
+        parser.add_argument('--assay', help='assay', required=True)
     parser.add_argument('--sample', help='sample name', required=True)
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)

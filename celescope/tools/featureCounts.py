@@ -13,18 +13,6 @@ from tools.report import reporter
 logger1 = logging.getLogger(__name__)
 
 
-def get_opts_featureCounts(parser, sub_program): 
-
-    parser.add_argument('--gtf_type', help='Specify feature type in GTF annotation', default='exon')
-    if sub_program:
-        parser.add_argument('--genomeDir', required=True)
-        parser.add_argument('--thread', default=1)
-        parser.add_argument('--input', required=True)
-        #parser.add_argument('--format', default='BAM')
-        parser.add_argument('--outdir', help='output dir',required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-
-
 def format_stat(log, samplename):
     #Assigned, Unassigned_NoFeatures, Unassigned_Ambiguity=(0, 0, 0)
     tmp_arr = []
@@ -83,9 +71,19 @@ def featureCounts(args):
 
     logger1.info('generate report ...!')
     format_stat(args.outdir+'/'+args.sample+'.summary', args.sample)
-    t = reporter(name='featureCounts', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
+    t = reporter(name='featureCounts', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
     logger1.info('generate report done!')
 
 
+def get_opts_featureCounts(parser, sub_program): 
 
+    parser.add_argument('--gtf_type', help='Specify feature type in GTF annotation', default='exon')
+    if sub_program:
+        parser.add_argument('--genomeDir', required=True)
+        parser.add_argument('--thread', default=1)
+        parser.add_argument('--input', required=True)
+        #parser.add_argument('--format', default='BAM')
+        parser.add_argument('--outdir', help='output dir',required=True)
+        parser.add_argument('--sample', help='sample name', required=True)
+        parser.add_argument('--assay', help='assay', required=True)

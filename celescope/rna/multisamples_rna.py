@@ -105,89 +105,104 @@ def main():
     #os.system('sh %s'%(raw_dir+'/ln.sh'))
 
     logdir = args['outdir']+'/log'
-    os.system('mkdir -p %s'%(logdir))
-    sjm_cmd = 'log_dir %s\n'%(logdir)
+    os.system('mkdir -p %s' % (logdir))
+    sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
     conda = args['conda']
     app = rootDir + '/celescope.py'
     thread = args['thread']
+    chemistry = args['chemistry']
+    genomeDir = args['genomeDir']
+    pattern = args['pattern']
+    whitelist = args['whitelist']
+    linker = args['linker']    
+    lowQual = args['lowQual']
+    lowNum = args['lowNum']
+    starMem = args['starMem']
+    gtf_type = args['gtf_type']
 
-    for n in fq_dict:
+    basedir = args['outdir']
+    assay = 'rna'
+    steps = ['sample', 'barcode', 'cutadapt', 'STAR', "featureCounts", "count", 'analysis']
+
+    for sample in fq_dict:
+        outdir_dic = {}
+        index = 0
+        for step in steps:
+            outdir = f"{basedir}/{sample}/{index:02d}.{step}"
+            outdir_dic.update({step: outdir})
+            index += 1
+
         # sample
-        outdir = '{basedir}/{sampledir}/{step}'.format(basedir = args['outdir'], sampledir = n, step='00.sample')
-        cmd = '''source activate {conda}; python {app} sample --chemistry {chemistry} --description "{description}"
-        --sample {samplename} --outdir {outdir} --genomeDir {genomeDir};'''.format(
-            description="Single Cell RNA-Seq",
-            chemistry=args['chemistry'], conda=conda, app=app, samplename=n, 
-            outdir=outdir, genomeDir=args['genomeDir'])
-        sjm_cmd += generate_sjm(cmd, 'sample_'+n)
+        step = "sample"
+        cmd = f'''source activate {conda}; python {app} {step} --chemistry {chemistry} 
+        --sample {sample} --outdir {outdir_dic[step]} --genomeDir {genomeDir} --assay {assay}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}')
+        last_step = step
 
         # barcode
-        arr = fq_dict[n]
-        outdir = '{basedir}/{sampledir}/{step}'.format(basedir = args['outdir'], sampledir = n, step='01.barcode')
-        cmd = '''source activate {conda}; python {app} barcode --fq1 {fq1} --fq2 {fq2} --chemistry {chemistry} 
-            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {samplename} --lowQual {lowQual} 
-            --lowNum {lowNum} --outdir {outdir} --thread {thread};'''.format(
-            conda=conda, app=app, fq1 = arr[0], fq2 =arr[1], chemistry=args['chemistry'],
-            pattern=args['pattern'], whitelist=args['whitelist'], linker=args['linker'], samplename=n, 
-            lowQual=args['lowQual'], lowNum=args['lowNum'], outdir=outdir, thread=thread
-        )
-        sjm_cmd += generate_sjm(cmd, 'barcode_'+n, m=5, x=thread)
-        sjm_order += 'order barcode_%s after sample_%s\n'%(n, n)
+        arr = fq_dict[sample]
+        step = "barcode"
+        cmd = f'''source activate {conda}; python {app} {step} --fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry} 
+            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {sample} --lowQual {lowQual} 
+            --lowNum {lowNum} --outdir {outdir_dic[step]} --thread {thread} --assay {assay}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=thread)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
 
         # adapt
-        fq = outdir + '/' + n + '_2.fq.gz'
-        outdir = '{basedir}/{sampledir}/{step}'.format(basedir = args['outdir'], sampledir = n, step='02.cutadapt')
-        cmd = '''source activate {conda}; python {app} cutadapt --fq {fq} --sample {samplename} --outdir 
-            {outdir}'''.format(conda=conda, app=app, fq=fq, samplename=n, outdir=outdir)
-        sjm_cmd += generate_sjm(cmd, 'adapt_' + n, m=2)
-        sjm_order += 'order adapt_%s after barcode_%s\n'%(n, n)
+        step = "cutadapt"
+        fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
+        cmd = f'''source activate {conda}; python {app} {step} --fq {fq} --sample {sample} --outdir 
+            {outdir_dic[step]} --assay {assay}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
 
         # STAR
-        fq = outdir + '/' + n + '_clean_2.fq.gz'
-        outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='03.STAR')
-        cmd = '''source activate {conda}; python {app} STAR --fq {fq} --sample {samplename} 
-        --genomeDir {genomeDir} --thread {thread} --outdir {outdir}'''.format(
-            conda=conda, app=app, fq=fq, samplename=n, genomeDir=args['genomeDir'],
-            outdir=outdir, thread=thread)
-
-        sjm_cmd += generate_sjm(cmd, 'STAR_' + n, m=args['starMem'], x=thread)
-        sjm_order += 'order STAR_%s after adapt_%s\n' % (n, n)
-        
+        step = 'STAR'
+        fq = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
+        cmd = f'''source activate {conda}; python {app} {step} --fq {fq} --sample {sample} 
+        --genomeDir {genomeDir} --thread {thread} --outdir {outdir_dic[step]} --assay {assay}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=starMem, x=thread)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
+      
         # featureCounts
-        bam = outdir + '/' + n + '_Aligned.sortedByCoord.out.bam'
-        outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='04.featureCounts')
-        cmd = '''source activate {conda}; python {app} featureCounts --input {bam} --gtf_type {gtf_type} --sample 
-                {samplename} --thread {thread} --outdir {outdir} --genomeDir {genomeDir}'''.format(
-                conda=conda, app=app, bam=bam, genomeDir=args['genomeDir'],
-                samplename=n, gtf_type=args['gtf_type'], outdir=outdir, thread=thread)
-        sjm_cmd += generate_sjm(cmd, 'featureCounts_' + n, m=8, x=thread)
-        sjm_order += 'order featureCounts_%s after STAR_%s\n'%(n, n)
+        step = 'featureCounts'
+        input = f'{outdir_dic["STAR"]}/{sample}_Aligned.sortedByCoord.out.bam'
+        cmd = f'''source activate {conda}; python {app} featureCounts --input {input} --gtf_type {gtf_type} --sample 
+                {sample} --thread {thread} --outdir {outdir_dic[step]} --genomeDir {genomeDir} --assay {assay}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=8, x=thread)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
 
         # count
-        bam = outdir + '/' + n + '_name_sorted.bam'
-        outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='05.count')
-        cmd = '''source activate {conda}; python {app} count --bam {bam} --sample {samplename} --cells {cells} 
-            --outdir {outdir}'''.format(conda=conda, app=app,  
-            bam=bam, samplename=n, cells=cells_dict[n], outdir=outdir)
-        sjm_cmd += generate_sjm(cmd, 'count_' + n, m=30)
-        sjm_order += 'order count_%s after featureCounts_%s\n' % (n, n)
+        step = 'count'
+        bam = f'{outdir_dic["featureCounts"]}/{sample}_name_sorted.bam'
+        cmd = f'''source activate {conda}; python {app} count --bam {bam} --sample {sample} --cells {cells_dict[sample]} 
+            --outdir {outdir_dic[step]} --assay {assay}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=8, x=thread)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
 
         # analysis
-        matrix_file = outdir + '/' + n + '_matrix.xls'
-        outdir = '{basedir}/{sampledir}/{step}'.format(basedir=args['outdir'], sampledir=n, step='06.analysis')
-        cmd = '''source activate {conda}; python {app} analysis --matrix_file {matrix_file} --sample {samplename}  
-            --outdir {outdir} --genomeDir {genomeDir}'''.format(conda=conda, app=app, 
-            matrix_file=matrix_file, samplename=n,  outdir=outdir, genomeDir=args['genomeDir'])
-        sjm_cmd += generate_sjm(cmd, 'analysis_' + n, m=10)
-        sjm_order += 'order analysis_%s after count_%s\n'%(n, n)
+        step = 'analysis'
+        matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.xls'
+        cmd = f'''source activate {conda}; python {app} analysis --matrix_file {matrix_file} --sample {sample}  
+            --outdir {outdir_dic[step]} --genomeDir {genomeDir} --assay {assay}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=15, x=1)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
 
 
     # merged report 
+    step = "merge_report"
     cmd = '''source activate {conda}; python {app} --samples {samples} --workdir {workdir};'''.format(
-        conda=conda, app=rnaDir + '/merge_table_rna.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
-    sjm_cmd += generate_sjm(cmd, 'report')
-    sjm_order += ''.join(['order report after count_%s\n'%(n) for n in fq_dict])
+        conda=conda, app=rnaDir + '/merge_table_virus.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
+    sjm_cmd += generate_sjm(cmd, 'merge_report')
+    for sample in fq_dict:
+        sjm_order += f'order {step} after {last_step}_{sample}\n'
     with open(logdir + '/sjm.job', 'w') as fh:
         fh.write(sjm_cmd+'\n')
         fh.write(sjm_order)

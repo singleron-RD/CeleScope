@@ -11,16 +11,6 @@ from tools.report import reporter
 logger1 = logging.getLogger(__name__)
 
 
-def get_opts_STAR(parser, sub_program):
-    if sub_program:
-        parser.add_argument('--fq', required=True)
-        parser.add_argument('--readFilesCommand', default='zcat')
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--thread', default=1)
-    parser.add_argument('--genomeDir', help='genome directory', required=True)
-
-
 def format_stat(map_log, region_log, samplename):
     fh1 = open(map_log, 'r')
     p1 = re.compile(r'Uniquely mapped reads number\s+(\d+)')
@@ -77,9 +67,11 @@ def STAR(args):
     outPrefix = args.outdir + '/' + args.sample + '_'
     outBam = args.outdir + '/' + args.sample + '_'
     # cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir, '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax', '1', '--outReadsUnmapped', 'Fastx', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']    
-    cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir, '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax', '1', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']    
+    cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir,
+        '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax',
+        '1', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate','--outReadsUnmapped','Fastx']    
     logger1.info('%s' % (' '.join(cmd)))
-    subprocess.check_call(cmd )
+    subprocess.check_call(cmd)
     logger1.info('STAR done!')
 
     logger1.info('stat mapping region ...!')
@@ -94,7 +86,18 @@ def STAR(args):
     logger1.info('generate report ...!')
     plot = format_stat(args.outdir+'/'+args.sample+'_Log.final.out', region_txt, args.sample)
 
-    t = reporter(name='STAR', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..', plot=plot)
+    t = reporter(name='STAR', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..', plot=plot)
     t.get_report()
     logger1.info('generate report done!')
+
+
+def get_opts_STAR(parser, sub_program):
+    if sub_program:
+        parser.add_argument('--fq', required=True)
+        parser.add_argument('--readFilesCommand', default='zcat')
+        parser.add_argument('--outdir', help='output dir', required=True)
+        parser.add_argument('--sample', help='sample name', required=True)
+        parser.add_argument('--thread', default=1)
+        parser.add_argument('--assay', help='assay', required=True)
+    parser.add_argument('--genomeDir', help='genome directory', required=True)
 

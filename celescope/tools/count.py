@@ -19,13 +19,6 @@ from tools.report import reporter
 logger1 = logging.getLogger(__name__)
 
 
-def get_opts_count(parser, sub_program):
-    if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--bam', required=True)
-    parser.add_argument('--cells', help='expected number of cells', default="auto")
-
 def report_prepare(count_file, downsample_file, outdir):
 
     json_file = outdir + '/.data.json'
@@ -311,8 +304,17 @@ def count(args):
     report_prepare(marked_counts_file, downsample_file, args.outdir + '/..')
 
     logging.info('count done!')
-    t = reporter(
+    t = reporter(assay=args.assay, 
         name='count',sample=args.sample, 
         stat_file=args.outdir + '/stat.txt',
         outdir=args.outdir + '/..')
     t.get_report()
+
+
+def get_opts_count(parser, sub_program):
+    if sub_program:
+        parser.add_argument('--outdir', help='output dir', required=True)
+        parser.add_argument('--sample', help='sample name', required=True)
+        parser.add_argument('--bam', required=True)
+        parser.add_argument('--assay', help='assay', required=True)
+    parser.add_argument('--cells', help='expected number of cells', default="auto")

@@ -8,22 +8,9 @@ from itertools import islice
 import pandas as pd
 
 from tools.utils import format_number
-from tools.utils import getlogger
 from tools.report import reporter
 
-logger1 = getlogger()
-
-
-def get_opts_cutadapt(parser,sub_program):
-    if sub_program:
-        parser.add_argument('--fq', help='fq file', required=True)
-        parser.add_argument('--outdir', help='output dir',required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-    parser.add_argument('--adapt', action='append', default=['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',])
-    parser.add_argument('--minimum-length', dest='minimum_length', help='minimum_length, default=20', default=20)
-    parser.add_argument('--nextseq-trim', dest='nextseq_trim', help='nextseq_trim, default=20', default=20)
-    parser.add_argument('--overlap', help='minimum overlap length, default=5', default=5)
-    parser.add_argument('--thread', default=2)
+logger1 = logging.getLogger(__name__)
 
 
 def format_stat(cutadapt_log, samplename):
@@ -73,7 +60,19 @@ def cutadapt(args):
 
     logging.info('generate report ...!')
     format_stat(args.outdir + '/cutadapt.log', args.sample)
-    t = reporter(name='cutadapt', sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
+    t = reporter(name='cutadapt', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
     logging.info('generate report done!')
 
+
+def get_opts_cutadapt(parser, sub_program):
+    if sub_program:
+        parser.add_argument('--fq', help='fq file', required=True)
+        parser.add_argument('--outdir', help='output dir',required=True)
+        parser.add_argument('--sample', help='sample name', required=True)
+        parser.add_argument('--assay', help='assay', required=True)
+    parser.add_argument('--adapt', action='append', default=['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',])
+    parser.add_argument('--minimum-length', dest='minimum_length', help='minimum_length, default=20', default=20)
+    parser.add_argument('--nextseq-trim', dest='nextseq_trim', help='nextseq_trim, default=20', default=20)
+    parser.add_argument('--overlap', help='minimum overlap length, default=5', default=5)
+    parser.add_argument('--thread', default=2)
