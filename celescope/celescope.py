@@ -73,6 +73,11 @@ if __name__ == '__main__':
     get_opts_analysis_rna_virus(parser_analysis_rna_virus, True)
     parser_analysis_rna_virus.set_defaults(func=analysis_rna_virus)
 
+    from capture_virus.analysis_capture_virus import analysis_capture_virus, get_opts_analysis_capture_virus
+    parser_analysis_capture_virus = subparsers.add_parser('analysis_capture_virus')
+    get_opts_analysis_capture_virus(parser_analysis_capture_virus, True)
+    parser_analysis_capture_virus.set_defaults(func=analysis_capture_virus)
+
     from rna.rna import rna
     parser_run = subparsers.add_parser('rna', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
@@ -96,16 +101,19 @@ if __name__ == '__main__':
     get_opts_analysis_rna_virus(parser_run, False)
     parser_run.set_defaults(func=rna_virus)
 
-    """
-    from virus.capture_virus import capture_virus
+    from capture_virus.count_capture_virus import count_capture_virus, get_opts_count_capture_virus
+    parser_count_capture_virus = subparsers.add_parser('count_capture_virus')
+    get_opts_count_capture_virus(parser_count_capture_virus, True)
+    parser_count_capture_virus.set_defaults(func=count_capture_virus)
+
+    from capture_virus.capture_virus import capture_virus
     parser_run = subparsers.add_parser('capture_virus', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
     get_opts_barcode(parser_run, False)
     get_opts_cutadapt(parser_run, False)
     get_opts_STAR_virus(parser_run, False)
-    get_opts_count_virus(parser_run, False)
-    parser_run.set_defaults(func=virus)
-    """
+    get_opts_count_capture_virus(parser_run, False)
+    parser_run.set_defaults(func=capture_virus)
 
     args = parser.parse_args()
     args.func(args)

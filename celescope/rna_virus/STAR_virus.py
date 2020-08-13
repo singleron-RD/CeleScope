@@ -34,6 +34,10 @@ def STAR_virus(args):
  --outFileNamePrefix {out_prefix}".format(genome=virus_genomeDir,
     input_read=input_read, runThreadN=thread, out_prefix=out_prefix)
 
+    # add gz 
+    if input_read[len(input_read)-2:] == "gz":
+        cmd += ' --readFilesCommand zcat'
+
     logger1.info(cmd)
     os.system(cmd)
     logger1.info("align virus genome done.")   

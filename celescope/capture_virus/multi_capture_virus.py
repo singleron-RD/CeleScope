@@ -121,7 +121,7 @@ def main():
     assay = "capture_virus"
 
     basedir = args['outdir']
-    steps = ['sample', 'barcode', 'cutadapt',  "STAR_virus",  "count_capture_virus"]
+    steps = ['sample', 'barcode', 'cutadapt',  "STAR_virus",  "count_capture_virus", "analysis_capture_virus"]
 
     for sample in fq_dict:
         outdir_dic = {}
@@ -175,6 +175,14 @@ def main():
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
+        # analysis_capture_virus
+        step = 'analysis_capture_virus'
+        virus_file = f'{outdir_dic["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
+        cmd = f'''source activate {conda}; python {app} {step} --match_dir {match_dict[sample]} --sample {sample}  
+            --outdir {outdir_dic[step]} --virus_file {virus_file} --assay {assay}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=15, x=1)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
 
     # merged report 
     step = "merge_report"

@@ -48,7 +48,7 @@ def sum_virus(validated_barcodes, virus_bam, out_read_count_file, out_umi_count_
     df_umi.to_csv(out_umi_count_file, sep="\t")
 
 
-def count_virus(args):
+def count_capture_virus(args):
 
     logger1.info('virus count start...!')
 
@@ -70,7 +70,7 @@ def count_virus(args):
     logger1.info('virus count done!')
 
 
-def get_opts_count_virus(parser, sub_program):
+def get_opts_count_capture_virus(parser, sub_program):
     parser.add_argument('--match_dir', help='matched rna_virus directory', required=True)
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
