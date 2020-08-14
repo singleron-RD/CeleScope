@@ -63,6 +63,11 @@ if __name__ == '__main__':
     get_opts_count_virus(parser_count_virus, True)
     parser_count_virus.set_defaults(func=count_virus)   
 
+    from capture_virus.count_capture_virus import count_capture_virus, get_opts_count_capture_virus
+    parser_count_capture_virus = subparsers.add_parser('count_capture_virus')
+    get_opts_count_capture_virus(parser_count_capture_virus, True)
+    parser_count_capture_virus.set_defaults(func=count_capture_virus)
+
     from tools.analysis import analysis, get_opts_analysis
     parser_analysis = subparsers.add_parser('analysis')
     get_opts_analysis(parser_analysis, True)
@@ -100,11 +105,6 @@ if __name__ == '__main__':
     get_opts_count_virus(parser_run, False)
     get_opts_analysis_rna_virus(parser_run, False)
     parser_run.set_defaults(func=rna_virus)
-
-    from capture_virus.count_capture_virus import count_capture_virus, get_opts_count_capture_virus
-    parser_count_capture_virus = subparsers.add_parser('count_capture_virus')
-    get_opts_count_capture_virus(parser_count_capture_virus, True)
-    parser_count_capture_virus.set_defaults(func=count_capture_virus)
 
     from capture_virus.capture_virus import capture_virus
     parser_run = subparsers.add_parser('capture_virus', conflict_handler='resolve')
