@@ -6,9 +6,9 @@ import logging
 import subprocess
 import glob
 import sys
-from tools.utils import format_number
-from tools.utils import glob_genomeDir
-from tools.report import reporter
+from celescope.tools.utils import format_number
+from celescope.tools.utils import glob_genomeDir
+from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 

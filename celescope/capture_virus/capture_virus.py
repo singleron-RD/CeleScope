@@ -20,29 +20,29 @@ def capture_virus(args):
 
     step = "sample"
     args.outdir = f'{sample}/{outdir_dic["step"]}/'
-    from tools.sample_info import sample_info
+    from celescope.tools.sample_info import sample_info
     sample_info(args)   
 
     step = "barcode"
     args.outdir = f'{sample}/{outdir_dic["step"]}/'   
-    from tools.barcode import barcode
+    from celescope.tools.barcode import barcode
     barcode(args)
 
     step = "cutadapt"
     args.outdir = f'{sample}/{outdir_dic["step"]}/' 
     args.fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
-    from tools.cutadapt import cutadapt
+    from celescope.tools.cutadapt import cutadapt
     cutadapt(args)
 
     step = "STAR_virus"
     args.input_read = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
     args.outdir = f'{sample}/{outdir_dic["step"]}/' 
-    from virus.STAR_virus import STAR_virus
+    from celescope.virus.STAR_virus import STAR_virus
     STAR_virus(args)  
 
     step = 'count_capture_virus'
     args.virus_bam = f'{outdir_dic["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
     args.outdir = f'{sample}/{outdir_dic["step"]}/' 
-    from capture_virus.count_capture_virus import count_capture_virus
+    from celescope.capture_virus.count_capture_virus import count_capture_virus
     count_capture_virus(args)
  

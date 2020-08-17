@@ -5,8 +5,8 @@ import os
 import pandas as pd
 import sys
 import logging
-from tools.__version__ import __VERSION__
-from tools.report import reporter
+from celescope.tools.__version__ import __VERSION__
+from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 ASSAY_DICT = {"rna": "Single Cell RNA-Seq",

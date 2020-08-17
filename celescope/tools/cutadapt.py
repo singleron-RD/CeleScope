@@ -7,8 +7,8 @@ import logging
 from itertools import islice
 import pandas as pd
 
-from tools.utils import format_number
-from tools.report import reporter
+from celescope.tools.utils import format_number
+from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 

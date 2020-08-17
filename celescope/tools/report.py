@@ -6,6 +6,7 @@ import argparse
 import pandas as pd
 import io
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
+
 env = Environment(
     loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
     autoescape=select_autoescape(['html', 'xml'])

@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
-from tools.report import reporter
-from tools.utils import glob_genomeDir
+from celescope.tools.report import reporter
+from celescope.tools.utils import glob_genomeDir
 
 logger1 = logging.getLogger(__name__)
 # invoke by celescope

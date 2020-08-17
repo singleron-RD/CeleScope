@@ -6,8 +6,8 @@ import pysam
 import logging
 import os
 from collections import defaultdict
-from tools.utils import format_number
-from tools.report import reporter
+from celescope.tools.utils import format_number
+from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 

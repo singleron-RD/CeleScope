@@ -13,8 +13,8 @@ import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
-from tools.utils import format_number
-from tools.report import reporter
+from celescope.tools.utils import format_number
+from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 

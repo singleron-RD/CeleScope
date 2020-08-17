@@ -7,8 +7,8 @@ import logging
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
-from tools.utils import format_number
-from tools.report import reporter
+from celescope.tools.utils import format_number
+from celescope.tools.report import reporter
 
 
 logger1 = logging.getLogger(__name__)

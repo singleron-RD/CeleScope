@@ -15,36 +15,36 @@ def rna(args):
 
     args.outdir = baseDir + '/00.sample'
     args.description = "Single Cell RNA-Seq"
-    from tools.sample_info import sample_info
+    from celescope.tools.sample_info import sample_info
     sample_info(args)
 
     args.outdir = baseDir + '/01.barcode'    
-    from tools.barcode import barcode
+    from celescope.tools.barcode import barcode
     barcode(args)
 
     args.fq = baseDir + '/01.barcode/' + sample + '_2.fq.gz'
     args.outdir = baseDir + '/02.cutadapt'
-    from tools.cutadapt import cutadapt
+    from celescope.tools.cutadapt import cutadapt
     cutadapt(args)
 
     args.fq = baseDir + '/02.cutadapt/' + sample + '_clean_2.fq.gz'
     args.outdir = baseDir + '/03.STAR'
-    from tools.STAR import STAR
+    from celescope.tools.STAR import STAR
     STAR(args)
 
     args.input = baseDir + '/03.STAR/' + sample + '_Aligned.sortedByCoord.out.bam'
     args.outdir = baseDir + '/04.featureCounts'
-    from tools.featureCounts import featureCounts
+    from celescope.tools.featureCounts import featureCounts
     featureCounts(args)
 
     args.bam = baseDir + '/04.featureCounts/' + sample + '_name_sorted.bam'
     args.outdir = baseDir + '/05.count'
-    from tools.count import count
+    from celescope.tools.count import count
     count(args)
 
     args.matrix_file = baseDir + '/05.count/' + sample + '_matrix.xls'
     args.outdir = baseDir + '/06.analysis'
-    from tools.analysis import analysis
+    from celescope.tools.analysis import analysis
     analysis(args)
 
 

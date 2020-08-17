@@ -11,8 +11,8 @@ import pandas as pd
 import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
-from tools.report import reporter
-from tools.utils import glob_genomeDir
+from celescope.tools.report import reporter
+from celescope.tools.utils import glob_genomeDir
 
 logger1 = logging.getLogger(__name__)
 # invoke by celescope
