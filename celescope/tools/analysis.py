@@ -16,7 +16,7 @@ from celescope.tools.utils import glob_genomeDir
 
 logger1 = logging.getLogger(__name__)
 # invoke by celescope.py under rootdir
-toolsdir = os.path.realpath(sys.path[0] + '/tools')
+toolsdir = os.path.dirname(__file__) 
 
 
 def report_prepare(outdir, tsne_df, marker_df):

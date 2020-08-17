@@ -7,7 +7,7 @@ import sys
 sys.path.append('../tools')
 
 
-def rna(args):
+def run(args):
     #tmp = vars(args)
     sample = args.sample
     baseDir = args.sample  
@@ -48,12 +48,5 @@ def rna(args):
     analysis(args)
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser(description='Single cell RNA-Seq')
-    args = parser.parse_args()
-    rna(args)
 
 
-if __name__ == '__main__':
-    main()

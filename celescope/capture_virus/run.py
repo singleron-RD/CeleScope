@@ -6,7 +6,7 @@ from collections import defaultdict, namedtuple
 import sys
 
 
-def capture_virus(args):
+def run(args):
     steps = ['sample', 'barcode', 'cutadapt',  "STAR_virus", "count_capture_virus"]
     sample = args.sample
     args.assay = "capture_virus"

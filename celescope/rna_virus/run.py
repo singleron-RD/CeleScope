@@ -6,7 +6,7 @@ from collections import defaultdict, namedtuple
 import sys
 
 
-def rna_virus(args):
+def run(args):
     steps = ['sample', 'barcode', 'cutadapt', 'STAR', "STAR_virus", "featureCounts", "count", "count_virus",
         'analysis']
     sample = args.sample
