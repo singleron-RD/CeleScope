@@ -16,6 +16,23 @@ requirements:
   host:
     - python ==3.6.7
     - pip
+    - star ==2.6.1b
+    - fastqc ==0.11.7
+    - picard ==2.18.17
+    - ucsc-gtftogenepred ==377
+    - subread ==2.0.1
+    - samtools ==1.9
+    - r-seurat ==2.3.4
+    - r-argparse ==2.0.1
+    - r-tidyverse ==1.2.1
+    - cutadapt ==1.17
+    - jinja2 ==2.10
+    - matplotlib ==2.2.2
+    - numpy ==1.15.4
+    - pandas ==0.23.4
+    - pysam ==0.15.3
+    - scipy ==0.19.1
+    - xopen ==0.5.0
   run:
     - python ==3.6.7
     - star ==2.6.1b
@@ -27,6 +44,14 @@ requirements:
     - r-seurat ==2.3.4
     - r-argparse ==2.0.1
     - r-tidyverse ==1.2.1
+    - cutadapt ==1.17
+    - jinja2 ==2.10
+    - matplotlib ==2.2.2
+    - numpy ==1.15.4
+    - pandas ==0.23.4
+    - pysam ==0.15.3
+    - scipy ==0.19.1
+    - xopen ==0.5.0
 
 test:
 
