@@ -1,3 +1,3 @@
 conda create -f celescope.yml
-conda activate celescope1.1
+conda activate celescope
 python setup.py install

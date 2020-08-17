@@ -12,7 +12,7 @@
 ```
 git clone https://github.com/zhouyiqi91/CeleScope.git
 cd CeleScope
-conda env create -f celescope.yml
+sh build.sh
 ```
 
 ## Reference genome 
@@ -27,7 +27,7 @@ mkdir -p references/Homo_sapiens/Ensembl/GRCh38
 gzip -c -d Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz > references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.fa
 gzip -c -d Homo_sapiens.GRCh38.99.gtf.gz > references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf
 
-conda activate celescope1.1
+conda activate celescope
 
 gtfToGenePred -genePredExt -geneNameAsName2 references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf /dev/stdout | \
     awk '{print $12"\t"$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10}' > references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.refFlat
@@ -70,8 +70,8 @@ STAR \
 ### Example
 
 ```
-conda activate celescope1.1
-python3 {CeleScope_path}/celescope.py rna\   
+conda activate celescope
+python3 {CeleScope_path}/celescope.py rna run\   
  --fq1 ./data/R2005212_L1_1.fq.gz\
  --fq2 ./data/R2005212_L1_2.fq.gz\
  --chemistry scopeV2.0.1\

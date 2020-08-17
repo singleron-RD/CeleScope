@@ -1,10 +1,9 @@
-name: celescope1.1
+name: celescope
 channels:
   - conda-forge
   - bioconda
   - r
   - defaults
-  - singleronbio
 dependencies:
   - _r-mutex=1.0.1=anacondar_1
   - bcftools=1.9=ha228f0b_3
