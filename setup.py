@@ -1,5 +1,5 @@
 import setuptools
-from celescope.tools.__version__ import __VERSION__
+from celescope.__init__ import __VERSION__
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
