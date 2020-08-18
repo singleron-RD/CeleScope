@@ -2,10 +2,8 @@
 #coding=utf8
 
 import argparse
-import sys
-import os 
 import logging
-from celescope.__init__ import __VERSION__
+from celescope.__init__ import __VERSION__, ASSAY_DICT
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
@@ -15,8 +13,9 @@ def main():
     subparsers = parser.add_subparsers()
 
     # rna
-    text = 'Single Cell RNA-Seq'
-    subparsers_rna = subparsers.add_parser('rna', help=text, description=text)
+    assay = 'rna'
+    text = ASSAY_DICT[assay]
+    subparsers_rna = subparsers.add_parser(assay, help=text, description=text)
     subparsers_rna_sub = subparsers_rna.add_subparsers()
 
     from celescope.tools.sample_info import sample_info, get_opts_sample
@@ -66,8 +65,9 @@ def main():
     parser_run.set_defaults(func=run) 
 
     # rna_virus
-    text = 'Single Cell RNA-Seq Virus'
-    subparsers_rna_virus = subparsers.add_parser('rna_virus', help=text, description=text)
+    assay = 'rna_virus'
+    text = ASSAY_DICT[assay]
+    subparsers_rna_virus = subparsers.add_parser(assay, help=text, description=text)
     subparsers_rna_virus_sub = subparsers_rna_virus.add_subparsers()
 
     parser_sample = subparsers_rna_virus_sub.add_parser('sample', description='sample infomation')
@@ -127,8 +127,9 @@ def main():
     parser_run.set_defaults(func=run)    
 
     # capture_virus
-    text = 'Single Cell Capture Virus'
-    subparsers_capture_virus = subparsers.add_parser('capture_virus', help=text, description=text)
+    assay = 'capture_virus'
+    text = ASSAY_DICT[assay]
+    subparsers_capture_virus = subparsers.add_parser(assay, help=text, description=text)
     subparsers_capture_virus_sub = subparsers_capture_virus.add_subparsers()
 
     parser_sample = subparsers_capture_virus_sub.add_parser('sample')
@@ -162,20 +163,19 @@ def main():
     parser_run.set_defaults(func=run)
 
     # fusion
-    text = 'Single Cell Fusion Gene'
-    subparsers_fusion = subparsers.add_parser('fusion', help=text, description=text)
+    assay = 'fusion'
+    text = ASSAY_DICT[assay]
+    subparsers_fusion = subparsers.add_parser(assay, help=text, description=text)
     subparsers_fusion_sub = subparsers_fusion.add_subparsers()
 
     parser_sample = subparsers_fusion_sub.add_parser('sample')
     get_opts_sample(parser_sample, True)
     parser_sample.set_defaults(func=sample_info)
 
-    from celescope.tools.barcode import barcode, get_opts_barcode
     parser_barcode = subparsers_fusion_sub.add_parser('barcode')
     get_opts_barcode(parser_barcode, True)
     parser_barcode.set_defaults(func=barcode)
 
-    from celescope.tools.cutadapt import cutadapt, get_opts_cutadapt
     parser_cutadapt = subparsers_fusion_sub.add_parser('cutadapt')
     get_opts_cutadapt(parser_cutadapt, True)
     parser_cutadapt.set_defaults(func=cutadapt)
@@ -198,6 +198,37 @@ def main():
     get_opts_STAR_fusion(parser_run, False)
     get_opts_count_fusion(parser_run, False)
     parser_run.set_defaults(func=run)
+
+    # smk
+    assay = 'smk'
+    text = ASSAY_DICT[assay]
+    subparsers_assay = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_assay_sub = subparsers_assay.add_subparsers()
+
+    parser_tmp = subparsers_assay_sub.add_parser('sample')
+    get_opts_sample(parser_tmp, True)
+    parser_tmp.set_defaults(func=sample_info)
+
+    parser_tmp = subparsers_assay_sub.add_parser('barcode')
+    get_opts_barcode(parser_tmp, True)
+    parser_tmp.set_defaults(func=barcode)
+
+    parser_tmp = subparsers_assay_sub.add_parser('cutadapt')
+    get_opts_cutadapt(parser_tmp, True)
+    parser_tmp.set_defaults(func=cutadapt)
+
+    from celescope.smk.demultiplex import demultiplex, get_opts_demultiplex
+    parser_tmp = subparsers_assay_sub.add_parser('demultiplex')
+    get_opts_demultiplex(parser_tmp, True)
+    parser_tmp.set_defaults(func=demultiplex)
+
+    from celescope.smk.run import run
+    parser_tmp = subparsers_assay_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    get_opts_sample(parser_tmp, False)
+    get_opts_barcode(parser_tmp, False)
+    get_opts_cutadapt(parser_tmp, False)
+    get_opts_demultiplex(parser_tmp, False)
+    parser_tmp.set_defaults(func=run)
 
     args = parser.parse_args()
     args.func(args)

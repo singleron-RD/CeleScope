@@ -5,15 +5,10 @@ import os
 import pandas as pd
 import sys
 import logging
-from celescope.__init__ import __VERSION__
+from celescope.__init__ import __VERSION__, ASSAY_DICT
 from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
-ASSAY_DICT = {"rna": "Single Cell RNA-Seq",
-            "rna_virus": "Single Cell RNA-Seq Virus",
-            'capture_virus': "Single cell Capture Virus",
-            'fusion': "Single Cell Fusion Gene",
-            }
 
 
 def sample_info(args):
@@ -45,6 +40,5 @@ def get_opts_sample(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--genomeDir', help='genomeDir', required=True)
         parser.add_argument('--assay', help='assay', required=True)
     parser.add_argument('--chemistry', help='chemistry')

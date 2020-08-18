@@ -1,5 +1,5 @@
-#!/bin/env python
-#coding=utf8
+# !/bin/env python
+# coding=utf8
 
 import os
 import glob
@@ -121,7 +121,7 @@ def main():
         # sample
         step = "sample"
         cmd = f'''source activate {conda}; {app} {assay} {step} --chemistry {chemistry} 
-        --sample {sample} --outdir {outdir_dic[step]} --genomeDir {genomeDir} --assay {assay}'''
+        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}')
         last_step = step
 

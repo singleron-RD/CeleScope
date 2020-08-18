@@ -1,15 +1,11 @@
-#!/bin/env python
-#coding=utf8
-import os, re, io, logging, gzip, json
-import subprocess
-from collections import defaultdict, namedtuple
-import sys
+# !/bin/env python
+# coding=utf8
 from celescope.rna.__init__ import __STEPS__, __ASSAY__
 
 
 def run(args):
     steps = __STEPS__
-    args.assay = __ASSAY__  
+    args.assay = __ASSAY__
     sample = args.sample
 
     outdir_dic = {}
@@ -22,7 +18,7 @@ def run(args):
     step = "sample"
     args.outdir = f'{outdir_dic[step]}/'
     from celescope.tools.sample_info import sample_info
-    sample_info(args)   
+    sample_info(args)
 
     step = "barcode"
     args.outdir = f'{outdir_dic[step]}/'
@@ -58,7 +54,3 @@ def run(args):
     args.matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.xls'
     from celescope.tools.analysis import analysis
     analysis(args)
-
-
-
-
