@@ -55,7 +55,7 @@ def read_barcode_file(match_barcode_file):
 
 def count_fusion(args):
 
-    logger1.info("fusion count...!")
+    logger1.info("count_fusion...!")
 
     outdir = args.outdir
     sample = args.sample
@@ -126,13 +126,13 @@ def count_fusion(args):
             new_row = pd.Series(data={'barcode':0}, name=tag)
             df_barcode = df_barcode.append(new_row,ignore_index=False)
     df_barcode["percent"] = df_barcode["barcode"]/n_match_barcode
-    df_barcode.to_csv(out_barcode_count_file ,sep="\t")
+    df_barcode.to_csv(out_barcode_count_file, sep="\t")
 
     df_pivot = df_umi.pivot(index="barcode",columns="tag",values="UMI")
     df_pivot.fillna(0,inplace=True)
-    df_tsne_fusion = pd.merge(df_tsne,df_pivot,right_index=True,left_index=True,how="left")
-    df_tsne_fusion.fillna(0,inplace=True)
-    df_tsne_fusion.to_csv(out_tsne_file,sep="\t")
+    df_tsne_fusion = pd.merge(df_tsne,df_pivot, right_index=True, left_index=True, how="left")
+    df_tsne_fusion.fillna(0, inplace=True)
+    df_tsne_fusion.to_csv(out_tsne_file, sep="\t")
     logger1.info("count done.")
 
     # plot
@@ -144,10 +144,10 @@ def count_fusion(args):
 
 def get_opts_count_fusion(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir',required=True)
+        parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument("--bam",required=True)
+        parser.add_argument("--bam", required=True)
     #parser.add_argument("--fusion_fasta",help="fusion fasta",required=True)
-    parser.add_argument("--fusion_pos",help="first base position of the second gene(0-start),tsv file",required=True)
-    parser.add_argument("--match_dir",help="match scRNA-Seq dir",required=True)
-    parser.add_argument("--flanking_base",default=5)
+    parser.add_argument("--fusion_pos", help="first base position of the second gene(0-start),tsv file",required=True)
+    parser.add_argument("--match_dir", help="match scRNA-Seq dir", required=True)
+    parser.add_argument("--flanking_base", default=5)

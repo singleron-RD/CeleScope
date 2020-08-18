@@ -9,11 +9,11 @@ logger1 = logging.getLogger(__name__)
 
 def STAR_fusion(args):
 
-    logger1.info('align...')
+    logger1.info('STAR_fusion...')
 
     sample = args.sample
     outdir = args.outdir
-    clean_read = args.clean_read
+    input_read = args.input_read
     genome = args.genome
     runThreadN = args.runThreadN
 
@@ -22,11 +22,11 @@ def STAR_fusion(args):
         os.system('mkdir -p %s'%(outdir))
     
     out_prefix = outdir + "/" + sample
-    out_BAM = out_prefix + "Aligned.sortedByCoord.out.bam"
+    out_BAM = out_prefix + "_Aligned.sortedByCoord.out.bam"
 
     cmd = f"STAR \
  --genomeDir {genome} \
- --readFilesIn {clean_read}\
+ --readFilesIn {input_read}\
  --readFilesCommand zcat\
  --outSAMtype BAM SortedByCoordinate\
  --runThreadN {runThreadN}\
@@ -47,6 +47,6 @@ def get_opts_STAR_fusion(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir',required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument("--clean_read",required=True)
-    parser.add_argument('--genome', help='genome dir', required=True)
+        parser.add_argument("--input_read",required=True)
+    parser.add_argument('--genome', help='fusion gene STAR index genome directory', required=True)
     parser.add_argument("--runThreadN", help='STAR thread', default=1)

@@ -5,19 +5,20 @@ import os
 import pandas as pd
 import sys
 import logging
-from celescope.tools.__version__ import __VERSION__
+from celescope.__init__ import __VERSION__
 from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 ASSAY_DICT = {"rna": "Single Cell RNA-Seq",
             "rna_virus": "Single Cell RNA-Seq Virus",
-            'capture_virus': "Single cell Capture Virus"
+            'capture_virus': "Single cell Capture Virus",
+            'fusion': "Single Cell Fusion Gene",
             }
 
 
 def sample_info(args):
-    if not os.path.exists(args.outdir):
-        os.system('mkdir -p %s' % args.outdir)
+
+    logger1.info('sample info...!')
     sample = args.sample
     ASSAY = ASSAY_DICT[args.assay]
     version = __VERSION__
@@ -37,7 +38,7 @@ def sample_info(args):
 
     t = reporter(name='sample', assay=args.assay, sample=args.sample, stat_file=stat_file, outdir=outdir + '/..')
     t.get_report()
-    logger1.info("Generating sample info done.")
+    logger1.info("generating sample info done.")
 
 
 def get_opts_sample(parser, sub_program):

@@ -8,6 +8,7 @@ import argparse
 import re
 import logging
 from collections import defaultdict
+from celescope._meta import __CONDA__
 
 parent_dir = os.path.dirname(__file__)
 
@@ -87,7 +88,6 @@ def main():
     parser.add_argument('--starMem', help='starMem', default=30)
     parser.add_argument('--genomeDir', help='genome index dir', required=True)
     parser.add_argument('--gtf_type', help='Specify attribute type in GTF annotation, default=exon', default='exon')
-    parser.add_argument('--conda', help='conda env name', default="celescope1.1")
     parser.add_argument('--thread', help='thread', default=6)
     args = vars(parser.parse_args())
 
@@ -107,7 +107,7 @@ def main():
     os.system('mkdir -p %s' % (logdir))
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
-    conda = args['conda']
+    conda = __CONDA__
     app = 'celescope'
     thread = args['thread']
     chemistry = args['chemistry']

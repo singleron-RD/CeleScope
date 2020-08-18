@@ -19,30 +19,30 @@ def run(args):
         index += 1
 
     step = "sample"
-    args.outdir = f'{sample}/{outdir_dic["step"]}/'
+    args.outdir = f'{outdir_dic[step]}/'
     from celescope.tools.sample_info import sample_info
     sample_info(args)   
 
     step = "barcode"
-    args.outdir = f'{sample}/{outdir_dic["step"]}/'   
+    args.outdir = f'{outdir_dic[step]}/'
     from celescope.tools.barcode import barcode
     barcode(args)
 
     step = "cutadapt"
-    args.outdir = f'{sample}/{outdir_dic["step"]}/' 
+    args.outdir = f'{outdir_dic[step]}/' 
     args.fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
     from celescope.tools.cutadapt import cutadapt
     cutadapt(args)
 
     step = "STAR_virus"
     args.input_read = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-    args.outdir = f'{sample}/{outdir_dic["step"]}/' 
+    args.outdir = f'{outdir_dic[step]}/' 
     from celescope.virus.STAR_virus import STAR_virus
     STAR_virus(args)  
 
     step = 'count_capture_virus'
     args.virus_bam = f'{outdir_dic["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
-    args.outdir = f'{sample}/{outdir_dic["step"]}/' 
+    args.outdir = f'{outdir_dic[step]}/' 
     from celescope.capture_virus.count_capture_virus import count_capture_virus
     count_capture_virus(args)
  

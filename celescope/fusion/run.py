@@ -1,11 +1,11 @@
 #!/bin/env python
 #coding=utf8
-
+from celescope.fusion.__init__ import __STEPS__, __ASSAY__
 
 def run(args):
-    steps = ['sample', 'barcode', 'cutadapt',  "STAR_fusion", "count_fusion"]
+    steps = __STEPS__
+    args.assay = __ASSAY__
     sample = args.sample
-    args.assay = "fusion"
 
     outdir_dic = {}
     index = 0
@@ -15,29 +15,29 @@ def run(args):
         index += 1
 
     step = "sample"
-    args.outdir = f'{sample}/{outdir_dic["step"]}/'
+    args.outdir = f'{outdir_dic[step]}/'
     from celescope.tools.sample_info import sample_info
     sample_info(args)   
 
     step = "barcode"
-    args.outdir = f'{sample}/{outdir_dic["step"]}/'   
+    args.outdir = f'{outdir_dic[step]}/'
     from celescope.tools.barcode import barcode
     barcode(args)
 
     step = "cutadapt"
-    args.outdir = f'{sample}/{outdir_dic["step"]}/' 
+    args.outdir = f'{outdir_dic[step]}/'
     args.fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
     from celescope.tools.cutadapt import cutadapt
     cutadapt(args)
 
     step = "STAR_fusion"
     args.input_read = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-    args.outdir = f'{sample}/{outdir_dic["step"]}/' 
+    args.outdir = f'{outdir_dic[step]}/'
     from celescope.fusion.STAR_fusion import STAR_fusion
     STAR_fusion(args)  
 
     step = 'count_fusion'
-    args.virus_bam = f'{outdir_dic["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
-    args.outdir = f'{sample}/{outdir_dic["step"]}/' 
+    args.outdir = f'{outdir_dic[step]}/'
+    args.bam = f'{outdir_dic["STAR_fusion"]}/{sample}_Aligned.sortedByCoord.out.bam'
     from celescope.fusion.count_fusion import count_fusion
     count_fusion(args)

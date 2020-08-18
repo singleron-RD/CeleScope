@@ -5,7 +5,7 @@ import argparse
 import sys
 import os 
 import logging
-from celescope.tools.__version__ import __VERSION__
+from celescope.__init__ import __VERSION__
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
@@ -139,20 +139,17 @@ def main():
     get_opts_sample(parser_sample, True)
     parser_sample.set_defaults(func=sample_info)
 
-    from celescope.tools.barcode import barcode, get_opts_barcode
     parser_barcode = subparsers_capture_virus_sub.add_parser('barcode')
     get_opts_barcode(parser_barcode, True)
     parser_barcode.set_defaults(func=barcode)
 
-    from celescope.tools.cutadapt import cutadapt, get_opts_cutadapt
     parser_cutadapt = subparsers_capture_virus_sub.add_parser('cutadapt')
     get_opts_cutadapt(parser_cutadapt, True)
     parser_cutadapt.set_defaults(func=cutadapt)
 
-    from celescope.tools.STAR import STAR, get_opts_STAR
-    parser_STAR = subparsers_capture_virus_sub.add_parser('STAR')
-    get_opts_STAR(parser_STAR, True)
-    parser_STAR.set_defaults(func=STAR)
+    parser_STAR_virus = subparsers_capture_virus_sub.add_parser('STAR_virus')
+    get_opts_STAR_virus(parser_STAR_virus, True)
+    parser_STAR_virus.set_defaults(func=STAR_virus)
 
     from celescope.capture_virus.count_capture_virus import count_capture_virus, get_opts_count_capture_virus
     parser_count_capture_virus = subparsers_capture_virus_sub.add_parser('count_capture_virus')
@@ -160,7 +157,7 @@ def main():
     parser_count_capture_virus.set_defaults(func=count_capture_virus)
 
     from celescope.capture_virus.run import run
-    parser_run = subparsers_capture_virus_sub.add_parser('run',help='run all steps', conflict_handler='resolve')
+    parser_run = subparsers_capture_virus_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
     get_opts_barcode(parser_run, False)
     get_opts_cutadapt(parser_run, False)
@@ -172,6 +169,10 @@ def main():
     text = 'Single Cell Fusion Gene'
     subparsers_fusion = subparsers.add_parser('fusion', help=text, description=text)
     subparsers_fusion_sub = subparsers_fusion.add_subparsers()
+
+    parser_sample = subparsers_fusion_sub.add_parser('sample')
+    get_opts_sample(parser_sample, True)
+    parser_sample.set_defaults(func=sample_info)
 
     from celescope.tools.barcode import barcode, get_opts_barcode
     parser_barcode = subparsers_fusion_sub.add_parser('barcode')
@@ -193,7 +194,14 @@ def main():
     get_opts_count_fusion(parser_count_fusion, True)
     parser_count_fusion.set_defaults(func=count_fusion)
 
-
+    from celescope.fusion.run import run
+    parser_run = subparsers_fusion_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    get_opts_sample(parser_run, False)
+    get_opts_barcode(parser_run, False)
+    get_opts_cutadapt(parser_run, False)
+    get_opts_STAR_fusion(parser_run, False)
+    get_opts_count_fusion(parser_run, False)
+    parser_run.set_defaults(func=run)
 
 
     args = parser.parse_args()
