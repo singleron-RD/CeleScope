@@ -4,46 +4,57 @@ import os, re, io, logging, gzip, json
 import subprocess
 from collections import defaultdict, namedtuple
 import sys
-sys.path.append('../tools')
-
+from celescope.rna.__init__ import __STEPS__, __ASSAY__
 
 def run(args):
-    #tmp = vars(args)
+    steps = __STEPS__
+    args.assay = __ASSAY__  
     sample = args.sample
-    baseDir = args.sample  
-    args.assay = "rna"  
 
-    args.outdir = baseDir + '/00.sample'
-    args.description = "Single Cell RNA-Seq"
+    outdir_dic = {}
+    index = 0
+    for step in steps:
+        outdir = f"{sample}/{index:02d}.{step}"
+        outdir_dic.update({step: outdir})
+        index += 1
+
+    step = "sample"
+    args.outdir = f'{outdir_dic[step]}/'
     from celescope.tools.sample_info import sample_info
-    sample_info(args)
+    sample_info(args)   
 
-    args.outdir = baseDir + '/01.barcode'    
+    step = "barcode"
+    args.outdir = f'{outdir_dic[step]}/'
     from celescope.tools.barcode import barcode
     barcode(args)
 
-    args.fq = baseDir + '/01.barcode/' + sample + '_2.fq.gz'
-    args.outdir = baseDir + '/02.cutadapt'
+    step = "cutadapt"
+    args.outdir = f'{outdir_dic[step]}/'
+    args.fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
     from celescope.tools.cutadapt import cutadapt
     cutadapt(args)
 
-    args.fq = baseDir + '/02.cutadapt/' + sample + '_clean_2.fq.gz'
-    args.outdir = baseDir + '/03.STAR'
+    step = 'STAR'
+    args.outdir = f'{outdir_dic[step]}/'
+    args.fq = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
     from celescope.tools.STAR import STAR
     STAR(args)
 
-    args.input = baseDir + '/03.STAR/' + sample + '_Aligned.sortedByCoord.out.bam'
-    args.outdir = baseDir + '/04.featureCounts'
+    step = 'featureCounts'
+    args.outdir = f'{outdir_dic[step]}/'
+    args.input = f'{outdir_dic["STAR"]}/{sample}_Aligned.sortedByCoord.out.bam'
     from celescope.tools.featureCounts import featureCounts
     featureCounts(args)
 
-    args.bam = baseDir + '/04.featureCounts/' + sample + '_name_sorted.bam'
-    args.outdir = baseDir + '/05.count'
+    step = 'count'
+    args.outdir = f'{outdir_dic[step]}/'
+    args.bam = f'{outdir_dic["featureCounts"]}/{sample}_name_sorted.bam'
     from celescope.tools.count import count
     count(args)
 
-    args.matrix_file = baseDir + '/05.count/' + sample + '_matrix.xls'
-    args.outdir = baseDir + '/06.analysis'
+    step = 'analysis'
+    args.outdir = f'{outdir_dic[step]}/'
+    args.matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.xls'
     from celescope.tools.analysis import analysis
     analysis(args)
 
