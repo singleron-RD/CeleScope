@@ -6,6 +6,7 @@ from collections import defaultdict, namedtuple
 import sys
 from celescope.rna.__init__ import __STEPS__, __ASSAY__
 
+
 def run(args):
     steps = __STEPS__
     args.assay = __ASSAY__  
