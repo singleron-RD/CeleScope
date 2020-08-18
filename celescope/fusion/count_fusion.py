@@ -2,8 +2,6 @@
 #coding=utf8
 
 import pysam
-from collections import defaultdict
-
 import gzip
 import os
 import pandas as pd
@@ -14,9 +12,10 @@ import argparse
 import matplotlib as mpl
 import re
 import json
+import glob
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-import glob
+from collections import defaultdict
 from celescope.tools.report import reporter
 from celescope.tools.utils import format_number
 
@@ -32,12 +31,12 @@ def genDict(dim=3):
 
 
 def read_pos(fusion_pos_file):
-    df = pd.read_csv(fusion_pos_file,sep="\t")
+    df = pd.read_csv(fusion_pos_file, sep="\t")
     dic = dict([ (tag,int(pos)) for tag,pos in zip(df.iloc[:,0],df.iloc[:,1]) ])
     return dic
 
 
-def is_fusion(pos, read_start,read_length, flanking_base):
+def is_fusion(pos, read_start, read_length, flanking_base):
     test_start = (pos - flanking_base) >= read_start
     test_end = (pos + flanking_base) <= (read_start + read_length)
     return (test_start and test_end)
@@ -45,7 +44,7 @@ def is_fusion(pos, read_start,read_length, flanking_base):
 
 def read_barcode_file(match_barcode_file):
     match_barcode = []
-    with open(match_barcode_file,"rt") as f:
+    with open(match_barcode_file, "rt") as f:
         while True:
             line = f.readline().strip()
             if not line:
@@ -58,16 +57,16 @@ def count_fusion(args):
 
     logger1.info("fusion count...!")
 
-    outdir = args.outdir   
+    outdir = args.outdir
     sample = args.sample
     bam = args.bam
     flanking_base = int(args.flanking_base)
-    fusion_pos_file = args.fusion_pos 
+    fusion_pos_file = args.fusion_pos
     match_dir = args.match_dir
 
     # check dir
     if not os.path.exists(outdir):
-        os.system('mkdir -p %s'%(outdir))
+        os.system('mkdir -p %s' % (outdir))
 
     fusion_pos = read_pos(fusion_pos_file)
     out_prefix = outdir + "/" + sample
@@ -78,7 +77,7 @@ def count_fusion(args):
     match_barcode = read_barcode_file(match_barcode_file)
     # tsne
     match_tsne_file = "{match_dir}/06.analysis/tsne_coord.tsv".format(match_dir=match_dir)
-    df_tsne = pd.read_csv(match_tsne_file,sep="\t",index_col=0)
+    df_tsne = pd.read_csv(match_tsne_file, sep="\t", index_col=0)
     # out
     out_read_count_file = out_prefix + "_fusion_read_count.tsv"
     out_umi_count_file = out_prefix + "_fusion_UMI_count.tsv"
@@ -112,11 +111,11 @@ def count_fusion(args):
             for umi in count_dic[barcode][tag]:
                 rows.append([barcode,tag,umi,count_dic[barcode][tag][umi]])
     df_read = pd.DataFrame(rows)
-    df_read.rename(columns = {0:"barcode",1:"tag",2:"UMI",3:"read_count"},inplace=True)
-    df_read.to_csv(out_read_count_file ,sep="\t",index=False)
+    df_read.rename(columns={0:"barcode", 1:"tag", 2:"UMI", 3:"read_count"}, inplace=True)
+    df_read.to_csv(out_read_count_file, sep="\t", index=False)
 
     df_umi = df_read.groupby(["barcode","tag"]).agg({"UMI":"count"})
-    df_umi.to_csv(out_umi_count_file ,sep="\t")
+    df_umi.to_csv(out_umi_count_file, sep="\t")
 
     df_umi.reset_index(inplace=True)
     df_barcode = df_umi.groupby(["tag"]).agg({"barcode":"count"})
@@ -137,13 +136,13 @@ def count_fusion(args):
     logger1.info("count done.")
 
     # plot
-    cmd = "Rscript {app} --tsne_fusion {out_tsne_file} --outdir {outdir}".format(
-        app=parentDir + "/plot.R", out_tsne_file=out_tsne_file, outdir=outdir)
+    app = parentDir + "/plot_fusion.R"
+    cmd = f"Rscript {app} --tsne_fusion {out_tsne_file} --outdir {outdir}"
     os.system(cmd)
     logger1.info("plot done.")
 
 
-def get_opts_count_fusion(parser,sub_program):
+def get_opts_count_fusion(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir',required=True)
         parser.add_argument('--sample', help='sample name', required=True)
