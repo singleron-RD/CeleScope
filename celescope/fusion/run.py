@@ -2,6 +2,7 @@
 #coding=utf8
 from celescope.fusion.__init__ import __STEPS__, __ASSAY__
 
+
 def run(args):
     steps = __STEPS__
     args.assay = __ASSAY__

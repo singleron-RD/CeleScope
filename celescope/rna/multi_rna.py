@@ -6,11 +6,10 @@ import glob
 import sys
 import argparse
 import re
-import logging
 from collections import defaultdict
-from celescope._meta import __CONDA__
-
-parent_dir = os.path.dirname(__file__)
+from celescope.__init__ import __CONDA__
+from celescope.rna.__init__ import __STEPS__, __ASSAY__
+from celescope.tools.utils import merge_report, generate_sjm
 
 
 def parse_map(mapfile):
@@ -55,19 +54,6 @@ def parse_map(mapfile):
     return fq_dict, cells_dict
 
 
-def generate_sjm(cmd, name, q='all.q', m=1, x=1):
-    cmd = '''
-job_begin
-    name {name}
-    sched_options -w n -cwd -V -l vf={m}g,p={x} -q {q}
-    cmd {cmd}
-job_end
-'''.format(
-    name = name, m=m, x=x, q=q, cmd=re.sub(r'\s+', r' ', cmd.replace('\n',' ')))
-
-    return cmd
-
-
 def main():
 
     parser = argparse.ArgumentParser('CeleScope RNA multi-sample')
@@ -107,7 +93,6 @@ def main():
     os.system('mkdir -p %s' % (logdir))
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
-    conda = __CONDA__
     app = 'celescope'
     thread = args['thread']
     chemistry = args['chemistry']
@@ -119,10 +104,11 @@ def main():
     lowNum = args['lowNum']
     starMem = args['starMem']
     gtf_type = args['gtf_type']
-
     basedir = args['outdir']
-    assay = 'rna'
-    steps = ['sample', 'barcode', 'cutadapt', 'STAR', "featureCounts", "count", 'analysis']
+    
+    assay = __ASSAY__
+    steps = __STEPS__
+    conda = __CONDA__
 
     for sample in fq_dict:
         outdir_dic = {}
@@ -194,17 +180,8 @@ def main():
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
-
     # merged report 
-    step = "merge_report"
-    cmd = '''source activate {conda}; python {app} --samples {samples} --workdir {workdir};'''.format(
-        conda=conda, app=parent_dir + '/merge_table_rna.py', samples=','.join(fq_dict.keys()), workdir=args['outdir'])
-    sjm_cmd += generate_sjm(cmd, 'merge_report')
-    for sample in fq_dict:
-        sjm_order += f'order {step} after {last_step}_{sample}\n'
-    with open(logdir + '/sjm.job', 'w') as fh:
-        fh.write(sjm_cmd+'\n')
-        fh.write(sjm_order)
+    merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda)
 
 
 if __name__ == '__main__':

@@ -13,6 +13,7 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
 from celescope.tools.utils import glob_genomeDir
+from celescope.rna.__init__ import __ASSAY__
 
 logger1 = logging.getLogger(__name__)
 # invoke by celescope.py under rootdir
@@ -142,7 +143,9 @@ def analysis(args):
     report_prepare(outdir, tsne_df, marker_df)
 
     logger1.info('generate report ...!')
-    t = reporter(name='analysis', assay="rna", sample=args.sample, outdir=args.outdir + '/..')
+    stat_file = outdir + "/stat.txt"
+    assay = __ASSAY__
+    t = reporter(name='analysis', assay=assay, sample=args.sample, outdir=args.outdir + '/..', stat_file=stat_file)
     t.get_report()
     logger1.info('generate report done!')
     

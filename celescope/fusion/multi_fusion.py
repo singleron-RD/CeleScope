@@ -9,8 +9,7 @@ import re
 from collections import defaultdict
 from celescope.__init__ import __CONDA__
 from celescope.fusion.__init__ import __STEPS__, __ASSAY__
-
-tools_dir = os.path.dirname(os.path.dirname(__file__)) + "/tools"
+from celescope.tools.utils import merge_report, generate_sjm
 
 
 def parse_map(mapfile):
@@ -51,19 +50,6 @@ def parse_map(mapfile):
         fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
 
     return fq_dict, match_dict
-
-
-def generate_sjm(cmd, name, q='all.q', m=1, x=1):
-    cmd = '''
-job_begin
-    name {name}
-    sched_options -w n -cwd -V -l vf={m}g,p={x} -q {q}
-    cmd {cmd}
-job_end
-'''.format(
-    name=name, m=m, x=x, q=q, cmd=re.sub(r'\s+', r' ', cmd.replace('\n',' ')))
-
-    return cmd
 
 
 def main():
@@ -174,18 +160,7 @@ def main():
         last_step = step
 
     # merged report 
-    step = "merge_report"
-    steps_str = ",".join(steps)
-    samples = ','.join(fq_dict.keys())
-    app = tools_dir + '/merge_table.py'
-    workdir = args['outdir']
-    cmd = f'source activate {conda}; python {app} --samples {samples} --workdir {workdir} --steps {steps_str}'
-    sjm_cmd += generate_sjm(cmd, 'merge_report')
-    for sample in fq_dict:
-        sjm_order += f'order {step} after {last_step}_{sample}\n'
-    with open(logdir + '/sjm.job', 'w') as fh:
-        fh.write(sjm_cmd+'\n')
-        fh.write(sjm_order)
+    merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda)
 
 
 if __name__ == '__main__':

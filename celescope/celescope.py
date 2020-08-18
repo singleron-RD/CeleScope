@@ -9,10 +9,6 @@ from celescope.__init__ import __VERSION__
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
-if __name__ == '__main__':
-    main()
-
-
 def main():
     parser = argparse.ArgumentParser(description='CeleScope')
     parser.add_argument('-v', '--version', action='version', version= __VERSION__)
@@ -203,6 +199,9 @@ def main():
     get_opts_count_fusion(parser_run, False)
     parser_run.set_defaults(func=run)
 
-
     args = parser.parse_args()
     args.func(args)
+
+
+if __name__ == '__main__':
+    main()

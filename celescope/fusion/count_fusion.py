@@ -147,6 +147,7 @@ def get_opts_count_fusion(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument("--bam", required=True)
+        parser.add_argument('--assay', help='assay', required=True)
     #parser.add_argument("--fusion_fasta",help="fusion fasta",required=True)
     parser.add_argument("--fusion_pos", help="first base position of the second gene(0-start),tsv file",required=True)
     parser.add_argument("--match_dir", help="match scRNA-Seq dir", required=True)

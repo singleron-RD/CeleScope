@@ -2,17 +2,46 @@
 #coding=utf8
 
 import logging
+import os
+import glob
+import sys
+import re
 import pandas as pd
 import numpy as np
-#from scipy.stats.kde import gaussian_kde
-#from scipy.signal import argrelextrema
 import subprocess
 from collections import defaultdict
+import celescope.tools
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import glob
-import sys
+
+tools_dir = os.path.dirname(celescope.tools.__file__)
+
+
+def generate_sjm(cmd, name, m=1, x=1):
+    res_cmd = '''
+job_begin
+    name {name}
+    sched_options -w n -cwd -V -l vf={m}g,p={x} 
+    cmd {cmd}
+job_end
+'''.format(name=name, m=m, x=x, cmd=re.sub(r'\s+', r' ', cmd.replace('\n',' ')))
+
+    return res_cmd
+
+
+def merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda):
+    step = "merge_report"
+    steps_str = ",".join(steps)
+    samples = ','.join(fq_dict.keys())
+    app = tools_dir + '/merge_table.py'
+    cmd = f'source activate {conda}; python {app} --samples {samples} --steps {steps_str}'
+    sjm_cmd += generate_sjm(cmd, 'merge_report')
+    for sample in fq_dict:
+        sjm_order += f'order {step} after {last_step}_{sample}\n'
+    with open(logdir + '/sjm.job', 'w') as fh:
+        fh.write(sjm_cmd+'\n')
+        fh.write(sjm_order)
 
 
 def format_number(number: int) -> str:
