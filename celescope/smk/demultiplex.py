@@ -21,7 +21,7 @@ logger1 = logging.getLogger(__name__)
 class SMK:
 
     def __init__(self, SMK_read2, match_barcode_file, sample, SMK_barcode_fasta, tsne_file, UMI_min, percent_min, 
-        combine_cluster, run_summary, UMI2):
+        combine_cluster, run_summary, UMI2, outdir):
         self.SMK_read2 = SMK_read2
         self.match_barcode_file = match_barcode_file
         self.sample = sample
@@ -32,6 +32,7 @@ class SMK:
         self.combine_cluster = combine_cluster
         self.run_summary = run_summary
         self.UMI2 = UMI2
+        self.outdir = outdir
 
         self.SMK_barcode_dic = {}
         self.SMK_barcode_length = None
@@ -43,15 +44,18 @@ class SMK:
         self.cell_ambiguity = 0
         self.reads_too_short = 0
         self.match_barcode = []
-        self.out_df = sample + "_UMI.tsv"
-        self.res_df_file = sample + "_read_count.tsv"
-        self.out_UMI2_df = sample + "_UMI2.tsv"
-        self.df_tsne_summary_file = sample + "_tag_summary.tsv"
-        self.df_count_file = sample + "_cluster_count.tsv"
-        self.cluster_plot = sample + "_cluster_plot.pdf"
+        self.out_df = f'{outdir}/{sample}_UMI.tsv'
+        self.res_df_file = f'{outdir}/{sample}_read_count.tsv'
+        self.out_UMI2_df = f'{outdir}/{sample}_UMI2.tsv'
+        self.df_tsne_summary_file = f'{outdir}/{sample}_tag_summary.tsv'
+        self.df_count_file = f'{outdir}/{sample}_cluster_count.tsv'
+        self.cluster_plot = f'{outdir}/{sample}_cluster_plot.pdf'
         if combine_cluster:
-            self.df_count_combine_file = sample + "_combine_cluster_count.tsv"
-            self.combine_cluster_plot = sample + "_combine_cluster_plot.pdf"
+            self.df_count_combine_file = f'{outdir}/{sample}_combine_cluster_count.tsv'
+            self.combine_cluster_plot = f'{outdir}/{sample}_combine_cluster_plot.pdf'
+
+        if not os.path.exists(outdir):
+            os.system('mkdir -p %s' % outdir)
 
     @staticmethod
     def genDict(dim=3):
@@ -201,7 +205,7 @@ class SMK:
                 self.df.fillna(0,inplace=True)
             else:
                 df_read_file = glob.glob(sample+"_read_count.tsv")[0]
-                df_read = pd.read_csv(df_read_file,sep="\t",index_col=0)
+                df_read = pd.read_csv(df_read_file, sep="\t",index_col=0)
                 df_read_count = df_read[["SMK_barcode_name","read_count"]]
                 df_UMI2_count = df_read_count[df_read_count["read_count"]>1].reset_index()
                 df_UMI2_count = df_UMI2_count.groupby(["barcode","SMK_barcode_name"]).agg("count")
@@ -209,7 +213,7 @@ class SMK:
                 self.df = df_UMI2_count.unstack("SMK_barcode_name",fill_value=0)
                 self.df.columns = self.df.columns.droplevel()
                 self.df.fillna(0,inplace=True)
-                self.df.to_csv(self.out_UMI2_df,sep="\t")
+                self.df.to_csv(self.out_UMI2_df, sep="\t")
 
         df_tsne = pd.read_csv(self.tsne_file,sep="\t",index_col=0)
         df_tsne["cluster"] = df_tsne["cluster"]+1
@@ -287,5 +291,5 @@ def demultiplex(args):
 
     s = SMK(SMK_read2=SMK_read2, match_barcode_file=match_barcode_file, sample=sample, 
         SMK_barcode_fasta=SMK_barcode_fasta, tsne_file=tsne_file, UMI_min=UMI_min, percent_min=percent_min, 
-        combine_cluster=combine_cluster, run_summary=run_summary, UMI2=UMI2)
+        combine_cluster=combine_cluster, run_summary=run_summary, UMI2=UMI2, outdir=outdir)
     s.run()
