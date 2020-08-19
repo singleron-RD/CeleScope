@@ -1,7 +1,15 @@
 import setuptools
-from celescope.__init__ import __VERSION__
+from celescope.__init__ import __VERSION__, ASSAY_DICT
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+entrys = ['celescope=celescope.celescope:main',]
+for assay in ASSAY_DICT:
+    entrys.append(f'multi_{assay}=celescope.{assay}.multi_{assay}:main')
+entry_dict = {
+        'console_scripts': entrys,
+}
+
 
 setuptools.setup(
     name="celescope", # Replace with your own username
@@ -24,11 +32,7 @@ setuptools.setup(
         '': ['templates/*'],
     },
     include_package_data=True,
-    entry_points={
-        'console_scripts': [
-            'celescope=celescope.celescope:main',
-        ],
-    },
+    entry_points=entry_dict,
     install_requires=[
         'cutadapt==1.17',
         'pysam==0.15.0',
