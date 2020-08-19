@@ -97,10 +97,8 @@ def analysis_capture_virus(args):
 
     report_prepare(outdir, tsne_df, marker_df, virus_df)
 
-    logger1.info('generate report ...!')
     t = reporter(name='analysis_capture_virus', assay=args.assay, sample=args.sample, outdir=args.outdir + '/..')
     t.get_report()
-    logger1.info('generate report done!')    
 
 
 def get_opts_analysis_capture_virus(parser, sub_program):

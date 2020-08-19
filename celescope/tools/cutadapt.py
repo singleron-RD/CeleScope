@@ -58,11 +58,9 @@ def cutadapt(args):
         fh.write(res.stdout)
     logging.info('cutadapt done!')
 
-    logging.info('generate report ...!')
     format_stat(args.outdir + '/cutadapt.log', args.sample)
     t = reporter(name='cutadapt', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
-    logging.info('generate report done!')
 
 
 def get_opts_cutadapt(parser, sub_program):

@@ -69,11 +69,9 @@ def featureCounts(args):
     subprocess.check_call(cmd)
     logger1.info('samtools sort done!')
 
-    logger1.info('generate report ...!')
     format_stat(args.outdir+'/'+args.sample+'.summary', args.sample)
     t = reporter(name='featureCounts', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
-    logger1.info('generate report done!')
 
 
 def get_opts_featureCounts(parser, sub_program): 

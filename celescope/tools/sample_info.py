@@ -33,7 +33,6 @@ def sample_info(args):
 
     t = reporter(name='sample', assay=args.assay, sample=args.sample, stat_file=stat_file, outdir=outdir + '/..')
     t.get_report()
-    logger1.info("generating sample info done.")
 
 
 def get_opts_sample(parser, sub_program):

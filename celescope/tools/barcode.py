@@ -9,12 +9,11 @@ from itertools import combinations, permutations, islice
 from xopen import xopen
 from celescope.tools.utils import format_number
 from celescope.tools.report import reporter
+from celescope.tools.__init__ import __PATTERN_DICT__
 
 
 logger1 = logging.getLogger(__name__)
 barcode_corrected_num = 0
-PATTERN_DICT = {'scopeV2.0.0': 'C8L16C8L16C8U8T18', 'scopeV2.0.1': 'C8L16C8L16C8L1U8T18', 
-                'scopeV2.1.0': 'C8L16C8L16C8U12T18', 'scopeV2.1.1': 'C8L16C8L16C8L1U12T18'}
 
 # 定义输出格式
 stat_info = '''
@@ -26,6 +25,7 @@ stat_info = '''
 
 def ord2chr(q, offset=33):
     return chr(int(q) + offset) 
+
 
 # 生成错配字典
 def generate_mis_seq(seq, n=1, bases = 'ACGTN'):
@@ -59,6 +59,7 @@ def generate_mis_seq(seq, n=1, bases = 'ACGTN'):
             if mis_num != 0:
                 res[''.join(seq_tmp)] = (seq, mis_num, ','.join([str(i) for i in g]), ','.join(raw_tmp), ','.join(b))
     return(res)
+
 
 def generate_seq_dict(seqlist, n=1):
     seq_dict = {}
@@ -172,7 +173,7 @@ def barcode(args):
         os.system('mkdir -p %s' % args.outdir)
 
     if (args.chemistry):
-        bc_pattern = PATTERN_DICT[args.chemistry]
+        bc_pattern = __PATTERN_DICT__[args.chemistry]
         (linker, whitelist) = get_scope_bc(args.chemistry)
     else:
         bc_pattern = args.pattern
@@ -201,7 +202,8 @@ def barcode(args):
 
     fq1_list = args.fq1.split(",")
     fq2_list = args.fq2.split(",")
-    if len(fq1_list)>1:
+    # merge multiple fastq files
+    if len(fq1_list) > 1:
         logger1.info("merge fastq with same sample name...")
         fastq_dir = args.outdir+"/../merge_fastq"
         if not os.path.exists(fastq_dir):
@@ -298,7 +300,6 @@ def barcode(args):
             umi=umi, seq=seq2, qual=qual2))
         clean_num += 1
 
-
         barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
         umi_qual_Counter.update(C_U_quals_ascii[C_len:])
         C_U_base_Counter.update(raw_cb + umi)
@@ -310,7 +311,6 @@ def barcode(args):
     #print(umi_qual_Counter)
     BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(30)])/float(sum(barcode_qual_Counter.values()))*100
     UMIsQ30 = sum([umi_qual_Counter[k] for k in umi_qual_Counter if k >= ord2chr(30)])/float(sum(umi_qual_Counter.values()))*100
-
 
     global stat_info
     cal_percent=lambda x: "{:.2%}".format((x+0.0)/total_num)
@@ -327,17 +327,15 @@ def barcode(args):
         stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
         fh.write(stat_info)
     logger1.info('extract barcode done!')
-    
+
     logger1.info('fastqc ...!')
     cmd = ['fastqc', '-t', str(args.thread), '-o', args.outdir, out_fq2]
     logger1.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
     logger1.info('fastqc done!')
-    
-    logger1.info('generate report ...!')
+
     t = reporter(name='barcode', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
-    logger1.info('generate report done!')
 
 
 def get_opts_barcode(parser, sub_program):
@@ -347,8 +345,7 @@ def get_opts_barcode(parser, sub_program):
     parser.add_argument('--sample', help='sample name', required=True)
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)
-    parser.add_argument('--chemistry', choices=['scopeV2.0.0', 'scopeV2.0.1',
-                        'scopeV2.1.0', 'scopeV2.1.1'], help='chemistry version')
+    parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version')
     parser.add_argument('--pattern', help='')
     parser.add_argument('--whitelist', help='')
     parser.add_argument('--linker', help='')
