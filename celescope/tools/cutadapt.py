@@ -39,7 +39,7 @@ def format_stat(cutadapt_log, samplename):
     fh.close()
 
 def cutadapt(args):
-    logging.info('cutadapt ...!')
+    logger1.info('cutadapt ...!')
     # check dir
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s'%(args.outdir))
@@ -52,11 +52,11 @@ def cutadapt(args):
     
     out_fq2 = args.outdir + '/' + args.sample + '_clean_2.fq.gz'
     cmd = ['cutadapt'] + adapt + ['-n', str(len(args.adapt)), '-j', str(args.thread), '-m', str(args.minimum_length), '--nextseq-trim=' + str(args.nextseq_trim), '--overlap', str(args.overlap), '-o', out_fq2, args.fq ]
-    logging.info('%s'%(' '.join(cmd)))
+    logger1.info('%s'%(' '.join(cmd)))
     res = subprocess.run(cmd,stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
     with open(args.outdir + '/cutadapt.log', 'wb') as fh:
         fh.write(res.stdout)
-    logging.info('cutadapt done!')
+    logger1.info('cutadapt done!')
 
     format_stat(args.outdir + '/cutadapt.log', args.sample)
     t = reporter(name='cutadapt', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')

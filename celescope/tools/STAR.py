@@ -54,8 +54,9 @@ def format_stat(map_log, region_log, samplename):
     return {'region_labels': ['Exonic Regions','Intronic Regions','Intergenic Regions'], 
             'region_values': [Exonic_Regions, Intronic_Regions, Intergenic_Regions]}
 
+
 def STAR(args):
-    logging.info('STAR ...!')
+    logger1.info('STAR ...!')
     # check
     refFlat, gtf = glob_genomeDir(args.genomeDir, logger1)
 
