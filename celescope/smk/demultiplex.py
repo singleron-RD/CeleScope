@@ -41,6 +41,10 @@ class SMK:
         self.cell_assigned = 0
         self.cell_failed = 0
         self.cell_ambiguity = 0
+        self.reads = 0
+        self.reads_unmapped = 0
+        self.reads_mapped_not_in_cell = 0
+        self.reads_mapped_in_cell = 0
         self.reads_too_short = 0
         self.match_barcode = []
         self.out_df = f'{outdir}/{sample}_UMI.tsv'
@@ -96,24 +100,31 @@ class SMK:
             line4 = read2.readline()
             if not line4:
                 break
-            index += 1
-            if index % 10000 == 0:
-                logger1.info(str(index)+" reads done.")
+            self.reads += 1
+            if self.reads % 1000000 == 0:
+                logger1.info(str(self.reads) + " reads done.")
             attr = str(line1).strip("@").split("_")
             barcode = str(attr[0])
             umi = str(attr[1])
             seq = line2.strip()
             if len(seq) < self.SMK_barcode_length:
                 self.reads_too_short += 1
+                self.reads_unmapped += 1
                 continue
-            seq = seq[0:self.SMK_barcode_length]            
-            if not (barcode in self.match_barcode):
-                continue
+            seq = seq[0:self.SMK_barcode_length]      
+            mapped = False
             for SMK_barcode_name in self.SMK_barcode_dic:
                 SMK_barcode_seq = self.SMK_barcode_dic[SMK_barcode_name]
                 if SMK.hamming_distance(seq, SMK_barcode_seq) < 3:
+                    mapped = True
+                    if not (barcode in self.match_barcode):
+                        self.reads_mapped_not_in_cell += 1
+                        continue                    
                     self.res_dic[barcode][SMK_barcode_name][umi] += 1
+                    self.reads_mapped_in_cell += 1
                     continue
+            if not mapped:
+                self.reads_unmapped += 1
         
         # write dic to pandas df
         rows = []
@@ -125,6 +136,26 @@ class SMK:
         res_df.rename(columns={0:"barcode", 1:"SMK_barcode_name", 2:"UMI", 3:"read_count"}, inplace=True)
         res_df.to_csv(self.res_df_file, sep="\t", index=False)
 
+        # stat
+        stat = pd.DataFrame(
+        {"item": [
+            "Reads Mapped in Cell", 
+            "Reads Mapped not in Cell", 
+            "Reads Unmapped",
+            "Reads Unmapped too Short", 
+            ],
+        "count": [
+            self.reads_mapped_in_cell,
+            self.reads_mapped_not_in_cell,
+            self.reads_unmapped,
+            self.reads_too_short,
+            ],
+        }, columns=["item", "count"])
+        stat["count_percent"] = stat["count"].apply(lambda x:f'{x}({round(x/self.reads * 100, 2)}%)')
+        stat = stat.loc[:, ["item", "count_percent"]]
+        stat_file = self.outdir + "/stat.txt"
+        stat.to_csv(stat_file, sep=":", header=None, index=False)
+        
     def read_SMK_barcode(self):
 
         with open(self.SMK_barcode_fasta, "rt") as f:
@@ -195,20 +226,21 @@ class SMK:
         self.df.to_csv(self.out_df, sep="\t")
 
     def summary(self):
+
         if not self.run_summary:
             self.tag_count()
         else:
             if not self.UMI2:
                 df_file = glob.glob(sample + "_UMI.tsv")[0]
-                self.df = pd.read_csv(df_file,sep="\t", index_col=0)
-                self.df.fillna(0,inplace=True)
+                self.df = pd.read_csv(df_file, sep="\t", index_col=0)
+                self.df.fillna(0, inplace=True)
             else:
                 df_read_file = glob.glob(sample+"_read_count.tsv")[0]
                 df_read = pd.read_csv(df_read_file, sep="\t", index_col=0)
                 df_read_count = df_read[["SMK_barcode_name", "read_count"]]
                 df_UMI2_count = df_read_count[df_read_count["read_count"] > 1].reset_index()
                 df_UMI2_count = df_UMI2_count.groupby(["barcode", "SMK_barcode_name"]).agg("count")
-                df_UMI2_count.rename(columns={"read_count": "UMI_count"},inplace=True)
+                df_UMI2_count.rename(columns={"read_count": "UMI_count"}, inplace=True)
                 self.df = df_UMI2_count.unstack("SMK_barcode_name", fill_value=0)
                 self.df.columns = self.df.columns.droplevel()
                 self.df.fillna(0,inplace=True)
@@ -229,7 +261,7 @@ class SMK:
             df_combine_cluster = pd.read_csv(self.combine_cluster,sep="\t", header=None)
             df_combine_cluster.columns = ["cluster", "combine_cluster"]
             df_tsne_combine_cluster_summary = pd.merge(df_tsne_summary, df_combine_cluster,
-                on=["cluster"],how="left",left_index=True).set_index(df_tsne_summary.index)
+                on=["cluster"], how="left", left_index=True).set_index(df_tsne_summary.index)
             df_tsne_combine_cluster_summary.to_csv(self.df_tsne_summary_file, sep="\t")
         else:
             df_tsne_summary.to_csv(self.df_tsne_summary_file, sep="\t")
@@ -241,9 +273,6 @@ class SMK:
             SMK.write_and_plot(df=df_tsne_combine_cluster_summary, column_name="combine_cluster",
             count_file=self.df_count_combine_file, plot_file=self.combine_cluster_plot)
         
-        if not self.run_summary:
-            logger1.info("reads too short : " + str(self.reads_too_short))
-
     
     def run(self):
         logger1.info("running")
@@ -262,9 +291,9 @@ def get_opts_demultiplex(parser, sub_program):
     parser.add_argument("--percent_min", help="keep tags have percent>=percent_min", default = 0.7)
     parser.add_argument("--combine_cluster", help="conbine cluster tsv file", default = None)
     parser.add_argument("--UMI2", help="only consider UMI with as least two read support", action='store_true')
+    parser.add_argument("--run_summary", help="only run demultiplex summary", action='store_true')
     if sub_program:
-        parser.add_argument("--SMK_read2",help="SMK clean read2", required=True)
-        parser.add_argument("--run_summary",help="only run summary", action='store_true')
+        parser.add_argument("--SMK_read2", help="SMK clean read2", required=True)
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
