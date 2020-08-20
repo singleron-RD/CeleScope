@@ -12,7 +12,7 @@ entry_dict = {
 
 
 setuptools.setup(
-    name="celescope", # Replace with your own username
+    name="celescope",
     version=__VERSION__,
     author="zhouyiqi",
     author_email="zhouyiqi@singleronbio.com",
@@ -30,6 +30,7 @@ setuptools.setup(
     package_data={
         'celescope.tools': ['*.R'],     # All R files 
         '': ['templates/*'],
+        '': ['data/*'],
     },
     include_package_data=True,
     entry_points=entry_dict,
