@@ -271,9 +271,9 @@ def count(args):
 
     # umi纠错，输出Barcode geneID  UMI     count为表头的表格
     count_detail_file = args.outdir + '/' + args.sample + '_count_detail.txt'
-    logging.info('UMI count ...!')
+    logger1.info('UMI count ...!')
     bam2table(args.bam, count_detail_file)
-    logging.info('bam to table done ...!')
+    logger1.info('bam to table done ...!')
 
     df = pd.read_table(count_detail_file, header=0)
 
@@ -303,7 +303,7 @@ def count(args):
 
     report_prepare(marked_counts_file, downsample_file, args.outdir + '/..')
 
-    logging.info('count done!')
+    logger1.info('count done!')
     t = reporter(assay=args.assay, 
         name='count',sample=args.sample, 
         stat_file=args.outdir + '/stat.txt',

@@ -7,7 +7,6 @@ import sys
 import argparse
 import re
 import glob
-import logging
 from collections import defaultdict
 import matplotlib as mpl
 mpl.use('Agg')
@@ -99,7 +98,7 @@ class SMK:
                 break
             index += 1
             if index % 10000 == 0:
-                logging.info(str(index)+" reads done.")
+                logger1.info(str(index)+" reads done.")
             attr = str(line1).strip("@").split("_")
             barcode = str(attr[0])
             umi = str(attr[1])
@@ -123,8 +122,8 @@ class SMK:
                 for umi in self.res_dic[barcode][SMK_barcode_name]:
                     rows.append([barcode, SMK_barcode_name, umi, self.res_dic[barcode][SMK_barcode_name][umi]])
         res_df = pd.DataFrame(rows)
-        res_df.rename(columns = {0:"barcode", 1:"SMK_barcode_name", 2:"UMI", 3:"read_count"}, inplace=True)
-        res_df.to_csv(self.res_df_file,sep="\t",index=False)
+        res_df.rename(columns={0:"barcode", 1:"SMK_barcode_name", 2:"UMI", 3:"read_count"}, inplace=True)
+        res_df.to_csv(self.res_df_file, sep="\t", index=False)
 
     def read_SMK_barcode(self):
 
@@ -157,7 +156,7 @@ class SMK:
             return sub_df.loc[sub_df["UMI_count"] == UMI_max, "SMK_barcode"].values[0]
 
     @staticmethod
-    def write_and_plot(df,column_name, count_file, plot_file):
+    def write_and_plot(df, column_name, count_file, plot_file):
         df_count = df.groupby(["tag",column_name]).size().unstack()
         df_count.fillna(0, inplace=True)
         df_count.to_csv(count_file, sep="\t")
@@ -172,8 +171,8 @@ class SMK:
         margin_bottom = np.zeros(len(df_plot[column_name].drop_duplicates()))
 
         for num, type in enumerate(types):
-            values = list(df_plot.loc[df_plot["tag"]==type,"percent"])
-            df_plot[df_plot['tag'] == type].plot.bar(x=column_name,y='percent', ax=ax, stacked=True, 
+            values = list(df_plot.loc[df_plot["tag"]==type, "percent"])
+            df_plot[df_plot['tag'] == type].plot.bar(x=column_name, y='percent', ax=ax, stacked=True, 
                                             bottom = margin_bottom, label=type,color=colors[num*3+1])
             margin_bottom += values
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
@@ -188,45 +187,44 @@ class SMK:
         else:
             for barcode in self.res_dic:
                 for SMK_barcode_name in self.res_dic[barcode]:
-                    UMI2_count = sum(list(map(lambda x:x>1,list(self.res_dic[barcode][SMK_barcode_name].values()))))
+                    UMI2_count = sum(list(map(lambda x:x > 1, list(self.res_dic[barcode][SMK_barcode_name].values()))))
                     self.res_sum_dic[barcode][SMK_barcode_name] = UMI2_count                    
         self.df = pd.DataFrame(self.res_sum_dic)
         self.df = self.df.T
-        self.df.fillna(0,inplace=True)
-        self.df.to_csv(self.out_df,sep="\t")
+        self.df.fillna(0, inplace=True)
+        self.df.to_csv(self.out_df, sep="\t")
 
     def summary(self):
         if not self.run_summary:
             self.tag_count()
         else:
             if not self.UMI2:
-                df_file = glob.glob(sample+"_UMI.tsv")[0]
-                self.df = pd.read_csv(df_file,sep="\t",index_col=0)
+                df_file = glob.glob(sample + "_UMI.tsv")[0]
+                self.df = pd.read_csv(df_file,sep="\t", index_col=0)
                 self.df.fillna(0,inplace=True)
             else:
                 df_read_file = glob.glob(sample+"_read_count.tsv")[0]
-                df_read = pd.read_csv(df_read_file, sep="\t",index_col=0)
-                df_read_count = df_read[["SMK_barcode_name","read_count"]]
-                df_UMI2_count = df_read_count[df_read_count["read_count"]>1].reset_index()
-                df_UMI2_count = df_UMI2_count.groupby(["barcode","SMK_barcode_name"]).agg("count")
-                df_UMI2_count.rename(columns={"read_count":"UMI_count"},inplace=True)
-                self.df = df_UMI2_count.unstack("SMK_barcode_name",fill_value=0)
+                df_read = pd.read_csv(df_read_file, sep="\t", index_col=0)
+                df_read_count = df_read[["SMK_barcode_name", "read_count"]]
+                df_UMI2_count = df_read_count[df_read_count["read_count"] > 1].reset_index()
+                df_UMI2_count = df_UMI2_count.groupby(["barcode", "SMK_barcode_name"]).agg("count")
+                df_UMI2_count.rename(columns={"read_count": "UMI_count"},inplace=True)
+                self.df = df_UMI2_count.unstack("SMK_barcode_name", fill_value=0)
                 self.df.columns = self.df.columns.droplevel()
                 self.df.fillna(0,inplace=True)
                 self.df.to_csv(self.out_UMI2_df, sep="\t")
 
-        df_tsne = pd.read_csv(self.tsne_file,sep="\t",index_col=0)
-        df_tsne["cluster"] = df_tsne["cluster"]+1
+        df_tsne = pd.read_csv(self.tsne_file, sep="\t", index_col=0)
 
         df_tag_UMI = self.df.stack().reset_index()
-        df_tag_UMI.columns = ["barcode","SMK_barcode","UMI_count"]
+        df_tag_UMI.columns = ["barcode", "SMK_barcode", "UMI_count"]
 
         barcode_tag_type = df_tag_UMI.groupby(["barcode"]).apply(SMK.tag_type, UMI_min=self.UMI_min,
             percent_min=self.percent_min)
         df_summary = pd.DataFrame(barcode_tag_type)
         df_summary.columns = ["tag"]
         df_tsne_summary = pd.merge(df_tsne, df_summary, how="left", left_index=True, right_index=True)
-        df_tsne_summary.fillna({"tag":"Undetermined"},inplace=True)
+        df_tsne_summary.fillna({"tag": "Undetermined"}, inplace=True)
         if self.combine_cluster:
             df_combine_cluster = pd.read_csv(self.combine_cluster,sep="\t", header=None)
             df_combine_cluster.columns = ["cluster", "combine_cluster"]
@@ -244,17 +242,17 @@ class SMK:
             count_file=self.df_count_combine_file, plot_file=self.combine_cluster_plot)
         
         if not self.run_summary:
-            logging.info("reads too short : " + str(self.reads_too_short))
+            logger1.info("reads too short : " + str(self.reads_too_short))
 
     
     def run(self):
-        logging.info("running")
+        logger1.info("running")
         if not self.run_summary:
             self.read_SMK_barcode()
             self.read_barcode_file()
             self.read_to_dic()
         self.summary()
-        logging.info("done")
+        logger1.info("done")
 
 
 def get_opts_demultiplex(parser, sub_program):
