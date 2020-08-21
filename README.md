@@ -102,9 +102,6 @@ celescope smk run\
  --combine_cluster {combine_cluster.tsv}
 ```
 
-`--fq1` gzipped FASTQ read 1 file path  
-`--fq2` gzipped FASTQ read 2 file path  
-`--sample_name` output sample prefix  
 `--match_dir` matched scRNA-Seq directory after running CeleScope  
 `--SMK_barcode_fasta` SMK tag fasta file  
 `--dim` SMK dimension  
