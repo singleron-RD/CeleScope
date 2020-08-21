@@ -6,15 +6,24 @@ import sys
 import json
 import argparse
 import matplotlib
+import logging
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from collections import defaultdict
 
+
+logger1 = logging.getLogger(__name__)
+
+
 parser = argparse.ArgumentParser('merge report')
+parser.add_argument('--outdir', help='outdir', required=True)
 parser.add_argument('--samples', help='samples, seperated by comma', required=True)
 parser.add_argument('--steps', help='steps', required=True)
+parser.add_argument('--rm_files', action='store_true', help='remove all fq.gz and bam after running')
 args = vars(parser.parse_args())
 
+outdir = args['outdir']
+os.chdir(outdir)
 steps = args['steps'].split(",")
 samples = args['samples'].split(',')
 result_dict = defaultdict(list)
@@ -46,3 +55,11 @@ with open('./merge.xls', 'w') as fh:
             fh.write(k + '\n')
         fh.write('\n')
 
+if args['rm_files']:
+    cmd = '''
+        find . -iname '*.fq*' -delete;
+        find . -iname '*.bam' -delete;
+    '''
+    logger1.info("rm fq and bam files")
+    os.system(cmd)
+    logger1.info("rm done.")

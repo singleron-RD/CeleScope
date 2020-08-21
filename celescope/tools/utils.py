@@ -30,12 +30,15 @@ job_end
     return res_cmd
 
 
-def merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda):
+def merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda, outdir, rm_files):
     step = "merge_report"
     steps_str = ",".join(steps)
     samples = ','.join(fq_dict.keys())
     app = tools_dir + '/merge_table.py'
-    cmd = f'source activate {conda}; python {app} --samples {samples} --steps {steps_str}'
+    cmd = f'''source activate {conda}; python {app} --samples {samples} 
+    --steps {steps_str} --outdir {outdir} '''
+    if rm_files:
+        cmd += ' --rm_files'
     sjm_cmd += generate_sjm(cmd, 'merge_report')
     for sample in fq_dict:
         sjm_order += f'order {step} after {last_step}_{sample}\n'

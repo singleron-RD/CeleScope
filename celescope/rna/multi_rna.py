@@ -30,16 +30,14 @@ def parse_map(mapfile):
                 cell_number = "auto"
             try:
                 pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
-                pattern1_2 = f'{library_path}/*{library_id}*R1*.fastq.gz'
+                pattern1_2 = f'{library_path}/*{library_id}*R1.fastq.gz'
                 pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
-                pattern2_2 = f'{library_path}/*{library_id}*R2*.fastq.gz'
-                fq1 = (glob.glob(pattern1_1) + glob.glob(pattern1_2))
-                fq2 = (glob.glob(pattern2_1) + glob.glob(pattern2_2))
+                pattern2_2 = f'{library_path}/*{library_id}*R2.fastq.gz'
+                fq1 = ",".join(glob.glob(pattern1_1) + glob.glob(pattern1_2))
+                fq2 = ",".join(glob.glob(pattern2_1) + glob.glob(pattern2_2))
             except IndexError as e:
                 sys.exit("Mapfile Error:"+str(e))
                 
-            assert os.path.exists(fq1), '%s not exists!' % (fq1)
-            assert os.path.exists(fq2), '%s not exists!' % (fq2)
             if sample_name in fq_dict:
                 fq_dict[sample_name][0].append(fq1)
                 fq_dict[sample_name][1].append(fq2)
@@ -75,6 +73,7 @@ def main():
     parser.add_argument('--genomeDir', help='genome index dir', required=True)
     parser.add_argument('--gtf_type', help='Specify attribute type in GTF annotation, default=exon', default='exon')
     parser.add_argument('--thread', help='thread', default=6)
+    parser.add_argument('--rm_files', action='store_true', help='remove all fq.gz and bam after running')
     args = vars(parser.parse_args())
 
     fq_dict, cells_dict = parse_map(args['mapfile'])
@@ -180,8 +179,10 @@ def main():
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
-    # merged report 
-    merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda)
+    # merged report
+    step = 'merge_report'
+    merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda, args['outdir'], args['rm_files'])
+          
 
 
 if __name__ == '__main__':
