@@ -88,3 +88,46 @@ celescope rna run\
 `--thread` number of threads
 
 
+### Single Cell Multiplexing
+
+```
+conda activate celescope
+celescope smk run\   
+ --fq1 {fq1.gz}\
+ --fq2 {fq2.gz}\
+ --chemistry scopeV2.0.1\
+ --SMK_barcode_fasta {SMK.fasta}\
+ --match_dir {match_dir}\
+ --dim 2\
+ --combine_cluster {combine_cluster.tsv}
+```
+
+`--sample_name` output sample prefix  
+`--match_dir` matched scRNA-Seq directory after running CeleScope  
+`--SMK_barcode_fasta` SMK tag fasta file  
+`--dim` SMK dimension
+`--combine_cluster` conbine cluster tsv file; first column:original cluster number; second column:combined cluster number  
+
+sample file
+
+```
+$cat SMK.fasta
+>SMK1
+GTTGTCAAGATGCTACCGTTCAGAGATTCAAGGGCAGCCGCGTCACGATTGGATACGACTGTTGGACCGG
+>SMK2
+GTTGTCAAGATGCTACCGTTCAGAGTGGATGGGATAAGTGCGTGATGGACCGAAGGGACCTCGTGGCCGG
+>SMK3
+GTTGTCAAGATGCTACCGTTCAGAGCGGCTCGTGCTGCGTCGTCTCAAGTCCAGAAACTCCGTGTATCCT
+>SMK4
+GTTGTCAAGATGCTACCGTTCAGAGATTGGGAGGCTTTCGTACCGCTGCCGCCACCAGGTGATACCCGCT
+
+$cat combine_cluster.tsv 
+1	1
+2	2
+3	2
+4	2
+5	3
+```
+
+
+
