@@ -70,7 +70,9 @@ def STAR(args):
     # cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir, '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax', '1', '--outReadsUnmapped', 'Fastx', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']    
     cmd = ['STAR', '--runThreadN', str(args.thread), '--genomeDir', args.genomeDir,
         '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax',
-        '1', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate','--outReadsUnmapped','Fastx']    
+        '1', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']    
+    if args.out_unmapped:
+        cmd.append(['--outReadsUnmapped', 'Fastx'])
     logger1.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
     logger1.info('STAR done!')
@@ -100,5 +102,6 @@ def get_opts_STAR(parser, sub_program):
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--thread', default=1)
         parser.add_argument('--assay', help='assay', required=True)
+        parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
     parser.add_argument('--genomeDir', help='genome directory', required=True)
 

@@ -33,8 +33,8 @@ def parse_map(mapfile):
                 pattern1_2 = f'{library_path}/*{library_id}*R1*.fastq.gz'
                 pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
                 pattern2_2 = f'{library_path}/*{library_id}*R2*.fastq.gz'
-                fq1 = (glob.glob(pattern1_1) + glob.glob(pattern1_2))[0]
-                fq2 = (glob.glob(pattern2_1) + glob.glob(pattern2_2))[0]
+                fq1 = (glob.glob(pattern1_1) + glob.glob(pattern1_2))
+                fq2 = (glob.glob(pattern2_1) + glob.glob(pattern2_2))
             except IndexError as e:
                 sys.exit("Mapfile Error:"+str(e))
                 

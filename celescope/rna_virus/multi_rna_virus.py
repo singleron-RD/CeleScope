@@ -151,7 +151,8 @@ def main():
         step = 'STAR'
         fq = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
         cmd = f'''source activate {conda};  {app} {assay} {step}  --fq {fq} --sample {sample} 
-        --genomeDir {genomeDir} --thread {thread} --outdir {outdir_dic[step]} --assay {assay}'''
+        --genomeDir {genomeDir} --thread {thread} --outdir {outdir_dic[step]} --assay {assay}
+        --out_unmapped'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=starMem, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step

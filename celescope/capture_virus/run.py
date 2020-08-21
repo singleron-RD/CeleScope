@@ -37,7 +37,7 @@ def run(args):
     step = "STAR_virus"
     args.input_read = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
     args.outdir = f'{outdir_dic[step]}/' 
-    from celescope.virus.STAR_virus import STAR_virus
+    from celescope.rna_virus.STAR_virus import STAR_virus
     STAR_virus(args)  
 
     step = 'count_capture_virus'
