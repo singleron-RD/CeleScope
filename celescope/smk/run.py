@@ -43,4 +43,8 @@ def run(args):
     from celescope.smk.count_smk import count_smk
     count_smk(args)
 
-
+    step = 'analysis_smk'
+    args.tsne_tag_file = f'{outdir_dic["count_smk"]}/{sample}_tsne_tag.tsv'
+    args.outdir = f'{outdir_dic[step]}/'
+    from celescope.smk.analysis_smk import analysis_smk
+    analysis_smk(args)
