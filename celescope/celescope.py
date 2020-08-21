@@ -217,17 +217,23 @@ def main():
     get_opts_cutadapt(parser_tmp, True)
     parser_tmp.set_defaults(func=cutadapt)
 
-    from celescope.smk.demultiplex import demultiplex, get_opts_demultiplex
-    parser_tmp = subparsers_assay_sub.add_parser('demultiplex')
-    get_opts_demultiplex(parser_tmp, True)
-    parser_tmp.set_defaults(func=demultiplex)
+    from celescope.smk.mapping_smk import mapping_smk, get_opts_mapping_smk
+    parser_tmp = subparsers_assay_sub.add_parser('mapping_smk')
+    get_opts_mapping_smk(parser_tmp, True)
+    parser_tmp.set_defaults(func=mapping_smk)
+
+    from celescope.smk.count_smk import count_smk, get_opts_count_smk
+    parser_tmp = subparsers_assay_sub.add_parser('count_smk')
+    get_opts_count_smk(parser_tmp, True)
+    parser_tmp.set_defaults(func=count_smk)
 
     from celescope.smk.run import run
     parser_tmp = subparsers_assay_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_tmp, False)
     get_opts_barcode(parser_tmp, False)
     get_opts_cutadapt(parser_tmp, False)
-    get_opts_demultiplex(parser_tmp, False)
+    get_opts_mapping_smk(parser_tmp, False)
+    get_opts_count_smk(parser_tmp, False)
     parser_tmp.set_defaults(func=run)
 
     args = parser.parse_args()

@@ -119,6 +119,14 @@
       {% if cutadapt_summary is defined %}
       {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
+
+      {% if mapping_smk_summary is defined %}
+      {% include "html/smk/mapping_smk_summary.html"%}
+      {% endif %}
+
+      {% if count_smk_summary is defined %}
+      {% include "html/common/count_smk_summary.html"%}
+      {% endif %}
     
 
     </div>

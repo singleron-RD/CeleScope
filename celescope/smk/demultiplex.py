@@ -181,7 +181,7 @@ class SMK:
         UMI_max_percent = UMI_max/UMI_sum
         if UMI_sum < UMI_min:
             return "Undetermined"
-        elif  UMI_max_percent < percent_min:
+        elif UMI_max_percent < percent_min:
             return "Multiplet"
         else:
             return sub_df.loc[sub_df["UMI_count"] == UMI_max, "SMK_barcode"].values[0]

@@ -144,15 +144,27 @@ def main():
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
-        # demultiplex
-        step = 'demultiplex'
+        # mapping_smk
+        step = 'mapping_smk'
         SMK_read2 = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-        cmd = f'''source activate {conda}; {app} {assay} {step} --SMK_read2 {SMK_read2} --UMI_min {UMI_min} 
-        --percent_min {percent_min} --SMK_barcode_fasta {SMK_barcode_fasta} --match_dir {match_dict[sample]}
+        cmd = f'''source activate {conda}; {app} {assay} {step} --SMK_read2 {SMK_read2} 
+        --SMK_barcode_fasta {SMK_barcode_fasta} --match_dir {match_dict[sample]}
         --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
+
+        # count_smk
+        step = 'count_smk'
+        cell_UMI_file = f'{outdir_dic["mapping_smk"]}/{sample}_cell_UMI_count.tsv'
+        cmd = f'''source activate {conda}; {app} {assay} {step} 
+        --match_dir {match_dict[sample]} --cell_UMI_file {cell_UMI_file}
+        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}
+        --UMI_min {UMI_min} --percent_min {percent_min} '''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
+
       
     # merged report 
     merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda)
