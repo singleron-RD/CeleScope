@@ -16,6 +16,7 @@ from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 
+
 def genDict(dim=3):
     if dim==1:
         return defaultdict(int)
@@ -64,18 +65,13 @@ class smk_mapping:
             os.system('mkdir -p %s' % outdir)
 
     def read_barcode_file(self):
-        with open(self.match_barcode_file, "rt") as f:
-            while True:
-                line = f.readline().strip()
-                if not line:
-                    break
-                self.match_barcode.append(line)    
+        match_barcode = pd.read_csv(self.match_barcode_file, header=None)
+        self.match_barcode = list(match_barcode.iloc[:, 0]) 
         self.cell_total = len(self.match_barcode)
 
     def read_to_dic(self):
 
         read2 = gzip.open(self.SMK_read2, "rt")
-        index = 0
         seq_length = len(list(self.SMK_barcode_dic.values())[0])
         while True:
             line1 = read2.readline()
@@ -164,6 +160,10 @@ class smk_mapping:
                 
         df_cell_umi_count = pd.DataFrame(self.res_sum_dic)
         df_cell_umi_count = df_cell_umi_count.T
+        # merge
+        df_cell = pd.DataFrame(index=self.match_barcode)
+        df_cell_umi_count = pd.merge(df_cell, df_cell_umi_count, how="left", left_index=True, right_index=True)
+        # fillna
         df_cell_umi_count.fillna(0, inplace=True)
         df_cell_umi_count = df_cell_umi_count.astype(int)
         df_cell_umi_count.to_csv(self.cell_umi_count_file, sep="\t")
@@ -174,8 +174,9 @@ class smk_mapping:
         self.read_barcode_file()
         self.read_to_dic()
         self.tag_count()
-        t = reporter(name='mapping_smk', assay="smk", sample=self.sample, 
-        stat_file=self.stat_file, outdir=self.outdir + '/..')
+        t = reporter(
+            name='mapping_smk', assay="smk", sample=self.sample, 
+            stat_file=self.stat_file, outdir=self.outdir + '/..')
         t.get_report()
         logger1.info('mapping smk done...!')
 

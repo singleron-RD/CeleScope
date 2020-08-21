@@ -125,7 +125,11 @@
       {% endif %}
 
       {% if count_smk_summary is defined %}
-      {% include "html/common/count_smk_summary.html"%}
+      {% include "html/smk/count_smk_summary.html"%}
+      {% endif %}
+
+      {% if cluster_tsne is defined %}
+      {% include "html/smk/analysis_smk_summary.html"%}
       {% endif %}
     
 

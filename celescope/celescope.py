@@ -227,6 +227,11 @@ def main():
     get_opts_count_smk(parser_tmp, True)
     parser_tmp.set_defaults(func=count_smk)
 
+    from celescope.smk.analysis_smk import analysis_smk, get_opts_analysis_smk
+    parser_tmp = subparsers_assay_sub.add_parser('analysis_smk')
+    get_opts_analysis_smk(parser_tmp, True)
+    parser_tmp.set_defaults(func=analysis_smk)
+
     from celescope.smk.run import run
     parser_tmp = subparsers_assay_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_tmp, False)
@@ -234,6 +239,7 @@ def main():
     get_opts_cutadapt(parser_tmp, False)
     get_opts_mapping_smk(parser_tmp, False)
     get_opts_count_smk(parser_tmp, False)
+    get_opts_analysis_smk(parser_tmp, False)
     parser_tmp.set_defaults(func=run)
 
     args = parser.parse_args()

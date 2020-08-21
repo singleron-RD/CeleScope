@@ -71,8 +71,9 @@ def main():
     parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed', default=2)
     parser.add_argument('--thread', help='thread', default=6)
     parser.add_argument("--SMK_barcode_fasta", help="SMK barcode fasta")
-    parser.add_argument("--UMI_min", help="keep tags have UMI>=UMI_min", default = 50)
-    parser.add_argument("--percent_min", help="keep tags have percent>=percent_min", default = 0.7)
+    parser.add_argument("--UMI_min", help="cells have SMK_UMI>=UMI_min are considered as valid cell", default="auto")
+    parser.add_argument("--dim", help="SMK tag dimension", default=1)
+    parser.add_argument("--SNR_min", help="minimum signal to noise ratio", default="auto")
 
     args = vars(parser.parse_args())
 
@@ -104,7 +105,8 @@ def main():
 
     SMK_barcode_fasta = args['SMK_barcode_fasta']
     UMI_min = args['UMI_min']
-    percent_min = args['percent_min']
+    SNR_min = args['SNR_min']
+    dim = args['dim']
 
     assay = __ASSAY__
     steps = __STEPS__
@@ -160,7 +162,17 @@ def main():
         cmd = f'''source activate {conda}; {app} {assay} {step} 
         --match_dir {match_dict[sample]} --cell_UMI_file {cell_UMI_file}
         --sample {sample} --outdir {outdir_dic[step]} --assay {assay}
-        --UMI_min {UMI_min} --percent_min {percent_min} '''
+        --UMI_min {UMI_min} --SNR_min {SNR_min} --dim {dim}'''
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
+        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        last_step = step
+
+        # analysis_smk
+        step = 'analysis_smk'
+        tsne_tag_file = f'{outdir_dic["count_smk"]}/{sample}_tsne_tag.tsv'
+        cmd = f'''source activate {conda}; {app} {assay} {step}
+        --match_dir {match_dict[sample]} --tsne_tag_file {tsne_tag_file}
+        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
