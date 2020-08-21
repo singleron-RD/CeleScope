@@ -102,8 +102,8 @@ celescope smk run\
  --combine_cluster {combine_cluster.tsv}
 ```
 
-`--match_dir` matched scRNA-Seq directory after running CeleScope  
 `--SMK_barcode_fasta` SMK tag fasta file  
+`--match_dir` matched scRNA-Seq directory after running CeleScope  
 `--dim` SMK dimension  
 `--combine_cluster` conbine cluster tsv file; first column:original cluster number; second column:combined cluster number  
 
