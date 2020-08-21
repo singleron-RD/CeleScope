@@ -31,9 +31,16 @@ def run(args):
     from celescope.tools.cutadapt import cutadapt
     cutadapt(args)
 
-    step = 'demultiplex'
-    args.outdir = f'{outdir_dic[step]}/'
+    step = 'mapping_smk'
     args.SMK_read2 = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-    from celescope.smk.demultiplex import demultiplex
-    demultiplex(args)
+    args.outdir = f'{outdir_dic[step]}/'
+    from celescope.smk.mapping_smk import mapping_smk
+    mapping_smk(args)
+
+    step = 'count_smk'
+    args.cell_UMI_file = f'{outdir_dic["mapping_smk"]}/{sample}_cell_UMI_count.tsv'
+    args.outdir = f'{outdir_dic[step]}/'
+    from celescope.smk.count_smk import count_smk
+    count_smk(args)
+
 
