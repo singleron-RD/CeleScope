@@ -103,7 +103,7 @@ celescope smk run\
 ```
 
 `--fq1` gzipped FASTQ read 1 file path  
-`--fq2` gzipped FASTQ read 2 file path 
+`--fq2` gzipped FASTQ read 2 file path  
 `--sample_name` output sample prefix  
 `--match_dir` matched scRNA-Seq directory after running CeleScope  
 `--SMK_barcode_fasta` SMK tag fasta file  
