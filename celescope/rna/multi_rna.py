@@ -9,47 +9,7 @@ import re
 from collections import defaultdict
 from celescope.__init__ import __CONDA__
 from celescope.rna.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.utils import merge_report, generate_sjm
-
-
-def parse_map(mapfile):
-    fq_dict = defaultdict(list)
-    cells_dict = defaultdict(list)
-    with open(mapfile) as fh:
-        for line in fh:
-            line = line.strip()
-            if not line: continue
-            if line.startswith('#'): continue
-            tmp = line.split()
-            library_id = tmp[0]
-            library_path = tmp[1]
-            sample_name = tmp[2]
-            if len(tmp) == 4:
-                cell_number = int(tmp[3])
-            else:
-                cell_number = "auto"
-            try:
-                pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
-                pattern1_2 = f'{library_path}/*{library_id}*R1.fastq.gz'
-                pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
-                pattern2_2 = f'{library_path}/*{library_id}*R2.fastq.gz'
-                fq1 = ",".join(glob.glob(pattern1_1) + glob.glob(pattern1_2))
-                fq2 = ",".join(glob.glob(pattern2_1) + glob.glob(pattern2_2))
-            except IndexError as e:
-                sys.exit("Mapfile Error:"+str(e))
-                
-            if sample_name in fq_dict:
-                fq_dict[sample_name][0].append(fq1)
-                fq_dict[sample_name][1].append(fq2)
-            else:
-                fq_dict[sample_name] = [[fq1], [fq2]]
-            cells_dict[sample_name] = cell_number
-    
-    for sample_name in fq_dict:
-        fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
-        fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
-
-    return fq_dict, cells_dict
+from celescope.tools.utils import merge_report, generate_sjm, parse_map_col4
 
 
 def main():
@@ -76,7 +36,7 @@ def main():
     parser.add_argument('--rm_files', action='store_true', help='remove all fq.gz and bam after running')
     args = vars(parser.parse_args())
 
-    fq_dict, cells_dict = parse_map(args['mapfile'])
+    fq_dict, cells_dict = parse_map_col4(args['mapfile'], "auto")
 
     # 链接数据
     raw_dir = args['outdir'] + '/data_give/rawdata'

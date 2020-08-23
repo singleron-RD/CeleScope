@@ -18,6 +18,50 @@ import matplotlib.pyplot as plt
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
 
+def get_fq(library_id, library_path):
+    try:
+        pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
+        pattern1_2 = f'{library_path}/*{library_id}*R1.fastq.gz'
+        pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
+        pattern2_2 = f'{library_path}/*{library_id}*R2.fastq.gz'
+        fq1 = ",".join(glob.glob(pattern1_1) + glob.glob(pattern1_2))
+        fq2 = ",".join(glob.glob(pattern2_1) + glob.glob(pattern2_2))
+    except IndexError as e:
+        sys.exit("Mapfile Error:"+str(e))
+    return fq1, fq2
+
+
+def parse_map_col4(mapfile, default_val):
+    fq_dict = defaultdict(list)
+    col4_dict = defaultdict(list)
+    with open(mapfile) as fh:
+        for line in fh:
+            line = line.strip()
+            if not line: continue
+            if line.startswith('#'): continue
+            tmp = line.split()
+            library_id = tmp[0]
+            library_path = tmp[1]
+            sample_name = tmp[2]
+            if len(tmp) == 4:
+                col4 = tmp[3]
+            else:
+                col4 = default_val
+            fq1, fq2 = get_fq(library_id, library_path)
+                
+            if sample_name in fq_dict:
+                fq_dict[sample_name][0].append(fq1)
+                fq_dict[sample_name][1].append(fq2)
+            else:
+                fq_dict[sample_name] = [[fq1], [fq2]]
+            col4_dict[sample_name] = col4
+    
+    for sample_name in fq_dict:
+        fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
+        fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
+
+    return fq_dict, col4_dict
+
 def generate_sjm(cmd, name, m=1, x=1):
     res_cmd = '''
 job_begin
