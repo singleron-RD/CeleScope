@@ -27,11 +27,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    package_data={
-        'celescope.tools': ['*.R'],     # All R files 
-        '': ['templates/*'],
-        '': ['data/*'],
-    },
     include_package_data=True,
     entry_points=entry_dict,
     install_requires=[
