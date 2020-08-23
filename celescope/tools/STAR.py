@@ -102,6 +102,6 @@ def get_opts_STAR(parser, sub_program):
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--thread', default=1)
         parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
+    parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
     parser.add_argument('--genomeDir', help='genome directory', required=True)
 
