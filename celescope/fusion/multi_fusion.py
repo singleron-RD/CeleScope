@@ -73,6 +73,8 @@ def main():
     parser.add_argument('--thread', help='thread', default=6)
     parser.add_argument('--genomeDir', help='fusion genomeDir', required=True)
     parser.add_argument("--fusion_pos", help="first base position of the second gene(0-start),tsv file", required=True)
+    parser.add_argument("--UMI_min", default=1)
+    parser.add_argument('--rm_files', action='store_true', help='remove all fq.gz and bam after running')
     args = vars(parser.parse_args())
 
     fq_dict, match_dict = parse_map(args['mapfile'])
@@ -106,6 +108,7 @@ def main():
     steps = __STEPS__
     fusion_pos = args['fusion_pos']
     basedir = args['outdir']    
+    UMI_min = args['UMI_min']
 
     for sample in fq_dict:
         outdir_dic = {}
@@ -153,14 +156,14 @@ def main():
         # count_fusion
         step = 'count_fusion'
         bam = bam = f'{outdir_dic["STAR_fusion"]}/{sample}_Aligned.sortedByCoord.out.bam'
-        cmd = f'''source activate {conda};  {app} {assay} {step}  --bam {bam} --sample {sample} 
+        cmd = f'''source activate {conda};  {app} {assay} {step}  --bam {bam} --sample {sample} --UMI_min {UMI_min}
             --outdir {outdir_dic[step]} --match_dir {match_dict[sample]} --fusion_pos {fusion_pos} --assay {assay}'''        
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=20, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'        
         last_step = step
 
     # merged report 
-    merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda)
+    merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda, args['outdir'], args['rm_files'])
 
 
 if __name__ == '__main__':

@@ -63,6 +63,7 @@ def count_fusion(args):
     flanking_base = int(args.flanking_base)
     fusion_pos_file = args.fusion_pos
     match_dir = args.match_dir
+    UMI_min = int(args.UMI_min)
 
     # check dir
     if not os.path.exists(outdir):
@@ -111,10 +112,11 @@ def count_fusion(args):
             for umi in count_dic[barcode][tag]:
                 rows.append([barcode,tag,umi,count_dic[barcode][tag][umi]])
     df_read = pd.DataFrame(rows)
-    df_read.rename(columns={0:"barcode", 1:"tag", 2:"UMI", 3:"read_count"}, inplace=True)
+    df_read.rename(columns={0: "barcode", 1: "tag", 2: "UMI", 3: "read_count"}, inplace=True)
     df_read.to_csv(out_read_count_file, sep="\t", index=False)
 
-    df_umi = df_read.groupby(["barcode","tag"]).agg({"UMI":"count"})
+    df_umi = df_read.groupby(["barcode", "tag"]).agg({"UMI": "count"})
+    df_umi = df_umi[df_umi["UMI"] >= UMI_min]
     df_umi.to_csv(out_umi_count_file, sep="\t")
 
     df_umi.reset_index(inplace=True)
@@ -123,14 +125,14 @@ def count_fusion(args):
     # add zero count tag
     for tag in fusion_pos.keys():
         if not tag in df_barcode.barcode:
-            new_row = pd.Series(data={'barcode':0}, name=tag)
-            df_barcode = df_barcode.append(new_row,ignore_index=False)
-    df_barcode["percent"] = df_barcode["barcode"]/n_match_barcode
+            new_row = pd.Series(data={'barcode': 0}, name=tag)
+            df_barcode = df_barcode.append(new_row, ignore_index=False)
+    df_barcode["percent"] = df_barcode["barcode"] / n_match_barcode
     df_barcode.to_csv(out_barcode_count_file, sep="\t")
 
-    df_pivot = df_umi.pivot(index="barcode",columns="tag",values="UMI")
-    df_pivot.fillna(0,inplace=True)
-    df_tsne_fusion = pd.merge(df_tsne,df_pivot, right_index=True, left_index=True, how="left")
+    df_pivot = df_umi.pivot(index="barcode", columns="tag", values="UMI")
+    df_pivot.fillna(0, inplace=True)
+    df_tsne_fusion = pd.merge(df_tsne, df_pivot, right_index=True, left_index=True, how="left")
     df_tsne_fusion.fillna(0, inplace=True)
     df_tsne_fusion.to_csv(out_tsne_file, sep="\t")
     logger1.info("count done.")
@@ -152,3 +154,4 @@ def get_opts_count_fusion(parser, sub_program):
     parser.add_argument("--fusion_pos", help="first base position of the second gene(0-start),tsv file",required=True)
     parser.add_argument("--match_dir", help="match scRNA-Seq dir", required=True)
     parser.add_argument("--flanking_base", default=5)
+    parser.add_argument("--UMI_min", default=1)
