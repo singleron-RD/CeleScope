@@ -242,6 +242,36 @@ def main():
     get_opts_analysis_smk(parser_tmp, False)
     parser_tmp.set_defaults(func=run)
 
+    # vdj
+    assay = 'vdj'
+    text = ASSAY_DICT[assay]
+    subparsers_assay = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_assay_sub = subparsers_assay.add_subparsers()
+
+    parser_tmp = subparsers_assay_sub.add_parser('sample')
+    get_opts_sample(parser_tmp, True)
+    parser_tmp.set_defaults(func=sample_info)
+
+    parser_tmp = subparsers_assay_sub.add_parser('barcode')
+    get_opts_barcode(parser_tmp, True)
+    parser_tmp.set_defaults(func=barcode)
+
+    parser_tmp = subparsers_assay_sub.add_parser('cutadapt')
+    get_opts_cutadapt(parser_tmp, True)
+    parser_tmp.set_defaults(func=cutadapt)
+
+    from celescope.vdj.mapping_vdj import mapping_vdj, get_opts_mapping_vdj
+    parser_tmp = subparsers_assay_sub.add_parser('mapping_vdj')
+    get_opts_mapping_vdj(parser_tmp, True)
+    parser_tmp.set_defaults(func=mapping_vdj)
+
+    from celescope.vdj.count_vdj import count_vdj, get_opts_count_vdj
+    parser_tmp = subparsers_assay_sub.add_parser('count_vdj')
+    get_opts_count_vdj(parser_tmp, True)
+    parser_tmp.set_defaults(func=count_vdj)
+
+
+
     args = parser.parse_args()
     args.func(args)
 

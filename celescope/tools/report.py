@@ -16,13 +16,21 @@ logger1 = logging.getLogger(__name__)
 
 
 class reporter:
-    def __init__(self, assay, name, outdir, sample, stat_file=None, plot=None):
+
+    def __init__(
+        self, assay, name, outdir, sample,
+        stat_file=None, plot=None, parameters=None,
+        table_file=None, table_header=None
+    ):
         self.assay = assay
         self.name = name
         self.stat_file = stat_file
         self.outdir = outdir
         self.sample = sample
         self.plot = plot
+        self.parameters = parameters
+        self.table_file = table_file
+        self.table_header = table_header
   
     def get_report(self):
         logger1.info(f'generate report: {self.assay} {self.name}')
@@ -41,6 +49,17 @@ class reporter:
   
         if self.plot:
             data[self.name + '_plot'] = self.plot
+        
+        if self.parameters:
+            data[self.name + '_parameters'] = self.parameters
+        
+        if self.table_file:
+            df = pd.read_csv(self.table_file, sep="\t")
+            df = df.fillna(value="")
+            data[self.name + '_table'] = df.values.tolist()
+        
+        if self.table_header:
+            data[self.name + '_table_header'] = self.table_header
 
         report_html = "{outdir}/{sample}_report.html".format(outdir=self.outdir, sample=self.sample)
         with io.open(report_html, 'w', encoding='utf8') as fh:

@@ -18,6 +18,14 @@ import matplotlib.pyplot as plt
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
 
+def gen_stat(df, stat_file):
+    # 3cols: item count total_count
+    df['percent'] = df["count"] / df['total_count']
+    df['value'] = df.apply(lambda x: f"{x['count']}({round(x['percent'] * 100, 2)}%)", axis=1)
+    df = df.loc[:, ["item", "value"]]
+    df.to_csv(stat_file, sep=":", header=None, index=False)
+
+
 def get_fq(library_id, library_path):
     try:
         pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
@@ -120,7 +128,6 @@ def glob_genomeDir(genomeDir, logger1):
         logger1.info("gtf file found: " + gtf)
 
     return refFlat, gtf
-
 
 
 def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):
