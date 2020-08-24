@@ -82,16 +82,19 @@ def STAR(args):
     region_txt = args.outdir + '/' + args.sample + '_region.log'
     cmd = ['picard', '-Xmx4G', '-XX:ParallelGCThreads=4', 'CollectRnaSeqMetrics', 'I=%s'%(outBam), 'O=%s' % (region_txt), 'REF_FLAT=%s' % (refFlat), 'STRAND=NONE', 'VALIDATION_STRINGENCY=SILENT']
     logger1.info('%s'%(' '.join(cmd)))
-    res = subprocess.run(cmd, stderr=subprocess.STDOUT,stdout=subprocess.PIPE)
+    res = subprocess.run(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     logger1.info(res.stdout)
     logger1.info('stat mapping region done!')
 
-    logger1.info('generate report ...!')
     plot = format_stat(args.outdir+'/'+args.sample+'_Log.final.out', region_txt, args.sample)
-
-    t = reporter(name='STAR', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..', plot=plot)
+    t = reporter(
+        name='STAR',
+        assay=args.assay,
+        sample=args.sample,
+        stat_file=args.outdir + '/stat.txt',
+        outdir=args.outdir + '/..',
+        plot=plot)
     t.get_report()
-    logger1.info('generate report done!')
 
 
 def get_opts_STAR(parser, sub_program):
