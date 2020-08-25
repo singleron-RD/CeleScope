@@ -182,6 +182,7 @@ def mapping_vdj(args):
     type = args.type
     debug = args.debug
     assay = args.assay
+    thread = args.thread
 
     report = f"{outdir}/{sample}_align.txt"
     not_align_fq = f"{outdir}/not_align.fq"
@@ -194,7 +195,7 @@ def mapping_vdj(args):
     cmd = f"""
 mixcr align \
 --species hs \
--t 5 \
+-t {thread} \
 --not-aligned-R1 {not_align_fq} \
 --report {report} \
 -OallowPartialAlignments=true \

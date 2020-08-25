@@ -116,6 +116,7 @@ def main():
         --thread {thread}
         --outdir {outdir_dic[step]}
         --assay {assay}
+        --thread {thread}
         '''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=15, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
