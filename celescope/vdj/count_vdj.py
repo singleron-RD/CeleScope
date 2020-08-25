@@ -356,7 +356,7 @@ def count_vdj(args):
         stat = stat.loc[:, ["item", "new_count"]]
         stat.to_csv(stat_file, sep=":", header=None, index=False)
 
-    cell_stat_file = "{}/cell_stat.txt".format(outdir)
+    cell_stat_file = "{}/stat.txt".format(outdir)
     gen_stat(cell_summary, cell_stat_file)
     name = type + '_count_vdj'
     t = reporter(
