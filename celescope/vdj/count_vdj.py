@@ -423,4 +423,4 @@ def get_opts_count_vdj(parser, sub_program):
                         help='minimum UMI number to filter', default="auto")
     parser.add_argument('--debug', dest='debug', default=False)
     parser.add_argument(
-        '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=2)
+        '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)
