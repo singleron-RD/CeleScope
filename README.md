@@ -12,7 +12,7 @@
 ```
 git clone https://github.com/zhouyiqi91/CeleScope.git
 cd CeleScope
-sh build.sh
+source build.sh
 ```
 
 ## Reference genome 
