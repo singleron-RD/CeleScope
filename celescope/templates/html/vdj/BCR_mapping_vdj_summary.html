@@ -1,0 +1,38 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>Mapping     <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+    <div class="box">
+      <div class="description" style="display: none;">
+        <p><b>Reads Mapped to Any VDJ Gene</b> : reads Mapped to any germline VDJ gene segments.</p>
+        <p><b>Reads with CDR3</b> : reads with CDR3 sequence.</p>
+        <p><b>Reads with Correct CDR3</b> : some reads with CDR3 might have stop codon and these reads are classified as incorrect.</p>
+        <p><b>Reads Mapped Confidently to Both V and J Gene</b> : reads with correct CDR3 and mapped to both V and J gene.</p>
+        <p><b>Reads Mapped to IGH</b> : reads mapped confidently to IGH chain.</p>
+        <p><b>Reads Mapped to IGL</b> : reads mapped confidently to IGL chain.</p>
+        <p><b>Reads Mapped to IGK</b> : reads mapped confidently to IGK chain.</p>
+    </div>
+      <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+        {% for item in BCR_mapping_vdj_summary %}
+          {% if loop.index <= (loop.length+1)/2 %}
+          <tr>
+            {% for i in item %} 
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+
+      <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+        {% for item in BCR_mapping_vdj_summary %}
+          {% if loop.index > (loop.length+1)/2 %}
+          <tr>
+            {% for i in item %} 
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+      <div class="clear" ></div>
+    </div>
+  </div>
