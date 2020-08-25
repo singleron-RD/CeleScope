@@ -270,7 +270,14 @@ def main():
     get_opts_count_vdj(parser_tmp, True)
     parser_tmp.set_defaults(func=count_vdj)
 
-
+    from celescope.vdj.run import run
+    parser_tmp = subparsers_assay_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    get_opts_sample(parser_tmp, False)
+    get_opts_barcode(parser_tmp, False)
+    get_opts_cutadapt(parser_tmp, False)
+    get_opts_mapping_vdj(parser_tmp, False)
+    get_opts_count_vdj(parser_tmp, False)
+    parser_tmp.set_defaults(func=run)
 
     args = parser.parse_args()
     args.func(args)
