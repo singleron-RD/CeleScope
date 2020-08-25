@@ -1,5 +1,6 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, hamming_distance
+from celescope.tools.barcode import seq_ranges, parse_pattern
 import gzip
 import os
 import pandas as pd
@@ -22,18 +23,6 @@ def genDict(dim=3):
         return defaultdict(int)
     else:
         return defaultdict(lambda: genDict(dim - 1))
-
-
-def hamming_distance(string1, string2):
-    distance = 0
-    length = len(string1)
-    length2 = len(string2)
-    if (length != length2):
-        raise Exception("string1 and string2 do not have same length")
-    for i in range(length):
-        if string1[i] != string2[i]:
-            distance += 1
-    return distance
 
 
 class smk_mapping:
@@ -201,7 +190,9 @@ def get_opts_mapping_smk(parser, sub_program):
     parser.add_argument(
         "--match_dir",
         help="matched scRNA-Seq CeleScope directory path")
-    parser.add_argument("--SMK_barcode_fasta", help="SMK barcode fasta")
+    parser.add_argument("--SMK_pattern", help="SMK read2 pattern")
+    parser.add_argument("--SMK_linker", help="SMK read2 linker fasta path")
+    parser.add_argument("--SMK_barcode", help="SMK read2 barcode fasta path ")
     if sub_program:
         parser.add_argument(
             "--SMK_read2",

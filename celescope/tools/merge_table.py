@@ -54,7 +54,7 @@ with open('./merge.xls', 'w') as fh:
 if args['rm_files']:
     cmd = '''
         find . -iname '*.fq*' -delete;
-        find . -iname '*.bam' -delete;
+        find . -iname '*.bam' -not -path './*/*.featureCounts/*name_sorted.bam' -delete;
     '''
     logger1.info("rm fq and bam files")
     os.system(cmd)

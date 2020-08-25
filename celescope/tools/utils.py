@@ -15,6 +15,18 @@ import matplotlib.pyplot as plt
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
 
+def hamming_distance(string1, string2):
+    distance = 0
+    length = len(string1)
+    length2 = len(string2)
+    if (length != length2):
+        raise Exception("string1 and string2 do not have same length")
+    for i in range(length):
+        if string1[i] != string2[i]:
+            distance += 1
+    return distance
+    
+
 def gen_stat(df, stat_file):
     # 3cols: item count total_count
     df['percent'] = df["count"] / df['total_count']
