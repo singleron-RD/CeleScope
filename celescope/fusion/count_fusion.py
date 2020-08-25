@@ -4,7 +4,6 @@
 from celescope.tools.utils import format_number
 from celescope.tools.report import reporter
 from collections import defaultdict
-from matplotlib import pyplot as plt
 import pysam
 import gzip
 import os
@@ -18,6 +17,7 @@ import re
 import json
 import glob
 mpl.use('Agg')
+from matplotlib import pyplot as plt
 
 parentDir = os.path.dirname(__file__)
 logger1 = logging.getLogger(__name__)

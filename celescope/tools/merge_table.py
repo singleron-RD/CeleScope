@@ -2,15 +2,11 @@
 # coding=utf8
 
 from collections import defaultdict
-from matplotlib import pyplot as plt
 import os
 import sys
 import json
 import argparse
-import matplotlib
 import logging
-matplotlib.use('Agg')
-
 
 logger1 = logging.getLogger(__name__)
 
@@ -29,13 +25,6 @@ os.chdir(outdir)
 steps = args['steps'].split(",")
 samples = args['samples'].split(',')
 result_dict = defaultdict(list)
-
-
-def pie_label(values, keys):
-    total = float(sum(values))
-    return ['%s:%.2f%%' % (k.replace(' Regions', ''), v / total * 100)
-            for k, v in zip(keys, values)]
-
 
 summarys = [step + '_summary' for step in steps]
 for sample in samples:

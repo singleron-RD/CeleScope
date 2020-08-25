@@ -2,7 +2,6 @@ import glob
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
 from celescope.tools.utils import format_number
-from matplotlib import pyplot as plt
 import gzip
 import os
 import pandas as pd
@@ -14,6 +13,7 @@ import matplotlib as mpl
 import re
 import json
 mpl.use('Agg')
+from matplotlib import pyplot as plt
 
 logger1 = logging.getLogger(__name__)
 STEP = 'count_vdj'

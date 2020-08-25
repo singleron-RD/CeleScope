@@ -1,6 +1,5 @@
 from celescope.tools.report import reporter
 from celescope.tools.utils import format_number
-import matplotlib.pyplot as plt
 import gzip
 import os
 import pandas as pd
@@ -13,6 +12,7 @@ import glob
 from collections import defaultdict
 import matplotlib as mpl
 mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 logger1 = logging.getLogger(__name__)
 

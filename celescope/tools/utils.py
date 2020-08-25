@@ -1,7 +1,3 @@
-#!/bin/env python
-# coding=utf8
-
-import matplotlib.pyplot as plt
 import logging
 import os
 import glob
@@ -14,6 +10,7 @@ from collections import defaultdict
 import celescope.tools
 import matplotlib
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
 

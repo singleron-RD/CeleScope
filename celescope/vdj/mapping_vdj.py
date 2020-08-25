@@ -1,7 +1,6 @@
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
 from celescope.tools.utils import format_number, gen_stat
-from matplotlib import pyplot as plt
 import os
 import logging
 import gzip
@@ -12,6 +11,7 @@ import re
 import json
 import argparse
 mpl.use('Agg')
+from matplotlib import pyplot as plt
 
 logger1 = logging.getLogger(__name__)
 STEP = 'mapping_vdj'
