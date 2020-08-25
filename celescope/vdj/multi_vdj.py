@@ -141,6 +141,9 @@ def main():
 
     # merged report
     step = 'merge_report'
+    # add type to steps mapping and count
+    for i in range(3,len(steps)):
+        steps[i] = f'{type}_{steps[i]}'
     merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order,
                  logdir, conda, args['outdir'], args['rm_files'])
 
