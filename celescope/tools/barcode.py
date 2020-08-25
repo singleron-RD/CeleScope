@@ -1,6 +1,9 @@
 #!/bin/env python
 # coding=utf8
-import os, re, io, gzip
+import os
+import re
+import io
+import gzip
 import subprocess
 import sys
 import logging
@@ -23,12 +26,13 @@ stat_info = '''
     Q30 of UMIs: %.2f%%
 '''
 
+
 def ord2chr(q, offset=33):
-    return chr(int(q) + offset) 
+    return chr(int(q) + offset)
 
 
 # 生成错配字典
-def generate_mis_seq(seq, n=1, bases = 'ACGTN'):
+def generate_mis_seq(seq, n=1, bases='ACGTN'):
     # 以随机bases中的碱基替换seq中的n个位置，产生的错配字典
     # 返回字典，错配序列为key，
     # (正确序列，错配碱基数目，错配碱基位置，原始碱基，新碱基)组成的元组
@@ -38,7 +42,7 @@ def generate_mis_seq(seq, n=1, bases = 'ACGTN'):
     assert length >= n, "err number should not be larger than sequence length!"
     res = {}
     seq_arr = list(seq)
-    pos_group = list(combinations(range(0 ,length), n))
+    pos_group = list(combinations(range(0, length), n))
     bases_group = list(permutations(bases, n))
 
     for g in pos_group:
@@ -57,7 +61,8 @@ def generate_mis_seq(seq, n=1, bases = 'ACGTN'):
                 seq_tmp[g[i]] = new_base
 
             if mis_num != 0:
-                res[''.join(seq_tmp)] = (seq, mis_num, ','.join([str(i) for i in g]), ','.join(raw_tmp), ','.join(b))
+                res[''.join(seq_tmp)] = (seq, mis_num, ','.join([str(i)
+                                                                 for i in g]), ','.join(raw_tmp), ','.join(b))
     return(res)
 
 
@@ -72,7 +77,8 @@ def generate_seq_dict(seqlist, n=1):
             for k, v in generate_mis_seq(seq, n).items():
                 # duplicate key
                 if k in seq_dict:
-                    logger1.warning('barcode %s, %s\n%s, %s' % (v, k, seq_dict[k], k))
+                    logger1.warning('barcode %s, %s\n%s, %s' %
+                                    (v, k, seq_dict[k], k))
                 else:
                     seq_dict[k] = v
     return seq_dict
@@ -114,14 +120,14 @@ def read_fastq(f):
     for i, line in enumerate(f):
         if i % 4 == 0:
             assert line.startswith('@'), ("Line {0} in FASTQ file is expected to start with '@', "
-                    "but found {1!r}".format(i+1, line[:10]))
+                                          "but found {1!r}".format(i+1, line[:10]))
             name = line.strip()[1:]
         elif i % 4 == 1:
             sequence = line.strip()
         elif i % 4 == 2:
             line = line.strip()
             assert line.startswith('+'), ("Line {0} in FASTQ file is expected to start with '+', "
-                    "but found {1!r}".format(i+1, line[:10]))
+                                          "but found {1!r}".format(i+1, line[:10]))
         elif i % 4 == 3:
             qualities = line.rstrip('\n\r')
             yield name, sequence, qualities
@@ -149,7 +155,8 @@ def no_polyT(seq, strictT=0, minT=10):
 
 def no_barcode(seq_arr, mis_dict, err_tolerance=1):
     global barcode_corrected_num
-    tmp = [ mis_dict[seq][0:2] if seq in mis_dict else ('X', 100) for seq in seq_arr ]
+    tmp = [mis_dict[seq][0:2] if seq in mis_dict else (
+        'X', 100) for seq in seq_arr]
     err = sum([t[1] for t in tmp])
     if err > err_tolerance:
         return True
@@ -196,7 +203,7 @@ def barcode(args):
     C_U_base_Counter = Counter()
     args.lowQual = ord2chr(args.lowQual)
 
-    # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G   
+    # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
     barcode_dict = generate_seq_dict(whitelist, n=1)
     linker_dict = generate_seq_dict(linker, n=2)
 
@@ -208,15 +215,19 @@ def barcode(args):
         fastq_dir = args.outdir+"/../merge_fastq"
         if not os.path.exists(fastq_dir):
             os.system('mkdir -p %s' % fastq_dir)
-        fastq1_file = "{fastq_dir}/{sample}_1.fq.gz".format(fastq_dir=fastq_dir,sample=args.sample)
-        fastq2_file = "{fastq_dir}/{sample}_2.fq.gz".format(fastq_dir=fastq_dir,sample=args.sample)
-        fq1_cmd = "cat {fq1_files} > {fastq1_file}".format(fq1_files = " ".join(fq1_list),fastq1_file=fastq1_file)
-        fq2_cmd = "cat {fq2_files} > {fastq2_file}".format(fq2_files = " ".join(fq2_list),fastq2_file=fastq2_file)
+        fastq1_file = "{fastq_dir}/{sample}_1.fq.gz".format(
+            fastq_dir=fastq_dir, sample=args.sample)
+        fastq2_file = "{fastq_dir}/{sample}_2.fq.gz".format(
+            fastq_dir=fastq_dir, sample=args.sample)
+        fq1_cmd = "cat {fq1_files} > {fastq1_file}".format(
+            fq1_files=" ".join(fq1_list), fastq1_file=fastq1_file)
+        fq2_cmd = "cat {fq2_files} > {fastq2_file}".format(
+            fq2_files=" ".join(fq2_list), fastq2_file=fastq2_file)
         logger1.info(fq1_cmd)
         os.system(fq1_cmd)
         logger1.info(fq2_cmd)
         os.system(fq2_cmd)
-        logger1.info("merge fastq done.") 
+        logger1.info("merge fastq done.")
     else:
         fastq1_file = args.fq1
         fastq2_file = args.fq2
@@ -226,7 +237,8 @@ def barcode(args):
     out_fq2 = args.outdir + '/' + args.sample + '_2.fq.gz'
     fh3 = xopen(out_fq2, 'w')
 
-    (total_num, clean_num,  no_polyT_num, lowQual_num, no_linker_num, no_barcode_num) = (0, 0, 0, 0, 0, 0)
+    (total_num, clean_num,  no_polyT_num, lowQual_num,
+     no_linker_num, no_barcode_num) = (0, 0, 0, 0, 0, 0)
     Barcode_dict = defaultdict(int)
 
     if args.nopolyT:
@@ -245,10 +257,9 @@ def barcode(args):
             (header2, seq2, qual2) = next(g2)
         except:
             break
-        
-        total_num += 1
-        #if total_num > 10000: total_num-= 1; break
 
+        total_num += 1
+        # if total_num > 10000: total_num-= 1; break
 
         # polyT filter
         if bool_T:
@@ -256,12 +267,15 @@ def barcode(args):
             if no_polyT(polyT):
                 no_polyT_num += 1
                 if args.nopolyT:
-                    fh1_without_polyT.write('@%s\n%s\n+\n%s\n'%(header1, seq1, qual1))
-                    fh2_without_polyT.write('@%s\n%s\n+\n%s\n'%(header2, seq2, qual2))
+                    fh1_without_polyT.write(
+                        '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                    fh2_without_polyT.write(
+                        '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                 continue
 
         # lowQual filter
-        C_U_quals_ascii = seq_ranges(qual1, pattern_dict['C'] + pattern_dict['U'])
+        C_U_quals_ascii = seq_ranges(
+            qual1, pattern_dict['C'] + pattern_dict['U'])
         # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
         if low_qual(C_U_quals_ascii, args.lowQual, args.lowNum):
             lowQual_num += 1
@@ -274,10 +288,12 @@ def barcode(args):
             linker = seq_ranges(seq1, pattern_dict['L'])
             if (no_linker(linker, linker_dict)):
                 no_linker_num += 1
-                
+
                 if args.noLinker:
-                    fh1_without_linker.write('@%s\n%s\n+\n%s\n'%(header1, seq1, qual1))
-                    fh2_without_linker.write('@%s\n%s\n+\n%s\n'%(header2, seq2, qual2))
+                    fh1_without_linker.write(
+                        '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                    fh2_without_linker.write(
+                        '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                 continue
 
         # barcode filter
@@ -307,13 +323,15 @@ def barcode(args):
     fh3.close()
 
     # stat
-    #print(barcode_qual_Counter)
-    #print(umi_qual_Counter)
-    BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(30)])/float(sum(barcode_qual_Counter.values()))*100
-    UMIsQ30 = sum([umi_qual_Counter[k] for k in umi_qual_Counter if k >= ord2chr(30)])/float(sum(umi_qual_Counter.values()))*100
+    # print(barcode_qual_Counter)
+    # print(umi_qual_Counter)
+    BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(
+        30)])/float(sum(barcode_qual_Counter.values()))*100
+    UMIsQ30 = sum([umi_qual_Counter[k] for k in umi_qual_Counter if k >= ord2chr(
+        30)])/float(sum(umi_qual_Counter.values()))*100
 
     global stat_info
-    cal_percent=lambda x: "{:.2%}".format((x+0.0)/total_num)
+    def cal_percent(x): return "{:.2%}".format((x+0.0)/total_num)
     with open(args.outdir + '/stat.txt', 'w') as fh:
         """
         Raw Reads: %s
@@ -321,9 +339,9 @@ def barcode(args):
         Q30 of Barcodes: %.2f%%
         Q30 of UMIs: %.2f%%
         """
-        stat_info = stat_info%(format_number(total_num), format_number(clean_num), 
-            cal_percent(clean_num), BarcodesQ30,
-            UMIsQ30)
+        stat_info = stat_info % (format_number(total_num), format_number(clean_num),
+                                 cal_percent(clean_num), BarcodesQ30,
+                                 UMIsQ30)
         stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
         fh.write(stat_info)
     logger1.info('extract barcode done!')
@@ -334,7 +352,8 @@ def barcode(args):
     subprocess.check_call(cmd)
     logger1.info('fastqc done!')
 
-    t = reporter(name='barcode', assay=args.assay, sample=args.sample, stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
+    t = reporter(name='barcode', assay=args.assay, sample=args.sample,
+                 stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
 
 
@@ -345,14 +364,18 @@ def get_opts_barcode(parser, sub_program):
     parser.add_argument('--sample', help='sample name', required=True)
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)
-    parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version')
+    parser.add_argument(
+        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version')
     parser.add_argument('--pattern', help='')
     parser.add_argument('--whitelist', help='')
     parser.add_argument('--linker', help='')
-    parser.add_argument('--lowQual', type=int, help='max phred of base as lowQual, default=0', default=0)
-    parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
-    parser.add_argument('--nopolyT', action='store_true', help='output nopolyT fq')
-    parser.add_argument('--noLinker', action='store_true', help='output noLinker fq')
+    parser.add_argument('--lowQual', type=int,
+                        help='max phred of base as lowQual, default=0', default=0)
+    parser.add_argument(
+        '--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
+    parser.add_argument('--nopolyT', action='store_true',
+                        help='output nopolyT fq')
+    parser.add_argument('--noLinker', action='store_true',
+                        help='output noLinker fq')
     parser.add_argument('--thread', help='number of threads', default=1)
     return parser
-
