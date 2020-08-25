@@ -147,16 +147,6 @@ def count_vdj(args):
     df_clonetypes.to_csv(clonetypes_file, sep="\t", index=False)
 
     if type == "TCR":
-        df_TRA_TRB = df_cell_confident_count[
-            (df_cell_confident_count.aaSeqCDR3_TRA != "NA") &
-            (df_cell_confident_count.aaSeqCDR3_TRB != "NA")
-        ]
-        cell_with_confident_TRA_and_TRB = df_TRA_TRB.shape[0]
-        cell_summary_row_list.append({
-            "item": "Cell with confident TRA and TRB",
-            "count": cell_with_confident_TRA_and_TRB,
-            "total_count": cell_number,
-        })
 
         UMI_col_dic = {"TRA": "UMI_TRA", "TRB": "UMI_TRB"}
         for chain in UMI_col_dic:
@@ -171,6 +161,17 @@ def count_vdj(args):
                 "count": Median_chain_UMIs_per_Cell,
                 "total_count": np.nan
             })
+
+        df_TRA_TRB = df_cell_confident_count[
+            (df_cell_confident_count.aaSeqCDR3_TRA != "NA") &
+            (df_cell_confident_count.aaSeqCDR3_TRB != "NA")
+        ]
+        cell_with_confident_TRA_and_TRB = df_TRA_TRB.shape[0]
+        cell_summary_row_list.append({
+            "item": "Cell with TRA and TRB",
+            "count": cell_with_confident_TRA_and_TRB,
+            "total_count": cell_number,
+        })
 
         """
         df cell barcode filter
@@ -216,19 +217,6 @@ def count_vdj(args):
 
     # BCR
     elif type == "BCR":
-        df_heavy_and_light = df_cell_confident_count[
-            (df_cell_confident_count.aaSeqCDR3_IGH != "NA") &
-            (
-                (df_cell_confident_count.aaSeqCDR3_IGL != "NA") |
-                (df_cell_confident_count.aaSeqCDR3_IGK != "NA")
-            )
-        ]
-        Cell_with_Heavy_and_Light_Chain = df_heavy_and_light.shape[0]
-        cell_summary_row_list.append({
-            "item": "Cell with Heavy and Light Chain",
-            "count": Cell_with_Heavy_and_Light_Chain,
-            "total_count": cell_number
-        })
 
         UMI_col_dic = {"IGH": "UMI_IGH", "IGL": "UMI_IGL", "IGK": "UMI_IGK"}
         for chain in UMI_col_dic:
@@ -244,7 +232,21 @@ def count_vdj(args):
             cell_summary_row_list.append({
             "item":  "Median {chain} UMIs per Cell".format(chain=chain),
             "count": Median_chain_UMIs_per_Cell,
-            "total_count": np.nan})    
+            "total_count": np.nan})
+
+        df_heavy_and_light = df_cell_confident_count[
+            (df_cell_confident_count.aaSeqCDR3_IGH != "NA") &
+            (
+                (df_cell_confident_count.aaSeqCDR3_IGL != "NA") |
+                (df_cell_confident_count.aaSeqCDR3_IGK != "NA")
+            )
+        ]
+        Cell_with_Heavy_and_Light_Chain = df_heavy_and_light.shape[0]
+        cell_summary_row_list.append({
+            "item": "Cell with Heavy and Light Chain",
+            "count": Cell_with_Heavy_and_Light_Chain,
+            "total_count": cell_number
+        }) 
 
         """
         df cell barcode filter
@@ -274,7 +276,7 @@ def count_vdj(args):
                 "total_count": cell_number
             })
             cell_summary_row_list.append({
-                "item": "Cell with match Barcode,Heavy and Light Chain",
+                "item": "Cell with match Barcode, Heavy and Light Chain",
                 "count": match_cell_with_heavy_and_light,
                 "total_count": cell_number
             })
@@ -313,12 +315,12 @@ def count_vdj(args):
             return "("+str(row["percent"])+"%)"
         else:
             return ""
-    cell_summary["percent_str"] = cell_summary.apply(lambda row: percent_str_func(row),axis=1)
+    cell_summary["percent_str"] = cell_summary.apply(lambda row: percent_str_func(row), axis=1)
 
     # stat file
     def gen_stat(summary, stat_file):
         stat = summary
-        stat["new_count"] = stat["count"].astype(str)+ stat["percent_str"]
+        stat["new_count"] = stat["count"].astype(str) + stat["percent_str"]
         stat = stat.loc[:, ["item", "new_count"]]
         stat.to_csv(stat_file, sep=":", header=None, index=False)
 
@@ -330,7 +332,8 @@ def count_vdj(args):
         sample=args.sample,
         stat_file=cell_stat_file,
         outdir=outdir + '/..',
-        assay=args.assay
+        assay=args.assay,
+        parameters={"iUMI": iUMI},
     )
     t.get_report()
 
@@ -344,20 +347,20 @@ def count_vdj(args):
     top10_clonetypes_df = df_clonetypes.head(10)
     top10_clonetypes_df = top10_clonetypes_df.reset_index(drop=True)
     top10_clonetypes_df.index = top10_clonetypes_df.index + 1
-    top10_clonetypes_df["percent"] = top10_clonetypes_df["percent"].apply(lambda x:str(x)+"%")
+    top10_clonetypes_df["percent"] = top10_clonetypes_df["percent"].apply(lambda x: str(x) + "%")
     seqs = ["aaSeqCDR3"]
     cols = []
     for chain in chains:
         for seq in seqs:
-            cols.append("_".join([seq,chain]))
+            cols.append("_".join([seq, chain]))
     top10_cols = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
     top10_clonetypes_df = top10_clonetypes_df[top10_cols]
-    top10_clonetypes_df.to_csv(top10_clonetypes_file, sep="\t",index=False)
+    top10_clonetypes_df.to_csv(top10_clonetypes_file, sep="\t", index=False)
     table_header = ["Clonetype_ID"] + cols + ["Frequency", "Percent"]
     t = reporter(
         name="clonetypes", 
         sample=args.sample, 
-        table_file=top10_clonetypes_file, 
+        table_file=top10_clonetypes_file,
         table_header=table_header,
         outdir=outdir + '/..',
         assay=args.assay,
