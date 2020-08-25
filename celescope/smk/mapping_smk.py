@@ -1,3 +1,6 @@
+from celescope.tools.report import reporter
+from celescope.tools.utils import format_number
+import matplotlib.pyplot as plt
 import gzip
 import os
 import pandas as pd
@@ -10,18 +13,15 @@ import glob
 from collections import defaultdict
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
-from celescope.tools.utils import format_number
-from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 
 
 def genDict(dim=3):
-    if dim==1:
+    if dim == 1:
         return defaultdict(int)
     else:
-        return defaultdict(lambda: genDict(dim-1))
+        return defaultdict(lambda: genDict(dim - 1))
 
 
 def hamming_distance(string1, string2):
@@ -38,7 +38,8 @@ def hamming_distance(string1, string2):
 
 class smk_mapping:
 
-    def __init__(self, SMK_read2, match_barcode_file, sample, SMK_barcode_fasta, outdir):
+    def __init__(self, SMK_read2, match_barcode_file,
+                 sample, SMK_barcode_fasta, outdir):
         self.SMK_read2 = SMK_read2
         self.match_barcode_file = match_barcode_file
         self.sample = sample
@@ -66,7 +67,7 @@ class smk_mapping:
 
     def read_barcode_file(self):
         match_barcode = pd.read_csv(self.match_barcode_file, header=None)
-        self.match_barcode = list(match_barcode.iloc[:, 0]) 
+        self.match_barcode = list(match_barcode.iloc[:, 0])
         self.cell_total = len(self.match_barcode)
 
     def read_to_dic(self):
@@ -91,7 +92,7 @@ class smk_mapping:
                 self.reads_too_short += 1
                 self.reads_unmapped += 1
                 continue
-            seq = seq[0:self.SMK_barcode_length]      
+            seq = seq[0:self.SMK_barcode_length]
             mapped = False
             for SMK_barcode_name in self.SMK_barcode_dic:
                 SMK_barcode_seq = self.SMK_barcode_dic[SMK_barcode_name]
@@ -99,42 +100,51 @@ class smk_mapping:
                     mapped = True
                     if not (barcode in self.match_barcode):
                         self.reads_mapped_not_in_cell += 1
-                        continue                    
+                        continue
                     self.res_dic[barcode][SMK_barcode_name][umi] += 1
                     self.reads_mapped_in_cell += 1
                     continue
             if not mapped:
                 self.reads_unmapped += 1
-        
+
         # write dic to pandas df
         rows = []
         for barcode in self.res_dic:
             for SMK_barcode_name in self.res_dic[barcode]:
                 for umi in self.res_dic[barcode][SMK_barcode_name]:
-                    rows.append([barcode, SMK_barcode_name, umi, self.res_dic[barcode][SMK_barcode_name][umi]])
+                    rows.append([barcode, SMK_barcode_name, umi,
+                                 self.res_dic[barcode][SMK_barcode_name][umi]])
         df_cell_read_count = pd.DataFrame(rows)
-        df_cell_read_count.rename(columns={0:"barcode", 1:"SMK_barcode_name", 2:"UMI", 3:"read_count"}, inplace=True)
-        df_cell_read_count.to_csv(self.cell_read_count_file, sep="\t", index=False)
+        df_cell_read_count.rename(
+            columns={
+                0: "barcode",
+                1: "SMK_barcode_name",
+                2: "UMI",
+                3: "read_count"},
+            inplace=True)
+        df_cell_read_count.to_csv(
+            self.cell_read_count_file, sep="\t", index=False)
 
         # stat
         stat = pd.DataFrame(
-        {"item": [
-            "Reads Mapped in Cell", 
-            "Reads Mapped not in Cell", 
-            "Reads Unmapped",
-            "Reads Unmapped too Short", 
+            {"item": [
+                "Reads Mapped in Cell",
+                "Reads Mapped not in Cell",
+                "Reads Unmapped",
+                "Reads Unmapped too Short",
             ],
-        "count": [
-            self.reads_mapped_in_cell,
-            self.reads_mapped_not_in_cell,
-            self.reads_unmapped,
-            self.reads_too_short,
+                "count": [
+                self.reads_mapped_in_cell,
+                self.reads_mapped_not_in_cell,
+                self.reads_unmapped,
+                self.reads_too_short,
             ],
-        }, columns=["item", "count"])
-        stat["count_percent"] = stat["count"].apply(lambda x:f'{x}({round(x/self.reads * 100, 2)}%)')
+            }, columns=["item", "count"])
+        stat["count_percent"] = stat["count"].apply(
+            lambda x: f'{x}({round(x/self.reads * 100, 2)}%)')
         stat = stat.loc[:, ["item", "count_percent"]]
         stat.to_csv(self.stat_file, sep=":", header=None, index=False)
-        
+
     def read_SMK_barcode(self):
 
         with open(self.SMK_barcode_fasta, "rt") as f:
@@ -155,14 +165,20 @@ class smk_mapping:
 
     def tag_count(self):
         for barcode in self.res_dic:
-                for SMK_barcode_name in self.res_dic[barcode]:
-                    self.res_sum_dic[barcode][SMK_barcode_name] = len(self.res_dic[barcode][SMK_barcode_name])
-                
+            for SMK_barcode_name in self.res_dic[barcode]:
+                self.res_sum_dic[barcode][SMK_barcode_name] = len(
+                    self.res_dic[barcode][SMK_barcode_name])
+
         df_cell_umi_count = pd.DataFrame(self.res_sum_dic)
         df_cell_umi_count = df_cell_umi_count.T
         # merge
         df_cell = pd.DataFrame(index=self.match_barcode)
-        df_cell_umi_count = pd.merge(df_cell, df_cell_umi_count, how="left", left_index=True, right_index=True)
+        df_cell_umi_count = pd.merge(
+            df_cell,
+            df_cell_umi_count,
+            how="left",
+            left_index=True,
+            right_index=True)
         # fillna
         df_cell_umi_count.fillna(0, inplace=True)
         df_cell_umi_count = df_cell_umi_count.astype(int)
@@ -175,17 +191,22 @@ class smk_mapping:
         self.read_to_dic()
         self.tag_count()
         t = reporter(
-            name='mapping_smk', assay="smk", sample=self.sample, 
+            name='mapping_smk', assay="smk", sample=self.sample,
             stat_file=self.stat_file, outdir=self.outdir + '/..')
         t.get_report()
         logger1.info('mapping smk done...!')
 
 
 def get_opts_mapping_smk(parser, sub_program):
-    parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path")
+    parser.add_argument(
+        "--match_dir",
+        help="matched scRNA-Seq CeleScope directory path")
     parser.add_argument("--SMK_barcode_fasta", help="SMK barcode fasta")
     if sub_program:
-        parser.add_argument("--SMK_read2", help="SMK clean read2", required=True)
+        parser.add_argument(
+            "--SMK_read2",
+            help="SMK clean read2",
+            required=True)
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
@@ -198,9 +219,16 @@ def mapping_smk(args):
     SMK_barcode_fasta = args.SMK_barcode_fasta
     SMK_read2 = args.SMK_read2
 
-    match_barcode_file1 = glob.glob("{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file2 = glob.glob("{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
+    match_barcode_file1 = glob.glob(
+        "{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
+    match_barcode_file2 = glob.glob(
+        "{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
     match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
 
-    s = smk_mapping(SMK_read2, match_barcode_file, sample, SMK_barcode_fasta, outdir)
+    s = smk_mapping(
+        SMK_read2,
+        match_barcode_file,
+        sample,
+        SMK_barcode_fasta,
+        outdir)
     s.run()

@@ -1,5 +1,5 @@
 #!/bin/env python
-#coding=utf8
+# coding=utf8
 
 import os
 import sys
@@ -40,15 +40,16 @@ def cluster_tsne_list(tsne_df):
     tSNE_1	tSNE_2	cluster Gene_Counts
     return data list
     """
-    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:,0]
-    percent_df = sum_df.transform(lambda x:round(x/sum(x)*100,2))
+    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
+    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
     res = []
     for cluster in sorted(tsne_df.cluster.unique()):
-        sub_df = tsne_df[tsne_df.cluster==cluster]
-        name = "cluster {cluster}({percent}%)".format(cluster=cluster,percent=percent_df[cluster])
+        sub_df = tsne_df[tsne_df.cluster == cluster]
+        name = "cluster {cluster}({percent}%)".format(
+            cluster=cluster, percent=percent_df[cluster])
         tSNE_1 = list(sub_df.tSNE_1)
         tSNE_2 = list(sub_df.tSNE_2)
-        res.append({"name":name,"tSNE_1":tSNE_1,"tSNE_2":tSNE_2})
+        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
     return res
 
 
@@ -56,13 +57,13 @@ def virus_tsne_list(tsne_df, virus_df):
     """
     return data dic
     """
-    tsne_df.rename(columns={"Unnamed: 0":"barcode"},inplace=True)
-    df = pd.merge(tsne_df,virus_df,on="barcode",how="left")
+    tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+    df = pd.merge(tsne_df, virus_df, on="barcode", how="left")
     df["UMI"] = df["UMI"].fillna(0)
     tSNE_1 = list(df.tSNE_1)
     tSNE_2 = list(df.tSNE_2)
     virus_UMI = list(df.UMI)
-    res = {"tSNE_1":tSNE_1,"tSNE_2":tSNE_2,"virus_UMI":virus_UMI}
+    res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "virus_UMI": virus_UMI}
     return res
 
 
@@ -70,8 +71,13 @@ def marker_table(marker_df):
     """
     return html code
     """
-    marker_df = marker_df.loc[:,["cluster","gene","avg_logFC","pct.1","pct.2","p_val_adj"]]
-    marker_gene_table = marker_df.to_html(escape=False,index=False,table_id="marker_gene_table",justify="center")
+    marker_df = marker_df.loc[:, ["cluster", "gene",
+                                  "avg_logFC", "pct.1", "pct.2", "p_val_adj"]]
+    marker_gene_table = marker_df.to_html(
+        escape=False,
+        index=False,
+        table_id="marker_gene_table",
+        justify="center")
     return marker_gene_table
 
 
@@ -91,7 +97,8 @@ def gene_convert(gtf_file, matrix_file):
                 gene_name = gene_name_pattern.findall(attributes)[-1]
                 id_name[gene_id] = gene_name
 
-    matrix = pd.read_csv(matrix_file,sep="\t")
+    matrix = pd.read_csv(matrix_file, sep="\t")
+
     def convert(gene_id):
         if gene_id in id_name:
             return id_name[gene_id]
@@ -102,7 +109,7 @@ def gene_convert(gtf_file, matrix_file):
     matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
     matrix = matrix.dropna()
     matrix = matrix.rename({"geneID": ""}, axis='columns')
-    return matrix    
+    return matrix
 
 
 def analysis_rna_virus(args):
@@ -113,22 +120,27 @@ def analysis_rna_virus(args):
     outdir = args.outdir
     sample = args.sample
     matrix_file = args.matrix_file
-    virus_file =args.virus_file
+    virus_file = args.virus_file
 
     if not os.path.exists(outdir):
-        os.system('mkdir -p %s'%(outdir))
-    
+        os.system('mkdir -p %s' % (outdir))
+
     # run
     logger1.info("convert expression matrix.")
-    new_matrix = gene_convert(gtf_file, matrix_file)  
-    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(outdir=outdir,sample=sample)
-    new_matrix.to_csv(new_matrix_file,sep="\t",index=False,compression='gzip')
+    new_matrix = gene_convert(gtf_file, matrix_file)
+    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(
+        outdir=outdir, sample=sample)
+    new_matrix.to_csv(
+        new_matrix_file,
+        sep="\t",
+        index=False,
+        compression='gzip')
     logger1.info("expression matrix written.")
 
     # run_R
     logger1.info("Seurat running.")
     cmd = "Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {new_matrix_file}".format(
-        app=toolsdir+"/run_analysis.R",sample = sample, outdir=outdir,new_matrix_file=new_matrix_file)
+        app=toolsdir + "/run_analysis.R", sample=sample, outdir=outdir, new_matrix_file=new_matrix_file)
     os.system(cmd)
     logger1.info("Seurat done.")
 
@@ -141,16 +153,28 @@ def analysis_rna_virus(args):
 
     report_prepare(outdir, tsne_df, marker_df, virus_df)
 
-    t = reporter(name='analysis_rna_virus', assay=args.assay, sample=args.sample, outdir=args.outdir + '/..')
+    t = reporter(
+        name='analysis_rna_virus',
+        assay=args.assay,
+        sample=args.sample,
+        outdir=args.outdir + '/..')
     t.get_report()
-
 
 
 def get_opts_analysis_rna_virus(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--matrix_file', help='matrix file xls',required=True)
-        parser.add_argument('--genomeDir', help='genome directory', required=True)
-        parser.add_argument('--virus_file', help='virus UMI count file',required=True)
+        parser.add_argument(
+            '--matrix_file',
+            help='matrix file xls',
+            required=True)
+        parser.add_argument(
+            '--genomeDir',
+            help='genome directory',
+            required=True)
+        parser.add_argument(
+            '--virus_file',
+            help='virus UMI count file',
+            required=True)
         parser.add_argument('--assay', help='assay', required=True)

@@ -15,8 +15,10 @@ def parse_map(mapfile):
     with open(mapfile) as fh:
         for line in fh:
             line = line.strip()
-            if not line: continue
-            if line.startswith('#'): continue
+            if not line:
+                continue
+            if line.startswith('#'):
+                continue
             tmp = line.split()
             library_id = tmp[0]
             library_path = tmp[1]
@@ -31,8 +33,8 @@ def parse_map(mapfile):
                 fq1 = (glob.glob(pattern1_1) + glob.glob(pattern1_2))[0]
                 fq2 = (glob.glob(pattern2_1) + glob.glob(pattern2_2))[0]
             except IndexError as e:
-                sys.exit("Mapfile Error:"+str(e))
-                
+                sys.exit("Mapfile Error:" + str(e))
+
             assert os.path.exists(fq1), '%s not exists!' % (fq1)
             assert os.path.exists(fq2), '%s not exists!' % (fq2)
             if sample_name in fq_dict:
@@ -41,7 +43,7 @@ def parse_map(mapfile):
             else:
                 fq_dict[sample_name] = [[fq1], [fq2]]
             match_dict[sample_name] = match_dir
-    
+
     for sample_name in fq_dict:
         fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
         fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
@@ -53,24 +55,58 @@ def main():
 
     parser = argparse.ArgumentParser('CeleScope RNA multi-sample')
     #parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
-    parser.add_argument('--mapfile', help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"', required=True)
+    parser.add_argument(
+        '--mapfile',
+        help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"',
+        required=True)
     parser.add_argument('--chemistry', choices=['scopeV2.0.0', 'scopeV2.0.1',
-                        'scopeV2.1.0', 'scopeV2.1.1'], help='chemistry version')
+                                                'scopeV2.1.0', 'scopeV2.1.1'], help='chemistry version')
     parser.add_argument('--whitelist', help='cellbarcode list')
     parser.add_argument('--linker', help='linker')
     parser.add_argument('--pattern', help='read1 pattern')
     parser.add_argument('--outdir', help='output dir', default="./")
-    parser.add_argument('--adapt', action='append', help='adapter sequence', default=['polyT=A{15}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
-    parser.add_argument('--minimum-length', dest='minimum_length', help='minimum_length', default=20)
-    parser.add_argument('--nextseq-trim', dest='nextseq_trim', help='nextseq_trim', default=20)
-    parser.add_argument('--overlap', help='minimum overlap length, default=5', default=5)
-    parser.add_argument('--lowQual', type=int, help='max phred of base as lowQual', default=0)
-    parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed', default=2)
+    parser.add_argument(
+        '--adapt',
+        action='append',
+        help='adapter sequence',
+        default=[
+            'polyT=A{15}',
+            'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
+    parser.add_argument(
+        '--minimum-length',
+        dest='minimum_length',
+        help='minimum_length',
+        default=20)
+    parser.add_argument(
+        '--nextseq-trim',
+        dest='nextseq_trim',
+        help='nextseq_trim',
+        default=20)
+    parser.add_argument(
+        '--overlap',
+        help='minimum overlap length, default=5',
+        default=5)
+    parser.add_argument(
+        '--lowQual',
+        type=int,
+        help='max phred of base as lowQual',
+        default=0)
+    parser.add_argument(
+        '--lowNum',
+        type=int,
+        help='max number with lowQual allowed',
+        default=2)
     parser.add_argument('--thread', help='thread', default=6)
     parser.add_argument("--SMK_barcode_fasta", help="SMK barcode fasta")
-    parser.add_argument("--UMI_min", help="cells have SMK_UMI>=UMI_min are considered as valid cell", default="auto")
+    parser.add_argument(
+        "--UMI_min",
+        help="cells have SMK_UMI>=UMI_min are considered as valid cell",
+        default="auto")
     parser.add_argument("--dim", help="SMK tag dimension", default=1)
-    parser.add_argument("--SNR_min", help="minimum signal to noise ratio", default="auto")
+    parser.add_argument(
+        "--SNR_min",
+        help="minimum signal to noise ratio",
+        default="auto")
 
     args = vars(parser.parse_args())
 
@@ -78,15 +114,15 @@ def main():
 
     # 链接数据
     raw_dir = args['outdir'] + '/data_give/rawdata'
-    os.system('mkdir -p %s'%(raw_dir))
+    os.system('mkdir -p %s' % (raw_dir))
     with open(raw_dir + '/ln.sh', 'w') as fh:
-        fh.write('cd %s\n'%(raw_dir))
+        fh.write('cd %s\n' % (raw_dir))
         for s, arr in fq_dict.items():
-            fh.write('ln -sf %s %s\n'%(arr[0], s + '_1.fq.gz'))
-            fh.write('ln -sf %s %s\n'%(arr[1], s + '_2.fq.gz'))
+            fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
+            fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
     #os.system('sh %s'%(raw_dir+'/ln.sh'))
 
-    logdir = args['outdir']+'/log'
+    logdir = args['outdir'] + '/log'
     os.system('mkdir -p %s' % (logdir))
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
@@ -95,7 +131,7 @@ def main():
     chemistry = args['chemistry']
     pattern = args['pattern']
     whitelist = args['whitelist']
-    linker = args['linker']    
+    linker = args['linker']
     lowQual = args['lowQual']
     lowNum = args['lowNum']
     basedir = args['outdir']
@@ -119,7 +155,7 @@ def main():
 
         # sample
         step = "sample"
-        cmd = f'''source activate {conda}; {app} {assay} {step} --chemistry {chemistry} 
+        cmd = f'''source activate {conda}; {app} {assay} {step} --chemistry {chemistry}
         --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}')
         last_step = step
@@ -127,8 +163,8 @@ def main():
         # barcode
         arr = fq_dict[sample]
         step = "barcode"
-        cmd = f'''source activate {conda}; {app} {assay} {step} --fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry} 
-            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {sample} --lowQual {lowQual} 
+        cmd = f'''source activate {conda}; {app} {assay} {step} --fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry}
+            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {sample} --lowQual {lowQual}
             --lowNum {lowNum} --outdir {outdir_dic[step]} --thread {thread} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
@@ -137,7 +173,7 @@ def main():
         # adapt
         step = "cutadapt"
         fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
-        cmd = f'''source activate {conda}; {app} {assay} {step} --fq {fq} --sample {sample} --outdir 
+        cmd = f'''source activate {conda}; {app} {assay} {step} --fq {fq} --sample {sample} --outdir
             {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
@@ -146,7 +182,7 @@ def main():
         # mapping_smk
         step = 'mapping_smk'
         SMK_read2 = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-        cmd = f'''source activate {conda}; {app} {assay} {step} --SMK_read2 {SMK_read2} 
+        cmd = f'''source activate {conda}; {app} {assay} {step} --SMK_read2 {SMK_read2}
         --SMK_barcode_fasta {SMK_barcode_fasta} --match_dir {match_dict[sample]}
         --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
@@ -156,7 +192,7 @@ def main():
         # count_smk
         step = 'count_smk'
         cell_UMI_file = f'{outdir_dic["mapping_smk"]}/{sample}_cell_UMI_count.tsv'
-        cmd = f'''source activate {conda}; {app} {assay} {step} 
+        cmd = f'''source activate {conda}; {app} {assay} {step}
         --match_dir {match_dict[sample]} --cell_UMI_file {cell_UMI_file}
         --sample {sample} --outdir {outdir_dic[step]} --assay {assay}
         --UMI_min {UMI_min} --SNR_min {SNR_min} --dim {dim}'''
@@ -174,8 +210,7 @@ def main():
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
-      
-    # merged report 
+    # merged report
     merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda)
 
 

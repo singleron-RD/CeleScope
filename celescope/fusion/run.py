@@ -1,5 +1,5 @@
 #!/bin/env python
-#coding=utf8
+# coding=utf8
 from celescope.fusion.__init__ import __STEPS__, __ASSAY__
 
 
@@ -18,7 +18,7 @@ def run(args):
     step = "sample"
     args.outdir = f'{outdir_dic[step]}/'
     from celescope.tools.sample_info import sample_info
-    sample_info(args)   
+    sample_info(args)
 
     step = "barcode"
     args.outdir = f'{outdir_dic[step]}/'
@@ -35,7 +35,7 @@ def run(args):
     args.input_read = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
     args.outdir = f'{outdir_dic[step]}/'
     from celescope.fusion.STAR_fusion import STAR_fusion
-    STAR_fusion(args)  
+    STAR_fusion(args)
 
     step = 'count_fusion'
     args.outdir = f'{outdir_dic[step]}/'

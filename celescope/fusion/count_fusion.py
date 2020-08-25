@@ -1,6 +1,10 @@
 #!/bin/env python
-#coding=utf8
+# coding=utf8
 
+from celescope.tools.utils import format_number
+from celescope.tools.report import reporter
+from collections import defaultdict
+from matplotlib import pyplot as plt
 import pysam
 import gzip
 import os
@@ -14,25 +18,22 @@ import re
 import json
 import glob
 mpl.use('Agg')
-from matplotlib import pyplot as plt
-from collections import defaultdict
-from celescope.tools.report import reporter
-from celescope.tools.utils import format_number
 
 parentDir = os.path.dirname(__file__)
 logger1 = logging.getLogger(__name__)
 
 
 def genDict(dim=3):
-    if dim==1:
+    if dim == 1:
         return defaultdict(int)
     else:
-        return defaultdict(lambda: genDict(dim-1))
+        return defaultdict(lambda: genDict(dim - 1))
 
 
 def read_pos(fusion_pos_file):
     df = pd.read_csv(fusion_pos_file, sep="\t")
-    dic = dict([ (tag,int(pos)) for tag,pos in zip(df.iloc[:,0],df.iloc[:,1]) ])
+    dic = dict([(tag, int(pos))
+                for tag, pos in zip(df.iloc[:, 0], df.iloc[:, 1])])
     return dic
 
 
@@ -49,7 +50,7 @@ def read_barcode_file(match_barcode_file):
             line = f.readline().strip()
             if not line:
                 break
-            match_barcode.append(line) 
+            match_barcode.append(line)
     return match_barcode
 
 
@@ -72,12 +73,15 @@ def count_fusion(args):
     fusion_pos = read_pos(fusion_pos_file)
     out_prefix = outdir + "/" + sample
     # barcode
-    match_barcode_file1 = glob.glob("{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file2 = glob.glob("{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
+    match_barcode_file1 = glob.glob(
+        "{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
+    match_barcode_file2 = glob.glob(
+        "{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
     match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
     match_barcode = read_barcode_file(match_barcode_file)
     # tsne
-    match_tsne_file = "{match_dir}/06.analysis/tsne_coord.tsv".format(match_dir=match_dir)
+    match_tsne_file = "{match_dir}/06.analysis/tsne_coord.tsv".format(
+        match_dir=match_dir)
     df_tsne = pd.read_csv(match_tsne_file, sep="\t", index_col=0)
     # out
     out_read_count_file = out_prefix + "_fusion_read_count.tsv"
@@ -88,7 +92,8 @@ def count_fusion(args):
     # process bam
     samfile = pysam.AlignmentFile(bam, "rb")
     header = samfile.header
-    new_bam = pysam.AlignmentFile(out_prefix+"_fusion.bam", "wb", header=header)
+    new_bam = pysam.AlignmentFile(
+        out_prefix + "_fusion.bam", "wb", header=header)
     count_dic = genDict(dim=3)
     for read in samfile:
         tag = read.reference_name
@@ -100,7 +105,7 @@ def count_fusion(args):
         if tag in fusion_pos.keys():
             if barcode in match_barcode:
                 if is_fusion(pos=fusion_pos[tag], read_start=read_start,
-                read_length=read_length, flanking_base=flanking_base):
+                             read_length=read_length, flanking_base=flanking_base):
                     new_bam.write(read)
                     count_dic[barcode][tag][umi] += 1
     new_bam.close()
@@ -110,9 +115,15 @@ def count_fusion(args):
     for barcode in count_dic:
         for tag in count_dic[barcode]:
             for umi in count_dic[barcode][tag]:
-                rows.append([barcode,tag,umi,count_dic[barcode][tag][umi]])
+                rows.append([barcode, tag, umi, count_dic[barcode][tag][umi]])
     df_read = pd.DataFrame(rows)
-    df_read.rename(columns={0: "barcode", 1: "tag", 2: "UMI", 3: "read_count"}, inplace=True)
+    df_read.rename(
+        columns={
+            0: "barcode",
+            1: "tag",
+            2: "UMI",
+            3: "read_count"},
+        inplace=True)
     df_read.to_csv(out_read_count_file, sep="\t", index=False)
 
     df_umi = df_read.groupby(["barcode", "tag"]).agg({"UMI": "count"})
@@ -120,7 +131,7 @@ def count_fusion(args):
     df_umi.to_csv(out_umi_count_file, sep="\t")
 
     df_umi.reset_index(inplace=True)
-    df_barcode = df_umi.groupby(["tag"]).agg({"barcode":"count"})
+    df_barcode = df_umi.groupby(["tag"]).agg({"barcode": "count"})
     n_match_barcode = len(match_barcode)
     # add zero count tag
     for tag in fusion_pos.keys():
@@ -132,7 +143,12 @@ def count_fusion(args):
 
     df_pivot = df_umi.pivot(index="barcode", columns="tag", values="UMI")
     df_pivot.fillna(0, inplace=True)
-    df_tsne_fusion = pd.merge(df_tsne, df_pivot, right_index=True, left_index=True, how="left")
+    df_tsne_fusion = pd.merge(
+        df_tsne,
+        df_pivot,
+        right_index=True,
+        left_index=True,
+        how="left")
     df_tsne_fusion.fillna(0, inplace=True)
     df_tsne_fusion.to_csv(out_tsne_file, sep="\t")
     logger1.info("count done.")
@@ -151,7 +167,13 @@ def get_opts_count_fusion(parser, sub_program):
         parser.add_argument("--bam", required=True)
         parser.add_argument('--assay', help='assay', required=True)
     #parser.add_argument("--fusion_fasta",help="fusion fasta",required=True)
-    parser.add_argument("--fusion_pos", help="first base position of the second gene(0-start),tsv file",required=True)
-    parser.add_argument("--match_dir", help="match scRNA-Seq dir", required=True)
+    parser.add_argument(
+        "--fusion_pos",
+        help="first base position of the second gene(0-start),tsv file",
+        required=True)
+    parser.add_argument(
+        "--match_dir",
+        help="match scRNA-Seq dir",
+        required=True)
     parser.add_argument("--flanking_base", default=5)
     parser.add_argument("--UMI_min", default=1)

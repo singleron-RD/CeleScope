@@ -17,10 +17,11 @@ def genDict(dim=3):
     if dim == 1:
         return defaultdict(int)
     else:
-        return defaultdict(lambda: genDict(dim-1))
+        return defaultdict(lambda: genDict(dim - 1))
 
 
-def sum_virus(validated_barcodes, virus_bam, out_read_count_file, out_umi_count_file):
+def sum_virus(validated_barcodes, virus_bam,
+              out_read_count_file, out_umi_count_file):
     # process bam
     samfile = pysam.AlignmentFile(virus_bam, "rb")
     count_dic = genDict(dim=3)
@@ -41,7 +42,13 @@ def sum_virus(validated_barcodes, virus_bam, out_read_count_file, out_umi_count_
     if len(rows) == 0:
         logging.warning("No cell virus UMI found!")
 
-    df_read = df_read = pd.DataFrame(rows, columns=["barcode", "tag", "UMI", "read_count"])
+    df_read = df_read = pd.DataFrame(
+        rows,
+        columns=[
+            "barcode",
+            "tag",
+            "UMI",
+            "read_count"])
     df_read.to_csv(out_read_count_file, sep="\t", index=False)
 
     df_umi = df_read.groupby(["barcode", "tag"]).agg({"UMI": "count"})
@@ -55,23 +62,31 @@ def count_capture_virus(args):
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % (args.outdir))
-    
+
     # read barcodes
-    barcode_file = glob.glob(f'{args.match_dir}/*count/matrix_10X/*_cellbarcode.tsv')[0]
+    barcode_file = glob.glob(
+        f'{args.match_dir}/*count/matrix_10X/*_cellbarcode.tsv')[0]
     logger1.info(f'barcode file found: {barcode_file}')
     df_barcodes = pd.read_csv(barcode_file, header=None)
-    validated_barcodes = list(df_barcodes.iloc[:,0])
+    validated_barcodes = list(df_barcodes.iloc[:, 0])
 
     # count virus
     out_read_count_file = args.outdir + "/" + args.sample + "_virus_read_count.tsv"
     out_umi_count_file = args.outdir + "/" + args.sample + "_virus_UMI_count.tsv"
-    sum_virus(validated_barcodes, args.virus_bam, out_read_count_file, out_umi_count_file)
+    sum_virus(
+        validated_barcodes,
+        args.virus_bam,
+        out_read_count_file,
+        out_umi_count_file)
 
     logger1.info('virus count done!')
 
 
 def get_opts_count_capture_virus(parser, sub_program):
-    parser.add_argument('--match_dir', help='matched rna_virus directory', required=True)
+    parser.add_argument(
+        '--match_dir',
+        help='matched rna_virus directory',
+        required=True)
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)

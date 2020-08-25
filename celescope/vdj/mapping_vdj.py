@@ -1,3 +1,7 @@
+from celescope.vdj.__init__ import CHAINS
+from celescope.tools.report import reporter
+from celescope.tools.utils import format_number, gen_stat
+from matplotlib import pyplot as plt
 import os
 import logging
 import gzip
@@ -8,10 +12,6 @@ import re
 import json
 import argparse
 mpl.use('Agg')
-from matplotlib import pyplot as plt
-from celescope.tools.utils import format_number, gen_stat
-from celescope.tools.report import reporter
-from celescope.vdj.__init__ import CHAINS
 
 logger1 = logging.getLogger(__name__)
 STEP = 'mapping_vdj'
@@ -123,14 +123,19 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
         'aaSeqCDR3',
         'nSeqCDR3',
     ]
-    df_UMI_count = df_UMI.groupby(groupby_elements, as_index=False).agg({"UMI": "count"})
+    df_UMI_count = df_UMI.groupby(
+        groupby_elements, as_index=False).agg({"UMI": "count"})
     df_UMI_count = df_UMI_count.sort_values("UMI", ascending=False)
     # out unfiltered
     df_UMI_count.to_csv(UMI_count_unfiltered_file, sep="\t", index=False)
 
-    df_UMI_count_filter1 = df_UMI_count.groupby(["barcode", "chain"], as_index=False).head(1)
+    df_UMI_count_filter1 = df_UMI_count.groupby(
+        ["barcode", "chain"], as_index=False).head(1)
     # out filtered1
-    df_UMI_count_filter1.to_csv(UMI_count_filtered1_file, sep="\t", index=False)
+    df_UMI_count_filter1.to_csv(
+        UMI_count_filtered1_file,
+        sep="\t",
+        index=False)
 
     if debug:
         unique_UMI = df_UMI.shape[0]
@@ -147,7 +152,12 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
         })
 
     # stat file
-    df = pd.DataFrame(mapping_summary_row_list, columns=["item", "count", "total_count"])
+    df = pd.DataFrame(
+        mapping_summary_row_list,
+        columns=[
+            "item",
+            "count",
+            "total_count"])
     stat_file = f'{outdir}/stat.txt'
     gen_stat(df, stat_file)
 
@@ -190,7 +200,7 @@ mixcr align \
 -OallowPartialAlignments=true \
 -OvParameters.geneFeatureToAlign=VTranscriptWithP \
 {fq} \
-{read2_vdjca} 
+{read2_vdjca}
 mixcr exportAlignments \
 {read2_vdjca} {alignments} \
 -readIds --force-overwrite -vGene -dGene -jGene -cGene \

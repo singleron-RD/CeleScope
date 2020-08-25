@@ -92,7 +92,7 @@ def count_vdj(args):
     df_UMI_cell = df_UMI_sum[df_UMI_sum.UMI >= UMI_min]
     df_UMI_sum["mark"] = df_UMI_sum["UMI"].apply(
         lambda x: "CB" if (x >= UMI_min) else "UB")
-    report_prepare(df_UMI_sum, outdir+"/../")
+    report_prepare(df_UMI_sum, outdir + "/../")
 
     cell_barcodes = set(df_UMI_cell.barcode)
     cell_number = len(cell_barcodes)
@@ -105,7 +105,8 @@ def count_vdj(args):
     # df_UMI_count_filter1 in cell
     df_cell = df_UMI_count_filter1[df_UMI_count_filter1.barcode.isin(
         cell_barcodes)]
-    # filter2: cell wtih UMI >= iUMI of identical receptor type and CDR3 combinations.
+    # filter2: cell wtih UMI >= iUMI of identical receptor type and CDR3
+    # combinations.
     df_cell_UMI_count_filter2 = df_cell[df_cell.UMI >= iUMI]
 
     # cell confident
@@ -146,7 +147,7 @@ def count_vdj(args):
 
     # add clonetype ID
     df_clonetypes = df_clonetypes.reset_index()
-    df_clonetypes["clonetype_ID"] = pd.Series(df_clonetypes.index)+1
+    df_clonetypes["clonetype_ID"] = pd.Series(df_clonetypes.index) + 1
     df_clonetypes.drop(columns=["index"], inplace=True)
 
     # order
@@ -169,7 +170,7 @@ def count_vdj(args):
             else:
                 Median_chain_UMIs_per_Cell = 0
             cell_summary_row_list.append({
-                "item":  "Median {chain} UMIs per Cell".format(chain=chain),
+                "item": "Median {chain} UMIs per Cell".format(chain=chain),
                 "count": Median_chain_UMIs_per_Cell,
                 "total_count": np.nan
             })
@@ -224,7 +225,7 @@ def count_vdj(args):
             total_match_CDR3_barcode_number = sum(
                 df_match_cell_confident_count.barcode)
             df_match_cell_confident_count["percent"] = df_match_cell_confident_count.barcode / \
-                total_match_CDR3_barcode_number*100
+                total_match_CDR3_barcode_number * 100
             df_match_cell_confident_count["percent"] = df_match_cell_confident_count["percent"].apply(
                 lambda x: round(x, 2)
             )
@@ -248,7 +249,7 @@ def count_vdj(args):
             else:
                 Median_chain_UMIs_per_Cell = 0
             cell_summary_row_list.append({
-                "item":  "Median {chain} UMIs per Cell".format(chain=chain),
+                "item": "Median {chain} UMIs per Cell".format(chain=chain),
                 "count": Median_chain_UMIs_per_Cell,
                 "total_count": np.nan})
 
@@ -308,7 +309,7 @@ def count_vdj(args):
             total_match_CDR3_barcode_number = sum(
                 df_match_cell_confident_count.barcode)
             df_match_cell_confident_count["percent"] = df_match_cell_confident_count.barcode / \
-                total_match_CDR3_barcode_number*100
+                total_match_CDR3_barcode_number * 100
             df_match_cell_confident_count["percent"] = df_match_cell_confident_count["percent"].apply(
                 lambda x: round(x, 2)
             )
@@ -334,7 +335,7 @@ def count_vdj(args):
                                 "item", "count", "total_count"])
     cell_summary["count"] = cell_summary["count"].apply(int)
     cell_summary["percent"] = cell_summary["count"] / \
-        (cell_summary.total_count.astype("float"))*100
+        (cell_summary.total_count.astype("float")) * 100
     cell_summary["percent"] = cell_summary["percent"].apply(
         lambda x: round(x, 2))
     cell_summary["count"] = cell_summary["count"].apply(format_number)
@@ -343,7 +344,7 @@ def count_vdj(args):
         need_percent = bool(
             re.search("Cell with", row["item"], flags=re.IGNORECASE))
         if need_percent:
-            return "("+str(row["percent"])+"%)"
+            return "(" + str(row["percent"]) + "%)"
         else:
             return ""
     cell_summary["percent_str"] = cell_summary.apply(

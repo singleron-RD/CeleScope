@@ -120,14 +120,14 @@ def read_fastq(f):
     for i, line in enumerate(f):
         if i % 4 == 0:
             assert line.startswith('@'), ("Line {0} in FASTQ file is expected to start with '@', "
-                                          "but found {1!r}".format(i+1, line[:10]))
+                                          "but found {1!r}".format(i + 1, line[:10]))
             name = line.strip()[1:]
         elif i % 4 == 1:
             sequence = line.strip()
         elif i % 4 == 2:
             line = line.strip()
             assert line.startswith('+'), ("Line {0} in FASTQ file is expected to start with '+', "
-                                          "but found {1!r}".format(i+1, line[:10]))
+                                          "but found {1!r}".format(i + 1, line[:10]))
         elif i % 4 == 3:
             qualities = line.rstrip('\n\r')
             yield name, sequence, qualities
@@ -147,7 +147,7 @@ def low_qual(quals, minQ='/', num=2):
 
 def no_polyT(seq, strictT=0, minT=10):
     # strictT requires the first nth position to be T
-    if seq[:strictT] != 'T'*strictT or seq.count('T') < minT:
+    if seq[:strictT] != 'T' * strictT or seq.count('T') < minT:
         return True
     else:
         return False
@@ -190,20 +190,22 @@ def barcode(args):
         sys.exit("invalid chemistry or [pattern,linker,whitelist]")
 
     # parse pattern to dict, C8L10C8L10C8U8
-    # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U': [[44, 52]], 'L': [[8, 18], [26, 36]]})
+    # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
+    # [[44, 52]], 'L': [[8, 18], [26, 36]]})
     pattern_dict = parse_pattern(bc_pattern)
     #pattern_dict = parse_pattern(args.pattern)
     bool_T = True if 'T' in pattern_dict else False
     bool_L = True if 'L' in pattern_dict else False
 
-    C_len = sum([item[1]-item[0] for item in pattern_dict['C']])
+    C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
 
     barcode_qual_Counter = Counter()
     umi_qual_Counter = Counter()
     C_U_base_Counter = Counter()
     args.lowQual = ord2chr(args.lowQual)
 
-    # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
+    # generate list with mismatch 1, substitute one base in raw sequence with
+    # A,T,C,G
     barcode_dict = generate_seq_dict(whitelist, n=1)
     linker_dict = generate_seq_dict(linker, n=2)
 
@@ -212,7 +214,7 @@ def barcode(args):
     # merge multiple fastq files
     if len(fq1_list) > 1:
         logger1.info("merge fastq with same sample name...")
-        fastq_dir = args.outdir+"/../merge_fastq"
+        fastq_dir = args.outdir + "/../merge_fastq"
         if not os.path.exists(fastq_dir):
             os.system('mkdir -p %s' % fastq_dir)
         fastq1_file = "{fastq_dir}/{sample}_1.fq.gz".format(
@@ -237,7 +239,7 @@ def barcode(args):
     out_fq2 = args.outdir + '/' + args.sample + '_2.fq.gz'
     fh3 = xopen(out_fq2, 'w')
 
-    (total_num, clean_num,  no_polyT_num, lowQual_num,
+    (total_num, clean_num, no_polyT_num, lowQual_num,
      no_linker_num, no_barcode_num) = (0, 0, 0, 0, 0, 0)
     Barcode_dict = defaultdict(int)
 
@@ -255,7 +257,7 @@ def barcode(args):
         try:
             (header1, seq1, qual1) = next(g1)
             (header2, seq2, qual2) = next(g2)
-        except:
+        except BaseException:
             break
 
         total_num += 1
@@ -326,12 +328,12 @@ def barcode(args):
     # print(barcode_qual_Counter)
     # print(umi_qual_Counter)
     BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(
-        30)])/float(sum(barcode_qual_Counter.values()))*100
+        30)]) / float(sum(barcode_qual_Counter.values())) * 100
     UMIsQ30 = sum([umi_qual_Counter[k] for k in umi_qual_Counter if k >= ord2chr(
-        30)])/float(sum(umi_qual_Counter.values()))*100
+        30)]) / float(sum(umi_qual_Counter.values())) * 100
 
     global stat_info
-    def cal_percent(x): return "{:.2%}".format((x+0.0)/total_num)
+    def cal_percent(x): return "{:.2%}".format((x + 0.0) / total_num)
     with open(args.outdir + '/stat.txt', 'w') as fh:
         """
         Raw Reads: %s

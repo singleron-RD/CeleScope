@@ -16,10 +16,11 @@ def genDict(dim=3):
     if dim == 1:
         return defaultdict(int)
     else:
-        return defaultdict(lambda: genDict(dim-1))
+        return defaultdict(lambda: genDict(dim - 1))
 
 
-def sum_virus(validated_barcodes, virus_bam, out_read_count_file, out_umi_count_file):
+def sum_virus(validated_barcodes, virus_bam,
+              out_read_count_file, out_umi_count_file):
     # process bam
     samfile = pysam.AlignmentFile(virus_bam, "rb")
     count_dic = genDict(dim=3)
@@ -40,7 +41,13 @@ def sum_virus(validated_barcodes, virus_bam, out_read_count_file, out_umi_count_
     if len(rows) == 0:
         logging.warning("No cell virus UMI found!")
 
-    df_read = df_read = pd.DataFrame(rows, columns=["barcode", "tag", "UMI", "read_count"])
+    df_read = df_read = pd.DataFrame(
+        rows,
+        columns=[
+            "barcode",
+            "tag",
+            "UMI",
+            "read_count"])
     df_read.to_csv(out_read_count_file, sep="\t", index=False)
 
     df_umi = df_read.groupby(["barcode", "tag"]).agg({"UMI": "count"})
@@ -54,15 +61,19 @@ def count_virus(args):
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % (args.outdir))
-    
+
     # read barcodes
     df_barcodes = pd.read_csv(args.barcode_file, header=None)
-    validated_barcodes = list(df_barcodes.iloc[:,0])
+    validated_barcodes = list(df_barcodes.iloc[:, 0])
 
     # count virus
     out_read_count_file = args.outdir + "/" + args.sample + "_virus_read_count.tsv"
     out_umi_count_file = args.outdir + "/" + args.sample + "_virus_UMI_count.tsv"
-    sum_virus(validated_barcodes, args.virus_bam, out_read_count_file, out_umi_count_file)
+    sum_virus(
+        validated_barcodes,
+        args.virus_bam,
+        out_read_count_file,
+        out_umi_count_file)
 
     logger1.info('virus count done!')
 

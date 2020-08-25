@@ -33,7 +33,8 @@ result_dict = defaultdict(list)
 
 def pie_label(values, keys):
     total = float(sum(values))
-    return ['%s:%.2f%%' % (k.replace(' Regions', ''), v/total*100) for k, v in zip(keys, values)]
+    return ['%s:%.2f%%' % (k.replace(' Regions', ''), v / total * 100)
+            for k, v in zip(keys, values)]
 
 
 summarys = [step + '_summary' for step in steps]

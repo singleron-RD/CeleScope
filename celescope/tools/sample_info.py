@@ -27,11 +27,16 @@ def sample_info(args):
         os.system('mkdir -p %s' % outdir)
 
     stat = pd.DataFrame({"item": ["Sample ID", "Assay", "Chemistry", "Software Version"],
-        "count": [sample, ASSAY, chemistry, version]}, columns=["item", "count"])
+                         "count": [sample, ASSAY, chemistry, version]}, columns=["item", "count"])
     stat_file = outdir + "/stat.txt"
     stat.to_csv(stat_file, sep=":", header=None, index=False)
 
-    t = reporter(name='sample', assay=args.assay, sample=args.sample, stat_file=stat_file, outdir=outdir + '/..')
+    t = reporter(
+        name='sample',
+        assay=args.assay,
+        sample=args.sample,
+        stat_file=stat_file,
+        outdir=outdir + '/..')
     t.get_report()
 
 

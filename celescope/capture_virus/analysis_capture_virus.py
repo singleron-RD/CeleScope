@@ -1,5 +1,5 @@
 #!/bin/env python
-#coding=utf8
+# coding=utf8
 
 import os
 import sys
@@ -41,15 +41,16 @@ def cluster_tsne_list(tsne_df):
     tSNE_1	tSNE_2	cluster Gene_Counts
     return data list
     """
-    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:,0]
-    percent_df = sum_df.transform(lambda x:round(x/sum(x)*100,2))
+    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
+    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
     res = []
     for cluster in sorted(tsne_df.cluster.unique()):
-        sub_df = tsne_df[tsne_df.cluster==cluster]
-        name = "cluster {cluster}({percent}%)".format(cluster=cluster,percent=percent_df[cluster])
+        sub_df = tsne_df[tsne_df.cluster == cluster]
+        name = "cluster {cluster}({percent}%)".format(
+            cluster=cluster, percent=percent_df[cluster])
         tSNE_1 = list(sub_df.tSNE_1)
         tSNE_2 = list(sub_df.tSNE_2)
-        res.append({"name":name,"tSNE_1":tSNE_1,"tSNE_2":tSNE_2})
+        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
     return res
 
 
@@ -57,13 +58,13 @@ def virus_tsne_list(tsne_df, virus_df):
     """
     return data dic
     """
-    tsne_df.rename(columns={"Unnamed: 0":"barcode"},inplace=True)
-    df = pd.merge(tsne_df,virus_df,on="barcode",how="left")
+    tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+    df = pd.merge(tsne_df, virus_df, on="barcode", how="left")
     df["UMI"] = df["UMI"].fillna(0)
     tSNE_1 = list(df.tSNE_1)
     tSNE_2 = list(df.tSNE_2)
     virus_UMI = list(df.UMI)
-    res = {"tSNE_1":tSNE_1,"tSNE_2":tSNE_2,"virus_UMI":virus_UMI}
+    res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "virus_UMI": virus_UMI}
     return res
 
 
@@ -71,8 +72,13 @@ def marker_table(marker_df):
     """
     return html code
     """
-    marker_df = marker_df.loc[:,["cluster","gene","avg_logFC","pct.1","pct.2","p_val_adj"]]
-    marker_gene_table = marker_df.to_html(escape=False,index=False,table_id="marker_gene_table",justify="center")
+    marker_df = marker_df.loc[:, ["cluster", "gene",
+                                  "avg_logFC", "pct.1", "pct.2", "p_val_adj"]]
+    marker_gene_table = marker_df.to_html(
+        escape=False,
+        index=False,
+        table_id="marker_gene_table",
+        justify="center")
     return marker_gene_table
 
 
@@ -86,7 +92,7 @@ def analysis_capture_virus(args):
     match_dir = args.match_dir
 
     if not os.path.exists(outdir):
-        os.system('mkdir -p %s'%(outdir))    
+        os.system('mkdir -p %s' % (outdir))
 
     # report
     tsne_df_file = glob.glob(f'{match_dir}/*analysis*/tsne_coord.tsv')[0]
@@ -97,7 +103,11 @@ def analysis_capture_virus(args):
 
     report_prepare(outdir, tsne_df, marker_df, virus_df)
 
-    t = reporter(name='analysis_capture_virus', assay=args.assay, sample=args.sample, outdir=args.outdir + '/..')
+    t = reporter(
+        name='analysis_capture_virus',
+        assay=args.assay,
+        sample=args.sample,
+        outdir=args.outdir + '/..')
     t.get_report()
 
 
@@ -106,5 +116,8 @@ def get_opts_analysis_capture_virus(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--match_dir', help='match_dir', required=True)
-        parser.add_argument('--virus_file', help='virus UMI count file',required=True)
+        parser.add_argument(
+            '--virus_file',
+            help='virus UMI count file',
+            required=True)
         parser.add_argument('--assay', help='assay', required=True)

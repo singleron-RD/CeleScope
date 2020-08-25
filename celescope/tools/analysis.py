@@ -1,5 +1,5 @@
 #!/bin/env python
-#coding=utf8
+# coding=utf8
 
 import os
 import sys
@@ -17,7 +17,7 @@ from celescope.rna.__init__ import __ASSAY__
 
 logger1 = logging.getLogger(__name__)
 # invoke by celescope.py under rootdir
-toolsdir = os.path.dirname(__file__) 
+toolsdir = os.path.dirname(__file__)
 
 
 def report_prepare(outdir, tsne_df, marker_df):
@@ -42,15 +42,16 @@ def cluster_tsne_list(tsne_df):
     tSNE_1	tSNE_2	cluster Gene_Counts
     return data list
     """
-    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:,0]
-    percent_df = sum_df.transform(lambda x:round(x/sum(x)*100,2))
+    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
+    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
     res = []
     for cluster in sorted(tsne_df.cluster.unique()):
-        sub_df = tsne_df[tsne_df.cluster==cluster]
-        name = "cluster {cluster}({percent}%)".format(cluster=cluster,percent=percent_df[cluster])
+        sub_df = tsne_df[tsne_df.cluster == cluster]
+        name = "cluster {cluster}({percent}%)".format(
+            cluster=cluster, percent=percent_df[cluster])
         tSNE_1 = list(sub_df.tSNE_1)
         tSNE_2 = list(sub_df.tSNE_2)
-        res.append({"name":name,"tSNE_1":tSNE_1,"tSNE_2":tSNE_2})
+        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
     return res
 
 
@@ -61,7 +62,7 @@ def gene_tsne_list(tsne_df):
     tSNE_1 = list(tsne_df.tSNE_1)
     tSNE_2 = list(tsne_df.tSNE_2)
     Gene_Counts = list(tsne_df.Gene_Counts)
-    res = {"tSNE_1":tSNE_1,"tSNE_2":tSNE_2,"Gene_Counts":Gene_Counts}
+    res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "Gene_Counts": Gene_Counts}
     return res
 
 
@@ -69,9 +70,14 @@ def marker_table(marker_df):
     """
     return html code
     """
-    marker_df = marker_df.loc[:,["cluster","gene","avg_logFC","pct.1","pct.2","p_val_adj"]]
+    marker_df = marker_df.loc[:, ["cluster", "gene",
+                                  "avg_logFC", "pct.1", "pct.2", "p_val_adj"]]
     marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
-    marker_gene_table = marker_df.to_html(escape=False,index=False,table_id="marker_gene_table",justify="center")
+    marker_gene_table = marker_df.to_html(
+        escape=False,
+        index=False,
+        table_id="marker_gene_table",
+        justify="center")
     return marker_gene_table
 
 
@@ -104,7 +110,7 @@ def gene_convert(gtf_file, matrix_file):
     matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
     matrix = matrix.dropna()
     matrix = matrix.rename({"geneID": ""}, axis='columns')
-    return matrix    
+    return matrix
 
 
 def analysis(args):
@@ -120,18 +126,23 @@ def analysis(args):
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
-    
+
     # runFalse
     logger1.info("convert expression matrix.")
     new_matrix = gene_convert(gtf, matrix_file)
-    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(outdir=outdir, sample=sample)
-    new_matrix.to_csv(new_matrix_file, sep="\t", index=False, compression='gzip')
+    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(
+        outdir=outdir, sample=sample)
+    new_matrix.to_csv(
+        new_matrix_file,
+        sep="\t",
+        index=False,
+        compression='gzip')
     logger1.info("expression matrix written.")
 
     # run_R
     logger1.info("Seurat running.")
     cmd = "Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {new_matrix_file}".format(
-        app=toolsdir+"/run_analysis.R", sample=sample, outdir=outdir, new_matrix_file=new_matrix_file)
+        app=toolsdir + "/run_analysis.R", sample=sample, outdir=outdir, new_matrix_file=new_matrix_file)
     os.system(cmd)
     logger1.info("Seurat done.")
 
@@ -145,17 +156,23 @@ def analysis(args):
     logger1.info('generate report ...!')
     stat_file = outdir + "/stat.txt"
     assay = __ASSAY__
-    t = reporter(name='analysis', assay=assay, sample=args.sample, outdir=args.outdir + '/..', stat_file=stat_file)
+    t = reporter(
+        name='analysis',
+        assay=assay,
+        sample=args.sample,
+        outdir=args.outdir + '/..',
+        stat_file=stat_file)
     t.get_report()
     logger1.info('generate report done!')
-    
+
 
 def get_opts_analysis(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
-        parser.add_argument('--genomeDir', help='genome directory', required=True)
+        parser.add_argument(
+            '--genomeDir',
+            help='genome directory',
+            required=True)
         parser.add_argument('--assay', help='assay', required=True)
-
-

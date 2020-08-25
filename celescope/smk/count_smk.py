@@ -1,3 +1,6 @@
+from celescope.tools.report import reporter
+from celescope.tools.utils import format_number
+import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import logging
@@ -7,9 +10,6 @@ import glob
 from collections import defaultdict
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
-from celescope.tools.utils import format_number
-from celescope.tools.report import reporter
 
 logger1 = logging.getLogger(__name__)
 
@@ -63,21 +63,21 @@ def write_and_plot(df, column_name, count_file, plot_file):
     df_count = df.groupby(["tag", column_name]).size().unstack()
     df_count.fillna(0, inplace=True)
     df_count.to_csv(count_file, sep="\t")
-    df_percent = df_count/df_count.sum()
+    df_percent = df_count / df_count.sum()
     df_plot = df_percent.stack().reset_index()
     df_plot.rename({0: "percent"}, axis=1, inplace=True)
 
-    #plot
+    # plot
     colors = list(mpl.colors.cnames.keys())
-    fig, ax = plt.subplots(figsize=(20, 10))  
+    fig, ax = plt.subplots(figsize=(20, 10))
     types = df_plot["tag"].drop_duplicates()
     margin_bottom = np.zeros(len(df_plot[column_name].drop_duplicates()))
 
     for num, type in enumerate(types):
-        values = list(df_plot.loc[df_plot["tag"]==type, "percent"])
+        values = list(df_plot.loc[df_plot["tag"] == type, "percent"])
         df_plot[df_plot['tag'] == type].plot.bar(
-            x=column_name, y='percent', ax=ax, stacked=True, 
-            bottom=margin_bottom, label=type,color=colors[num*3+1])
+            x=column_name, y='percent', ax=ax, stacked=True,
+            bottom=margin_bottom, label=type, color=colors[num * 3 + 1])
         margin_bottom += values
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     plt.title("SMK tag fraction")
@@ -115,14 +115,21 @@ def count_smk(args):
     logger1.info(f'UMI_min: {UMI_min}')
     SNR_min = get_SNR_min(df_cell_UMI, dim, SNR_min, UMI_min)
     logger1.info(f'SNR_min: {SNR_min}')
-    df_cell_UMI["tag"] = df_cell_UMI.apply(tag_type, UMI_min=UMI_min, SNR_min=SNR_min, dim=dim, axis=1)
+    df_cell_UMI["tag"] = df_cell_UMI.apply(
+        tag_type, UMI_min=UMI_min, SNR_min=SNR_min, dim=dim, axis=1)
     df_cell_UMI.to_csv(UMI_tag_file, sep="\t")
 
     df_tsne = pd.read_csv(tsne_file, sep="\t", index_col=0)
-    df_tsne_tag = pd.merge(df_tsne, df_cell_UMI, how="left", left_index=True, right_index=True)
+    df_tsne_tag = pd.merge(
+        df_tsne,
+        df_cell_UMI,
+        how="left",
+        left_index=True,
+        right_index=True)
 
     if combine_cluster:
-        df_combine_cluster = pd.read_csv(combine_cluster, sep="\t", header=None)
+        df_combine_cluster = pd.read_csv(
+            combine_cluster, sep="\t", header=None)
         df_combine_cluster.columns = ["cluster", "combine_cluster"]
         df_tsne_combine_cluster_tag = pd.merge(
             df_tsne_tag, df_combine_cluster,
@@ -145,10 +152,12 @@ def count_smk(args):
         )
 
     df_stat = pd.DataFrame({"item": ["Dimension"], "count_percent": [dim]})
-    df_tag_count = df_cell_UMI["tag"].value_counts().sort_values(ascending=False).reset_index()
+    df_tag_count = df_cell_UMI["tag"].value_counts(
+    ).sort_values(ascending=False).reset_index()
     df_tag_count.columns = ["item", "count"]
     ncell = df_tag_count["count"].sum()
-    df_tag_count["count_percent"] = df_tag_count["count"].apply(lambda x:f'{x}({round(x / ncell * 100, 2)}%)')
+    df_tag_count["count_percent"] = df_tag_count["count"].apply(
+        lambda x: f'{x}({round(x / ncell * 100, 2)}%)')
     df_tag_count = df_tag_count.loc[:, ["item", "count_percent"]]
     df_stat = df_stat.append(df_tag_count)
     stat_file = f'{outdir}/stat.txt'
@@ -162,13 +171,24 @@ def count_smk(args):
 
 
 def get_opts_count_smk(parser, sub_program):
-    parser.add_argument("--UMI_min", help="cells have SMK_UMI>=UMI_min are considered as valid cell", default="auto")
+    parser.add_argument(
+        "--UMI_min",
+        help="cells have SMK_UMI>=UMI_min are considered as valid cell",
+        default="auto")
     parser.add_argument("--dim", help="SMK tag dimension", default=1)
-    parser.add_argument("--SNR_min", help="minimum signal to noise ratio", default="auto")
-    parser.add_argument("--combine_cluster", help="conbine cluster tsv file", default=None)
+    parser.add_argument(
+        "--SNR_min",
+        help="minimum signal to noise ratio",
+        default="auto")
+    parser.add_argument(
+        "--combine_cluster",
+        help="conbine cluster tsv file",
+        default=None)
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path")
+        parser.add_argument(
+            "--match_dir",
+            help="matched scRNA-Seq CeleScope directory path")
         parser.add_argument("--cell_UMI_file", help="cell SMK UMI file")

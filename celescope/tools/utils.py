@@ -1,6 +1,7 @@
 #!/bin/env python
-#coding=utf8
+# coding=utf8
 
+import matplotlib.pyplot as plt
 import logging
 import os
 import glob
@@ -13,7 +14,6 @@ from collections import defaultdict
 import celescope.tools
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
@@ -21,7 +21,9 @@ tools_dir = os.path.dirname(celescope.tools.__file__)
 def gen_stat(df, stat_file):
     # 3cols: item count total_count
     df['percent'] = df["count"] / df['total_count']
-    df['value'] = df.apply(lambda x: f"{x['count']}({round(x['percent'] * 100, 2)}%)", axis=1)
+    df['value'] = df.apply(
+        lambda x: f"{x['count']}({round(x['percent'] * 100, 2)}%)",
+        axis=1)
     df = df.loc[:, ["item", "value"]]
     df.to_csv(stat_file, sep=":", header=None, index=False)
 
@@ -35,7 +37,7 @@ def get_fq(library_id, library_path):
         fq1 = ",".join(glob.glob(pattern1_1) + glob.glob(pattern1_2))
         fq2 = ",".join(glob.glob(pattern2_1) + glob.glob(pattern2_2))
     except IndexError as e:
-        sys.exit("Mapfile Error:"+str(e))
+        sys.exit("Mapfile Error:" + str(e))
     return fq1, fq2
 
 
@@ -45,8 +47,10 @@ def parse_map_col4(mapfile, default_val):
     with open(mapfile) as fh:
         for line in fh:
             line = line.strip()
-            if not line: continue
-            if line.startswith('#'): continue
+            if not line:
+                continue
+            if line.startswith('#'):
+                continue
             tmp = line.split()
             library_id = tmp[0]
             library_path = tmp[1]
@@ -56,38 +60,40 @@ def parse_map_col4(mapfile, default_val):
             else:
                 col4 = default_val
             fq1, fq2 = get_fq(library_id, library_path)
-                
+
             if sample_name in fq_dict:
                 fq_dict[sample_name][0].append(fq1)
                 fq_dict[sample_name][1].append(fq2)
             else:
                 fq_dict[sample_name] = [[fq1], [fq2]]
             col4_dict[sample_name] = col4
-    
+
     for sample_name in fq_dict:
         fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
         fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
 
     return fq_dict, col4_dict
 
+
 def generate_sjm(cmd, name, m=1, x=1):
     res_cmd = '''
 job_begin
     name {name}
-    sched_options -w n -cwd -V -l vf={m}g,p={x} 
+    sched_options -w n -cwd -V -l vf={m}g,p={x}
     cmd {cmd}
 job_end
-'''.format(name=name, m=m, x=x, cmd=re.sub(r'\s+', r' ', cmd.replace('\n',' ')))
+'''.format(name=name, m=m, x=x, cmd=re.sub(r'\s+', r' ', cmd.replace('\n', ' ')))
 
     return res_cmd
 
 
-def merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda, outdir, rm_files):
+def merge_report(fq_dict, steps, last_step, sjm_cmd,
+                 sjm_order, logdir, conda, outdir, rm_files):
     step = "merge_report"
     steps_str = ",".join(steps)
     samples = ','.join(fq_dict.keys())
     app = tools_dir + '/merge_table.py'
-    cmd = f'''source activate {conda}; python {app} --samples {samples} 
+    cmd = f'''source activate {conda}; python {app} --samples {samples}
     --steps {steps_str} --outdir {outdir} '''
     if rm_files:
         cmd += ' --rm_files'
@@ -95,7 +101,7 @@ def merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda, o
     for sample in fq_dict:
         sjm_order += f'order {step} after {last_step}_{sample}\n'
     with open(logdir + '/sjm.job', 'w') as fh:
-        fh.write(sjm_cmd+'\n')
+        fh.write(sjm_cmd + '\n')
         fh.write(sjm_order)
 
 
@@ -112,7 +118,7 @@ def glob_genomeDir(genomeDir, logger1):
     else:
         refFlat = refFlat[0]
         logger1.info("refFlat file found: " + refFlat)
-    
+
     gtf = glob.glob(genomeDir + "/*.gtf")
     if (len(gtf) == 0):
         sys.exit("ERROR: gtf file not found in " + genomeDir)
@@ -130,23 +136,25 @@ def glob_genomeDir(genomeDir, logger1):
     return refFlat, gtf
 
 
-def barcode_filter_with_magnitude(df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):
+def barcode_filter_with_magnitude(
+        df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):
     # col can be readcount or UMI
     # determine validated barcodes
     df = df.sort_values(col, ascending=False)
-    idx = int(expected_cell_num*0.01) - 1
+    idx = int(expected_cell_num * 0.01) - 1
     idx = max(0, idx)
 
     # calculate read counts threshold
-    threshold = int(df.iloc[idx, df.columns==col] * 0.1)
+    threshold = int(df.iloc[idx, df.columns == col] * 0.1)
     threshold = max(1, threshold)
-    validated_barcodes = df[df[col]>threshold].index
+    validated_barcodes = df[df[col] > threshold].index
 
     fig = plt.figure()
     plt.plot(df[col])
     plt.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
-    plt.vlines(len(validated_barcodes), 0 , threshold, linestyle='dashed')
-    plt.title('expected cell num: %s\n%s threshold: %s\ncell num: %s'%(expected_cell_num, col, threshold, len(validated_barcodes)))
+    plt.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
+    plt.title('expected cell num: %s\n%s threshold: %s\ncell num: %s' %
+              (expected_cell_num, col, threshold, len(validated_barcodes)))
     plt.loglog()
     plt.savefig(plot)
 
@@ -157,7 +165,7 @@ def barcode_filter_with_kde(df, plot='kde.pdf', col='UMI'):
     # col can be readcount or UMI
     # filter low values
     df = df.sort_values(col, ascending=False)
-    arr = np.log10([i for i in df[col] if i/float(df[col][0]) > 0.001])
+    arr = np.log10([i for i in df[col] if i / float(df[col][0]) > 0.001])
 
     # kde
     x_grid = np.linspace(min(arr), max(arr), 10000)
@@ -166,20 +174,21 @@ def barcode_filter_with_kde(df, plot='kde.pdf', col='UMI'):
 
     local_mins = argrelextrema(y, np.less)
     log_threshold = x_grid[local_mins[-1][0]]
-    threshold = np.power(10,log_threshold)
-    validated_barcodes = df[df[col]>threshold].index
+    threshold = np.power(10, log_threshold)
+    validated_barcodes = df[df[col] > threshold].index
 
     # plot
-    fig, (ax1, ax2) = plt.subplots(2, figsize=(6.4,10))
+    fig, (ax1, ax2) = plt.subplots(2, figsize=(6.4, 10))
     ax1.plot(x_grid, y)
     #ax1.axhline(y[local_mins[-1][0]], -0.5, log_threshold, linestyle='dashed')
     ax1.vlines(log_threshold, 0, y[local_mins[-1][0]], linestyle='dashed')
     ax1.set_ylim(0, 0.3)
-    
+
     ax2.plot(df[col])
     ax2.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
-    ax2.vlines(len(validated_barcodes), 0 , threshold, linestyle='dashed')
-    ax2.set_title('%s threshold: %s\ncell num: %s'%(col, int(threshold), len(validated_barcodes)))
+    ax2.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
+    ax2.set_title('%s threshold: %s\ncell num: %s' %
+                  (col, int(threshold), len(validated_barcodes)))
     ax2.loglog()
     plt.savefig(plot)
 
@@ -187,13 +196,14 @@ def barcode_filter_with_kde(df, plot='kde.pdf', col='UMI'):
 
 
 def get_slope(x, y, window=200, step=10):
-    assert len(x)==len(y)
-    start=0
+    assert len(x) == len(y)
+    start = 0
     last = len(x)
-    res = [[],[]]
+    res = [[], []]
     while True:
-        end = start + window 
-        if end > last: break
+        end = start + window
+        if end > last:
+            break
         z = np.polyfit(x[start:end], y[start:end], 1)
         res[0].append(x[start])
         res[1].append(z[0])
@@ -201,32 +211,34 @@ def get_slope(x, y, window=200, step=10):
     return res
 
 
-def barcode_filter_with_derivative(df, plot='derivative.pdf', col='UMI', window=500, step=5):
+def barcode_filter_with_derivative(
+        df, plot='derivative.pdf', col='UMI', window=500, step=5):
     # col can be readcount or UMI
     # filter low values
     df = df.sort_values(col, ascending=False)
-    y = np.log10([i for i in df[col] if i/float(df[col][0]) > 0.001])
+    y = np.log10([i for i in df[col] if i / float(df[col][0]) > 0.001])
     x = np.log10(np.arange(len(y)) + 1)
-    
+
     # derivative
     res = get_slope(x, y, window=window, step=step)
-    res2 = get_slope(res[0], res[1], window=window, step=step) 
-    g0 = [res2[0][i] for i,j in enumerate(res2[1]) if j>0] 
-    cell_num = int(np.power(10,g0[0]))
+    res2 = get_slope(res[0], res[1], window=window, step=step)
+    g0 = [res2[0][i] for i, j in enumerate(res2[1]) if j > 0]
+    cell_num = int(np.power(10, g0[0]))
     threshold = df[col][cell_num]
     validated_barcodes = df.index[0:cell_num]
-    
+
     # plot
-    fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(6.4,15))
+    fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(6.4, 15))
     ax1.plot(res[0], res[1])
-    
+
     ax2.plot(res2[0], res2[1])
     ax2.set_ylim(-1, 1)
-    
+
     ax3.plot(df[col])
     ax3.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
-    ax3.vlines(len(validated_barcodes), 0 , threshold, linestyle='dashed')
-    ax3.set_title('%s threshold: %s\ncell num: %s'%(col, int(threshold), len(validated_barcodes)))
+    ax3.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
+    ax3.set_title('%s threshold: %s\ncell num: %s' %
+                  (col, int(threshold), len(validated_barcodes)))
     ax3.loglog()
     plt.savefig(plot)
 
@@ -236,9 +248,9 @@ def barcode_filter_with_derivative(df, plot='derivative.pdf', col='UMI', window=
 def downsample(bam, barcodes, percent):
     """
     calculate median_geneNum and saturation based on a given percent of reads
-    
+
     Args:
-        bam - bam file 
+        bam - bam file
         barcodes(set) - validated barcodes
         percent(float) - percent of reads in bam file.
 
@@ -246,33 +258,35 @@ def downsample(bam, barcodes, percent):
         percent(float) - input percent
         median_geneNum(int) - median gene number
         saturation(float) - sequencing saturation
-    
+
     Description:
         Sequencing Saturation = 1 - n_deduped_reads / n_reads.
-        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads. 
+        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads.
         n_reads = Total number of confidently mapped, valid cell-barcode, valid UMI reads.
     """
-    logging.info ('working' + str(percent))
+    logging.info('working' + str(percent))
     cmd = ['samtools', 'view', '-s', str(percent), bam]
     p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    #nesting defaultdicts in an arbitrary depth
+    # nesting defaultdicts in an arbitrary depth
+
     def genDDict(dim=3):
-        if dim==1:
+        if dim == 1:
             return defaultdict(int)
         else:
-            return defaultdict(lambda: genDDict(dim-1))
-    readDict =  genDDict()
+            return defaultdict(lambda: genDDict(dim - 1))
+    readDict = genDDict()
 
     n_reads = 0
     while True:
         line = p1.stdout.readline()
-        if not line.strip(): break
+        if not line.strip():
+            break
         tmp = line.strip().split()
         if tmp[-1].startswith('XT:Z:'):
             geneID = tmp[-1].replace('XT:Z:', '')
             cell_barcode, umi = tmp[0].split('_')[0:2]
-            #filter invalid barcode
-            if cell_barcode in barcodes: 
+            # filter invalid barcode
+            if cell_barcode in barcodes:
                 n_reads += 1
                 readDict[cell_barcode][umi][geneID] += 1
     p1.stdout.close()
@@ -291,7 +305,8 @@ def downsample(bam, barcodes, percent):
     median_geneNum = np.median(geneNum_list) if geneNum_list else 0
     saturation = (1 - float(n_deduped_reads) / n_reads) * 100
 
-    return "%.2f\t%.2f\t%.2f\n"%(percent, median_geneNum, saturation), saturation
+    return "%.2f\t%.2f\t%.2f\n" % (
+        percent, median_geneNum, saturation), saturation
 
 
 if __name__ == '__main__':
@@ -300,5 +315,3 @@ if __name__ == '__main__':
     barcode_filter_with_magnitude(df)
     barcode_filter_with_kde(df)
     barcode_filter_with_derivative(df)
-
-

@@ -1,15 +1,21 @@
 #!/bin/env python
-#coding=utf8
+# coding=utf8
 
 import argparse
 import logging
 from celescope.__init__ import __VERSION__, ASSAY_DICT
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 def main():
     parser = argparse.ArgumentParser(description='CeleScope')
-    parser.add_argument('-v', '--version', action='version', version= __VERSION__)
+    parser.add_argument(
+        '-v',
+        '--version',
+        action='version',
+        version=__VERSION__)
     subparsers = parser.add_subparsers()
 
     # rna
@@ -51,10 +57,11 @@ def main():
     from celescope.tools.analysis import analysis, get_opts_analysis
     parser_analysis = subparsers_rna_sub.add_parser('analysis')
     get_opts_analysis(parser_analysis, True)
-    parser_analysis.set_defaults(func=analysis) 
+    parser_analysis.set_defaults(func=analysis)
 
     from celescope.rna.run import run
-    parser_run = subparsers_rna_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    parser_run = subparsers_rna_sub.add_parser(
+        'run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
     get_opts_barcode(parser_run, False)
     get_opts_cutadapt(parser_run, False)
@@ -62,15 +69,17 @@ def main():
     get_opts_featureCounts(parser_run, False)
     get_opts_count(parser_run, False)
     get_opts_analysis(parser_run, False)
-    parser_run.set_defaults(func=run) 
+    parser_run.set_defaults(func=run)
 
     # rna_virus
     assay = 'rna_virus'
     text = ASSAY_DICT[assay]
-    subparsers_rna_virus = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_rna_virus = subparsers.add_parser(
+        assay, help=text, description=text)
     subparsers_rna_virus_sub = subparsers_rna_virus.add_subparsers()
 
-    parser_sample = subparsers_rna_virus_sub.add_parser('sample', description='sample infomation')
+    parser_sample = subparsers_rna_virus_sub.add_parser(
+        'sample', description='sample infomation')
     get_opts_sample(parser_sample, True)
     parser_sample.set_defaults(func=sample_info)
 
@@ -107,15 +116,17 @@ def main():
     from celescope.rna_virus.count_virus import count_virus, get_opts_count_virus
     parser_count_virus = subparsers_rna_virus_sub.add_parser('count_virus')
     get_opts_count_virus(parser_count_virus, True)
-    parser_count_virus.set_defaults(func=count_virus) 
+    parser_count_virus.set_defaults(func=count_virus)
 
     from celescope.rna_virus.analysis_rna_virus import analysis_rna_virus, get_opts_analysis_rna_virus
-    parser_analysis_rna_virus = subparsers_rna_virus_sub.add_parser('analysis_rna_virus')
+    parser_analysis_rna_virus = subparsers_rna_virus_sub.add_parser(
+        'analysis_rna_virus')
     get_opts_analysis_rna_virus(parser_analysis_rna_virus, True)
     parser_analysis_rna_virus.set_defaults(func=analysis_rna_virus)
 
     from celescope.rna_virus.run import run
-    parser_run = subparsers_rna_virus_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    parser_run = subparsers_rna_virus_sub.add_parser(
+        'run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
     get_opts_barcode(parser_run, False)
     get_opts_cutadapt(parser_run, False)
@@ -124,12 +135,13 @@ def main():
     get_opts_featureCounts(parser_run, False)
     get_opts_count_virus(parser_run, False)
     get_opts_analysis_rna_virus(parser_run, False)
-    parser_run.set_defaults(func=run)    
+    parser_run.set_defaults(func=run)
 
     # capture_virus
     assay = 'capture_virus'
     text = ASSAY_DICT[assay]
-    subparsers_capture_virus = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_capture_virus = subparsers.add_parser(
+        assay, help=text, description=text)
     subparsers_capture_virus_sub = subparsers_capture_virus.add_subparsers()
 
     parser_sample = subparsers_capture_virus_sub.add_parser('sample')
@@ -149,12 +161,14 @@ def main():
     parser_STAR_virus.set_defaults(func=STAR_virus)
 
     from celescope.capture_virus.count_capture_virus import count_capture_virus, get_opts_count_capture_virus
-    parser_count_capture_virus = subparsers_capture_virus_sub.add_parser('count_capture_virus')
+    parser_count_capture_virus = subparsers_capture_virus_sub.add_parser(
+        'count_capture_virus')
     get_opts_count_capture_virus(parser_count_capture_virus, True)
     parser_count_capture_virus.set_defaults(func=count_capture_virus)
 
     from celescope.capture_virus.run import run
-    parser_run = subparsers_capture_virus_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    parser_run = subparsers_capture_virus_sub.add_parser(
+        'run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
     get_opts_barcode(parser_run, False)
     get_opts_cutadapt(parser_run, False)
@@ -165,7 +179,8 @@ def main():
     # fusion
     assay = 'fusion'
     text = ASSAY_DICT[assay]
-    subparsers_fusion = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_fusion = subparsers.add_parser(
+        assay, help=text, description=text)
     subparsers_fusion_sub = subparsers_fusion.add_subparsers()
 
     parser_sample = subparsers_fusion_sub.add_parser('sample')
@@ -191,7 +206,8 @@ def main():
     parser_count_fusion.set_defaults(func=count_fusion)
 
     from celescope.fusion.run import run
-    parser_run = subparsers_fusion_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    parser_run = subparsers_fusion_sub.add_parser(
+        'run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_run, False)
     get_opts_barcode(parser_run, False)
     get_opts_cutadapt(parser_run, False)
@@ -202,7 +218,8 @@ def main():
     # smk
     assay = 'smk'
     text = ASSAY_DICT[assay]
-    subparsers_assay = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_assay = subparsers.add_parser(
+        assay, help=text, description=text)
     subparsers_assay_sub = subparsers_assay.add_subparsers()
 
     parser_tmp = subparsers_assay_sub.add_parser('sample')
@@ -233,7 +250,8 @@ def main():
     parser_tmp.set_defaults(func=analysis_smk)
 
     from celescope.smk.run import run
-    parser_tmp = subparsers_assay_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    parser_tmp = subparsers_assay_sub.add_parser(
+        'run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_tmp, False)
     get_opts_barcode(parser_tmp, False)
     get_opts_cutadapt(parser_tmp, False)
@@ -245,7 +263,8 @@ def main():
     # vdj
     assay = 'vdj'
     text = ASSAY_DICT[assay]
-    subparsers_assay = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_assay = subparsers.add_parser(
+        assay, help=text, description=text)
     subparsers_assay_sub = subparsers_assay.add_subparsers()
 
     parser_tmp = subparsers_assay_sub.add_parser('sample')
@@ -271,7 +290,8 @@ def main():
     parser_tmp.set_defaults(func=count_vdj)
 
     from celescope.vdj.run import run
-    parser_tmp = subparsers_assay_sub.add_parser('run', help='run all steps', conflict_handler='resolve')
+    parser_tmp = subparsers_assay_sub.add_parser(
+        'run', help='run all steps', conflict_handler='resolve')
     get_opts_sample(parser_tmp, False)
     get_opts_barcode(parser_tmp, False)
     get_opts_cutadapt(parser_tmp, False)

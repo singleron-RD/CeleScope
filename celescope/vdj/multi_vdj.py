@@ -51,7 +51,7 @@ def main():
             fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
             fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
 
-    logdir = args['outdir']+'/log'
+    logdir = args['outdir'] + '/log'
     os.system('mkdir -p %s' % (logdir))
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
@@ -81,7 +81,7 @@ def main():
 
         # sample
         step = "sample"
-        cmd = f'''source activate {conda}; {app} {assay} {step} --chemistry {chemistry} 
+        cmd = f'''source activate {conda}; {app} {assay} {step} --chemistry {chemistry}
         --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}')
         last_step = step
@@ -89,8 +89,8 @@ def main():
         # barcode
         arr = fq_dict[sample]
         step = "barcode"
-        cmd = f'''source activate {conda}; {app} {assay} {step} --fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry} 
-            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {sample} --lowQual {lowQual} 
+        cmd = f'''source activate {conda}; {app} {assay} {step} --fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry}
+            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {sample} --lowQual {lowQual}
             --lowNum {lowNum} --outdir {outdir_dic[step]} --thread {thread} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
@@ -99,7 +99,7 @@ def main():
         # adapt
         step = "cutadapt"
         fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
-        cmd = f'''source activate {conda}; {app} {assay} {step} --fq {fq} --sample {sample} --outdir 
+        cmd = f'''source activate {conda}; {app} {assay} {step} --fq {fq} --sample {sample} --outdir
             {outdir_dic[step]} --assay {assay}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'

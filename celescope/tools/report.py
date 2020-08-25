@@ -1,7 +1,6 @@
-#!/bin/env python
-#coding=utf8
-
-import os, sys, json
+import os
+import sys
+import json
 import argparse
 import pandas as pd
 import io
@@ -31,7 +30,7 @@ class reporter:
         self.parameters = parameters
         self.table_file = table_file
         self.table_header = table_header
-  
+
     def get_report(self):
         logger1.info(f'generate report: {self.assay} {self.name}')
         template = env.get_template(f'html/{self.assay}/base.html')
@@ -46,34 +45,29 @@ class reporter:
         if self.stat_file:
             df = pd.read_table(self.stat_file, header=None, sep=':', dtype=str)
             data[self.name + '_summary'] = df.values.tolist()
-  
+
         if self.plot:
             data[self.name + '_plot'] = self.plot
-        
+
         if self.parameters:
             data[self.name + '_parameters'] = self.parameters
-        
+
         if self.table_file:
             df = pd.read_csv(self.table_file, sep="\t")
             df = df.fillna(value="")
             data[self.name + '_table'] = df.values.tolist()
-        
+
         if self.table_header:
             data[self.name + '_table_header'] = self.table_header
 
-        report_html = "{outdir}/{sample}_report.html".format(outdir=self.outdir, sample=self.sample)
+        report_html = "{outdir}/{sample}_report.html".format(
+            outdir=self.outdir, sample=self.sample)
         with io.open(report_html, 'w', encoding='utf8') as fh:
             html = template.render(data)
-            #fh.write(html.encode('utf-8'))
+            # fh.write(html.encode('utf-8'))
             fh.write(html)
 
         with open(json_file, 'w') as fh:
             json.dump(data, fh)
 
         logger1.info('generate report done!')
-
-
-
-
-
-

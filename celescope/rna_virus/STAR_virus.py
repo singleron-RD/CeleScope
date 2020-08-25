@@ -19,7 +19,7 @@ def STAR_virus(args):
     # check dir
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
-    
+
     out_prefix = outdir + "/" + sample + "_virus_"
     out_BAM = out_prefix + "Aligned.sortedByCoord.out.bam"
 
@@ -32,15 +32,15 @@ def STAR_virus(args):
  --runThreadN {runThreadN}\
  --limitBAMsortRAM 1933647594\
  --outFileNamePrefix {out_prefix}".format(genome=virus_genomeDir,
-    input_read=input_read, runThreadN=thread, out_prefix=out_prefix)
+                                          input_read=input_read, runThreadN=thread, out_prefix=out_prefix)
 
-    # add gz 
-    if input_read[len(input_read)-2:] == "gz":
+    # add gz
+    if input_read[len(input_read) - 2:] == "gz":
         cmd += ' --readFilesCommand zcat'
 
     logger1.info(cmd)
     os.system(cmd)
-    logger1.info("align virus genome done.")   
+    logger1.info("align virus genome done.")
 
     cmd = "samtools index {out_BAM}".format(out_BAM=out_BAM)
     logger1.info(cmd)
@@ -55,4 +55,7 @@ def get_opts_STAR_virus(parser, sub_program):
         parser.add_argument("--input_read", required=True)
         parser.add_argument("--thread", help='STAR thread', default=1)
         parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument('--virus_genomeDir', help='virus genome dir', required=True)
+    parser.add_argument(
+        '--virus_genomeDir',
+        help='virus genome dir',
+        required=True)
