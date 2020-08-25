@@ -1,3 +1,8 @@
+import glob
+from celescope.vdj.__init__ import CHAINS
+from celescope.tools.report import reporter
+from celescope.tools.utils import format_number
+from matplotlib import pyplot as plt
 import gzip
 import os
 import pandas as pd
@@ -9,11 +14,6 @@ import matplotlib as mpl
 import re
 import json
 mpl.use('Agg')
-from matplotlib import pyplot as plt
-import os,glob
-from celescope.tools.utils import format_number
-from celescope.tools.report import reporter
-from celescope.vdj.__init__ import CHAINS
 
 logger1 = logging.getLogger(__name__)
 STEP = 'count_vdj'
@@ -61,24 +61,27 @@ def count_vdj(args):
     clonetypes_file = "{}/clonetypes.tsv".format(outdir)
     match_clonetypes_file = "{}/match_clonetypes.tsv".format(outdir)
     top10_clonetypes_file = "{}/top10_clonetypes.tsv".format(outdir)
-    
-    # read file 
+
+    # read file
     df_UMI_count_filter1 = pd.read_csv(UMI_count_filter1_file, sep='\t')
     if (not match_dir) or (match_dir == "None"):
         match_bool = False
     else:
         match_bool = True
     if match_bool:
-        match_barcode_file1 = glob.glob(f"{match_dir}/*count/*_cellbarcode.tsv")
-        match_barcode_file2 = glob.glob(f"{match_dir}/*count/matrix_10X/*_cellbarcode.tsv")
+        match_barcode_file1 = glob.glob(
+            f"{match_dir}/*count/*_cellbarcode.tsv")
+        match_barcode_file2 = glob.glob(
+            f"{match_dir}/*count/matrix_10X/*_cellbarcode.tsv")
         match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
         logger1.info("match scRNA-Seq directory found: " + match_dir)
         match_cell_barcodes = pd.read_csv(match_barcode_file, header=None)
-    
+
     cell_summary_row_list = []
 
     # cell calling：cell calling: keep UMIs >= UMI_min
-    df_UMI_sum = df_UMI_count_filter1.groupby(['barcode'], as_index=False).agg({"UMI":"sum"})
+    df_UMI_sum = df_UMI_count_filter1.groupby(
+        ['barcode'], as_index=False).agg({"UMI": "sum"})
     if (UMI_min == "auto"):
         rank = 20
         df_UMI_sum_sorted = df_UMI_sum.sort_values(["UMI"], ascending=False)
@@ -87,7 +90,8 @@ def count_vdj(args):
     else:
         UMI_min = int(UMI_min)
     df_UMI_cell = df_UMI_sum[df_UMI_sum.UMI >= UMI_min]
-    df_UMI_sum["mark"] = df_UMI_sum["UMI"].apply(lambda x: "CB" if (x >= UMI_min) else "UB")
+    df_UMI_sum["mark"] = df_UMI_sum["UMI"].apply(
+        lambda x: "CB" if (x >= UMI_min) else "UB")
     report_prepare(df_UMI_sum, outdir+"/../")
 
     cell_barcodes = set(df_UMI_cell.barcode)
@@ -99,19 +103,23 @@ def count_vdj(args):
     })
 
     # df_UMI_count_filter1 in cell
-    df_cell = df_UMI_count_filter1[df_UMI_count_filter1.barcode.isin(cell_barcodes)]    
+    df_cell = df_UMI_count_filter1[df_UMI_count_filter1.barcode.isin(
+        cell_barcodes)]
     # filter2: cell wtih UMI >= iUMI of identical receptor type and CDR3 combinations.
     df_cell_UMI_count_filter2 = df_cell[df_cell.UMI >= iUMI]
 
     # cell confident
-    df_cell_confident = df_cell_UMI_count_filter2[df_cell_UMI_count_filter2["chain"].isin(chains)]
+    df_cell_confident = df_cell_UMI_count_filter2[df_cell_UMI_count_filter2["chain"].isin(
+        chains)]
     df_cell_confident = df_cell_confident.sort_values("UMI", ascending=False)
-    df_cell_confident = df_cell_confident.groupby(["barcode", "chain"], as_index=False).head(1)
+    df_cell_confident = df_cell_confident.groupby(
+        ["barcode", "chain"], as_index=False).head(1)
 
     # count
     df_cell_confident_count = df_cell_confident.set_index(["barcode", "chain"])
     df_cell_confident_count = df_cell_confident_count.unstack()
-    df_cell_confident_count.columns = ['_'.join(col) for col in df_cell_confident_count]
+    df_cell_confident_count.columns = [
+        '_'.join(col) for col in df_cell_confident_count]
     df_cell_confident_count = df_cell_confident_count.reset_index()
     df_cell_confident_count.fillna(inplace=True, value="NA")
 
@@ -127,12 +135,14 @@ def count_vdj(args):
             df_cell_confident_count[col] = "NA"
 
     df_clonetypes = df_cell_confident_count.copy()
-      
+
     df_clonetypes = df_clonetypes.groupby(cols, as_index=False).agg({
         "barcode": "count"}).sort_values("barcode", ascending=False)
     total_CDR3_barcode_number = sum(df_clonetypes.barcode)
-    df_clonetypes["percent"] = df_clonetypes.barcode/total_CDR3_barcode_number * 100
-    df_clonetypes["percent"] = df_clonetypes["percent"].apply(lambda x: round(x, 2))
+    df_clonetypes["percent"] = df_clonetypes.barcode / \
+        total_CDR3_barcode_number * 100
+    df_clonetypes["percent"] = df_clonetypes["percent"].apply(
+        lambda x: round(x, 2))
 
     # add clonetype ID
     df_clonetypes = df_clonetypes.reset_index()
@@ -152,12 +162,14 @@ def count_vdj(args):
         for chain in UMI_col_dic:
             UMI_col_name = UMI_col_dic[chain]
             if UMI_col_name in df_cell_confident_count.columns:
-                df_cell_confident_count[UMI_col_name].replace("NA", 0 ,inplace=True)
-                Median_chain_UMIs_per_Cell = np.median(df_cell_confident_count[UMI_col_name])
+                df_cell_confident_count[UMI_col_name].replace(
+                    "NA", 0, inplace=True)
+                Median_chain_UMIs_per_Cell = np.median(
+                    df_cell_confident_count[UMI_col_name])
             else:
                 Median_chain_UMIs_per_Cell = 0
             cell_summary_row_list.append({
-                "item" :  "Median {chain} UMIs per Cell".format(chain=chain),
+                "item":  "Median {chain} UMIs per Cell".format(chain=chain),
                 "count": Median_chain_UMIs_per_Cell,
                 "total_count": np.nan
             })
@@ -180,10 +192,12 @@ def count_vdj(args):
         if match_bool:
             match_cell_barcodes = set(match_cell_barcodes[0])
             match_cell_number = len(match_cell_barcodes)
-            cell_with_match_barcode = match_cell_barcodes.intersection(cell_barcodes)
+            cell_with_match_barcode = match_cell_barcodes.intersection(
+                cell_barcodes)
             cell_with_match_barcode_number = len(cell_with_match_barcode)
 
-            df_match = df_cell_confident_count[df_cell_confident_count.barcode.isin(match_cell_barcodes)]
+            df_match = df_cell_confident_count[df_cell_confident_count.barcode.isin(
+                match_cell_barcodes)]
 
             df_match_TRA_TRB = df_match[
                 (df_match.aaSeqCDR3_TRA != "NA") &
@@ -207,13 +221,15 @@ def count_vdj(args):
             """
             df_match_cell_confident_count = df_match.groupby(cols, as_index=False).agg({
                 "barcode": "count"}).sort_values("barcode", ascending=False)
-            total_match_CDR3_barcode_number = sum(df_match_cell_confident_count.barcode)
-            df_match_cell_confident_count["percent"] = df_match_cell_confident_count.barcode / total_match_CDR3_barcode_number*100
+            total_match_CDR3_barcode_number = sum(
+                df_match_cell_confident_count.barcode)
+            df_match_cell_confident_count["percent"] = df_match_cell_confident_count.barcode / \
+                total_match_CDR3_barcode_number*100
             df_match_cell_confident_count["percent"] = df_match_cell_confident_count["percent"].apply(
                 lambda x: round(x, 2)
             )
-            df_match_cell_confident_count.to_csv(match_clonetypes_file, sep="\t", index=False)    
-
+            df_match_cell_confident_count.to_csv(
+                match_clonetypes_file, sep="\t", index=False)
 
     # BCR
     elif type == "BCR":
@@ -222,17 +238,19 @@ def count_vdj(args):
         for chain in UMI_col_dic:
             UMI_col_name = UMI_col_dic[chain]
             if UMI_col_name in df_cell_confident_count.columns:
-                df_cell_confident_count[UMI_col_name].replace("NA", 0, inplace=True)
+                df_cell_confident_count[UMI_col_name].replace(
+                    "NA", 0, inplace=True)
                 df_cell_confident_count_over_zero = df_cell_confident_count[
                     df_cell_confident_count[UMI_col_name] > 0
                 ]
-                Median_chain_UMIs_per_Cell = np.median(df_cell_confident_count_over_zero[UMI_col_name])
+                Median_chain_UMIs_per_Cell = np.median(
+                    df_cell_confident_count_over_zero[UMI_col_name])
             else:
                 Median_chain_UMIs_per_Cell = 0
             cell_summary_row_list.append({
-            "item":  "Median {chain} UMIs per Cell".format(chain=chain),
-            "count": Median_chain_UMIs_per_Cell,
-            "total_count": np.nan})
+                "item":  "Median {chain} UMIs per Cell".format(chain=chain),
+                "count": Median_chain_UMIs_per_Cell,
+                "total_count": np.nan})
 
         df_heavy_and_light = df_cell_confident_count[
             (df_cell_confident_count.aaSeqCDR3_IGH != "NA") &
@@ -246,7 +264,7 @@ def count_vdj(args):
             "item": "Cell with Heavy and Light Chain",
             "count": Cell_with_Heavy_and_Light_Chain,
             "total_count": cell_number
-        }) 
+        })
 
         """
         df cell barcode filter
@@ -255,10 +273,12 @@ def count_vdj(args):
         if match_bool:
             match_cell_barcodes = set(match_cell_barcodes[0])
             match_cell_number = len(match_cell_barcodes)
-            cell_with_match_barcode = match_cell_barcodes.intersection(cell_barcodes)
+            cell_with_match_barcode = match_cell_barcodes.intersection(
+                cell_barcodes)
             cell_with_match_barcode_number = len(cell_with_match_barcode)
 
-            df_match = df_cell_confident_count[df_cell_confident_count.barcode.isin(match_cell_barcodes)]
+            df_match = df_cell_confident_count[df_cell_confident_count.barcode.isin(
+                match_cell_barcodes)]
 
             # median match UMI
             df_match_heavy_light = df_match[
@@ -268,7 +288,7 @@ def count_vdj(args):
                     (df_match.aaSeqCDR3_IGK != "NA")
                 )
             ]
-            match_cell_with_heavy_and_light = df_match_heavy_light.shape[0]            
+            match_cell_with_heavy_and_light = df_match_heavy_light.shape[0]
 
             cell_summary_row_list.append({
                 "item": "Cell with match Barcode",
@@ -283,39 +303,51 @@ def count_vdj(args):
             """
             df_match_clonetypes
             """
-            df_match_cell_confident_count = df_match.groupby(cols,as_index=False).agg(
+            df_match_cell_confident_count = df_match.groupby(cols, as_index=False).agg(
                 {"barcode": "count"}).sort_values("barcode", ascending=False)
-            total_match_CDR3_barcode_number = sum(df_match_cell_confident_count.barcode)
-            df_match_cell_confident_count["percent"] = df_match_cell_confident_count.barcode / total_match_CDR3_barcode_number*100
+            total_match_CDR3_barcode_number = sum(
+                df_match_cell_confident_count.barcode)
+            df_match_cell_confident_count["percent"] = df_match_cell_confident_count.barcode / \
+                total_match_CDR3_barcode_number*100
             df_match_cell_confident_count["percent"] = df_match_cell_confident_count["percent"].apply(
-                lambda x:round(x,2)
+                lambda x: round(x, 2)
             )
-            df_match_cell_confident_count.to_csv(match_clonetypes_file, sep="\t", index=False) 
+            df_match_cell_confident_count.to_csv(
+                match_clonetypes_file, sep="\t", index=False)
 
-    df_mergeID = pd.merge(df_cell_confident_count, df_clonetypes, how="left", on=cols)
+    df_mergeID = pd.merge(df_cell_confident_count,
+                          df_clonetypes, how="left", on=cols)
     df_mergeID.sort_values(["clonetype_ID", "barcode"], inplace=True)
     # output df_cell_confident_count
     df_mergeID.to_csv(cell_confident_count_file, sep="\t", index=False)
     df_mergeID = df_mergeID[["barcode", "clonetype_ID"]]
-    df_cell_confident_with_ID = pd.merge(df_cell_confident, df_mergeID, how="left", on="barcode")
-    df_cell_confident_with_ID.sort_values(["clonetype_ID", "barcode", "chain"], inplace=True)
+    df_cell_confident_with_ID = pd.merge(
+        df_cell_confident, df_mergeID, how="left", on="barcode")
+    df_cell_confident_with_ID.sort_values(
+        ["clonetype_ID", "barcode", "chain"], inplace=True)
     # output df_cell_confident
-    df_cell_confident_with_ID.to_csv(cell_confident_file, sep="\t", index=False)
+    df_cell_confident_with_ID.to_csv(
+        cell_confident_file, sep="\t", index=False)
 
     # summary file
-    cell_summary = pd.DataFrame(cell_summary_row_list, columns=["item", "count", "total_count"])
+    cell_summary = pd.DataFrame(cell_summary_row_list, columns=[
+                                "item", "count", "total_count"])
     cell_summary["count"] = cell_summary["count"].apply(int)
-    cell_summary["percent"] = cell_summary["count"]/(cell_summary.total_count.astype("float"))*100
-    cell_summary["percent"] = cell_summary["percent"].apply(lambda x:round(x, 2))
+    cell_summary["percent"] = cell_summary["count"] / \
+        (cell_summary.total_count.astype("float"))*100
+    cell_summary["percent"] = cell_summary["percent"].apply(
+        lambda x: round(x, 2))
     cell_summary["count"] = cell_summary["count"].apply(format_number)
 
     def percent_str_func(row):
-        need_percent = bool(re.search("Cell with", row["item"], flags=re.IGNORECASE))
+        need_percent = bool(
+            re.search("Cell with", row["item"], flags=re.IGNORECASE))
         if need_percent:
             return "("+str(row["percent"])+"%)"
         else:
             return ""
-    cell_summary["percent_str"] = cell_summary.apply(lambda row: percent_str_func(row), axis=1)
+    cell_summary["percent_str"] = cell_summary.apply(
+        lambda row: percent_str_func(row), axis=1)
 
     # stat file
     def gen_stat(summary, stat_file):
@@ -347,7 +379,8 @@ def count_vdj(args):
     top10_clonetypes_df = df_clonetypes.head(10)
     top10_clonetypes_df = top10_clonetypes_df.reset_index(drop=True)
     top10_clonetypes_df.index = top10_clonetypes_df.index + 1
-    top10_clonetypes_df["percent"] = top10_clonetypes_df["percent"].apply(lambda x: str(x) + "%")
+    top10_clonetypes_df["percent"] = top10_clonetypes_df["percent"].apply(
+        lambda x: str(x) + "%")
     seqs = ["aaSeqCDR3"]
     cols = []
     for chain in chains:
@@ -358,8 +391,8 @@ def count_vdj(args):
     top10_clonetypes_df.to_csv(top10_clonetypes_file, sep="\t", index=False)
     table_header = ["Clonetype_ID"] + cols + ["Frequency", "Percent"]
     t = reporter(
-        name="clonetypes", 
-        sample=args.sample, 
+        name="clonetypes",
+        sample=args.sample,
         table_file=top10_clonetypes_file,
         table_header=table_header,
         outdir=outdir + '/..',
@@ -375,8 +408,8 @@ def count_vdj(args):
     """
 
     # finish
-    logger1.info(f'{STEP} done!')  
-        
+    logger1.info(f'{STEP} done!')
+
 
 def get_opts_count_vdj(parser, sub_program):
     if sub_program:
@@ -386,6 +419,8 @@ def get_opts_count_vdj(parser, sub_program):
         parser.add_argument("--assay", required=True)
     parser.add_argument("--match_dir", default=None)
     parser.add_argument("--type", required=True)
-    parser.add_argument('--UMI_min', dest='UMI_min', help='minimum UMI number to filter', default="auto")
+    parser.add_argument('--UMI_min', dest='UMI_min',
+                        help='minimum UMI number to filter', default="auto")
     parser.add_argument('--debug', dest='debug', default=False)
-    parser.add_argument('--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=2)
+    parser.add_argument(
+        '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=2)
