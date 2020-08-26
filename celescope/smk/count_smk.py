@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, read_one_col
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
@@ -87,8 +87,14 @@ def write_and_plot(df, column_name, count_file, plot_file):
 def count_smk(args):
 
     logger1.info('count smk start...!')
-    cell_UMI_file = args.cell_UMI_file
-    tsne_file = glob.glob(f'{args.match_dir}/*analysis/tsne_coord.tsv')[0]
+    UMI_file = args.UMI_file
+    match_dir = args.match_dir
+    tsne_file = glob.glob(f'{match_dir}/*analysis/tsne_coord.tsv')[0]
+    match_barcode_file1 = glob.glob(
+        "{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
+    match_barcode_file2 = glob.glob(
+        "{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
+    match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
     UMI_min = args.UMI_min
     SNR_min = args.SNR_min
     dim = int(args.dim)
@@ -100,6 +106,9 @@ def count_smk(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
+    # process
+    match_barcode, cell_total = read_one_col(match_barcode_file)
+
     UMI_tag_file = f'{outdir}/{sample}_umi_tag.tsv'
     tsne_tag_file = f'{outdir}/{sample}_tsne_tag.tsv'
     cluster_count_file = f'{outdir}/{sample}_cluster_count.tsv'
@@ -108,21 +117,31 @@ def count_smk(args):
         combine_cluster_count_file = f'{outdir}/{sample}_combine_cluster_count.tsv'
         combine_cluster_plot = f'{outdir}/{sample}_combine_cluster_plot.pdf'
 
-    df_cell_UMI = pd.read_csv(cell_UMI_file, sep="\t", index_col=0)
-    df_cell_UMI.fillna(0, inplace=True)
+    df_UMI_count = pd.read_csv(UMI_file, sep="\t", index_col=0)
+    df_cell = pd.DataFrame(index=match_barcode)
+    df_cell_UMI_count = pd.merge(
+        df_cell,
+        df_UMI_count,
+        how="left",
+        left_index=True,
+        right_index=True)
+        # fillna
+    df_cell_UMI_count.fillna(0, inplace=True)
+    df_cell_UMI_count = df_cell_UMI_count.astype(int)
+    df_cell_UMI_count.fillna(0, inplace=True)
 
-    UMI_min = get_UMI_min(df_cell_UMI, UMI_min)
+    UMI_min = get_UMI_min(df_cell_UMI_count, UMI_min)
     logger1.info(f'UMI_min: {UMI_min}')
-    SNR_min = get_SNR_min(df_cell_UMI, dim, SNR_min, UMI_min)
+    SNR_min = get_SNR_min(df_cell_UMI_count, dim, SNR_min, UMI_min)
     logger1.info(f'SNR_min: {SNR_min}')
-    df_cell_UMI["tag"] = df_cell_UMI.apply(
+    df_cell_UMI_count["tag"] = df_cell_UMI_count.apply(
         tag_type, UMI_min=UMI_min, SNR_min=SNR_min, dim=dim, axis=1)
-    df_cell_UMI.to_csv(UMI_tag_file, sep="\t")
+    df_cell_UMI_count.to_csv(UMI_tag_file, sep="\t")
 
     df_tsne = pd.read_csv(tsne_file, sep="\t", index_col=0)
     df_tsne_tag = pd.merge(
         df_tsne,
-        df_cell_UMI,
+        df_cell_UMI_count,
         how="left",
         left_index=True,
         right_index=True)
@@ -152,7 +171,7 @@ def count_smk(args):
         )
 
     df_stat = pd.DataFrame({"item": ["Dimension"], "count_percent": [dim]})
-    df_tag_count = df_cell_UMI["tag"].value_counts(
+    df_tag_count = df_cell_UMI_count["tag"].value_counts(
     ).sort_values(ascending=False).reset_index()
     df_tag_count.columns = ["item", "count"]
     ncell = df_tag_count["count"].sum()
@@ -184,11 +203,10 @@ def get_opts_count_smk(parser, sub_program):
         "--combine_cluster",
         help="conbine cluster tsv file",
         default=None)
+    parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path")
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument(
-            "--match_dir",
-            help="matched scRNA-Seq CeleScope directory path")
-        parser.add_argument("--cell_UMI_file", help="cell SMK UMI file")
+
+        parser.add_argument("--UMI_file", help="SMK UMI file")

@@ -3,6 +3,7 @@ import os
 import glob
 import sys
 import re
+import gzip
 import pandas as pd
 import numpy as np
 import subprocess
@@ -13,6 +14,116 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
+logger1 = logging.getLogger(__name__)
+
+
+def process_read(read2_file, pattern_dict, barcode_dict, linker_dict):
+    # if valid, return (True)
+    metrics = defaultdict(int)
+    res_dict = genDict(dim=3)
+    read2 = gzip.open(read2_file, "rt")
+    while True:
+        line1 = read2.readline()
+        line2 = read2.readline()
+        line3 = read2.readline()
+        line4 = read2.readline()
+        if not line4:
+            break
+        metrics['Total Reads'] += 1
+        attr = str(line1).strip("@").split("_")
+        barcode = str(attr[0])
+        umi = str(attr[1])
+        seq = line2.strip()
+        if linker_dict:
+            try:
+                seq_linker = ''.join(seq_range(seq, pattern_dict['L']))
+            except:
+                metrics['Reads Unmapped too Short'] += 1
+                continue
+        if barcode_dict:
+            try:
+                seq_barcode = ''.join(seq_range(seq, pattern_dict['C']))
+            except:
+                metrics['Reads Unmapped too Short'] += 1
+                continue
+        
+        # check linker
+        valid_linker = False
+        for linker_name in linker_dict:
+            if hamming_correct(linker_dict[linker_name], seq_linker):
+                valid_linker = True
+                continue
+        
+        if not valid_linker:
+            metrics['Reads Unmapped Invalid Linker'] += 1
+            continue
+
+        # check barcode
+        valid_barcode = False
+        for barcode_name in barcode_dict:
+            if hamming_correct(barcode_dict[barcode_name], seq_barcode):
+                res_dict[barcode][barcode_name][umi] += 1
+                valid_barcode = True
+                continue
+
+        if not valid_barcode:
+            metrics['Reads Unmapped Invalid Barcode'] += 1
+            continue
+
+        # mapped
+        metrics['Reads Mapped'] += 1
+        if metrics['Reads Mapped'] % 1000000 == 0:
+            logger1.info(str(metrics['Reads Mapped']) + " reads done.")
+        
+    return res_dict, metrics
+
+
+def seq_range(seq, pattern_dict):
+    # get subseq with intervals in arr and concatenate
+    length = len(seq)
+    for x in pattern_dict:
+        if length < x[1]:
+            raise Exception(f'invalid seq range {x[0]}:{x[1]} in read')
+    return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
+
+
+def read_one_col(file):
+    df = pd.read_csv(file, header=None)
+    col1 = list(df.iloc[:, 0])
+    num = len(col1)
+    return col1, num
+
+
+def read_fasta(fasta_file, equal=False):
+    # seq must have equal length
+    dict = {}
+    LENGTH = 0
+    with open(fasta_file, "rt") as f:
+        while True:
+            line1 = f.readline()
+            line2 = f.readline()
+            if not line2:
+                break
+            name = line1.strip(">").strip()
+            seq = line2.strip()
+            seq_length = len(seq)
+            if equal:
+                if LENGTH == 0:
+                    LENGTH = seq_length
+                else:
+                    if LENGTH != seq_length:
+                        raise Exception(f"{fasta_file} have different seq length")
+            dict[name] = seq
+    if equal:
+        return dict, LENGTH
+    return dict
+
+
+def hamming_correct(string1, string2):
+    threshold = len(string1) / 10 + 1
+    if hamming_distance(string1, string2) < threshold:
+        return True
+    return False
 
 
 def hamming_distance(string1, string2):
@@ -25,7 +136,7 @@ def hamming_distance(string1, string2):
         if string1[i] != string2[i]:
             distance += 1
     return distance
-    
+
 
 def gen_stat(df, stat_file):
     # 3cols: item count total_count
@@ -254,6 +365,13 @@ def barcode_filter_with_derivative(
     return (validated_barcodes, threshold, len(validated_barcodes))
 
 
+def genDict(dim=3):
+    if dim == 1:
+        return defaultdict(int)
+    else:
+        return defaultdict(lambda: genDict(dim - 1))
+
+
 def downsample(bam, barcodes, percent):
     """
     calculate median_geneNum and saturation based on a given percent of reads
@@ -277,13 +395,7 @@ def downsample(bam, barcodes, percent):
     cmd = ['samtools', 'view', '-s', str(percent), bam]
     p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     # nesting defaultdicts in an arbitrary depth
-
-    def genDDict(dim=3):
-        if dim == 1:
-            return defaultdict(int)
-        else:
-            return defaultdict(lambda: genDDict(dim - 1))
-    readDict = genDDict()
+    readDict = genDict()
 
     n_reads = 0
     while True:

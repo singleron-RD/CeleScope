@@ -53,7 +53,7 @@ def parse_map(mapfile):
 
 def main():
 
-    parser = argparse.ArgumentParser('CeleScope RNA multi-sample')
+    parser = argparse.ArgumentParser('CeleScope SMK multi-sample')
     #parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
     parser.add_argument(
         '--mapfile',
@@ -97,7 +97,6 @@ def main():
         help='max number with lowQual allowed',
         default=2)
     parser.add_argument('--thread', help='thread', default=6)
-    parser.add_argument("--SMK_barcode_fasta", help="SMK barcode fasta")
     parser.add_argument(
         "--UMI_min",
         help="cells have SMK_UMI>=UMI_min are considered as valid cell",
@@ -107,6 +106,13 @@ def main():
         "--SNR_min",
         help="minimum signal to noise ratio",
         default="auto")
+    parser.add_argument("--SMK_pattern", help="SMK read2 pattern")
+    parser.add_argument("--SMK_linker", help="SMK read2 linker fasta path")
+    parser.add_argument("--SMK_barcode", help="SMK read2 barcode fasta path ")
+    parser.add_argument(
+        '--rm_files',
+        action='store_true',
+        help='remove all fq.gz and bam after running')
 
     args = vars(parser.parse_args())
 
@@ -135,11 +141,14 @@ def main():
     lowQual = args['lowQual']
     lowNum = args['lowNum']
     basedir = args['outdir']
+    rm_files = args['rm_files']
 
-    SMK_barcode_fasta = args['SMK_barcode_fasta']
     UMI_min = args['UMI_min']
     SNR_min = args['SNR_min']
     dim = args['dim']
+    SMK_pattern = args['SMK_pattern']
+    SMK_barcode = args['SMK_barcode']
+    SMK_linker = args['SMK_linker']
 
     assay = __ASSAY__
     steps = __STEPS__
@@ -183,17 +192,20 @@ def main():
         step = 'mapping_smk'
         SMK_read2 = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
         cmd = f'''source activate {conda}; {app} {assay} {step} --SMK_read2 {SMK_read2}
-        --SMK_barcode_fasta {SMK_barcode_fasta} --match_dir {match_dict[sample]}
-        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
+        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}
+        --SMK_pattern {SMK_pattern}
+        --SMK_barcode {SMK_barcode}
+        --SMK_linker {SMK_linker}
+        '''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
         # count_smk
         step = 'count_smk'
-        cell_UMI_file = f'{outdir_dic["mapping_smk"]}/{sample}_cell_UMI_count.tsv'
+        UMI_file = f'{outdir_dic["mapping_smk"]}/{sample}_UMI_count.tsv'
         cmd = f'''source activate {conda}; {app} {assay} {step}
-        --match_dir {match_dict[sample]} --cell_UMI_file {cell_UMI_file}
+        --match_dir {match_dict[sample]} --UMI_file {UMI_file}
         --sample {sample} --outdir {outdir_dic[step]} --assay {assay}
         --UMI_min {UMI_min} --SNR_min {SNR_min} --dim {dim}'''
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
@@ -211,7 +223,9 @@ def main():
         last_step = step
 
     # merged report
-    merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order, logdir, conda)
+    merge_report(
+        fq_dict, steps, last_step, sjm_cmd,
+        sjm_order, logdir, conda, outdir, rm_files)
 
 
 if __name__ == '__main__':

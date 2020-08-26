@@ -93,32 +93,51 @@ celescope rna run\
 ```
 conda activate celescope
 celescope smk run\   
- --fq1 {fq1.gz}\
- --fq2 {fq2.gz}\
+ --fq1 {smk fq1.gz}\
+ --fq2 {smk fq2.gz}\
+ --sample {sample name}\
  --chemistry scopeV2.0.1\
- --SMK_barcode_fasta {SMK.fasta}\
+ --SMK_pattern L25C45\
+ --SMK_barcode {SMK barcode fasta}\
+ --SMK_linker {SMK linker fasta}\
  --match_dir {match_dir}\
  --dim 2\
  --combine_cluster {combine_cluster.tsv}
 ```
 
-`--SMK_barcode_fasta` SMK tag fasta file  
-`--match_dir` matched scRNA-Seq directory after running CeleScope  
-`--dim` SMK dimension  
-`--combine_cluster` conbine cluster tsv file; first column:original cluster number; second column:combined cluster number  
+`SMK_pattern` Required. L25C45 means 25 bp linker + 45 bp cell barcode  
+abbreviations:  
+C: cell barcode  
+U: UMI  
+T: polyT  
+L: linker  
+`--SMK_barcode` Required. SMK tag fasta file
+`--SMK_linker` Required. SMK linker fasta file 
+`--match_dir` Required. Matched scRNA-Seq directory after running CeleScope  
+`--dim` Required. SMK dimension  
+`--combine_cluster` Optional. Conbine cluster tsv file.
+first column:original cluster number  
+second column:combined cluster number    
 
-sample file
 
 ```
-$cat SMK.fasta
+$cat SMK_barcode.fasta
 >SMK1
-GTTGTCAAGATGCTACCGTTCAGAGATTCAAGGGCAGCCGCGTCACGATTGGATACGACTGTTGGACCGG
+ATTCAAGGGCAGCCGCGTCACGATTGGATACGACTGTTGGACCGG
 >SMK2
-GTTGTCAAGATGCTACCGTTCAGAGTGGATGGGATAAGTGCGTGATGGACCGAAGGGACCTCGTGGCCGG
+TGGATGGGATAAGTGCGTGATGGACCGAAGGGACCTCGTGGCCGG
 >SMK3
-GTTGTCAAGATGCTACCGTTCAGAGCGGCTCGTGCTGCGTCGTCTCAAGTCCAGAAACTCCGTGTATCCT
+CGGCTCGTGCTGCGTCGTCTCAAGTCCAGAAACTCCGTGTATCCT
 >SMK4
-GTTGTCAAGATGCTACCGTTCAGAGATTGGGAGGCTTTCGTACCGCTGCCGCCACCAGGTGATACCCGCT
+ATTGGGAGGCTTTCGTACCGCTGCCGCCACCAGGTGATACCCGCT
+>SMK5
+CTCCCTGGTGTTCAATACCCGATGTGGTGGGCAGAATGTGGCTGG
+>SMK6
+TTACCCGCAGGAAGACGTATACCCCTCGTGCCAGGCGACCAATGC
+
+$cat SMK_linker.fasta
+>smk_linker
+GTTGTCAAGATGCTACCGTTCAGAG
 
 $cat combine_cluster.tsv 
 1	1

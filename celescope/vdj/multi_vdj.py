@@ -11,7 +11,7 @@ from celescope.tools.utils import merge_report, generate_sjm, parse_map_col4
 
 def main():
 
-    parser = argparse.ArgumentParser('celeScope vdj multi-sample')
+    parser = argparse.ArgumentParser('CeleScope vdj multi-sample')
     parser.add_argument(
         '--mapfile', help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"', required=True)
     parser.add_argument('--chemistry', choices=['scopeV2.0.0', 'scopeV2.0.1',

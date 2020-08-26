@@ -137,6 +137,10 @@ def read_fastq(f):
 
 def seq_ranges(seq, arr):
     # get subseq with intervals in arr and concatenate
+    length = len(seq)
+    for x in arr:
+        if length < x[1]:
+            raise Exception(f'invalid seq range {x[0]}:{x[1]} in read')
     return ''.join([seq[x[0]:x[1]]for x in arr])
 
 
