@@ -153,7 +153,6 @@ def analysis(args):
     marker_df = pd.read_csv(marker_df_file, sep="\t")
     report_prepare(outdir, tsne_df, marker_df)
 
-    logger1.info('generate report ...!')
     stat_file = outdir + "/stat.txt"
     assay = __ASSAY__
     t = reporter(
@@ -163,7 +162,7 @@ def analysis(args):
         outdir=args.outdir + '/..',
         stat_file=stat_file)
     t.get_report()
-    logger1.info('generate report done!')
+    logger1.info('analysis done!')
 
 
 def get_opts_analysis(parser, sub_program):

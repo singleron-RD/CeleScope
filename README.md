@@ -116,9 +116,9 @@ L: linker
 `--SMK_linker` Required. SMK linker fasta file  
 `--match_dir` Required. Matched scRNA-Seq directory after running CeleScope  
 `--dim` Required. SMK dimension  
-`--combine_cluster` Optional. Conbine cluster tsv file.
+`--combine_cluster` Optional. Conbine cluster tsv file.  
 first column:original cluster number  
-second column:combined cluster number    
+second column:combined cluster number  
 
 
 ```
