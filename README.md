@@ -105,14 +105,15 @@ celescope smk run\
  --combine_cluster {combine_cluster.tsv}
 ```
 
+
 `SMK_pattern` Required. L25C45 means 25 bp linker + 45 bp cell barcode  
 abbreviations:  
 C: cell barcode  
 U: UMI  
 T: polyT  
 L: linker  
-`--SMK_barcode` Required. SMK tag fasta file
-`--SMK_linker` Required. SMK linker fasta file 
+`--SMK_barcode` Required. SMK tag fasta file  
+`--SMK_linker` Required. SMK linker fasta file  
 `--match_dir` Required. Matched scRNA-Seq directory after running CeleScope  
 `--dim` Required. SMK dimension  
 `--combine_cluster` Optional. Conbine cluster tsv file.
