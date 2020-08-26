@@ -154,6 +154,7 @@ def count_fusion(args):
     logger1.info("count done.")
 
     # plot
+    logger1.info("plot fusion...!")
     app = parentDir + "/plot_fusion.R"
     cmd = f"Rscript {app} --tsne_fusion {out_tsne_file} --outdir {outdir}"
     os.system(cmd)
