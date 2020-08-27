@@ -58,9 +58,9 @@ def count_vdj(args):
     # out file
     cell_confident_file = f"{outdir}/{sample}_cell_confident.tsv"
     cell_confident_count_file = f"{outdir}/{sample}_cell_confident_count.tsv"
-    clonetypes_file = "{}/clonetypes.tsv".format(outdir)
-    match_clonetypes_file = "{}/match_clonetypes.tsv".format(outdir)
-    top10_clonetypes_file = "{}/top10_clonetypes.tsv".format(outdir)
+    clonetypes_file = f"{outdir}/{sample}_clonetypes.tsv"
+    match_clonetypes_file = f"{outdir}/{sample}_match_clonetypes.tsv"
+    top10_clonetypes_file = f"{outdir}/{sample}_top10_clonetypes.tsv"
 
     # read file
     df_UMI_count_filter1 = pd.read_csv(UMI_count_filter1_file, sep='\t')
