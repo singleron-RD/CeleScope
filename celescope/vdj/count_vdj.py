@@ -207,12 +207,12 @@ def count_vdj(args):
             match_cell_with_TRA_and_TRB = df_match_TRA_TRB.shape[0]
 
             cell_summary_row_list.append({
-                "item": "Cell with match Barcode",
+                "item": "Cell with Barcode Match",
                 "count": cell_with_match_barcode_number,
                 "total_count": cell_number,
             })
             cell_summary_row_list.append({
-                "item": "Cell with match Barcode, TRA and TRB",
+                "item": "Cell with Barcode Match, TRA and TRB",
                 "count": match_cell_with_TRA_and_TRB,
                 "total_count": cell_number,
             })
@@ -292,12 +292,12 @@ def count_vdj(args):
             match_cell_with_heavy_and_light = df_match_heavy_light.shape[0]
 
             cell_summary_row_list.append({
-                "item": "Cell with match Barcode",
+                "item": "Cell with Barcode Match ",
                 "count": cell_with_match_barcode_number,
                 "total_count": cell_number
             })
             cell_summary_row_list.append({
-                "item": "Cell with match Barcode, Heavy and Light Chain",
+                "item": "Cell with Barcode Match, Heavy and Light Chain",
                 "count": match_cell_with_heavy_and_light,
                 "total_count": cell_number
             })
