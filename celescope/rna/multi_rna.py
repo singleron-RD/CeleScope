@@ -64,7 +64,7 @@ def main():
     parser.add_argument(
         '--rm_files',
         action='store_true',
-        help='remove all fq.gz and bam after running')
+        help='remove redundant fq.gz and bam after running')
     args = vars(parser.parse_args())
 
     fq_dict, cells_dict = parse_map_col4(args['mapfile'], "auto")

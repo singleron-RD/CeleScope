@@ -39,7 +39,7 @@ def main():
     parser.add_argument(
         '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=2)
     parser.add_argument('--rm_files', action='store_true',
-                        help='remove all fq.gz and bam after running')
+                        help='remove redundant fq.gz and bam after running')
     args = vars(parser.parse_args())
 
     fq_dict, match_dict = parse_map_col4(args['mapfile'], None)
