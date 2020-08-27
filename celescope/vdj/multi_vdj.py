@@ -14,6 +14,7 @@ def main():
     parser = argparse.ArgumentParser('CeleScope vdj multi-sample')
     parser.add_argument(
         '--mapfile', help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"', required=True)
+    parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
     parser.add_argument('--chemistry', choices=['scopeV2.0.0', 'scopeV2.0.1',
                                                 'scopeV2.1.0', 'scopeV2.1.1'], help='chemistry version')
     parser.add_argument('--whitelist', help='cellbarcode list')
@@ -55,7 +56,9 @@ def main():
     os.system('mkdir -p %s' % (logdir))
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
+    shell = ''
     app = 'celescope'
+    mod = args['mod']
     thread = args['thread']
     chemistry = args['chemistry']
     pattern = args['pattern']
@@ -79,73 +82,95 @@ def main():
             outdir_dic.update({step: outdir})
             index += 1
 
-        # sample
         step = "sample"
-        cmd = f'''source activate {conda}; {app} {assay} {step} --chemistry {chemistry}
-        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}')
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--chemistry {chemistry} '
+            f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda)
+        shell += cmd + '\n'
         last_step = step
 
         # barcode
         arr = fq_dict[sample]
         step = "barcode"
-        cmd = f'''source activate {conda}; {app} {assay} {step} --fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry}
-            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {sample} --lowQual {lowQual}
-            --lowNum {lowNum} --outdir {outdir_dic[step]} --thread {thread} --assay {assay}'''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=thread)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry} '
+            f'--pattern {pattern} --whitelist {whitelist} --linker {linker} '
+            f'--sample {sample} --lowQual {lowQual} --thread {thread} '
+            f'--lowNum {lowNum} --outdir {outdir_dic[step]} --assay {assay} '
+
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
         # adapt
         step = "cutadapt"
         fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
-        cmd = f'''source activate {conda}; {app} {assay} {step} --fq {fq} --sample {sample} --outdir
-            {outdir_dic[step]} --assay {assay}'''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--fq {fq} --sample {sample} --outdir '
+            f'{outdir_dic[step]} --assay {assay} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
         # mapping_vdj
         step = 'mapping_vdj'
         fq = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-        cmd = f'''
-        source activate {conda}; {app} {assay} {step}
-        --fq {fq}
-        --sample {sample}
-        --type {type}
-        --thread {thread}
-        --outdir {outdir_dic[step]}
-        --assay {assay}
-        --thread {thread}
-        '''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=15, x=thread)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--fq {fq} '
+            f'--sample {sample} '
+            f'--type {type} '
+            f'--thread {thread} '
+            f'--outdir {outdir_dic[step]} '
+            f'--assay {assay} '
+            f'--thread {thread} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
         # count_vdj
         step = 'count_vdj'
         UMI_count_filter1_file = f'{outdir_dic["mapping_vdj"]}/{sample}_UMI_count_filtered1.tsv'
-        cmd = f'''
-        source activate {conda}; {app} {assay} {step}
-        --sample {sample}
-        --type {type}
-        --iUMI {iUMI}
-        --outdir {outdir_dic[step]}
-        --assay {assay}
-        --UMI_count_filter1_file {UMI_count_filter1_file}
-        --match_dir {match_dict[sample]}
-        '''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=8, x=thread)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--sample {sample} '
+            f'--type {type} '
+            f'--iUMI {iUMI} '
+            f'--outdir {outdir_dic[step]} '
+            f'--assay {assay} '
+            f'--UMI_count_filter1_file {UMI_count_filter1_file} '
+            f'--match_dir {match_dict[sample]} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
     # merged report
     step = 'merge_report'
-    # add type to steps mapping and count
-    for i in range(3, len(steps)):
-        steps[i] = f'{type}_{steps[i]}'
-    merge_report(fq_dict, steps, last_step, sjm_cmd, sjm_order,
-                 logdir, conda, args['outdir'], args['rm_files'])
+    if mod == 'sjm':
+        # add type to steps mapping and count
+        for i in range(3, len(steps)):
+            steps[i] = f'{type}_{steps[i]}'
+        merge_report(
+            fq_dict, steps, last_step, sjm_cmd, sjm_order,
+            logdir, conda, args['outdir'], args['rm_files']
+        )
+    if mod == 'shell':
+        os.system('mkdir -p ./shell/')
+        with open(f'./shell/{sample}.sh', 'w') as f:
+            f.write(shell)
 
 
 if __name__ == '__main__':

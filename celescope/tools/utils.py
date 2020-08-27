@@ -195,14 +195,14 @@ def parse_map_col4(mapfile, default_val):
     return fq_dict, col4_dict
 
 
-def generate_sjm(cmd, name, m=1, x=1):
-    res_cmd = '''
+def generate_sjm(cmd, name, conda, m=1, x=1):
+    res_cmd = f'''
 job_begin
     name {name}
     sched_options -w n -cwd -V -l vf={m}g,p={x}
-    cmd {cmd}
+    cmd source activate {conda}; {cmd}
 job_end
-'''.format(name=name, m=m, x=x, cmd=re.sub(r'\s+', r' ', cmd.replace('\n', ' ')))
+'''
 
     return res_cmd
 
@@ -213,11 +213,13 @@ def merge_report(fq_dict, steps, last_step, sjm_cmd,
     steps_str = ",".join(steps)
     samples = ','.join(fq_dict.keys())
     app = tools_dir + '/merge_table.py'
-    cmd = f'''source activate {conda}; python {app} --samples {samples}
-    --steps {steps_str} --outdir {outdir} '''
+    cmd = (
+        f'python {app} --samples {samples} '
+        f'--steps {steps_str} --outdir {outdir}'
+    )
     if rm_files:
         cmd += ' --rm_files'
-    sjm_cmd += generate_sjm(cmd, 'merge_report')
+    sjm_cmd += generate_sjm(cmd, 'merge_report', conda)
     for sample in fq_dict:
         sjm_order += f'order {step} after {last_step}_{sample}\n'
     with open(logdir + '/sjm.job', 'w') as fh:
