@@ -87,8 +87,10 @@ def gene_convert(gtf_file, matrix_file):
     gene_name_pattern = re.compile(r'gene_name "(\S+)"')
     id_name = {}
     with open(gtf_file) as f:
-        for line in f.readlines():
-            if line.startswith('#!'):
+        for line in f:
+            if not line.strip():
+                continue
+            if line.startswith('#'):
                 continue
             tabs = line.split('\t')
             gtf_type, attributes = tabs[2], tabs[-1]
