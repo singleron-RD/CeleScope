@@ -37,7 +37,7 @@ def main():
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument("--debug", action='store_true')
     parser.add_argument(
-        '--iUMI', help='minimum number of UMI of identical receptor type and CDR3')
+        '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)
     parser.add_argument('--rm_files', action='store_true',
                         help='remove redundant fq.gz and bam after running')
     args = vars(parser.parse_args())
