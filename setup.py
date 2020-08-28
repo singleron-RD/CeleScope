@@ -32,10 +32,10 @@ setuptools.setup(
     install_requires=[
         'cutadapt==1.17',
         'pysam==0.15.0',
-        'scipy==0.19.1',
-        'numpy==1.15.4',
+        'scipy>=0.19.1',
+        'numpy>=1.15.4',
         'pandas==0.23.4',
-        'jinja2==2.10',
+        'jinja2>=2.10',
         'matplotlib==2.2.2',
         'xopen==0.5.0',
     ]
