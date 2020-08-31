@@ -7,16 +7,47 @@ import gzip
 import pandas as pd
 import numpy as np
 import subprocess
+import time
+from datetime import timedelta
 from collections import defaultdict
+from functools import wraps
 import celescope.tools
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
-logger1 = logging.getLogger(__name__)
 
 
+def log(func):
+    '''
+    return logger.
+    logging start and done.
+    '''
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    module = func.__module__
+    name = func.__name__
+    logger_name = f'{module}.{name}'
+    logger = logging.getLogger(logger_name)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logger.info('start...')
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        used = timedelta(seconds=end - start)
+        logger.info(f'done. time used: {used}')
+        return result
+
+    wrapper.logger = logger
+    return wrapper
+
+
+@log
 def process_read(read2_file, pattern_dict, barcode_dict, linker_dict):
     # if valid, return (True)
     metrics = defaultdict(int)
@@ -53,7 +84,7 @@ def process_read(read2_file, pattern_dict, barcode_dict, linker_dict):
             if hamming_correct(linker_dict[linker_name], seq_linker):
                 valid_linker = True
                 continue
-        
+
         if not valid_linker:
             metrics['Reads Unmapped Invalid Linker'] += 1
             continue
@@ -73,8 +104,8 @@ def process_read(read2_file, pattern_dict, barcode_dict, linker_dict):
         # mapped
         metrics['Reads Mapped'] += 1
         if metrics['Reads Mapped'] % 1000000 == 0:
-            logger1.info(str(metrics['Reads Mapped']) + " reads done.")
-        
+            process_read.logger.info(str(metrics['Reads Mapped']) + " reads done.")
+
     return res_dict, metrics
 
 
@@ -231,7 +262,8 @@ def format_number(number: int) -> str:
     return format(number, ",")
 
 
-def glob_genomeDir(genomeDir, logger1):
+@log
+def glob_genomeDir(genomeDir):
     refFlat = glob.glob(genomeDir + "/*.refFlat")
     if (len(refFlat) > 1):
         sys.exit("ERROR: Multiple refFlat file in " + genomeDir)
@@ -239,7 +271,7 @@ def glob_genomeDir(genomeDir, logger1):
         sys.exit("ERROR: refFlat file not found in " + genomeDir)
     else:
         refFlat = refFlat[0]
-        logger1.info("refFlat file found: " + refFlat)
+        glob_genomeDir.logger.info("refFlat file found: " + refFlat)
 
     gtf = glob.glob(genomeDir + "/*.gtf")
     if (len(gtf) == 0):
@@ -250,10 +282,10 @@ def glob_genomeDir(genomeDir, logger1):
             sys.exit("ERROR: Multiple gtf file in " + genomeDir)
         else:
             gtf = gtf[0]
-            logger1.info("chr gtf file found: " + gtf)
+            glob_genomeDir.logger.info("chr gtf file found: " + gtf)
     else:
         gtf = gtf[0]
-        logger1.info("gtf file found: " + gtf)
+        glob_genomeDir.logger.info("gtf file found: " + gtf)
 
     return refFlat, gtf
 

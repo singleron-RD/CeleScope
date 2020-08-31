@@ -2,11 +2,7 @@
 # coding=utf8
 
 import argparse
-import logging
 from celescope.__init__ import __VERSION__, ASSAY_DICT
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
 def main():
@@ -298,6 +294,47 @@ def main():
     get_opts_mapping_vdj(parser_tmp, False)
     get_opts_count_vdj(parser_tmp, False)
     parser_tmp.set_defaults(func=run)
+
+    '''
+    # mut
+    assay = 'mut'
+    text = ASSAY_DICT[assay]
+    subparsers_mut = subparsers.add_parser(
+        assay, help=text, description=text)
+    subparsers_mut_sub = subparsers_mut.add_subparsers()
+
+    parser_sample = subparsers_mut_sub.add_parser('sample')
+    get_opts_sample(parser_sample, True)
+    parser_sample.set_defaults(func=sample_info)
+
+    parser_barcode = subparsers_mut_sub.add_parser('barcode')
+    get_opts_barcode(parser_barcode, True)
+    parser_barcode.set_defaults(func=barcode)
+
+    parser_cutadapt = subparsers_mut_sub.add_parser('cutadapt')
+    get_opts_cutadapt(parser_cutadapt, True)
+    parser_cutadapt.set_defaults(func=cutadapt)
+
+    from celescope.mut.mapping_mut import mapping_mut, get_opts_mapping_mut
+    parser_mapping_mut = subparsers_mut_sub.add_parser('mapping_mut')
+    get_opts_mapping_mut(parser_mapping_mut, True)
+    parser_mapping_mut.set_defaults(func=mapping_mut)
+
+    from celescope.mut.count_mut import count_mut, get_opts_count_mut
+    parser_count_mut = subparsers_mut_sub.add_parser('count_mut')
+    get_opts_count_mut(parser_count_mut, True)
+    parser_count_mut.set_defaults(func=count_mut)
+
+    from celescope.fusion.run import run
+    parser_run = subparsers_fusion_sub.add_parser(
+        'run', help='run all steps', conflict_handler='resolve')
+    get_opts_sample(parser_run, False)
+    get_opts_barcode(parser_run, False)
+    get_opts_cutadapt(parser_run, False)
+    get_opts_STAR_fusion(parser_run, False)
+    get_opts_count_fusion(parser_run, False)
+    parser_run.set_defaults(func=run)
+    '''
 
     args = parser.parse_args()
     args.func(args)

@@ -13,10 +13,8 @@ import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, log
 from celescope.tools.report import reporter
-
-logger1 = logging.getLogger(__name__)
 
 
 def report_prepare(count_file, downsample_file, outdir):
@@ -50,6 +48,7 @@ def report_prepare(count_file, downsample_file, outdir):
         json.dump(data, fh)
 
 
+@log
 def barcode_filter_with_magnitude(
         df, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1):
     # col can be readcount or UMI
@@ -87,7 +86,7 @@ def barcode_filter_with_magnitude(
         df_sub = sorted_df.iloc[index_low:index_high + 1, :]
         threshold = df_sub.iloc[np.argmax(
             np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
-        logger1.info("UMI threshold: " + str(threshold))
+        barcode_filter_with_magnitude.logger.info("UMI threshold: " + str(threshold))
     validated_barcodes = df[df[col] >= threshold].index
 
     import matplotlib
@@ -133,6 +132,7 @@ def correct_umi(fh1, barcode, gene_umi_dict, percent=0.1):
     return res_dict
 
 
+@log
 def bam2table(bam, detail_file):
     # 提取bam中相同barcode的reads，统计比对到基因的reads信息
     #
@@ -281,6 +281,7 @@ def downsample(detail_file, validated_barcodes, downsample_file):
     return saturation
 
 
+@log
 def count(args):
 
     # 检查和创建输出目录
@@ -289,9 +290,7 @@ def count(args):
 
     # umi纠错，输出Barcode geneID  UMI     count为表头的表格
     count_detail_file = args.outdir + '/' + args.sample + '_count_detail.txt'
-    logger1.info('UMI count ...!')
     bam2table(args.bam, count_detail_file)
-    logger1.info('bam to table done ...!')
 
     df = pd.read_table(count_detail_file, header=0)
 
@@ -326,7 +325,6 @@ def count(args):
 
     report_prepare(marked_counts_file, downsample_file, args.outdir + '/..')
 
-    logger1.info('count done!')
     t = reporter(assay=args.assay,
                  name='count', sample=args.sample,
                  stat_file=args.outdir + '/stat.txt',

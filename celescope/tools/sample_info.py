@@ -6,14 +6,13 @@ import pandas as pd
 import sys
 import logging
 from celescope.__init__ import __VERSION__, ASSAY_DICT
+from celescope.tools.utils import log
 from celescope.tools.report import reporter
 
-logger1 = logging.getLogger(__name__)
 
-
+@log
 def sample_info(args):
 
-    logger1.info('sample info...!')
     sample = args.sample
     ASSAY = ASSAY_DICT[args.assay]
     version = __VERSION__
@@ -26,8 +25,12 @@ def sample_info(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % outdir)
 
-    stat = pd.DataFrame({"item": ["Sample ID", "Assay", "Chemistry", "Software Version"],
-                         "count": [sample, ASSAY, chemistry, version]}, columns=["item", "count"])
+    stat = pd.DataFrame({
+        "item": ["Sample ID", "Assay", "Chemistry", "Software Version"],
+        "count": [sample, ASSAY, chemistry, version],
+        },
+        columns=["item", "count"]
+    )
     stat_file = outdir + "/stat.txt"
     stat.to_csv(stat_file, sep=":", header=None, index=False)
 

@@ -6,6 +6,7 @@ import pandas as pd
 import io
 import logging
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
+from celescope.tools.utils import log
 
 env = Environment(
     loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),

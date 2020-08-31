@@ -7,11 +7,9 @@ import logging
 import subprocess
 import glob
 import sys
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, log
 from celescope.tools.utils import glob_genomeDir
 from celescope.tools.report import reporter
-
-logger1 = logging.getLogger(__name__)
 
 
 def format_stat(log, samplename):
@@ -48,13 +46,11 @@ def format_stat(log, samplename):
     fh.close()
 
 
+@log
 def featureCounts(args):
-    """
-    """
-    logger1.info('featureCounts ...!')
 
     # check
-    refFlat, gtf = glob_genomeDir(args.genomeDir, logger1)
+    refFlat, gtf = glob_genomeDir(args.genomeDir)
 
     # check dir
     if not os.path.exists(args.outdir):
@@ -64,14 +60,13 @@ def featureCounts(args):
     outPrefix = args.outdir + '/' + args.sample
     cmd = ['featureCounts', '-a', gtf, '-o', outPrefix, '-R', 'BAM',
            '-T', str(args.thread), '-t', args.gtf_type, args.input]
-    logger1.info('%s' % (' '.join(cmd)))
+    featureCounts.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
-    logger1.info('featureCounts done!')
 
     subprocess.check_call(['which', 'samtools'])
 
     # sort by name:BC and umi
-    logger1.info('samtools sort ...!')
+    featureCounts.logger.info('samtools sort ...!')
     bam_basename = os.path.basename(args.input)
     cmd = [
         'samtools',
@@ -86,9 +81,9 @@ def featureCounts(args):
         '/' +
         bam_basename +
         '.featureCounts.bam']
-    logger1.info('%s' % (' '.join(cmd)))
+    featureCounts.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
-    logger1.info('samtools sort done!')
+    featureCounts.logger.info('samtools sort done.')
 
     format_stat(args.outdir + '/' + args.sample + '.summary', args.sample)
     t = reporter(

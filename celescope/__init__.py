@@ -1,4 +1,4 @@
-__VERSION__ = "1.1.3"
+__VERSION__ = "1.1.4"
 __CONDA__ = "test_install"
 ASSAY_DICT = {
     "rna": "Single Cell RNA-Seq",
@@ -7,4 +7,5 @@ ASSAY_DICT = {
     'fusion': "Single Cell Fusion Gene",
     'smk': "Single Cell SMK",
     'vdj': "Single Cell VDJ",
+    'mut': 'Single Cell Mutation',
 }

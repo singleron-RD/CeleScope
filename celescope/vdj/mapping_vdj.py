@@ -1,6 +1,6 @@
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, gen_stat
+from celescope.tools.utils import format_number, gen_stat, log
 import os
 import logging
 import gzip
@@ -12,9 +12,6 @@ import json
 import argparse
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-
-logger1 = logging.getLogger(__name__)
-STEP = 'mapping_vdj'
 
 
 def summary(fq, alignments, type, outdir, sample, assay, debug):
@@ -48,7 +45,7 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
         read_row_list.append(dic)
         index += 1
     df_read = pd.DataFrame(read_row_list, columns=["readId", "barcode", "UMI"])
-    logger1.info("fq reads to dataframe done.")
+    mapping_vdj.logger.info("fq reads to dataframe done.")
     read2.close()
     total_read = df_read.shape[0]
 
@@ -162,6 +159,7 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
     gen_stat(df, stat_file)
 
     # report
+    STEP = 'mapping_vdj'
     name = f'{type}_{STEP}'
     t = reporter(
         name=name,
@@ -173,9 +171,8 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
     t.get_report()
 
 
+@log
 def mapping_vdj(args):
-    step = "mapping_vdj"
-    logger1.info(f'{step} start!')
     sample = args.sample
     outdir = args.outdir
     fq = args.fq
@@ -206,13 +203,11 @@ mixcr exportAlignments \
 {read2_vdjca} {alignments} \
 -readIds --force-overwrite -vGene -dGene -jGene -cGene \
 -nFeature CDR3 -aaFeature CDR3\n"""
-    logger1.info(cmd)
+    mapping_vdj.logger.info(cmd)
     os.system(cmd)
 
     # summary
     summary(fq, alignments, type, outdir, sample, assay, debug)
-
-    logger1.info(f'{step} done!')
 
 
 def get_opts_mapping_vdj(parser, sub_program):

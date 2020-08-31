@@ -1,5 +1,6 @@
 
 # CeleScope
+GEXSCOPE Single Cell Analysis Tool Kit
 
 ## Requirements
 
@@ -74,19 +75,35 @@ conda activate celescope
 celescope rna run\   
  --fq1 ./data/R2005212_L1_1.fq.gz\
  --fq2 ./data/R2005212_L1_2.fq.gz\
- --chemistry scopeV2.0.1\
+ --chemistry scopeV2.1.1\
  --genomeDir /SGR/references/Homo_sapiens/Ensembl/GRCh38\
  --sample R2005212\
  --thread 4
 ```
 
-`--fq1` gzipped FASTQ read 1 file path  
-`--fq2` gzipped FASTQ read 2 file path  
-`--chemistry` chemistry version, choices=['scopeV2.0.0', 'scopeV2.0.1', 'scopeV2.1.0', 'scopeV2.1.1']  
-`--genomeDir` reference genome directory path  
-`--sample` sample name  
-`--thread` number of threads
+`--fq1` Required. gzipped FASTQ read 1 file path  
+`--fq2` Required. gzipped FASTQ read 2 file path  
+`--chemistry` Required. chemistry version, choices=['scopeV2.0.0', 'scopeV2.0.1', 'scopeV2.1.0', 'scopeV2.1.1']  
+`--genomeDir` Required. reference genome directory path  
+`--sample` Required. sample name  
+`--thread` Required. number of threads
 
+### Single Cell VDJ
+
+```
+conda activate celescope
+celescope vdj run\   
+ --fq1 {vdj fq1.gz}\
+ --fq2 {vdj fq2.gz}\
+ --sample {sample name}\
+ --chemistry scopeV2.0.1\
+ --thread 4\
+ --type {TCR or BCR}
+ --match_dir {match_dir}\
+```  
+
+`--type` Required. TCR or BCR  
+`--match_dir` Optional. Matched scRNA-Seq directory after running CeleScope  
 
 ### Single Cell Multiplexing
 
@@ -117,8 +134,8 @@ L: linker
 `--match_dir` Required. Matched scRNA-Seq directory after running CeleScope  
 `--dim` Required. SMK dimension  
 `--combine_cluster` Optional. Conbine cluster tsv file.  
-first column:original cluster number  
-second column:combined cluster number  
+first column: original cluster number  
+second column: combined cluster number  
 
 
 ```
@@ -147,6 +164,4 @@ $cat combine_cluster.tsv
 4	2
 5	3
 ```
-
-
 

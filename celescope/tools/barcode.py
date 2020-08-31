@@ -10,12 +10,10 @@ import logging
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, log
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 
-
-logger1 = logging.getLogger(__name__)
 barcode_corrected_num = 0
 
 # 定义输出格式
@@ -66,6 +64,7 @@ def generate_mis_seq(seq, n=1, bases='ACGTN'):
     return(res)
 
 
+@log
 def generate_seq_dict(seqlist, n=1):
     seq_dict = {}
     with open(seqlist, 'r') as fh:
@@ -77,13 +76,14 @@ def generate_seq_dict(seqlist, n=1):
             for k, v in generate_mis_seq(seq, n).items():
                 # duplicate key
                 if k in seq_dict:
-                    logger1.warning('barcode %s, %s\n%s, %s' %
+                    generate_seq_dict.logger.warning('barcode %s, %s\n%s, %s' %
                                     (v, k, seq_dict[k], k))
                 else:
                     seq_dict[k] = v
     return seq_dict
 
 
+@log
 def parse_pattern(pattern):
     # 解析接头结构，返回接头结构字典
     # key: 字母表示的接头, value: 碱基区间列表
@@ -94,7 +94,7 @@ def parse_pattern(pattern):
     p = re.compile(r'([CLUNT])(\d+)')
     tmp = p.findall(pattern)
     if not tmp:
-        logger1.error('Can not recognise pattern! %s' % pattern)
+        parse_pattern.logger.error('Can not recognise pattern! %s' % pattern)
     start = 0
     for item in tmp:
         end = start + int(item[1])
@@ -176,8 +176,8 @@ def no_linker(seq, linker_dict):
     return False if seq in linker_dict else True
 
 
+@log
 def barcode(args):
-    logger1.info('extract barcode ...!')
 
     # check dir
     if not os.path.exists(args.outdir):
@@ -217,7 +217,7 @@ def barcode(args):
     fq2_list = args.fq2.split(",")
     # merge multiple fastq files
     if len(fq1_list) > 1:
-        logger1.info("merge fastq with same sample name...")
+        barcode.logger.info("merge fastq with same sample name...")
         fastq_dir = args.outdir + "/../merge_fastq"
         if not os.path.exists(fastq_dir):
             os.system('mkdir -p %s' % fastq_dir)
@@ -229,11 +229,11 @@ def barcode(args):
             fq1_files=" ".join(fq1_list), fastq1_file=fastq1_file)
         fq2_cmd = "cat {fq2_files} > {fastq2_file}".format(
             fq2_files=" ".join(fq2_list), fastq2_file=fastq2_file)
-        logger1.info(fq1_cmd)
+        barcode.logger.info(fq1_cmd)
         os.system(fq1_cmd)
-        logger1.info(fq2_cmd)
+        barcode.logger.info(fq2_cmd)
         os.system(fq2_cmd)
-        logger1.info("merge fastq done.")
+        barcode.logger.info("merge fastq done.")
     else:
         fastq1_file = args.fq1
         fastq2_file = args.fq2
@@ -350,13 +350,12 @@ def barcode(args):
                                  UMIsQ30)
         stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
         fh.write(stat_info)
-    logger1.info('extract barcode done!')
 
-    logger1.info('fastqc ...!')
+    barcode.logger.info('fastqc ...!')
     cmd = ['fastqc', '-t', str(args.thread), '-o', args.outdir, out_fq2]
-    logger1.info('%s' % (' '.join(cmd)))
+    barcode.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
-    logger1.info('fastqc done!')
+    barcode.logger.info('fastqc done!')
 
     t = reporter(name='barcode', assay=args.assay, sample=args.sample,
                  stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')

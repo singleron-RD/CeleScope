@@ -1,7 +1,7 @@
 import glob
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, log
 import gzip
 import os
 import pandas as pd
@@ -14,9 +14,6 @@ import re
 import json
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-
-logger1 = logging.getLogger(__name__)
-STEP = 'count_vdj'
 
 
 def report_prepare(df, outdir):
@@ -39,9 +36,9 @@ def report_prepare(df, outdir):
         json.dump(data, fh)
 
 
+@log
 def count_vdj(args):
 
-    logger1.info(f'{STEP} start!')
     sample = args.sample
     match_dir = args.match_dir
     UMI_min = args.UMI_min
@@ -74,7 +71,7 @@ def count_vdj(args):
         match_barcode_file2 = glob.glob(
             f"{match_dir}/*count/matrix_10X/*_cellbarcode.tsv")
         match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
-        logger1.info("match scRNA-Seq directory found: " + match_dir)
+        count_vdj.logger.info("match scRNA-Seq directory found: " + match_dir)
         match_cell_barcodes = pd.read_csv(match_barcode_file, header=None)
 
     cell_summary_row_list = []
@@ -407,9 +404,6 @@ def count_vdj(args):
         other_metrics = pd.DataFrame(other_metrics_row_list,columns=["item","count"])
         other_metrics.to_csv(other_metrics_file,sep=":",header=None,index=False)
     """
-
-    # finish
-    logger1.info(f'{STEP} done!')
 
 
 def get_opts_count_vdj(parser, sub_program):

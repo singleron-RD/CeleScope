@@ -9,10 +9,8 @@ import logging
 from itertools import islice
 import pandas as pd
 
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, log
 from celescope.tools.report import reporter
-
-logger1 = logging.getLogger(__name__)
 
 
 def format_stat(cutadapt_log, samplename):
@@ -42,8 +40,8 @@ def format_stat(cutadapt_log, samplename):
     fh.close()
 
 
+@log
 def cutadapt(args):
-    logger1.info('cutadapt ...!')
     # check dir
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % (args.outdir))
@@ -67,11 +65,10 @@ def cutadapt(args):
                                   '-o',
                                   out_fq2,
                                   args.fq]
-    logger1.info('%s' % (' '.join(cmd)))
+    cutadapt.logger.info('%s' % (' '.join(cmd)))
     res = subprocess.run(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     with open(args.outdir + '/cutadapt.log', 'wb') as fh:
         fh.write(res.stdout)
-    logger1.info('cutadapt done!')
 
     format_stat(args.outdir + '/cutadapt.log', args.sample)
     t = reporter(

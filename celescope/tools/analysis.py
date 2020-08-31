@@ -12,11 +12,9 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir
+from celescope.tools.utils import glob_genomeDir, log
 from celescope.rna.__init__ import __ASSAY__
 
-logger1 = logging.getLogger(__name__)
-# invoke by celescope.py under rootdir
 toolsdir = os.path.dirname(__file__)
 
 
@@ -81,6 +79,7 @@ def marker_table(marker_df):
     return marker_gene_table
 
 
+@log
 def gene_convert(gtf_file, matrix_file):
 
     gene_id_pattern = re.compile(r'gene_id "(\S+)";')
@@ -115,11 +114,11 @@ def gene_convert(gtf_file, matrix_file):
     return matrix
 
 
+@log
 def analysis(args):
-    logger1.info('analysis ...!')
 
     # check
-    refFlat, gtf = glob_genomeDir(args.genomeDir, logger1)
+    refFlat, gtf = glob_genomeDir(args.genomeDir)
 
     # check dir
     outdir = args.outdir
@@ -130,7 +129,6 @@ def analysis(args):
         os.system('mkdir -p %s' % (outdir))
 
     # runFalse
-    logger1.info("convert expression matrix.")
     new_matrix = gene_convert(gtf, matrix_file)
     new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(
         outdir=outdir, sample=sample)
@@ -139,14 +137,13 @@ def analysis(args):
         sep="\t",
         index=False,
         compression='gzip')
-    logger1.info("expression matrix written.")
 
     # run_R
-    logger1.info("Seurat running.")
+    analysis.logger.info("Seurat running.")
     cmd = "Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {new_matrix_file}".format(
         app=toolsdir + "/run_analysis.R", sample=sample, outdir=outdir, new_matrix_file=new_matrix_file)
     os.system(cmd)
-    logger1.info("Seurat done.")
+    analysis.logger.info("Seurat done.")
 
     # report
     tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)
@@ -164,7 +161,6 @@ def analysis(args):
         outdir=args.outdir + '/..',
         stat_file=stat_file)
     t.get_report()
-    logger1.info('analysis done!')
 
 
 def get_opts_analysis(parser, sub_program):

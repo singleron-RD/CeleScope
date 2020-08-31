@@ -8,11 +8,9 @@ import json
 import logging
 import subprocess
 import glob
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, log
 from celescope.tools.utils import glob_genomeDir
 from celescope.tools.report import reporter
-
-logger1 = logging.getLogger(__name__)
 
 
 def format_stat(map_log, region_log, samplename):
@@ -76,10 +74,10 @@ def format_stat(map_log, region_log, samplename):
             'region_values': [Exonic_Regions, Intronic_Regions, Intergenic_Regions]}
 
 
+@log
 def STAR(args):
-    logger1.info('STAR ...!')
     # check
-    refFlat, gtf = glob_genomeDir(args.genomeDir, logger1)
+    refFlat, gtf = glob_genomeDir(args.genomeDir)
 
     # check dir
     if not os.path.exists(args.outdir):
@@ -94,11 +92,10 @@ def STAR(args):
            '1', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']
     if args.out_unmapped:
         cmd.append(['--outReadsUnmapped', 'Fastx'])
-    logger1.info('%s' % (' '.join(cmd)))
+    STAR.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
-    logger1.info('STAR done!')
 
-    logger1.info('stat mapping region ...!')
+    STAR.logger.info('picard start...')
     outBam = outPrefix + 'Aligned.sortedByCoord.out.bam'
     region_txt = args.outdir + '/' + args.sample + '_region.log'
     cmd = [
@@ -114,10 +111,10 @@ def STAR(args):
         (refFlat),
         'STRAND=NONE',
         'VALIDATION_STRINGENCY=SILENT']
-    logger1.info('%s' % (' '.join(cmd)))
+    STAR.logger.info('%s' % (' '.join(cmd)))
     res = subprocess.run(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
-    logger1.info(res.stdout)
-    logger1.info('stat mapping region done!')
+    STAR.logger.info(res.stdout)
+    STAR.logger.info('picard done.')
 
     plot = format_stat(
         args.outdir +
