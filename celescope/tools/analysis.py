@@ -12,7 +12,7 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir, log
+from celescope.tools.utils import glob_genomeDir, log, gene_convert
 from celescope.rna.__init__ import __ASSAY__
 
 toolsdir = os.path.dirname(__file__)
@@ -80,33 +80,12 @@ def marker_table(marker_df):
 
 
 @log
-def gene_convert(gtf_file, matrix_file):
+def generate_matrix(gtf_file, matrix_file):
 
-    gene_id_pattern = re.compile(r'gene_id "(\S+)";')
-    gene_name_pattern = re.compile(r'gene_name "(\S+)"')
-    id_name = {}
-    with open(gtf_file) as f:
-        for line in f:
-            if not line.strip():
-                continue
-            if line.startswith('#'):
-                continue
-            tabs = line.split('\t')
-            gtf_type, attributes = tabs[2], tabs[-1]
-            if gtf_type == 'gene':
-                gene_id = gene_id_pattern.findall(attributes)[-1]
-                gene_name = gene_name_pattern.findall(attributes)[-1]
-                id_name[gene_id] = gene_name
-
+    id_name = gene_convert(gtf_file)
     matrix = pd.read_csv(matrix_file, sep="\t")
 
-    def convert(gene_id):
-        if gene_id in id_name:
-            return id_name[gene_id]
-        else:
-            return np.nan
-
-    gene_name_col = matrix.geneID.apply(convert)
+    gene_name_col = matrix.geneID.apply(lambda x: id_name[x])
     matrix.geneID = gene_name_col
     matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
     matrix = matrix.dropna()
@@ -117,9 +96,6 @@ def gene_convert(gtf_file, matrix_file):
 @log
 def analysis(args):
 
-    # check
-    refFlat, gtf = glob_genomeDir(args.genomeDir)
-
     # check dir
     outdir = args.outdir
     sample = args.sample
@@ -128,20 +104,10 @@ def analysis(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
-    # runFalse
-    new_matrix = gene_convert(gtf, matrix_file)
-    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(
-        outdir=outdir, sample=sample)
-    new_matrix.to_csv(
-        new_matrix_file,
-        sep="\t",
-        index=False,
-        compression='gzip')
-
     # run_R
     analysis.logger.info("Seurat running.")
-    cmd = "Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {new_matrix_file}".format(
-        app=toolsdir + "/run_analysis.R", sample=sample, outdir=outdir, new_matrix_file=new_matrix_file)
+    app = toolsdir + "/run_analysis.R"
+    cmd = f"Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file}"
     os.system(cmd)
     analysis.logger.info("Seurat done.")
 
@@ -168,8 +134,4 @@ def get_opts_analysis(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
-        parser.add_argument(
-            '--genomeDir',
-            help='genome directory',
-            required=True)
         parser.add_argument('--assay', help='assay', required=True)

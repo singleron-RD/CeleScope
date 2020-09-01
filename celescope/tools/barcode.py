@@ -59,8 +59,8 @@ def generate_mis_seq(seq, n=1, bases='ACGTN'):
                 seq_tmp[g[i]] = new_base
 
             if mis_num != 0:
-                res[''.join(seq_tmp)] = (seq, mis_num, ','.join([str(i)
-                                                                 for i in g]), ','.join(raw_tmp), ','.join(b))
+                res[''.join(seq_tmp)] = (seq, mis_num, ','.join(
+                    [str(i) for i in g]), ','.join(raw_tmp), ','.join(b))
     return(res)
 
 
@@ -221,14 +221,12 @@ def barcode(args):
         fastq_dir = args.outdir + "/../merge_fastq"
         if not os.path.exists(fastq_dir):
             os.system('mkdir -p %s' % fastq_dir)
-        fastq1_file = "{fastq_dir}/{sample}_1.fq.gz".format(
-            fastq_dir=fastq_dir, sample=args.sample)
-        fastq2_file = "{fastq_dir}/{sample}_2.fq.gz".format(
-            fastq_dir=fastq_dir, sample=args.sample)
-        fq1_cmd = "cat {fq1_files} > {fastq1_file}".format(
-            fq1_files=" ".join(fq1_list), fastq1_file=fastq1_file)
-        fq2_cmd = "cat {fq2_files} > {fastq2_file}".format(
-            fq2_files=" ".join(fq2_list), fastq2_file=fastq2_file)
+        fastq1_file = f"{fastq_dir}/{args.sample}_1.fq.gz"
+        fastq2_file = f"{fastq_dir}/{args.sample}_2.fq.gz"
+        fq1_files = " ".join(fq1_list)
+        fq2_files = " ".join(fq2_list)
+        fq1_cmd = f"cat {fq1_files} > {fastq1_file}"
+        fq2_cmd = f"cat {fq2_files} > {fastq2_file}"
         barcode.logger.info(fq1_cmd)
         os.system(fq1_cmd)
         barcode.logger.info(fq2_cmd)

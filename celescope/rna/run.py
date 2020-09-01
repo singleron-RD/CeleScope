@@ -51,6 +51,6 @@ def run(args):
 
     step = 'analysis'
     args.outdir = f'{outdir_dic[step]}/'
-    args.matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.xls'
+    args.matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.tsv.gz'
     from celescope.tools.analysis import analysis
     analysis(args)

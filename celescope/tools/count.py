@@ -5,7 +5,6 @@ import os
 import sys
 import json
 import functools
-import logging
 from collections import defaultdict
 from itertools import groupby
 import numpy as np
@@ -13,7 +12,7 @@ import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
-from celescope.tools.utils import format_number, log
+from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
 from celescope.tools.report import reporter
 
 
@@ -86,7 +85,8 @@ def barcode_filter_with_magnitude(
         df_sub = sorted_df.iloc[index_low:index_high + 1, :]
         threshold = df_sub.iloc[np.argmax(
             np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
-        barcode_filter_with_magnitude.logger.info("UMI threshold: " + str(threshold))
+        barcode_filter_with_magnitude.logger.info(
+            "UMI threshold: " + str(threshold))
     validated_barcodes = df[df[col] >= threshold].index
 
     import matplotlib
@@ -185,8 +185,15 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
     return validated_barcodes, threshold, cell_num, CB_describe
 
 
-def expression_matrix(df, validated_barcodes,
-                      matrix_prefix, matrix_10X_prefix):
+def expression_matrix(
+        df, validated_barcodes,
+        outdir, sample, gtf_file):
+
+    matrix_10X_dir = f"{outdir}/{sample}_matrix_10X/"
+    matrix_table_file = f"{outdir}/{sample}_matrix.tsv.gz"
+    if not os.path.exists(matrix_10X_dir):
+        os.mkdir(matrix_10X_dir)
+
     df.loc[:, 'mark'] = 'UB'
     df.loc[df['Barcode'].isin(validated_barcodes), 'mark'] = 'CB'
 
@@ -198,33 +205,50 @@ def expression_matrix(df, validated_barcodes,
         index='geneID', columns='Barcode', values='UMI',
         aggfunc=len).fillna(0).astype(int)
 
-    #out_raw_matrix = outdir + '/' + sample + '_matrix.txt'
-    table.fillna(0).to_csv(matrix_prefix + '_matrix.xls', sep='\t')
+    id_name = gene_convert(gtf_file)
+    id = table.index.to_series()
+    name = id.apply(lambda x: id_name[x])
+    genes = pd.concat([id, name], axis=1)
+    genes.columns = ['gene_id', 'gene_name']
 
+    # write 10X matrix
     table.columns.to_series().to_csv(
-        matrix_10X_prefix + '_cellbarcode.tsv', index=False, sep='\t')
-    table.index.to_series().to_csv(
-        matrix_10X_prefix + '_genes.tsv', index=False, sep='\t')
-    mmwrite(matrix_10X_prefix, csr_matrix(table.fillna(0)))
+        f'{matrix_10X_dir}/barcodes.tsv', index=False, sep='\t')
+    genes.to_csv(
+        f'{matrix_10X_dir}/genes.tsv', index=False, header=False, sep='\t')
+    mmwrite(f'{matrix_10X_dir}/matrix', csr_matrix(table))
+
+    # convert id to name; write table matrix
+    table.index = name
+    table.index.name = ""
+    table.to_csv(
+        matrix_table_file,
+        sep="\t",
+        compression='gzip')
+
     return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome)
 
 
 def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
-                CB_reads_count, reads_mapped_to_transcriptome, stat_file, outdir):
+                CB_reads_count, reads_mapped_to_transcriptome,
+                stat_file, outdir):
 
     # total read
     json_file = outdir + '.data.json'
     fh = open(json_file)
     data = json.load(fh)
-    #total_read_number = int(data['barcode_summary'][0][1])
     str_number = data['barcode_summary'][1][1].split("(")[0]
     valid_read_number = int(str_number.replace(",", ""))
 
     summary = pd.Series([0, 0, 0, 0, 0, 0, 0],
                         index=[
-                            'Estimated Number of Cells', 'Fraction Reads in Cells',
-                            'Mean Reads per Cell', 'Median UMI per Cell', 'Total Genes',
-                            'Median Genes per Cell', 'Saturation'
+                            'Estimated Number of Cells',
+                            'Fraction Reads in Cells',
+                            'Mean Reads per Cell',
+                            'Median UMI per Cell',
+                            'Total Genes',
+                            'Median Genes per Cell',
+                            'Saturation',
     ])
 
     # 细胞数
@@ -284,6 +308,9 @@ def downsample(detail_file, validated_barcodes, downsample_file):
 @log
 def count(args):
 
+    # check
+    refFlat, gtf = glob_genomeDir(args.genomeDir)
+
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % (args.outdir))
@@ -301,14 +328,9 @@ def count(args):
         df, args.cells, pdf, marked_counts_file)
 
     # 输出matrix
-    matrix_prefix = args.outdir + '/' + args.sample
-    matrix_10X_dir = "{outdir}/matrix_10X/".format(outdir=args.outdir)
-    matrix_10X_prefix = "{matrix_10X_dir}/{sample}".format(
-        matrix_10X_dir=matrix_10X_dir, sample=args.sample)
-    if not os.path.exists(matrix_10X_dir):
-        os.system('mkdir -p %s' % (matrix_10X_dir))
     (CB_total_Genes, CB_reads_count,
-        reads_mapped_to_transcriptome) = expression_matrix(df, validated_barcodes, matrix_prefix, matrix_10X_prefix)
+        reads_mapped_to_transcriptome) = expression_matrix(
+            df, validated_barcodes, args.outdir, args.sample, gtf)
 
     # downsampling
     validated_barcodes = set(validated_barcodes)
@@ -321,7 +343,8 @@ def count(args):
     # summary
     stat_file = args.outdir + '/stat.txt'
     get_summary(df, args.sample, Saturation, CB_describe, CB_total_Genes,
-                CB_reads_count, reads_mapped_to_transcriptome, stat_file, args.outdir + '/../')
+                CB_reads_count, reads_mapped_to_transcriptome, stat_file,
+                args.outdir + '/../')
 
     report_prepare(marked_counts_file, downsample_file, args.outdir + '/..')
 
@@ -338,6 +361,10 @@ def get_opts_count(parser, sub_program):
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--bam', required=True)
         parser.add_argument('--assay', help='assay', required=True)
+        parser.add_argument(
+            '--genomeDir',
+            help='genome directory',
+            required=True)
     parser.add_argument(
         '--cells',
         help='expected number of cells',

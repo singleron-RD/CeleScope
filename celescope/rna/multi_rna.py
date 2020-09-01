@@ -185,6 +185,7 @@ def main():
             f'{app} {assay} {step} '
             f'--bam {bam} --sample {sample} --cells {cells_dict[sample]} '
             f'--outdir {outdir_dic[step]} --assay {assay} '
+            f'--genomeDir {genomeDir}'
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
@@ -193,12 +194,12 @@ def main():
 
         # analysis
         step = 'analysis'
-        matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.xls'
+        matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.tsv.gz'
         cmd = (
             f'{app} {assay} {step} '
             f'--matrix_file {matrix_file} --sample {sample} '
             f'--outdir {outdir_dic[step]} '
-            f'--genomeDir {genomeDir} --assay {assay} '
+            f'--assay {assay} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
