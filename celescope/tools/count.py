@@ -185,6 +185,7 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
     return validated_barcodes, threshold, cell_num, CB_describe
 
 
+@log
 def expression_matrix(
         df, validated_barcodes,
         outdir, sample, gtf_file):
@@ -289,6 +290,7 @@ def sample(p, df, bc):
     return format_str % (p, geneNum_median, saturation), saturation
 
 
+@log
 def downsample(detail_file, validated_barcodes, downsample_file):
     df = pd.read_table(detail_file, index_col=[0, 1, 2])
     df = df.index.repeat(df['count']).to_frame()

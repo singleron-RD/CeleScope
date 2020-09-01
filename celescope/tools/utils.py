@@ -20,30 +20,6 @@ import matplotlib.pyplot as plt
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
 
-def gene_convert(gtf_file):
-
-    gene_id_pattern = re.compile(r'gene_id "(\S+)";')
-    gene_name_pattern = re.compile(r'gene_name "(\S+)"')
-    id_name = {}
-    c = Counter()
-    with open(gtf_file) as f:
-        for line in f:
-            if not line.strip():
-                continue
-            if line.startswith('#'):
-                continue
-            tabs = line.split('\t')
-            gtf_type, attributes = tabs[2], tabs[-1]
-            if gtf_type == 'gene':
-                gene_id = gene_id_pattern.findall(attributes)[-1]
-                gene_name = gene_name_pattern.findall(attributes)[-1]
-                c[gene_id] += 1
-                if c[gene_id] > 1:
-                    gene_name = f'{gene_name}_{c[gene_id]}'
-                id_name[gene_id] = gene_name
-    return id_name
-
-
 def log(func):
     '''
     return logger.
@@ -70,6 +46,30 @@ def log(func):
 
     wrapper.logger = logger
     return wrapper
+
+
+def gene_convert(gtf_file):
+
+    gene_id_pattern = re.compile(r'gene_id "(\S+)";')
+    gene_name_pattern = re.compile(r'gene_name "(\S+)"')
+    id_name = {}
+    c = Counter()
+    with open(gtf_file) as f:
+        for line in f:
+            if not line.strip():
+                continue
+            if line.startswith('#'):
+                continue
+            tabs = line.split('\t')
+            gtf_type, attributes = tabs[2], tabs[-1]
+            if gtf_type == 'gene':
+                gene_id = gene_id_pattern.findall(attributes)[-1]
+                gene_name = gene_name_pattern.findall(attributes)[-1]
+                c[gene_name] += 1
+                if c[gene_name] > 1:
+                    gene_name = f'{gene_name}_{c[gene_name]}'
+                id_name[gene_id] = gene_name
+    return id_name
 
 
 @log
@@ -431,6 +431,7 @@ def genDict(dim=3):
         return defaultdict(lambda: genDict(dim - 1))
 
 
+@log
 def downsample(bam, barcodes, percent):
     """
     calculate median_geneNum and saturation based on a given percent of reads

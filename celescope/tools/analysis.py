@@ -94,6 +94,13 @@ def generate_matrix(gtf_file, matrix_file):
 
 
 @log
+def seurat(sample, outdir, matrix_file):
+    app = toolsdir + "/run_analysis.R"
+    cmd = f"Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file}"
+    os.system(cmd)
+
+
+@log
 def analysis(args):
 
     # check dir
@@ -105,11 +112,7 @@ def analysis(args):
         os.system('mkdir -p %s' % (outdir))
 
     # run_R
-    analysis.logger.info("Seurat running.")
-    app = toolsdir + "/run_analysis.R"
-    cmd = f"Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file}"
-    os.system(cmd)
-    analysis.logger.info("Seurat done.")
+    seurat(sample, outdir, matrix_file)
 
     # report
     tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)
