@@ -6,49 +6,7 @@ import re
 from collections import defaultdict
 from celescope.__init__ import __CONDA__
 from celescope.smk.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.utils import merge_report, generate_sjm
-
-
-def parse_map(mapfile):
-    fq_dict = defaultdict(list)
-    match_dict = defaultdict(list)
-    with open(mapfile) as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('#'):
-                continue
-            tmp = line.split()
-            library_id = tmp[0]
-            library_path = tmp[1]
-            sample_name = tmp[2]
-            match_dir = tmp[3]
-
-            try:
-                pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
-                pattern1_2 = library_path + '/' + library_id + '*' + 'R1_*.fastq.gz'
-                pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
-                pattern2_2 = library_path + '/' + library_id + '*' + 'R2_*.fastq.gz'
-                fq1 = (glob.glob(pattern1_1) + glob.glob(pattern1_2))[0]
-                fq2 = (glob.glob(pattern2_1) + glob.glob(pattern2_2))[0]
-            except IndexError as e:
-                sys.exit("Mapfile Error:" + str(e))
-
-            assert os.path.exists(fq1), '%s not exists!' % (fq1)
-            assert os.path.exists(fq2), '%s not exists!' % (fq2)
-            if sample_name in fq_dict:
-                fq_dict[sample_name][0].append(fq1)
-                fq_dict[sample_name][1].append(fq2)
-            else:
-                fq_dict[sample_name] = [[fq1], [fq2]]
-            match_dict[sample_name] = match_dir
-
-    for sample_name in fq_dict:
-        fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
-        fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
-
-    return fq_dict, match_dict
+from celescope.tools.utils import merge_report, generate_sjm, parse_map_col4
 
 
 def main():
@@ -116,7 +74,7 @@ def main():
 
     args = vars(parser.parse_args())
 
-    fq_dict, match_dict = parse_map(args['mapfile'])
+    fq_dict, match_dict = parse_map_col4(args['mapfile'], None)
 
     # 链接数据
     raw_dir = args['outdir'] + '/data_give/rawdata'
@@ -132,6 +90,7 @@ def main():
     os.system('mkdir -p %s' % (logdir))
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
+    shell = ''
     app = 'celescope'
     thread = args['thread']
     chemistry = args['chemistry']
@@ -164,61 +123,91 @@ def main():
 
         # sample
         step = "sample"
-        cmd = f'''source activate {conda}; {app} {assay} {step} --chemistry {chemistry}
-        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}')
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--chemistry {chemistry} '
+            f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda)
+        shell += cmd + '\n'
         last_step = step
 
         # barcode
         arr = fq_dict[sample]
         step = "barcode"
-        cmd = f'''source activate {conda}; {app} {assay} {step} --fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry}
-            --pattern {pattern} --whitelist {whitelist} --linker {linker} --sample {sample} --lowQual {lowQual}
-            --lowNum {lowNum} --outdir {outdir_dic[step]} --thread {thread} --assay {assay}'''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=thread)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry} '
+            f'--pattern {pattern} --whitelist {whitelist} --linker {linker} '
+            f'--sample {sample} --lowQual {lowQual} --thread {thread} '
+            f'--lowNum {lowNum} --outdir {outdir_dic[step]} --assay {assay} '
+
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
         # adapt
         step = "cutadapt"
         fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
-        cmd = f'''source activate {conda}; {app} {assay} {step} --fq {fq} --sample {sample} --outdir
-            {outdir_dic[step]} --assay {assay}'''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--fq {fq} --sample {sample} --outdir '
+            f'{outdir_dic[step]} --assay {assay} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
         # mapping_smk
         step = 'mapping_smk'
         SMK_read2 = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-        cmd = f'''source activate {conda}; {app} {assay} {step} --SMK_read2 {SMK_read2}
-        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}
-        --SMK_pattern {SMK_pattern}
-        --SMK_barcode {SMK_barcode}
-        --SMK_linker {SMK_linker}
-        '''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--sample {sample} '
+            f'--outdir {outdir_dic[step]} '
+            f'--assay {assay} '
+            f'--SMK_read2 {SMK_read2} '
+            f'--SMK_pattern {SMK_pattern} '
+            f'--SMK_barcode {SMK_barcode} '
+            f'--SMK_linker {SMK_linker} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
         # count_smk
         step = 'count_smk'
         UMI_file = f'{outdir_dic["mapping_smk"]}/{sample}_UMI_count.tsv'
-        cmd = f'''source activate {conda}; {app} {assay} {step}
-        --match_dir {match_dict[sample]} --UMI_file {UMI_file}
-        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}
-        --UMI_min {UMI_min} --SNR_min {SNR_min} --dim {dim}'''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--sample {sample} '
+            f'--outdir {outdir_dic[step]} '
+            f'--assay {assay} '
+            f'--match_dir {match_dict[sample]} '
+            f'--UMI_file {UMI_file} '
+            f'--dim {dim} '
+            f'--UMI_min {UMI_min} '
+            f'--SNR_min {SNR_min} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 
         # analysis_smk
         step = 'analysis_smk'
         tsne_tag_file = f'{outdir_dic["count_smk"]}/{sample}_tsne_tag.tsv'
-        cmd = f'''source activate {conda}; {app} {assay} {step}
-        --match_dir {match_dict[sample]} --tsne_tag_file {tsne_tag_file}
-        --sample {sample} --outdir {outdir_dic[step]} --assay {assay}'''
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', m=5, x=1)
+        cmd = (
+            f'{app} {assay} {step} '
+            f'--sample {sample} '
+            f'--outdir {outdir_dic[step]} '
+            f'--assay {assay} '
+            f'--match_dir {match_dict[sample]} '
+            f'--tsne_tag_file {tsne_tag_file} '
+        )
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         last_step = step
 

@@ -64,8 +64,10 @@ def main():
         '--mapfile',
         help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"',
         required=True)
-    parser.add_argument('--chemistry', choices=['scopeV2.0.0', 'scopeV2.0.1',
-                                                'scopeV2.1.0', 'scopeV2.1.1'], help='chemistry version')
+    parser.add_argument('--chemistry', choices=[
+        'scopeV2.0.0', 'scopeV2.0.1',
+        'scopeV2.1.0', 'scopeV2.1.1'
+        ], help='chemistry version')
     parser.add_argument('--whitelist', help='cellbarcode list')
     parser.add_argument('--linker', help='linker')
     parser.add_argument('--pattern', help='read1 pattern')
