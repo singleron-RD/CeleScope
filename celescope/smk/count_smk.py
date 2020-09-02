@@ -20,7 +20,9 @@ def get_UMI_min(df_cell_UMI, UMI_min):
     if UMI_min == "auto":
         UMI_min1 = np.percentile(df_cell_UMI.sum(axis=1), 5)
         UMI_min2 = np.median(df_cell_UMI.sum(axis=1)) / 10
-        return int(min(UMI_min1, UMI_min2))
+        UMI_min = int(min(UMI_min1, UMI_min2))
+        UMI_min = max(UMI_min, 1)
+        return UMI_min
     else:
         return int(UMI_min)
 
@@ -39,6 +41,8 @@ def get_SNR_min(df_cell_UMI, dim, SNR_min, UMI_min):
     df_valid_cell_UMI = df_cell_UMI[UMIs > UMI_min]
     if SNR_min == "auto":
         SNRs = df_valid_cell_UMI.apply(get_SNR, dim=dim, axis=1)
+        if np.median(SNRs) == np.inf:
+            return 20
         return np.median(SNRs) / 10
     else:
         return float(SNR_min)
