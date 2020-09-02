@@ -6,54 +6,20 @@ import re
 from collections import defaultdict
 from celescope.__init__ import __CONDA__
 from celescope.smk.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.utils import merge_report, generate_sjm, parse_map_col4
+from celescope.tools.utils import merge_report, generate_sjm
+from celescope.tools.utils import parse_map_col4, multi_opts, link_data
 
 
 def main():
 
-    parser = argparse.ArgumentParser('CeleScope SMK multi-sample')
-    #parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
-    parser.add_argument(
-        '--mapfile',
-        help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"',
-        required=True)
-    parser.add_argument('--chemistry', choices=['scopeV2.0.0', 'scopeV2.0.1',
-                                                'scopeV2.1.0', 'scopeV2.1.1'], help='chemistry version')
-    parser.add_argument('--whitelist', help='cellbarcode list')
-    parser.add_argument('--linker', help='linker')
-    parser.add_argument('--pattern', help='read1 pattern')
-    parser.add_argument('--outdir', help='output dir', default="./")
-    parser.add_argument(
-        '--adapt',
-        action='append',
-        help='adapter sequence',
-        default=[
-            'polyT=A{15}',
-            'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
-    parser.add_argument(
-        '--minimum-length',
-        dest='minimum_length',
-        help='minimum_length',
-        default=20)
-    parser.add_argument(
-        '--nextseq-trim',
-        dest='nextseq_trim',
-        help='nextseq_trim',
-        default=20)
-    parser.add_argument(
-        '--overlap',
-        help='minimum overlap length, default=5',
-        default=5)
-    parser.add_argument(
-        '--lowQual',
-        type=int,
-        help='max phred of base as lowQual',
-        default=0)
-    parser.add_argument(
-        '--lowNum',
-        type=int,
-        help='max number with lowQual allowed',
-        default=2)
+    # init
+    assay = __ASSAY__
+    steps = __STEPS__
+    conda = __CONDA__
+    app = 'celescope'
+
+    # parser
+    parser = multi_opts(assay)
     parser.add_argument('--thread', help='thread', default=6)
     parser.add_argument(
         "--UMI_min",
@@ -67,58 +33,50 @@ def main():
     parser.add_argument("--SMK_pattern", help="SMK read2 pattern")
     parser.add_argument("--SMK_linker", help="SMK read2 linker fasta path")
     parser.add_argument("--SMK_barcode", help="SMK read2 barcode fasta path ")
-    parser.add_argument(
-        '--rm_files',
-        action='store_true',
-        help='remove all fq.gz and bam after running')
+    args = parser.parse_args()
 
-    args = vars(parser.parse_args())
+    # read args
+    outdir = args.outdir
+    chemistry = args.chemistry
+    pattern = args.pattern
+    whitelist = args.whitelist
+    linker = args.linker
+    lowQual = args.lowQual
+    lowNum = args.lowNum
+    mod = args.mod
+    rm_files = args.rm_files
 
-    fq_dict, match_dict = parse_map_col4(args['mapfile'], None)
+    # parse mapfile
+    fq_dict, match_dict = parse_map_col4(args.mapfile, "auto")
 
-    # 链接数据
-    raw_dir = args['outdir'] + '/data_give/rawdata'
-    os.system('mkdir -p %s' % (raw_dir))
-    with open(raw_dir + '/ln.sh', 'w') as fh:
-        fh.write('cd %s\n' % (raw_dir))
-        for s, arr in fq_dict.items():
-            fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
-            fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
-    #os.system('sh %s'%(raw_dir+'/ln.sh'))
+    # link
+    link_data(outdir, fq_dict)
 
-    logdir = args['outdir'] + '/log'
+    # custom args
+    thread = args.thread
+    UMI_min = args.UMI_min
+    dim = args.dim
+    SNR_min = args.SNR_min
+    SMK_pattern = args.SMK_pattern
+    SMK_linker = args.SMK_linker
+    SMK_barcode = args.SMK_barcode
+
+    # mk log dir
+    logdir = outdir + '/log'
     os.system('mkdir -p %s' % (logdir))
+
+    # script init
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
     shell = ''
-    app = 'celescope'
-    thread = args['thread']
-    chemistry = args['chemistry']
-    pattern = args['pattern']
-    whitelist = args['whitelist']
-    linker = args['linker']
-    lowQual = args['lowQual']
-    lowNum = args['lowNum']
-    basedir = args['outdir']
-    rm_files = args['rm_files']
 
-    UMI_min = args['UMI_min']
-    SNR_min = args['SNR_min']
-    dim = args['dim']
-    SMK_pattern = args['SMK_pattern']
-    SMK_barcode = args['SMK_barcode']
-    SMK_linker = args['SMK_linker']
-
-    assay = __ASSAY__
-    steps = __STEPS__
-    conda = __CONDA__
-
+    # run
     for sample in fq_dict:
         outdir_dic = {}
         index = 0
         for step in steps:
-            outdir = f"{basedir}/{sample}/{index:02d}.{step}"
-            outdir_dic.update({step: outdir})
+            step_outdir = f"{outdir}/{sample}/{index:02d}.{step}"
+            outdir_dic.update({step: step_outdir})
             index += 1
 
         # sample
@@ -180,14 +138,14 @@ def main():
 
         # count_smk
         step = 'count_smk'
-        UMI_file = f'{outdir_dic["mapping_smk"]}/{sample}_UMI_count.tsv'
+        read_file = f'{outdir_dic["mapping_smk"]}/{sample}_read_count.tsv'
         cmd = (
             f'{app} {assay} {step} '
             f'--sample {sample} '
             f'--outdir {outdir_dic[step]} '
             f'--assay {assay} '
             f'--match_dir {match_dict[sample]} '
-            f'--UMI_file {UMI_file} '
+            f'--read_file {read_file} '
             f'--dim {dim} '
             f'--UMI_min {UMI_min} '
             f'--SNR_min {SNR_min} '
@@ -212,9 +170,23 @@ def main():
         last_step = step
 
     # merged report
-    merge_report(
-        fq_dict, steps, last_step, sjm_cmd,
-        sjm_order, logdir, conda, outdir, rm_files)
+    if mod == 'sjm':
+        step = 'merge_report'
+        merge_report(
+            fq_dict,
+            steps,
+            last_step,
+            sjm_cmd,
+            sjm_order,
+            logdir,
+            conda,
+            outdir,
+            rm_files,
+        )
+    if mod == 'shell':
+        os.system('mkdir -p ./shell/')
+        with open(f'./shell/{sample}.sh', 'w') as f:
+            f.write(shell)
 
 
 if __name__ == '__main__':

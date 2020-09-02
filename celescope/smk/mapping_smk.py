@@ -124,6 +124,8 @@ class smk_mapping:
 
         df_umi_count = pd.DataFrame(self.res_sum_dic)
         df_umi_count = df_umi_count.T
+        df_umi_count.fillna(0, inplace=True)
+        df_umi_count = df_umi_count.astype(int)
         df_umi_count.to_csv(self.UMI_count_file, sep="\t")
 
     @log

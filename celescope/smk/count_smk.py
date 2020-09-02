@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, read_one_col, log, gen_stat
+from celescope.tools.utils import format_number, read_one_col, log, format_stat
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
@@ -38,12 +38,12 @@ def get_SNR(row, dim):
 
 def get_SNR_min(df_cell_UMI, dim, SNR_min, UMI_min):
     UMIs = df_cell_UMI.apply(get_UMI, axis=1)
-    df_valid_cell_UMI = df_cell_UMI[UMIs > UMI_min]
+    df_valid_cell_UMI = df_cell_UMI[UMIs >= UMI_min]
     if SNR_min == "auto":
         SNRs = df_valid_cell_UMI.apply(get_SNR, dim=dim, axis=1)
         if np.median(SNRs) == np.inf:
-            return 20
-        return np.median(SNRs) / 10
+            return 10
+        return max(np.median(SNRs) / 10, 2)
     else:
         return float(SNR_min)
 
@@ -89,7 +89,7 @@ def write_and_plot(df, column_name, count_file, plot_file):
 @log
 def count_smk(args):
 
-    UMI_file = args.UMI_file
+    read_file = args.read_file
     match_dir = args.match_dir
     tsne_file = glob.glob(f'{match_dir}/*analysis/tsne_coord.tsv')[0]
     match_barcode_file1 = glob.glob(
@@ -108,6 +108,9 @@ def count_smk(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
+    # stat_row
+    stats = pd.Series()
+
     # process
     match_barcode, cell_total = read_one_col(match_barcode_file)
 
@@ -119,31 +122,61 @@ def count_smk(args):
         combine_cluster_count_file = f'{outdir}/{sample}_combine_cluster_count.tsv'
         combine_cluster_plot = f'{outdir}/{sample}_combine_cluster_plot.pdf'
 
-    df_UMI_count = pd.read_csv(UMI_file, sep="\t", index_col=0)
+    df_read_count = pd.read_csv(read_file, sep="\t", index_col=0)
+    mapped_read = df_read_count['read_count'].sum()
+
+    # in cell
+    df_read_count_in_cell = df_read_count[df_read_count.index.isin(match_barcode)]
+    mapped_read_in_cell = int(df_read_count_in_cell['read_count'].sum())
+    stats = stats.append(pd.Series(
+        format_stat(mapped_read_in_cell, mapped_read),
+        index=['Mapped Reads in Cells']
+    ))
+
+    # UMI
+    df_UMI_in_cell = df_read_count_in_cell.reset_index().groupby([
+        'barcode', 'SMK_barcode_name']).agg({'UMI': 'count'})
+    df_UMI_in_cell = df_UMI_in_cell.reset_index()
+    df_UMI_in_cell = df_UMI_in_cell.pivot(
+        index='barcode', columns='SMK_barcode_name', values='UMI')
     df_cell = pd.DataFrame(index=match_barcode)
-    df_cell_UMI_count = pd.merge(
+    df_UMI_cell = pd.merge(
         df_cell,
-        df_UMI_count,
+        df_UMI_in_cell,
         how="left",
         left_index=True,
         right_index=True)
-    # fillna
-    df_cell_UMI_count.fillna(0, inplace=True)
-    df_cell_UMI_count = df_cell_UMI_count.astype(int)
-    df_cell_UMI_count.fillna(0, inplace=True)
 
-    UMI_min = get_UMI_min(df_cell_UMI_count, UMI_min)
+    # fillna
+    df_UMI_cell.fillna(0, inplace=True)
+    df_UMI_cell = df_UMI_cell.astype(int)
+
+    # UMI
+    UMIs = df_UMI_cell.apply(sum, axis=1)
+    median = round(np.median(UMIs), 2)
+    mean = round(np.mean(UMIs), 2)
+    stats = stats.append(pd.Series(
+        str(median),
+        index=['Median UMI per Cell']
+    ))
+
+    stats = stats.append(pd.Series(
+        str(mean),
+        index=['Mean UMI per Cell']
+    ))
+
+    UMI_min = get_UMI_min(df_UMI_cell, UMI_min)
     count_smk.logger.info(f'UMI_min: {UMI_min}')
-    SNR_min = get_SNR_min(df_cell_UMI_count, dim, SNR_min, UMI_min)
+    SNR_min = get_SNR_min(df_UMI_cell, dim, SNR_min, UMI_min)
     count_smk.logger.info(f'SNR_min: {SNR_min}')
-    df_cell_UMI_count["tag"] = df_cell_UMI_count.apply(
+    df_UMI_cell["tag"] = df_UMI_cell.apply(
         tag_type, UMI_min=UMI_min, SNR_min=SNR_min, dim=dim, axis=1)
-    df_cell_UMI_count.to_csv(UMI_tag_file, sep="\t")
+    df_UMI_cell.to_csv(UMI_tag_file, sep="\t")
 
     df_tsne = pd.read_csv(tsne_file, sep="\t", index_col=0)
     df_tsne_tag = pd.merge(
         df_tsne,
-        df_cell_UMI_count,
+        df_UMI_cell,
         how="left",
         left_index=True,
         right_index=True)
@@ -172,20 +205,17 @@ def count_smk(args):
             plot_file=combine_cluster_plot
         )
 
-    df_stat = pd.DataFrame({
-        "item": ["Dimension"],
-        "count": [dim],
-        "total_count": [None]
-    })
-    df_tag_count = df_cell_UMI_count["tag"].value_counts(
-    ).sort_values(ascending=False).reset_index()
+    df_tag_count = df_UMI_cell["tag"].value_counts().sort_values(
+        ascending=False).reset_index()
     df_tag_count.columns = ["item", "count"]
-    ncell = df_tag_count["count"].sum()
-    df_tag_count['total_count'] = ncell
-    df_stat = df_stat.append(df_tag_count)
-
+    for index, row in df_tag_count.iterrows():
+        stats = stats.append(pd.Series(
+            format_stat(row['count'], cell_total),
+            index=[row['item'] + ' Cell']
+    ))
     stat_file = f'{outdir}/stat.txt'
-    gen_stat(df_stat, stat_file)
+    stats.to_csv(stat_file, sep=':', header=False)
+
 
     t = reporter(
         name='count_smk', assay=assay, sample=sample,
@@ -212,5 +242,4 @@ def get_opts_count_smk(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
-
-        parser.add_argument("--UMI_file", help="SMK UMI file")
+        parser.add_argument("--read_file", help="SMK read count file")

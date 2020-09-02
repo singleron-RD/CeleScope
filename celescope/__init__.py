@@ -1,5 +1,5 @@
 __VERSION__ = "1.1.4"
-__CONDA__ = "test_install"
+__CONDA__ = "scope1.0"
 ASSAY_DICT = {
     "rna": "Single Cell RNA-Seq",
     "rna_virus": "Single Cell RNA-Seq Virus",

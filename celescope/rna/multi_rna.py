@@ -66,8 +66,8 @@ def main():
         outdir_dic = {}
         index = 0
         for step in steps:
-            outdir = f"{outdir}/{sample}/{index:02d}.{step}"
-            outdir_dic.update({step: outdir})
+            step_outdir = f"{outdir}/{sample}/{index:02d}.{step}"
+            outdir_dic.update({step: step_outdir})
             index += 1
 
         # sample

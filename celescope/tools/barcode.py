@@ -94,7 +94,8 @@ def parse_pattern(pattern):
     p = re.compile(r'([CLUNT])(\d+)')
     tmp = p.findall(pattern)
     if not tmp:
-        parse_pattern.logger.error('Can not recognise pattern! %s' % pattern)
+        parse_pattern.logger.error(f'Invalid pattern: {pattern}')
+        sys.exit()
     start = 0
     for item in tmp:
         end = start + int(item[1])
@@ -104,8 +105,8 @@ def parse_pattern(pattern):
 
 
 def get_scope_bc(bctype):
-    tools_path = os.path.dirname(os.path.abspath(__file__))
-    root_path = os.path.dirname(tools_path)
+    import celescope
+    root_path = os.path.dirname(celescope.__file__)
     linker_f = glob.glob(f'{root_path}/data/{bctype}/linker*')[0]
     whitelist_f = f'{root_path}/data/{bctype}/bclist'
     return linker_f, whitelist_f
@@ -132,7 +133,7 @@ def read_fastq(f):
             qualities = line.rstrip('\n\r')
             yield name, sequence, qualities
     if i % 4 != 3:
-        raise FormatError("FASTQ file ended prematurely")
+        raise Exception("FASTQ file ended prematurely")
 
 
 def seq_ranges(seq, arr):

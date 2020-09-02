@@ -36,7 +36,7 @@ def run(args):
     mapping_smk(args)
 
     step = 'count_smk'
-    args.UMI_file = f'{outdir_dic["mapping_smk"]}/{sample}_UMI_count.tsv'
+    args.read_file = f'{outdir_dic["mapping_smk"]}/{sample}_read_count.tsv'
     args.outdir = f'{outdir_dic[step]}/'
     from celescope.smk.count_smk import count_smk
     count_smk(args)

@@ -50,6 +50,12 @@ def log(func):
     return wrapper
 
 
+def format_stat(count, total_count):
+    percent = round(count / total_count * 100, 2)
+    string = f'{count}({percent}%)'
+    return string
+
+
 def multi_opts(assay):
     readme = f'{assay} multi-samples'
     parser = argparse.ArgumentParser(readme)
