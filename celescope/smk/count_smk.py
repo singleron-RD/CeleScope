@@ -211,7 +211,7 @@ def count_smk(args):
     for index, row in df_tag_count.iterrows():
         stats = stats.append(pd.Series(
             format_stat(row['count'], cell_total),
-            index=[row['item'] + ' Cell']
+            index=[row['item'] + ' Cells']
     ))
     stat_file = f'{outdir}/stat.txt'
     stats.to_csv(stat_file, sep=':', header=False)

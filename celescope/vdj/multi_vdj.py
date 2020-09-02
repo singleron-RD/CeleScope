@@ -132,7 +132,6 @@ def main():
             f'--thread {thread} '
             f'--outdir {outdir_dic[step]} '
             f'--assay {assay} '
-            f'--thread {thread} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
