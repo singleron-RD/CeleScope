@@ -8,6 +8,7 @@ import logging
 from celescope.__init__ import __VERSION__, ASSAY_DICT
 from celescope.tools.utils import log
 from celescope.tools.report import reporter
+from celescope.tools.__init__ import __PATTERN_DICT__
 
 
 @log
@@ -48,4 +49,4 @@ def get_opts_sample(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument('--chemistry', help='chemistry')
+    parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version')

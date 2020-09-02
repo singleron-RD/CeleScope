@@ -6,7 +6,7 @@ import io
 import gzip
 import subprocess
 import sys
-import logging
+import glob
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
@@ -106,8 +106,8 @@ def parse_pattern(pattern):
 def get_scope_bc(bctype):
     tools_path = os.path.dirname(os.path.abspath(__file__))
     root_path = os.path.dirname(tools_path)
-    linker_f = os.path.join(root_path, 'data/' + bctype + '/linker_withC')
-    whitelist_f = os.path.join(root_path, 'data/' + bctype + '/bclist')
+    linker_f = glob.glob(f'{root_path}/data/{bctype}/linker*')[0]
+    whitelist_f = f'{root_path}/data/{bctype}/bclist'
     return linker_f, whitelist_f
 
 
@@ -183,15 +183,16 @@ def barcode(args):
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % args.outdir)
 
-    if (args.chemistry):
-        bc_pattern = __PATTERN_DICT__[args.chemistry]
+    bc_pattern = __PATTERN_DICT__[args.chemistry]
+    if (bc_pattern):
         (linker, whitelist) = get_scope_bc(args.chemistry)
     else:
         bc_pattern = args.pattern
         linker = args.linker
         whitelist = args.whitelist
     if (not linker) or (not whitelist) or (not bc_pattern):
-        sys.exit("invalid chemistry or [pattern,linker,whitelist]")
+        barcode.logger.error("invalid chemistry or [pattern,linker,whitelist]")
+        sys.exit()
 
     # parse pattern to dict, C8L10C8L10C8U8
     # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':

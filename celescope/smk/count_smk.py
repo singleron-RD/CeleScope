@@ -123,7 +123,7 @@ def count_smk(args):
         how="left",
         left_index=True,
         right_index=True)
-        # fillna
+    # fillna
     df_cell_UMI_count.fillna(0, inplace=True)
     df_cell_UMI_count = df_cell_UMI_count.astype(int)
     df_cell_UMI_count.fillna(0, inplace=True)

@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 import subprocess
 import time
+import argparse
 from datetime import timedelta
 from collections import defaultdict
 from functools import wraps
@@ -16,6 +17,7 @@ import celescope.tools
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from celescope.tools.__init__ import __PATTERN_DICT__
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
@@ -46,6 +48,73 @@ def log(func):
 
     wrapper.logger = logger
     return wrapper
+
+
+def multi_opts(assay):
+    readme = f'{assay} multi-samples'
+    parser = argparse.ArgumentParser(readme)
+    parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
+    parser.add_argument(
+        '--mapfile',
+        help='''
+            tsv file, 4 columns:
+            1st col: LibName;
+            2nd col: DataDir;
+            3rd col: SampleName;
+            4th col: Cell number or match_dir, optional;
+        ''',
+        required=True)
+    parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version')
+    parser.add_argument('--whitelist', help='cellbarcode list')
+    parser.add_argument('--linker', help='linker')
+    parser.add_argument('--pattern', help='read1 pattern')
+    parser.add_argument('--outdir', help='output dir', default="./")
+    parser.add_argument(
+        '--adapt',
+        action='append',
+        help='adapter sequence',
+        default=[
+            'polyT=A{15}',
+            'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
+    parser.add_argument(
+        '--minimum-length',
+        dest='minimum_length',
+        help='minimum_length',
+        default=20)
+    parser.add_argument(
+        '--nextseq-trim',
+        dest='nextseq_trim',
+        help='nextseq_trim',
+        default=20)
+    parser.add_argument(
+        '--overlap',
+        help='minimum overlap length, default=5',
+        default=5)
+    parser.add_argument(
+        '--lowQual',
+        type=int,
+        help='max phred of base as lowQual',
+        default=0)
+    parser.add_argument(
+        '--lowNum',
+        type=int,
+        help='max number with lowQual allowed',
+        default=2)
+    parser.add_argument(
+        '--rm_files',
+        action='store_true',
+        help='remove redundant fq.gz and bam after running')
+    return parser
+
+
+def link_data(outdir, fq_dict):
+    raw_dir = f'{outdir}/data_give/rawdata'
+    os.system('mkdir -p %s' % (raw_dir))
+    with open(raw_dir + '/ln.sh', 'w') as fh:
+        fh.write('cd %s\n' % (raw_dir))
+        for s, arr in fq_dict.items():
+            fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
+            fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
 
 
 def gene_convert(gtf_file):
@@ -271,8 +340,9 @@ job_end
     return res_cmd
 
 
-def merge_report(fq_dict, steps, last_step, sjm_cmd,
-                 sjm_order, logdir, conda, outdir, rm_files):
+def merge_report(
+    fq_dict, steps, last_step, sjm_cmd,
+    sjm_order, logdir, conda, outdir, rm_files):
     step = "merge_report"
     steps_str = ",".join(steps)
     samples = ','.join(fq_dict.keys())
