@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, read_one_col
+from celescope.tools.utils import format_number, read_one_col, log, gen_stat
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
@@ -10,8 +10,6 @@ import glob
 from collections import defaultdict
 import matplotlib as mpl
 mpl.use('Agg')
-
-logger1 = logging.getLogger(__name__)
 
 
 def get_UMI(row):
@@ -84,9 +82,9 @@ def write_and_plot(df, column_name, count_file, plot_file):
     fig.savefig(plot_file)
 
 
+@log
 def count_smk(args):
 
-    logger1.info('count smk start...!')
     UMI_file = args.UMI_file
     match_dir = args.match_dir
     tsne_file = glob.glob(f'{match_dir}/*analysis/tsne_coord.tsv')[0]
@@ -131,9 +129,9 @@ def count_smk(args):
     df_cell_UMI_count.fillna(0, inplace=True)
 
     UMI_min = get_UMI_min(df_cell_UMI_count, UMI_min)
-    logger1.info(f'UMI_min: {UMI_min}')
+    count_smk.logger.info(f'UMI_min: {UMI_min}')
     SNR_min = get_SNR_min(df_cell_UMI_count, dim, SNR_min, UMI_min)
-    logger1.info(f'SNR_min: {SNR_min}')
+    count_smk.logger.info(f'SNR_min: {SNR_min}')
     df_cell_UMI_count["tag"] = df_cell_UMI_count.apply(
         tag_type, UMI_min=UMI_min, SNR_min=SNR_min, dim=dim, axis=1)
     df_cell_UMI_count.to_csv(UMI_tag_file, sep="\t")
@@ -170,23 +168,25 @@ def count_smk(args):
             plot_file=combine_cluster_plot
         )
 
-    df_stat = pd.DataFrame({"item": ["Dimension"], "count_percent": [dim]})
+    df_stat = pd.DataFrame({
+        "item": ["Dimension"],
+        "count": [dim],
+        "total_count": [None]
+    })
     df_tag_count = df_cell_UMI_count["tag"].value_counts(
     ).sort_values(ascending=False).reset_index()
     df_tag_count.columns = ["item", "count"]
     ncell = df_tag_count["count"].sum()
-    df_tag_count["count_percent"] = df_tag_count["count"].apply(
-        lambda x: f'{x}({round(x / ncell * 100, 2)}%)')
-    df_tag_count = df_tag_count.loc[:, ["item", "count_percent"]]
+    df_tag_count['total_count'] = ncell
     df_stat = df_stat.append(df_tag_count)
+
     stat_file = f'{outdir}/stat.txt'
-    df_stat.to_csv(stat_file, sep=":", index=False, header=None)
+    gen_stat(df_stat, stat_file)
+
     t = reporter(
         name='count_smk', assay=assay, sample=sample,
         stat_file=stat_file, outdir=outdir + '/..')
     t.get_report()
-
-    logger1.info('count smk done...!')
 
 
 def get_opts_count_smk(parser, sub_program):

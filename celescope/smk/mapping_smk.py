@@ -1,6 +1,6 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number
-from celescope.tools.utils import read_fasta, process_read
+from celescope.tools.utils import format_number, log
+from celescope.tools.utils import read_fasta, process_read, gen_stat
 from celescope.tools.barcode import parse_pattern
 import gzip
 import os
@@ -15,8 +15,6 @@ from collections import defaultdict
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-
-logger1 = logging.getLogger(__name__)
 
 
 def genDict(dim=3):
@@ -99,24 +97,24 @@ class smk_mapping:
 
         # stat
         stat = pd.DataFrame(
-            {"item": [
-                "Reads Mapped",
-                "Reads Unmapped too Short",
-                "Reads Unmapped Invalid Linker",
-                "Reads Unmapped Invalid Barcode",
-            ],
-            "count": [
-                self.metrics["Reads Mapped"],
-                self.metrics["Reads Unmapped too Short"],
-                self.metrics["Reads Unmapped Invalid Linker"],
-                self.metrics["Reads Unmapped Invalid Barcode"],
-            ],
-            }, columns=["item", "count"]
+            {
+                "item": [
+                    "Reads Mapped",
+                    "Reads Unmapped too Short",
+                    "Reads Unmapped Invalid Linker",
+                    "Reads Unmapped Invalid Barcode",
+                ],
+                "count": [
+                    self.metrics["Reads Mapped"],
+                    self.metrics["Reads Unmapped too Short"],
+                    self.metrics["Reads Unmapped Invalid Linker"],
+                    self.metrics["Reads Unmapped Invalid Barcode"],
+                ],
+            }, 
+            columns=["item", "count"]
         )
-        stat["count_percent"] = stat["count"].apply(
-            lambda x: f'{x}({round(x / self.metrics["Total Reads"] * 100, 2)}%)')
-        stat = stat.loc[:, ["item", "count_percent"]]
-        stat.to_csv(self.stat_file, sep=":", header=None, index=False)
+        stat['total_count'] = self.metrics["Total Reads"]
+        gen_stat(stat, self.stat_file)
 
     def tag_count(self):
         for barcode in self.res_dic:
@@ -128,15 +126,14 @@ class smk_mapping:
         df_umi_count = df_umi_count.T
         df_umi_count.to_csv(self.UMI_count_file, sep="\t")
 
+    @log
     def run(self):
-        logger1.info('mapping smk start...!')
         self.read_to_dic()
         self.tag_count()
         t = reporter(
             name='mapping_smk', assay="smk", sample=self.sample,
             stat_file=self.stat_file, outdir=self.outdir + '/..')
         t.get_report()
-        logger1.info('mapping smk done...!')
 
 
 def get_opts_mapping_smk(parser, sub_program):

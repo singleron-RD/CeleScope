@@ -196,10 +196,18 @@ def hamming_distance(string1, string2):
 
 def gen_stat(df, stat_file):
     # 3cols: item count total_count
-    df['percent'] = df["count"] / df['total_count']
-    df['value'] = df.apply(
-        lambda x: f"{x['count']}({round(x['percent'] * 100, 2)}%)",
-        axis=1)
+
+    def add_percent(row):
+        count = row['count']
+        percent = count / row['total_count']
+        value = f'{format_number(count)}({round(percent * 100, 2)}%)'
+        return value
+    df.loc[~df['total_count'].isna(), 'value'] = df.loc[~df['total_count'].isna(), :].apply(
+        lambda row: add_percent(row), axis=1
+    )
+    df.loc[df['total_count'].isna(), 'value'] = df.loc[df['total_count'].isna(), :].apply(
+        lambda row: f'{format_number(row["count"])}', axis=1
+    )
     df = df.loc[:, ["item", "value"]]
     df.to_csv(stat_file, sep=":", header=None, index=False)
 
