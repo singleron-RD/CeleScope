@@ -336,6 +336,49 @@ def main():
     parser_run.set_defaults(func=run)
     '''
 
+
+    # hla
+    assay = 'hla'
+    text = ASSAY_DICT[assay]
+    subparsers_hla = subparsers.add_parser(
+        assay, help=text, description=text)
+    subparsers_hla_sub = subparsers_hla.add_subparsers()
+
+    parser_sample = subparsers_hla_sub.add_parser('sample')
+    get_opts_sample(parser_sample, True)
+    parser_sample.set_defaults(func=sample_info)
+
+    parser_barcode = subparsers_hla_sub.add_parser('barcode')
+    get_opts_barcode(parser_barcode, True)
+    parser_barcode.set_defaults(func=barcode)
+
+    parser_cutadapt = subparsers_hla_sub.add_parser('cutadapt')
+    get_opts_cutadapt(parser_cutadapt, True)
+    parser_cutadapt.set_defaults(func=cutadapt)
+
+    from celescope.hla.mapping_hla import mapping_hla, get_opts_mapping_hla
+    parser_mapping_hla = subparsers_hla_sub.add_parser('mapping_hla')
+    get_opts_mapping_hla(parser_mapping_hla, True)
+    parser_mapping_hla.set_defaults(func=mapping_hla)
+
+    '''
+    from celescope.hla.count_hla import count_hla, get_opts_count_hla
+    parser_count_hla = subparsers_hla_sub.add_parser('count_hla')
+    get_opts_count_hla(parser_count_hla, True)
+    parser_count_hla.set_defaults(func=count_hla)
+
+    from celescope.hla.run import run
+    parser_run = subparsers_fusion_sub.add_parser(
+        'run', help='run all steps', conflict_handler='resolve')
+    get_opts_sample(parser_run, False)
+    get_opts_barcode(parser_run, False)
+    get_opts_cutadapt(parser_run, False)
+    get_opts_mapping_hla(parser_run, False)
+    get_opts_count_hla(parser_run, False)
+    parser_run.set_defaults(func=run)
+    '''
+
+
     args = parser.parse_args()
     args.func(args)
 
