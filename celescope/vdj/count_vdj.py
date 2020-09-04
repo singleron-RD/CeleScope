@@ -1,7 +1,7 @@
 import glob
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, log
+from celescope.tools.utils import format_number, log, read_barcode_file
 import gzip
 import os
 import pandas as pd
@@ -66,13 +66,7 @@ def count_vdj(args):
     else:
         match_bool = True
     if match_bool:
-        match_barcode_file1 = glob.glob(
-            f"{match_dir}/*count/*_cellbarcode.tsv")
-        match_barcode_file2 = glob.glob(
-            f"{match_dir}/*count/matrix_10X/*_cellbarcode.tsv")
-        match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
-        count_vdj.logger.info("match scRNA-Seq directory found: " + match_dir)
-        match_cell_barcodes = pd.read_csv(match_barcode_file, header=None)
+        match_cell_barcodes, match_cell_number = read_barcode_file(match_dir)
 
     cell_summary_row_list = []
 
@@ -188,8 +182,6 @@ def count_vdj(args):
         intersect cell_barcodes from scRNA-Seq with barcode from TCR seq
         """
         if match_bool:
-            match_cell_barcodes = set(match_cell_barcodes[0])
-            match_cell_number = len(match_cell_barcodes)
             cell_with_match_barcode = match_cell_barcodes.intersection(
                 cell_barcodes)
             cell_with_match_barcode_number = len(cell_with_match_barcode)
@@ -269,8 +261,6 @@ def count_vdj(args):
         intersect cell_barcodes from normal scRNA-Seq with barcode from BCR seq
         """
         if match_bool:
-            match_cell_barcodes = set(match_cell_barcodes[0])
-            match_cell_number = len(match_cell_barcodes)
             cell_with_match_barcode = match_cell_barcodes.intersection(
                 cell_barcodes)
             cell_with_match_barcode_number = len(cell_with_match_barcode)

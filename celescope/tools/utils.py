@@ -50,6 +50,20 @@ def log(func):
     return wrapper
 
 
+def read_barcode_file(match_dir):
+    '''
+    multi version compatible
+    '''
+    match_barcode_file1 = glob.glob(
+        f"{match_dir}/05.count/*_cellbarcode.tsv")
+    match_barcode_file2 = glob.glob(
+        f"{match_dir}/05.count/*matrix_10X/*_cellbarcode.tsv")
+    match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
+    match_barcode, cell_total = read_one_col(match_barcode_file)
+    match_barcode = set(match_barcode)
+    return match_barcode, cell_total
+
+
 def format_stat(count, total_count):
     percent = round(count / total_count * 100, 2)
     string = f'{count}({percent}%)'
