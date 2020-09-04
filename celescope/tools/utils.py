@@ -362,7 +362,7 @@ job_end
 
 def merge_report(
     fq_dict, steps, last_step, sjm_cmd,
-    sjm_order, logdir, conda, outdir, rm_files):
+    sjm_order, logdir, conda, outdir, rm_files):    
     step = "merge_report"
     steps_str = ",".join(steps)
     samples = ','.join(fq_dict.keys())
@@ -401,6 +401,8 @@ def glob_genomeDir(genomeDir):
         sys.exit("ERROR: gtf file not found in " + genomeDir)
     elif (len(gtf) > 1):
         gtf = glob.glob(genomeDir + "/*.chr.gtf")
+        if (len(gtf) == 0):
+            sys.exit("ERROR: No chr gtf file in "+ genomeDir)
         if (len(gtf) > 1):
             sys.exit("ERROR: Multiple gtf file in " + genomeDir)
         else:
