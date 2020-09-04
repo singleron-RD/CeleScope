@@ -329,8 +329,6 @@ def barcode(args):
     fh3.close()
 
     # stat
-    # print(barcode_qual_Counter)
-    # print(umi_qual_Counter)
     BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(
         30)]) / float(sum(barcode_qual_Counter.values())) * 100
     UMIsQ30 = sum([umi_qual_Counter[k] for k in umi_qual_Counter if k >= ord2chr(

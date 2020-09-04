@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, read_one_col, log, format_stat
+from celescope.tools.utils import format_number, read_barcode_file, log, format_stat
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
@@ -92,11 +92,6 @@ def count_smk(args):
     read_file = args.read_file
     match_dir = args.match_dir
     tsne_file = glob.glob(f'{match_dir}/*analysis/tsne_coord.tsv')[0]
-    match_barcode_file1 = glob.glob(
-        "{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file2 = glob.glob(
-        "{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
     UMI_min = args.UMI_min
     SNR_min = args.SNR_min
     dim = int(args.dim)
@@ -112,7 +107,7 @@ def count_smk(args):
     stats = pd.Series()
 
     # process
-    match_barcode, cell_total = read_one_col(match_barcode_file)
+    match_barcode, cell_total = read_barcode_file(match_dir)
 
     UMI_tag_file = f'{outdir}/{sample}_umi_tag.tsv'
     tsne_tag_file = f'{outdir}/{sample}_tsne_tag.tsv'

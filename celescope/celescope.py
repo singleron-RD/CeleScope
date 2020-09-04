@@ -336,7 +336,6 @@ def main():
     parser_run.set_defaults(func=run)
     '''
 
-
     # hla
     assay = 'hla'
     text = ASSAY_DICT[assay]
@@ -377,7 +376,6 @@ def main():
     get_opts_count_hla(parser_run, False)
     parser_run.set_defaults(func=run)
     '''
-
 
     args = parser.parse_args()
     args.func(args)
