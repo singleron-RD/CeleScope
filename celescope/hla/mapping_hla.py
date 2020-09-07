@@ -1,5 +1,4 @@
 import os
-import gzip
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 import celescope
@@ -58,7 +57,7 @@ def split_bam(out_bam, outdir, barcodes, sample):
                 count_dict[barcode][umi] += 1
             else:
                 count_dict[barcode][umi] = 1
-    
+
     # write new bam
     index = 0
     for barcode in barcodes:
@@ -154,8 +153,7 @@ def mapping_hla(args):
     valid_index_dict = hla_typing(index_dict, outdir, thread)
 
     # summary
-    summary()
-
+    summary(valid_index_dict, outdir)
 
 
 def get_opts_mapping_hla(parser, sub_program):
