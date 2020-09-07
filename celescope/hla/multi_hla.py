@@ -20,12 +20,6 @@ def main():
 
     # parser
     parser = multi_opts(assay)
-    parser.add_argument('--starMem', help='starMem', default=30)
-    parser.add_argument('--genomeDir', help='genome index dir', required=True)
-    parser.add_argument(
-        '--gtf_type',
-        help='Specify attribute type in GTF annotation, default=exon',
-        default='exon')
     parser.add_argument('--thread', help='thread', default=6)
     args = parser.parse_args()
 
@@ -41,16 +35,13 @@ def main():
     rm_files = args.rm_files
 
     # parse mapfile
-    fq_dict, cells_dict = parse_map_col4(args.mapfile, "auto")
+    fq_dict, match_dict = parse_map_col4(args.mapfile, None)
 
     # link
     link_data(outdir, fq_dict)
 
     # custom args
     thread = args.thread
-    genomeDir = args.genomeDir
-    starMem = args.starMem
-    gtf_type = args.gtf_type
 
     # mk log dir
     logdir = outdir + '/log'
@@ -110,63 +101,22 @@ def main():
         shell += cmd + '\n'
         last_step = step
 
-        # STAR
-        step = 'STAR'
+        # mapping_hla
+        step = 'mapping_hla'
         fq = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
         cmd = (
             f'{app} {assay} {step} '
             f'--fq {fq} --sample {sample} '
-            f'--genomeDir {genomeDir} --thread {thread} ' 
+            f'--thread {thread} '
+            f'--match_dir {match_dict[sample]} '
             f'--outdir {outdir_dic[step]} --assay {assay} '
         )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=starMem, x=thread)
+        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=30, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         shell += cmd + '\n'
         last_step = step
 
-        # featureCounts
-        step = 'featureCounts'
-        input = f'{outdir_dic["STAR"]}/{sample}_Aligned.sortedByCoord.out.bam'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--input {input} --gtf_type {gtf_type} '
-            f'--sample {sample} --thread {thread} --outdir {outdir_dic[step]} '
-            f'--genomeDir {genomeDir} --assay {assay} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
-        last_step = step
-
-        # count
-        step = 'count'
-        bam = f'{outdir_dic["featureCounts"]}/{sample}_name_sorted.bam'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--bam {bam} --sample {sample} --cells {cells_dict[sample]} '
-            f'--outdir {outdir_dic[step]} --assay {assay} '
-            f'--genomeDir {genomeDir}'
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
-        last_step = step
-
-        # analysis
-        step = 'analysis'
-        matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.tsv.gz'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--matrix_file {matrix_file} --sample {sample} '
-            f'--outdir {outdir_dic[step]} '
-            f'--assay {assay} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
-        last_step = step
-
-    # merged report
+     # merged report
     if mod == 'sjm':
         step = 'merge_report'
         merge_report(

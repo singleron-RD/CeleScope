@@ -8,4 +8,5 @@ ASSAY_DICT = {
     'smk': "Single Cell SMK",
     'vdj': "Single Cell VDJ",
     'mut': 'Single Cell Mutation',
+    'hla': 'Single Cell HLA',
 }

@@ -58,7 +58,12 @@ def read_barcode_file(match_dir):
         f"{match_dir}/05.count/*_cellbarcode.tsv")
     match_barcode_file2 = glob.glob(
         f"{match_dir}/05.count/*matrix_10X/*_cellbarcode.tsv")
-    match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
+    match_barcode_file3 = glob.glob(
+        f"{match_dir}/05.count/*matrix_10X/*barcodes.tsv")
+    match_barcode_file = (
+        match_barcode_file1 +
+        match_barcode_file2 +
+        match_barcode_file3)[0]
     match_barcode, cell_total = read_one_col(match_barcode_file)
     match_barcode = set(match_barcode)
     return match_barcode, cell_total
@@ -305,10 +310,14 @@ def get_fq(library_id, library_path):
     try:
         pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
         pattern1_2 = f'{library_path}/*{library_id}*R1.fastq.gz'
+        pattern1_3 = f'{library_path}/*{library_id}*R1_001.fastq.gz'
         pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
         pattern2_2 = f'{library_path}/*{library_id}*R2.fastq.gz'
-        fq1 = ",".join(glob.glob(pattern1_1) + glob.glob(pattern1_2))
-        fq2 = ",".join(glob.glob(pattern2_1) + glob.glob(pattern2_2))
+        pattern2_3 = f'{library_path}/*{library_id}*R2_001.fastq.gz'
+        fq1 = ",".join(glob.glob(pattern1_1) + glob.glob(pattern1_2) + glob.glob(pattern1_3))
+        fq2 = ",".join(glob.glob(pattern2_1) + glob.glob(pattern2_2) + glob.glob(pattern2_3))
+        if len(fq1) == 0:
+            sys.exit('Invalid fastq name pattern!')
     except IndexError as e:
         sys.exit("Mapfile Error:" + str(e))
     return fq1, fq2
