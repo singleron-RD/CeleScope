@@ -71,7 +71,7 @@ def split_bam(out_bam, outdir, barcodes, sample):
             cell_dir = f'{cells_dir}/cell{index}'
             cell_bam_file = f'{cell_dir}/cell{index}.bam'
             if not os.path.exists(cell_dir):
-                os.makedirs(cell_dir) 
+                os.makedirs(cell_dir)
             index_dict[index]['valid'] = True
             cell_bam = pysam.AlignmentFile(
                 f'{cell_bam_file}', "wb", header=header)
@@ -123,8 +123,26 @@ def hla_typing(index_dict, outdir, thread):
 
 
 @log
-def summary(valid_index_dict, outdir):
-    pass
+def summary(valid_index_dict, outdir, sample):
+    n = 0
+    for index in valid_index_dict:
+        try:
+            sub_df = pd.read_csv(f'{outdir}/cells/cell{index}/cell{index}_result.tsv', sep='\t', index_col=0)
+        except Exception:
+            continue
+        n += 1
+        sub_df['barcode'] = valid_index_dict[index]
+        sub_df.index = [index]
+        if n == 1:
+            all_df = sub_df
+        else:
+            all_df = all_df.append(sub_df, ignore_index=True)
+    all_df['Reads'] = all_df['Reads'].apply(lambda x: int(x))
+    all_df = all_df[all_df['Reads'] != 0]
+    all_df.index.name = 'Cell_ID'
+    all_df = all_df.drop('Objective', axis=1)
+    out_file = f'{outdir}/{sample}_typing.tsv'
+    all_df.to_csv(out_file, sep='\t')
 
 
 @log
@@ -153,7 +171,7 @@ def mapping_hla(args):
     valid_index_dict = hla_typing(index_dict, outdir, thread)
 
     # summary
-    summary(valid_index_dict, outdir)
+    summary(valid_index_dict, outdir, sample)
 
 
 def get_opts_mapping_hla(parser, sub_program):
