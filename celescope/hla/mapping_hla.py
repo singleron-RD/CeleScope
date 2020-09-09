@@ -19,7 +19,7 @@ def razer(fq, outdir, sample, thread):
     if not os.path.exists(out_bam_dir):
         os.mkdir(out_bam_dir)
 
-    # out_bam    
+    # out_bam
     out_bam = f'{outdir}/bam/{sample}.bam'
 
     # run
@@ -36,15 +36,25 @@ def razer(fq, outdir, sample, thread):
 
 
 @log
-def split_bam(out_bam, outdir, barcodes, sample):
+def split_bam(out_bam, barcodes, outdir, sample):
+    '''
+    input:
+        out_bam: from razers3
+        barcodes: cell barcodes
+    ouput:
+        bam_dict: assign reads to cell barcodes and UMI
+        count_dict: UMI counts per cell
+        index: assign index(1-based) to cells
+    '''
 
     # init
     count_dict = defaultdict(dict)
-    bam_dict = defaultdict(list)
+    bam_dict = defaultdict(dict)
     index_dict = defaultdict(dict)
     cells_dir = f'{outdir}/cells/'
 
     # read bam and split
+    split_bam.logger.info('reading bam...')
     samfile = pysam.AlignmentFile(out_bam, "rb")
     header = samfile.header
     for read in samfile:
@@ -52,12 +62,15 @@ def split_bam(out_bam, outdir, barcodes, sample):
         barcode = attr[0]
         umi = attr[1]
         if barcode in barcodes:
-            bam_dict[barcode].append(read)
+            # keep one read for each UMI
+            if umi not in bam_dict[barcode]:
+                bam_dict[barcode][umi] = read
             if umi in count_dict[barcode]:
                 count_dict[barcode][umi] += 1
             else:
                 count_dict[barcode][umi] = 1
 
+    split_bam.logger.info('writing cell bam...')
     # write new bam
     index = 0
     for barcode in barcodes:
@@ -75,21 +88,27 @@ def split_bam(out_bam, outdir, barcodes, sample):
             index_dict[index]['valid'] = True
             cell_bam = pysam.AlignmentFile(
                 f'{cell_bam_file}', "wb", header=header)
-            for read in bam_dict[barcode]:
+            for umi in bam_dict[barcode]:
+                read = bam_dict[barcode][umi]
                 cell_bam.write(read)
             cell_bam.close()
 
     # out df_index
     df_index = pd.DataFrame(index_dict).T
+    df_index.index.name = 'cell_index'
     index_file = f'{outdir}/{sample}_cell_index.tsv'
     df_index.to_csv(index_file, sep='\t')
 
     # out count_dict
     df_count = pd.DataFrame(count_dict).T
+    df_temp = df_count.stack()
+    df_temp = df_temp.astype(int)
+    df_temp = df_temp.reset_index()
+    df_temp.columns = ['barcode', 'UMI', 'read_count']
     count_file = f'{outdir}/{sample}_UMI_count.tsv'
-    df_count.to_csv(count_file, sep='\t')
+    df_temp.to_csv(count_file, sep='\t', index=False)
 
-    return count_dict, index_dict
+    return index_file, count_file
 
 
 def sub_typing(bam):
@@ -107,42 +126,48 @@ def sub_typing(bam):
     os.system(cmd)
 
 
-@log
-def hla_typing(index_dict, outdir, thread):
-    all_res = []
-    valid_index_dict = {}
-    for index in index_dict:
-        if index_dict[index]['valid']:
-            valid_index_dict[index] = index_dict[index]['barcode']
+def read_index(index_file):
+    df_index = pd.read_csv(index_file, sep='\t', index_col=0, dtype=object)
+    df_valid = df_index[df_index['valid'] == 'True']
+    return df_valid
 
-    bams = [f'{outdir}/cells/cell{index}/cell{index}.bam' for index in valid_index_dict]
+
+@log
+def hla_typing(index_file, outdir, thread):
+    all_res = []
+    df_valid = read_index(index_file)
+
+    bams = [
+        f'{outdir}/cells/cell{index}/cell{index}.bam' for index in df_valid.index]
     with ProcessPoolExecutor(thread) as pool:
         for res in pool.map(sub_typing, bams):
             all_res.append(res)
-    return valid_index_dict
 
 
 @log
-def summary(valid_index_dict, outdir, sample):
+def summary(index_file, outdir, sample):
+    
     n = 0
-    for index in valid_index_dict:
+    df_valid = read_index(index_file)
+    
+    for index in df_valid.index:
         try:
-            sub_df = pd.read_csv(f'{outdir}/cells/cell{index}/cell{index}_result.tsv', sep='\t', index_col=0)
+            sub_df = pd.read_csv(
+                f'{outdir}/cells/cell{index}/cell{index}_result.tsv', sep='\t', index_col=0)
         except Exception:
             continue
         n += 1
-        sub_df['barcode'] = valid_index_dict[index]
-        sub_df.index = [index]
+        sub_df['barcode'] = df_valid.loc[index, :]['barcode']
+        sub_df['cell_index'] = index
         if n == 1:
             all_df = sub_df
         else:
             all_df = all_df.append(sub_df, ignore_index=True)
     all_df['Reads'] = all_df['Reads'].apply(lambda x: int(x))
     all_df = all_df[all_df['Reads'] != 0]
-    all_df.index.name = 'Cell_ID'
     all_df = all_df.drop('Objective', axis=1)
     out_file = f'{outdir}/{sample}_typing.tsv'
-    all_df.to_csv(out_file, sep='\t')
+    all_df.to_csv(out_file, sep='\t', index=False)
 
 
 @log
@@ -165,13 +190,13 @@ def mapping_hla(args):
     out_bam = razer(fq, outdir, sample, thread)
 
     # split bam
-    _count_dict, index_dict = split_bam(out_bam, outdir, barcodes, sample)
+    index_file, _count_file = split_bam(out_bam, barcodes, outdir, sample)
 
     # typing
-    valid_index_dict = hla_typing(index_dict, outdir, thread)
+    hla_typing(index_file, outdir, thread)
 
     # summary
-    summary(valid_index_dict, outdir, sample)
+    summary(index_file, outdir, sample)
 
 
 def get_opts_mapping_hla(parser, sub_program):
@@ -180,5 +205,6 @@ def get_opts_mapping_hla(parser, sub_program):
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument("--fq", required=True)
         parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument("--match_dir", help="match scRNA-Seq dir", required=True)
+    parser.add_argument(
+        "--match_dir", help="match scRNA-Seq dir", required=True)
     parser.add_argument("--thread", help='number of thread', default=1)
