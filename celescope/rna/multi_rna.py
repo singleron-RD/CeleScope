@@ -59,7 +59,7 @@ def main():
     # script init
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
-    shell = ''
+    shell_dict = defaultdict(str)
 
     # outdir dict
     for sample in fq_dict:
@@ -78,7 +78,7 @@ def main():
             f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda)
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # barcode
@@ -94,7 +94,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # adapt
@@ -107,7 +107,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # STAR
@@ -121,7 +121,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=starMem, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # featureCounts
@@ -135,7 +135,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # count
@@ -149,7 +149,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # analysis
@@ -163,7 +163,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
     # merged report
@@ -182,8 +182,9 @@ def main():
         )
     if mod == 'shell':
         os.system('mkdir -p ./shell/')
-        with open(f'./shell/{sample}.sh', 'w') as f:
-            f.write(shell)
+        for sample in shell_dict:
+            with open(f'./shell/{sample}.sh', 'w') as f:
+                f.write(shell_dict[sample])
 
 
 if __name__ == '__main__':
