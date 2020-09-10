@@ -37,7 +37,7 @@ setuptools.setup(
         'pandas==0.23.4',
         'jinja2>=2.10',
         'matplotlib>=2.2.2',
-        'xopen==0.5.0',
+        'xopen>=0.5.0',
         'editdistance>=0.5.3'
     ]
 )
