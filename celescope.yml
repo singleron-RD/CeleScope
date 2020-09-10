@@ -5,6 +5,7 @@ channels:
   - r
   - defaults
 dependencies:
+  - editdistance=0.5.3
   - _r-mutex=1.0.1=anacondar_1
   - bcftools=1.9=ha228f0b_3
   - blas=1.0=mkl
