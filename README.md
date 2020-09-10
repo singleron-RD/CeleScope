@@ -13,7 +13,7 @@ GEXSCOPE Single Cell Analysis Tool Kit
 ```
 git clone https://github.com/zhouyiqi91/CeleScope.git
 cd CeleScope
-source build.sh
+source setup.sh
 ```
 
 ## Reference genome 
