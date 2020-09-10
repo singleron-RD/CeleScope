@@ -27,7 +27,7 @@ percent.mito <- Matrix::colSums(rds@raw.data[mito.genes,])/Matrix::colSums(rds@r
 rds <- AddMetaData(object = rds, metadata = percent.mito, col.name = "percent.mito")
 meta = rds@meta.data
 total_cell = dim(meta)[1]
-percent_list = c(0.05,0.1,0.15,0.2)
+percent_list = c(0.05,0.1,0.15,0.2,0.5)
 mito_df = dplyr::tibble(mito_percent=numeric(),cell_percent=numeric())
 for (percent in percent_list){
   cell_percent = sum(meta$percent.mito > percent) / total_cell
