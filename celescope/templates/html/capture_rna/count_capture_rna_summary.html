@@ -22,7 +22,7 @@
             </tr>
           {% endfor %}
         </table>
-        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 5%;margin-right:0%; width: 47%">
           <script>
               var index1 = [];
               for (var i = 0; i < {{ CB_num }}; i++) {
@@ -90,7 +90,7 @@
         <hr />
         
 
-        <div id="myDivSaturation" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
+        <div id="myDivSaturation" style="float: left; margin-left: 3%; margin-top: 3%; margin-right:0%; width: 47%">
           <script>
             var data = [{
               x: {{ percentile|safe }},
@@ -132,7 +132,7 @@
           </script>
         </div>
         
-        <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
+        <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 3%; margin-right:0%; width: 47%">
           <script>
             var data = [{
               x: {{ percentile|safe }},

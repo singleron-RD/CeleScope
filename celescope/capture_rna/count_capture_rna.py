@@ -234,16 +234,22 @@ def expression_matrix(
     match_cell_str = f'{format_number(n_match_cell)}({match_percent}%)'
     
     df_match = table.loc[:, match_cell]
+    df_match.to_csv(
+        f"{outdir}/{sample}_match_matrix.tsv.gz",
+        sep="\t",
+        compression='gzip')
 
     match_UMI_median = df_match.apply(np.median, axis=1)
-    UMI_mean = df_match.apply(np.mean, axis=1)
-    df_count = pd.DataFrame({"UMI_median": UMI_median, 'UMI_mean': UMI_mean})
+    match_UMI_mean = df_match.apply(np.mean, axis=1)
+    df_count = pd.DataFrame({"UMI_median": match_UMI_median, 'UMI_mean': match_UMI_mean})
     df_count = df_count.sort_values(['UMI_median', 'UMI_mean'], ascending=False)
     df_count.to_csv(f'{outdir}/{sample}_match_UMI_count.tsv', sep='\t')
 
     # median count
+    df_match_cell_UMI_count = df_match.apply(sum, axis=0)
+    match_cell_UMI_median = int(np.median(df_match_cell_UMI_count))
 
-    return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome, match_cell_str, match_UMI_median)
+    return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome, match_cell_str, match_cell_UMI_median)
 
 
 def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
