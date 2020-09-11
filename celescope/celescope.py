@@ -377,6 +377,47 @@ def main():
     parser_run.set_defaults(func=run)
     '''
 
+    # capture_rna
+    assay = 'capture_rna'
+    text = ASSAY_DICT[assay]
+    subparsers_capture_rna = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_capture_rna_sub = subparsers_capture_rna.add_subparsers()
+
+    from celescope.tools.sample_info import sample_info, get_opts_sample
+    parser_sample = subparsers_capture_rna_sub.add_parser('sample')
+    get_opts_sample(parser_sample, True)
+    parser_sample.set_defaults(func=sample_info)
+
+    from celescope.tools.barcode import barcode, get_opts_barcode
+    parser_barcode = subparsers_capture_rna_sub.add_parser('barcode')
+    get_opts_barcode(parser_barcode, True)
+    parser_barcode.set_defaults(func=barcode)
+
+    from celescope.tools.cutadapt import cutadapt, get_opts_cutadapt
+    parser_cutadapt = subparsers_capture_rna_sub.add_parser('cutadapt')
+    get_opts_cutadapt(parser_cutadapt, True)
+    parser_cutadapt.set_defaults(func=cutadapt)
+
+    from celescope.tools.STAR import STAR, get_opts_STAR
+    parser_STAR = subparsers_capture_rna_sub.add_parser('STAR')
+    get_opts_STAR(parser_STAR, True)
+    parser_STAR.set_defaults(func=STAR)
+
+    from celescope.tools.featureCounts import featureCounts, get_opts_featureCounts
+    parser_featureCounts = subparsers_capture_rna_sub.add_parser('featureCounts')
+    get_opts_featureCounts(parser_featureCounts, True)
+    parser_featureCounts.set_defaults(func=featureCounts)
+
+    from celescope.capture_rna.count_capture_rna import count_capture_rna, get_opts_count_capture_rna
+    parser_count_capture_rna = subparsers_capture_rna_sub.add_parser('count_capture_rna')
+    get_opts_count_capture_rna(parser_count_capture_rna, True)
+    parser_count_capture_rna.set_defaults(func=count_capture_rna)
+
+    from celescope.tools.analysis import analysis, get_opts_analysis
+    parser_analysis = subparsers_capture_rna_sub.add_parser('analysis')
+    get_opts_analysis(parser_analysis, True)
+    parser_analysis.set_defaults(func=analysis)
+
     args = parser.parse_args()
     args.func(args)
 

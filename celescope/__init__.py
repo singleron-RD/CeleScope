@@ -1,5 +1,5 @@
 __VERSION__ = "1.1.4"
-__CONDA__ = "scope1.0"
+__CONDA__ = "cele_conda2"
 ASSAY_DICT = {
     "rna": "Single Cell RNA-Seq",
     "rna_virus": "Single Cell RNA-Seq Virus",
@@ -9,4 +9,5 @@ ASSAY_DICT = {
     'vdj': "Single Cell VDJ",
     'mut': 'Single Cell Mutation',
     'hla': 'Single Cell HLA',
+    'capture_rna': 'Single Cell Capture RNA',
 }
