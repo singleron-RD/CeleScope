@@ -1,0 +1,186 @@
+    <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+      <h2>Cells    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+
+      <div class="box">
+        <div class="description" style="display: none;">
+          <p><b>Estimated Number of Cells</b> : the number of barcodes considered as cell-associated.</p>
+          <p><b>Fraction Reads in Cells</b> : the fraction of uniquely-mapped-to-transcriptome reads with cell-associated barcodes.</p>           
+          <p><b>Mean Reads per Cell</b> : the number of valid reads divided by the estimated number of cells.</p>
+          <p><b>Median UMI per Cell</b> : the median number of UMI counts per cell-associated barcode.</p>
+          <p><b>Total Genes</b> : the number of genes with at least one UMI count in any cell.</p>
+          <p><b>Median Genes per Cell</b> : the median number of genes detected per cell-associated barcode.</p>
+          <p><b>Saturation</b> : the fraction of UMI originating from an already-observed UMI.</p>
+          <p><b>Saturation</b> : the fraction of UMI originating from an already-observed UMI.</p>
+          <p><b>Saturation</b> : the fraction of UMI originating from an already-observed UMI.</p>
+      </div>
+        <table style="float: left; margin-left: 0%; margin-top: 0%; margin-right:3%; width: 47%">
+          {% for item in count_capture_rna_summary %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </table>
+        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 5%;margin-right:0%; width: 47%">
+          <script>
+              var index1 = [];
+              for (var i = 0; i < {{ CB_num }}; i++) {
+                  index1.push(i + 1)
+              }
+
+              var index2 = [];
+              for (var i = 0; i < {{ UB_num }}; i++) {
+                  index2.push(i + 1 + {{ CB_num }})
+              }
+
+              var trace0 = {
+                  x: index1,
+                  y: {{ Cells }},
+                  mode: 'lines',
+                  name: 'Cells',
+                  line: {
+                      color: '#337bb6',
+                      width: 3
+                  }
+              };
+              var trace1 = {
+                  x: index2,
+                  y: {{ Background }},
+                  mode: 'lines',
+                  name: 'Background',
+                  line: {
+                      color: '#D3D3D3',
+                      width: 3
+                  }
+              };
+              var data = [ trace0, trace1 ];
+              var layout = {
+                  height: 313,
+                  width: 470,
+                  margin: {
+                        l: 50,
+                        r: 0,
+                        b: 30,
+                        t: 30,
+                  },
+                  title: 'Barcode Rank', 
+                  xaxis: {
+                      title: 'Barcodes',
+                      type: 'log'
+                  },
+                  yaxis: {
+                      title: 'UMI counts',
+                      type: 'log'
+                  },
+              };
+
+              var config = { 
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            };
+              Plotly.newPlot('myDivUMI', data, layout, config);
+          </script>       
+        </div>
+        
+        <hr />
+        
+
+        <div id="myDivSaturation" style="float: left; margin-left: 3%; margin-top: 3%; margin-right:0%; width: 47%">
+          <script>
+            var data = [{
+              x: {{ percentile|safe }},
+              y: {{ Saturation|safe }},
+              mode: 'lines'
+            }];
+            var layout = {
+                height: 313,
+                width: 400,
+                margin: {
+                    l: 45,
+                    r: 35,
+                    b: 30,
+                    t: 30,
+                },
+                
+                title: 'Sequencing Saturation',
+                xaxis: {
+                    title: 'Reads Fraction',
+                },
+                yaxis: {
+                    title: 'Sequencing Saturation(%)',
+                    range: [0, 100]
+                },
+                
+                showlegend: false,
+
+            };
+
+            var config = { 
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            };
+            Plotly.newPlot('myDivSaturation', data, layout, config);
+          </script>
+        </div>
+        
+        <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 3%; margin-right:0%; width: 47%">
+          <script>
+            var data = [{
+              x: {{ percentile|safe }},
+              y: {{ MedianGeneNum|safe }},
+              mode: 'lines'
+            }];
+            var layout = {
+                height: 313,
+                width: 400,
+                margin: {
+                    l: 45,
+                    r: 35,
+                    b: 30,
+                    t: 30,
+                },
+                title: 'Median Genes per Cell',
+                xaxis: {
+                    title: 'Reads Fraction',
+                },
+                yaxis: {
+                    title: 'Median Genes per Cell',
+                    rangemode: 'tozero',
+                },
+                showlegend: false,
+
+            };
+
+     //  Modebar Buttons names at https://github.com/plotly/plotly.js/blob/master/src/components/modebar/buttons.js
+     //  - sendDataToCloud 
+     //  - (2D): zoom2d, pan2d, select2d, lasso2d, zoomIn2d, zoomOut2d, autoScale2d, resetScale2d
+     //  - (Cartesian): hoverClosestCartesian, hoverCompareCartesian 
+     //  - (3D): zoom3d, pan3d, orbitRotation, tableRotation, handleDrag3d, resetCameraDefault3d, resetCameraLastSave3d, hoverClosest3d
+     //  - (Geo): zoomInGeo, zoomOutGeo, resetGeo, hoverClosestGeo
+     //  - hoverClosestGl2d, hoverClosestPie, toggleHover, resetViews 
+
+
+            var config = { 
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            };
+            Plotly.newPlot('myDivMedianGeneNum', data, layout, config);
+          </script>
+        </div>
+
+        <div class="clear" ></div>
+      </div>
+    </div>
