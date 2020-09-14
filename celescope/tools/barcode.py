@@ -283,7 +283,7 @@ def barcode(args):
             break
 
         total_num += 1
-        # if total_num > 10000: total_num-= 1; break
+
 
         # polyT filter
         if bool_T:
@@ -339,12 +339,18 @@ def barcode(args):
             readID=header2.strip().split(' ')[0][1:], cellbarcode=cb,
             umi=umi, seq=seq2, qual=qual2))
         clean_num += 1
+        if total_num % 1000000 == 0:
+            barcode.logger.info(f'processed reads: {total_num}. valid reads: {clean_num}')
 
         barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
         umi_qual_Counter.update(C_U_quals_ascii[C_len:])
         C_U_base_Counter.update(raw_cb + umi)
 
     fh3.close()
+
+    # logging
+    if total_num % 1000000 != 0:
+        barcode.logger.info(f'processed reads: {total_num}. valid reads: {clean_num}')
 
     # stat
     BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(
