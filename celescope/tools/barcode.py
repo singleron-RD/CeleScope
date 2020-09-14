@@ -177,6 +177,21 @@ def no_linker(seq, linker_dict):
     return False if seq in linker_dict else True
 
 
+def check_seq(seq_file, pattern_dict, seq_abbr):
+    length = 0
+    for item in pattern_dict[seq_abbr]:
+        start = item[0]
+        end = item[1]
+        length += end - start
+    with open(seq_file, 'r') as fh:
+        for seq in fh:
+            seq = seq.strip()
+            if seq == '':
+                continue
+            if len(seq) != length:
+                raise Exception(f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
+
+
 @log
 def barcode(args):
 
@@ -199,7 +214,10 @@ def barcode(args):
     # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
     # [[44, 52]], 'L': [[8, 18], [26, 36]]})
     pattern_dict = parse_pattern(bc_pattern)
-    #pattern_dict = parse_pattern(args.pattern)
+
+    # check linker
+    check_seq(linker, pattern_dict, "L")
+
     bool_T = True if 'T' in pattern_dict else False
     bool_L = True if 'L' in pattern_dict else False
 
