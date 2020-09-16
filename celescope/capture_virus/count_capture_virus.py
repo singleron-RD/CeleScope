@@ -3,14 +3,11 @@ import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
-import logging
 import os
 import glob
 from collections import defaultdict
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, read_barcode_file, log
 from celescope.tools.report import reporter
-
-logger1 = logging.getLogger(__name__)
 
 
 def genDict(dim=3):
@@ -20,6 +17,7 @@ def genDict(dim=3):
         return defaultdict(lambda: genDict(dim - 1))
 
 
+@log
 def sum_virus(validated_barcodes, virus_bam,
               out_read_count_file, out_umi_count_file):
     # process bam
@@ -40,7 +38,7 @@ def sum_virus(validated_barcodes, virus_bam,
             for umi in count_dic[barcode][tag]:
                 rows.append([barcode, tag, umi, count_dic[barcode][tag][umi]])
     if len(rows) == 0:
-        logging.warning("No cell virus UMI found!")
+        sum_virus.logger.warning("No cell virus UMI found!")
 
     df_read = df_read = pd.DataFrame(
         rows,
@@ -55,31 +53,25 @@ def sum_virus(validated_barcodes, virus_bam,
     df_umi.to_csv(out_umi_count_file, sep="\t")
 
 
+@log
 def count_capture_virus(args):
 
-    logger1.info('virus count start...!')
 
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % (args.outdir))
 
     # read barcodes
-    barcode_file = glob.glob(
-        f'{args.match_dir}/*count/matrix_10X/*_cellbarcode.tsv')[0]
-    logger1.info(f'barcode file found: {barcode_file}')
-    df_barcodes = pd.read_csv(barcode_file, header=None)
-    validated_barcodes = list(df_barcodes.iloc[:, 0])
+    match_cell_barcodes, _match_cell_number = read_barcode_file(args.match_dir)
 
     # count virus
     out_read_count_file = args.outdir + "/" + args.sample + "_virus_read_count.tsv"
     out_umi_count_file = args.outdir + "/" + args.sample + "_virus_UMI_count.tsv"
     sum_virus(
-        validated_barcodes,
+        match_cell_barcodes,
         args.virus_bam,
         out_read_count_file,
         out_umi_count_file)
-
-    logger1.info('virus count done!')
 
 
 def get_opts_count_capture_virus(parser, sub_program):

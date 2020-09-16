@@ -12,11 +12,10 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir
+from celescope.tools.utils import glob_genomeDir, log
+import celescope.tools
 
-logger1 = logging.getLogger(__name__)
-# invoke by celescope
-toolsdir = os.path.dirname(__file__) + "../tools/"
+toolsdir = os.path.dirname(celescope.tools.__file__)
 
 
 def report_prepare(outdir, tsne_df, marker_df, virus_df):
@@ -82,8 +81,8 @@ def marker_table(marker_df):
     return marker_gene_table
 
 
+@log
 def analysis_capture_virus(args):
-    logger1.info('capture virus analysis ...!')
 
     # check dir
     outdir = args.outdir
