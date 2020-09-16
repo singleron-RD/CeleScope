@@ -129,6 +129,7 @@ def main():
             f'--fq {fq} --sample {sample} '
             f'--outdir {outdir_dic[step]} --assay {assay} '
             f'--genomeDir {genomeDir} --thread {thread} '
+            f'--out_unmapped '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=starMem, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
