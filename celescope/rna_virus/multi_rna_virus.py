@@ -148,6 +148,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=starMem, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # featureCounts
@@ -190,6 +191,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=20, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # analysis_rna_virus
@@ -204,6 +206,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
     # merged report
