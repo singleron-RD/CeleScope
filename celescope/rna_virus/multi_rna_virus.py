@@ -194,7 +194,7 @@ def main():
 
         # analysis_rna_virus
         step = 'analysis_rna_virus'
-        matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.xls'
+        matrix_file = f'{outdir_dic["count"]}/{sample}_matrix.tsv.gz'
         virus_file = f'{outdir_dic["count_virus"]}/{sample}_virus_UMI_count.tsv'
         cmd = (
             f'{app} {assay} {step} '
