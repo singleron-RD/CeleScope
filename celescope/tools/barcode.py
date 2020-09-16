@@ -275,10 +275,13 @@ def barcode(args):
         fh1_without_linker = xopen(args.outdir + '/noLinker_1.fq', 'w')
         fh2_without_linker = xopen(args.outdir + '/noLinker_2.fq', 'w')
 
-    count_dic = genDict(dim=3)
-    valid_count_dic = genDict(dim=2)
-    probe_dic = read_fasta(args.probe_file)
-    reads_without_probe = 0
+    bool_probe = False
+    if args.probe_file and args.probe_file != 'None':
+        bool_probe = True
+        count_dic = genDict(dim=3)
+        valid_count_dic = genDict(dim=2)
+        probe_dic = read_fasta(args.probe_file)
+        reads_without_probe = 0
 
     g1 = read_fastq(fh1)
     g2 = read_fastq(fh2)
@@ -352,7 +355,7 @@ def barcode(args):
             umi=umi, seq=seq2, qual=qual2))
         clean_num += 1
 
-        if args.probe_file:
+        if bool_probe:
             # valid count
             valid_count_dic[cb][umi] += 1
 
@@ -386,7 +389,7 @@ def barcode(args):
         raise Exception(
             'no valid reads found! please check the --chemistry parameter.')
 
-    if args.probe_file:
+    if bool_probe:
         # total probe summary
         total_umi = 0
         total_valid_read = 0

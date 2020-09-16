@@ -27,6 +27,7 @@ def main():
         help='Specify attribute type in GTF annotation, default=exon',
         default='exon')
     parser.add_argument('--thread', help='thread', default=6)
+    parser.add_argument('--probe_file', help="probe fasta file")
     args = parser.parse_args()
 
     # read args
@@ -51,6 +52,7 @@ def main():
     genomeDir = args.genomeDir
     starMem = args.starMem
     gtf_type = args.gtf_type
+    probe_file = args.probe_file
 
     # mk log dir
     logdir = outdir + '/log'
@@ -90,7 +92,7 @@ def main():
             f'--pattern {pattern} --whitelist {whitelist} --linker {linker} '
             f'--sample {sample} --lowQual {lowQual} --thread {thread} '
             f'--lowNum {lowNum} --outdir {outdir_dic[step]} --assay {assay} '
-
+            f'--probe_file {probe_file} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
