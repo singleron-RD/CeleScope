@@ -241,7 +241,16 @@ def expression_matrix(
 
     match_UMI_median = df_match.apply(np.median, axis=1)
     match_UMI_mean = df_match.apply(np.mean, axis=1)
-    df_count = pd.DataFrame({"UMI_median": match_UMI_median, 'UMI_mean': match_UMI_mean})
+    match_UMI_median_over_zero = df_match.apply(lambda row: np.median(row[row > 0]), axis=1)
+    match_UMI_mean_over_zero = df_match.apply(lambda row: np.mean(row[row > 0]), axis=1)
+
+    df_count = pd.DataFrame({
+        "UMI_median": match_UMI_median,
+        'UMI_mean': match_UMI_mean,
+        "UMI_median_over_zero": match_UMI_median_over_zero,
+        "UMI_mean_over_zero": match_UMI_mean_over_zero,
+
+    })
     df_count = df_count.sort_values(['UMI_median', 'UMI_mean'], ascending=False)
     df_count.to_csv(f'{outdir}/{sample}_match_UMI_count.tsv', sep='\t')
 
