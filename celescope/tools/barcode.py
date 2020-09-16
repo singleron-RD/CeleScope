@@ -7,10 +7,11 @@ import gzip
 import subprocess
 import sys
 import glob
+import pandas as pd
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
-from celescope.tools.utils import format_number, log
+from celescope.tools.utils import format_number, log, read_fasta, genDict
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 
@@ -77,7 +78,7 @@ def generate_seq_dict(seqlist, n=1):
                 # duplicate key
                 if k in seq_dict:
                     generate_seq_dict.logger.warning('barcode %s, %s\n%s, %s' %
-                                    (v, k, seq_dict[k], k))
+                                                     (v, k, seq_dict[k], k))
                 else:
                     seq_dict[k] = v
     return seq_dict
@@ -189,7 +190,8 @@ def check_seq(seq_file, pattern_dict, seq_abbr):
             if seq == '':
                 continue
             if len(seq) != length:
-                raise Exception(f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
+                raise Exception(
+                    f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
 
 
 @log
@@ -273,8 +275,14 @@ def barcode(args):
         fh1_without_linker = xopen(args.outdir + '/noLinker_1.fq', 'w')
         fh2_without_linker = xopen(args.outdir + '/noLinker_2.fq', 'w')
 
+    count_dic = genDict(dim=3)
+    valid_count_dic = genDict(dim=2)
+    probe_dic = read_fasta(args.probe_file)
+    reads_without_probe = 0
+
     g1 = read_fastq(fh1)
     g2 = read_fastq(fh2)
+
     while True:
         try:
             (header1, seq1, qual1) = next(g1)
@@ -344,6 +352,23 @@ def barcode(args):
             umi=umi, seq=seq2, qual=qual2))
         clean_num += 1
 
+        if args.probe_file:
+            # valid count
+            valid_count_dic[cb][umi] += 1
+
+            # output probe UMi and read count
+            find_probe = False
+            for probe_name in probe_dic:
+                probe_seq = probe_dic[probe_name]
+                probe_seq = probe_seq.upper()
+                if seq1.find(probe_seq) != -1:
+                    count_dic[probe_name][cb][umi] += 1
+                    find_probe = True
+                    break
+
+            if not find_probe:
+                reads_without_probe += 1
+
         barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
         umi_qual_Counter.update(C_U_quals_ascii[C_len:])
         C_U_base_Counter.update(raw_cb + umi)
@@ -358,7 +383,45 @@ def barcode(args):
         )
 
     if clean_num == 0:
-        raise Exception('no valid reads found! please check the --chemistry parameter.')
+        raise Exception(
+            'no valid reads found! please check the --chemistry parameter.')
+
+    if args.probe_file:
+        # total probe summary
+        total_umi = 0
+        total_valid_read = 0
+        for cb in valid_count_dic:
+            total_umi += len(valid_count_dic[cb])
+            total_valid_read += sum(valid_count_dic[cb].values())
+        barcode.logger.info("total umi:"+str(total_umi))
+        barcode.logger.info("total valid read:"+str(total_valid_read))
+        barcode.logger.info("reads without probe:"+str(reads_without_probe))
+
+        # probe summary
+        count_list = []
+        for probe_name in probe_dic:
+            UMI_count = 0
+            read_count = 0
+            if probe_name in count_dic:
+                for cb in count_dic[probe_name]:
+                    UMI_count += len(count_dic[probe_name][cb])
+                    read_count += sum(count_dic[probe_name][cb].values())
+            count_list.append(
+                {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
+
+        df_count = pd.DataFrame(count_list, columns=[
+                                "probe_name", "read_count", "UMI_count"])
+
+        def format_percent(x):
+            x = str(round(x*100, 2))+"%"
+            return x
+        df_count["read_fraction"] = (
+            df_count["read_count"]/total_valid_read).apply(format_percent)
+        df_count["UMI_fraction"] = (
+            df_count["UMI_count"]/total_umi).apply(format_percent)
+        df_count.sort_values(by="UMI_count", inplace=True, ascending=False)
+        df_count_file = args.outdir + '/' + args.sample + '_probe_count.tsv'
+        df_count.to_csv(df_count_file, sep="\t", index=False)
 
     # stat
     BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(
@@ -413,4 +476,5 @@ def get_opts_barcode(parser, sub_program):
     parser.add_argument('--noLinker', action='store_true',
                         help='output noLinker fq')
     parser.add_argument('--thread', help='number of threads', default=1)
+    parser.add_argument('--probe_file', help="probe fasta file")
     return parser
