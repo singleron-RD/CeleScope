@@ -200,7 +200,6 @@ def main():
             f'{app} {assay} {step} '
             f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
             f'--matrix_file {matrix_file} '
-            f'--genomeDir {genomeDir} '
             f'--virus_file {virus_file} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
