@@ -180,7 +180,7 @@ def main():
         # count_virus
         step = 'count_virus'
         virus_bam = f'{outdir_dic["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
-        barcode_file = f'{outdir_dic["count"]}/matrix_10X/{sample}_cellbarcode.tsv'
+        barcode_file = f'{outdir_dic["count"]}/{sample}_matrix_10X/barcodes.tsv'
         cmd = (
             f'{app} {assay} {step} '
             f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
