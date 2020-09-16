@@ -11,11 +11,10 @@ import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir
+from celescope.tools.utils import glob_genomeDir, gene_convert, log
+import celescope.tools
 
-logger1 = logging.getLogger(__name__)
-# invoke by celescope
-toolsdir = os.path.dirname(__file__) + "../tools/"
+toolsdir = os.path.dirname(celescope.tools.__file__)
 
 
 def report_prepare(outdir, tsne_df, marker_df, virus_df):
@@ -81,41 +80,16 @@ def marker_table(marker_df):
     return marker_gene_table
 
 
-def gene_convert(gtf_file, matrix_file):
-
-    gene_id_pattern = re.compile(r'gene_id "(\S+)";')
-    gene_name_pattern = re.compile(r'gene_name "(\S+)"')
-    id_name = {}
-    with open(gtf_file) as f:
-        for line in f.readlines():
-            if line.startswith('#!'):
-                continue
-            tabs = line.split('\t')
-            gtf_type, attributes = tabs[2], tabs[-1]
-            if gtf_type == 'gene':
-                gene_id = gene_id_pattern.findall(attributes)[-1]
-                gene_name = gene_name_pattern.findall(attributes)[-1]
-                id_name[gene_id] = gene_name
-
-    matrix = pd.read_csv(matrix_file, sep="\t")
-
-    def convert(gene_id):
-        if gene_id in id_name:
-            return id_name[gene_id]
-        else:
-            return np.nan
-    gene_name_col = matrix.geneID.apply(convert)
-    matrix.geneID = gene_name_col
-    matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
-    matrix = matrix.dropna()
-    matrix = matrix.rename({"geneID": ""}, axis='columns')
-    return matrix
+@log
+def seurat(sample, outdir, matrix_file):
+    app = toolsdir + "/run_analysis.R"
+    cmd = f"Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file}"
+    os.system(cmd)
 
 
+@log
 def analysis_rna_virus(args):
-    logger1.info('virus_analysis ...!')
 
-    refFlat, gtf_file = glob_genomeDir(args.genomeDir, logger1)
     # check dir
     outdir = args.outdir
     sample = args.sample
@@ -125,24 +99,8 @@ def analysis_rna_virus(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
-    # run
-    logger1.info("convert expression matrix.")
-    new_matrix = gene_convert(gtf_file, matrix_file)
-    new_matrix_file = "{outdir}/{sample}_matrix.tsv.gz".format(
-        outdir=outdir, sample=sample)
-    new_matrix.to_csv(
-        new_matrix_file,
-        sep="\t",
-        index=False,
-        compression='gzip')
-    logger1.info("expression matrix written.")
-
     # run_R
-    logger1.info("Seurat running.")
-    cmd = "Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {new_matrix_file}".format(
-        app=toolsdir + "/run_analysis.R", sample=sample, outdir=outdir, new_matrix_file=new_matrix_file)
-    os.system(cmd)
-    logger1.info("Seurat done.")
+    seurat(sample, outdir, matrix_file)
 
     # report
     tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)
@@ -165,14 +123,7 @@ def get_opts_analysis_rna_virus(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument(
-            '--matrix_file',
-            help='matrix file xls',
-            required=True)
-        parser.add_argument(
-            '--genomeDir',
-            help='genome directory',
-            required=True)
+        parser.add_argument('--matrix_file', help='matrix file', required=True)
         parser.add_argument(
             '--virus_file',
             help='virus UMI count file',

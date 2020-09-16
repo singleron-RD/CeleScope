@@ -6,10 +6,8 @@ import pysam
 import logging
 import os
 from collections import defaultdict
-from celescope.tools.utils import format_number
+from celescope.tools.utils import format_number, log
 from celescope.tools.report import reporter
-
-logger1 = logging.getLogger(__name__)
 
 
 def genDict(dim=3):
@@ -54,9 +52,8 @@ def sum_virus(validated_barcodes, virus_bam,
     df_umi.to_csv(out_umi_count_file, sep="\t")
 
 
+@log
 def count_virus(args):
-
-    logger1.info('virus count start...!')
 
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
@@ -74,8 +71,6 @@ def count_virus(args):
         args.virus_bam,
         out_read_count_file,
         out_umi_count_file)
-
-    logger1.info('virus count done!')
 
 
 def get_opts_count_virus(parser, sub_program):

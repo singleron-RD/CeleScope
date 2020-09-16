@@ -91,7 +91,7 @@ def STAR(args):
            '--readFilesIn', args.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax',
            '1', '--outFileNamePrefix', outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate']
     if args.out_unmapped:
-        cmd.append(['--outReadsUnmapped', 'Fastx'])
+        cmd += ['--outReadsUnmapped', 'Fastx']
     STAR.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
 
