@@ -1,5 +1,3 @@
-#!/bin/env python
-# coding=utf8
 from celescope.fusion.__init__ import __STEPS__, __ASSAY__
 
 

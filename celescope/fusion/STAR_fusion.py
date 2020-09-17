@@ -1,15 +1,9 @@
-#!/bin/env python
-# coding=utf8
-
 import os
-import logging
-
-logger1 = logging.getLogger(__name__)
+from celescope.tools.utils import log
 
 
+@log
 def STAR_fusion(args):
-
-    logger1.info('STAR_fusion...')
 
     sample = args.sample
     outdir = args.outdir
@@ -33,14 +27,12 @@ def STAR_fusion(args):
  --limitBAMsortRAM 10000000000\
  --outFileNamePrefix {out_prefix}"
 
-    logger1.info(cmd)
+    STAR_fusion.logger.info(cmd)
     os.system(cmd)
-    logger1.info("STAR fusion done.")
 
     cmd = "samtools index {out_BAM}".format(out_BAM=out_BAM)
-    logger1.info(cmd)
+    STAR_fusion.logger.info(cmd)
     os.system(cmd)
-    logger1.info("samtools index done.")
 
 
 def get_opts_STAR_fusion(parser, sub_program):

@@ -1,6 +1,3 @@
-#!/bin/env python
-# coding=utf8
-
 from celescope.tools.utils import format_number
 from celescope.tools.report import reporter
 from collections import defaultdict
@@ -18,22 +15,17 @@ import json
 import glob
 mpl.use('Agg')
 from matplotlib import pyplot as plt
+from celescope.tools.utils import log, format_number, genDict, read_barcode_file
+import celescope.fusion
 
-parentDir = os.path.dirname(__file__)
-logger1 = logging.getLogger(__name__)
-
-
-def genDict(dim=3):
-    if dim == 1:
-        return defaultdict(int)
-    else:
-        return defaultdict(lambda: genDict(dim - 1))
+fusionDir = os.path.dirname(celescope.fusion.__file__)
 
 
 def read_pos(fusion_pos_file):
+    dic = {}
     df = pd.read_csv(fusion_pos_file, sep="\t")
-    dic = dict([(tag, int(pos))
-                for tag, pos in zip(df.iloc[:, 0], df.iloc[:, 1])])
+    for tag, pos in zip(df.iloc[:, 0], df.iloc[:, 1]):
+        dic[tag] = pos
     return dic
 
 
@@ -43,20 +35,8 @@ def is_fusion(pos, read_start, read_length, flanking_base):
     return (test_start and test_end)
 
 
-def read_barcode_file(match_barcode_file):
-    match_barcode = []
-    with open(match_barcode_file, "rt") as f:
-        while True:
-            line = f.readline().strip()
-            if not line:
-                break
-            match_barcode.append(line)
-    return match_barcode
-
-
+@log
 def count_fusion(args):
-
-    logger1.info("count_fusion...!")
 
     outdir = args.outdir
     sample = args.sample
@@ -73,15 +53,9 @@ def count_fusion(args):
     fusion_pos = read_pos(fusion_pos_file)
     out_prefix = outdir + "/" + sample
     # barcode
-    match_barcode_file1 = glob.glob(
-        "{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file2 = glob.glob(
-        "{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
-    match_barcode = read_barcode_file(match_barcode_file)
+    match_barcode, _n_barcode = read_barcode_file(match_dir)
     # tsne
-    match_tsne_file = "{match_dir}/06.analysis/tsne_coord.tsv".format(
-        match_dir=match_dir)
+    match_tsne_file = f"{match_dir}/06.analysis/tsne_coord.tsv"
     df_tsne = pd.read_csv(match_tsne_file, sep="\t", index_col=0)
     # out
     out_read_count_file = out_prefix + "_fusion_read_count.tsv"
@@ -151,14 +125,13 @@ def count_fusion(args):
         how="left")
     df_tsne_fusion.fillna(0, inplace=True)
     df_tsne_fusion.to_csv(out_tsne_file, sep="\t")
-    logger1.info("count done.")
 
     # plot
-    logger1.info("plot fusion...!")
-    app = parentDir + "/plot_fusion.R"
+    count_fusion.logger.info("plot fusion...!")
+    app = fusionDir + "/plot_fusion.R"
     cmd = f"Rscript {app} --tsne_fusion {out_tsne_file} --outdir {outdir}"
     os.system(cmd)
-    logger1.info("plot done.")
+    count_fusion.logger.info("plot done.")
 
 
 def get_opts_count_fusion(parser, sub_program):
