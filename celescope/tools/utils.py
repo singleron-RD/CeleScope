@@ -533,11 +533,11 @@ def barcode_filter_with_derivative(
     return (validated_barcodes, threshold, len(validated_barcodes))
 
 
-def genDict(dim=3):
+def genDict(dim=3, valType=int):
     if dim == 1:
-        return defaultdict(int)
+        return defaultdict(valType)
     else:
-        return defaultdict(lambda: genDict(dim - 1))
+        return defaultdict(lambda: genDict(dim - 1, valType=valType))
 
 
 @log

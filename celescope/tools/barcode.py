@@ -349,11 +349,8 @@ def barcode(args):
 
         umi = seq_ranges(seq1, pattern_dict['U'])
         Barcode_dict[cb] += 1
-        # new readID: @barcode_umi_old readID
-        fh3.write('@{cellbarcode}_{umi}_{readID}\n{seq}\n+\n{qual}\n'.format(
-            readID=header2.strip().split(' ')[0][1:], cellbarcode=cb,
-            umi=umi, seq=seq2, qual=qual2))
         clean_num += 1
+        read_name_probe = 'None'
 
         if bool_probe:
             # valid count
@@ -366,6 +363,7 @@ def barcode(args):
                 probe_seq = probe_seq.upper()
                 if seq1.find(probe_seq) != -1:
                     count_dic[probe_name][cb][umi] += 1
+                    read_name_probe = probe_name
                     find_probe = True
                     break
 
@@ -375,6 +373,9 @@ def barcode(args):
         barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
         umi_qual_Counter.update(C_U_quals_ascii[C_len:])
         C_U_base_Counter.update(raw_cb + umi)
+
+        # new readID: @barcode_umi_old readID
+        fh3.write(f'@{cb}_{umi}_{read_name_probe}_{total_num}\n{seq2}\n+\n{qual2}\n')
 
     fh3.close()
 

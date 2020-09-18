@@ -10,7 +10,7 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
 from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
-from celescope.tools.utils import read_barcode_file
+from celescope.tools.utils import read_barcode_file, genDict
 from celescope.tools.report import reporter
 
 
@@ -131,9 +131,11 @@ def correct_umi(fh1, barcode, gene_umi_dict, percent=0.1):
 
 
 @log
-def bam2table(bam, detail_file):
+def bam2table(bam, detail_file, id_name):
     # 提取bam中相同barcode的reads，统计比对到基因的reads信息
-    #
+    # probe
+    probe_gene_count_dict = genDict(dim=3, valType=set)
+
     samfile = pysam.AlignmentFile(bam, "rb")
     with open(detail_file, 'w') as fh1:
         fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
@@ -146,7 +148,13 @@ def bam2table(bam, detail_file):
         for _, g in groupby(samfile, keyfunc):
             gene_umi_dict = defaultdict(lambda: defaultdict(int))
             for seg in g:
-                (barcode, umi) = seg.query_name.split('_')[:2]
+                (barcode, umi, probe) = seg.query_name.split('_')[:3]
+                if probe != 'None':
+                    probe_gene_count_dict[probe]['total'][barcode].add(umi)
+                    if seg.has_tag('XT'):
+                        geneID = seg.get_tag('XT')
+                        geneName = id_name[geneID]
+                        probe_gene_count_dict[probe][geneName][barcode].add(umi)
                 if not seg.has_tag('XT'):
                     continue
                 geneID = seg.get_tag('XT')
@@ -158,6 +166,25 @@ def bam2table(bam, detail_file):
                 for umi in res_dict[geneID]:
                     fh1.write('%s\t%s\t%s\t%s\n' % (barcode, geneID, umi,
                                                     res_dict[geneID][umi]))
+
+    # out probe
+    row_list = []
+    for probe in probe_gene_count_dict:
+        for geneName in probe_gene_count_dict[probe]:
+            barcode_count = len(probe_gene_count_dict[probe][geneName])
+            umi_count = 0
+            for barcode in probe_gene_count_dict[probe][geneName]:
+                umi_count += len(probe_gene_count_dict[probe][geneName][barcode])
+            row_list.append({
+                'probe': probe,
+                'gene': geneName,
+                'barcode_count': barcode_count,
+                'UMI_count': umi_count,
+            })
+
+    df_probe = pd.DataFrame(row_list,
+        columns=['probe', 'gene', 'barcode_count', 'UMI_count'])
+    return df_probe
 
 
 @log
@@ -187,7 +214,7 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
 @log
 def expression_matrix(
         df, validated_barcodes,
-        outdir, sample, gtf_file,
+        outdir, sample, id_name,
         sc_cell_barcodes, sc_cell_number):
 
     matrix_10X_dir = f"{outdir}/{sample}_matrix_10X/"
@@ -206,7 +233,6 @@ def expression_matrix(
         index='geneID', columns='Barcode', values='UMI',
         aggfunc=len).fillna(0).astype(int)
 
-    id_name = gene_convert(gtf_file)
     id = table.index.to_series()
     name = id.apply(lambda x: id_name[x])
     genes = pd.concat([id, name], axis=1)
@@ -348,7 +374,8 @@ def downsample(detail_file, validated_barcodes, downsample_file):
 def count_capture_rna(args):
 
     # check
-    refFlat, gtf = glob_genomeDir(args.genomeDir)
+    _refFlat, gtf = glob_genomeDir(args.genomeDir)
+    id_name = gene_convert(gtf)
 
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
@@ -356,7 +383,8 @@ def count_capture_rna(args):
 
     # umi纠错，输出Barcode geneID  UMI     count为表头的表格
     count_detail_file = args.outdir + '/' + args.sample + '_count_detail.txt'
-    bam2table(args.bam, count_detail_file)
+    df_probe = bam2table(args.bam, count_detail_file, id_name)
+    df_probe.to_csv(f'{args.outdir}/{args.sample}_probe_gene_count.tsv', sep='\t', index=False)
 
     df = pd.read_table(count_detail_file, header=0)
 
@@ -381,7 +409,7 @@ def count_capture_rna(args):
         validated_barcodes,
         args.outdir,
         args.sample,
-        gtf,
+        id_name,
         sc_cell_barcodes,
         sc_cell_number
         )
