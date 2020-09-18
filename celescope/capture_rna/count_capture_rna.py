@@ -190,6 +190,9 @@ def bam2table(bam, detail_file, id_name):
 
     df_probe = pd.DataFrame(row_list,
         columns=['probe', 'gene', 'barcode_count', 'read_count', 'UMI_count'])
+    df_probe = df_probe.groupby(['probe']).apply(
+        lambda x: x.sort_values('UMI_count', ascending=False)
+    )
     return df_probe
 
 
