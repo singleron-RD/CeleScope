@@ -134,7 +134,7 @@ def correct_umi(fh1, barcode, gene_umi_dict, percent=0.1):
 def bam2table(bam, detail_file, id_name):
     # 提取bam中相同barcode的reads，统计比对到基因的reads信息
     # probe
-    probe_gene_count_dict = genDict(dim=3, valType=set)
+    probe_gene_count_dict = genDict(dim=4, valType=int)
 
     samfile = pysam.AlignmentFile(bam, "rb")
     with open(detail_file, 'w') as fh1:
@@ -150,11 +150,13 @@ def bam2table(bam, detail_file, id_name):
             for seg in g:
                 (barcode, umi, probe) = seg.query_name.split('_')[:3]
                 if probe != 'None':
-                    probe_gene_count_dict[probe]['total'][barcode].add(umi)
+                    probe_gene_count_dict[probe]['total'][barcode][umi] += 1
                     if seg.has_tag('XT'):
                         geneID = seg.get_tag('XT')
                         geneName = id_name[geneID]
-                        probe_gene_count_dict[probe][geneName][barcode].add(umi)
+                        probe_gene_count_dict[probe][geneName][barcode][umi] += 1
+                    else:
+                        probe_gene_count_dict[probe]['None'][barcode][umi] += 1
                 if not seg.has_tag('XT'):
                     continue
                 geneID = seg.get_tag('XT')
@@ -173,17 +175,21 @@ def bam2table(bam, detail_file, id_name):
         for geneName in probe_gene_count_dict[probe]:
             barcode_count = len(probe_gene_count_dict[probe][geneName])
             umi_count = 0
+            read_count = 0
             for barcode in probe_gene_count_dict[probe][geneName]:
-                umi_count += len(probe_gene_count_dict[probe][geneName][barcode])
+                for umi in probe_gene_count_dict[probe][geneName][barcode]:
+                    umi_count += len( probe_gene_count_dict[probe][geneName][barcode])
+                    read_count += probe_gene_count_dict[probe][geneName][barcode][umi]
             row_list.append({
                 'probe': probe,
                 'gene': geneName,
                 'barcode_count': barcode_count,
-                'UMI_count': umi_count,
+                'read_count': read_count,
+                'UMI_count': umi_count
             })
 
     df_probe = pd.DataFrame(row_list,
-        columns=['probe', 'gene', 'barcode_count', 'UMI_count'])
+        columns=['probe', 'gene', 'barcode_count', 'read_count', 'UMI_count'])
     return df_probe
 
 
