@@ -58,6 +58,7 @@ def count_vdj(args):
     clonetypes_file = f"{outdir}/{sample}_clonetypes.tsv"
     match_clonetypes_file = f"{outdir}/{sample}_match_clonetypes.tsv"
     top10_clonetypes_file = f"{outdir}/{sample}_top10_clonetypes.tsv"
+    match_top10_clonetypes_file = f"{outdir}/{sample}_match_top10_clonetypes.tsv"
 
     # read file
     df_UMI_count_filter1 = pd.read_csv(UMI_count_filter1_file, sep='\t')
@@ -129,7 +130,7 @@ def count_vdj(args):
     df_clonetypes = df_cell_confident_count.copy()
 
     df_clonetypes = df_clonetypes.groupby(cols, as_index=False).agg({
-        "barcode": "count"}).sort_values("barcode", ascending=False)
+        "barcode": "count"}).sort_values(["barcode"] + cols, ascending=False)
     total_CDR3_barcode_number = sum(df_clonetypes.barcode)
     df_clonetypes["percent"] = df_clonetypes.barcode / \
         total_CDR3_barcode_number * 100
@@ -206,21 +207,6 @@ def count_vdj(args):
                 "total_count": cell_number,
             })
 
-            """
-            df_match_clonetypes
-            """
-            df_match_cell_confident_count = df_match.groupby(cols, as_index=False).agg({
-                "barcode": "count"}).sort_values("barcode", ascending=False)
-            total_match_CDR3_barcode_number = sum(
-                df_match_cell_confident_count.barcode)
-            df_match_cell_confident_count["percent"] = df_match_cell_confident_count.barcode / \
-                total_match_CDR3_barcode_number * 100
-            df_match_cell_confident_count["percent"] = df_match_cell_confident_count["percent"].apply(
-                lambda x: round(x, 2)
-            )
-            df_match_cell_confident_count.to_csv(
-                match_clonetypes_file, sep="\t", index=False)
-
     # BCR
     elif type == "BCR":
 
@@ -288,20 +274,28 @@ def count_vdj(args):
                 "count": match_cell_with_heavy_and_light,
                 "total_count": cell_number
             })
-            """
-            df_match_clonetypes
-            """
-            df_match_cell_confident_count = df_match.groupby(cols, as_index=False).agg(
-                {"barcode": "count"}).sort_values("barcode", ascending=False)
-            total_match_CDR3_barcode_number = sum(
-                df_match_cell_confident_count.barcode)
-            df_match_cell_confident_count["percent"] = df_match_cell_confident_count.barcode / \
-                total_match_CDR3_barcode_number * 100
-            df_match_cell_confident_count["percent"] = df_match_cell_confident_count["percent"].apply(
-                lambda x: round(x, 2)
-            )
-            df_match_cell_confident_count.to_csv(
-                match_clonetypes_file, sep="\t", index=False)
+
+    if match_bool:
+        """
+        df_match_clonetypes
+        """
+        df_match_clonetypes = df_match.groupby(cols, as_index=False).agg({
+            "barcode": "count"}).sort_values(["barcode"] + cols, ascending=False)
+        total_match_CDR3_barcode_number = sum(
+            df_match_clonetypes.barcode)
+        df_match_clonetypes["percent"] = df_match_clonetypes.barcode / \
+            total_match_CDR3_barcode_number * 100
+        df_match_clonetypes["percent"] = df_match_clonetypes["percent"].apply(
+            lambda x: round(x, 2)
+        )
+        df_match_clonetypes.rename(columns={"barcode": "barcode_count"}, inplace=True)
+        df_match_clonetypes = df_match_clonetypes.merge(
+            df_clonetypes, on=cols, how='left', suffixes=('', '_y'))
+        # order and drop duplicated cols
+        order = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
+        df_clonetypes = df_clonetypes[order]
+        df_match_clonetypes.to_csv(
+            match_clonetypes_file, sep="\t", index=False)
 
     df_mergeID = pd.merge(df_cell_confident_count,
                           df_clonetypes, how="left", on=cols)
@@ -358,33 +352,39 @@ def count_vdj(args):
     t.get_report()
 
     # cloneytpes table
-    """
-    if not (match_dir is None):
-        top10_clonetypes_df = df_match_cell_confident_count.head(10)
-    else:
+    def format_table(df_clonetypes, top10_clonetypes_file):
         top10_clonetypes_df = df_clonetypes.head(10)
-    """
-    top10_clonetypes_df = df_clonetypes.head(10)
-    top10_clonetypes_df = top10_clonetypes_df.reset_index(drop=True)
-    top10_clonetypes_df.index = top10_clonetypes_df.index + 1
-    top10_clonetypes_df["percent"] = top10_clonetypes_df["percent"].apply(
-        lambda x: str(x) + "%")
-    seqs = ["aaSeqCDR3"]
-    cols = []
-    for chain in chains:
-        for seq in seqs:
-            cols.append("_".join([seq, chain]))
-    top10_cols = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
-    top10_clonetypes_df = top10_clonetypes_df[top10_cols]
-    top10_clonetypes_df.to_csv(top10_clonetypes_file, sep="\t", index=False)
-    table_header = ["Clonetype_ID"] + cols + ["Frequency", "Percent"]
+        top10_clonetypes_df = top10_clonetypes_df.reset_index(drop=True)
+        top10_clonetypes_df.index = top10_clonetypes_df.index + 1
+        top10_clonetypes_df["percent"] = top10_clonetypes_df["percent"].apply(
+            lambda x: str(x) + "%")
+        seqs = ["aaSeqCDR3"]
+        cols = []
+        for chain in chains:
+            for seq in seqs:
+                cols.append("_".join([seq, chain]))
+        top10_cols = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
+        top10_clonetypes_df = top10_clonetypes_df[top10_cols]
+        top10_clonetypes_df.to_csv(top10_clonetypes_file, sep="\t", index=False)
+        table_header = ["Clonetype_ID"] + cols + ["Frequency", "Percent"]
+        return table_header
+
+    table_header = format_table(df_clonetypes, top10_clonetypes_file)
+    use_top10_clonetypes_file = top10_clonetypes_file
+    section_header = 'Top10 clonetypes'
+    if match_bool:
+        format_table(df_match_clonetypes, match_top10_clonetypes_file)
+        use_top10_clonetypes_file = match_top10_clonetypes_file
+        section_header = 'Match Top10 clonetypes'
+    
     t = reporter(
         name="clonetypes",
         sample=args.sample,
-        table_file=top10_clonetypes_file,
+        table_file=use_top10_clonetypes_file,
         table_header=table_header,
         outdir=outdir + '/..',
         assay=args.assay,
+        parameters={'section_header': section_header},
     )
     t.get_report()
 
