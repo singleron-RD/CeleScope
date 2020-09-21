@@ -18,8 +18,8 @@ resolution = 0.6
 res_str = paste0('res.', resolution)
 
 matrix = read.table(matrix_file,sep="\t",header=TRUE,row.names=1)
-tsne.out = paste(outdir,"tsne_coord.tsv",sep="/")
-marker.out = paste(outdir,"markers.tsv",sep="/")
+tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
+marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")
 rds.out = paste0(outdir,'/',sample,'.rds')
 
