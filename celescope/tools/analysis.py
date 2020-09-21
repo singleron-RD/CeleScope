@@ -94,9 +94,13 @@ def generate_matrix(gtf_file, matrix_file):
 
 
 @log
-def seurat(sample, outdir, matrix_file):
+def seurat(sample, outdir, matrix_file, save_rds):
     app = toolsdir + "/run_analysis.R"
-    cmd = f"Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file}"
+    cmd = (
+        f'Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file} '
+        f'--save_rds {save_rds}'
+    )
+    seurat.logger.info(cmd)
     os.system(cmd)
 
 
@@ -107,12 +111,13 @@ def analysis(args):
     outdir = args.outdir
     sample = args.sample
     matrix_file = args.matrix_file
+    save_rds = args.save_rds
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
     # run_R
-    seurat(sample, outdir, matrix_file)
+    seurat(sample, outdir, matrix_file, save_rds)
 
     # report
     tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)
@@ -137,4 +142,5 @@ def get_opts_analysis(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
+        parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
         parser.add_argument('--assay', help='assay', required=True)

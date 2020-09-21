@@ -50,6 +50,15 @@ def log(func):
     return wrapper
 
 
+def arg_str(arg, arg_name):
+    '''
+    return action store_true arguments as string
+    '''
+    if arg:
+        return '--' + arg_name
+    return ''
+
+
 def read_barcode_file(match_dir):
     '''
     multi version compatible
