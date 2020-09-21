@@ -162,6 +162,12 @@ def main():
     get_opts_count_capture_virus(parser_count_capture_virus, True)
     parser_count_capture_virus.set_defaults(func=count_capture_virus)
 
+    from celescope.capture_virus.analysis_capture_virus import analysis_capture_virus, get_opts_analysis_capture_virus
+    parser_analysis_capture_virus = subparsers_capture_virus_sub.add_parser(
+        'analysis_capture_virus')
+    get_opts_analysis_capture_virus(parser_analysis_capture_virus, True)
+    parser_analysis_capture_virus.set_defaults(func=analysis_capture_virus)
+
     from celescope.capture_virus.run import run
     parser_run = subparsers_capture_virus_sub.add_parser(
         'run', help='run all steps', conflict_handler='resolve')
