@@ -176,7 +176,10 @@ def gene_convert(gtf_file):
 
 
 @log
-def process_read(read2_file, pattern_dict, barcode_dict, linker_dict):
+def process_read(
+    read2_file, pattern_dict, barcode_dict, linker_dict,
+    barcode_length, linker_length):
+
     # if valid, return (True)
     metrics = defaultdict(int)
     res_dict = genDict(dim=3)
@@ -194,24 +197,25 @@ def process_read(read2_file, pattern_dict, barcode_dict, linker_dict):
         umi = str(attr[1])
         seq = line2.strip()
         if linker_dict:
-            try:
-                seq_linker = ''.join(seq_range(seq, pattern_dict['L']))
-            except:
+            seq_linker = seq_ranges(seq, pattern_dict['L'])
+            if len(seq_linker) < linker_length:
                 metrics['Reads Unmapped too Short'] += 1
                 continue
         if barcode_dict:
-            try:
-                seq_barcode = ''.join(seq_range(seq, pattern_dict['C']))
-            except:
-                metrics['Reads Unmapped too Short'] += 1
-                continue
+            seq_barcode = seq_ranges(seq, pattern_dict['C'])
+            if barcode_length != len(seq_barcode):
+                miss_length = barcode_length - len(seq_barcode)
+                if miss_length > 2:
+                    metrics['Reads Unmapped too Short'] += 1
+                    continue
+                seq_barcode = seq_barcode + "A" * miss_length                    
         
         # check linker
         valid_linker = False
         for linker_name in linker_dict:
             if hamming_correct(linker_dict[linker_name], seq_linker):
                 valid_linker = True
-                continue
+                break
 
         if not valid_linker:
             metrics['Reads Unmapped Invalid Linker'] += 1
@@ -223,7 +227,7 @@ def process_read(read2_file, pattern_dict, barcode_dict, linker_dict):
             if hamming_correct(barcode_dict[barcode_name], seq_barcode):
                 res_dict[barcode][barcode_name][umi] += 1
                 valid_barcode = True
-                continue
+                break
 
         if not valid_barcode:
             metrics['Reads Unmapped Invalid Barcode'] += 1
@@ -237,12 +241,17 @@ def process_read(read2_file, pattern_dict, barcode_dict, linker_dict):
     return res_dict, metrics
 
 
-def seq_range(seq, pattern_dict):
+def seq_ranges_exception(seq, pattern_dict):
     # get subseq with intervals in arr and concatenate
     length = len(seq)
     for x in pattern_dict:
         if length < x[1]:
             raise Exception(f'invalid seq range {x[0]}:{x[1]} in read')
+    return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
+
+
+def seq_ranges(seq, pattern_dict):
+    # get subseq with intervals in arr and concatenate
     return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
 
 

@@ -75,6 +75,8 @@ class smk_mapping:
             self.pattern_dict,
             self.SMK_barcode_dic,
             self.SMK_linker_dic,
+            self.SMK_barcode_length,
+            self.SMK_linker_length,
         )
 
         # write dic to pandas df
