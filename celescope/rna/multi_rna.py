@@ -28,6 +28,7 @@ def main():
         default='exon')
     parser.add_argument('--thread', help='thread', default=6)
     parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
+    parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
     args = parser.parse_args()
 
     # read args
@@ -54,6 +55,8 @@ def main():
     gtf_type = args.gtf_type
     save_rds = args.save_rds
     save_rds_str = arg_str(save_rds, 'save_rds')
+    type_marker_tsv = args.type_marker_tsv
+    
 
     # mk log dir
     logdir = outdir + '/log'
@@ -164,6 +167,7 @@ def main():
             f'--outdir {outdir_dic[step]} '
             f'--assay {assay} '
             f'{save_rds_str} '
+            f'--type_marker_tsv {type_marker_tsv} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
