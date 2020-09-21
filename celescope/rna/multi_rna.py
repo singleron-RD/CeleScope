@@ -6,7 +6,7 @@ import re
 from collections import defaultdict
 from celescope.__init__ import __CONDA__
 from celescope.rna.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.utils import merge_report, generate_sjm
+from celescope.tools.utils import merge_report, generate_sjm, arg_str
 from celescope.tools.utils import parse_map_col4, multi_opts, link_data
 
 
@@ -27,6 +27,7 @@ def main():
         help='Specify attribute type in GTF annotation, default=exon',
         default='exon')
     parser.add_argument('--thread', help='thread', default=6)
+    parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
     args = parser.parse_args()
 
     # read args
@@ -51,6 +52,8 @@ def main():
     genomeDir = args.genomeDir
     starMem = args.starMem
     gtf_type = args.gtf_type
+    save_rds = args.save_rds
+    save_rds_str = arg_str(save_rds, 'save_rds')
 
     # mk log dir
     logdir = outdir + '/log'
@@ -160,6 +163,7 @@ def main():
             f'--matrix_file {matrix_file} --sample {sample} '
             f'--outdir {outdir_dic[step]} '
             f'--assay {assay} '
+            f'{save_rds_str} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'

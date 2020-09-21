@@ -6,17 +6,20 @@ argv <- arg_parser('')
 argv <- add_argument(argv,"--matrix_file", help="matrix file")
 argv <- add_argument(argv,"--outdir", help="outdir")
 argv <- add_argument(argv,"--sample", help="sample")
+argv <- add_argument(argv,"--save_rds", help="write rds to disk")
 argv <- parse_args(argv)
 
 #args
 matrix_file = argv$matrix_file
 outdir = argv$outdir
 sample = argv$sample
+save_rds = argv$save_rds
 
 matrix = read.table(matrix_file,sep="\t",header=TRUE,row.names=1)
 tsne.out = paste(outdir,"tsne_coord.tsv",sep="/")
 marker.out = paste(outdir,"markers.tsv",sep="/")
 mito.out = paste(outdir,"stat.txt",sep="/")
+rds.out = paste0(outdir,'/',sample,'.rds')
 
 
 rds = CreateSeuratObject(raw.data = matrix,project=sample)
@@ -75,3 +78,7 @@ df.gene = meta[,"nGene",drop=F]
 colnames(df.gene) = "Gene_Counts"
 df.all = cbind(df.tsne,df.gene)
 write.table(df.all,tsne.out,sep="\t",col.names=NA,quote = F)
+
+if (save_rds == 'True'){
+  saveRDS(rds, rds.out)
+}
