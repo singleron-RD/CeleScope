@@ -134,6 +134,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
         # count_smk
@@ -152,6 +153,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
         # analysis_smk
@@ -167,6 +169,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+        shell += cmd + '\n'
         last_step = step
 
     # merged report
