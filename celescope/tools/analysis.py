@@ -105,6 +105,20 @@ def seurat(sample, outdir, matrix_file, save_rds):
 
 
 @log
+def auto_assign(sample, outdir, type_marker_tsv):
+    rds = f'{outdir}/{sample}.rds'
+    app = toolsdir + "/auto_assign.R"
+    cmd = (
+        f'Rscript {app} '
+        f'--rds {rds} '
+        f'--type_marker_tsv {type_marker_tsv} '
+        f'--outdir {outdir} '
+    )
+    auto_assign.logger.info(cmd)
+    os.system(cmd)
+
+
+@log
 def analysis(args):
 
     # check dir
@@ -112,12 +126,22 @@ def analysis(args):
     sample = args.sample
     matrix_file = args.matrix_file
     save_rds = args.save_rds
+    type_marker_tsv = args.type_marker_tsv
+    auto_assign_bool = False
+    if type_marker_tsv and type_marker_tsv != 'None':
+        auto_assign_bool = True
+    if auto_assign_bool:
+        save_rds = True
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
     # run_R
     seurat(sample, outdir, matrix_file, save_rds)
+
+    # auto_assign
+    if auto_assign_bool:
+        auto_assign(sample, outdir, type_marker_tsv)
 
     # report
     tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)
@@ -142,5 +166,7 @@ def get_opts_analysis(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
-        parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
         parser.add_argument('--assay', help='assay', required=True)
+    parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
+    parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
+

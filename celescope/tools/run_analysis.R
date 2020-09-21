@@ -14,6 +14,8 @@ matrix_file = argv$matrix_file
 outdir = argv$outdir
 sample = argv$sample
 save_rds = argv$save_rds
+resolution = 0.6
+res_str = paste0('res.', resolution)
 
 matrix = read.table(matrix_file,sep="\t",header=TRUE,row.names=1)
 tsne.out = paste(outdir,"tsne_coord.tsv",sep="/")
@@ -46,13 +48,14 @@ rds <- FindVariableGenes(object = rds, mean.function = ExpMean, dispersion.funct
 use.gene = rds@var.genes
 rds <- ScaleData(object = rds,vars.to.regress = c("nUMI", "percent.mito"),genes.use =use.gene)
 rds <- RunPCA(object = rds, pc.genes = use.gene, do.print = FALSE)
-rds <- FindClusters(object = rds, reduction.type = "pca", dims.use = 1:20, resolution = 0.6, print.output = 0, save.SNN = TRUE,force.recalc = TRUE)
+rds <- FindClusters(object = rds, reduction.type = "pca", dims.use = 1:20, resolution = resolution, print.output = 0, save.SNN = TRUE,force.recalc = TRUE)
+rds@meta.data[[res_str]] = as.numeric(rds@meta.data[[res_str]]) + 1
+rds = SetAllIdent(rds, res_str)
 
 # Run Non-linear dimensional reduction (tSNE)
 rds <- RunTSNE(object = rds, dims.use = 1:20, do.fast = TRUE,check_duplicates = FALSE)
 tryCatch({
   rds.markers <- FindAllMarkers(object = rds, genes.use = use.gene)
-  rds.markers$cluster = as.numeric(as.character(rds.markers$cluster)) + 1
   rds.markers = dplyr::group_by(rds.markers,cluster) %>% dplyr::arrange(desc(avg_logFC))
 }, error = function(e){
   print (paste0("no marker found: ", e))
@@ -70,10 +73,9 @@ write_tsv(rds.markers,marker.out,col_names = T)
 df.tsne = rds@dr$tsne@cell.embeddings
 df.tsne = as.data.frame(df.tsne)
 meta = rds@meta.data
-dic = rds@meta.data$res.0.6
+dic = rds@meta.data[[res_str]]
 names(dic) = rownames(rds@meta.data)
 df.tsne$cluster = as.numeric(dic[rownames(df.tsne)])
-df.tsne$cluster = df.tsne$cluster + 1
 df.gene = meta[,"nGene",drop=F]
 colnames(df.gene) = "Gene_Counts"
 df.all = cbind(df.tsne,df.gene)
