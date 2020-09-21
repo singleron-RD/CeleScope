@@ -113,6 +113,7 @@ def auto_assign(sample, outdir, type_marker_tsv):
         f'--rds {rds} '
         f'--type_marker_tsv {type_marker_tsv} '
         f'--outdir {outdir} '
+        f'--sample {sample} '
     )
     auto_assign.logger.info(cmd)
     os.system(cmd)
@@ -144,8 +145,8 @@ def analysis(args):
         auto_assign(sample, outdir, type_marker_tsv)
 
     # report
-    tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)
-    marker_df_file = "{outdir}/markers.tsv".format(outdir=outdir)
+    tsne_df_file = f'{outdir}/{sample}_tsne_coord.tsv'
+    marker_df_file = f'{outdir}/{sample}_markers.tsv'
     tsne_df = pd.read_csv(tsne_df_file, sep="\t")
     marker_df = pd.read_csv(marker_df_file, sep="\t")
     report_prepare(outdir, tsne_df, marker_df)

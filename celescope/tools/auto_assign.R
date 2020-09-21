@@ -4,6 +4,7 @@ library(tidyverse)
 
 argv <- arg_parser('')
 argv <- add_argument(argv,"--outdir", help="the output dir.",default=getwd())
+argv <- add_argument(argv,"--sample", help="sample")
 argv <- add_argument(argv,"--rds",help="Seurat rds")
 argv <- add_argument(argv,"--type_marker_tsv",help="cell type marker tsv")
 #argv <- add_argument(argv,"--resolution", help="tSNE resolution",default=0.8)
@@ -12,6 +13,7 @@ argv <- parse_args(argv)
 #read args
 
 outdir <- argv$outdir
+sample <- argv$sample
 rds <- argv$rds
 type_marker_tsv <- argv$type_marker_tsv
 #resolution <- argv$resolution
@@ -32,8 +34,8 @@ n_cell_name <- length(cell_name)
 clusters <- sort(unique(all_data@ident))
 
 #create dir
-auto_dir <- paste0(outdir,"/auto_assign/")
-png_dir <- paste0(auto_dir,"png/")
+auto_dir <- stringr::str_glue('{outdir}/{sample}_auto_assign/')
+png_dir <- stringr::str_glue('{auto_dir}/{sample}_png/')
 dir.create(auto_dir)
 dir.create(png_dir)
 
@@ -85,7 +87,7 @@ for (cluster in clusters){
 }
 
 all_dat <- mutate(all_dat,pct.diff=pct.1-pct.2)
-exp.out = paste(auto_dir, "type_marker_exp.tsv", sep='/')
+exp.out = stringr::str_glue('{auto_dir}/{sample}_type_marker_exp.tsv')
 write_tsv(all_dat, exp.out)
 
 # plot
@@ -124,5 +126,5 @@ as2 <- as1 %>% ungroup %>% group_by(cluster) %>%
   filter(total_rank==max(total_rank)) %>% arrange(as.numeric(cluster))
 as3 <- select(as2,cluster,cell_type,avg_pct.diff,avg_logfc,max_p_val_adj)
 as3[(as3$avg_pct.diff < 0 | as3$avg_logfc < 0),]$cell_type = 'NA'
-res.out = stringr::str_glue('{auto_dir}/auto_cluster_type.tsv')
+res.out = stringr::str_glue('{auto_dir}/{sample}_auto_cluster_type.tsv')
 write_tsv(as3, res.out)
