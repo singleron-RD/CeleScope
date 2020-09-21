@@ -4,7 +4,9 @@ channels:
   - bioconda
   - r
   - defaults
+  - imperial-college-research-computing
 dependencies:
+  - mixcr=3.0.3
   - editdistance=0.5.3
   - _r-mutex=1.0.1=anacondar_1
   - bcftools=1.9=ha228f0b_3
