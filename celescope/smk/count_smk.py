@@ -91,7 +91,7 @@ def count_smk(args):
 
     read_file = args.read_file
     match_dir = args.match_dir
-    tsne_file = glob.glob(f'{match_dir}/*analysis/tsne_coord.tsv')[0]
+    tsne_file = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
     UMI_min = args.UMI_min
     SNR_min = args.SNR_min
     dim = int(args.dim)
@@ -232,7 +232,7 @@ def get_opts_count_smk(parser, sub_program):
         "--combine_cluster",
         help="conbine cluster tsv file",
         default=None)
-    parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path")
+    parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path", required=True)
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
