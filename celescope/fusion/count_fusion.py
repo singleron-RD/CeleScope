@@ -55,7 +55,7 @@ def count_fusion(args):
     # barcode
     match_barcode, _n_barcode = read_barcode_file(match_dir)
     # tsne
-    match_tsne_file = f"{match_dir}/06.analysis/tsne_coord.tsv"
+    match_tsne_file = f"{match_dir}/*analysis/*tsne_coord.tsv"
     df_tsne = pd.read_csv(match_tsne_file, sep="\t", index_col=0)
     # out
     out_read_count_file = out_prefix + "_fusion_read_count.tsv"
