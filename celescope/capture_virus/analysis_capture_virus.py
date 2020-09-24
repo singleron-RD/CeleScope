@@ -94,8 +94,8 @@ def analysis_capture_virus(args):
         os.system('mkdir -p %s' % (outdir))
 
     # report
-    tsne_df_file = glob.glob(f'{match_dir}/*analysis*/tsne_coord.tsv')[0]
-    marker_df_file = glob.glob(f'{match_dir}/*analysis*/markers.tsv')[0]
+    tsne_df_file = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
+    marker_df_file = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
     tsne_df = pd.read_csv(tsne_df_file, sep="\t")
     marker_df = pd.read_csv(marker_df_file, sep="\t")
     virus_df = pd.read_csv(virus_file, sep="\t")
