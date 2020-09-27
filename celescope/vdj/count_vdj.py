@@ -293,7 +293,7 @@ def count_vdj(args):
             df_clonetypes, on=cols, how='left', suffixes=('', '_y'))
         # order and drop duplicated cols
         order = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
-        df_clonetypes = df_clonetypes[order]
+        df_match_clonetypes = df_match_clonetypes[order]
         df_match_clonetypes.to_csv(
             match_clonetypes_file, sep="\t", index=False)
 
