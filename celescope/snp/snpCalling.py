@@ -101,19 +101,33 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
     return index_file, count_file
 
 
-def call_snp(bam):
+def call_snp(index, outdir, fasta):
 
-    outdir = os.path.dirname(bam)
-    prefix = os.path.basename(bam).strip('.bam')
-    cmd = (
-        f'OptiTypePipeline.py '
-        f'--input {bam} '
-        f'--rna '
-        f'--outdir {outdir} '
-        f'--prefix {prefix} '
-        f'>/dev/null 2>&1 '
+    bam = f'{outdir}/cells/cell{index}/cell{index}.bam'
+    # sort
+    sorted_bam = f'{outdir}/cells/cell{index}/cell{index}_sorted.bam'
+    cmd_sort = (
+        f'samtools sort {bam} -o {sorted_bam}'
     )
-    os.system(cmd)
+    os.system(cmd_sort)
+
+    # mpileup
+    out_bcf = f'{outdir}/cells/cell{index}/cell{index}.bcf'
+    cmd_mpileup = (
+        f'samtools mpileup -g -f '
+        f'{fasta} '
+        f'{sorted_bam} | '
+        f'bcftools call -mv -Ob '
+        f'-o {out_bcf}'
+    )
+    os.system(cmd_mpileup)
+
+    # view
+    out_vcf = f'{outdir}/cells/cell{index}/cell{index}.vcf'
+    cmd_view = (
+        f'bcftools view {out_bcf} > {out_vcf}'
+    )
+    os.system(cmd_view)
 
 
 def read_index(index_file):
@@ -123,14 +137,14 @@ def read_index(index_file):
 
 
 @log
-def call_all_snp(index_file, outdir, thread):
+def call_all_snp(index_file, outdir, thread, fasta):
     all_res = []
     df_valid = read_index(index_file)
-
-    bams = [
-        f'{outdir}/cells/cell{index}/cell{index}.bam' for index in df_valid.index]
+    index_arg = df_valid.index
+    outdir_arg = [outdir] * len(index_arg)
+    fasta_arg = [fasta] * len(index_arg)
     with ProcessPoolExecutor(thread) as pool:
-        for res in pool.map(call_snp, bams):
+        for res in pool.map(call_snp, index_arg, outdir_arg, fasta_arg):
             all_res.append(res)
 
 
@@ -161,9 +175,8 @@ def summary(index_file, outdir, sample):
 
 
 @log
-def convert(gene_list_file, genomeDir):
+def convert(gene_list_file, gtf):
     gene_list_name, _count = read_one_col(gene_list_file)
-    _refFlat, gtf = glob_genomeDir(genomeDir)
     id_name = gene_convert(gtf)
     name_id = {}
     for id in id_name:
@@ -195,15 +208,18 @@ def snpCalling(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
+    # get genome file
+    _refFlat, gtf, fasta = glob_genomeDir(genomeDir, fa=True)
+
     # convert gene
-    gene_id_name_dic = convert(gene_list_file, genomeDir)
+    gene_id_name_dic = convert(gene_list_file, gtf)
 
     # split bam
     index_file, _count_file = split_bam(
         bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
 
     # snp
-    # call_all_snp(index_file, outdir, thread)
+    call_all_snp(index_file, outdir, thread, fasta)
 
     # summary
     # summary(index_file, outdir, sample)
