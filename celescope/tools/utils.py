@@ -413,7 +413,7 @@ def format_number(number: int) -> str:
 
 
 @log
-def glob_genomeDir(genomeDir):
+def glob_genomeDir(genomeDir, fa=False):
     refFlat = glob.glob(genomeDir + "/*.refFlat")
     if (len(refFlat) > 1):
         sys.exit("ERROR: Multiple refFlat file in " + genomeDir)
@@ -438,7 +438,13 @@ def glob_genomeDir(genomeDir):
     else:
         gtf = gtf[0]
         glob_genomeDir.logger.info("gtf file found: " + gtf)
-
+    
+    if fa:
+        fasta = glob.glob(genomeDir + "/*.fa") + glob.glob(genomeDir + "/*.fasta")
+        if len(fasta) > 1:
+            sys.exit("ERROR: Multiple fasta file in " + genomeDir)
+        fasta = fasta[0]
+        return refFlat, gtf, fasta
     return refFlat, gtf
 
 
