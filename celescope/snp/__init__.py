@@ -1,2 +1,2 @@
-__STEPS__ = ['sample', 'barcode', 'cutadapt', 'mapping_mut', 'count_mut']
+__STEPS__ = ['sample', 'barcode', 'cutadapt', 'STAR', 'featureCounts', 'snpCalling']
 __ASSAY__ = 'snp'

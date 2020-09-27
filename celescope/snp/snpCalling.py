@@ -5,14 +5,18 @@ import celescope
 import pysam
 import pandas as pd
 from celescope.tools.utils import format_number, log, read_barcode_file
+from celescope.tools.utils import read_one_col, gene_convert, glob_genomeDir
 
 
 @log
-def split_bam(out_bam, barcodes, outdir, sample):
+def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length):
     '''
     input:
-        out_bam: from feauturCounts
+        bam: bam from feauturCounts
         barcodes: cell barcodes
+        gene_id_name_dic: id name dic
+        min_query_length: minimum query length
+
     ouput:
         bam_dict: assign reads to cell barcodes and UMI
         count_dict: UMI counts per cell
@@ -27,20 +31,28 @@ def split_bam(out_bam, barcodes, outdir, sample):
 
     # read bam and split
     split_bam.logger.info('reading bam...')
-    samfile = pysam.AlignmentFile(out_bam, "rb")
+    samfile = pysam.AlignmentFile(bam, "rb")
     header = samfile.header
     for read in samfile:
         attr = read.query_name.split('_')
         barcode = attr[0]
         umi = attr[1]
-        if barcode in barcodes:
+        if not read.has_tag('XT'):
+            continue
+        gene = read.get_tag('XT')
+        query_length = read.infer_query_length()
+        if (barcode in barcodes) and (gene in gene_id_name_dic) and (query_length >= min_query_length):
+            gene_name = gene_id_name_dic[gene]
             # keep one read for each UMI
             if umi not in bam_dict[barcode]:
                 bam_dict[barcode][umi] = read
-            if umi in count_dict[barcode]:
-                count_dict[barcode][umi] += 1
+            # count
+            if gene_name not in count_dict[barcode]:
+                count_dict[barcode][gene_name] = {}
+            if umi in count_dict[barcode][gene_name]:
+                count_dict[barcode][gene_name][umi] += 1
             else:
-                count_dict[barcode][umi] = 1
+                count_dict[barcode][gene_name][umi] = 1
 
     split_bam.logger.info('writing cell bam...')
     # write new bam
@@ -51,7 +63,7 @@ def split_bam(out_bam, barcodes, outdir, sample):
         index_dict[index]['barcode'] = barcode
         index_dict[index]['valid'] = False
 
-        # out
+        # out bam
         if barcode in bam_dict:
             cell_dir = f'{cells_dir}/cell{index}'
             cell_bam_file = f'{cell_dir}/cell{index}.bam'
@@ -72,18 +84,24 @@ def split_bam(out_bam, barcodes, outdir, sample):
     df_index.to_csv(index_file, sep='\t')
 
     # out count_dict
-    df_count = pd.DataFrame(count_dict).T
-    df_temp = df_count.stack()
-    df_temp = df_temp.astype(int)
-    df_temp = df_temp.reset_index()
-    df_temp.columns = ['barcode', 'UMI', 'read_count']
-    count_file = f'{outdir}/{sample}_UMI_count.tsv'
-    df_temp.to_csv(count_file, sep='\t', index=False)
+    df_count = pd.DataFrame(columns=['barcode', 'gene', 'UMI', 'read_count'])
+    for barcode in count_dict:
+        for gene in count_dict[barcode]:
+            for umi in count_dict[barcode][gene]:
+                read_count = count_dict[barcode][gene][umi]
+                df_count = df_count.append({
+                    'barcode': barcode,
+                    'gene': gene,
+                    'UMI': umi,
+                    'read_count': read_count,
+                }, ignore_index=True)
+    count_file = f'{outdir}/{sample}_count.tsv'
+    df_count.to_csv(count_file, sep='\t', index=False)
 
     return index_file, count_file
 
 
-def call_variants(bam):
+def call_snp(bam):
 
     outdir = os.path.dirname(bam)
     prefix = os.path.basename(bam).strip('.bam')
@@ -105,14 +123,14 @@ def read_index(index_file):
 
 
 @log
-def hla_typing(index_file, outdir, thread):
+def call_all_snp(index_file, outdir, thread):
     all_res = []
     df_valid = read_index(index_file)
 
     bams = [
         f'{outdir}/cells/cell{index}/cell{index}.bam' for index in df_valid.index]
     with ProcessPoolExecutor(thread) as pool:
-        for res in pool.map(sub_typing, bams):
+        for res in pool.map(call_snp, bams):
             all_res.append(res)
 
 
@@ -143,13 +161,32 @@ def summary(index_file, outdir, sample):
 
 
 @log
-def mapping_hla(args):
+def convert(gene_list_file, genomeDir):
+    gene_list_name, _count = read_one_col(gene_list_file)
+    _refFlat, gtf = glob_genomeDir(genomeDir)
+    id_name = gene_convert(gtf)
+    name_id = {}
+    for id in id_name:
+        name = id_name[id]
+        name_id[name] = id
+    gene_id_name_dic = {}
+    for gene_name in gene_list_name:
+        gene_id = name_id[gene_name]
+        gene_id_name_dic[gene_id] = gene_name
+    return gene_id_name_dic
+
+
+@log
+def snpCalling(args):
 
     sample = args.sample
     outdir = args.outdir
-    fq = args.fq
     thread = int(args.thread)
     match_dir = args.match_dir
+    bam = args.bam
+    genomeDir = args.genomeDir
+    gene_list_file = args.gene_list
+    min_query_length = args.min_query_length
 
     # process args
     barcodes, _nCell = read_barcode_file(match_dir)
@@ -158,22 +195,29 @@ def mapping_hla(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
-    # split bam
-    index_file, _count_file = split_bam(out_bam, barcodes, outdir, sample)
+    # convert gene
+    gene_id_name_dic = convert(gene_list_file, genomeDir)
 
-    # typing
-    hla_typing(index_file, outdir, thread)
+    # split bam
+    index_file, _count_file = split_bam(
+        bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
+
+    # snp
+    # call_all_snp(index_file, outdir, thread)
 
     # summary
-    summary(index_file, outdir, sample)
+    # summary(index_file, outdir, sample)
 
 
-def get_opts_mapping_hla(parser, sub_program):
+def get_opts_snpCalling(parser, sub_program):
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument("--fq", required=True)
         parser.add_argument('--assay', help='assay', required=True)
+        parser.add_argument("--thread", help='number of thread', default=1)
+        parser.add_argument("--bam", help='featureCounts bam', required=True)
+        parser.add_argument("--genomeDir", help='genomeDir', required=True)
     parser.add_argument(
         "--match_dir", help="match scRNA-Seq dir", required=True)
-    parser.add_argument("--thread", help='number of thread', default=1)
+    parser.add_argument("--gene_list", help='gene_list', required=True)
+    parser.add_argument("--min_query_length", help='minimum query length', default=35)

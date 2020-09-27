@@ -28,6 +28,7 @@ def main():
         default='exon')
     parser.add_argument('--thread', help='thread', default=6)
     parser.add_argument('--gene_list', help="gene_list", required=True)
+    parser.add_argument('--probe_file', help="probe fasta file")
     args = parser.parse_args()
 
     # read args
@@ -53,6 +54,7 @@ def main():
     starMem = args.starMem
     gtf_type = args.gtf_type
     gene_list = args.gene_list
+    probe_file = args.probe_file
 
     # mk log dir
     logdir = outdir + '/log'
@@ -140,32 +142,18 @@ def main():
         shell_dict[sample] += cmd + '\n'
         last_step = step
 
-        # count
+        # snpCalling
         step = 'snpCalling'
         bam = f'{outdir_dic["featureCounts"]}/{sample}_name_sorted.bam'
         cmd = (
             f'{app} {assay} {step} '
-            f'--bam {bam} --sample {sample} --cells auto '
+            f'--bam {bam} --sample {sample} '
             f'--outdir {outdir_dic[step]} --assay {assay} '
             f'--match_dir {match_dict[sample]} '
             f'--genomeDir {genomeDir} '
-            f'--gene_list {gene_list}'
+            f'--gene_list {gene_list} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
-
-        # analysis
-        step = 'analysis'
-        matrix_file = f'{outdir_dic["count_capture_rna"]}/{sample}_matrix.tsv.gz'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--matrix_file {matrix_file} --sample {sample} '
-            f'--outdir {outdir_dic[step]} '
-            f'--assay {assay} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
         shell_dict[sample] += cmd + '\n'
         last_step = step

@@ -50,7 +50,7 @@ def format_stat(log, samplename):
 def featureCounts(args):
 
     # check
-    refFlat, gtf = glob_genomeDir(args.genomeDir)
+    _refFlat, gtf = glob_genomeDir(args.genomeDir)
 
     # check dir
     if not os.path.exists(args.outdir):

@@ -424,6 +424,42 @@ def main():
     get_opts_analysis(parser_analysis, True)
     parser_analysis.set_defaults(func=analysis)
 
+    # snp
+    assay = 'snp'
+    text = ASSAY_DICT[assay]
+    subparsers_snp = subparsers.add_parser(assay, help=text, description=text)
+    subparsers_snp = subparsers_snp.add_subparsers()
+
+    from celescope.tools.sample_info import sample_info, get_opts_sample
+    parser_sample = subparsers_snp.add_parser('sample')
+    get_opts_sample(parser_sample, True)
+    parser_sample.set_defaults(func=sample_info)
+
+    from celescope.tools.barcode import barcode, get_opts_barcode
+    parser_barcode = subparsers_snp.add_parser('barcode')
+    get_opts_barcode(parser_barcode, True)
+    parser_barcode.set_defaults(func=barcode)
+
+    from celescope.tools.cutadapt import cutadapt, get_opts_cutadapt
+    parser_cutadapt = subparsers_snp.add_parser('cutadapt')
+    get_opts_cutadapt(parser_cutadapt, True)
+    parser_cutadapt.set_defaults(func=cutadapt)
+
+    from celescope.tools.STAR import STAR, get_opts_STAR
+    parser_STAR = subparsers_snp.add_parser('STAR')
+    get_opts_STAR(parser_STAR, True)
+    parser_STAR.set_defaults(func=STAR)
+
+    from celescope.tools.featureCounts import featureCounts, get_opts_featureCounts
+    parser_featureCounts = subparsers_snp.add_parser('featureCounts')
+    get_opts_featureCounts(parser_featureCounts, True)
+    parser_featureCounts.set_defaults(func=featureCounts)
+
+    from celescope.snp.snpCalling import snpCalling, get_opts_snpCalling
+    parser_snpCalling = subparsers_snp.add_parser('snpCalling')
+    get_opts_snpCalling(parser_snpCalling, True)
+    parser_snpCalling.set_defaults(func=snpCalling)
+
     args = parser.parse_args()
     args.func(args)
 
