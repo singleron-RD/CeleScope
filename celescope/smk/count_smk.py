@@ -200,8 +200,7 @@ def count_smk(args):
             plot_file=combine_cluster_plot
         )
 
-    df_tag_count = df_UMI_cell["tag"].value_counts().sort_values(
-        ascending=False).reset_index()
+    df_tag_count = df_UMI_cell["tag"].value_counts().reset_index()
     df_tag_count.columns = ["item", "count"]
     for index, row in df_tag_count.iterrows():
         stats = stats.append(pd.Series(
