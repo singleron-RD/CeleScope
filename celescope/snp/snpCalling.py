@@ -4,6 +4,7 @@ from concurrent.futures import ProcessPoolExecutor
 import celescope
 import pysam
 import pandas as pd
+import logging
 from celescope.tools.utils import format_number, log, read_barcode_file
 from celescope.tools.utils import read_one_col, gene_convert, glob_genomeDir
 
@@ -13,7 +14,7 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
     '''
     input:
         bam: bam from feauturCounts
-        barcodes: cell barcodes
+        barcodes: cell barcodes, set
         gene_id_name_dic: id name dic
         min_query_length: minimum query length
 
@@ -57,6 +58,8 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
     split_bam.logger.info('writing cell bam...')
     # write new bam
     index = 0
+    barcodes = list(barcodes)
+    barcodes.sort()
     for barcode in barcodes:
         # init
         index += 1
@@ -103,6 +106,7 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
 
 def call_snp(index, outdir, fasta):
 
+    logging.info(f'Processing Cell {index}..')
     bam = f'{outdir}/cells/cell{index}/cell{index}.bam'
     # sort
     sorted_bam = f'{outdir}/cells/cell{index}/cell{index}_sorted.bam'
@@ -116,9 +120,10 @@ def call_snp(index, outdir, fasta):
     cmd_mpileup = (
         f'samtools mpileup -g -f '
         f'{fasta} '
-        f'{sorted_bam} | '
+        f'{sorted_bam} 2>/dev/null | '
         f'bcftools call -mv -Ob '
-        f'-o {out_bcf}'
+        f'-o {out_bcf} '
+        f'>/dev/null 2>&1 '
     )
     os.system(cmd_mpileup)
 
@@ -151,27 +156,19 @@ def call_all_snp(index_file, outdir, thread, fasta):
 @log
 def summary(index_file, outdir, sample):
     
-    n = 0
     df_valid = read_index(index_file)
-    
+    out_vcf = open(f'{outdir}/{sample}.vcf', 'wt')
     for index in df_valid.index:
-        try:
-            sub_df = pd.read_csv(
-                f'{outdir}/cells/cell{index}/cell{index}_result.tsv', sep='\t', index_col=0)
-        except Exception:
-            continue
-        n += 1
-        sub_df['barcode'] = df_valid.loc[index, :]['barcode']
-        sub_df['cell_index'] = index
-        if n == 1:
-            all_df = sub_df
-        else:
-            all_df = all_df.append(sub_df, ignore_index=True)
-    all_df['Reads'] = all_df['Reads'].apply(lambda x: int(x))
-    all_df = all_df[all_df['Reads'] != 0]
-    all_df = all_df.drop('Objective', axis=1)
-    out_file = f'{outdir}/{sample}_typing.tsv'
-    all_df.to_csv(out_file, sep='\t', index=False)
+        vcf = f'{outdir}/cells/cell{index}/cell{index}.vcf'
+        with open(vcf, 'rt') as f:
+            for line in f:
+                if line.startswith("#"):
+                    continue
+                items = line.split('\t')
+                items[7] += f';CELL={index}'
+                new_line = '\t'.join(items)
+                out_vcf.write(new_line)
+    out_vcf.close()        
 
 
 @log
