@@ -64,11 +64,11 @@ def read_barcode_file(match_dir):
     multi version compatible
     '''
     match_barcode_file1 = glob.glob(
-        f"{match_dir}/05.count/*_cellbarcode.tsv")
+        f"{match_dir}/*count/*_cellbarcode.tsv")
     match_barcode_file2 = glob.glob(
-        f"{match_dir}/05.count/*matrix_10X/*_cellbarcode.tsv")
+        f"{match_dir}/*count/*matrix_10X/*_cellbarcode.tsv")
     match_barcode_file3 = glob.glob(
-        f"{match_dir}/05.count/*matrix_10X/*barcodes.tsv")
+        f"{match_dir}/*count/*matrix_10X/*barcodes.tsv")
     match_barcode_file = (
         match_barcode_file1 +
         match_barcode_file2 +
