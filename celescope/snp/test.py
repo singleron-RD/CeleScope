@@ -11,7 +11,7 @@ class test_snp(unittest.TestCase):
         self.genomeDir = '/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92'
         self.gene_list_file = './gene_list.tsv'
         self.index_file = './S20070818_TS/05.snpCalling/S20070818_TS_cell_index.tsv'
-        self.thread = 10
+        self.thread = 20
         self.outdir = './S20070818_TS/05.snpCalling/'
         _refFlat, self.gtf, self.fasta = glob_genomeDir(self.genomeDir, fa=True)
         self.match_dir = '/SGRNJ02/RandD4/RD20051303_Panel/20200717/S20070818_ZL/'

@@ -34,6 +34,8 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
     split_bam.logger.info('reading bam...')
     samfile = pysam.AlignmentFile(bam, "rb")
     header = samfile.header
+    barcodes = list(barcodes)
+    barcodes.sort()
     for read in samfile:
         attr = read.query_name.split('_')
         barcode = attr[0]
@@ -44,6 +46,9 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
         query_length = read.infer_query_length()
         if (barcode in barcodes) and (gene in gene_id_name_dic) and (query_length >= min_query_length):
             gene_name = gene_id_name_dic[gene]
+            read.set_tag(tag='GN', value=gene_name, value_type='Z')
+            index = barcodes.index(barcode) + 1
+            read.set_tag(tag='CL', value=f'CELL{index}', value_type='Z')
             # keep one read for each UMI
             if umi not in bam_dict[barcode]:
                 bam_dict[barcode][umi] = read
@@ -58,8 +63,6 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
     split_bam.logger.info('writing cell bam...')
     # write new bam
     index = 0
-    barcodes = list(barcodes)
-    barcodes.sort()
     for barcode in barcodes:
         # init
         index += 1
@@ -153,22 +156,75 @@ def call_all_snp(index_file, outdir, thread, fasta):
             all_res.append(res)
 
 
+def process_vcf_header(line, sample):
+    if line.startswith('##'):
+        if line.find('samtools') != -1 or line.find('bcftools') != -1:
+            return
+        return line
+    else:
+        items = line.split('\t')
+        items[-1] = sample
+        new_line = '\t'.join(items) + '\n'
+        return new_line
+
+
 @log
 def summary(index_file, outdir, sample):
-    
+    number = 0
     df_valid = read_index(index_file)
     out_vcf = open(f'{outdir}/{sample}.vcf', 'wt')
     for index in df_valid.index:
-        vcf = f'{outdir}/cells/cell{index}/cell{index}.vcf'
-        with open(vcf, 'rt') as f:
+        number += 1
+        cell_vcf_file = f'{outdir}/cells/cell{index}/cell{index}.vcf'
+        coords = defaultdict(set)
+        with open(cell_vcf_file, 'rt') as f:
             for line in f:
                 if line.startswith("#"):
+                    # add vcf and bam header
+                    if number == 1:
+                        new_line = process_vcf_header(line, sample)
+                        if new_line:
+                            out_vcf.write(new_line)
                     continue
                 items = line.split('\t')
                 items[7] += f';CELL={index}'
                 new_line = '\t'.join(items)
                 out_vcf.write(new_line)
-    out_vcf.close()        
+                chrom = str(items[0])
+                pos = int(items[1])
+                coords[chrom].add(pos)
+
+        # add bam header
+        if number == 1:
+            cell_bam_file = f'{outdir}/cells/cell{index}/cell{index}_sorted.bam'
+            cell_bam = pysam.AlignmentFile(cell_bam_file, "rb")
+            header = cell_bam.header
+            out_bam = pysam.AlignmentFile(f'{outdir}/{sample}.bam', "wb", header=header)
+
+        # add bam
+        if len(coords) > 0:
+            cell_bam_file = f'{outdir}/cells/cell{index}/cell{index}_sorted.bam'
+            cell_bam = pysam.AlignmentFile(cell_bam_file, "rb")
+            for read in cell_bam:
+                bam_ref = str(read.reference_name)
+                aligned_pairs = read.get_aligned_pairs()
+                align_dict = {}
+                for pair in aligned_pairs:
+                    ref_pos = pair[1]
+                    read_pos = pair[0]
+                    if ref_pos and read_pos:
+                        align_dict[ref_pos] = read_pos
+                if bam_ref in coords.keys():
+                    for pos in coords[bam_ref]:
+                        if pos in align_dict:
+                            out_bam.write(read)
+                            break
+
+    out_vcf.close()
+    out_bam.close()
+    pysam.sort("-o", f'{outdir}/{sample}_sorted.bam', f'{outdir}/{sample}.bam')
+    cmd = f'samtools index {outdir}/{sample}_sorted.bam'
+    os.system(cmd)
 
 
 @log
@@ -219,7 +275,7 @@ def snpCalling(args):
     call_all_snp(index_file, outdir, thread, fasta)
 
     # summary
-    # summary(index_file, outdir, sample)
+    summary(index_file, outdir, sample)
 
 
 def get_opts_snpCalling(parser, sub_program):
