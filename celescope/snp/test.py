@@ -16,6 +16,7 @@ class test_snp(unittest.TestCase):
         _refFlat, self.gtf, self.fasta = glob_genomeDir(self.genomeDir, fa=True)
         self.match_dir = '/SGRNJ02/RandD4/RD20051303_Panel/20200717/S20070818_ZL/'
         self.sample = 'S20070818_TS'
+        self.count_file = './S20070818_TS/05.snpCalling/S20070818_TS_count.tsv'
 
     @unittest.skip('pass')
     def test_convert(self):
@@ -44,8 +45,7 @@ class test_snp(unittest.TestCase):
     
     #@unittest.skip('pass')
     def test_summary(self):
-        summary(self.index_file, self.outdir, self.sample)
-
+        summary(self.index_file, self.count_file, self.outdir, self.sample)
 
 
 if __name__ == '__main__':

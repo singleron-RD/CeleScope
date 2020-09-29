@@ -3,10 +3,13 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 import celescope
 import pysam
+import numpy as np
 import pandas as pd
 import logging
 from celescope.tools.utils import format_number, log, read_barcode_file
+from celescope.tools.utils import format_stat
 from celescope.tools.utils import read_one_col, gene_convert, glob_genomeDir
+from celescope.tools.report import reporter
 
 
 @log
@@ -141,7 +144,7 @@ def call_snp(index, outdir, fasta):
 def read_index(index_file):
     df_index = pd.read_csv(index_file, sep='\t', index_col=0, dtype=object)
     df_valid = df_index[df_index['valid'] == 'True']
-    return df_valid
+    return df_index, df_valid
 
 
 @log
@@ -169,10 +172,19 @@ def process_vcf_header(line, sample):
 
 
 @log
-def summary(index_file, outdir, sample):
+def summary(index_file, count_file, outdir, sample):
+    # init
     number = 0
-    df_valid = read_index(index_file)
+    Number_of_Match_Cells_with_SNP = 0
+    SNP_count_dict = defaultdict(int)
+    coord_gene_dict = defaultdict(dict)
+
+    # read index
+    df_index, df_valid = read_index(index_file)
+
+    # out vcf
     out_vcf = open(f'{outdir}/{sample}.vcf', 'wt')
+
     for index in df_valid.index:
         number += 1
         cell_vcf_file = f'{outdir}/cells/cell{index}/cell{index}.vcf'
@@ -186,13 +198,15 @@ def summary(index_file, outdir, sample):
                         if new_line:
                             out_vcf.write(new_line)
                     continue
-                items = line.split('\t')
-                items[7] += f';CELL={index}'
-                new_line = '\t'.join(items)
-                out_vcf.write(new_line)
-                chrom = str(items[0])
-                pos = int(items[1])
-                coords[chrom].add(pos)
+                if line:
+                    items = line.split('\t')
+                    items[7] += f';CELL={index}'
+                    new_line = '\t'.join(items)
+                    out_vcf.write(new_line)
+                    chrom = str(items[0])
+                    pos = int(items[1])
+                    coords[chrom].add(pos)
+                    SNP_count_dict[index] += 1
 
         # add bam header
         if number == 1:
@@ -203,10 +217,12 @@ def summary(index_file, outdir, sample):
 
         # add bam
         if len(coords) > 0:
+            Number_of_Match_Cells_with_SNP += 1
             cell_bam_file = f'{outdir}/cells/cell{index}/cell{index}_sorted.bam'
             cell_bam = pysam.AlignmentFile(cell_bam_file, "rb")
             for read in cell_bam:
                 bam_ref = str(read.reference_name)
+                gene_name = read.get_tag('GN')
                 aligned_pairs = read.get_aligned_pairs()
                 align_dict = {}
                 for pair in aligned_pairs:
@@ -215,16 +231,79 @@ def summary(index_file, outdir, sample):
                     if ref_pos and read_pos:
                         align_dict[ref_pos] = read_pos
                 if bam_ref in coords.keys():
+                    read_flag = False
                     for pos in coords[bam_ref]:
                         if pos in align_dict:
-                            out_bam.write(read)
-                            break
+                            read_flag = True
+                            coord_gene_dict[bam_ref][pos] = gene_name
+                    if read_flag:
+                        out_bam.write(read)
 
     out_vcf.close()
     out_bam.close()
     pysam.sort("-o", f'{outdir}/{sample}_sorted.bam', f'{outdir}/{sample}.bam')
     cmd = f'samtools index {outdir}/{sample}_sorted.bam'
     os.system(cmd)
+
+    # annotate vcf
+    anno_vcf = open(f'{outdir}/{sample}_anno.vcf', 'wt')
+    with open(f'{outdir}/{sample}.vcf', 'rt') as vcf:
+        for line in vcf:
+            if line.startswith('#'):
+                anno_vcf.write(line)
+                continue
+            items = line.split('\t')
+            chrom = str(items[0])
+            pos = int(items[1])
+            gene_name = coord_gene_dict[chrom][pos]
+            items[7] += f';GENE={gene_name}'
+            new_line = '\t'.join(items)
+            anno_vcf.write(new_line)
+    anno_vcf.close()
+
+    # rm
+    os.remove(f'{outdir}/{sample}.vcf')
+    os.remove(f'{outdir}/{sample}.bam')
+
+    # stat
+    stats = pd.Series()
+    n_match_cell = len(df_index.index)
+
+    df_count = pd.read_csv(count_file, sep='\t')
+    df_count_read = df_count.groupby('barcode').agg({'read_count':sum})
+    read_total = sum(df_count_read['read_count'])
+    Mean_Reads_per_Cell = round((read_total / n_match_cell), 2)
+    stats = stats.append(pd.Series(
+        Mean_Reads_per_Cell,
+        index=['Mean Reads per Cell']
+    ))
+    df_count_UMI = df_count.groupby('barcode').agg({'UMI':'count'})
+    UMI_total = sum(df_count_UMI['UMI'])
+    Mean_UMIs_per_Cell = round((UMI_total / n_match_cell), 2)
+    stats = stats.append(pd.Series(
+        Mean_UMIs_per_Cell,
+        index=['Mean UMIs per Cell']
+    ))
+
+    stats = stats.append(pd.Series(
+        format_stat(Number_of_Match_Cells_with_SNP, n_match_cell),
+        index=['Number of Cells with SNP']
+    ))
+
+    SNP_counts = list(SNP_count_dict.values())
+    Mean_SNP_per_Cell = round(np.mean(SNP_counts), 3)
+    stats = stats.append(pd.Series(
+        Mean_SNP_per_Cell,
+        index=['Mean SNPs per Cell with SNP']
+    ))
+
+    stat_file = f'{outdir}/stat.txt'
+    stats.to_csv(stat_file, sep=':', header=False)
+
+    t = reporter(
+        name='snpCalling', assay='snp', sample=sample,
+        stat_file=stat_file, outdir=outdir + '/..')
+    t.get_report()
 
 
 @log
@@ -268,14 +347,14 @@ def snpCalling(args):
     gene_id_name_dic = convert(gene_list_file, gtf)
 
     # split bam
-    index_file, _count_file = split_bam(
+    index_file, count_file = split_bam(
         bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
 
     # snp
     call_all_snp(index_file, outdir, thread, fasta)
 
     # summary
-    summary(index_file, outdir, sample)
+    summary(index_file, count_file, outdir, sample)
 
 
 def get_opts_snpCalling(parser, sub_program):

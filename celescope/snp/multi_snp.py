@@ -41,6 +41,10 @@ def main():
     lowNum = args.lowNum
     mod = args.mod
     rm_files = args.rm_files
+    if args.steps_run != 'all':
+        steps_run = args.steps_run.split(',')
+    else:
+        steps_run = args.steps_run
 
     # parse mapfile
     fq_dict, match_dict = parse_map_col4(args.mapfile, None)
@@ -96,10 +100,11 @@ def main():
             f'--lowNum {lowNum} --outdir {outdir_dic[step]} --assay {assay} '
             f'--probe_file {probe_file} '
         )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
+        if (steps_run == 'all') or (step in steps_run):
+            sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
+            sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+            shell_dict[sample] += cmd + '\n'
+            last_step = step
 
         # adapt
         step = "cutadapt"
@@ -109,10 +114,11 @@ def main():
             f'--fq {fq} --sample {sample} --outdir '
             f'{outdir_dic[step]} --assay {assay} '
         )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
+        if (steps_run == 'all') or (step in steps_run):
+            sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
+            sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+            shell_dict[sample] += cmd + '\n'
+            last_step = step
 
         # STAR
         step = 'STAR'
@@ -123,10 +129,11 @@ def main():
             f'--genomeDir {genomeDir} --thread {thread} ' 
             f'--outdir {outdir_dic[step]} --assay {assay} '
         )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=starMem, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
+        if (steps_run == 'all') or (step in steps_run):
+            sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=starMem, x=thread)
+            sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+            shell_dict[sample] += cmd + '\n'
+            last_step = step
 
         # featureCounts
         step = 'featureCounts'
@@ -137,10 +144,11 @@ def main():
             f'--sample {sample} --thread {thread} --outdir {outdir_dic[step]} '
             f'--genomeDir {genomeDir} --assay {assay} '
         )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
+        if (steps_run == 'all') or (step in steps_run):
+            sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
+            sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+            shell_dict[sample] += cmd + '\n'
+            last_step = step
 
         # snpCalling
         step = 'snpCalling'
@@ -153,10 +161,11 @@ def main():
             f'--genomeDir {genomeDir} '
             f'--gene_list {gene_list} '
         )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
+        if (steps_run == 'all') or (step in steps_run):
+            sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
+            sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
+            shell_dict[sample] += cmd + '\n'
+            last_step = step
 
     # merged report
     if mod == 'sjm':

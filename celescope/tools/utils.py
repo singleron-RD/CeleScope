@@ -138,6 +138,7 @@ def multi_opts(assay):
         '--rm_files',
         action='store_true',
         help='remove redundant fq.gz and bam after running')
+    parser.add_argument('--steps_run', help='steps to run', default='all')
     return parser
 
 
@@ -375,7 +376,7 @@ def parse_map_col4(mapfile, default_val):
     return fq_dict, col4_dict
 
 
-def generate_sjm(cmd, name, conda, m=1, x=1):
+def generate_sjm(cmd, name, conda, m=1, x=1, steps_run='all'):
     res_cmd = f'''
 job_begin
     name {name}

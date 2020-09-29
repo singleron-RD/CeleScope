@@ -128,8 +128,8 @@
       {% include "html/rna/featureCounts_summary.html"%}
       {% endif %}
 
-      {% if count_capture_rna_summary is defined %}
-      {% include "html/capture_rna/count_capture_rna_summary.html"%}
+      {% if snpCalling_summary is defined %}
+      {% include "html/snp/snpCalling_summary.html"%}
       {% endif %}
 
       {% if cluster_tsne is defined %}
