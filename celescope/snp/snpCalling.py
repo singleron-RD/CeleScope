@@ -184,11 +184,11 @@ def summary(index_file, count_file, outdir, sample):
 
     # out vcf
     out_vcf = open(f'{outdir}/{sample}.vcf', 'wt')
-
     for index in df_valid.index:
+        vcf_coords_dict = {}
         number += 1
         cell_vcf_file = f'{outdir}/cells/cell{index}/cell{index}.vcf'
-        coords = defaultdict(set)
+        # vcf coords
         with open(cell_vcf_file, 'rt') as f:
             for line in f:
                 if line.startswith("#"):
@@ -205,7 +205,10 @@ def summary(index_file, count_file, outdir, sample):
                     out_vcf.write(new_line)
                     chrom = str(items[0])
                     pos = int(items[1])
-                    coords[chrom].add(pos)
+                    if chrom not in vcf_coords_dict:
+                        vcf_coords_dict[chrom] = set([pos])
+                    else:
+                        vcf_coords_dict[chrom].add(pos)
                     SNP_count_dict[index] += 1
 
         # add bam header
@@ -216,7 +219,7 @@ def summary(index_file, count_file, outdir, sample):
             out_bam = pysam.AlignmentFile(f'{outdir}/{sample}.bam', "wb", header=header)
 
         # add bam
-        if len(coords) > 0:
+        if len(vcf_coords_dict) > 0:
             Number_of_Match_Cells_with_SNP += 1
             cell_bam_file = f'{outdir}/cells/cell{index}/cell{index}_sorted.bam'
             cell_bam = pysam.AlignmentFile(cell_bam_file, "rb")
@@ -228,11 +231,11 @@ def summary(index_file, count_file, outdir, sample):
                 for pair in aligned_pairs:
                     ref_pos = pair[1]
                     read_pos = pair[0]
-                    if ref_pos and read_pos:
+                    if ref_pos:
                         align_dict[ref_pos] = read_pos
-                if bam_ref in coords.keys():
+                if bam_ref in vcf_coords_dict.keys():
                     read_flag = False
-                    for pos in coords[bam_ref]:
+                    for pos in vcf_coords_dict[bam_ref]:
                         if pos in align_dict:
                             read_flag = True
                             coord_gene_dict[bam_ref][pos] = gene_name
@@ -262,8 +265,8 @@ def summary(index_file, count_file, outdir, sample):
     anno_vcf.close()
 
     # rm
-    os.remove(f'{outdir}/{sample}.vcf')
-    os.remove(f'{outdir}/{sample}.bam')
+    #os.remove(f'{outdir}/{sample}.vcf')
+    #os.remove(f'{outdir}/{sample}.bam')
 
     # stat
     stats = pd.Series()

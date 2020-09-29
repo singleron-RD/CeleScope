@@ -35,10 +35,10 @@ def merge_report():
             # add title
             if sample == samples[0]:
                 result_dict[summary].append(
-                    '\t'.join([x[0].replace(' ', '_') for x in data_dic[summary]])
+                    '\t'.join([str(x[0]).replace(' ', '_') for x in data_dic[summary]])
                 )
             result_dict[summary].append(
-                '\t'.join([x[1].replace(' ', '') for x in data_dic[summary]])
+                '\t'.join([str(x[1]).replace(' ', '') for x in data_dic[summary]])
             )
 
     with open('./merge.xls', 'w') as fh:
