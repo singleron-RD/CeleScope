@@ -1,3 +1,3 @@
 conda env create -f celescope.yml
-source activate celescope
-python setup.py install
+source activate celescope_hla
+python setup.py develop

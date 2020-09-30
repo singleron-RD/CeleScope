@@ -1,5 +1,5 @@
-__VERSION__ = "1.1.5"
-__CONDA__ = "celescope_RD"
+__VERSION__ = "1.1.4"
+__CONDA__ = "celescope_hla"
 
 ASSAY_DICT = {
     "rna": "Single Cell RNA-Seq",
@@ -8,8 +8,7 @@ ASSAY_DICT = {
     'fusion': "Single Cell Fusion Gene",
     'smk': "Single Cell SMK",
     'vdj': "Single Cell VDJ",
-    'mut': 'Single Cell Insertion and Deletion',
+    'mut': 'Single Cell Mutation',
     'hla': 'Single Cell HLA',
     'capture_rna': 'Single Cell Capture RNA',
-    'snp': 'Single Cell SNP',
 }
