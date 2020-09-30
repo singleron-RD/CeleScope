@@ -1,7 +1,7 @@
 import unittest
 import os
 import pandas as pd
-from celescope.snp.snpCalling import convert, call_all_snp, call_snp, split_bam, summary
+from celescope.snp.snpCalling import convert, call_all_snp, call_snp, split_bam, summary, read_index
 from celescope.tools.utils import read_barcode_file, glob_genomeDir
 
 
@@ -43,9 +43,16 @@ class test_snp(unittest.TestCase):
             bam, barcodes, self.outdir,
             self.sample, gene_id_name_dic, min_query_length)
     
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_summary(self):
         summary(self.index_file, self.count_file, self.outdir, self.sample)
+
+    def test_index(self):
+        index_file = '/SGRNJ02/RandD4/RD20051303_Panel/20200929/S20070817_TS/05.snpCalling/S20070817_TS_cell_index.tsv'
+        df_index, df_valid = read_index(index_file)
+        index_arg = df_valid.index
+        print(index_arg)
+        print(list(index_arg))
 
 
 if __name__ == '__main__':

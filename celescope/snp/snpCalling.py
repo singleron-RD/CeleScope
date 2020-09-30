@@ -150,7 +150,7 @@ def read_index(index_file):
 @log
 def call_all_snp(index_file, outdir, thread, fasta):
     all_res = []
-    df_valid = read_index(index_file)
+    _df_index, df_valid = read_index(index_file)
     index_arg = df_valid.index
     outdir_arg = [outdir] * len(index_arg)
     fasta_arg = [fasta] * len(index_arg)
