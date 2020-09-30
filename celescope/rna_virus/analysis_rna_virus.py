@@ -103,8 +103,8 @@ def analysis_rna_virus(args):
     seurat(sample, outdir, matrix_file)
 
     # report
-    tsne_df_file = "{outdir}/tsne_coord.tsv".format(outdir=outdir)
-    marker_df_file = "{outdir}/markers.tsv".format(outdir=outdir)
+    tsne_df_file = "{outdir}/*tsne_coord.tsv".format(outdir=outdir)
+    marker_df_file = "{outdir}/*markers.tsv".format(outdir=outdir)
     tsne_df = pd.read_csv(tsne_df_file, sep="\t")
     marker_df = pd.read_csv(marker_df_file, sep="\t")
     virus_df = pd.read_csv(virus_file, sep="\t")
