@@ -130,7 +130,7 @@ def count_vdj(args):
     df_clonetypes = df_cell_confident_count.copy()
 
     df_clonetypes = df_clonetypes.groupby(cols, as_index=False).agg({
-        "barcode": "count"}).sort_values(["barcode"] + cols, ascending=False)
+        "barcode": "count"}).sort_values(["barcode"] + cols, ascending=False, na_position='last')
     total_CDR3_barcode_number = sum(df_clonetypes.barcode)
     df_clonetypes["percent"] = df_clonetypes.barcode / \
         total_CDR3_barcode_number * 100
@@ -280,7 +280,7 @@ def count_vdj(args):
         df_match_clonetypes
         """
         df_match_clonetypes = df_match.groupby(cols, as_index=False).agg({
-            "barcode": "count"}).sort_values(["barcode"] + cols, ascending=False)
+            "barcode": "count"}).sort_values(["barcode"] + cols, ascending=False, na_position='last')
         total_match_CDR3_barcode_number = sum(
             df_match_clonetypes.barcode)
         df_match_clonetypes["percent"] = df_match_clonetypes.barcode / \
