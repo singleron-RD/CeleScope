@@ -130,7 +130,12 @@ def count_vdj(args):
     df_clonetypes = df_cell_confident_count.copy()
 
     df_clonetypes = df_clonetypes.groupby(cols, as_index=False).agg({
-        "barcode": "count"}).sort_values(["barcode"] + cols, ascending=False, na_position='last')
+        "barcode": "count"})
+    # put na last
+    df_clonetypes.replace('NA', np.nan, inplace=True)
+    df_clonetypes.sort_values(["barcode"] + cols, ascending=False, na_position='last', inplace=True)
+    df_clonetypes.replace(np.nan, 'NA', inplace=True)
+
     total_CDR3_barcode_number = sum(df_clonetypes.barcode)
     df_clonetypes["percent"] = df_clonetypes.barcode / \
         total_CDR3_barcode_number * 100
@@ -280,7 +285,7 @@ def count_vdj(args):
         df_match_clonetypes
         """
         df_match_clonetypes = df_match.groupby(cols, as_index=False).agg({
-            "barcode": "count"}).sort_values(["barcode"] + cols, ascending=False, na_position='last')
+            "barcode": "count"})
         total_match_CDR3_barcode_number = sum(
             df_match_clonetypes.barcode)
         df_match_clonetypes["percent"] = df_match_clonetypes.barcode / \
@@ -294,6 +299,7 @@ def count_vdj(args):
         # order and drop duplicated cols
         order = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
         df_match_clonetypes = df_match_clonetypes[order]
+        df_match_clonetypes.sort_values(["barcode_count", "clonetype_ID"], ascending=[False,True], inplace=True)
         df_match_clonetypes.to_csv(
             match_clonetypes_file, sep="\t", index=False)
 
