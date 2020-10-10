@@ -6,82 +6,69 @@ import re
 from collections import defaultdict
 from celescope.__init__ import __CONDA__
 from celescope.vdj.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.utils import merge_report, generate_sjm, parse_map_col4
+from celescope.tools.utils import merge_report, generate_sjm, arg_str
+from celescope.tools.utils import parse_map_col4, multi_opts, link_data
 
 
 def main():
 
-    parser = argparse.ArgumentParser('CeleScope vdj multi-sample')
-    parser.add_argument(
-        '--mapfile', help='mapfile, 3 columns, "LibName\\tDataDir\\tSampleName"', required=True)
-    parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
-    parser.add_argument('--chemistry', choices=['scopeV2.0.0', 'scopeV2.0.1',
-                                                'scopeV2.1.0', 'scopeV2.1.1'], help='chemistry version')
-    parser.add_argument('--whitelist', help='cellbarcode list')
-    parser.add_argument('--linker', help='linker')
-    parser.add_argument('--pattern', help='read1 pattern')
-    parser.add_argument('--outdir', help='output dir', default="./")
-    parser.add_argument('--adapt', action='append', help='adapter sequence',
-                        default=['polyT=A{15}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
-    parser.add_argument('--minimum-length', dest='minimum_length',
-                        help='minimum_length', default=20)
-    parser.add_argument('--nextseq-trim', dest='nextseq_trim',
-                        help='nextseq_trim', default=20)
-    parser.add_argument(
-        '--overlap', help='minimum overlap length, default=5', default=5)
-    parser.add_argument('--lowQual', type=int,
-                        help='max phred of base as lowQual', default=0)
-    parser.add_argument('--lowNum', type=int,
-                        help='max number with lowQual allowed', default=2)
-    parser.add_argument('--thread', help='thread', default=6)
+        # init
+    assay = __ASSAY__
+    steps = __STEPS__
+    conda = __CONDA__
+    app = 'celescope'
+
+    # parser
+    parser = multi_opts(assay)
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument("--debug", action='store_true')
     parser.add_argument(
         '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)
-    parser.add_argument('--rm_files', action='store_true',
-                        help='remove redundant fq.gz and bam after running')
-    args = vars(parser.parse_args())
+    parser.add_argument('--thread', help='thread', default=6)
+    args = parser.parse_args()
 
-    fq_dict, match_dict = parse_map_col4(args['mapfile'], None)
+    # read args
+    outdir = args.outdir
+    chemistry = args.chemistry
+    pattern = args.pattern
+    whitelist = args.whitelist
+    linker = args.linker
+    lowQual = args.lowQual
+    lowNum = args.lowNum
+    mod = args.mod
+    rm_files = args.rm_files
 
-    raw_dir = args['outdir'] + '/data_give/rawdata'
-    os.system('mkdir -p %s' % (raw_dir))
-    with open(raw_dir + '/ln.sh', 'w') as fh:
-        fh.write('cd %s\n' % (raw_dir))
-        for s, arr in fq_dict.items():
-            fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
-            fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
+    # parse mapfile
+    fq_dict, match_dict = parse_map_col4(args.mapfile, None)
 
-    logdir = args['outdir'] + '/log'
+    # link
+    link_data(outdir, fq_dict)
+
+    # custom args
+    thread = args.thread
+    type = args.type
+    debug = args.debug
+    iUMI = args.iUMI    
+
+    # mk log dir
+    logdir = outdir + '/log'
     os.system('mkdir -p %s' % (logdir))
+
+    # script init
     sjm_cmd = 'log_dir %s\n' % (logdir)
     sjm_order = ''
-    shell = ''
-    app = 'celescope'
-    mod = args['mod']
-    thread = args['thread']
-    chemistry = args['chemistry']
-    pattern = args['pattern']
-    whitelist = args['whitelist']
-    linker = args['linker']
-    lowQual = args['lowQual']
-    lowNum = args['lowNum']
-    basedir = args['outdir']
-    type = args['type']
-    iUMI = args['iUMI']
+    shell_dict = defaultdict(str)
 
-    assay = __ASSAY__
-    steps = __STEPS__
-    conda = __CONDA__
-
+    # outdir dict
     for sample in fq_dict:
         outdir_dic = {}
         index = 0
         for step in steps:
-            outdir = f"{basedir}/{sample}/{index:02d}.{step}"
-            outdir_dic.update({step: outdir})
+            step_outdir = f"{outdir}/{sample}/{index:02d}.{step}"
+            outdir_dic.update({step: step_outdir})
             index += 1
 
+        # sample
         step = "sample"
         cmd = (
             f'{app} {assay} {step} '
@@ -89,7 +76,7 @@ def main():
             f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda)
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # barcode
@@ -105,7 +92,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # adapt
@@ -118,7 +105,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # mapping_vdj
@@ -135,7 +122,7 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
         # count_vdj
@@ -153,23 +140,28 @@ def main():
         )
         sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=8, x=thread)
         sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell += cmd + '\n'
+        shell_dict[sample] += cmd + '\n'
         last_step = step
 
     # merged report
-    step = 'merge_report'
     if mod == 'sjm':
-        # add type to steps mapping and count
-        for i in range(3, len(steps)):
-            steps[i] = f'{type}_{steps[i]}'
+        step = 'merge_report'
         merge_report(
-            fq_dict, steps, last_step, sjm_cmd, sjm_order,
-            logdir, conda, args['outdir'], args['rm_files']
+            fq_dict,
+            steps,
+            last_step,
+            sjm_cmd,
+            sjm_order,
+            logdir,
+            conda,
+            outdir,
+            rm_files,
         )
     if mod == 'shell':
         os.system('mkdir -p ./shell/')
-        with open(f'./shell/{sample}.sh', 'w') as f:
-            f.write(shell)
+        for sample in shell_dict:
+            with open(f'./shell/{sample}.sh', 'w') as f:
+                f.write(shell_dict[sample])
 
 
 if __name__ == '__main__':
