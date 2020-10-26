@@ -41,7 +41,7 @@ def main():
     lowNum = args.lowNum
     mod = args.mod
     rm_files = args.rm_files
-    debug_str = '--debug'
+    debug_str = arg_str(args.debug, 'debug')
     outFilterMatchNmin = args.outFilterMatchNmin
     
     # parse mapfile
