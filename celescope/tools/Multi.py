@@ -5,8 +5,8 @@ import argparse
 import re
 from collections import defaultdict
 from celescope.__init__ import __CONDA__
-from celescope.tools.utils import merge_report, generate_sjm, arg_str
-from celescope.tools.utils import parse_map_col4, multi_opts, link_data
+from celescope.tools.utils import merge_report, arg_str
+from celescope.tools.utils import parse_map_col4, link_data
 from celescope.tools.__init__ import __PATTERN_DICT__
 
 class Multi():
@@ -78,19 +78,22 @@ class Multi():
         self.parser = parser
         return parser
 
-    def custome_args(self):
-        # parser
-        parser = self.parser
-        parser.add_argument('--starMem', help='starMem', default=30)
-        parser.add_argument('--genomeDir', help='genome index dir', required=True)
-        parser.add_argument(
+    def STAR_args(self):
+        self.parser.add_argument('--starMem', help='starMem', default=30)
+        self.parser.add_argument('--genomeDir', help='genome index dir', required=True)
+        self.parser.add_argument(
             '--gtf_type',
             help='Specify attribute type in GTF annotation, default=exon',
             default='exon')
-        parser.add_argument('--thread', help='thread', default=6)
-        parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
-        parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
-        self.parser = parser
+        self.parser.add_argument('--thread', help='thread', default=6)
+
+    def analysis_args(self):
+        self.parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
+        self.parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
+
+    def custome_args(self):
+        self.STAR_args()
+        self.analysis_args()
 
     def parse_args(self):
         self.multi_opts()
@@ -109,14 +112,29 @@ class Multi():
         self.debug_str = arg_str(self.args.debug, 'debug')
         self.outFilterMatchNmin = self.args.outFilterMatchNmin
 
-    def read_custome_args(self):
+    @staticmethod
+    def arg_str(arg, arg_name):
+        '''
+        return action store_true arguments as string
+        '''
+        if arg:
+            return '--' + arg_name
+        return ''
+
+    def read_STAR_args(self):
         self.thread = self.args.thread
         self.genomeDir = self.args.genomeDir
         self.starMem = self.args.starMem
         self.gtf_type = self.args.gtf_type
+    
+    def read_analysis_args(self):
         self.save_rds = self.args.save_rds
-        self.save_rds_str = arg_str(self.save_rds, 'save_rds')
+        self.save_rds_str = Multi.arg_str(self.save_rds, 'save_rds')
         self.type_marker_tsv = self.args.type_marker_tsv
+
+    def read_custome_args(self):
+        self.read_STAR_args()
+        self.read_analysis_args()
 
     def prepare(self):
         # parse_mapfile
@@ -144,6 +162,23 @@ class Multi():
                 self.outdir_dic[sample].update({step: step_outdir})
                 index += 1
     
+    def generate_cmd(self, cmd, step, sample, m=1, x=1):
+        self.sjm_cmd += f'''
+job_begin
+    name {step}_{sample}
+    sched_options -w n -cwd -V -l vf={m}g,p={x}
+    cmd source activate {self.__CONDA__}; {cmd}
+job_end
+'''
+
+    def generate_first(self, cmd, step, sample, m=1, x=1):
+        self.generate_cmd(cmd, step, sample, m=1, x=1)
+        self.shell_dict[sample] += cmd + '\n'
+        self.last_step = step
+
+    def generate_other(self, cmd, step, sample, m=1, x=1):
+        self.generate_first(cmd, step, sample, m=1, x=1)
+        self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
 
     def sample_info(self, sample):
         step = "sample"
@@ -151,16 +186,14 @@ class Multi():
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
-            f'{step } '
+            f'{step} '
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
             f'--chemistry {self.chemistry} '
             f'--fq1 {arr[0]}'
         )
-        self.sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', self.__CONDA__)
-        self.shell_dict[sample] += cmd + '\n'
-        self.last_step = step
+        self.generate_first(cmd, step, sample, m=1, x=1)
     
     def barcode(self, sample):
         # barcode
@@ -169,7 +202,7 @@ class Multi():
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
-            f'{step } '
+            f'{step} '
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
@@ -180,10 +213,7 @@ class Multi():
             f'--lowNum {self.lowNum} '
 
         )
-        self.sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', self.__CONDA__, m=5, x=self.thread)
-        self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
-        self.shell_dict[sample] += cmd + '\n'
-        self.last_step = step
+        self.generate_other(cmd, step, sample, m=5, x=1)
 
     def cutadapt(self, sample):
         # adapt
@@ -198,10 +228,7 @@ class Multi():
             f'--assay {self.__ASSAY__} '
             f'--fq {fq}'
         )
-        self.sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', self.__CONDA__, m=5, x=1)
-        self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
-        self.shell_dict[sample] += cmd + '\n'
-        self.last_step = step
+        self.generate_other(cmd, step, sample, m=5, x=1)
 
     def STAR(self, sample):
         step = 'STAR'
@@ -209,7 +236,7 @@ class Multi():
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
-            f'{step } '
+            f'{step} '
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
@@ -219,10 +246,7 @@ class Multi():
             f'{self.debug_str} '
             f'--outFilterMatchNmin {self.outFilterMatchNmin} '
         )
-        self.sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', self.__CONDA__, m=self.starMem, x=self.thread)
-        self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
-        self.shell_dict[sample] += cmd + '\n'
-        self.last_step = step
+        self.generate_other(cmd, step, sample, m=self.starMem, x=self.thread)
 
     def featureCounts(self, sample):
         step = 'featureCounts'
@@ -230,7 +254,7 @@ class Multi():
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
-            f'{step } '
+            f'{step} '
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
@@ -238,10 +262,7 @@ class Multi():
             f'--genomeDir {self.genomeDir} '
             f'--thread {self.thread} '
         )
-        self.sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', self.__CONDA__, m=self.starMem, x=self.thread)
-        self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
-        self.shell_dict[sample] += cmd + '\n'
-        self.last_step = step
+        self.generate_other(cmd, step, sample, m=5, x=self.thread)
 
     def count(self, sample):
         step = 'count'
@@ -249,7 +270,7 @@ class Multi():
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
-            f'{step } '
+            f'{step} '
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
@@ -257,10 +278,7 @@ class Multi():
             f'--cells {self.col4_dict[sample]} '
             f'--genomeDir {self.genomeDir} '
         )
-        self.sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', self.__CONDA__, m=self.starMem, x=self.thread)
-        self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
-        self.shell_dict[sample] += cmd + '\n'
-        self.last_step = step
+        self.generate_other(cmd, step, sample, m=10, x=1)
 
     def analysis(self, sample):
         step = 'analysis'
@@ -276,10 +294,7 @@ class Multi():
             f'{self.save_rds_str} '
             f'--type_marker_tsv {self.type_marker_tsv} '
         )
-        self.sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', self.__CONDA__, m=15, x=self.thread)
-        self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
-        self.shell_dict[sample] += cmd + '\n'
-        self.last_step = step
+        self.generate_other(cmd, step, sample, m=10, x=1)
 
     def run_steps(self):
         for sample in self.fq_dict:
