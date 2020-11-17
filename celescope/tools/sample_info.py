@@ -20,14 +20,15 @@ def sample_info(args):
     version = __VERSION__
     outdir = args.outdir
     chemistry = args.chemistry
-    fq1 = args.fq1
-    fq1_file0 = fq1.split(',')[0]
-    #transcriptome = args.genomeDir.split("/")[-1]
 
     # get chemistry
     if chemistry == 'auto':
+        fq1 = args.fq1
+        fq1_file0 = fq1.split(',')[0]
         ch = Chemistry(fq1_file0)
         chemistry = ch.get_chemistry()
+    else:
+        chemistry = args.chemistry
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % outdir)
@@ -56,6 +57,6 @@ def get_opts_sample(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument('--fq1', help='read1 fq file', required=True)
+        parser.add_argument('--fq1', help='read1 fq file')
     parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
     

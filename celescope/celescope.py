@@ -301,7 +301,6 @@ def main():
     get_opts_count_vdj(parser_tmp, False)
     parser_tmp.set_defaults(func=run)
 
-    '''
     # mut
     assay = 'mut'
     text = ASSAY_DICT[assay]
@@ -340,7 +339,6 @@ def main():
     get_opts_STAR_fusion(parser_run, False)
     get_opts_count_fusion(parser_run, False)
     parser_run.set_defaults(func=run)
-    '''
 
     # hla
     assay = 'hla'

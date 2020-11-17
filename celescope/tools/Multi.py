@@ -5,7 +5,7 @@ import argparse
 import re
 from collections import defaultdict
 from celescope.__init__ import __CONDA__
-from celescope.tools.utils import merge_report, arg_str
+from celescope.tools.utils import merge_report
 from celescope.tools.utils import parse_map_col4, link_data
 from celescope.tools.__init__ import __PATTERN_DICT__
 
@@ -110,7 +110,10 @@ class Multi():
         self.lowNum = self.args.lowNum
         self.mod = self.args.mod
         self.rm_files = self.args.rm_files
-        self.debug_str = arg_str(self.args.debug, 'debug')
+        if self.__CONDA__ == 'celescope_RD':
+            self.debug_str = '--debug'
+        else:
+            self.debug_str = Multi.arg_str(self.args.debug, 'debug')
         self.outFilterMatchNmin = self.args.outFilterMatchNmin
 
     @staticmethod
