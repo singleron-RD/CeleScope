@@ -26,6 +26,7 @@ class Multi_snp(Multi):
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
+            f'--bam {bam} '
             f'--match_dir {self.col4_dict[sample]} '
             f'--genomeDir {self.genomeDir} '
             f'--gene_list {self.gene_list} '

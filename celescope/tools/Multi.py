@@ -86,6 +86,7 @@ class Multi():
             help='Specify attribute type in GTF annotation, default=exon',
             default='exon')
         self.parser.add_argument('--thread', help='thread', default=6)
+        self.parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
 
     def analysis_args(self):
         self.parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
@@ -126,6 +127,7 @@ class Multi():
         self.genomeDir = self.args.genomeDir
         self.starMem = self.args.starMem
         self.gtf_type = self.args.gtf_type
+        self.out_unmapped = Multi.arg_str(self.args.out_unmapped, 'out_unmapped')
     
     def read_analysis_args(self):
         self.save_rds = self.args.save_rds
@@ -245,6 +247,7 @@ job_end
             f'--thread {self.thread} '
             f'{self.debug_str} '
             f'--outFilterMatchNmin {self.outFilterMatchNmin} '
+            f'{self.out_unmapped} '
         )
         self.generate_other(cmd, step, sample, m=self.starMem, x=self.thread)
 
