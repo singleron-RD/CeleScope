@@ -140,6 +140,16 @@ def call_snp(index, outdir, fasta):
     )
     os.system(cmd_view)
 
+    # norm
+    norm_vcf = f'{outdir}/cells/cell{index}/cell{index}_norm.vcf'
+    cmd_norm = (
+        f'bcftools norm -d none '
+        f'-f {fasta} '
+        f'{out_vcf} '
+        f'-o {norm_vcf} '
+    )
+    os.system(cmd_norm)
+
 
 def read_index(index_file):
     df_index = pd.read_csv(index_file, sep='\t', index_col=0, dtype=object)
@@ -187,7 +197,7 @@ def summary(index_file, count_file, outdir, sample):
     for index in df_valid.index:
         vcf_coords_dict = {}
         number += 1
-        cell_vcf_file = f'{outdir}/cells/cell{index}/cell{index}.vcf'
+        cell_vcf_file = f'{outdir}/cells/cell{index}/cell{index}_norm.vcf'
         # vcf coords
         with open(cell_vcf_file, 'rt') as f:
             for line in f:
