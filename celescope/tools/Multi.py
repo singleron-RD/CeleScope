@@ -182,8 +182,10 @@ job_end
         self.last_step = step
 
     def generate_other(self, cmd, step, sample, m=1, x=1):
-        self.generate_first(cmd, step, sample, m=1, x=1)
+        self.generate_cmd(cmd, step, sample, m=1, x=1)
+        self.shell_dict[sample] += cmd + '\n'
         self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
+        self.last_step = step
 
     def sample_info(self, sample):
         step = "sample"
