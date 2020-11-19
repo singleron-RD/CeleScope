@@ -2,7 +2,7 @@ import unittest
 import os
 import pandas as pd
 from celescope.tools.STAR import Step_mapping
-from celescope.tools.utils import read_barcode_file
+from celescope.tools.utils import read_barcode_file, gene_convert
 from .Chemistry import Chemistry
 
 class Tests(unittest.TestCase):
@@ -35,6 +35,7 @@ class Tests(unittest.TestCase):
         mapping.format_stat()
         mapping.report()
 
+    @unittest.skip('pass')
     def test_chemistry(self):
         fq1s = [
             '/SGRNJ/DATA_PROJ/2004/20201102_9/MG_201026_1-R2010283_L3_1.fq.gz',
@@ -47,7 +48,15 @@ class Tests(unittest.TestCase):
             ch = Chemistry(fq1)
             results.append(ch.get_chemistry())
         print(results)
-        assert results == ['scopeV2.1.1', 'scopeV2.1.1', 'scopeV2.0.1', 'scopeV2.2.1']            
+        assert results == ['scopeV2.1.1', 'scopeV2.1.1', 'scopeV2.0.1', 'scopeV2.2.1']      
+
+    @unittest.skip('pass')
+    def test_gtf(self):
+        gtf_file = '/SGRNJ/Database/script/genome/hs/gtf/Homo_sapiens.GRCh38.99.gtf'
+        id_name = gene_convert(gtf_file)
+        print(f"ENSG00000001629: {id_name['ENSG00000001629']}")
+
+        
 
 
 if __name__ == '__main__':
