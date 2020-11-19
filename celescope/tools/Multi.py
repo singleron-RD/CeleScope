@@ -17,6 +17,7 @@ class Multi():
         self.__CONDA__ = __CONDA__
         self.__APP__ = 'celescope'
         self.col4_default = 'auto'
+        self.last_step = ''
 
     def multi_opts(self):
         readme = f'{self.__ASSAY__} multi-samples'
@@ -67,7 +68,6 @@ class Multi():
             help='remove redundant fq.gz and bam after running')
         parser.add_argument('--steps_run', help='steps to run', default='all')
         parser.add_argument('--debug', help='debug or not', action='store_true')
-        parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
         self.parser = parser
         return parser
 
@@ -80,6 +80,7 @@ class Multi():
             default='exon')
         self.parser.add_argument('--thread', help='thread', default=6)
         self.parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
+        self.parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
 
     def analysis_args(self):
         self.parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
@@ -104,6 +105,7 @@ class Multi():
         self.overlap = self.args.overlap
         self.mod = self.args.mod
         self.rm_files = self.args.rm_files
+        self.steps_run = self.args.steps_run
         if self.__CONDA__ == 'celescope_RD':
             self.debug_str = '--debug'
         else:
@@ -125,6 +127,7 @@ class Multi():
         self.starMem = self.args.starMem
         self.gtf_type = self.args.gtf_type
         self.out_unmapped = Multi.arg_str(self.args.out_unmapped, 'out_unmapped')
+        self.outFilterMatchNmin = self.args.outFilterMatchNmin
     
     def read_analysis_args(self):
         self.save_rds = self.args.save_rds
@@ -170,6 +173,13 @@ job_begin
 job_end
 '''
 
+    def process_cmd(self, cmd, step, sample, m=1, x=1):
+        self.generate_cmd(cmd, step, sample, m=1, x=1)
+        self.shell_dict[sample] += cmd + '\n'
+        if self.last_step:
+            self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
+        self.last_step = step
+
     def generate_first(self, cmd, step, sample, m=1, x=1):
         self.generate_cmd(cmd, step, sample, m=1, x=1)
         self.shell_dict[sample] += cmd + '\n'
@@ -181,7 +191,7 @@ job_end
         self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
         self.last_step = step
 
-    def sample_info(self, sample):
+    def sample(self, sample):
         step = "sample"
         arr = self.fq_dict[sample]
         cmd = (
@@ -194,7 +204,7 @@ job_end
             f'--chemistry {self.chemistry} '
             f'--fq1 {arr[0]}'
         )
-        self.generate_first(cmd, step, sample, m=1, x=1)
+        self.process_cmd(cmd, step, sample, m=1, x=1)
     
     def barcode(self, sample):
         # barcode
@@ -214,7 +224,7 @@ job_end
             f'--lowNum {self.lowNum} '
 
         )
-        self.generate_other(cmd, step, sample, m=5, x=1)
+        self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def cutadapt(self, sample):
         # adapt
@@ -230,7 +240,7 @@ job_end
             f'--fq {fq} '
             f'--overlap {self.overlap} '
         )
-        self.generate_other(cmd, step, sample, m=5, x=1)
+        self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def STAR(self, sample):
         step = 'STAR'
@@ -249,7 +259,7 @@ job_end
             f'--outFilterMatchNmin {self.outFilterMatchNmin} '
             f'{self.out_unmapped} '
         )
-        self.generate_other(cmd, step, sample, m=self.starMem, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
 
     def featureCounts(self, sample):
         step = 'featureCounts'
@@ -266,7 +276,7 @@ job_end
             f'--thread {self.thread} '
             f'--gtf_type {self.gtf_type} '
         )
-        self.generate_other(cmd, step, sample, m=5, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=5, x=self.thread)
 
     def count(self, sample):
         step = 'count'
@@ -282,7 +292,7 @@ job_end
             f'--cells {self.col4_dict[sample]} '
             f'--genomeDir {self.genomeDir} '
         )
-        self.generate_other(cmd, step, sample, m=10, x=1)
+        self.process_cmd(cmd, step, sample, m=10, x=1)
 
     def analysis(self, sample):
         step = 'analysis'
@@ -298,17 +308,18 @@ job_end
             f'{self.save_rds_str} '
             f'--type_marker_tsv {self.type_marker_tsv} '
         )
-        self.generate_other(cmd, step, sample, m=10, x=1)
+        self.process_cmd(cmd, step, sample, m=10, x=1)
 
     def run_steps(self):
+        if self.steps_run == 'all':
+            self.steps_run = self.__STEPS__
+        elif self.steps_run:
+            self.steps_run = self.steps_run.strip().split(',')
+
         for sample in self.fq_dict:
-            self.sample_info(sample)
-            self.barcode(sample)
-            self.cutadapt(sample)
-            self.STAR(sample)
-            self.featureCounts(sample)
-            self.count(sample)
-            self.analysis(sample)
+            self.last_step = ''
+            for step in self.steps_run:
+                eval(f'self.{step}(sample)')
 
     def end(self):
         if self.mod == 'sjm':
