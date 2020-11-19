@@ -29,7 +29,7 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
 
     # init
     count_dict = defaultdict(dict)
-    bam_dict = defaultdict(dict)
+    bam_dict = defaultdict(list)
     index_dict = defaultdict(dict)
     cells_dir = f'{outdir}/cells/'
 
@@ -52,9 +52,10 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
             read.set_tag(tag='GN', value=gene_name, value_type='Z')
             index = barcodes.index(barcode) + 1
             read.set_tag(tag='CL', value=f'CELL{index}', value_type='Z')
-            # keep one read for each UMI
-            if umi not in bam_dict[barcode]:
-                bam_dict[barcode][umi] = read
+
+            # assign read to barcode
+            bam_dict[barcode].append(read)
+
             # count
             if gene_name not in count_dict[barcode]:
                 count_dict[barcode][gene_name] = {}
@@ -81,8 +82,7 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
             index_dict[index]['valid'] = True
             cell_bam = pysam.AlignmentFile(
                 f'{cell_bam_file}', "wb", header=header)
-            for umi in bam_dict[barcode]:
-                read = bam_dict[barcode][umi]
+            for read in bam_dict[barcode]:
                 cell_bam.write(read)
             cell_bam.close()
 

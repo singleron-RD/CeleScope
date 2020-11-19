@@ -30,6 +30,7 @@ class Multi_snp(Multi):
             f'--match_dir {self.col4_dict[sample]} '
             f'--genomeDir {self.genomeDir} '
             f'--gene_list {self.gene_list} '
+            f'--thread {self.thread} '
         )
         self.generate_other(cmd, step, sample, m=8, x=self.thread)
 
@@ -44,7 +45,7 @@ class Multi_snp(Multi):
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
-             f'--match_dir {self.col4_dict[sample]} '
+            f'--match_dir {self.col4_dict[sample]} '
             f'--vcf_anno {vcf_anno} '
             f'--index_file {index_file} '
             f'--annovar_config {self.annovar_config} '
@@ -61,6 +62,17 @@ class Multi_snp(Multi):
             self.featureCounts(sample)
             self.snpCalling(sample)
             self.analysis_snp(sample)
+            self.end()
+
+    def run(self):
+        self.multi_opts()
+        self.custome_args()
+        self.parse_args()
+        self.read_custome_args()
+        self.prepare()
+        self.gtf_type = 'gene'
+        self.run_steps()
+        self.end()
 
 
 def main():

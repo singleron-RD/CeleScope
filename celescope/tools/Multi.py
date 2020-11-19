@@ -269,6 +269,7 @@ job_end
             f'--input {input} --gtf_type {self.gtf_type} '
             f'--genomeDir {self.genomeDir} '
             f'--thread {self.thread} '
+            f'--gtf_type {self.gtf_type} '
         )
         self.generate_other(cmd, step, sample, m=5, x=self.thread)
 
