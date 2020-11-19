@@ -58,8 +58,10 @@ def featureCounts(args):
 
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
-    cmd = ['featureCounts', '-a', gtf, '-o', outPrefix, '-R', 'BAM',
-           '-T', str(args.thread), '-t', args.gtf_type, args.input]
+    cmd = ['featureCounts', 
+        '-s', '1',
+        '-a', gtf, '-o', outPrefix, '-R', 'BAM',
+        '-T', str(args.thread), '-t', args.gtf_type, args.input]
     featureCounts.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
 
