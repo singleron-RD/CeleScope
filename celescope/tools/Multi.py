@@ -54,15 +54,8 @@ class Multi():
             dest='nextseq_trim',
             help='nextseq_trim',
             default=20)
-        parser.add_argument(
-            '--overlap',
-            help='minimum overlap length, default=5',
-            default=5)
-        parser.add_argument(
-            '--lowQual',
-            type=int,
-            help='max phred of base as lowQual',
-            default=0)
+        parser.add_argument('--overlap', help='minimum overlap length', default=10)
+        parser.add_argument('--lowQual', type=int, help='max phred of base as lowQual', default=0)
         parser.add_argument(
             '--lowNum',
             type=int,
@@ -108,6 +101,7 @@ class Multi():
         self.linker = self.args.linker
         self.lowQual = self.args.lowQual
         self.lowNum = self.args.lowNum
+        self.overlap = self.args.overlap
         self.mod = self.args.mod
         self.rm_files = self.args.rm_files
         if self.__CONDA__ == 'celescope_RD':
@@ -233,7 +227,8 @@ job_end
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
-            f'--fq {fq}'
+            f'--fq {fq} '
+            f'--overlap {self.overlap} '
         )
         self.generate_other(cmd, step, sample, m=5, x=1)
 

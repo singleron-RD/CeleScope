@@ -107,6 +107,6 @@ def get_opts_cutadapt(parser, sub_program):
         default=20)
     parser.add_argument(
         '--overlap',
-        help='minimum overlap length, default=5',
-        default=5)
+        help='minimum overlap length',
+        default=10)
     parser.add_argument('--thread', default=2)
