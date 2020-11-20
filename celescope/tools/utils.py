@@ -748,7 +748,7 @@ def parse_match_dir(match_dir):
     match_barcode, cell_total = read_barcode_file(match_dir)
     match_dict['match_barcode'] = match_barcode
     match_dict['cell_total'] = cell_total
-    match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
+    match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
     try:
         match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]
     except Exception:
@@ -756,15 +756,17 @@ def parse_match_dir(match_dir):
     return match_dict
 
 
+@log
 def STAR_util(
     sample,
     outdir,
     input_read,
     genomeDir,
     runThreadN,
-    outFilterMatchNmin,
+    outFilterMatchNmin=35,
+    out_unmapped=False,
+    outFilterMultimapNmax=1,
 ):
-
 
     # check dir
     if not os.path.exists(outdir):
@@ -779,9 +781,12 @@ def STAR_util(
  --readFilesCommand zcat\
  --outSAMtype BAM SortedByCoordinate\
  --runThreadN {runThreadN}\
- --limitBAMsortRAM 10000000000\
  --outFilterMatchNmin {outFilterMatchNmin}\
- --outFileNamePrefix {out_prefix}"
+ --outFileNamePrefix {out_prefix}\
+ --outFilterMultimapNmax {outFilterMultimapNmax} "
+    
+    if out_unmapped:
+        cmd += ' --outReadsUnmapped Fastx '
 
     STAR_util.logger.info(cmd)
     os.system(cmd)

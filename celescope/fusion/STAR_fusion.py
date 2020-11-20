@@ -1,17 +1,20 @@
 import os
-from celescope.tools.utils import log, STAR_util
+from celescope.tools.utils import log
+from celescope.tools.STAR import Step_mapping
 
 
 @log
 def STAR_fusion(args):
-    STAR_util(
+    s = Step_mapping(
         args.sample,
         args.outdir,
+        args.assay,
+        args.thread,
         args.input_read,
         args.genomeDir,
-        args.thread,
-        args.outFilterMatchNmin,
+        outFilterMatchNmin = args.outFilterMatchNmin,
     )
+    s.STAR()
 
 
 def get_opts_STAR_fusion(parser, sub_program):

@@ -15,7 +15,7 @@ from celescope.tools.report import reporter
 
 class Step_mapping():
 
-    def __init__(self, sample, outdir, assay, thread, fq, genomeDir, out_unmapped, debug, outFilterMatchNmin):
+    def __init__(self, sample, outdir, assay, thread, fq, genomeDir, out_unmapped=False, debug=False, outFilterMatchNmin=0):
         self.sample = sample
         self.outdir = outdir
         self.assay = assay
@@ -25,11 +25,11 @@ class Step_mapping():
         self.out_unmapped = out_unmapped
         self.debug = debug
         self.outFilterMatchNmin = outFilterMatchNmin
-        self.refFlat, self.gtf = glob_genomeDir(genomeDir)
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % (outdir))
         self.stats = pd.Series()
         self.stats_file = f'{outdir}/stat.txt'
+        self.step_name = 'STAR'
 
     def format_stat(self):
         fh1 = open(self.STAR_map_log, 'r')
@@ -147,6 +147,7 @@ class Step_mapping():
 
     @log
     def picard(self):
+        self.refFlat, self.gtf = glob_genomeDir(self.genomeDir)
         self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
         cmd = [
             'picard',
@@ -174,7 +175,7 @@ class Step_mapping():
     
     def report(self):
         t = reporter(
-            name='STAR',
+            name=self.step_name,
             assay=self.assay,
             sample=self.sample,
             stat_file=self.stats_file,

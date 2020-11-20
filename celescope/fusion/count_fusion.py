@@ -15,7 +15,7 @@ import json
 import glob
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-from celescope.tools.utils import log, format_number, genDict, read_barcode_file
+from celescope.tools.utils import log, format_number, genDict, parse_match_dir, read_barcode_file
 import celescope.fusion
 
 fusionDir = os.path.dirname(celescope.fusion.__file__)
@@ -55,7 +55,7 @@ def count_fusion(args):
     # barcode
     match_barcode, _n_barcode = read_barcode_file(match_dir)
     # tsne
-    match_tsne_file = glob.glob(f"{match_dir}/*analysis/*tsne_coord.tsv")[0]
+    match_tsne_file = parse_match_dir(match_dir)['tsne_coord']
     df_tsne = pd.read_csv(match_tsne_file, sep="\t", index_col=0)
     # out
     out_read_count_file = out_prefix + "_fusion_read_count.tsv"
@@ -100,38 +100,41 @@ def count_fusion(args):
         inplace=True)
     df_read.to_csv(out_read_count_file, sep="\t", index=False)
 
-    df_umi = df_read.groupby(["barcode", "tag"]).agg({"UMI": "count"})
-    df_umi = df_umi[df_umi["UMI"] >= UMI_min]
-    df_umi.to_csv(out_umi_count_file, sep="\t")
+    if not rows:
+        count_fusion.logger.error('***** NO FUSION FOUND! *****')
+    else:
+        df_umi = df_read.groupby(["barcode", "tag"]).agg({"UMI": "count"})
+        df_umi = df_umi[df_umi["UMI"] >= UMI_min]
+        df_umi.to_csv(out_umi_count_file, sep="\t")
 
-    df_umi.reset_index(inplace=True)
-    df_barcode = df_umi.groupby(["tag"]).agg({"barcode": "count"})
-    n_match_barcode = len(match_barcode)
-    # add zero count tag
-    for tag in fusion_pos.keys():
-        if not tag in df_barcode.barcode:
-            new_row = pd.Series(data={'barcode': 0}, name=tag)
-            df_barcode = df_barcode.append(new_row, ignore_index=False)
-    df_barcode["percent"] = df_barcode["barcode"] / n_match_barcode
-    df_barcode.to_csv(out_barcode_count_file, sep="\t")
+        df_umi.reset_index(inplace=True)
+        df_barcode = df_umi.groupby(["tag"]).agg({"barcode": "count"})
+        n_match_barcode = len(match_barcode)
+        # add zero count tag
+        for tag in fusion_pos.keys():
+            if not tag in df_barcode.barcode:
+                new_row = pd.Series(data={'barcode': 0}, name=tag)
+                df_barcode = df_barcode.append(new_row, ignore_index=False)
+        df_barcode["percent"] = df_barcode["barcode"] / n_match_barcode
+        df_barcode.to_csv(out_barcode_count_file, sep="\t")
 
-    df_pivot = df_umi.pivot(index="barcode", columns="tag", values="UMI")
-    df_pivot.fillna(0, inplace=True)
-    df_tsne_fusion = pd.merge(
-        df_tsne,
-        df_pivot,
-        right_index=True,
-        left_index=True,
-        how="left")
-    df_tsne_fusion.fillna(0, inplace=True)
-    df_tsne_fusion.to_csv(out_tsne_file, sep="\t")
+        df_pivot = df_umi.pivot(index="barcode", columns="tag", values="UMI")
+        df_pivot.fillna(0, inplace=True)
+        df_tsne_fusion = pd.merge(
+            df_tsne,
+            df_pivot,
+            right_index=True,
+            left_index=True,
+            how="left")
+        df_tsne_fusion.fillna(0, inplace=True)
+        df_tsne_fusion.to_csv(out_tsne_file, sep="\t")
 
-    # plot
-    count_fusion.logger.info("plot fusion...!")
-    app = fusionDir + "/plot_fusion.R"
-    cmd = f"Rscript {app} --tsne_fusion {out_tsne_file} --outdir {outdir}"
-    os.system(cmd)
-    count_fusion.logger.info("plot done.")
+        # plot
+        count_fusion.logger.info("plot fusion...!")
+        app = fusionDir + "/plot_fusion.R"
+        cmd = f"Rscript {app} --tsne_fusion {out_tsne_file} --outdir {outdir}"
+        os.system(cmd)
+        count_fusion.logger.info("plot done.")
 
 
 def get_opts_count_fusion(parser, sub_program):
