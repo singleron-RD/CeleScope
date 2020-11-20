@@ -164,7 +164,7 @@ class Multi():
                 self.outdir_dic[sample].update({step: step_outdir})
                 index += 1
     
-    def generate_cmd(self, cmd, step, sample, m=1, x=1):
+    def generate_cmd(self, cmd, step, sample, m, x):
         self.sjm_cmd += f'''
 job_begin
     name {step}_{sample}
@@ -174,7 +174,7 @@ job_end
 '''
 
     def process_cmd(self, cmd, step, sample, m=1, x=1):
-        self.generate_cmd(cmd, step, sample, m=1, x=1)
+        self.generate_cmd(cmd, step, sample, m=m, x=x)
         self.shell_dict[sample] += cmd + '\n'
         if self.last_step:
             self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
