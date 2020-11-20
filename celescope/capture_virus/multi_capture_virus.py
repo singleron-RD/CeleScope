@@ -1,24 +1,20 @@
 from celescope.__init__ import __CONDA__
-from celescope.snp.__init__ import __STEPS__, __ASSAY__
+from celescope.capture_virus.__init__ import __STEPS__, __ASSAY__
 from celescope.tools.Multi import Multi
 
 
-class Multi_snp(Multi):
+class Multi_capture_virus(Multi):
     def custome_args(self):
         self.STAR_args()
-        self.parser.add_argument('--gene_list', help="gene_list", required=True)
-        self.parser.add_argument('--probe_file', help="probe fasta file")
-        self.parser.add_argument('--annovar_config', help='annovar soft config file')
+        self.parser.add_argument('--virus_genomeDir', help='virus_genomeDir', required=True)
 
     def read_custome_args(self):
         self.read_STAR_args()
-        self.gene_list = self.args.gene_list
-        self.probe_file = self.args.probe_file
-        self.annovar_config = self.args.annovar_config
+        self.virus_genomeDir = self.args.virus_genomeDir
 
-    def snpCalling(self, sample):
-        step = 'snpCalling'
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
+    def STAR_virus(self, sample):
+        step = 'STAR_virus'
+        input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -26,17 +22,30 @@ class Multi_snp(Multi):
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
-            f'--bam {bam} '
+            f'--input_read {input_read} '
+            f'--virus_genomeDir {self.virus_genomeDir} '
+            f'--thread {self.thread} '
+        )
+        self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
+
+    def count_capture_virus(self, sample):
+        step = 'count_capture_virus'
+        virus_bam = f'{self.outdir_dic[sample]["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        cmd = (
+            f'{self.__APP__} '
+            f'{self.__ASSAY__} '
+            f'{step} '
+            f'--outdir {self.outdir_dic[sample][step]} '
+            f'--sample {sample} '
+            f'--assay {self.__ASSAY__} '
+            f'--virus_bam {virus_bam} '
             f'--match_dir {self.col4_dict[sample]} '
-            f'--genomeDir {self.genomeDir} '
-            f'--gene_list {self.gene_list} '
         )
-        self.generate_other(cmd, step, sample, m=8, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=5, x=1)
 
-    def analysis_snp(self, sample):
-        step = 'analysis_snp'
-        vcf_anno = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_anno.vcf'
-        index_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_cell_index.tsv'
+    def analysis_capture_virus(self, sample):        
+        step = 'analysis_capture_virus'
+        virus_file = f'{self.outdir_dic[sample]["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -44,223 +53,21 @@ class Multi_snp(Multi):
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
-             f'--match_dir {self.col4_dict[sample]} '
-            f'--vcf_anno {vcf_anno} '
-            f'--index_file {index_file} '
-            f'--annovar_config {self.annovar_config} '
+            f'--virus_file {virus_file} '
+            f'--match_dir {self.col4_dict[sample]} '
+
         )
-        self.generate_other(cmd, step, sample, m=8, x=self.thread)
-
-
-    def run_steps(self):
-        for sample in self.fq_dict:
-            self.sample_info(sample)
-            self.barcode(sample)
-            self.cutadapt(sample)
-            self.STAR(sample)
-            self.featureCounts(sample)
-            self.snpCalling(sample)
-            self.analysis_snp(sample)
+        self.process_cmd(cmd, step, sample, m=15, x=1)
 
 
 def main():
-    multi = Multi_snp(__ASSAY__, __STEPS__, __CONDA__)
+    multi = Multi_capture_virus(__ASSAY__, __STEPS__, __CONDA__)
     multi.col4_default = None
     multi.run()
 
-if __name__ == '__main__':
-    main()
-
-#!/bin/env python
-# coding=utf8
-
-import os
-import glob
-import sys
-import argparse
-import re
-import logging
-from collections import defaultdict
-from celescope.__init__ import __CONDA__
-from celescope.capture_virus.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.utils import merge_report, generate_sjm
-from celescope.tools.utils import parse_map_col4, multi_opts, link_data
-
-
-def main():
-
-    # init
-    assay = __ASSAY__
-    steps = __STEPS__
-    conda = __CONDA__
-    app = 'celescope'
-
-    # parser
-    parser = multi_opts(assay)
-    parser.add_argument('--starMem', help='starMem', default=30)
-    parser.add_argument('--genomeDir', help='genome index dir', required=True)
-    parser.add_argument(
-        '--gtf_type',
-        help='Specify attribute type in GTF annotation, default=exon',
-        default='exon')
-    parser.add_argument('--thread', help='thread', default=6)
-    parser.add_argument(
-        '--virus_genomeDir',
-        help='virus_genomeDir',
-        required=True)
-    args = parser.parse_args()
-
-    fq_dict, cells_dict = parse_map_col4(args.mapfile, 'auto')
-
-    # read args
-    outdir = args.outdir
-    chemistry = args.chemistry
-    pattern = args.pattern
-    whitelist = args.whitelist
-    linker = args.linker
-    lowQual = args.lowQual
-    lowNum = args.lowNum
-    mod = args.mod
-    rm_files = args.rm_files
-
-    # parse mapfile
-    fq_dict, match_dict = parse_map_col4(args.mapfile, None)
-
-    # link
-    link_data(outdir, fq_dict)
-
-    # custom args
-    thread = args.thread
-    genomeDir = args.genomeDir
-    starMem = args.starMem
-    gtf_type = args.gtf_type
-    virus_genomeDir = args.virus_genomeDir
-
-    # mk log dir
-    logdir = outdir + '/log'
-    os.system('mkdir -p %s' % (logdir))
-
-    # script init
-    sjm_cmd = 'log_dir %s\n' % (logdir)
-    sjm_order = ''
-    shell_dict = defaultdict(str)
-
-    # outdir dict
-    for sample in fq_dict:
-        outdir_dic = {}
-        index = 0
-        for step in steps:
-            step_outdir = f"{outdir}/{sample}/{index:02d}.{step}"
-            outdir_dic.update({step: step_outdir})
-            index += 1
-
-        # sample
-        step = "sample"
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--chemistry {chemistry} '
-            f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda)
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
-
-        # barcode
-        arr = fq_dict[sample]
-        step = "barcode"
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry} '
-            f'--pattern {pattern} --whitelist {whitelist} --linker {linker} '
-            f'--sample {sample} --lowQual {lowQual} --thread {thread} '
-            f'--lowNum {lowNum} --outdir {outdir_dic[step]} --assay {assay} '
-
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
-
-        # adapt
-        step = "cutadapt"
-        fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--fq {fq} --sample {sample} --outdir '
-            f'{outdir_dic[step]} --assay {assay} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
-
-        # STAR_virus
-        step = 'STAR_virus'
-        input_read = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
-            f'--input_read {input_read} '
-            f'--virus_genomeDir {virus_genomeDir} '
-            f'--thread {thread} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=starMem, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        last_step = step
-
-        # count_capture_virus
-        step = 'count_capture_virus'
-        virus_bam = f'{outdir_dic["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
-            f'--virus_bam {virus_bam} '
-            f'--match_dir {match_dict[sample]} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=20, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        last_step = step
-
-        # analysis_capture_virus
-        step = 'analysis_capture_virus'
-        virus_file = f'{outdir_dic["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
-            f'--virus_file {virus_file} '
-            f'--match_dir {match_dict[sample]} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=15, x=1)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        last_step = step
-
-    # merged report
-    if mod == 'sjm':
-        step = 'merge_report'
-        merge_report(
-            fq_dict,
-            steps,
-            last_step,
-            sjm_cmd,
-            sjm_order,
-            logdir,
-            conda,
-            outdir,
-            rm_files,
-        )
-    if mod == 'shell':
-        os.system('mkdir -p ./shell/')
-        for sample in shell_dict:
-            with open(f'./shell/{sample}.sh', 'w') as f:
-                f.write(shell_dict[sample])
-
-
-
-
-
-
-
-
 
 if __name__ == '__main__':
     main()
+
+
+
