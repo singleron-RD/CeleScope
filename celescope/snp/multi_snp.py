@@ -52,18 +52,6 @@ class Multi_snp(Multi):
         )
         self.generate_other(cmd, step, sample, m=8, x=self.thread)
 
-
-    def run_steps(self):
-        for sample in self.fq_dict:
-            self.sample(sample)
-            self.barcode(sample)
-            self.cutadapt(sample)
-            self.STAR(sample)
-            self.featureCounts(sample)
-            self.snpCalling(sample)
-            self.analysis_snp(sample)
-            self.end()
-
     def run(self):
         self.multi_opts()
         self.custome_args()
