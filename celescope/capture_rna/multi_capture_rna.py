@@ -48,17 +48,6 @@ class Multi_capture_rna(Multi):
         self.generate_other(cmd, step, sample, m=10, x=1)
 
 
-    def run_steps(self):
-        for sample in self.fq_dict:
-            self.sample_info(sample)
-            self.barcode(sample)
-            self.cutadapt(sample)
-            self.STAR(sample)
-            self.featureCounts(sample)
-            self.count_capture_rna(sample)
-            self.analysis(sample)
-
-
 def main():
     multi = Multi_capture_rna(__ASSAY__, __STEPS__, __CONDA__)
     multi.col4_default = None

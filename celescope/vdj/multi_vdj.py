@@ -15,14 +15,6 @@ class Multi_vdj(Multi):
         self.type = self.args.type 
         self.thread = self.args.thread
 
-    def run_steps(self):
-        for sample in self.fq_dict:
-            self.sample_info(sample)
-            self.barcode(sample)
-            self.cutadapt(sample)
-            self.mapping_vdj(sample)
-            self.count_vdj(sample)
-
     def mapping_vdj(self, sample):
         step = 'mapping_vdj'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'

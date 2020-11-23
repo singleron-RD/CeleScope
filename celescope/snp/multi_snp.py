@@ -55,7 +55,7 @@ class Multi_snp(Multi):
 
     def run_steps(self):
         for sample in self.fq_dict:
-            self.sample_info(sample)
+            self.sample(sample)
             self.barcode(sample)
             self.cutadapt(sample)
             self.STAR(sample)

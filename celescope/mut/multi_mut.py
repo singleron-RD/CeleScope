@@ -51,15 +51,6 @@ class Multi_mut(Multi):
         self.generate_other(cmd, step, sample, m=8, x=1)
 
 
-    def run_steps(self):
-        for sample in self.fq_dict:
-            self.sample_info(sample)
-            self.barcode(sample)
-            self.cutadapt(sample)
-            self.mapping_mut(sample)
-            self.count_mut(sample)
-
-
 def main():
     multi = Multi_mut(__ASSAY__, __STEPS__, __CONDA__)
     multi.col4_default = None

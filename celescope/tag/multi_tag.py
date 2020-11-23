@@ -80,15 +80,6 @@ class Multi_tag(Multi):
         self.generate_other(cmd, step, sample, m=5, x=1)
 
 
-    def run_steps(self):
-        for sample in self.fq_dict:
-            self.sample_info(sample)
-            self.barcode(sample)
-            self.cutadapt(sample)
-            self.mapping_tag(sample)
-            self.count_tag(sample)
-            self.analysis_tag(sample)
-
 
 def main():
     multi = Multi_tag(__ASSAY__, __STEPS__, __CONDA__)
