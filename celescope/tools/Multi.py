@@ -110,7 +110,6 @@ class Multi():
             self.debug_str = '--debug'
         else:
             self.debug_str = Multi.arg_str(self.args.debug, 'debug')
-        self.outFilterMatchNmin = self.args.outFilterMatchNmin
 
     @staticmethod
     def arg_str(arg, arg_name):
