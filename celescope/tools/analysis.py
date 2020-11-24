@@ -14,6 +14,7 @@ from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
 from celescope.tools.utils import glob_genomeDir, log, gene_convert
 from celescope.rna.__init__ import __ASSAY__
+from celescope.tools.Analysis import Analysis
 
 toolsdir = os.path.dirname(__file__)
 
@@ -125,6 +126,8 @@ def analysis(args):
     # check dir
     outdir = args.outdir
     sample = args.sample
+    assay = args.assay 
+
     matrix_file = args.matrix_file
     save_rds = args.save_rds
     type_marker_tsv = args.type_marker_tsv
@@ -145,21 +148,14 @@ def analysis(args):
         auto_assign(sample, outdir, type_marker_tsv)
 
     # report
-    tsne_df_file = f'{outdir}/{sample}_tsne_coord.tsv'
-    marker_df_file = f'{outdir}/{sample}_markers.tsv'
-    tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-    marker_df = pd.read_csv(marker_df_file, sep="\t")
-    report_prepare(outdir, tsne_df, marker_df)
-
-    stat_file = outdir + "/stat.txt"
-    assay = __ASSAY__
-    t = reporter(
-        name='analysis',
-        assay=assay,
-        sample=args.sample,
-        outdir=args.outdir + '/..',
-        stat_file=stat_file)
-    t.get_report()
+    ana = Analysis(     
+        sample,
+        outdir,
+        assay,
+        match_dir=outdir+'/../',
+        step='analysis',     
+    )
+    ana.run()
 
 
 def get_opts_analysis(parser, sub_program):

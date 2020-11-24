@@ -749,6 +749,7 @@ def parse_match_dir(match_dir):
     match_dict['match_barcode'] = match_barcode
     match_dict['cell_total'] = cell_total
     match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
+    match_dict['markers'] = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
     try:
         match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]
     except Exception:
