@@ -172,7 +172,11 @@ def gene_convert(gtf_file):
             gtf_type, attributes = tabs[2], tabs[-1]
             if gtf_type == 'gene':
                 gene_id = gene_id_pattern.findall(attributes)[-1]
-                gene_name = gene_name_pattern.findall(attributes)[-1]
+                gene_names = gene_name_pattern.findall(attributes)
+                if not gene_names:
+                    gene_name = gene_id 
+                else:
+                    gene_name = gene_names[-1]
                 c[gene_name] += 1
                 if c[gene_name] > 1:
                     gene_name = f'{gene_name}_{c[gene_name]}'

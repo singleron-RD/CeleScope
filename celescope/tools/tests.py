@@ -50,13 +50,15 @@ class Tests(unittest.TestCase):
         print(results)
         assert results == ['scopeV2.1.1', 'scopeV2.1.1', 'scopeV2.0.1', 'scopeV2.2.1']      
 
-    @unittest.skip('pass')
+    #@unittest.skip('pass')
     def test_gtf(self):
         gtf_file = '/SGRNJ/Database/script/genome/hs/gtf/Homo_sapiens.GRCh38.99.gtf'
         id_name = gene_convert(gtf_file)
         print(f"ENSG00000001629: {id_name['ENSG00000001629']}")
 
-        
+        gtf_file = '/SGRNJ01/RD_dir/pipeline_test/litao/genomes/Cricetulus_griseus/Cricetulus_griseus_crigri.CriGri_1.0.101.gtf'
+        id_name = gene_convert(gtf_file)
+        print(id_name)
 
 
 if __name__ == '__main__':
