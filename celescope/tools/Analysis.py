@@ -63,7 +63,7 @@ class Analysis():
         stat_file=stat_file)
         t.get_report()
 
-    def cluster_tsne_list(self, colname, show_tag=True):
+    def get_cluster_tsne(self, colname, show_tag=True):
         """
         tSNE_1	tSNE_2	cluster Gene_Counts
         return data list
@@ -118,18 +118,22 @@ class Analysis():
         with open(json_file, 'w') as fh:
             json.dump(data, fh)
 
+    def get_marker_gene_table(self):
+        marker_df = self.process_marker_table()
+        table_dict = Analysis.get_table(
+            title='Marker Genes by Cluster',
+            id='marker_gene_table',
+            df_table=marker_df,
+        )
+        return table_dict
+
     def run(self):
-        cluster_tsne = self.cluster_tsne_list(colname='cluster')
+        cluster_tsne = self.get_cluster_tsne(colname='cluster')
         gene_tsne = self.get_gene_tsne()
-        marker_gene_table = self.process_marker_table()
-        table0 = Analysis.get_table(
-            'Marker Genes by Cluster',
-            'marker_gene_table',
-            marker_gene_table,
-            )
+        table_dict = self.get_marker_gene_table()
         self.report_prepare(
             cluster_tsne=cluster_tsne,
-            gene_tsne = gene_tsne,
-            table0=table0,
+            gene_tsne=gene_tsne,
+            table_dict=table_dict,
         )
         self.report()

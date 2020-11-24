@@ -141,7 +141,7 @@ def analysis(args):
         os.system('mkdir -p %s' % (outdir))
 
     # run_R
-    #seurat(sample, outdir, matrix_file, save_rds)
+    seurat(sample, outdir, matrix_file, save_rds)
 
     # auto_assign
     if auto_assign_bool:
