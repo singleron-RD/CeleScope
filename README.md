@@ -76,15 +76,13 @@ conda activate celescope
 celescope rna run\   
  --fq1 ./data/R2005212_L1_1.fq.gz\
  --fq2 ./data/R2005212_L1_2.fq.gz\
- --chemistry scopeV2.1.1\
  --genomeDir /SGR/references/Homo_sapiens/Ensembl/GRCh38\
  --sample R2005212\
  --thread 4
 ```
 
 `--fq1` Required. gzipped FASTQ read 1 file path  
-`--fq2` Required. gzipped FASTQ read 2 file path  
-`--chemistry` Required. chemistry version, choices=['scopeV2.0.0', 'scopeV2.0.1', 'scopeV2.1.0', 'scopeV2.1.1']  
+`--fq2` Required. gzipped FASTQ read 2 file path   
 `--genomeDir` Required. reference genome directory path  
 `--sample` Required. sample name  
 `--thread` Required. number of threads
@@ -97,7 +95,6 @@ celescope vdj run\
  --fq1 {vdj fq1.gz}\
  --fq2 {vdj fq2.gz}\
  --sample {sample name}\
- --chemistry scopeV2.0.1\
  --thread 4\
  --type {TCR or BCR}
  --match_dir {match_dir}\
@@ -114,7 +111,6 @@ celescope smk run\
  --fq1 {smk fq1.gz}\
  --fq2 {smk fq2.gz}\
  --sample {sample name}\
- --chemistry scopeV2.0.1\
  --SMK_pattern L25C45\
  --SMK_barcode {SMK barcode fasta}\
  --SMK_linker {SMK linker fasta}\
