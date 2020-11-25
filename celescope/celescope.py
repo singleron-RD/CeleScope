@@ -301,7 +301,6 @@ def main():
     get_opts_count_vdj(parser_tmp, False)
     parser_tmp.set_defaults(func=run)
 
-    '''
     # mut
     assay = 'mut'
     text = ASSAY_DICT[assay]
@@ -340,7 +339,6 @@ def main():
     get_opts_STAR_fusion(parser_run, False)
     get_opts_count_fusion(parser_run, False)
     parser_run.set_defaults(func=run)
-    '''
 
     # hla
     assay = 'hla'
@@ -459,6 +457,110 @@ def main():
     parser_snpCalling = subparsers_snp.add_parser('snpCalling')
     get_opts_snpCalling(parser_snpCalling, True)
     parser_snpCalling.set_defaults(func=snpCalling)
+
+    from celescope.snp.analysis_snp import analysis_snp, get_opts_analysis_snp
+    parser_analysis_snp = subparsers_snp.add_parser('analysis_snp')
+    get_opts_analysis_snp(parser_analysis_snp, True)
+    parser_analysis_snp.set_defaults(func=analysis_snp)
+
+
+    # tag
+    assay = 'tag'
+    text = ASSAY_DICT[assay]
+    subparsers_assay = subparsers.add_parser(
+        assay, help=text, description=text)
+    subparsers_assay_sub = subparsers_assay.add_subparsers()
+
+    parser_tmp = subparsers_assay_sub.add_parser('sample')
+    get_opts_sample(parser_tmp, True)
+    parser_tmp.set_defaults(func=sample_info)
+
+    parser_tmp = subparsers_assay_sub.add_parser('barcode')
+    get_opts_barcode(parser_tmp, True)
+    parser_tmp.set_defaults(func=barcode)
+
+    parser_tmp = subparsers_assay_sub.add_parser('cutadapt')
+    get_opts_cutadapt(parser_tmp, True)
+    parser_tmp.set_defaults(func=cutadapt)
+
+    from celescope.tag.mapping_tag import mapping_tag, get_opts_mapping_tag
+    parser_tmp = subparsers_assay_sub.add_parser('mapping_tag')
+    get_opts_mapping_tag(parser_tmp, True)
+    parser_tmp.set_defaults(func=mapping_tag)
+
+    from celescope.tag.count_tag import count_tag, get_opts_count_tag
+    parser_tmp = subparsers_assay_sub.add_parser('count_tag')
+    get_opts_count_tag(parser_tmp, True)
+    parser_tmp.set_defaults(func=count_tag)
+
+    from celescope.tag.analysis_tag import analysis_tag, get_opts_analysis_tag
+    parser_tmp = subparsers_assay_sub.add_parser('analysis_tag')
+    get_opts_analysis_tag(parser_tmp, True)
+    parser_tmp.set_defaults(func=analysis_tag)
+
+    # citeseq
+    assay = 'citeseq'
+    text = ASSAY_DICT[assay]
+    subparsers_assay = subparsers.add_parser(
+        assay, help=text, description=text)
+    subparsers_assay_sub = subparsers_assay.add_subparsers()
+
+    parser_tmp = subparsers_assay_sub.add_parser('sample')
+    get_opts_sample(parser_tmp, True)
+    parser_tmp.set_defaults(func=sample_info)
+
+    parser_tmp = subparsers_assay_sub.add_parser('barcode')
+    get_opts_barcode(parser_tmp, True)
+    parser_tmp.set_defaults(func=barcode)
+
+    parser_tmp = subparsers_assay_sub.add_parser('cutadapt')
+    get_opts_cutadapt(parser_tmp, True)
+    parser_tmp.set_defaults(func=cutadapt)
+
+    from celescope.tag.mapping_tag import mapping_tag, get_opts_mapping_tag
+    parser_tmp = subparsers_assay_sub.add_parser('mapping_tag')
+    get_opts_mapping_tag(parser_tmp, True)
+    parser_tmp.set_defaults(func=mapping_tag)
+
+    from celescope.citeseq.count_cite import count_cite, get_opts_count_cite
+    parser_tmp = subparsers_assay_sub.add_parser('count_cite')
+    get_opts_count_cite(parser_tmp, True)
+    parser_tmp.set_defaults(func=count_cite)
+
+    from celescope.citeseq.analysis_cite import analysis_cite, get_opts_analysis_cite
+    parser_tmp = subparsers_assay_sub.add_parser('analysis_cite')
+    get_opts_analysis_cite(parser_tmp, True)
+    parser_tmp.set_defaults(func=analysis_cite)
+
+
+    # tcr_fl
+    assay = 'tcr_fl'
+    text = ASSAY_DICT[assay]
+    subparsers_assay = subparsers.add_parser(
+        assay, help=text, description=text)
+    subparsers_assay_sub = subparsers_assay.add_subparsers()
+
+    parser_tmp = subparsers_assay_sub.add_parser('sample')
+    get_opts_sample(parser_tmp, True)
+    parser_tmp.set_defaults(func=sample_info)
+
+    parser_tmp = subparsers_assay_sub.add_parser('barcode')
+    get_opts_barcode(parser_tmp, True)
+    parser_tmp.set_defaults(func=barcode)
+
+    parser_tmp = subparsers_assay_sub.add_parser('cutadapt')
+    get_opts_cutadapt(parser_tmp, True)
+    parser_tmp.set_defaults(func=cutadapt)
+
+    from celescope.tcr_fl.split_fq import split_fq, get_opts_split_fq
+    parser_tmp = subparsers_assay_sub.add_parser('split_fq')
+    get_opts_split_fq(parser_tmp, True)
+    parser_tmp.set_defaults(func=split_fq)
+
+    from celescope.tcr_fl.assemble import assemble, get_opts_assemble
+    parser_tmp = subparsers_assay_sub.add_parser('assemble')
+    get_opts_assemble(parser_tmp, True)
+    parser_tmp.set_defaults(func=assemble)
 
     args = parser.parse_args()
     args.func(args)

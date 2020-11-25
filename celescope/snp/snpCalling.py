@@ -29,7 +29,7 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
 
     # init
     count_dict = defaultdict(dict)
-    bam_dict = defaultdict(dict)
+    bam_dict = defaultdict(list)
     index_dict = defaultdict(dict)
     cells_dir = f'{outdir}/cells/'
 
@@ -52,9 +52,10 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
             read.set_tag(tag='GN', value=gene_name, value_type='Z')
             index = barcodes.index(barcode) + 1
             read.set_tag(tag='CL', value=f'CELL{index}', value_type='Z')
-            # keep one read for each UMI
-            if umi not in bam_dict[barcode]:
-                bam_dict[barcode][umi] = read
+
+            # assign read to barcode
+            bam_dict[barcode].append(read)
+
             # count
             if gene_name not in count_dict[barcode]:
                 count_dict[barcode][gene_name] = {}
@@ -81,8 +82,7 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
             index_dict[index]['valid'] = True
             cell_bam = pysam.AlignmentFile(
                 f'{cell_bam_file}', "wb", header=header)
-            for umi in bam_dict[barcode]:
-                read = bam_dict[barcode][umi]
+            for read in bam_dict[barcode]:
                 cell_bam.write(read)
             cell_bam.close()
 
@@ -140,6 +140,16 @@ def call_snp(index, outdir, fasta):
     )
     os.system(cmd_view)
 
+    # norm
+    norm_vcf = f'{outdir}/cells/cell{index}/cell{index}_norm.vcf'
+    cmd_norm = (
+        f'bcftools norm -d none '
+        f'-f {fasta} '
+        f'{out_vcf} '
+        f'-o {norm_vcf} '
+    )
+    os.system(cmd_norm)
+
 
 def read_index(index_file):
     df_index = pd.read_csv(index_file, sep='\t', index_col=0, dtype=object)
@@ -187,7 +197,7 @@ def summary(index_file, count_file, outdir, sample):
     for index in df_valid.index:
         vcf_coords_dict = {}
         number += 1
-        cell_vcf_file = f'{outdir}/cells/cell{index}/cell{index}.vcf'
+        cell_vcf_file = f'{outdir}/cells/cell{index}/cell{index}_norm.vcf'
         # vcf coords
         with open(cell_vcf_file, 'rt') as f:
             for line in f:
@@ -290,14 +300,14 @@ def summary(index_file, count_file, outdir, sample):
 
     stats = stats.append(pd.Series(
         format_stat(Number_of_Match_Cells_with_SNP, n_match_cell),
-        index=['Number of Cells with SNP']
+        index=['Number of Cells with Variants']
     ))
 
     SNP_counts = list(SNP_count_dict.values())
     Mean_SNP_per_Cell = round(np.mean(SNP_counts), 3)
     stats = stats.append(pd.Series(
         Mean_SNP_per_Cell,
-        index=['Mean SNPs per Cell with SNP']
+        index=['Mean Variants per Cell with Variants']
     ))
 
     stat_file = f'{outdir}/stat.txt'

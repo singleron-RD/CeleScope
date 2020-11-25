@@ -9,10 +9,12 @@ import numpy as np
 import subprocess
 import time
 import argparse
+import pysam
 from datetime import timedelta
 from collections import defaultdict
 from functools import wraps
 from collections import Counter
+import json
 import celescope.tools
 import matplotlib
 matplotlib.use('Agg')
@@ -80,7 +82,7 @@ def read_barcode_file(match_dir):
 
 def format_stat(count, total_count):
     percent = round(count / total_count * 100, 2)
-    string = f'{count}({percent}%)'
+    string = f'{format_number(count)}({percent}%)'
     return string
 
 
@@ -98,7 +100,7 @@ def multi_opts(assay):
             4th col: Cell number or match_dir, optional;
         ''',
         required=True)
-    parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version')
+    parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
     parser.add_argument('--whitelist', help='cellbarcode list')
     parser.add_argument('--linker', help='linker')
     parser.add_argument('--pattern', help='read1 pattern')
@@ -111,7 +113,7 @@ def multi_opts(assay):
             'polyT=A{15}',
             'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
     parser.add_argument(
-        '--minimum-length',
+        '--minimum_length',
         dest='minimum_length',
         help='minimum_length',
         default=20)
@@ -139,6 +141,8 @@ def multi_opts(assay):
         action='store_true',
         help='remove redundant fq.gz and bam after running')
     parser.add_argument('--steps_run', help='steps to run', default='all')
+    parser.add_argument('--debug', help='debug or not', action='store_true')
+    parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
     return parser
 
 
@@ -168,7 +172,11 @@ def gene_convert(gtf_file):
             gtf_type, attributes = tabs[2], tabs[-1]
             if gtf_type == 'gene':
                 gene_id = gene_id_pattern.findall(attributes)[-1]
-                gene_name = gene_name_pattern.findall(attributes)[-1]
+                gene_names = gene_name_pattern.findall(attributes)
+                if not gene_names:
+                    gene_name = gene_id 
+                else:
+                    gene_name = gene_names[-1]
                 c[gene_name] += 1
                 if c[gene_name] > 1:
                     gene_name = f'{gene_name}_{c[gene_name]}'
@@ -197,7 +205,7 @@ def process_read(
         barcode = str(attr[0])
         umi = str(attr[1])
         seq = line2.strip()
-        if linker_dict:
+        if linker_length != 0:
             seq_linker = seq_ranges(seq, pattern_dict['L'])
             if len(seq_linker) < linker_length:
                 metrics['Reads Unmapped too Short'] += 1
@@ -212,12 +220,15 @@ def process_read(
                 seq_barcode = seq_barcode + "A" * miss_length                    
         
         # check linker
-        valid_linker = False
-        for linker_name in linker_dict:
-            if hamming_correct(linker_dict[linker_name], seq_linker):
-                valid_linker = True
-                break
-
+        if linker_length != 0:
+            valid_linker = False
+            for linker_name in linker_dict:
+                if hamming_correct(linker_dict[linker_name], seq_linker):
+                    valid_linker = True
+                    break
+        else:
+            valid_linker = True
+            
         if not valid_linker:
             metrics['Reads Unmapped Invalid Linker'] += 1
             continue
@@ -300,7 +311,7 @@ def hamming_distance(string1, string2):
     length = len(string1)
     length2 = len(string2)
     if (length != length2):
-        raise Exception("string1 and string2 do not have same length")
+        raise Exception(f"string1({length}) and string2({length2}) do not have same length")
     for i in range(length):
         if string1[i] != string2[i]:
             distance += 1
@@ -624,9 +635,200 @@ def downsample(bam, barcodes, percent):
         percent, median_geneNum, saturation), saturation
 
 
-if __name__ == '__main__':
+def cluster_tsne_list(tsne_df):
+    """
+    tSNE_1	tSNE_2	cluster Gene_Counts
+    return data list
+    """
+    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
+    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
+    res = []
+    for cluster in sorted(tsne_df.cluster.unique()):
+        sub_df = tsne_df[tsne_df.cluster == cluster]
+        name = "cluster {cluster}({percent}%)".format(
+            cluster=cluster, percent=percent_df[cluster])
+        tSNE_1 = list(sub_df.tSNE_1)
+        tSNE_2 = list(sub_df.tSNE_2)
+        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
+    return res
 
-    df = pd.read_table('SRR6954578_counts.txt', header=0)
-    barcode_filter_with_magnitude(df)
-    barcode_filter_with_kde(df)
-    barcode_filter_with_derivative(df)
+
+def marker_table(marker_df):
+    """
+    return html code
+    """
+    marker_df = marker_df.loc[:, ["cluster", "gene",
+                                  "avg_logFC", "pct.1", "pct.2", "p_val_adj"]]
+    marker_gene_table = marker_df.to_html(
+        escape=False,
+        index=False,
+        table_id="marker_gene_table",
+        justify="center")
+    return marker_gene_table
+
+
+def report_prepare(outdir, **kwargs):
+    json_file = outdir + '/../.data.json'
+    if not os.path.exists(json_file):
+        data = {}
+    else:
+        fh = open(json_file)
+        data = json.load(fh)
+        fh.close()
+
+    for key in kwargs:
+        data[key] = kwargs[key]
+
+    with open(json_file, 'w') as fh:
+        json.dump(data, fh)
+
+
+def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['DP', 'GENE', 'CELL']):
+    vcf = pysam.VariantFile(vcf_file)
+    df = pd.DataFrame(columns=[col.upper() for col in cols] + infos + ['GT'])
+    rec_dict = {}
+    for rec in vcf.fetch():
+
+        for col in cols:
+            rec_dict[col.upper()] = getattr(rec, col)
+            if col == 'alleles':
+                rec_dict['ALLELES'] = '-'.join(rec_dict['ALLELES'])
+                
+        for info in infos:
+            rec_dict[info] = rec.info[info]
+
+        rec_dict['GT'] = [s['GT'] for s in rec.samples.values()][0]
+        rec_dict['GT'] = [str(item) for item in rec_dict['GT']]
+        rec_dict['GT'] = '/'.join(rec_dict['GT'])
+
+        df = df.append(pd.Series(rec_dict),ignore_index=True)
+    return df
+
+
+def parse_annovar(annovar_file):
+    df = pd.DataFrame(columns=['mRNA', 'protein', 'cosmic'])
+    with open(annovar_file, 'rt') as f:
+        index = 0
+        for line in f:
+            index += 1
+            if index == 1:
+                continue
+            attrs = line.split('\t')
+            func = attrs[5]
+            if func == 'exonic':
+                changes = attrs[9]
+                cosmic = attrs[10]
+            else:
+                changes = attrs[7]
+                cosmic = attrs[8]
+            change_list = list()
+            for change in changes.split(','):
+                change_attrs = change.split(':')
+                mRNA = ''
+                protein = ''
+                for change_index in range(len(change_attrs)):
+                    change_attr = change_attrs[change_index]
+                    if change_attr.startswith('c.'):
+                        base = change_attr.strip('c.')
+                        exon = change_attrs[change_index - 1]
+                        mRNA = f'{exon}:{base}'
+                    if change_attr.startswith('p.'):
+                        protein = change_attr.strip('p.')
+                if not (mRNA, protein) in change_list:
+                    change_list.append((mRNA, protein)) 
+            combine = [','.join(item) for item in list(zip(*change_list))]
+            mRNA = combine[0]
+            protein = combine[1]
+            df = df.append({
+                'MRNA': mRNA,
+                'PROTEIN': protein,
+                'COSMIC': cosmic,
+            }, ignore_index=True)
+    return df
+
+
+def parse_match_dir(match_dir):
+    match_dict = {}
+    match_barcode, cell_total = read_barcode_file(match_dir)
+    match_dict['match_barcode'] = match_barcode
+    match_dict['cell_total'] = cell_total
+    match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
+    try:
+        match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]
+    except Exception:
+        match_dict['rds'] = None
+    return match_dict
+
+
+@log
+def STAR_util(
+    sample,
+    outdir,
+    input_read,
+    genomeDir,
+    runThreadN,
+    outFilterMatchNmin=35,
+    out_unmapped=False,
+    outFilterMultimapNmax=1,
+):
+
+    # check dir
+    if not os.path.exists(outdir):
+        os.system('mkdir -p %s' % (outdir))
+
+    out_prefix = f'{outdir}/{sample}_'
+    out_BAM = out_prefix + "Aligned.sortedByCoord.out.bam"
+
+    cmd = f"STAR \
+ --genomeDir {genomeDir} \
+ --readFilesIn {input_read}\
+ --readFilesCommand zcat\
+ --outSAMtype BAM SortedByCoordinate\
+ --runThreadN {runThreadN}\
+ --outFilterMatchNmin {outFilterMatchNmin}\
+ --outFileNamePrefix {out_prefix}\
+ --outFilterMultimapNmax {outFilterMultimapNmax} "
+    
+    if out_unmapped:
+        cmd += ' --outReadsUnmapped Fastx '
+
+    STAR_util.logger.info(cmd)
+    os.system(cmd)
+
+    cmd = "samtools index {out_BAM}".format(out_BAM=out_BAM)
+    STAR_util.logger.info(cmd)
+    os.system(cmd)
+
+
+def get_scope_bc(bctype):
+    import celescope
+    root_path = os.path.dirname(celescope.__file__)
+    linker_f = glob.glob(f'{root_path}/data/chemistry/{bctype}/linker*')[0]
+    whitelist_f = f'{root_path}/data/chemistry/{bctype}/bclist'
+    return linker_f, whitelist_f
+
+@log
+def parse_pattern(pattern):
+    # 解析接头结构，返回接头结构字典
+    # key: 字母表示的接头, value: 碱基区间列表
+    # eg.: C8L10C8L10C8U8T30
+    # defaultdict(<type 'list'>:
+    # {'C': [[0, 8], [18, 26], [36, 44]], 'U': [[44, 52]], 'L': [[8, 18], [26, 36]], 'T': [[52, 82]]})
+    pattern_dict = defaultdict(list)
+    p = re.compile(r'([CLUNT])(\d+)')
+    tmp = p.findall(pattern)
+    if not tmp:
+        parse_pattern.logger.error(f'Invalid pattern: {pattern}')
+        sys.exit()
+    start = 0
+    for item in tmp:
+        end = start + int(item[1])
+        pattern_dict[item[0]].append([start, end])
+        start = end
+    return pattern_dict
+    
+
+
+
+
+

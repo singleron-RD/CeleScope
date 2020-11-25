@@ -44,7 +44,7 @@ mito_df$mito_percent = paste0("Fraction of cells have mito gene percent>",round(
 write_delim(mito_df, mito.out, col_names=F, delim=":")
 
 rds <- NormalizeData(object = rds, normalization.method = "LogNormalize",scale.factor = 10000)
-rds <- FindVariableGenes(object = rds, mean.function = ExpMean, dispersion.function = LogVMR, x.low.cutoff = 0.1,  y.cutoff = 1)
+rds <- FindVariableGenes(object = rds, mean.function = ExpMean, dispersion.function = LogVMR, x.low.cutoff = 0.1,  y.cutoff = 1, do.contour=F)
 use.gene = rds@var.genes
 rds <- ScaleData(object = rds,vars.to.regress = c("nUMI", "percent.mito"),genes.use =use.gene)
 rds <- RunPCA(object = rds, pc.genes = use.gene, do.print = FALSE)

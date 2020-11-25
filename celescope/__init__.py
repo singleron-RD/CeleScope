@@ -1,4 +1,4 @@
-__VERSION__ = "1.1.5"
+__VERSION__ = "1.1.6"
 __CONDA__ = "celescope_RD"
 
 ASSAY_DICT = {
@@ -11,5 +11,8 @@ ASSAY_DICT = {
     'mut': 'Single Cell Insertion and Deletion',
     'hla': 'Single Cell HLA',
     'capture_rna': 'Single Cell Capture RNA',
-    'snp': 'Single Cell SNP',
+    'snp': 'Single Cell Variant',
+    'tag': 'Single Cell tag',
+    'citeseq': 'Single Cell CITE-Seq',
+    'tcr_fl': 'Single Cell full length TCR',
 }

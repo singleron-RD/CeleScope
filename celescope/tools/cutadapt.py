@@ -96,7 +96,7 @@ def get_opts_cutadapt(parser, sub_program):
             'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',
         ])
     parser.add_argument(
-        '--minimum-length',
+        '--minimum_length',
         dest='minimum_length',
         help='minimum_length, default=20',
         default=20)
@@ -107,6 +107,6 @@ def get_opts_cutadapt(parser, sub_program):
         default=20)
     parser.add_argument(
         '--overlap',
-        help='minimum overlap length, default=5',
-        default=5)
+        help='minimum overlap length',
+        default=10)
     parser.add_argument('--thread', default=2)

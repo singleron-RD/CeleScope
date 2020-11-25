@@ -1,167 +1,61 @@
-import os
-import glob
-import sys
-import argparse
-import re
-from collections import defaultdict
 from celescope.__init__ import __CONDA__
 from celescope.fusion.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.utils import merge_report, generate_sjm
-from celescope.tools.utils import parse_map_col4, multi_opts, link_data
+from celescope.tools.Multi import Multi
+
+
+class Multi_fusion(Multi):
+    def custome_args(self):
+        self.STAR_args()
+        self.parser.add_argument("--fusion_pos",
+        help="first base position of the second gene(0-start),tsv file", required=True)
+        self.parser.add_argument("--UMI_min", default=1)
+
+    def read_custome_args(self):
+        self.read_STAR_args()
+        self.fusion_pos = self.args.fusion_pos
+        self.UMI_min = self.args.UMI_min
+
+    def STAR_fusion(self, sample):
+        step = 'STAR_fusion'
+        input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        cmd = (
+            f'{self.__APP__} '
+            f'{self.__ASSAY__} '
+            f'{step} '
+            f'--outdir {self.outdir_dic[sample][step]} '
+            f'--sample {sample} '
+            f'--assay {self.__ASSAY__} '
+            f'--input_read {input_read} '
+            f'--genomeDir {self.genomeDir} '
+            f'--thread {self.thread} '
+        )
+        self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
+
+    def count_fusion(self, sample):
+        step = 'count_fusion'
+        bam = f'{self.outdir_dic[sample]["STAR_fusion"]}/{sample}_Aligned.sortedByCoord.out.bam'
+        cmd = (
+            f'{self.__APP__} '
+            f'{self.__ASSAY__} '
+            f'{step} '
+            f'--outdir {self.outdir_dic[sample][step]} '
+            f'--sample {sample} '
+            f'--assay {self.__ASSAY__} '
+            f'--bam {bam} '
+            f'--UMI_min {self.UMI_min} '
+            f'--match_dir {self.col4_dict[sample]} '
+            f'--fusion_pos {self.fusion_pos} '
+        )
+        self.process_cmd(cmd, step, sample, m=15, x=1)
 
 
 def main():
-
-    # init
-    assay = __ASSAY__
-    steps = __STEPS__
-    conda = __CONDA__
-    app = 'celescope'
-
-    # parser
-    parser = multi_opts(assay)
-    parser.add_argument('--starMem', help='starMem', default=10)
-    parser.add_argument('--thread', help='thread', default=6)
-    parser.add_argument('--genomeDir', help='fusion genomeDir', required=True)
-    parser.add_argument(
-        "--fusion_pos",
-        help="first base position of the second gene(0-start),tsv file",
-        required=True)
-    parser.add_argument("--UMI_min", default=1)
-    args = parser.parse_args()
-
-    # read args
-    outdir = args.outdir
-    chemistry = args.chemistry
-    pattern = args.pattern
-    whitelist = args.whitelist
-    linker = args.linker
-    lowQual = args.lowQual
-    lowNum = args.lowNum
-    mod = args.mod
-    rm_files = args.rm_files
-
-    # parse mapfile
-    fq_dict, match_dict = parse_map_col4(args.mapfile, None)
-
-    # link
-    link_data(outdir, fq_dict)
-
-    # custom args
-    thread = args.thread
-    genomeDir = args.genomeDir
-    starMem = args.starMem
-    fusion_pos = args.fusion_pos
-    UMI_min = args.UMI_min
-
-    # mk log dir
-    logdir = outdir + '/log'
-    os.system('mkdir -p %s' % (logdir))
-
-    # script init
-    sjm_cmd = 'log_dir %s\n' % (logdir)
-    sjm_order = ''
-    shell_dict = defaultdict(str)
-
-    # outdir dict
-    for sample in fq_dict:
-        outdir_dic = {}
-        index = 0
-        for step in steps:
-            step_outdir = f"{outdir}/{sample}/{index:02d}.{step}"
-            outdir_dic.update({step: step_outdir})
-            index += 1
-
-        # sample
-        step = "sample"
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--chemistry {chemistry} '
-            f'--sample {sample} --outdir {outdir_dic[step]} --assay {assay} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda)
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
-
-        # barcode
-        arr = fq_dict[sample]
-        step = "barcode"
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--fq1 {arr[0]} --fq2 {arr[1]} --chemistry {chemistry} '
-            f'--pattern {pattern} --whitelist {whitelist} --linker {linker} '
-            f'--sample {sample} --lowQual {lowQual} --thread {thread} '
-            f'--lowNum {lowNum} --outdir {outdir_dic[step]} --assay {assay} '
-
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
-
-        # adapt
-        step = "cutadapt"
-        fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--fq {fq} --sample {sample} --outdir '
-            f'{outdir_dic[step]} --assay {assay} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=5, x=1)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
-
-        # STAR_fusion
-        step = 'STAR_fusion'
-        input_read = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--outdir {outdir_dic[step]} --assay {assay} --sample {sample} '
-            f'--thread {thread} '
-            f'--input_read {input_read} '
-            f'--genomeDir {genomeDir} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=starMem, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        shell_dict[sample] += cmd + '\n'
-        last_step = step
-
-        # count_fusion
-        step = 'count_fusion'
-        bam = f'{outdir_dic["STAR_fusion"]}/{sample}_Aligned.sortedByCoord.out.bam'
-        cmd = (
-            f'{app} {assay} {step} '
-            f'--outdir {outdir_dic[step]} --assay {assay} --sample {sample} '
-            f'--bam {bam} '
-            f'--UMI_min {UMI_min} '
-            f'--match_dir {match_dict[sample]} '
-            f'--fusion_pos {fusion_pos} '
-        )
-        sjm_cmd += generate_sjm(cmd, f'{step}_{sample}', conda, m=20, x=thread)
-        sjm_order += f'order {step}_{sample} after {last_step}_{sample}\n'
-        last_step = step
-
-    # merged report
-    if mod == 'sjm':
-        step = 'merge_report'
-        merge_report(
-            fq_dict,
-            steps,
-            last_step,
-            sjm_cmd,
-            sjm_order,
-            logdir,
-            conda,
-            outdir,
-            rm_files,
-        )
-    if mod == 'shell':
-        os.system('mkdir -p ./shell/')
-        for sample in shell_dict:
-            with open(f'./shell/{sample}.sh', 'w') as f:
-                f.write(shell_dict[sample])
+    multi = Multi_fusion(__ASSAY__, __STEPS__, __CONDA__)
+    multi.col4_default = None
+    multi.run()
 
 
 if __name__ == '__main__':
     main()
+
+
