@@ -103,6 +103,7 @@ class Multi():
         self.lowQual = self.args.lowQual
         self.lowNum = self.args.lowNum
         self.overlap = self.args.overlap
+        self.minimum_length = self.args.minimum_length
         self.mod = self.args.mod
         self.rm_files = self.args.rm_files
         self.steps_run = self.args.steps_run
@@ -238,6 +239,7 @@ job_end
             f'--assay {self.__ASSAY__} '
             f'--fq {fq} '
             f'--overlap {self.overlap} '
+            f'--minimum_length {self.minimum_length} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
