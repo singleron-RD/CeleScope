@@ -151,7 +151,7 @@ class Step_mapping():
         self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
         cmd = [
             'picard',
-            '-Xmx4G',
+            '-Xmx20G',
             '-XX:ParallelGCThreads=4',
             'CollectRnaSeqMetrics',
             'I=%s' %
