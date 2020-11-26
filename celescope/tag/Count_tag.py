@@ -38,9 +38,10 @@ class Count_tag():
         self.match_barcode, self.cell_total = read_barcode_file(match_dir)
         self.df_read_count = pd.read_csv(read_count_file, sep="\t", index_col=0)
         self.tsne_file = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
-        
+        self.no_noise = False
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % outdir)
+
 
 
     @staticmethod
@@ -60,18 +61,22 @@ class Count_tag():
 
     @staticmethod
     def get_SNR(row, dim):
-        row_sorted = sorted(row, reverse=True)
+        row_sorted = sorted(row, reverse=True)            
         noise = row_sorted[dim]
         signal = row_sorted[dim - 1]
         if noise == 0:
             return np.inf
         return float(signal) / noise
 
-    @staticmethod
-    def get_SNR_min(df_cell_UMI, dim, SNR_min, UMI_min):
+    def get_SNR_min(self, df_cell_UMI, dim, SNR_min, UMI_min):
         UMIs = df_cell_UMI.apply(Count_tag.get_UMI, axis=1)
         df_valid_cell_UMI = df_cell_UMI[UMIs >= UMI_min]
         if SNR_min == "auto":
+            # no noise
+            if df_valid_cell_UMI.shape[1] <= dim:
+                logging.warning('*** No NOISE FOUND! ***')
+                self.no_noise = True
+                return 0
             SNRs = df_valid_cell_UMI.apply(Count_tag.get_SNR, dim=dim, axis=1)
             if np.median(SNRs) == np.inf:
                 return 10
@@ -80,8 +85,11 @@ class Count_tag():
             return float(SNR_min)
 
     @staticmethod
-    def tag_type(row, UMI_min, SNR_min, dim):
-        SNR = Count_tag.get_SNR(row, dim)
+    def tag_type(row, UMI_min, SNR_min, dim, no_noise=False):
+        if no_noise:
+            SNR = 1
+        else:
+            SNR = Count_tag.get_SNR(row, dim)
         UMI = Count_tag.get_UMI(row)
         if UMI < UMI_min:
             return "Undetermined"
@@ -142,7 +150,6 @@ class Count_tag():
 
         # UMI
         tag_name = df_read_count_in_cell.columns[0]
-        print(tag_name)
         df_UMI_in_cell = df_read_count_in_cell.reset_index().groupby([
             'barcode', tag_name]).agg({'UMI': 'count'})
         df_UMI_in_cell = df_UMI_in_cell.reset_index()
@@ -176,10 +183,10 @@ class Count_tag():
 
         UMI_min = Count_tag.get_UMI_min(df_UMI_cell, self.UMI_min)
         Count_tag.run.logger.info(f'UMI_min: {UMI_min}')
-        SNR_min = Count_tag.get_SNR_min(df_UMI_cell, self.dim, self.SNR_min, UMI_min)
+        SNR_min = self.get_SNR_min(df_UMI_cell, self.dim, self.SNR_min, UMI_min)
         Count_tag.run.logger.info(f'SNR_min: {SNR_min}')
         df_UMI_cell["tag"] = df_UMI_cell.apply(
-            Count_tag.tag_type, UMI_min=UMI_min, SNR_min=SNR_min, dim=self.dim, axis=1)
+            Count_tag.tag_type, UMI_min=UMI_min, SNR_min=SNR_min, dim=self.dim, no_noise=self.no_noise, axis=1)
         df_UMI_cell.to_csv(UMI_tag_file, sep="\t")
 
         df_tsne = pd.read_csv(self.tsne_file, sep="\t", index_col=0)

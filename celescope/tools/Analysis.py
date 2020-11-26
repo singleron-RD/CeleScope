@@ -53,8 +53,11 @@ class Analysis():
             justify="center")
         return table_dict
 
-    def report(self):
-        stat_file = self.outdir + "/stat.txt"
+    def report(self, stat=True):
+        if stat:
+            stat_file = self.outdir + "/stat.txt"
+        else:
+            stat_file = ''
         t = reporter(
         name=self.step,
         assay=self.assay,
@@ -63,12 +66,12 @@ class Analysis():
         stat_file=stat_file)
         t.get_report()
 
-    def get_cluster_tsne(self, colname, show_tag=True):
+    def get_cluster_tsne(self, colname, show_tag=True, dfname='tsne_df'):
         """
         tSNE_1	tSNE_2	cluster Gene_Counts
         return data list
         """
-        tsne_df = self.tsne_df
+        tsne_df = getattr(self, dfname)
         sum_df = tsne_df.groupby([colname]).agg("count").iloc[:, 0]
         percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
         res = []
@@ -126,6 +129,20 @@ class Analysis():
             df_table=marker_df,
         )
         return table_dict
+
+    def marker_table(self):
+        """
+        return html code
+        """
+        marker_df = self.marker_df.loc[:, ["cluster", "gene",
+                                    "avg_logFC", "pct.1", "pct.2", "p_val_adj"]]
+        marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
+        marker_gene_table = marker_df.to_html(
+            escape=False,
+            index=False,
+            table_id="marker_gene_table",
+            justify="center")
+        return marker_gene_table
 
     def run(self):
         cluster_tsne = self.get_cluster_tsne(colname='cluster')
