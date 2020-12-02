@@ -384,6 +384,8 @@ def parse_map_col4(mapfile, default_val):
         fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
         fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
 
+    if not fq_dict:
+        raise Exception('empty mapfile!')
     return fq_dict, col4_dict
 
 
