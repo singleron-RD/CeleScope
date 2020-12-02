@@ -41,7 +41,7 @@ class Multi_tcr_fl(Multi):
             f'--fastq_dir {fastq_dir} '
             f'--thread {self.thread} '
         )
-        self.process_cmd(cmd, step, sample, m=4 * self.thread, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=4 * int(self.thread), x=self.thread)
 
 
 def main():
