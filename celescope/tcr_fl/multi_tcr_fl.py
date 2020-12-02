@@ -24,8 +24,9 @@ class Multi_tcr_fl(Multi):
             f'--assay {self.__ASSAY__} '
             f'--fq {fq} '
             f'--nCell {self.nCell} '
+            f'--match_dir {self.col4_dict[sample]} '
         )
-        self.generate_other(cmd, step, sample, m=5, x=1)
+        self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def assemble(self, sample):
         step = 'assemble'
@@ -40,7 +41,7 @@ class Multi_tcr_fl(Multi):
             f'--fastq_dir {fastq_dir} '
             f'--thread {self.thread} '
         )
-        self.generate_other(cmd, step, sample, m=4 * self.thread, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=4 * self.thread, x=self.thread)
 
 
 def main():
