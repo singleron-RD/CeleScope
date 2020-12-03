@@ -15,6 +15,8 @@ class Multi_snp(Multi):
         self.gene_list = self.args.gene_list
         self.probe_file = self.args.probe_file
         self.annovar_config = self.args.annovar_config
+        self.gtf_type = 'gene'
+        self.outFilterMatchNmin = 35
 
     def snpCalling(self, sample):
         step = 'snpCalling'
@@ -32,7 +34,7 @@ class Multi_snp(Multi):
             f'--gene_list {self.gene_list} '
             f'--thread {self.thread} '
         )
-        self.generate_other(cmd, step, sample, m=8, x=self.thread)
+        self.generate_cmd(cmd, step, sample, m=8, x=self.thread)
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
@@ -50,17 +52,7 @@ class Multi_snp(Multi):
             f'--index_file {index_file} '
             f'--annovar_config {self.annovar_config} '
         )
-        self.generate_other(cmd, step, sample, m=8, x=self.thread)
-
-    def run(self):
-        self.multi_opts()
-        self.custome_args()
-        self.parse_args()
-        self.read_custome_args()
-        self.prepare()
-        self.gtf_type = 'gene'
-        self.run_steps()
-        self.end()
+        self.generate_cmd(cmd, step, sample, m=8, x=self.thread)
 
 
 def main():
