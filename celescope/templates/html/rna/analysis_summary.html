@@ -1,13 +1,25 @@
+<script> {% include "./js/jquery.dataTables.min.js" %} </script>
+<script> {% include "./js/dataTables.jqueryui.min.js" %} </script>
 
+<script> {% include "./js/jszip.min.js" %} </script>
+<script> {% include "./js/dataTables.buttons.min.js" %} </script>
+<script> {% include "./js/buttons.flash.min.js" %} </script>
+<script> {% include "./js/buttons.html5.min.js" %} </script>
+<script> {% include "./js/buttons.print.min.js" %} </script>
 
 <link rel="stylesheet" type="text/css" href="code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> 
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/dataTables.jqueryui.min.css"> 
 
 <link rel="stylesheet" type="text/css"  href="https://cdn.datatables.net/buttons/1.4.0/css/buttons.dataTables.min.css" />
 
-
-
 <script>
+    $(document).ready(function () {
+        var table = $('#marker_gene_table').DataTable({
+            dom: 'Bfrtip',
+            buttons: ['excel']
+        });
+        table.columns(-1).order('desc').draw();
+    });
 
     $(document).ready(function () {
             var table = $('#marker_gene_table').DataTable();
