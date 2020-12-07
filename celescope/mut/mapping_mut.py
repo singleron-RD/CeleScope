@@ -7,7 +7,7 @@ def mapping_mut(args):
     STAR_util(
         args.sample,
         args.outdir,
-        args.input_read,
+        args.fq,
         args.indel_genomeDir,
         args.thread,
         args.outFilterMatchNmin,
