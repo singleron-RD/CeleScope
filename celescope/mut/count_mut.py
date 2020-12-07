@@ -173,6 +173,7 @@ def get_opts_count_mut(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument("--bam", required=True)
+        parser.add_argument('--assay', help='assay', required=True)
     parser.add_argument("--mut_file", help="mutation file", required=True)
     parser.add_argument(
         "--match_dir", help="match scRNA-Seq dir", required=True)
