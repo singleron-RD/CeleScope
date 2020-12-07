@@ -46,7 +46,7 @@ class Multi_mut(Multi):
             f'--bam {bam} '
             f'--mut_file {self.mut_file} '
             f'--match_dir {self.col4_dict[sample]} '
-            f'shift_base {self.shift_base} '
+            f'--shift_base {self.shift_base} '
         )
         self.generate_other(cmd, step, sample, m=8, x=1)
 
