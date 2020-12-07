@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, log, genDict
+from celescope.tools.utils import format_number, log, genDict, parse_match_dir
 import pysam
 import os
 import pandas as pd
@@ -34,17 +34,6 @@ def is_fusion(pos, read_start, read_length, flanking_base):
     return (test_start and test_end)
 
 
-def read_barcode_file(match_barcode_file):
-    match_barcode = []
-    with open(match_barcode_file, "rt") as f:
-        while True:
-            line = f.readline().strip()
-            if not line:
-                break
-            match_barcode.append(line)
-    return match_barcode
-
-
 @log
 def count_mut(args):
 
@@ -61,17 +50,12 @@ def count_mut(args):
 
     mut_dic = read_mut(mut_file)
     out_prefix = outdir + "/" + sample
-    # barcode
-    match_barcode_file1 = glob.glob(
-        "{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file2 = glob.glob(
-        "{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
-    match_barcode = read_barcode_file(match_barcode_file)
+
+
     # tsne
-    match_tsne_file = "{match_dir}/06.analysis/tsne_coord.tsv".format(
-        match_dir=match_dir)
-    df_tsne = pd.read_csv(match_tsne_file, sep="\t", index_col=0)
+    match_dict = parse_match_dir(match_dir)
+    df_tsne = pd.read_csv(match_dict['tsne_coord'], sep="\t", index_col=0)
+
     # out
     out_read_file = out_prefix + "_mut_read.tsv"
     out_read_count_file = out_prefix + "_mut_read_count.tsv"

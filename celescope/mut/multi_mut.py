@@ -31,7 +31,7 @@ class Multi_mut(Multi):
             f'--thread {self.thread} '
             f'--indel_genomeDir {self.indel_genomeDir} '
         )
-        self.generate_other(cmd, step, sample, m=self.starMem, x=self.thread)
+        self.generate_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
 
     def count_mut(self, sample):
         step = 'count_mut'
@@ -48,7 +48,7 @@ class Multi_mut(Multi):
             f'--match_dir {self.col4_dict[sample]} '
             f'--shift_base {self.shift_base} '
         )
-        self.generate_other(cmd, step, sample, m=8, x=1)
+        self.generate_cmd(cmd, step, sample, m=8, x=1)
 
 
 def main():
