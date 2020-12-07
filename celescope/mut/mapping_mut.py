@@ -11,6 +11,7 @@ def mapping_mut(args):
         args.indel_genomeDir,
         args.thread,
         args.outFilterMatchNmin,
+        outBAMsortingBinsN=200,
     )
 
 

@@ -133,23 +133,26 @@ def count_mut(args):
     df_UMI_count.to_csv(out_umi_count_file, sep="\t")
 
     df_temp = df_UMI_count.reset_index()
-    df_insertion = df_temp[df_temp["type"] == "insertion"]
-    df_insertion_barcode_count = df_insertion.pivot(
-        index="barcode", columns="gene", values="UMI_count")
-    df_insertion_barcode_count.to_csv(
-        out_insertion_barcode_count_file, sep="\t")
+    if df_temp.shape[0] == 0:
+        count_mut.logger.warning('NO VALID INSERTION FOUND!')
+    else:
+        df_insertion = df_temp[df_temp["type"] == "insertion"]
+        df_insertion_barcode_count = df_insertion.pivot(
+            index="barcode", columns="gene", values="UMI_count")
+        df_insertion_barcode_count.to_csv(
+            out_insertion_barcode_count_file, sep="\t")
 
-    df_tsne_mut = pd.merge(df_tsne, df_insertion_barcode_count,
-                           right_index=True, left_index=True, how="left")
-    df_tsne_mut.fillna(0, inplace=True)
-    df_tsne_mut.to_csv(out_tsne_file, sep="\t")
+        df_tsne_mut = pd.merge(df_tsne, df_insertion_barcode_count,
+                            right_index=True, left_index=True, how="left")
+        df_tsne_mut.fillna(0, inplace=True)
+        df_tsne_mut.to_csv(out_tsne_file, sep="\t")
 
-    # plot
-    app = parentDir + "/plot.R"
-    cmd = f"Rscript {app} --tsne_mut {out_tsne_file} --outdir {outdir}"
-    count_mut.logger.info(cmd)
-    os.system(cmd)
-    count_mut.logger.info("plot done.")
+        # plot
+        app = parentDir + "/plot.R"
+        cmd = f"Rscript {app} --tsne_mut {out_tsne_file} --outdir {outdir}"
+        count_mut.logger.info(cmd)
+        os.system(cmd)
+        count_mut.logger.info("plot done.")
 
 
 def get_opts_count_mut(parser, sub_program):

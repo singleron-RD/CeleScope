@@ -773,6 +773,7 @@ def STAR_util(
     outFilterMatchNmin=35,
     out_unmapped=False,
     outFilterMultimapNmax=1,
+    outBAMsortingBinsN=50,
 ):
 
     # check dir
@@ -790,7 +791,9 @@ def STAR_util(
  --runThreadN {runThreadN}\
  --outFilterMatchNmin {outFilterMatchNmin}\
  --outFileNamePrefix {out_prefix}\
- --outFilterMultimapNmax {outFilterMultimapNmax} "
+ --outFilterMultimapNmax {outFilterMultimapNmax}\
+ --outBAMsortingBinsN {outBAMsortingBinsN}\
+ --limitBAMsortRAM 100000000000 "
     
     if out_unmapped:
         cmd += ' --outReadsUnmapped Fastx '
