@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import functools
+import gzip
 from collections import defaultdict
 from itertools import groupby
 import numpy as np
@@ -137,7 +138,7 @@ def bam2table(bam, detail_file):
     # 提取bam中相同barcode的reads，统计比对到基因的reads信息
     #
     samfile = pysam.AlignmentFile(bam, "rb")
-    with open(detail_file, 'w') as fh1:
+    with gzip.open(detail_file, 'wt') as fh1:
         fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
 
         # pysam.libcalignedsegment.AlignedSegment
@@ -185,12 +186,30 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
     return validated_barcodes, threshold, cell_num, CB_describe
 
 
+def write_matrix_10X(table, id_name, matrix_10X_dir):
+    id = table.index.to_series()
+    name = id.apply(lambda x: id_name[x])
+    genes = pd.concat([id, name], axis=1)
+    genes.columns = ['gene_id', 'gene_name']
+
+    #write
+    table.columns.to_series().to_csv(
+        f'{matrix_10X_dir}/barcodes.tsv', index=False, sep='\t')
+    genes.to_csv(
+        f'{matrix_10X_dir}/genes.tsv', index=False, header=False, sep='\t')
+    mmwrite(f'{matrix_10X_dir}/matrix', csr_matrix(table))
+    return id, name
+
+
 @log
 def expression_matrix(
         df, validated_barcodes,
         outdir, sample, gtf_file):
 
     matrix_10X_dir = f"{outdir}/{sample}_matrix_10X/"
+    all_matrix_10X_dir = f"{outdir}/{sample}_all_matrix_10X/"
+    if not os.path.exists(all_matrix_10X_dir):
+        os.mkdir(all_matrix_10X_dir)
     matrix_table_file = f"{outdir}/{sample}_matrix.tsv.gz"
     if not os.path.exists(matrix_10X_dir):
         os.mkdir(matrix_10X_dir)
@@ -202,22 +221,19 @@ def expression_matrix(
     CB_reads_count = df.loc[df['mark'] == 'CB', 'count'].sum()
     reads_mapped_to_transcriptome = df['count'].sum()
 
+    id_name = gene_convert(gtf_file)
+
+    # write all
+    table_all = df.pivot_table(
+        index='geneID', columns='Barcode', values='UMI',
+        aggfunc=len).fillna(0).astype(int)
+    write_matrix_10X(table_all, id_name, all_matrix_10X_dir)    
+
+    # write CB
     table = df.loc[df['mark'] == 'CB', :].pivot_table(
         index='geneID', columns='Barcode', values='UMI',
         aggfunc=len).fillna(0).astype(int)
-
-    id_name = gene_convert(gtf_file)
-    id = table.index.to_series()
-    name = id.apply(lambda x: id_name[x])
-    genes = pd.concat([id, name], axis=1)
-    genes.columns = ['gene_id', 'gene_name']
-
-    # write 10X matrix
-    table.columns.to_series().to_csv(
-        f'{matrix_10X_dir}/barcodes.tsv', index=False, sep='\t')
-    genes.to_csv(
-        f'{matrix_10X_dir}/genes.tsv', index=False, header=False, sep='\t')
-    mmwrite(f'{matrix_10X_dir}/matrix', csr_matrix(table))
+    id, name = write_matrix_10X(table, id_name, matrix_10X_dir)
 
     # convert id to name; write table matrix
     table.index = name
@@ -318,7 +334,7 @@ def count(args):
         os.system('mkdir -p %s' % (args.outdir))
 
     # umi纠错，输出Barcode geneID  UMI     count为表头的表格
-    count_detail_file = args.outdir + '/' + args.sample + '_count_detail.txt'
+    count_detail_file = args.outdir + '/' + args.sample + '_count_detail.txt.gz'
     bam2table(args.bam, count_detail_file)
 
     df = pd.read_table(count_detail_file, header=0)
