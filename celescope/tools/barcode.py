@@ -313,7 +313,7 @@ def barcode(args):
         total_num += 1
 
         # polyT filter
-        if bool_T:
+        if bool_T and (not args.allowNoPolyT):
             polyT = seq_ranges(seq1, pattern_dict['T'])
             if no_polyT(polyT):
                 no_polyT_num += 1
@@ -497,4 +497,5 @@ def get_opts_barcode(parser, sub_program):
                         help='output noLinker fq')
     parser.add_argument('--thread', help='number of threads', default=1)
     parser.add_argument('--probe_file', help="probe fasta file")
+    parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
     return parser
