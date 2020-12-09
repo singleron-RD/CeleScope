@@ -71,6 +71,7 @@ class Multi():
         parser.add_argument('--noLinker', action='store_true', help='output noLinker fq')
         parser.add_argument('--probe_file', help="probe fasta file")
         parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
+        parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
         self.parser = parser
 
     def read_barcode_args(self):
@@ -81,6 +82,7 @@ class Multi():
         self.lowQual = self.args.lowQual
         self.lowNum = self.args.lowNum
         self.allowNoPolyT_str = Multi.arg_str(self.args.allowNoPolyT, 'allowNoPolyT')
+        self.allowNoLinker_str = Multi.arg_str(self.args.allowNoLinker, 'allowNoLinker')
 
     def STAR_args(self):
         self.parser.add_argument('--starMem', help='starMem', default=30)
@@ -232,6 +234,7 @@ job_end
             f'--lowQual {self.lowQual} --thread {self.thread} '
             f'--lowNum {self.lowNum} '
             f'{self.allowNoPolyT_str} '
+            f'{self.allowNoLinker_str} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 

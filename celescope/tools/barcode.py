@@ -341,7 +341,7 @@ def barcode(args):
             # linker filter
             barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
             raw_cb = ''.join(barcode_arr)
-            if bool_L:
+            if bool_L and (not args.allowNoLinker):
                 linker = seq_ranges(seq1, pattern_dict['L'])
                 if (no_linker(linker, linker_dict)):
                     no_linker_num += 1
@@ -504,4 +504,5 @@ def get_opts_barcode(parser, sub_program):
     parser.add_argument('--thread', help='number of threads', default=1)
     parser.add_argument('--probe_file', help="probe fasta file")
     parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
+    parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
     return parser
