@@ -483,7 +483,7 @@ def get_opts_barcode(parser, sub_program):
     parser.add_argument('--fq1', help='read1 fq file', required=True)
     parser.add_argument('--fq2', help='read2 fq file', required=True)
     parser.add_argument(
-        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version')
+        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
     parser.add_argument('--pattern', help='')
     parser.add_argument('--whitelist', help='')
     parser.add_argument('--linker', help='')
