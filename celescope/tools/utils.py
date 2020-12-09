@@ -344,8 +344,10 @@ def get_fq(library_id, library_path):
         pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
         pattern2_2 = f'{library_path}/*{library_id}*R2.fastq.gz'
         pattern2_3 = f'{library_path}/*{library_id}*R2_001.fastq.gz'
-        fq1 = ",".join(glob.glob(pattern1_1) + glob.glob(pattern1_2) + glob.glob(pattern1_3))
-        fq2 = ",".join(glob.glob(pattern2_1) + glob.glob(pattern2_2) + glob.glob(pattern2_3))
+        fq1_list = sorted(glob.glob(pattern1_1) + glob.glob(pattern1_2) + glob.glob(pattern1_3))
+        fq2_list = sorted(glob.glob(pattern2_1) + glob.glob(pattern2_2) + glob.glob(pattern2_3))
+        fq1 = ",".join(fq1_list)
+        fq2 = ",".join(fq2_list)
         if len(fq1) == 0:
             sys.exit('Invalid fastq name pattern!')
     except IndexError as e:
