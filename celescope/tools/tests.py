@@ -36,7 +36,7 @@ class Tests(unittest.TestCase):
         mapping.format_stat()
         mapping.report()
 
-    @unittest.skip('pass')
+    #@unittest.skip('pass')
     def test_chemistry(self):
         fq1s = [
             '/SGRNJ/DATA_PROJ/2004/20201102_9/MG_201026_1-R2010283_L3_1.fq.gz',
@@ -47,14 +47,14 @@ class Tests(unittest.TestCase):
         results = []
         for fq1 in fq1s:
             ch = Chemistry(fq1)
-            results.append(ch.get_chemistry())
+            results.append(ch.check_chemistry())
         print(results)
         assert results == ['scopeV2.1.1', 'scopeV2.1.1', 'scopeV2.0.1', 'scopeV2.2.1']
-        fq = '/SGRNJ03/DATA03/2004/20201122_14/R2011312_R1.fastq.gz'
+        fq = '/SGRNJ03/DATA03/2004/20201207_10/R2011312-PCRD-201203-1_combined_R1.fastq.gz'
         ch = Chemistry(fq)
-        print(ch.get_chemistry())
+        print(ch.check_chemistry())
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_gtf(self):
         '''
         gtf_file = '/SGRNJ/Database/script/genome/hs/gtf/Homo_sapiens.GRCh38.99.gtf'
