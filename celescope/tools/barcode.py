@@ -224,6 +224,7 @@ def barcode(args):
     fq1_list = fq1.split(",")
     fq2_list = fq2.split(",")
 
+
     # check dir
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % args.outdir)

@@ -52,6 +52,7 @@ class Multi():
             help='nextseq_trim',
             default=20)
         parser.add_argument('--overlap', help='minimum overlap length', default=10)
+        parser.add_argument('--insert', help="read2 insert length", default=150)
         parser.add_argument('--rm_files', action='store_true', help='remove redundant fq.gz and bam after running')
         parser.add_argument('--steps_run', help='steps to run', default='all')
         parser.add_argument('--debug', help='debug or not', action='store_true')
@@ -109,6 +110,7 @@ class Multi():
         self.outdir = self.args.outdir
         self.overlap = self.args.overlap
         self.minimum_length = self.args.minimum_length
+        self.insert = self.args.insert
         self.mod = self.args.mod
         self.rm_files = self.args.rm_files
         self.steps_run = self.args.steps_run
@@ -230,7 +232,6 @@ job_end
             f'--lowQual {self.lowQual} --thread {self.thread} '
             f'--lowNum {self.lowNum} '
             f'{self.allowNoPolyT_str} '
-
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
@@ -248,6 +249,7 @@ job_end
             f'--fq {fq} '
             f'--overlap {self.overlap} '
             f'--minimum_length {self.minimum_length} '
+            f'--insert {self.insert} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 

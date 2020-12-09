@@ -62,6 +62,8 @@ def cutadapt(args):
                                   '--nextseq-trim=' + str(args.nextseq_trim),
                                   '--overlap',
                                   str(args.overlap),
+                                  '-l',
+                                  str(args.insert),
                                   '-o',
                                   out_fq2,
                                   args.fq]
@@ -88,25 +90,12 @@ def get_opts_cutadapt(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument(
-        '--adapt',
-        action='append',
-        default=[
+    parser.add_argument('--adapt',action='append',default=[
             'polyT=A{18}',
-            'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',
-        ])
-    parser.add_argument(
-        '--minimum_length',
-        dest='minimum_length',
-        help='minimum_length, default=20',
-        default=20)
-    parser.add_argument(
-        '--nextseq-trim',
-        dest='nextseq_trim',
-        help='nextseq_trim, default=20',
-        default=20)
-    parser.add_argument(
-        '--overlap',
-        help='minimum overlap length',
-        default=10)
+            'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',])
+    parser.add_argument('--minimum_length',dest='minimum_length',help='minimum_length, default=20',default=20)
+    parser.add_argument('--nextseq-trim',dest='nextseq_trim',help='nextseq_trim, default=20',default=20)
+    parser.add_argument('--overlap',help='minimum overlap length',default=10)
     parser.add_argument('--thread', default=2)
+    parser.add_argument('--insert', help="read2 insert length", default=150)
+
