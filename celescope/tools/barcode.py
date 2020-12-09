@@ -229,14 +229,9 @@ def barcode(args):
         os.system('mkdir -p %s' % args.outdir)
 
     # get chemistry
-    chemistry_list = []
     if args.chemistry == 'auto':
-        for fastq1 in fq1_list:
-            ch = Chemistry(fastq1)
-            chemistry = ch.get_chemistry()
-            chemistry_list.append(chemistry)
-        if len(set(chemistry_list)) != 1:
-            raise Exception('multiple chemistry found!' + str(chemistry_list))
+            ch = Chemistry(fq1)
+            chemistry = ch.check_chemistry()
     else:
         chemistry = args.chemistry
 

@@ -835,8 +835,3 @@ def parse_pattern(pattern):
         start = end
     return pattern_dict
     
-
-
-
-
-

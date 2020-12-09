@@ -24,9 +24,8 @@ def sample_info(args):
     # get chemistry
     if chemistry == 'auto':
         fq1 = args.fq1
-        fq1_file0 = fq1.split(',')[0]
-        ch = Chemistry(fq1_file0)
-        chemistry = ch.get_chemistry()
+        ch = Chemistry(fq1)
+        chemistry = ch.check_chemistry()
     else:
         chemistry = args.chemistry
 
