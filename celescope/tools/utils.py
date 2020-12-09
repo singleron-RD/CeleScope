@@ -344,8 +344,10 @@ def get_fq(library_id, library_path):
         pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
         pattern2_2 = f'{library_path}/*{library_id}*R2.fastq.gz'
         pattern2_3 = f'{library_path}/*{library_id}*R2_001.fastq.gz'
-        fq1 = ",".join(glob.glob(pattern1_1) + glob.glob(pattern1_2) + glob.glob(pattern1_3))
-        fq2 = ",".join(glob.glob(pattern2_1) + glob.glob(pattern2_2) + glob.glob(pattern2_3))
+        fq1_list = sorted(glob.glob(pattern1_1) + glob.glob(pattern1_2) + glob.glob(pattern1_3))
+        fq2_list = sorted(glob.glob(pattern2_1) + glob.glob(pattern2_2) + glob.glob(pattern2_3))
+        fq1 = ",".join(fq1_list)
+        fq2 = ",".join(fq2_list)
         if len(fq1) == 0:
             sys.exit('Invalid fastq name pattern!')
     except IndexError as e:
@@ -384,6 +386,8 @@ def parse_map_col4(mapfile, default_val):
         fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
         fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
 
+    if not fq_dict:
+        raise Exception('empty mapfile!')
     return fq_dict, col4_dict
 
 
@@ -753,6 +757,7 @@ def parse_match_dir(match_dir):
     match_dict['match_barcode'] = match_barcode
     match_dict['cell_total'] = cell_total
     match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
+    match_dict['markers'] = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
     try:
         match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]
     except Exception:
@@ -770,6 +775,7 @@ def STAR_util(
     outFilterMatchNmin=35,
     out_unmapped=False,
     outFilterMultimapNmax=1,
+    outBAMsortingBinsN=50,
 ):
 
     # check dir
@@ -787,7 +793,9 @@ def STAR_util(
  --runThreadN {runThreadN}\
  --outFilterMatchNmin {outFilterMatchNmin}\
  --outFileNamePrefix {out_prefix}\
- --outFilterMultimapNmax {outFilterMultimapNmax} "
+ --outFilterMultimapNmax {outFilterMultimapNmax}\
+ --outBAMsortingBinsN {outBAMsortingBinsN}\
+ --limitBAMsortRAM 100000000000 "
     
     if out_unmapped:
         cmd += ' --outReadsUnmapped Fastx '
@@ -827,8 +835,3 @@ def parse_pattern(pattern):
         start = end
     return pattern_dict
     
-
-
-
-
-

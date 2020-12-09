@@ -7,27 +7,13 @@ class Multi_capture_rna(Multi):
     
     def custome_args(self):
         # parser
-        parser = self.parser
-        parser.add_argument('--starMem', help='starMem', default=30)
-        parser.add_argument('--genomeDir', help='genome index dir', required=True)
-        parser.add_argument(
-            '--gtf_type',
-            help='Specify attribute type in GTF annotation, default=exon',
-            default='exon')
-        parser.add_argument('--thread', help='thread', default=6)
-        parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
-        parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
-        parser.add_argument('--probe_file', help="probe fasta file")
-        self.parser = parser
+        self.STAR_args()
+        self.analysis_args()
+        self.parser.add_argument('--probe_file', help="probe fasta file")
 
     def read_custome_args(self):
-        self.thread = self.args.thread
-        self.genomeDir = self.args.genomeDir
-        self.starMem = self.args.starMem
-        self.gtf_type = self.args.gtf_type
-        self.save_rds = self.args.save_rds
-        self.save_rds_str = Multi.arg_str(self.save_rds, 'save_rds')
-        self.type_marker_tsv = self.args.type_marker_tsv
+        self.read_STAR_args()
+        self.read_analysis_args()
         self.probe_file = self.args.probe_file
 
     def count_capture_rna(self, sample):
@@ -45,7 +31,23 @@ class Multi_capture_rna(Multi):
             f'--genomeDir {self.genomeDir} '
             f'--cells auto '
         )
-        self.generate_other(cmd, step, sample, m=10, x=1)
+        self.process_cmd(cmd, step, sample, m=10, x=1)
+    
+    def analysis(self, sample):
+        step = 'analysis'
+        matrix_file = f'{self.outdir_dic[sample]["count_capture_rna"]}/{sample}_matrix.tsv.gz'
+        cmd = (
+            f'{self.__APP__} '
+            f'{self.__ASSAY__} '
+            f'{step } '
+            f'--outdir {self.outdir_dic[sample][step]} '
+            f'--sample {sample} '
+            f'--assay {self.__ASSAY__} '
+            f'--matrix_file {matrix_file} '
+            f'{self.save_rds_str} '
+            f'--type_marker_tsv {self.type_marker_tsv} '
+        )
+        self.process_cmd(cmd, step, sample, m=10, x=1)
 
 
 def main():

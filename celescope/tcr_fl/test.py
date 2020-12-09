@@ -31,12 +31,23 @@ class test_snp(unittest.TestCase):
         fq_outdir = 'fastq'
         split_run(fq, fq_outdir, nCell=50)
 
+    @unittest.skip('pass')
     def test_assemble(self):
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/tcr_fl/pipe/')
         fastq_dir = 'GOT0928_P1_T/03.split_fq/fastq'
         sample = 'GOT0928_P1_T'
         outdir = 'GOT0928_P1_T/04.assemble/'
         run_assemble(sample, outdir, fastq_dir, thread=4)
+
+    def test_summary(self):
+        os.chdir('/SGRNJ02/RandD4/RD2019016/20201202/GOT_TCR1118_1T/')
+        TRACER_PATH = '/SGRNJ/Public/Software/tracer/tracer'
+        CONF_PATH = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/tcr_fl/20201103/tracer_SGR.conf'
+        CONDA = 'vdjpuzzle1'
+        CONDA_SUB = 'celescope_tracer'
+        outdir = '04.assemble'
+        tracer_summarise(outdir)
+
 
 
 if __name__ == '__main__':

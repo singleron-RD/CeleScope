@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, log, genDict
+from celescope.tools.utils import format_number, log, genDict, parse_match_dir
 import pysam
 import os
 import pandas as pd
@@ -34,17 +34,6 @@ def is_fusion(pos, read_start, read_length, flanking_base):
     return (test_start and test_end)
 
 
-def read_barcode_file(match_barcode_file):
-    match_barcode = []
-    with open(match_barcode_file, "rt") as f:
-        while True:
-            line = f.readline().strip()
-            if not line:
-                break
-            match_barcode.append(line)
-    return match_barcode
-
-
 @log
 def count_mut(args):
 
@@ -61,17 +50,12 @@ def count_mut(args):
 
     mut_dic = read_mut(mut_file)
     out_prefix = outdir + "/" + sample
-    # barcode
-    match_barcode_file1 = glob.glob(
-        "{match_dir}/05.count/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file2 = glob.glob(
-        "{match_dir}/05.count/matrix_10X/*_cellbarcode.tsv".format(match_dir=match_dir))
-    match_barcode_file = (match_barcode_file1 + match_barcode_file2)[0]
-    match_barcode = read_barcode_file(match_barcode_file)
+
+
     # tsne
-    match_tsne_file = "{match_dir}/06.analysis/tsne_coord.tsv".format(
-        match_dir=match_dir)
-    df_tsne = pd.read_csv(match_tsne_file, sep="\t", index_col=0)
+    match_dict = parse_match_dir(match_dir)
+    df_tsne = pd.read_csv(match_dict['tsne_coord'], sep="\t", index_col=0)
+
     # out
     out_read_file = out_prefix + "_mut_read.tsv"
     out_read_count_file = out_prefix + "_mut_read_count.tsv"
@@ -149,23 +133,26 @@ def count_mut(args):
     df_UMI_count.to_csv(out_umi_count_file, sep="\t")
 
     df_temp = df_UMI_count.reset_index()
-    df_insertion = df_temp[df_temp["type"] == "insertion"]
-    df_insertion_barcode_count = df_insertion.pivot(
-        index="barcode", columns="gene", values="UMI_count")
-    df_insertion_barcode_count.to_csv(
-        out_insertion_barcode_count_file, sep="\t")
+    if df_temp.shape[0] == 0:
+        count_mut.logger.warning('NO VALID INSERTION FOUND!')
+    else:
+        df_insertion = df_temp[df_temp["type"] == "insertion"]
+        df_insertion_barcode_count = df_insertion.pivot(
+            index="barcode", columns="gene", values="UMI_count")
+        df_insertion_barcode_count.to_csv(
+            out_insertion_barcode_count_file, sep="\t")
 
-    df_tsne_mut = pd.merge(df_tsne, df_insertion_barcode_count,
-                           right_index=True, left_index=True, how="left")
-    df_tsne_mut.fillna(0, inplace=True)
-    df_tsne_mut.to_csv(out_tsne_file, sep="\t")
+        df_tsne_mut = pd.merge(df_tsne, df_insertion_barcode_count,
+                            right_index=True, left_index=True, how="left")
+        df_tsne_mut.fillna(0, inplace=True)
+        df_tsne_mut.to_csv(out_tsne_file, sep="\t")
 
-    # plot
-    app = parentDir + "/plot.R"
-    cmd = f"Rscript {app} --tsne_mut {out_tsne_file} --outdir {outdir}"
-    count_mut.logger.info(cmd)
-    os.system(cmd)
-    count_mut.logger.info("plot done.")
+        # plot
+        app = parentDir + "/plot.R"
+        cmd = f"Rscript {app} --tsne_mut {out_tsne_file} --outdir {outdir}"
+        count_mut.logger.info(cmd)
+        os.system(cmd)
+        count_mut.logger.info("plot done.")
 
 
 def get_opts_count_mut(parser, sub_program):
@@ -173,6 +160,7 @@ def get_opts_count_mut(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument("--bam", required=True)
+        parser.add_argument('--assay', help='assay', required=True)
     parser.add_argument("--mut_file", help="mutation file", required=True)
     parser.add_argument(
         "--match_dir", help="match scRNA-Seq dir", required=True)

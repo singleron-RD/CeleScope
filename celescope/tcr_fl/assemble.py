@@ -12,7 +12,7 @@ CONF_PATH = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/tcr_fl/20201103/tra
 CONDA = 'vdjpuzzle1'
 CONDA_SUB = 'celescope_tracer'
 
-
+@log
 def tracer_summarise(outdir):
     tracer_outdir = f'{outdir}/tracer'
     cmd = (
@@ -21,6 +21,7 @@ def tracer_summarise(outdir):
         f'-c {CONF_PATH} '
         f'{tracer_outdir} '
     )
+    tracer_summarise.logger.info(cmd)
     os.system(cmd)
 
 

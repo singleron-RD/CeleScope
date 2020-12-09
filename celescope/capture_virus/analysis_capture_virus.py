@@ -1,6 +1,3 @@
-#!/bin/env python
-# coding=utf8
-
 import os
 import sys
 import json
@@ -13,72 +10,47 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
 from celescope.tools.utils import glob_genomeDir, log
+from celescope.tools.Analysis import Analysis
 import celescope.tools
 
 toolsdir = os.path.dirname(celescope.tools.__file__)
 
+class Analysis_capture_virus(Analysis):
 
-def report_prepare(outdir, tsne_df, marker_df, virus_df):
-    json_file = outdir + '/../.data.json'
-    if not os.path.exists(json_file):
-        data = {}
-    else:
-        fh = open(json_file)
-        data = json.load(fh)
-        fh.close()
+    def get_virus_tsne(self):
+        df = pd.merge(self.tsne_df, self.virus_df, on="barcode", how="left")
+        self.df_file = f'{self.outdir}/{self.sample}_tsne.tsv'
+        df.to_csv(self.df_file, sep='\t')
+        df["UMI"] = df["UMI"].fillna(0)
+        tSNE_1 = list(df.tSNE_1)
+        tSNE_2 = list(df.tSNE_2)
+        virus_UMI = list(df.UMI)
+        res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "virus_UMI": virus_UMI}
+        return res
 
-    data["cluster_tsne"] = cluster_tsne_list(tsne_df)
-    data["virus_tsne"] = virus_tsne_list(tsne_df, virus_df)
-    data["marker_gene_table"] = marker_table(marker_df)
+    def get_virus_df(self):
+        self.virus_df = pd.read_csv(self.virus_file, sep="\t")
 
-    with open(json_file, 'w') as fh:
-        json.dump(data, fh)
+    def report(self):
+        t = reporter(
+            name=self.step,
+            assay=self.assay,
+            sample=self.sample,
+            outdir=self.outdir + '/..',
+        )
+        t.get_report()
 
-
-def cluster_tsne_list(tsne_df):
-    """
-    tSNE_1	tSNE_2	cluster Gene_Counts
-    return data list
-    """
-    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
-    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-    res = []
-    for cluster in sorted(tsne_df.cluster.unique()):
-        sub_df = tsne_df[tsne_df.cluster == cluster]
-        name = "cluster {cluster}({percent}%)".format(
-            cluster=cluster, percent=percent_df[cluster])
-        tSNE_1 = list(sub_df.tSNE_1)
-        tSNE_2 = list(sub_df.tSNE_2)
-        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
-    return res
-
-
-def virus_tsne_list(tsne_df, virus_df):
-    """
-    return data dic
-    """
-    tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-    df = pd.merge(tsne_df, virus_df, on="barcode", how="left")
-    df["UMI"] = df["UMI"].fillna(0)
-    tSNE_1 = list(df.tSNE_1)
-    tSNE_2 = list(df.tSNE_2)
-    virus_UMI = list(df.UMI)
-    res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "virus_UMI": virus_UMI}
-    return res
-
-
-def marker_table(marker_df):
-    """
-    return html code
-    """
-    marker_df = marker_df.loc[:, ["cluster", "gene",
-                                  "avg_logFC", "pct.1", "pct.2", "p_val_adj"]]
-    marker_gene_table = marker_df.to_html(
-        escape=False,
-        index=False,
-        table_id="marker_gene_table",
-        justify="center")
-    return marker_gene_table
+    def run(self):
+        cluster_tsne = self.get_cluster_tsne(colname='cluster')
+        self.get_virus_df()
+        virus_tsne = self.get_virus_tsne()
+        table_dict = self.get_marker_gene_table()
+        self.report_prepare(
+            cluster_tsne=cluster_tsne,
+            virus_tsne=virus_tsne,
+            table_dict=table_dict,
+        )
+        self.report()
 
 
 @log
@@ -89,25 +61,20 @@ def analysis_capture_virus(args):
     sample = args.sample
     virus_file = args.virus_file
     match_dir = args.match_dir
+    assay = args.assay
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
 
-    # report
-    tsne_df_file = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
-    marker_df_file = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
-    tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-    marker_df = pd.read_csv(marker_df_file, sep="\t")
-    virus_df = pd.read_csv(virus_file, sep="\t")
-
-    report_prepare(outdir, tsne_df, marker_df, virus_df)
-
-    t = reporter(
-        name='analysis_capture_virus',
-        assay=args.assay,
-        sample=args.sample,
-        outdir=args.outdir + '/..')
-    t.get_report()
+    ana = Analysis_capture_virus(     
+        sample,
+        outdir,
+        assay,
+        match_dir=match_dir,
+        step='analysis_capture_virus',     
+    )
+    ana.virus_file = virus_file
+    ana.run()
 
 
 def get_opts_analysis_capture_virus(parser, sub_program):

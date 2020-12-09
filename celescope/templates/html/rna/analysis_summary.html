@@ -1,10 +1,25 @@
+<script> {% include "./js/jquery.dataTables.min.js" %} </script>
+<script> {% include "./js/dataTables.jqueryui.min.js" %} </script>
 
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/1.10.21/js/dataTables.jqueryui.min.js"></script>
+<script> {% include "./js/jszip.min.js" %} </script>
+<script> {% include "./js/dataTables.buttons.min.js" %} </script>
+<script> {% include "./js/buttons.flash.min.js" %} </script>
+<script> {% include "./js/buttons.html5.min.js" %} </script>
+<script> {% include "./js/buttons.print.min.js" %} </script>
 
-<link rel="stylesheet" type="text/css" href="code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> 
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/dataTables.jqueryui.min.css"> 
+<style> {% include "./css/jquery-ui.css" %}</style>
+<style> {% include "./css/dataTables.jqueryui.min.css" %}</style>
+<style> {% include "./css/buttons.dataTables.min.css" %}</style>
+
 <script>
+    $(document).ready(function () {
+        var table = $('#marker_gene_table').DataTable({
+            dom: 'Bfrtip',
+            buttons: ['excel']
+        });
+        table.columns(-1).order('desc').draw();
+    });
+
     $(document).ready(function () {
             var table = $('#marker_gene_table').DataTable();
             var indexOfMyCol = 0 ;
@@ -138,9 +153,9 @@
 
       <hr />
 
-        <h3>Top Marker Genes by Cluster</h3>
+        <h3>{{table_dict['title']}}</h3>
         <div style=" margin-left: 3%; margin-right:3%;">
-            {{marker_gene_table | safe}}
+            {{table_dict['table'] | safe}}
         </div>
         
 

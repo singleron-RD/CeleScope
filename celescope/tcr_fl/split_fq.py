@@ -36,8 +36,9 @@ def split_run(fq, fq_outdir, barcodes=None, nCell=None):
         os.makedirs(fq_outdir)
     if nCell and nCell != 'None':
         barcodes = get_nCell_barcodes(fq, nCell)
-        bi = Barcode_index(barcodes)
+    bi = Barcode_index(barcodes)
     file_dict = {}
+    entry_dict = defaultdict(list)
     with pysam.FastxFile(fq) as fh:
         for entry in fh:
             attr = entry.name.split('_')
@@ -45,11 +46,13 @@ def split_run(fq, fq_outdir, barcodes=None, nCell=None):
             umi = attr[1]
             if barcode in barcodes:
                 cell_index = bi.index_dict[barcode]
-                if not cell_index in file_dict:
-                    file_dict[cell_index] = open(f'{fq_outdir}/{cell_index}.fq', 'w')
-                file_dict[cell_index].write(str(entry) + '\n')
-    for cell_index in file_dict:
-        file_dict[cell_index].close()
+                entry_dict[cell_index].append(entry)
+                
+    # write to file
+    for cell_index in entry_dict:
+        with open(f'{fq_outdir}/{cell_index}.fq', 'w') as f:
+            for entry in entry_dict[cell_index]:
+                f.write(str(entry) + '\n')
     return bi
 
 
