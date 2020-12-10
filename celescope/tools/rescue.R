@@ -16,20 +16,28 @@ sample = argv$sample
 matrix_dir = argv$matrix_dir
 threshold = as.numeric(argv$threshold)
 
-getwd()
-print(matrix_dir)
 mtx = Seurat::Read10X(matrix_dir)
-bcrank = barcodeRanks(mtx)
+bcrank = barcodeRanks(mtx, lower=threshold/10)
 uniq <- !duplicated(bcrank$rank)
-res$FDR[is.na(res$FDR)] = 1
-res.valid = res[res$FDR >0 & res$FDR<0.01,]
-res.valid.ncell = dim(res.valid)[1]
-print(paste('rescued cell number: ',res.valid.ncell))
+inflection = as.numeric(bcrank$inflection)
+knee = as.numeric(bcrank$knee)
 
-res.out = stringr::str_glue('{outdir}/{sample}_rescue.tsv')
-write.table(res, res.out, sep='\t')
-res.valid.out = stringr::str_glue('{outdir}/{sample}_rescue_valid.tsv')
-write.table(res.valid, res.valid.out, sep='\t')
+origin.cell = sum(bcrank$total >= threshold)
+inflection.cell = sum(bcrank$total >= inflection)
+rescued.cell = inflection.cell - origin.cell
+if (rescued.cell < 0){
+    rescued.cell = 0
+}
+print(paste('rescued cell number:',rescued.cell))
+
+df = tibble(
+    inflection=as.character(inflection),
+    knee=as.character(knee),
+    rescued_cell=as.character(rescued.cell)
+)
+df.out = stringr::str_glue('{outdir}/{sample}_rescue.tsv')
+write_tsv(df, df.out)
+
 
 
 

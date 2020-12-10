@@ -218,15 +218,15 @@ def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_ba
     
     df_UMI = df.groupby(['geneID','Barcode']).agg({'UMI':'count'})
     mtx= coo_matrix((df_UMI.UMI, (df_UMI.index.labels[0], df_UMI.index.labels[1])))
-    id = df_UMI.index.levels[0]
+    id = df_UMI.index.levels[0].to_series()
     # add gene symbol
     name = id.apply(lambda x: id_name[x])
     genes = pd.concat([id, name], axis=1)
     genes.columns = ['gene_id', 'gene_name']
 
-    barcodes = df_UMI.index.levels[1]
-    genes.to_csv(f'{matrix_10X_dir}/genes.tsv', index=False, sep='\t')
-    barcodes.to_series().to_csv(f'{matrix_10X_dir}/barcodes.tsv', index=False, sep='\t')
+    barcodes = df_UMI.index.levels[1].to_series()
+    genes.to_csv(f'{matrix_10X_dir}/genes.tsv', index=False, sep='\t', header=False)
+    barcodes.to_csv(f'{matrix_10X_dir}/barcodes.tsv', index=False, sep='\t')
     mmwrite(f'{matrix_10X_dir}/matrix', mtx)
 
 
@@ -346,6 +346,12 @@ def rescue_cells(outdir, sample, matrix_dir, threshold):
     )
     rescue_cells.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
+    out_file = f'{outdir}/{sample}_rescue.tsv'
+    df = pd.read_csv(out_file, sep='\t')
+    inflection = int(df.loc[:,'inflection'])
+    if inflection > threshold:
+        return threshold
+    return inflection
 
 
 @log
@@ -369,7 +375,7 @@ def count(args):
     df = pd.read_table(count_detail_file, header=0)
 
     # export all matrix
-    dir_name = 'all_matrix_10X'
+    dir_name = 'all_matrix'
     matrix_10X(df, outdir, sample, gtf_file, dir_name=dir_name)
 
     # call cells
@@ -381,8 +387,7 @@ def count(args):
     # rescue low UMI cells
     if rescue:
         matrix_dir = f"{outdir}/{sample}_{dir_name}/"
-        background_threshold = threshold - 1
-        rescue_cells(outdir, sample, matrix_dir, background_threshold)
+        threshold = rescue_cells(outdir, sample, matrix_dir, threshold)
 
     # export cell matrix
     matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=validated_barcodes)
