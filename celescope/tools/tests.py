@@ -4,7 +4,7 @@ import pandas as pd
 from celescope.tools.STAR import Step_mapping
 from celescope.tools.utils import read_barcode_file, gene_convert, get_fq
 from .Chemistry import Chemistry
-import subprocess
+from celescope.tools.count import matrix_10X, call_cells, rescue_cells
 
 class Tests(unittest.TestCase):
     def setUp(self):
@@ -95,6 +95,39 @@ class Tests(unittest.TestCase):
         fq1, fq2 = get_fq(library_id, library_path)
         print(fq1, fq2)
 
+    @unittest.skip('pass')
+    def test_matrix_10X(self):
+        match_dir = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/test2/'
+        validated_barcodes, _ncell = read_barcode_file(match_dir)    
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/')
+        df = pd.read_csv('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/test2/05.count/test2_count_detail.txt.gz',sep='\t')
+        outdir = 'test2/05.count'
+        sample = 'test2'
+        gtf_file = '/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92/Homo_sapiens.GRCh38.92.chr.gtf'
+        matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X_new', validated_barcodes=validated_barcodes)
+
+    @unittest.skip('pass')
+    def test_call_cells(self):
+        df = pd.read_csv('/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz',sep='\t')
+        os.chdir = '/SGRNJ02/RandD4/RD2019016/20201209/'
+        sample = 'J-Demo_Y1'
+        outdir = f'{sample}/05.count'
+        cells = 'auto'
+        pdf =  outdir + '/barcode_filter_magnitude.pdf'
+        marked_counts_file = outdir + '/' + sample + '_counts.txt'
+        (validated_barcodes, threshold, cell_num, CB_describe) = call_cells(
+            df, cells, pdf, marked_counts_file)
+        print(threshold)
+
+    def test_rescue(self):
+        dir_name = 'all_matrix_10X'
+        os.chdir('/SGRNJ02/RandD4/RD2019016/20201209/')
+        sample = 'J-Demo_Y1'
+        outdir = f'{sample}/05.count'
+        threshold = 279
+        matrix_dir = f"{outdir}/{sample}_{dir_name}/"
+        background_threshold = threshold - 1
+        rescue_cells(outdir, sample, matrix_dir, background_threshold)
 
 if __name__ == '__main__':
     unittest.main()
