@@ -10,11 +10,15 @@ from collections import defaultdict
 from itertools import groupby
 import numpy as np
 import pandas as pd
+import subprocess
 from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, coo_matrix
 import pysam
 from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
 from celescope.tools.report import reporter
+
+
+toolsdir = os.path.dirname(__file__)
 
 
 def report_prepare(count_file, downsample_file, outdir):
@@ -50,7 +54,7 @@ def report_prepare(count_file, downsample_file, outdir):
 
 @log
 def barcode_filter_with_magnitude(
-        df, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1):
+        df, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1, rescue=False):
     # col can be readcount or UMI
     # determine validated barcodes
 
@@ -88,7 +92,7 @@ def barcode_filter_with_magnitude(
             np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
         barcode_filter_with_magnitude.logger.info(
             "UMI threshold: " + str(threshold))
-    validated_barcodes = df[df[col] >= threshold].index
+    validated_barcodes = list(df[df[col] >= threshold].index)
 
     import matplotlib
     matplotlib.use('Agg')
@@ -163,6 +167,7 @@ def bam2table(bam, detail_file):
                                                     res_dict[geneID][umi]))
 
 
+@log
 def call_cells(df, expected_num, pdf, marked_counts_file):
     def num_gt2(x):
         return pd.Series.sum(x[x > 1])
@@ -202,47 +207,54 @@ def write_matrix_10X(table, id_name, matrix_10X_dir):
 
 
 @log
-def expression_matrix(
-        df, validated_barcodes,
-        outdir, sample, gtf_file):
-
-    matrix_10X_dir = f"{outdir}/{sample}_matrix_10X/"
-    all_matrix_10X_dir = f"{outdir}/{sample}_all_matrix_10X/"
-    if not os.path.exists(all_matrix_10X_dir):
-        os.mkdir(all_matrix_10X_dir)
-    matrix_table_file = f"{outdir}/{sample}_matrix.tsv.gz"
+def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=None):
+    matrix_10X_dir = f"{outdir}/{sample}_{dir_name}/"
     if not os.path.exists(matrix_10X_dir):
         os.mkdir(matrix_10X_dir)
+    id_name = gene_convert(gtf_file)
+
+    if validated_barcodes:
+        df = df.loc[df['Barcode'].isin(validated_barcodes), :]
+    
+    df_UMI = df.groupby(['geneID','Barcode']).agg({'UMI':'count'})
+    mtx= coo_matrix((df_UMI.UMI, (df_UMI.index.labels[0], df_UMI.index.labels[1])))
+    id = df_UMI.index.levels[0]
+    # add gene symbol
+    name = id.apply(lambda x: id_name[x])
+    genes = pd.concat([id, name], axis=1)
+    genes.columns = ['gene_id', 'gene_name']
+
+    barcodes = df_UMI.index.levels[1]
+    genes.to_csv(f'{matrix_10X_dir}/genes.tsv', index=False, sep='\t')
+    barcodes.to_series().to_csv(f'{matrix_10X_dir}/barcodes.tsv', index=False, sep='\t')
+    mmwrite(f'{matrix_10X_dir}/matrix', mtx)
+
+
+@log
+def expression_matrix(df, validated_barcodes, outdir, sample, gtf_file):
+
+    id_name = gene_convert(gtf_file)
 
     df.loc[:, 'mark'] = 'UB'
     df.loc[df['Barcode'].isin(validated_barcodes), 'mark'] = 'CB'
-
     CB_total_Genes = df.loc[df['mark'] == 'CB', 'geneID'].nunique()
     CB_reads_count = df.loc[df['mark'] == 'CB', 'count'].sum()
     reads_mapped_to_transcriptome = df['count'].sum()
 
-    id_name = gene_convert(gtf_file)
-
-    # write all
-    table_all = df.pivot_table(
-        index='geneID', columns='Barcode', values='UMI',
-        aggfunc=len).fillna(0).astype(int)
-    write_matrix_10X(table_all, id_name, all_matrix_10X_dir)    
-
-    # write CB
     table = df.loc[df['mark'] == 'CB', :].pivot_table(
         index='geneID', columns='Barcode', values='UMI',
         aggfunc=len).fillna(0).astype(int)
-    id, name = write_matrix_10X(table, id_name, matrix_10X_dir)
 
     # convert id to name; write table matrix
+    matrix_table_file = f"{outdir}/{sample}_matrix.tsv.gz"
+    id = table.index.to_series()
+    name = id.apply(lambda x: id_name[x])
     table.index = name
     table.index.name = ""
     table.to_csv(
         matrix_table_file,
         sep="\t",
         compression='gzip')
-
     return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome)
 
 
@@ -322,12 +334,29 @@ def downsample(detail_file, validated_barcodes, downsample_file):
             saturation = s
     return saturation
 
+@log
+def rescue_cells(outdir, sample, matrix_dir, threshold):
+    app = f'{toolsdir}/rescue.R'
+    cmd = (
+        f'Rscript {app} '
+        f'--matrix_dir {matrix_dir} '
+        f'--outdir {outdir} '
+        f'--sample {sample} '
+        f'--threshold {threshold}'
+    )
+    rescue_cells.logger.info(cmd)
+    subprocess.check_call(cmd, shell=True)
+
 
 @log
 def count(args):
+    # args
+    outdir = args.outdir
+    sample = args.sample
+    rescue = args.rescue
 
     # check
-    refFlat, gtf = glob_genomeDir(args.genomeDir)
+    refFlat, gtf_file = glob_genomeDir(args.genomeDir)
 
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
@@ -339,16 +368,27 @@ def count(args):
 
     df = pd.read_table(count_detail_file, header=0)
 
+    # export all matrix
+    dir_name = 'all_matrix_10X'
+    matrix_10X(df, outdir, sample, gtf_file, dir_name=dir_name)
+
     # call cells
     pdf = args.outdir + '/barcode_filter_magnitude.pdf'
     marked_counts_file = args.outdir + '/' + args.sample + '_counts.txt'
     (validated_barcodes, threshold, cell_num, CB_describe) = call_cells(
         df, args.cells, pdf, marked_counts_file)
 
-    # 输出matrix
+    # rescue low UMI cells
+    if rescue:
+        matrix_dir = f"{outdir}/{sample}_{dir_name}/"
+        background_threshold = threshold - 1
+        rescue_cells(outdir, sample, matrix_dir, background_threshold)
+
+    # export cell matrix
+    matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=validated_barcodes)
     (CB_total_Genes, CB_reads_count,
         reads_mapped_to_transcriptome) = expression_matrix(
-            df, validated_barcodes, args.outdir, args.sample, gtf)
+            df, validated_barcodes, outdir, sample, gtf_file)
 
     # downsampling
     validated_barcodes = set(validated_barcodes)
@@ -387,3 +427,4 @@ def get_opts_count(parser, sub_program):
         '--cells',
         help='expected number of cells',
         default="auto")
+    parser.add_argument('--rescue', help='rescue low UMI cells', action='store_true')

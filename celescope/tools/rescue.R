@@ -16,14 +16,20 @@ sample = argv$sample
 matrix_dir = argv$matrix_dir
 threshold = as.numeric(argv$threshold)
 
+getwd()
+print(matrix_dir)
 mtx = Seurat::Read10X(matrix_dir)
-res = emptyDrops(mtx, lower=threshold, niters=1000, test.ambient=TRUE, retain=threshold)
+bcrank = barcodeRanks(mtx)
+uniq <- !duplicated(bcrank$rank)
 res$FDR[is.na(res$FDR)] = 1
-res = res[res$FDR >0 & res$FDR<0.01,]
-res.ncell = dim(res)[1]
-print(paste('rescued cell number: ',res.ncell))
+res.valid = res[res$FDR >0 & res$FDR<0.01,]
+res.valid.ncell = dim(res.valid)[1]
+print(paste('rescued cell number: ',res.valid.ncell))
+
 res.out = stringr::str_glue('{outdir}/{sample}_rescue.tsv')
-write.table(res, res.out)
+write.table(res, res.out, sep='\t')
+res.valid.out = stringr::str_glue('{outdir}/{sample}_rescue_valid.tsv')
+write.table(res.valid, res.valid.out, sep='\t')
 
 
 
