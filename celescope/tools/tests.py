@@ -4,7 +4,7 @@ import pandas as pd
 from celescope.tools.STAR import Step_mapping
 from celescope.tools.utils import read_barcode_file, gene_convert, get_fq
 from .Chemistry import Chemistry
-from celescope.tools.count import matrix_10X, call_cells, rescue_cells
+from celescope.tools.count import matrix_10X, call_cells, rescue_cells, get_validated_barcodes
 
 class Tests(unittest.TestCase):
     def setUp(self):
@@ -36,7 +36,7 @@ class Tests(unittest.TestCase):
         mapping.format_stat()
         mapping.report()
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_chemistry(self):
         fq1s = [
             '/SGRNJ/DATA_PROJ/2004/20201102_9/MG_201026_1-R2010283_L3_1.fq.gz',
@@ -120,14 +120,16 @@ class Tests(unittest.TestCase):
         print(threshold)
 
     def test_rescue(self):
-        dir_name = 'all_matrix_10X'
+        dir_name = 'all_matrix'
         os.chdir('/SGRNJ02/RandD4/RD2019016/20201209/')
         sample = 'J-Demo_Y1'
         outdir = f'{sample}/05.count'
         threshold = 279
         matrix_dir = f"{outdir}/{sample}_{dir_name}/"
-        background_threshold = threshold - 1
-        rescue_cells(outdir, sample, matrix_dir, background_threshold)
+        threshold = rescue_cells(outdir, sample, matrix_dir, threshold)
+        df = pd.read_csv('/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz',sep='\t')
+        df_UMI = df.groupby(['geneID','Barcode']).agg({'UMI':'count'})
+        validated_barcodes = get_validated_barcodes(df_UMI, threshold, col='UMI')
 
 if __name__ == '__main__':
     unittest.main()

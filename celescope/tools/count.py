@@ -57,19 +57,19 @@ def get_validated_barcodes(df, threshold, col='UMI'):
 
 @log
 def barcode_filter_with_magnitude(
-        df, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1, rescue=False):
+        df_UMI, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1, rescue=False):
     # col can be readcount or UMI
     # determine validated barcodes
 
-    df = df.sort_values(col, ascending=False)
+    df_UMI = df_UMI.sort_values(col, ascending=False)
     if expected_cell_num == "auto":
         idx = int(3000 * 0.01)
-        barcode_number = df.shape[0]
+        barcode_number = df_UMI.shape[0]
         idx = int(min(barcode_number, idx))
         if idx == 0:
             sys.exit("cell number equals zero!")
         # calculate read counts threshold
-        threshold = int(df.iloc[idx - 1, df.columns == col] * 0.1)
+        threshold = int(df_UMI.iloc[idx - 1, df_UMI.columns == col] * 0.1)
         threshold = max(1, threshold)
     else:
         expected_cell_num = int(expected_cell_num)
@@ -77,7 +77,7 @@ def barcode_filter_with_magnitude(
         cell_low = expected_cell_num - cell_range
         cell_high = expected_cell_num + cell_range
 
-        df_barcode_count = df.groupby(
+        df_barcode_count = df_UMI.groupby(
             ['UMI']).size().reset_index(
             name='barcode_counts')
         sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
@@ -95,13 +95,13 @@ def barcode_filter_with_magnitude(
             np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
         barcode_filter_with_magnitude.logger.info(
             "UMI threshold: " + str(threshold))
-    validated_barcodes = get_validated_barcodes(df, threshold, col='UMI')
+    validated_barcodes = get_validated_barcodes(df_UMI, threshold, col='UMI')
 
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     fig = plt.figure()
-    plt.plot(df[col])
+    plt.plot(df_UMI[col])
     plt.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
     plt.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
     plt.title('expected cell num: %s\n%s threshold: %s\ncell num: %s' %
@@ -391,7 +391,8 @@ def count(args):
     if rescue:
         matrix_dir = f"{outdir}/{sample}_{dir_name}/"
         threshold = rescue_cells(outdir, sample, matrix_dir, threshold)
-        validated_barcodes = get_validated_barcodes(df, threshold, col='UMI')
+        df_UMI = df.groupby(['geneID','Barcode']).agg({'UMI':'count'})
+        validated_barcodes = get_validated_barcodes(df_UMI, threshold, col='UMI')
 
     # export cell matrix
     matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=validated_barcodes)
