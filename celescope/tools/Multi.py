@@ -248,7 +248,7 @@ job_end
             f'{self.allowNoLinker_str} '
             f'{self.noLinker_str} '
             f'{self.nopolyT_str} '
-            f'{self.probe_file} '
+            f'--probe_file {self.probe_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
