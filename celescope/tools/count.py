@@ -52,6 +52,9 @@ def report_prepare(count_file, downsample_file, outdir):
         json.dump(data, fh)
 
 
+def get_validated_barcodes(df, threshold, col='UMI'):
+    return list(df[df[col] >= threshold].index)
+
 @log
 def barcode_filter_with_magnitude(
         df, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1, rescue=False):
@@ -92,7 +95,7 @@ def barcode_filter_with_magnitude(
             np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
         barcode_filter_with_magnitude.logger.info(
             "UMI threshold: " + str(threshold))
-    validated_barcodes = list(df[df[col] >= threshold].index)
+    validated_barcodes = get_validated_barcodes(df, threshold, col='UMI')
 
     import matplotlib
     matplotlib.use('Agg')
@@ -388,6 +391,7 @@ def count(args):
     if rescue:
         matrix_dir = f"{outdir}/{sample}_{dir_name}/"
         threshold = rescue_cells(outdir, sample, matrix_dir, threshold)
+        validated_barcodes = get_validated_barcodes(df, threshold, col='UMI')
 
     # export cell matrix
     matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=validated_barcodes)
