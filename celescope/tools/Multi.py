@@ -81,6 +81,9 @@ class Multi():
         self.linker = self.args.linker
         self.lowQual = self.args.lowQual
         self.lowNum = self.args.lowNum
+        self.nopolyT_str = Multi.arg_str(self.args.nopolyT, 'nopolyT')
+        self.noLinker_str = Multi.arg_str(self.args.noLinker, 'noLinker')
+        self.probe_file = self.args.probe_file
         self.allowNoPolyT_str = Multi.arg_str(self.args.allowNoPolyT, 'allowNoPolyT')
         self.allowNoLinker_str = Multi.arg_str(self.args.allowNoLinker, 'allowNoLinker')
 
@@ -243,6 +246,9 @@ job_end
             f'--lowNum {self.lowNum} '
             f'{self.allowNoPolyT_str} '
             f'{self.allowNoLinker_str} '
+            f'{self.noLinker_str} '
+            f'{self.nopolyT_str} '
+            f'{self.probe_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
