@@ -81,6 +81,9 @@ class Multi():
         self.linker = self.args.linker
         self.lowQual = self.args.lowQual
         self.lowNum = self.args.lowNum
+        self.nopolyT_str = Multi.arg_str(self.args.nopolyT, 'nopolyT')
+        self.noLinker_str = Multi.arg_str(self.args.noLinker, 'noLinker')
+        self.probe_file = self.args.probe_file
         self.allowNoPolyT_str = Multi.arg_str(self.args.allowNoPolyT, 'allowNoPolyT')
         self.allowNoLinker_str = Multi.arg_str(self.args.allowNoLinker, 'allowNoLinker')
 
@@ -95,12 +98,16 @@ class Multi():
         self.parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
         self.parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
 
+    def count_args(self):
+        self.parser.add_argument('--rescue', help='rescue low UMI cells', action='store_true')
+
     def analysis_args(self):
         self.parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
         self.parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
 
     def custome_args(self):
         self.STAR_args()
+        self.count_args()
         self.analysis_args()
 
     def parse_args(self):
@@ -139,6 +146,9 @@ class Multi():
         self.gtf_type = self.args.gtf_type
         self.out_unmapped = Multi.arg_str(self.args.out_unmapped, 'out_unmapped')
         self.outFilterMatchNmin = self.args.outFilterMatchNmin
+
+    def read_count_args(self):
+        self.rescue_str = Multi.arg_str(self.args.rescue, 'rescue')
     
     def read_analysis_args(self):
         self.save_rds = self.args.save_rds
@@ -147,6 +157,7 @@ class Multi():
 
     def read_custome_args(self):
         self.read_STAR_args()
+        self.read_count_args()
         self.read_analysis_args()
 
     def prepare(self):
@@ -235,6 +246,9 @@ job_end
             f'--lowNum {self.lowNum} '
             f'{self.allowNoPolyT_str} '
             f'{self.allowNoLinker_str} '
+            f'{self.noLinker_str} '
+            f'{self.nopolyT_str} '
+            f'--probe_file {self.probe_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
@@ -305,6 +319,7 @@ job_end
             f'--bam {bam} '
             f'--cells {self.col4_dict[sample]} '
             f'--genomeDir {self.genomeDir} '
+            f'{self.rescue_str} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
 
