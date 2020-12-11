@@ -52,65 +52,6 @@ def report_prepare(count_file, downsample_file, outdir):
         json.dump(data, fh)
 
 
-def get_validated_barcodes(df, threshold, col='UMI'):
-    return list(df[df[col] >= threshold].index)
-
-@log
-def barcode_filter_with_magnitude(
-        df_UMI, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1, rescue=False):
-    # col can be readcount or UMI
-    # determine validated barcodes
-
-    df_UMI = df_UMI.sort_values(col, ascending=False)
-    if expected_cell_num == "auto":
-        idx = int(3000 * 0.01)
-        barcode_number = df_UMI.shape[0]
-        idx = int(min(barcode_number, idx))
-        if idx == 0:
-            sys.exit("cell number equals zero!")
-        # calculate read counts threshold
-        threshold = int(df_UMI.iloc[idx - 1, df_UMI.columns == col] * 0.1)
-        threshold = max(1, threshold)
-    else:
-        expected_cell_num = int(expected_cell_num)
-        cell_range = int(expected_cell_num * 0.1)
-        cell_low = expected_cell_num - cell_range
-        cell_high = expected_cell_num + cell_range
-
-        df_barcode_count = df_UMI.groupby(
-            ['UMI']).size().reset_index(
-            name='barcode_counts')
-        sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
-        sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_low:
-                index_low = i - 1
-                break
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_high:
-                index_high = i
-                break
-        df_sub = sorted_df.iloc[index_low:index_high + 1, :]
-        threshold = df_sub.iloc[np.argmax(
-            np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
-        barcode_filter_with_magnitude.logger.info(
-            "UMI threshold: " + str(threshold))
-    validated_barcodes = get_validated_barcodes(df_UMI, threshold, col='UMI')
-
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    plt.plot(df_UMI[col])
-    plt.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
-    plt.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
-    plt.title('expected cell num: %s\n%s threshold: %s\ncell num: %s' %
-              (expected_cell_num, col, threshold, len(validated_barcodes)))
-    plt.loglog()
-    plt.savefig(plot)
-
-    return (validated_barcodes, threshold, len(validated_barcodes))
-
 
 def hd(x, y):
     return len([i for i in range(len(x)) if x[i] != y[i]])
@@ -171,7 +112,7 @@ def bam2table(bam, detail_file):
 
 
 @log
-def call_cells(df, expected_num, pdf, marked_counts_file):
+def call_cells(df, expected_num, pdf):
     def num_gt2(x):
         return pd.Series.sum(x[x > 1])
 
@@ -183,15 +124,79 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
     df_sum.columns = ['readcount', 'UMI2', 'UMI', 'geneID']
     (validated_barcodes, threshold, cell_num) = barcode_filter_with_magnitude(
         df_sum, col='UMI', plot=pdf, expected_cell_num=expected_num)
+    #Saturation = (1 - tmp.loc[tmp['UMI'] == 1, :].shape[0] / total)*100
+    #Saturation = (df_sum['UMI2'].sum() + 0.0) / df_sum['UMI'].sum() * 100
+
+    return df_sum, threshold
+
+def get_validated_barcodes(df_sum, threshold, col='UMI'):
+    return list(df_sum[df_sum[col] >= threshold].index)
+
+@log
+def barcode_filter_with_magnitude(
+        df_sum, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1, rescue=False):
+    # col can be readcount or UMI
+    # determine validated barcodes
+
+    df_sum = df_sum.sort_values(col, ascending=False)
+    if expected_cell_num == "auto":
+        idx = int(3000 * 0.01)
+        barcode_number = df_sum.shape[0]
+        idx = int(min(barcode_number, idx))
+        if idx == 0:
+            sys.exit("cell number equals zero!")
+        # calculate read counts threshold
+        threshold = int(df_sum.iloc[idx - 1, df_sum.columns == col] * 0.1)
+        threshold = max(1, threshold)
+    else:
+        expected_cell_num = int(expected_cell_num)
+        cell_range = int(expected_cell_num * 0.1)
+        cell_low = expected_cell_num - cell_range
+        cell_high = expected_cell_num + cell_range
+
+        df_barcode_count = df_sum.groupby(
+            ['UMI']).size().reset_index(
+            name='barcode_counts')
+        sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
+        sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
+        for i in range(sorted_df.shape[0]):
+            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_low:
+                index_low = i - 1
+                break
+        for i in range(sorted_df.shape[0]):
+            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_high:
+                index_high = i
+                break
+        df_sub = sorted_df.iloc[index_low:index_high + 1, :]
+        threshold = df_sub.iloc[np.argmax(
+            np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
+        barcode_filter_with_magnitude.logger.info(
+            "UMI threshold: " + str(threshold))
+    validated_barcodes = get_validated_barcodes(df_sum, threshold, col='UMI')
+
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    plt.plot(df_sum[col])
+    plt.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
+    plt.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
+    plt.title('expected cell num: %s\n%s threshold: %s\ncell num: %s' %
+              (expected_cell_num, col, threshold, len(validated_barcodes)))
+    plt.loglog()
+    plt.savefig(plot)
+
+    return (validated_barcodes, threshold, len(validated_barcodes))
+
+
+def get_cell_stats(df_sum, threshold, marked_counts_file):
+    validated_barcodes = get_validated_barcodes(df_sum, threshold)
     df_sum.loc[:, 'mark'] = 'UB'
     df_sum.loc[df_sum.index.isin(validated_barcodes), 'mark'] = 'CB'
     df_sum.to_csv(marked_counts_file, sep='\t')
     CB_describe = df_sum.loc[df_sum['mark'] == 'CB', :].describe()
-    #Saturation = (1 - tmp.loc[tmp['UMI'] == 1, :].shape[0] / total)*100
-    #Saturation = (df_sum['UMI2'].sum() + 0.0) / df_sum['UMI'].sum() * 100
-    del df_sum
 
-    return validated_barcodes, threshold, cell_num, CB_describe
+    return validated_barcodes, CB_describe
 
 
 def write_matrix_10X(table, id_name, matrix_10X_dir):
@@ -362,17 +367,19 @@ def count(args):
     # args
     outdir = args.outdir
     sample = args.sample
+    assay = args.assay
+    cells = args.cells
     rescue = args.rescue
 
     # check
     refFlat, gtf_file = glob_genomeDir(args.genomeDir)
 
     # 检查和创建输出目录
-    if not os.path.exists(args.outdir):
-        os.system('mkdir -p %s' % (args.outdir))
+    if not os.path.exists(outdir):
+        os.system('mkdir -p %s' % (outdir))
 
     # umi纠错，输出Barcode geneID  UMI     count为表头的表格
-    count_detail_file = args.outdir + '/' + args.sample + '_count_detail.txt.gz'
+    count_detail_file = outdir + '/' + sample + '_count_detail.txt.gz'
     bam2table(args.bam, count_detail_file)
 
     df = pd.read_table(count_detail_file, header=0)
@@ -382,17 +389,17 @@ def count(args):
     matrix_10X(df, outdir, sample, gtf_file, dir_name=dir_name)
 
     # call cells
-    pdf = args.outdir + '/barcode_filter_magnitude.pdf'
-    marked_counts_file = args.outdir + '/' + args.sample + '_counts.txt'
-    (validated_barcodes, threshold, cell_num, CB_describe) = call_cells(
-        df, args.cells, pdf, marked_counts_file)
+    pdf = outdir + '/barcode_filter_magnitude.pdf'
+    df_sum, threshold = call_cells(df, cells, pdf)
 
     # rescue low UMI cells
     if rescue:
         matrix_dir = f"{outdir}/{sample}_{dir_name}/"
         threshold = rescue_cells(outdir, sample, matrix_dir, threshold)
-        df_UMI = df.groupby(['geneID','Barcode']).agg({'UMI':'count'})
-        validated_barcodes = get_validated_barcodes(df_UMI, threshold, col='UMI')
+    
+    # get cell stats
+    marked_counts_file = outdir + '/' + sample + '_counts.txt'
+    validated_barcodes, CB_describe = get_cell_stats(df_sum, threshold, marked_counts_file)
 
     # export cell matrix
     matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=validated_barcodes)
@@ -409,17 +416,17 @@ def count(args):
         downsample_file)
 
     # summary
-    stat_file = args.outdir + '/stat.txt'
-    get_summary(df, args.sample, Saturation, CB_describe, CB_total_Genes,
+    stat_file = outdir + '/stat.txt'
+    get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
                 CB_reads_count, reads_mapped_to_transcriptome, stat_file,
-                args.outdir + '/../')
+                outdir + '/../')
 
-    report_prepare(marked_counts_file, downsample_file, args.outdir + '/..')
+    report_prepare(marked_counts_file, downsample_file, outdir + '/..')
 
-    t = reporter(assay=args.assay,
+    t = reporter(assay=assay,
                  name='count', sample=args.sample,
-                 stat_file=args.outdir + '/stat.txt',
-                 outdir=args.outdir + '/..')
+                 stat_file=outdir + '/stat.txt',
+                 outdir=outdir + '/..')
     t.get_report()
 
 
