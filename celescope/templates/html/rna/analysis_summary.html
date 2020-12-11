@@ -17,7 +17,7 @@
             dom: 'Bfrtip',
             buttons: ['excel']
         });
-        table.columns(-1).order('desc').draw();
+        table.columns(0).order('asc').draw();
     });
 
     $(document).ready(function () {
@@ -31,9 +31,11 @@
             .appendTo( $(this).empty() )
             .on( 'change', function () {
                 var pattern = ""
-                if ($(this).val()!="") {(pattern="^"+$(this).val() +"$");}
+                if ($(this).val()!="") {
+                    pattern= pattern="^"+$(this).val() +"$"
+                }
                 table.column( i )
-                .search(input=pattern,  regex=true)
+                .search(input=pattern, regex=true, smart=false)
                 .draw();
             } );
  
