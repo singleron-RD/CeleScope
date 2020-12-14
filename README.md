@@ -22,7 +22,7 @@ channels:
   - defaults
   - imperial-college-research-computing
 ```
-3. running the following code
+3. run the following code
 ```
 cd CeleScope
 conda create -n celescope
