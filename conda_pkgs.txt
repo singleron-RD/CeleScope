@@ -7,6 +7,6 @@ subread=2.0.1
 samtools=1.9
 r-seurat=2.3.4
 r-argparse>=2.0.1
-r-tidyverse>=1.2.1
+r-tidyverse
 mixcr=3.0.3
-bioconductor-dropletutils>=1.10.0
+bioconductor-dropletutils
