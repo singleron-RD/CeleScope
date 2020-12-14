@@ -20,7 +20,7 @@ class reporter:
     def __init__(
         self, assay, name, outdir, sample,
         stat_file=None, plot=None, parameters=None,
-        table_file=None, table_header=None, html_flag=True
+        table_file=None, table_header=None, df=None, html_flag=True
     ):
         self.assay = assay
         self.name = name
@@ -31,6 +31,7 @@ class reporter:
         self.parameters = parameters
         self.table_file = table_file
         self.table_header = table_header
+        self.df = df
         self.html_flag = html_flag
 
     def get_report(self):
@@ -58,6 +59,10 @@ class reporter:
             df = pd.read_csv(self.table_file, sep="\t")
             df = df.fillna(value="")
             data[self.name + '_table'] = df.values.tolist()
+
+        if isinstance(self.df, pd.DataFrame):
+            df = self.df.fillna(value="")
+            data[self.name + '_table'] = df.values.tolist()        
 
         if self.table_header:
             data[self.name + '_table_header'] = self.table_header
