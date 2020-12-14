@@ -24,13 +24,14 @@ class Analysis():
         self.match_dir = match_dir
         self.step = step
 
-        match_dict = parse_match_dir(match_dir)
-        tsne_df_file = match_dict['tsne_coord']
-        marker_df_file = match_dict['markers']
-        self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-        self.marker_df = pd.read_csv(marker_df_file, sep="\t")
-        self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-        self.cluster_tsne = cluster_tsne_list(self.tsne_df)
+        if self.match_dir:
+            match_dict = parse_match_dir(match_dir)
+            tsne_df_file = match_dict['tsne_coord']
+            marker_df_file = match_dict['markers']
+            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
+            self.marker_df = pd.read_csv(marker_df_file, sep="\t")
+            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+            self.cluster_tsne = cluster_tsne_list(self.tsne_df)
 
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % outdir)
@@ -51,6 +52,7 @@ class Analysis():
             index=False,
             table_id=id,
             justify="center")
+        table_dict['id'] = id
         return table_dict
 
     def report(self, stat=True):

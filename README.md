@@ -11,10 +11,24 @@ GEXSCOPE Single Cell Analysis Tool Kit
 
 ## Installation
 
+
+1. `git clone https://github.com/zhouyiqi91/CeleScope.git`
+2. add channels to ~/.condarc
 ```
-git clone https://github.com/zhouyiqi91/CeleScope.git
+channels:
+  - conda-forge
+  - bioconda
+  - r
+  - defaults
+  - imperial-college-research-computing
+```
+3. running the following code
+```
 cd CeleScope
-source setup.sh
+conda create -n celescope
+conda activate celescope
+conda install --file conda_pkgs.txt
+python setup.py install
 ```
 
 ## Reference genome 

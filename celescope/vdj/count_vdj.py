@@ -2,6 +2,7 @@ import glob
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
 from celescope.tools.utils import format_number, log, read_barcode_file
+from celescope.tools.Analysis import Analysis
 import gzip
 import os
 import pandas as pd
@@ -45,6 +46,7 @@ def count_vdj(args):
     outdir = args.outdir
     UMI_count_filter1_file = args.UMI_count_filter1_file
     type = args.type
+    assay = args.assay
     debug = args.debug
     iUMI = int(args.iUMI)
     chains = CHAINS[type]
@@ -57,8 +59,6 @@ def count_vdj(args):
     cell_confident_count_file = f"{outdir}/{sample}_cell_confident_count.tsv"
     clonetypes_file = f"{outdir}/{sample}_clonetypes.tsv"
     match_clonetypes_file = f"{outdir}/{sample}_match_clonetypes.tsv"
-    top10_clonetypes_file = f"{outdir}/{sample}_top10_clonetypes.tsv"
-    match_top10_clonetypes_file = f"{outdir}/{sample}_match_top10_clonetypes.tsv"
 
     # read file
     df_UMI_count_filter1 = pd.read_csv(UMI_count_filter1_file, sep='\t')
@@ -358,39 +358,35 @@ def count_vdj(args):
     t.get_report()
 
     # cloneytpes table
-    def format_table(df_clonetypes, top10_clonetypes_file):
-        top10_clonetypes_df = df_clonetypes.head(10)
-        top10_clonetypes_df = top10_clonetypes_df.reset_index(drop=True)
-        top10_clonetypes_df.index = top10_clonetypes_df.index + 1
-        top10_clonetypes_df["percent"] = top10_clonetypes_df["percent"].apply(
+    def format_table(df_clonetypes):
+        df_table = df_clonetypes.copy()
+        df_table["percent"] = df_table["percent"].apply(
             lambda x: str(x) + "%")
         seqs = ["aaSeqCDR3"]
         cols = []
         for chain in chains:
             for seq in seqs:
                 cols.append("_".join([seq, chain]))
-        top10_cols = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
-        top10_clonetypes_df = top10_clonetypes_df[top10_cols]
-        top10_clonetypes_df.to_csv(top10_clonetypes_file, sep="\t", index=False)
+        df_table_cols = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
+        df_table = df_table[df_table_cols]
         table_header = ["Clonetype_ID"] + cols + ["Frequency", "Percent"]
-        return table_header
+        return df_table, table_header
 
-    table_header = format_table(df_clonetypes, top10_clonetypes_file)
-    use_top10_clonetypes_file = top10_clonetypes_file
-    section_header = 'Top10 clonetypes'
+    df_table, table_header = format_table(df_clonetypes)
+    title = 'Clonetypes'
     if match_bool:
-        format_table(df_match_clonetypes, match_top10_clonetypes_file)
-        use_top10_clonetypes_file = match_top10_clonetypes_file
-        section_header = 'Match Top10 clonetypes'
+        df_table, table_header = format_table(df_match_clonetypes)
+        title = 'Match Clonetypes'
+
+    ana = Analysis(sample, outdir ,assay, match_dir=None, step='count_vdj')
+    table_dict = Analysis.get_table(title, 'clonetypes_table', df_table)
+    ana.report_prepare(table_dict=table_dict)
     
     t = reporter(
         name="clonetypes",
         sample=args.sample,
-        table_file=use_top10_clonetypes_file,
-        table_header=table_header,
         outdir=outdir + '/..',
         assay=args.assay,
-        parameters={'section_header': section_header},
     )
     t.get_report()
 
