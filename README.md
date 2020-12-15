@@ -94,7 +94,6 @@ celescope rna run\
  --genomeDir /SGR/references/Homo_sapiens/Ensembl/GRCh38\
  --sample R2005212\
  --thread 4\
- --chemistry auto
 ```
 
 `--fq1` Required. gzipped FASTQ read 1 file path  
