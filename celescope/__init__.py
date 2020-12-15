@@ -1,5 +1,5 @@
 __VERSION__ = "1.1.6"
-__CONDA__ = "celescope_RD"
+__CONDA__ = "celescope"
 
 ASSAY_DICT = {
     "rna": "Single Cell RNA-Seq",
