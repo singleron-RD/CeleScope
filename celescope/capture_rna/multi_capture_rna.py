@@ -5,17 +5,6 @@ from celescope.tools.Multi import Multi
 
 class Multi_capture_rna(Multi):
     
-    def custome_args(self):
-        # parser
-        self.STAR_args()
-        self.analysis_args()
-        self.parser.add_argument('--probe_file', help="probe fasta file")
-
-    def read_custome_args(self):
-        self.read_STAR_args()
-        self.read_analysis_args()
-        self.probe_file = self.args.probe_file
-
     def count_capture_rna(self, sample):
         step = 'count_capture_rna'
         bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
