@@ -98,7 +98,7 @@ celescope rna run\
 
 `--fq1` Required. gzipped FASTQ read 1 file path  
 `--fq2` Required. gzipped FASTQ read 2 file path  
-`--chemistry` Required. default=auto detection 
+`--chemistry` Required. default=auto detection  
 `--genomeDir` Required. reference genome directory path  
 `--sample` Required. sample name  
 `--thread` Required. number of threads
