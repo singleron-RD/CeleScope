@@ -94,12 +94,11 @@ celescope rna run\
  --genomeDir /SGR/references/Homo_sapiens/Ensembl/GRCh38\
  --sample R2005212\
  --thread 4\
- --chemistry auto
 ```
 
 `--fq1` Required. gzipped FASTQ read 1 file path  
 `--fq2` Required. gzipped FASTQ read 2 file path  
-`--chemistry` Required. default=auto detection 
+`--chemistry` Required. default=auto detection  
 `--genomeDir` Required. reference genome directory path  
 `--sample` Required. sample name  
 `--thread` Required. number of threads
