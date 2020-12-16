@@ -6,7 +6,7 @@ GEXSCOPE Single Cell Analysis Tool Kit
 ## Requirements
 
 - conda
-- linux
+- git
 - minimum 32GB RAM(to run STAR aligner)
 
 ## Installation
@@ -22,12 +22,22 @@ channels:
   - defaults
   - imperial-college-research-computing
 ```
-3. run the following code
+3. install conda packages
 ```
 cd CeleScope
 conda create -n celescope
 conda activate celescope
 conda install --file conda_pkgs.txt
+```
+4. install celescope
+```
+pip install celescope
+# if you are in china, you can use pypi mirror to accelerate downloading
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope
+```
+5. install Beta version(optional)
+```
+# if you want to use Beta version of celescope
 python setup.py install
 ```
 
