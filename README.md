@@ -87,7 +87,7 @@ STAR \
 
 ```
 conda activate celescope
-celescope rna run\   
+celescope rna run\
  --fq1 ./data/R2005212_L1_1.fq.gz\
  --fq2 ./data/R2005212_L1_2.fq.gz\
  --chemistry auto\
