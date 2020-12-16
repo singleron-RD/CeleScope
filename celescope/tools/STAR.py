@@ -143,7 +143,7 @@ class Step_mapping():
         if self.out_unmapped:
             cmd += ['--outReadsUnmapped', 'Fastx']
         Step_mapping.STAR.logger.info(' '.join(cmd))
-        subprocess.check_call(cmd)
+        #subprocess.check_call(cmd)
 
     @log
     def picard(self):
@@ -162,7 +162,8 @@ class Step_mapping():
             (self.refFlat),
             'STRAND=NONE',
             'VALIDATION_STRINGENCY=SILENT']
-        res = subprocess.run(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        Step_mapping.picard.logger.info(cmd)
+        subprocess.check_call(cmd)
 
     @log
     def run(self):
