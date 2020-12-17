@@ -7,13 +7,11 @@ class Multi_snp(Multi):
     def custome_args(self):
         self.STAR_args()
         self.parser.add_argument('--gene_list', help="gene_list", required=True)
-        self.parser.add_argument('--probe_file', help="probe fasta file")
         self.parser.add_argument('--annovar_config', help='annovar soft config file')
 
     def read_custome_args(self):
         self.read_STAR_args()
         self.gene_list = self.args.gene_list
-        self.probe_file = self.args.probe_file
         self.annovar_config = self.args.annovar_config
         self.gtf_type = 'gene'
         self.outFilterMatchNmin = 35
