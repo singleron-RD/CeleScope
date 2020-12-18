@@ -1,4 +1,5 @@
 __VERSION__ = "1.1.7"
+__version__ = __VERSION__
 __CONDA__ = "celescope_RD"
 
 ASSAY_DICT = {
