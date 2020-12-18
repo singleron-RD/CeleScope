@@ -4,10 +4,13 @@ import pandas as pd
 from celescope.capture_rna.count_capture_rna import expression_matrix
 from celescope.tools.utils import read_barcode_file, read_one_col, glob_genomeDir
 from celescope.tools.report import reporter
+from celescope.tools.Analysis import Analysis
 
 
 class testHLA(unittest.TestCase):
     def setUp(self):
+        pass
+        '''
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/0910_panel/')
         self.sample = 'S20071508_D_TS'
         count_detail_file = './/S20071508_D_TS/05.count_capture_rna/S20071508_D_TS_count_detail.txt'
@@ -19,8 +22,9 @@ class testHLA(unittest.TestCase):
         self.validated_barcodes, _ = read_one_col(f'{self.sample}/05.count_capture_rna/{self.sample}_matrix_10X/barcodes.tsv') 
         _refFlat, self.gtf = glob_genomeDir(self.genomeDir)
         self.assay = 'capture_rna'
+        '''
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_expression_matrix(self):
         (
             CB_total_Genes,
@@ -40,12 +44,26 @@ class testHLA(unittest.TestCase):
         print(match_cell_str)
         print(match_UMI_median)
 
+    @unittest.skip('pass')
     def test_report(self):
         t = reporter(assay=self.assay,
             name='count_capture_rna', sample=self.sample,
             stat_file=self.outdir + '/stat.txt',
             outdir=self.outdir + '/..')
         t.get_report()
+    
+    def test_match_dir(self):
+        os.chdir('/SGRNJ02/RandD4/RD20051303_Panel/20201216')
+        sample = 'drug_S_H1975_203_TS'
+        outdir = './/drug_S_H1975_203_TS/06.analysis'
+        assay = 'capture_rna'
+        ana = Analysis(     
+            sample,
+            outdir,
+            assay,
+            match_dir=outdir+'/../',
+            step='analysis',     
+    )
 
 
 
