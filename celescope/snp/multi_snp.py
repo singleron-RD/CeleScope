@@ -32,7 +32,7 @@ class Multi_snp(Multi):
             f'--gene_list {self.gene_list} '
             f'--thread {self.thread} '
         )
-        self.generate_cmd(cmd, step, sample, m=8, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=8, x=self.thread)
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
@@ -50,7 +50,7 @@ class Multi_snp(Multi):
             f'--index_file {index_file} '
             f'--annovar_config {self.annovar_config} '
         )
-        self.generate_cmd(cmd, step, sample, m=8, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=8, x=self.thread)
 
 
 def main():
