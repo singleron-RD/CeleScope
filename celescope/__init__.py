@@ -1,4 +1,4 @@
-__VERSION__ = "1.1.7"
+__VERSION__ = "1.1.8-Beta"
 __version__ = __VERSION__
 __CONDA__ = "celescope_RD"
 
