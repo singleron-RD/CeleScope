@@ -15,7 +15,8 @@ from celescope.tools.report import reporter
 
 class Step_mapping():
 
-    def __init__(self, sample, outdir, assay, thread, fq, genomeDir, out_unmapped=False, debug=False, outFilterMatchNmin=0):
+    def __init__(self, sample, outdir, assay, thread, fq, genomeDir, 
+    out_unmapped=False, debug=False, outFilterMatchNmin=0, STAR_param=""):
         self.sample = sample
         self.outdir = outdir
         self.assay = assay
@@ -25,6 +26,7 @@ class Step_mapping():
         self.out_unmapped = out_unmapped
         self.debug = debug
         self.outFilterMatchNmin = outFilterMatchNmin
+        self.STAR_param = STAR_param
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % (outdir))
         self.stats = pd.Series()
@@ -142,8 +144,11 @@ class Step_mapping():
             '--outFilterMatchNmin', str(self.outFilterMatchNmin)]
         if self.out_unmapped:
             cmd += ['--outReadsUnmapped', 'Fastx']
-        Step_mapping.STAR.logger.info(' '.join(cmd))
-        subprocess.check_call(cmd)
+        cmd = ' '.join(cmd)
+        if self.STAR_param:
+            cmd += (" " + self.STAR_param)
+        Step_mapping.STAR.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
 
     @log
     def picard(self):
@@ -196,7 +201,8 @@ def STAR(args):
         args.genomeDir, 
         args.out_unmapped, 
         args.debug,
-        args.outFilterMatchNmin)
+        args.outFilterMatchNmin,
+        args.STAR_param)
     mapping.run()
 
 
@@ -211,3 +217,4 @@ def get_opts_STAR(parser, sub_program):
     parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
     parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
     parser.add_argument('--genomeDir', help='genome directory', required=True)
+    parser.add_argument('--STAR_param', help='STAR parameters', default="")

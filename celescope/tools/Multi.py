@@ -97,6 +97,7 @@ class Multi():
         self.parser.add_argument('--thread', help='thread', default=6)
         self.parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
         self.parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
+        self.parser.add_argument('--STAR_param', help='STAR parameters', default="")
 
     def count_args(self):
         self.parser.add_argument('--rescue', help='rescue low UMI cells', action='store_true')
@@ -146,6 +147,7 @@ class Multi():
         self.gtf_type = self.args.gtf_type
         self.out_unmapped = Multi.arg_str(self.args.out_unmapped, 'out_unmapped')
         self.outFilterMatchNmin = self.args.outFilterMatchNmin
+        self.STAR_param = self.args.STAR_param
 
     def read_count_args(self):
         self.rescue_str = Multi.arg_str(self.args.rescue, 'rescue')
@@ -286,6 +288,7 @@ job_end
             f'{self.debug_str} '
             f'--outFilterMatchNmin {self.outFilterMatchNmin} '
             f'{self.out_unmapped} '
+            f'--STAR_param \"{self.STAR_param}\" '
         )
         self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
 
