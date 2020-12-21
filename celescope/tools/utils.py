@@ -326,6 +326,8 @@ def gen_stat(df, stat_file):
         percent = count / row['total_count']
         value = f'{format_number(count)}({round(percent * 100, 2)}%)'
         return value
+
+    df.loc[:,'value'] = df.loc[:,'count']
     df.loc[~df['total_count'].isna(), 'value'] = df.loc[~df['total_count'].isna(), :].apply(
         lambda row: add_percent(row), axis=1
     )

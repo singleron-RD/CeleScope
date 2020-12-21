@@ -9,11 +9,13 @@ class Multi_vdj(Multi):
         self.parser.add_argument(
         '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)
         self.parser.add_argument('--thread', help='thread', default=6)
+        self.parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
 
     def read_custome_args(self):
         self.iUMI =  self.args.iUMI
         self.type = self.args.type 
         self.thread = self.args.thread
+        self.not_consensus_str = Multi.arg_str(self.args.not_consensus, 'not_consensus')
 
     def mapping_vdj(self, sample):
         step = 'mapping_vdj'
@@ -28,8 +30,9 @@ class Multi_vdj(Multi):
             f'--fq {fq} '
             f'--type {self.type} '
             f'--thread {self.thread} '
+            f'{self.not_consensus_str} '
         )
-        self.generate_other(cmd, step, sample, m=15, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=15, x=self.thread)
 
 
     def count_vdj(self, sample):
@@ -50,7 +53,7 @@ class Multi_vdj(Multi):
             f'--UMI_count_filter1_file {UMI_count_filter1_file} '
             f'--match_dir {self.col4_dict[sample]} '
         )
-        self.generate_other(cmd, step, sample, m=8, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=8, x=self.thread)
 
 
 def main():
