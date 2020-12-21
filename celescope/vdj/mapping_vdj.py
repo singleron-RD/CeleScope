@@ -1,12 +1,14 @@
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
 from celescope.tools.utils import format_number, gen_stat, log
+from celescope.tools.Fastq import Fastq
 import os
 import logging
 import gzip
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
+import pysam
 import re
 import json
 import argparse
@@ -14,7 +16,8 @@ mpl.use('Agg')
 from matplotlib import pyplot as plt
 
 
-def summary(fq, alignments, type, outdir, sample, assay, debug):
+@log
+def summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus):
     chains = CHAINS[type]
 
     '''
@@ -27,30 +30,35 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
     UMI_count_unfiltered_file = f'{outdir}/{sample}_UMI_count_unfiltered.tsv'
     UMI_count_filtered1_file = f'{outdir}/{sample}_UMI_count_filtered1.tsv'
 
-    # read fq
-    read2 = gzip.open(fq, "rt")
-    index = 0
-    read_row_list = []
-    while True:
-        line1 = read2.readline()
-        line2 = read2.readline()
-        line3 = read2.readline()
-        line4 = read2.readline()
-        if not line4:
-            break
-        attr = str(line1).strip("@").split("_")
-        barcode = str(attr[0])
-        umi = str(attr[1])
-        dic = {"readId": index, "barcode": barcode, "UMI": umi}
-        read_row_list.append(dic)
-        index += 1
-    df_read = pd.DataFrame(read_row_list, columns=["readId", "barcode", "UMI"])
-    mapping_vdj.logger.info("fq reads to dataframe done.")
-    read2.close()
-    total_read = df_read.shape[0]
+    stat_prefix = 'UMIs'
+    if not_consensus:
+        stat_prefix = 'Reads'
+
+    # read input_file
+    with pysam.FastxFile(input_file) as fh:
+        index = 0
+        read_row_list = []
+        for entry in fh:
+            attr = entry.name.split("_")
+            barcode = attr[0]
+            umi = attr[1]
+            dic = {"readId": index, "barcode": barcode, "UMI": umi}
+            read_row_list.append(dic)
+            index += 1
+        df_read = pd.DataFrame(read_row_list, columns=["readId", "barcode", "UMI"])
+        summary.logger.info(f"{input_file} to dataframe done.")
+        total_read = df_read.shape[0]
 
     # init row list
     mapping_summary_row_list = []
+
+    # total
+    if not not_consensus:
+        mapping_summary_row_list.append({
+        "item": f"{stat_prefix} Count",
+        "count": total_read,
+        "total_count": np.nan,
+    })
 
     # mapped
     alignment = pd.read_csv(alignments, sep="\t")
@@ -60,7 +68,7 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
     df_align = pd.merge(df_read, alignment, on="readId", how="right")
 
     mapping_summary_row_list.append({
-        "item": "Reads Mapped to Any VDJ Gene",
+        "item": f"{stat_prefix} Mapped to Any VDJ Gene",
         "count": align_read,
         "total_count": total_read,
     })
@@ -69,7 +77,7 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
     df_CDR3 = df_align[~pd.isnull(df_align["aaSeqCDR3"])]
     align_read_with_CDR3 = df_CDR3.shape[0]
     mapping_summary_row_list.append({
-        "item": "Reads with CDR3",
+        "item": f"{stat_prefix} with CDR3",
         "count": align_read_with_CDR3,
         "total_count": total_read,
     })
@@ -78,7 +86,7 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
     df_correct_CDR3 = df_CDR3[~(df_CDR3["aaSeqCDR3"].str.contains(r"\*"))]
     align_read_with_correct_CDR3 = df_correct_CDR3.shape[0]
     mapping_summary_row_list.append({
-        "item": "Reads with Correct CDR3",
+        "item": f"{stat_prefix} with Correct CDR3",
         "count": align_read_with_correct_CDR3,
         "total_count": total_read,
     })
@@ -93,7 +101,7 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
     df_VJ["VJ_pair"] = df_VJ["bestVGene"] + "_" + df_VJ["bestJGene"]
     Reads_Mapped_Confidently_to_VJ_Gene = df_VJ.shape[0]
     mapping_summary_row_list.append({
-        "item": "Reads Mapped Confidently to VJ Gene",
+        "item": f"{stat_prefix} Mapped Confidently to VJ Gene",
         "count": Reads_Mapped_Confidently_to_VJ_Gene,
         "total_count": total_read
     })
@@ -103,7 +111,7 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
         df_chain = df_VJ[df_VJ.chain == chain]
         Reads_Mapped_to_chain = df_chain.shape[0]
         mapping_summary_row_list.append({
-            "item": f"Reads Mapped to {chain}",
+            "item": f"{stat_prefix} Mapped to {chain}",
             "count": Reads_Mapped_to_chain,
             "total_count": total_read,
         })
@@ -171,23 +179,19 @@ def summary(fq, alignments, type, outdir, sample, assay, debug):
     t.get_report()
 
 
-@log
-def mapping_vdj(args):
-    sample = args.sample
-    outdir = args.outdir
-    fq = args.fq
-    type = args.type
-    debug = args.debug
-    assay = args.assay
-    thread = args.thread
+@log 
+def consensus_fq(fq, outdir, sample):
+    fq_obj = Fastq(fq)
+    fq_obj.umi_dumb_consensus()
+    out_fasta = fq_obj.write_consensus_fasta(outdir,sample)
+    return out_fasta
 
+@log 
+def mixcr(outdir, sample, input_file, thread):
     report = f"{outdir}/{sample}_align.txt"
     not_align_fq = f"{outdir}/not_align.fq"
     read2_vdjca = f"{outdir}/read2.vdjca"
     alignments = f"{outdir}/{sample}_alignments.txt"
-
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % outdir)
 
     cmd = f"""
 mixcr align \
@@ -197,22 +201,45 @@ mixcr align \
 --report {report} \
 -OallowPartialAlignments=true \
 -OvParameters.geneFeatureToAlign=VTranscriptWithP \
-{fq} \
+{input_file} \
 {read2_vdjca}
 mixcr exportAlignments \
 {read2_vdjca} {alignments} \
 -readIds --force-overwrite -vGene -dGene -jGene -cGene \
 -nFeature CDR3 -aaFeature CDR3\n"""
-    mapping_vdj.logger.info(cmd)
+    mixcr.logger.info(cmd)
     os.system(cmd)
+    return alignments
+
+
+@log
+def mapping_vdj(args):
+    sample = args.sample
+    outdir = args.outdir
+    fq = args.fq
+    type = args.type
+    debug = args.debug
+    assay = args.assay
+    thread = args.thread
+    not_consensus = args.not_consensus
+
+    if not os.path.exists(outdir):
+        os.system('mkdir -p %s' % outdir)
+
+    # umi consensus
+    input_file = fq
+    if not not_consensus:
+        input_file = consensus_fq(fq, outdir, sample)
+    alignments = mixcr(outdir, sample, input_file, thread)
 
     # summary
-    summary(fq, alignments, type, outdir, sample, assay, debug)
+    summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus)
 
 
 def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument("--debug", action='store_true')
+    parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)

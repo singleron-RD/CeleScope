@@ -94,16 +94,17 @@ class Fastq():
 
     @log
     def write_consensus_fasta(self, outdir, sample):
-        out_fasta = f'{outdir}/{sample}_consensus.fasta.gz'
+        out_fasta = f'{outdir}/{sample}_consensus.fasta'
         index = 0
-        with gzip.open(out_fasta, 'wt') as handle:
+        with open(out_fasta, 'wt') as handle:
             for barcode in self.consensus_dict:
                 for umi in self.consensus_dict[barcode]:
                     index += 1
                     read_name = f'{barcode}_{umi}_{index}'
                     seq = self.consensus_dict[barcode][umi]
-                    handle.write(read_name + '\n')
+                    handle.write('>' + read_name + '\n')
                     handle.write(seq + '\n')
+        return out_fasta
 
 
 
