@@ -187,7 +187,7 @@ def consensus_fq(fq, outdir, sample):
     return out_fasta
 
 @log 
-def mixcr(outdir, sample, input_file, thread):
+def mixcr(outdir, sample, input_file, thread, species):
     report = f"{outdir}/{sample}_align.txt"
     not_align_fq = f"{outdir}/not_align.fq"
     read2_vdjca = f"{outdir}/read2.vdjca"
@@ -195,7 +195,7 @@ def mixcr(outdir, sample, input_file, thread):
 
     cmd = f"""
 mixcr align \
---species hs \
+--species {species} \
 -t {thread} \
 --not-aligned-R1 {not_align_fq} \
 --report {report} \
@@ -222,6 +222,7 @@ def mapping_vdj(args):
     assay = args.assay
     thread = args.thread
     not_consensus = args.not_consensus
+    species = args.species
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % outdir)
@@ -230,7 +231,7 @@ def mapping_vdj(args):
     input_file = fq
     if not not_consensus:
         input_file = consensus_fq(fq, outdir, sample)
-    alignments = mixcr(outdir, sample, input_file, thread)
+    alignments = mixcr(outdir, sample, input_file, thread, species)
 
     # summary
     summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus)
@@ -240,6 +241,7 @@ def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument("--debug", action='store_true')
     parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
+    parser.add_argument('--species', choices=['hs', 'mmu'], help='human or mouse', default='hs')
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)

@@ -10,12 +10,14 @@ class Multi_vdj(Multi):
         '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)
         self.parser.add_argument('--thread', help='thread', default=6)
         self.parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
+        self.parser.add_argument('--species', choices=['hs', 'mmu'], help='human or mouse', default='hs')
 
     def read_custome_args(self):
         self.iUMI =  self.args.iUMI
         self.type = self.args.type 
         self.thread = self.args.thread
         self.not_consensus_str = Multi.arg_str(self.args.not_consensus, 'not_consensus')
+        self.species = self.args.species
 
     def mapping_vdj(self, sample):
         step = 'mapping_vdj'
@@ -31,6 +33,7 @@ class Multi_vdj(Multi):
             f'--type {self.type} '
             f'--thread {self.thread} '
             f'{self.not_consensus_str} '
+            f'--species {self.species}'
         )
         self.process_cmd(cmd, step, sample, m=15, x=self.thread)
 
