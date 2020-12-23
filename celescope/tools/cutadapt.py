@@ -8,6 +8,7 @@ import subprocess
 import logging
 from itertools import islice
 import pandas as pd
+import pysam
 
 from celescope.tools.utils import format_number, log
 from celescope.tools.report import reporter
@@ -41,20 +42,36 @@ def format_stat(cutadapt_log, samplename):
 
 
 @log
+def read_adapter_fasta(adapter_fasta):
+    '''
+    return ['adapter1=AAA','adapter2=BBB']
+    '''
+    adapter_args = []
+    if adapter_fasta:
+        with pysam.FastxFile(adapter_fasta) as fh:
+            for read in fh:
+                adapter_args.append(f'{read.name}={read.sequence}')
+    return adapter_args
+
+
+@log
 def cutadapt(args):
     # check dir
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % (args.outdir))
 
+    adapter_args = read_adapter_fasta(args.adapter_fasta)
+    adapter_args += args.adapt
+
     # run cutadapt
     adapt = []
-    for a in args.adapt:
+    for a in adapter_args:
         adapt.append('-a')
         adapt.append(a)
 
     out_fq2 = args.outdir + '/' + args.sample + '_clean_2.fq.gz'
     cmd = ['cutadapt'] + adapt + ['-n',
-                                  str(len(args.adapt)),
+                                  str(len(adapter_args)),
                                   '-j',
                                   str(args.thread),
                                   '-m',
@@ -93,6 +110,7 @@ def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--adapt',action='append',default=[
             'polyT=A{18}',
             'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',])
+    parser.add_argument('--adapter_fasta', help='addtional adapter fasta file')
     parser.add_argument('--minimum_length',dest='minimum_length',help='minimum_length, default=20',default=20)
     parser.add_argument('--nextseq-trim',dest='nextseq_trim',help='nextseq_trim, default=20',default=20)
     parser.add_argument('--overlap',help='minimum overlap length',default=10)

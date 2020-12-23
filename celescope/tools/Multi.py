@@ -34,25 +34,6 @@ class Multi():
             ''',
             required=True)
         parser.add_argument('--outdir', help='output dir', default="./")
-        parser.add_argument(
-            '--adapt',
-            action='append',
-            help='adapter sequence',
-            default=[
-                'polyT=A{15}',
-                'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
-        parser.add_argument(
-            '--minimum_length',
-            dest='minimum_length',
-            help='minimum_length',
-            default=20)
-        parser.add_argument(
-            '--nextseq-trim',
-            dest='nextseq_trim',
-            help='nextseq_trim',
-            default=20)
-        parser.add_argument('--overlap', help='minimum overlap length', default=10)
-        parser.add_argument('--insert', help="read2 insert length", default=150)
         parser.add_argument('--rm_files', action='store_true', help='remove redundant fq.gz and bam after running')
         parser.add_argument('--steps_run', help='steps to run', default='all')
         parser.add_argument('--debug', help='debug or not', action='store_true')
@@ -87,6 +68,36 @@ class Multi():
         self.allowNoPolyT_str = Multi.arg_str(self.args.allowNoPolyT, 'allowNoPolyT')
         self.allowNoLinker_str = Multi.arg_str(self.args.allowNoLinker, 'allowNoLinker')
 
+    def cutadapt_args(self):
+        parser = self.parser
+        parser.add_argument(
+            '--adapt',
+            action='append',
+            help='adapter sequence',
+            default=[
+                'polyT=A{15}',
+                'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
+        parser.add_argument(
+            '--minimum_length',
+            dest='minimum_length',
+            help='minimum_length',
+            default=20)
+        parser.add_argument(
+            '--nextseq-trim',
+            dest='nextseq_trim',
+            help='nextseq_trim',
+            default=20)
+        parser.add_argument('--overlap', help='minimum overlap length', default=10)
+        parser.add_argument('--insert', help="read2 insert length", default=150)
+        parser.add_argument('--adapter_fasta', help='addtional adapter fasta file')
+        self.parser = parser
+
+    def read_cutadapt_args(self):
+        self.overlap = self.args.overlap
+        self.minimum_length = self.args.minimum_length
+        self.insert = self.args.insert
+        self.adapter_fasta = self.args.adapter_fasta
+
     def STAR_args(self):
         self.parser.add_argument('--starMem', help='starMem', default=30)
         self.parser.add_argument('--genomeDir', help='genome index dir', required=True)
@@ -114,13 +125,11 @@ class Multi():
     def parse_args(self):
         self.multi_opts()
         self.barcode_args()
+        self.cutadapt_args()
         self.custome_args()
         self.args = self.parser.parse_args()
         # read args
         self.outdir = self.args.outdir
-        self.overlap = self.args.overlap
-        self.minimum_length = self.args.minimum_length
-        self.insert = self.args.insert
         self.mod = self.args.mod
         self.rm_files = self.args.rm_files
         self.steps_run = self.args.steps_run
@@ -129,6 +138,7 @@ class Multi():
         else:
             self.debug_str = Multi.arg_str(self.args.debug, 'debug')
         self.read_barcode_args()
+        self.read_cutadapt_args()
         self.read_custome_args()
 
     @staticmethod
@@ -269,6 +279,7 @@ job_end
             f'--overlap {self.overlap} '
             f'--minimum_length {self.minimum_length} '
             f'--insert {self.insert} '
+            f'--adapter_fasta {self.adapter_fasta} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
