@@ -90,6 +90,7 @@ class Multi():
         parser.add_argument('--overlap', help='minimum overlap length', default=10)
         parser.add_argument('--insert', help="read2 insert length", default=150)
         parser.add_argument('--adapter_fasta', help='addtional adapter fasta file')
+        parser.add_argument('--umi_consensus', help="perform umi consensus. not recommended for scRNA-Seq", action='store_true')
         self.parser = parser
 
     def read_cutadapt_args(self):
@@ -97,6 +98,7 @@ class Multi():
         self.minimum_length = self.args.minimum_length
         self.insert = self.args.insert
         self.adapter_fasta = self.args.adapter_fasta
+        self.umi_consensus_str = Multi.arg_str(self.args.umi_consensus, 'umi_consensus')
 
     def STAR_args(self):
         self.parser.add_argument('--starMem', help='starMem', default=30)
@@ -280,6 +282,7 @@ job_end
             f'--minimum_length {self.minimum_length} '
             f'--insert {self.insert} '
             f'--adapter_fasta {self.adapter_fasta} '
+            f'{self.umi_consensus_str} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 

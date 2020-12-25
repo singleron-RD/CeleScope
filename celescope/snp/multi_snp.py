@@ -9,12 +9,35 @@ class Multi_snp(Multi):
         self.parser.add_argument('--gene_list', help="gene_list", required=True)
         self.parser.add_argument('--annovar_config', help='annovar soft config file')
 
+
     def read_custome_args(self):
         self.read_STAR_args()
         self.gene_list = self.args.gene_list
         self.annovar_config = self.args.annovar_config
         self.gtf_type = 'gene'
         self.outFilterMatchNmin = 35
+
+    def STAR(self, sample):
+        step = 'STAR'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        if self.args.umi_consensus:
+            fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_consensus.fastq.gz'
+        cmd = (
+            f'{self.__APP__} '
+            f'{self.__ASSAY__} '
+            f'{step} '
+            f'--outdir {self.outdir_dic[sample][step]} '
+            f'--sample {sample} '
+            f'--assay {self.__ASSAY__} '
+            f'--fq {fq} '
+            f'--genomeDir {self.genomeDir} '
+            f'--thread {self.thread} '
+            f'{self.debug_str} '
+            f'--outFilterMatchNmin {self.outFilterMatchNmin} '
+            f'{self.out_unmapped} '
+            f'--STAR_param \"{self.STAR_param}\" '
+        )
+        self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
 
     def snpCalling(self, sample):
         step = 'snpCalling'

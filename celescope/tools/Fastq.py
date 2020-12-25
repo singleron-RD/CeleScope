@@ -14,7 +14,9 @@ class Fastq():
     @log
     def split_fq(self):
         '''
-        split barcode into barcode_UMI dict
+        split reads into barcode_UMI dict
+        read_list = fq_dict[barcode][umi]
+        elements of read_list: [entry.sequence,entry.quality]
         '''
         fq_dict = genDict(dim=2, valType=list)
 
@@ -23,7 +25,7 @@ class Fastq():
                 attr = entry.name.split('_')
                 barcode = attr[0]
                 umi = attr[1]
-                fq_dict[barcode][umi].append(entry.sequence)
+                fq_dict[barcode][umi].append([entry.sequence,entry.quality])
         return fq_dict
 
     @staticmethod
@@ -39,36 +41,52 @@ class Fastq():
 
         con_len = Fastq.get_read_length(read_list, threshold=0.5)
         consensus = ""
+        consensus_qual = ""
         for n in range(con_len):
             atom_dict = defaultdict(int)
+            quality_dict = defaultdict(int)
             num_atoms = 0
             for read in read_list:
                 # make sure we haven't run past the end of any sequences
                 # if they are of different lengths
-                if n < len(read):
-                    atom = read[n]
+                sequence = read[0]
+                quality = read[1]
+                if n < len(sequence):
+                    atom = sequence[n]
                     atom_dict[atom] += 1
                     num_atoms = num_atoms + 1
+
+                    base_qual = quality[n]
+                    quality_dict[base_qual] += 1
 
             consensus_atom = ambiguous
             for atom in atom_dict:
                 if atom_dict[atom] >= num_atoms * threshold:
                     consensus_atom = atom
-                    break 
+                    break
             consensus += consensus_atom
-        return consensus
+
+            max_freq_qual = 0
+            consensus_base_qual = 'F'
+            for base_qual in quality_dict:
+                if quality_dict[base_qual] > max_freq_qual:
+                    max_freq_qual = quality_dict[base_qual]
+                    consensus_base_qual = base_qual
+
+            consensus_qual += consensus_base_qual
+        return consensus, consensus_qual
 
     @staticmethod
     def get_read_length(read_list, threshold=0.5):
         '''
         compute read_length from read_list. 
-        length = max length with read fraction >= threshold 
-
+        length = max length with read fraction >= threshold
         '''
+        
         n_read = len(read_list)
         length_dict = defaultdict(int)
         for read in read_list:
-            length = len(read)
+            length = len(read[0])
             length_dict[length] += 1
         for length in length_dict:
             length_dict[length] = length_dict[length] / n_read
@@ -84,27 +102,49 @@ class Fastq():
         '''
         dumb_consensus for barcode,umi
         '''
-        consensus_dict = genDict(dim=2, valType = str)
+        consensus_dict = genDict(dim=2, valType = list)
         fq_dict = self.split_fq()
         for barcode in fq_dict:
             for umi in fq_dict[barcode]:
-                consenesus = Fastq.dumb_consensus(fq_dict[barcode][umi], threshold=threshold)
-                consensus_dict[barcode][umi] = consenesus
+                consenesus, consensus_qual = Fastq.dumb_consensus(fq_dict[barcode][umi], threshold=threshold)
+                consensus_dict[barcode][umi] = [consenesus, consensus_qual]
         self.consensus_dict = consensus_dict
 
     @log
     def write_consensus_fasta(self, outdir, sample):
         out_fasta = f'{outdir}/{sample}_consensus.fasta'
         index = 0
+        import os
+        print(os.getcwd())
         with open(out_fasta, 'wt') as handle:
             for barcode in self.consensus_dict:
                 for umi in self.consensus_dict[barcode]:
                     index += 1
                     read_name = f'{barcode}_{umi}_{index}'
-                    seq = self.consensus_dict[barcode][umi]
+                    seq = self.consensus_dict[barcode][umi][0]
                     handle.write('>' + read_name + '\n')
                     handle.write(seq + '\n')
         return out_fasta
+
+    @log
+    def write_consensus_fastq(self, outdir, sample, use_gzip=True):
+        suffix = ''
+        if gzip:
+            suffix = '.gz'
+        out_fastq = f'{outdir}/{sample}_consensus.fastq{suffix}'
+        index = 0
+        with gzip.open(out_fastq, 'wt') as handle:
+            for barcode in self.consensus_dict:
+                for umi in self.consensus_dict[barcode]:
+                    index += 1
+                    read_name = f'{barcode}_{umi}_{index}'
+                    seq = self.consensus_dict[barcode][umi][0]
+                    qual = self.consensus_dict[barcode][umi][1]
+                    handle.write('@' + read_name + '\n')
+                    handle.write(seq + '\n')
+                    handle.write('+\n')
+                    handle.write(qual + '\n')
+        return out_fastq
 
 
 
