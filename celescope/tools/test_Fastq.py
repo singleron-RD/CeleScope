@@ -21,7 +21,7 @@ class Test_Fastq(unittest.TestCase):
         print (Fastq.dumb_consensus(read_list, 0.5))
         assert Fastq.dumb_consensus(read_list, 0.5) == 'GGGGGGG'
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_write_consensus_fasta(self):
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/vdj/TCR/')
         outdir = 'TCR_sub/03.mapping_vdj'
@@ -31,6 +31,30 @@ class Test_Fastq(unittest.TestCase):
         fq_obj.umi_dumb_consensus()
         fq_obj.write_consensus_fasta(outdir,sample)
         fq_obj.write_consensus_fastq(outdir,sample)
+
+    #@unittest.skip('pass')
+    def test_concurrent(self):
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/variant/20201224_indel/consensus/')
+        outdir = './S32_SUR0528_drug_S203_TS/02.cutadapt'
+        sample = 'S32_SUR0528_drug_S203_TS'
+        fq = './S32_SUR0528_drug_S203_TS/02.cutadapt/test_1M.fq'
+        fq_obj = Fastq(fq)
+        fq_obj.umi_dumb_consensus_concurrent(thread=5)
+        #fq_obj.write_consensus_fasta(outdir,sample)
+        #fq_obj.write_consensus_fastq(outdir,sample)
+
+    @unittest.skip('pass')
+    def test_single(self):
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/variant/20201224_indel/consensus/')
+        outdir = './S32_SUR0528_drug_S203_TS/02.cutadapt'
+        sample = 'S32_SUR0528_drug_S203_TS'
+        fq = './S32_SUR0528_drug_S203_TS/02.cutadapt/test_1M.fq'
+        fq_obj = Fastq(fq)
+        fq_obj.umi_dumb_consensus()
+        #fq_obj.write_consensus_fasta(outdir,sample)
+        #fq_obj.write_consensus_fastq(outdir,sample)
+
+
 
 
 

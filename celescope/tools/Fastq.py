@@ -1,6 +1,8 @@
 from collections import defaultdict
 import pysam
 import gzip
+import numpy as np
+from concurrent.futures import ProcessPoolExecutor
 from celescope.tools.utils import genDict, log
 
 class Fastq():
@@ -108,6 +110,54 @@ class Fastq():
             for umi in fq_dict[barcode]:
                 consenesus, consensus_qual = Fastq.dumb_consensus(fq_dict[barcode][umi], threshold=threshold)
                 consensus_dict[barcode][umi] = [consenesus, consensus_qual]
+        self.consensus_dict = consensus_dict
+
+    @staticmethod
+    @log
+    def dumb_consensus_worker(fq_dict, threshold):
+        consensus_dict = {}        
+        for barcode in fq_dict:
+            for umi in fq_dict[barcode]:
+                consenesus, consensus_qual = Fastq.dumb_consensus(fq_dict[barcode][umi], threshold=threshold)
+                if barcode not in consensus_dict:
+                    consensus_dict[barcode] = {}
+                consensus_dict[barcode][umi] = [consenesus, consensus_qual]
+        return consensus_dict
+
+    @staticmethod
+    @log 
+    def split_dict(input_dict: dict, num_parts: int) -> list:
+        list_len: int = len(input_dict)
+        return [dict(list(input_dict.items())[i::num_parts])
+            for i in range(num_parts)]
+
+
+    @log
+    def umi_dumb_consensus_concurrent(self, thread, threshold=0.5):
+        '''
+        dumb_consensus for barcode,umi
+        '''
+
+        fq_dict = self.split_fq()
+        consensus_dict = {}
+
+        fq_dicts = Fastq.split_dict(fq_dict, thread)
+        for fq_dict in fq_dicts:
+            umi_list = []
+            read_list = []
+            for barcode in fq_dict.keys():
+                umi_list.append(len(fq_dict[barcode]))
+                for umi in fq_dict[barcode]:
+                    read_list.append(len(fq_dict[barcode][umi]))
+
+            print('mean UMI count:' + str(np.mean(umi_list)))
+            print('mean read count:' +  str(np.mean(read_list)))
+
+        threshold_list = [threshold] * thread
+
+        with ProcessPoolExecutor(thread) as pool:
+            for res in pool.map(Fastq.dumb_consensus_worker, fq_dicts, threshold_list):
+                consensus_dict.update(res)
         self.consensus_dict = consensus_dict
 
     @log
