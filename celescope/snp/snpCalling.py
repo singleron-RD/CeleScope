@@ -258,6 +258,7 @@ def summary(index_file, count_file, outdir, sample):
     os.system(cmd)
 
     # annotate vcf
+    '''
     anno_vcf = open(f'{outdir}/{sample}_anno.vcf', 'wt')
     with open(f'{outdir}/{sample}.vcf', 'rt') as vcf:
         for line in vcf:
@@ -272,7 +273,8 @@ def summary(index_file, count_file, outdir, sample):
             new_line = '\t'.join(items)
             anno_vcf.write(new_line)
     anno_vcf.close()
-
+    '''
+    
     # rm
     #os.remove(f'{outdir}/{sample}.vcf')
     #os.remove(f'{outdir}/{sample}.bam')

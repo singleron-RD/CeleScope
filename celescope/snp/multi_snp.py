@@ -59,7 +59,7 @@ class Multi_snp(Multi):
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
-        vcf_anno = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_anno.vcf'
+        vcf_anno = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}.vcf'
         index_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_cell_index.tsv'
         cmd = (
             f'{self.__APP__} '
