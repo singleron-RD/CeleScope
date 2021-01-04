@@ -17,7 +17,7 @@ save_rds = argv$save_rds
 resolution = 0.6
 res_str = paste0('res.', resolution)
 
-matrix = Seurat::Read10X(matrix_file,sep="\t",header=TRUE,row.names=1,quote = "")
+matrix = read.table(matrix_file,sep="\t",header=TRUE,row.names=1,quote = "")
 tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")
