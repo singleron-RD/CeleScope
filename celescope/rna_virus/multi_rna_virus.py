@@ -14,6 +14,8 @@ class Multi_rna_virus(Multi):
     def custome_args(self):
         self.STAR_args()
         self.STAR_virus_args()
+        self.count_args()
+        self.analysis_args()
 
     def read_custome_args(self):
         self.read_STAR_args()
@@ -52,8 +54,8 @@ class Multi_rna_virus(Multi):
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def analysis_rna_virus(self, sample):        
-        step = 'analysis_capture_virus'
-        virus_file = f'{self.outdir_dic[sample]["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
+        step = 'analysis_rna_virus'
+        virus_file = f'{self.outdir_dic[sample]["count_virus"]}/{sample}_virus_UMI_count.tsv'
         matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix.tsv.gz'
         cmd = (
             f'{self.__APP__} '
