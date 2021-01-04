@@ -15,11 +15,11 @@ class Multi_rna_virus(Multi):
         self.STAR_args()
         self.STAR_virus_args()
         self.count_args()
-        self.analysis_args()
 
     def read_custome_args(self):
         self.read_STAR_args()
         self.read_STAR_virus_args()
+        self.read_count_args()
 
     def STAR_virus(self, sample):
         step = 'STAR_virus'
