@@ -66,11 +66,11 @@ def read_barcode_file(match_dir):
     multi version compatible
     '''
     match_barcode_file1 = glob.glob(
-        f"{match_dir}/*count/*_cellbarcode.tsv")
+        f"{match_dir}/*count*/*_cellbarcode.tsv")
     match_barcode_file2 = glob.glob(
-        f"{match_dir}/*count/*matrix_10X/*_cellbarcode.tsv")
+        f"{match_dir}/*count*/*matrix_10X/*_cellbarcode.tsv")
     match_barcode_file3 = glob.glob(
-        f"{match_dir}/*count/*matrix_10X/*barcodes.tsv")
+        f"{match_dir}/*count*/*matrix_10X/*barcodes.tsv")
     match_barcode_file = (
         match_barcode_file1 +
         match_barcode_file2 +
@@ -326,6 +326,8 @@ def gen_stat(df, stat_file):
         percent = count / row['total_count']
         value = f'{format_number(count)}({round(percent * 100, 2)}%)'
         return value
+
+    df.loc[:,'value'] = df.loc[:,'count']
     df.loc[~df['total_count'].isna(), 'value'] = df.loc[~df['total_count'].isna(), :].apply(
         lambda row: add_percent(row), axis=1
     )
@@ -687,16 +689,16 @@ def report_prepare(outdir, **kwargs):
         json.dump(data, fh)
 
 
-def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['DP', 'GENE', 'CELL']):
+def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['DP', 'CELL']):
     vcf = pysam.VariantFile(vcf_file)
-    df = pd.DataFrame(columns=[col.upper() for col in cols] + infos + ['GT'])
+    df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos + ['GT'])
     rec_dict = {}
     for rec in vcf.fetch():
 
         for col in cols:
-            rec_dict[col.upper()] = getattr(rec, col)
+            rec_dict[col.capitalize()] = getattr(rec, col)
             if col == 'alleles':
-                rec_dict['ALLELES'] = '-'.join(rec_dict['ALLELES'])
+                rec_dict['Alleles'] = '-'.join(rec_dict['Alleles'])
                 
         for info in infos:
             rec_dict[info] = rec.info[info]
@@ -710,7 +712,7 @@ def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['DP', 'GENE', '
 
 
 def parse_annovar(annovar_file):
-    df = pd.DataFrame(columns=['mRNA', 'protein', 'cosmic'])
+    df = pd.DataFrame(columns=['Gene','mRNA', 'Protein', 'COSMIC'])
     with open(annovar_file, 'rt') as f:
         index = 0
         for line in f:
@@ -718,6 +720,7 @@ def parse_annovar(annovar_file):
             if index == 1:
                 continue
             attrs = line.split('\t')
+            gene = attrs[6]
             func = attrs[5]
             if func == 'exonic':
                 changes = attrs[9]
@@ -744,8 +747,9 @@ def parse_annovar(annovar_file):
             mRNA = combine[0]
             protein = combine[1]
             df = df.append({
-                'MRNA': mRNA,
-                'PROTEIN': protein,
+                'Gene': gene,
+                'mRNA': mRNA,
+                'Protein': protein,
                 'COSMIC': cosmic,
             }, ignore_index=True)
     return df

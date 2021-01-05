@@ -16,7 +16,7 @@ from celescope.tools.report import reporter
 def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length):
     '''
     input:
-        bam: bam from feauturCounts
+        bam: bam from splitN
         barcodes: cell barcodes, set
         gene_id_name_dic: id name dic
         min_query_length: minimum query length
@@ -32,9 +32,8 @@ def split_bam(bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
     bam_dict = defaultdict(list)
     index_dict = defaultdict(dict)
     cells_dir = f'{outdir}/cells/'
-
+ 
     # read bam and split
-    split_bam.logger.info('reading bam...')
     samfile = pysam.AlignmentFile(bam, "rb")
     header = samfile.header
     barcodes = list(barcodes)
@@ -120,7 +119,7 @@ def call_snp(index, outdir, fasta):
         f'samtools sort {bam} -o {sorted_bam}'
     )
     os.system(cmd_sort)
-
+   
     # mpileup
     out_bcf = f'{outdir}/cells/cell{index}/cell{index}.bcf'
     cmd_mpileup = (
@@ -259,6 +258,7 @@ def summary(index_file, count_file, outdir, sample):
     os.system(cmd)
 
     # annotate vcf
+    '''
     anno_vcf = open(f'{outdir}/{sample}_anno.vcf', 'wt')
     with open(f'{outdir}/{sample}.vcf', 'rt') as vcf:
         for line in vcf:
@@ -273,7 +273,8 @@ def summary(index_file, count_file, outdir, sample):
             new_line = '\t'.join(items)
             anno_vcf.write(new_line)
     anno_vcf.close()
-
+    '''
+    
     # rm
     #os.remove(f'{outdir}/{sample}.vcf')
     #os.remove(f'{outdir}/{sample}.bam')
@@ -335,6 +336,21 @@ def convert(gene_list_file, gtf):
 
 
 @log
+def SplitNCigarReads(outdir, sample ,fasta, bam):
+    splitN_bam = f'{outdir}/{sample}_splitN.bam'
+    cmd = (
+        f'gatk '
+        f'SplitNCigarReads '
+        f'-R {fasta} '
+        f'-I {bam} '
+        f'-O {splitN_bam} '
+    )
+    SplitNCigarReads.logger.info(cmd)
+    os.system(cmd)
+    return splitN_bam
+
+
+@log
 def snpCalling(args):
 
     sample = args.sample
@@ -359,9 +375,12 @@ def snpCalling(args):
     # convert gene
     gene_id_name_dic = convert(gene_list_file, gtf)
 
+    # splitN
+    splitN_bam = SplitNCigarReads(outdir, sample, fasta, bam)
+
     # split bam
     index_file, count_file = split_bam(
-        bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
+        splitN_bam, barcodes, outdir, sample, gene_id_name_dic, min_query_length)
 
     # snp
     call_all_snp(index_file, outdir, thread, fasta)

@@ -1,3 +1,4 @@
+from celescope.tools.Fastq import Fastq
 import unittest
 import os
 import pandas as pd
@@ -5,6 +6,7 @@ from celescope.tools.STAR import Step_mapping
 from celescope.tools.utils import read_barcode_file, gene_convert, get_fq
 from .Chemistry import Chemistry
 from celescope.tools.count import *
+from celescope.tools.cutadapt import *
 
 class Tests(unittest.TestCase):
     def setUp(self):
@@ -134,6 +136,7 @@ class Tests(unittest.TestCase):
         validated_barcodes = get_validated_barcodes(df_sum, threshold, col='UMI')
         print(len(validated_barcodes))
 
+    @unittest.skip('pass')
     def test_count_pipe(self):
         count_detail_file = '/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz'
         df = pd.read_csv(count_detail_file, sep='\t')
@@ -186,6 +189,20 @@ class Tests(unittest.TestCase):
                     stat_file=outdir + '/stat.txt',
                     outdir=outdir + '/..')
         t.get_report()
+
+    @unittest.skip('pass')
+    def test_read_adapter_fasta(self):
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna')
+        adapter_fasta = './adapter.fasta'
+        adapter_args = read_adapter_fasta(adapter_fasta)
+        assert adapter_args == ['a1=ATCG','a2=TGCAA']
+
+    def test_chemistry_jiace(self):
+        fq = '/SGRNJ03/DATA03/2004/20201224_18/R20067441-PCRD-201207-1-R2012093_combined_R1.fastq.gz\
+,/SGRNJ03/DATA03/2004/20201228_6/R2012093-PCRD-201207-1_combined_R1.fastq.gz'
+        ch = Chemistry(fq)
+        print(ch.check_chemistry())
+
 
 if __name__ == '__main__':
     unittest.main()

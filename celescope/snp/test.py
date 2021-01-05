@@ -74,12 +74,19 @@ class test_snp(unittest.TestCase):
     def test_annovar(self):
         self.step_analysis_variant.annovar()
     
+    @unittest.skip('pass')
     def test_parse_annovar(self):
         from celescope.tools.utils import parse_annovar
         self.annovar_file = glob.glob(f'{self.analysis_outdir}/{self.sample}*_multianno.txt')[0]
         parse_annovar(self.annovar_file)
 
-
+    def test_summary_new(self):
+        os.chdir('/SGRNJ02/RandD4/RD20051303_Panel/20201228/')
+        outdir = 'S32_SUR0528_0_1X_TS/05.snpCalling'
+        sample = 'S32_SUR0528_0_1X_TS'
+        index_file = f'{outdir}/{sample}_cell_index.tsv'
+        count_file = f'{outdir}/{sample}_count.tsv'
+        summary(index_file, count_file, outdir, sample)
 
 if __name__ == '__main__':
     unittest.main()

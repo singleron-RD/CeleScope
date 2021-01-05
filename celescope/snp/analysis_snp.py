@@ -50,7 +50,7 @@ class analysis_variant():
         """
         # df_vcf_count
         self.df_vcf.index = [int(index) for index in list(self.df_vcf['CELL'])]
-        df_vcf_count = self.df_vcf.groupby(['CHROM','POS','ALLELES','GENE']).agg({
+        df_vcf_count = self.df_vcf.groupby(['Chrom','Pos','Alleles','Gene']).agg({
             'CELL':'count'}).reset_index().sort_values(['CELL'],ascending=False)
 
         # vcf_tsne
@@ -59,21 +59,21 @@ class analysis_variant():
         df_vcf_tsne = pd.merge(df_vcf_barcode, self.tsne_df, on="barcode", how="left")
 
         # df_table
-        df_vcf_count.rename(columns={'CELL':'NCELL'}, inplace=True)
-        df_vcf_tsne.rename(columns={'CELL':'INDEX'}, inplace=True)
-        df_vcf_tsne = df_vcf_tsne.astype({'CHROM':'object', 'POS':'int64'})
-        df_vcf_count = df_vcf_count.astype({'CHROM':'object', 'POS':'int64'})
-        df_table = pd.merge(df_vcf_tsne, df_vcf_count, on=['CHROM',"POS","ALLELES",'GENE'], how='left')
+        df_vcf_count.rename(columns={'CELL':'nCell'}, inplace=True)
+        df_vcf_tsne.rename(columns={'CELL':'Cell_Index'}, inplace=True)
+        df_vcf_tsne.rename(columns={'cluster':'Cluster'}, inplace=True)
+        df_vcf_tsne = df_vcf_tsne.astype({'Chrom':'object', 'Pos':'int64'})
+        df_vcf_count = df_vcf_count.astype({'Chrom':'object', 'Pos':'int64'})
+        df_table = pd.merge(df_vcf_tsne, df_vcf_count, on=['Chrom',"Pos","Alleles",'Gene'], how='left')
         self.df_table_full = df_table
         df_table_full_file = f'{self.outdir}/{self.sample}_variant_table.tsv'
         self.df_table_full.to_csv(df_table_full_file, sep='\t')
-        cols = ['CHROM', 'POS', 'GENE', 'ALLELES', 'MRNA', 'PROTEIN', 'COSMIC', 'DP', 'GT', 'INDEX', 'cluster', 'NCELL']
+        cols = ['Chrom', 'Pos', 'Gene', 'Alleles', 'mRNA', 'Protein', 'COSMIC', 'DP', 'GT', 'Cell_Index', 'Cluster', 'nCell']
         df_table = df_table.loc[:, cols]
-        df_table.rename(columns={'cluster':'CLUSTER'}, inplace=True)
         self.df_table = df_table
 
         # vcf_tsne_all
-        df_vcf_tsne_count = df_vcf_tsne.groupby(['barcode','INDEX']).agg({'ALLELES':'count'})
+        df_vcf_tsne_count = df_vcf_tsne.groupby(['barcode','Cell_Index']).agg({'Alleles':'count'})
         df_vcf_tsne_all = pd.merge(self.tsne_df, df_vcf_tsne_count, on='barcode', how='left')
         df_index = df_index.reset_index()
         df_vcf_tsne_all = pd.merge(df_vcf_tsne_all, df_index, on='barcode', how='left')
@@ -81,10 +81,10 @@ class analysis_variant():
         tSNE_1 = list(df_vcf_tsne_all.tSNE_1)
         tSNE_2 = list(df_vcf_tsne_all.tSNE_2)
         def return_text(row):
-            text = f'Variants:{str(int(row["ALLELES"]))}<br>Cell_Index:{row["cell_index"]}'
+            text = f'Variants:{str(int(row["Alleles"]))}<br>Cell_Index:{row["cell_index"]}'
             return text
         text = list(df_vcf_tsne_all.apply(return_text, axis=1))
-        value = list(df_vcf_tsne_all.ALLELES)
+        value = list(df_vcf_tsne_all.Alleles)
         title = 't-SNE plot Colored by Cell Variant Counts'
         self.count_tsne = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "text": text, 'value':value, 'title':title}
 
