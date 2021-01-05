@@ -6,7 +6,7 @@ ucsc-gtftogenepred=377
 subread=2.0.1
 samtools=1.9
 r-seurat=2.3.4
-r-argparse>=2.0.1
+r-argparser
 r-tidyverse
 mixcr=3.0.3
 bioconductor-dropletutils
