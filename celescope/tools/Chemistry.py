@@ -71,7 +71,7 @@ class Chemistry():
             elif valid_linker_type == 1:
                 chemistry = 'scopeV2.1.1'
             elif valid_linker_type < 4:
-                chemistry = 'scopeV2.1.1'
+                chemistry = 'scopeV2.2.1'
                 Chemistry.get_chemistry.logger.warning(
                     f'chemistry scopeV2.2.1 only has {valid_linker_type} linker types!')
             else:
