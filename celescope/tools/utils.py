@@ -689,7 +689,7 @@ def report_prepare(outdir, **kwargs):
         json.dump(data, fh)
 
 
-def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['DP', 'CELL']):
+def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['DP', 'CELL', 'DP4']):
     vcf = pysam.VariantFile(vcf_file)
     df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos + ['GT'])
     rec_dict = {}
