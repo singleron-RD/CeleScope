@@ -100,18 +100,23 @@ conda activate celescope
 celescope rna run\
  --fq1 ./data/R2005212_L1_1.fq.gz\
  --fq2 ./data/R2005212_L1_2.fq.gz\
- --chemistry auto\
  --genomeDir /SGR/references/Homo_sapiens/Ensembl/GRCh38\
  --sample R2005212\
+ --chemistry auto\
  --thread 4\
 ```
 
-`--fq1` Required. gzipped FASTQ read 1 file path  
-`--fq2` Required. gzipped FASTQ read 2 file path  
-`--chemistry` Required. default=auto detection  
-`--genomeDir` Required. reference genome directory path  
-`--sample` Required. sample name  
-`--thread` Required. number of threads
+`--fq1` Required. Gzipped FASTQ read 1 file path.
+
+`--fq2` Required. Gzipped FASTQ read 2 file path.
+
+`--genomeDir` Required. Reference genome directory.  
+
+`--sample` Required. Sample name. 
+
+`--chemistry` Chemistry version, default=auto. 
+
+`--thread` Number of threads to use, default=1
 
 ### Single Cell VDJ
 
@@ -120,14 +125,25 @@ conda activate celescope
 celescope vdj run\   
  --fq1 {vdj fq1.gz}\
  --fq2 {vdj fq2.gz}\
+ --type {TCR or BCR}\
  --sample {sample name}\
  --chemistry auto\
- --thread 4\
- --type {TCR or BCR}
+ --thread {thread}\
  --match_dir {match_dir}\
 ```  
 
-`--type` Required. TCR or BCR  
+`--fq1` Required. Gzipped FASTQ read 1 file path.
+
+`--fq2` Required. Gzipped FASTQ read 2 file path.
+
+`--type` Required. TCR or BCR.   
+
+`--sample` Required. Sample name. 
+
+`--chemistry` Chemistry version, default=auto. 
+
+`--thread` Number of threads to use, default=1.
+
 `--match_dir` Optional. Matched scRNA-Seq directory after running CeleScope  
 
 
