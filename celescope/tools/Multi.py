@@ -21,7 +21,7 @@ class Multi():
 
     def multi_opts(self):
         readme = f'{self.__ASSAY__} multi-samples'
-        parser = argparse.ArgumentParser(readme)
+        parser = argparse.ArgumentParser(readme, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
         parser.add_argument(
             '--mapfile',
@@ -46,8 +46,8 @@ class Multi():
         parser.add_argument('--pattern', help='')
         parser.add_argument('--whitelist', help='')
         parser.add_argument('--linker', help='')
-        parser.add_argument('--lowQual', type=int, help='max phred of base as lowQual, default=0', default=0)
-        parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
+        parser.add_argument('--lowQual', type=int, help='max phred of base as lowQual', default=0)
+        parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed', default=2)
         parser.add_argument('--nopolyT', action='store_true', help='output nopolyT fq')
         parser.add_argument('--noLinker', action='store_true', help='output noLinker fq')
         parser.add_argument('--probe_file', help="probe fasta file")
@@ -105,7 +105,7 @@ class Multi():
         self.parser.add_argument('--genomeDir', help='genome index dir', required=True)
         self.parser.add_argument(
             '--gtf_type',
-            help='Specify attribute type in GTF annotation, default=exon',
+            help='Specify attribute type in GTF annotation',
             default='exon')
         self.parser.add_argument('--thread', help='thread', default=6)
         self.parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
