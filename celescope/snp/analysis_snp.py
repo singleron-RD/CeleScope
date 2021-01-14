@@ -127,7 +127,7 @@ class analysis_variant():
         cmd = (
             f'perl {dir}/convert2annovar.pl '
             f'-format vcf4 '
-            #f'--includeinfo '
+            f'--includeinfo '
             f'{self.vcf_file} > {input_file}'
         )
         subprocess.check_call(cmd, shell=True)
@@ -155,9 +155,8 @@ class analysis_variant():
 
     def run(self):
         self.get_df_vcf()
-        if self.annovar_config:
-            self.annovar()
-            self.df_vcf = pd.concat((self.df_vcf, self.df_annovar), axis=1)
+        self.annovar()
+        self.df_vcf = pd.concat((self.df_vcf, self.df_annovar), axis=1)
         self.get_table()
         self.get_variant_table()
         report_prepare(
@@ -182,7 +181,7 @@ def analysis_snp(args):
     step_snp.run()
 
 def get_opts_analysis_snp(parser, sub_program):
-    parser.add_argument('--annovar_config', help='annovar soft config file')
+    parser.add_argument('--annovar_config', help='annovar soft config file', required=True)
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)

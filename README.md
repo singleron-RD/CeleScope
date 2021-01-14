@@ -13,7 +13,7 @@ GEXSCOPE Single Cell Analysis Tool Kit
 
 
 1. `git clone https://github.com/zhouyiqi91/CeleScope.git`
-2. add channels to ~/.condarc
+2. Add channels to ~/.condarc
 ```
 channels:
   - conda-forge
@@ -22,20 +22,20 @@ channels:
   - defaults
   - imperial-college-research-computing
 ```
-3. install conda packages
+3. Install conda packages
 ```
 cd CeleScope
 conda create -n celescope
 conda activate celescope
 conda install --file conda_pkgs.txt
 ```
-4. install celescope
+4. Install celescope
 ```
 pip install celescope
 # if you are in china, you can use pypi mirror to accelerate downloading
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope
 ```
-5. install Beta version(optional)
+5. Install Beta version(optional)
 ```
 # if you want to use Beta version of celescope
 python setup.py install
@@ -130,63 +130,4 @@ celescope vdj run\
 `--type` Required. TCR or BCR  
 `--match_dir` Optional. Matched scRNA-Seq directory after running CeleScope  
 
-### Single Cell Multiplexing
-
-```
-conda activate celescope
-celescope smk run\   
- --fq1 {smk fq1.gz}\
- --fq2 {smk fq2.gz}\
- --sample {sample name}\
- --chemistry auto\
- --SMK_pattern L25C45\
- --SMK_barcode {SMK barcode fasta}\
- --SMK_linker {SMK linker fasta}\
- --match_dir {match_dir}\
- --dim 2\
- --combine_cluster {combine_cluster.tsv}
-```
-
-
-`SMK_pattern` Required. L25C45 means 25 bp linker + 45 bp cell barcode  
-abbreviations:  
-C: cell barcode  
-U: UMI  
-T: polyT  
-L: linker  
-`--SMK_barcode` Required. SMK tag fasta file  
-`--SMK_linker` Required. SMK linker fasta file  
-`--match_dir` Required. Matched scRNA-Seq directory after running CeleScope  
-`--dim` Required. SMK dimension  
-`--combine_cluster` Optional. Conbine cluster tsv file.  
-first column: original cluster number  
-second column: combined cluster number  
-
-
-```
-$cat SMK_barcode.fasta
->SMK1
-ATTCAAGGGCAGCCGCGTCACGATTGGATACGACTGTTGGACCGG
->SMK2
-TGGATGGGATAAGTGCGTGATGGACCGAAGGGACCTCGTGGCCGG
->SMK3
-CGGCTCGTGCTGCGTCGTCTCAAGTCCAGAAACTCCGTGTATCCT
->SMK4
-ATTGGGAGGCTTTCGTACCGCTGCCGCCACCAGGTGATACCCGCT
->SMK5
-CTCCCTGGTGTTCAATACCCGATGTGGTGGGCAGAATGTGGCTGG
->SMK6
-TTACCCGCAGGAAGACGTATACCCCTCGTGCCAGGCGACCAATGC
-
-$cat SMK_linker.fasta
->smk_linker
-GTTGTCAAGATGCTACCGTTCAGAG
-
-$cat combine_cluster.tsv 
-1	1
-2	2
-3	2
-4	2
-5	3
-```
 

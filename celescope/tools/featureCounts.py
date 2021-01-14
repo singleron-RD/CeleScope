@@ -7,8 +7,9 @@ import logging
 import subprocess
 import glob
 import sys
+import pysam
 from celescope.tools.utils import format_number, log
-from celescope.tools.utils import glob_genomeDir
+from celescope.tools.utils import glob_genomeDir, gene_convert
 from celescope.tools.report import reporter
 
 
@@ -45,6 +46,28 @@ def format_stat(log, samplename):
             stat_fh.write('%s: %s\n' % (t, s))
     fh.close()
 
+@log
+def add_tag(bam, gtf):
+    id_name = gene_convert(gtf)
+    samfile = pysam.AlignmentFile(bam, "rb")
+    header = samfile.header
+    new_bam = pysam.AlignmentFile(
+        bam + ".temp", "wb", header=header)
+    for read in samfile:
+        attr = read.query_name.split('_')
+        barcode = attr[0]
+        umi = attr[1]
+        read.set_tag(tag='CB', value=barcode, value_type='Z')
+        read.set_tag(tag='UB', value=umi, value_type='Z')
+        if read.has_tag('XT'):
+            gene_id = read.get_tag('XT')
+            gene_name = id_name[gene_id]
+            read.set_tag(tag='GN', value=gene_name, value_type='Z')
+            read.set_tag(tag='GX', value=gene_id, value_type='Z')
+        new_bam.write(read)
+    new_bam.close()
+    cmd = f'mv {bam}.temp {bam}'
+    subprocess.check_call(cmd, shell=True)
 
 @log
 def featureCounts(args):
@@ -67,9 +90,14 @@ def featureCounts(args):
 
     subprocess.check_call(['which', 'samtools'])
 
+    bam_basename = os.path.basename(args.input)
+    bam = f'{args.outdir}/{bam_basename}.featureCounts.bam'
+
+    # add tag
+    add_tag(bam, gtf)
+
     # sort by name:BC and umi
     featureCounts.logger.info('samtools sort ...!')
-    bam_basename = os.path.basename(args.input)
     cmd = [
         'samtools',
         'sort',
@@ -79,10 +107,7 @@ def featureCounts(args):
         '-o',
         outPrefix +
         '_name_sorted.bam',
-        args.outdir +
-        '/' +
-        bam_basename +
-        '.featureCounts.bam']
+        bam]
     featureCounts.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
     featureCounts.logger.info('samtools sort done.')

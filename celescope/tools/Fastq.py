@@ -127,7 +127,6 @@ class Fastq():
     @staticmethod
     @log 
     def split_dict(input_dict: dict, num_parts: int) -> list:
-        list_len: int = len(input_dict)
         return [dict(list(input_dict.items())[i::num_parts])
             for i in range(num_parts)]
 

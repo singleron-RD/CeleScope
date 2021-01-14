@@ -16,7 +16,7 @@ from celescope.tools.report import reporter
 class Step_mapping():
 
     def __init__(self, sample, outdir, assay, thread, fq, genomeDir, 
-    out_unmapped=False, debug=False, outFilterMatchNmin=0, STAR_param=""):
+    out_unmapped=False, debug=False, outFilterMatchNmin=0, STAR_param="", sort_BAM=True):
         self.sample = sample
         self.outdir = outdir
         self.assay = assay
@@ -27,6 +27,19 @@ class Step_mapping():
         self.debug = debug
         self.outFilterMatchNmin = outFilterMatchNmin
         self.STAR_param = STAR_param
+        self.sort_BAM = sort_BAM
+
+        # set param
+        self.outPrefix = f'{self.outdir}/{self.sample}_'
+        self.STAR_map_log = f'{self.outdir}/{self.sample}_Log.final.out'
+        self.STAR_bam = f'{self.outdir}/{self.sample}_Aligned.sortedByCoord.out.bam'
+        if self.sort_BAM:
+            self.sort_suffix = 'SortedByCoordinate'
+        else:
+            self.sort_suffix = 'Unsorted'
+            self.unsort_STAR_bam = f'{self.outdir}/{self.sample}_Aligned.out.bam'
+
+
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % (outdir))
         self.stats = pd.Series()
@@ -135,12 +148,9 @@ class Step_mapping():
     
     @log
     def STAR(self):
-        self.outPrefix = f'{self.outdir}/{self.sample}_'
-        self.STAR_bam = f'{self.outdir}/{self.sample}_Aligned.sortedByCoord.out.bam'
-        self.STAR_map_log = f'{self.outdir}/{self.sample}_Log.final.out'    
         cmd = ['STAR', '--runThreadN', str(self.thread), '--genomeDir', self.genomeDir,
             '--readFilesIn', self.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax',
-            '1', '--outFileNamePrefix', self.outPrefix, '--outSAMtype', 'BAM', 'SortedByCoordinate',
+            '1', '--outFileNamePrefix', self.outPrefix, '--outSAMtype', 'BAM', self.sort_suffix,
             '--outFilterMatchNmin', str(self.outFilterMatchNmin)]
         if self.out_unmapped:
             cmd += ['--outReadsUnmapped', 'Fastx']
@@ -179,6 +189,8 @@ class Step_mapping():
             self.ribo()
         self.format_stat()
         self.report()
+        if not self.sort_BAM:
+            self.sort_bam()
     
     def report(self):
         t = reporter(
@@ -190,6 +202,11 @@ class Step_mapping():
             plot=self.plot)
         t.get_report()
 
+    @log
+    def sort_bam(self):
+        cmd = f'samtools sort {self.unsort_STAR_bam} -o {self.STAR_bam}'
+        Step_mapping.sort_bam.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
 
 def STAR(args):
     mapping = Step_mapping(

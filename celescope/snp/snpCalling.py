@@ -121,23 +121,16 @@ def call_snp(index, outdir, fasta):
     os.system(cmd_sort)
    
     # mpileup
-    out_bcf = f'{outdir}/cells/cell{index}/cell{index}.bcf'
+    out_vcf = f'{outdir}/cells/cell{index}/cell{index}.vcf'
     cmd_mpileup = (
         f'samtools mpileup -g -f '
         f'{fasta} '
         f'{sorted_bam} 2>/dev/null | '
-        f'bcftools call -mv -Ob '
-        f'-o {out_bcf} '
+        f'bcftools call -mv -Ov '
+        f'-o {out_vcf} '
         f'>/dev/null 2>&1 '
     )
     os.system(cmd_mpileup)
-
-    # view
-    out_vcf = f'{outdir}/cells/cell{index}/cell{index}.vcf'
-    cmd_view = (
-        f'bcftools view {out_bcf} > {out_vcf}'
-    )
-    os.system(cmd_view)
 
     # norm
     norm_vcf = f'{outdir}/cells/cell{index}/cell{index}_norm.vcf'

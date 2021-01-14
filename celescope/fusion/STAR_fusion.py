@@ -13,8 +13,10 @@ def STAR_fusion(args):
         args.input_read,
         args.genomeDir,
         outFilterMatchNmin = args.outFilterMatchNmin,
+        sort_BAM=False
     )
     s.STAR()
+    s.sort_bam()
 
 
 def get_opts_STAR_fusion(parser, sub_program):
