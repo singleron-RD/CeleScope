@@ -116,7 +116,7 @@ celescope rna run\
 
 `--chemistry` Chemistry version, default=auto. 
 
-`--thread` Number of threads to use, default=1
+`--thread` Number of threads to use, default=1.
 
 ### Single Cell VDJ
 
@@ -144,6 +144,6 @@ celescope vdj run\
 
 `--thread` Number of threads to use, default=1.
 
-`--match_dir` Optional. Matched scRNA-Seq directory after running CeleScope  
+`--match_dir` Optional. Matched scRNA-Seq directory after running CeleScope.  
 
 
