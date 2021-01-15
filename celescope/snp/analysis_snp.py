@@ -13,7 +13,7 @@ from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
 from celescope.tools.utils import glob_genomeDir, log, parse_annovar
 from celescope.tools.utils import cluster_tsne_list, marker_table, report_prepare, parse_vcf
-from .snpCalling import read_index
+from mutract.utils import read_CID
 
 
 class analysis_variant():
@@ -54,7 +54,7 @@ class analysis_variant():
             'CELL':'count'}).reset_index().sort_values(['CELL'],ascending=False)
 
         # vcf_tsne
-        df_index, df_valid = read_index(self.index_file)
+        df_index, df_valid = read_CID(self.index_file)
         df_vcf_barcode = pd.merge(self.df_vcf, df_valid, left_index=True, right_index=True, how="left")
         df_vcf_tsne = pd.merge(df_vcf_barcode, self.tsne_df, on="barcode", how="left")
 

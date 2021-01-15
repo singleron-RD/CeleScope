@@ -61,7 +61,7 @@ def arg_str(arg, arg_name):
     return ''
 
 
-def read_barcode_file(match_dir):
+def read_barcode_file(match_dir, return_file=False):
     '''
     multi version compatible
     '''
@@ -77,6 +77,8 @@ def read_barcode_file(match_dir):
         match_barcode_file3)[0]
     match_barcode, cell_total = read_one_col(match_barcode_file)
     match_barcode = set(match_barcode)
+    if return_file:
+        return match_barcode, cell_total, match_barcode_file
     return match_barcode, cell_total
 
 

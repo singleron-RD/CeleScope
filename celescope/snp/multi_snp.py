@@ -4,6 +4,7 @@ from celescope.tools.Multi import Multi
 
 
 class Multi_snp(Multi):
+    
     def custome_args(self):
         self.STAR_args()
         self.parser.add_argument('--gene_list', help="gene_list", required=True)
@@ -22,6 +23,9 @@ class Multi_snp(Multi):
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
         if self.args.umi_consensus:
             fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_consensus.fastq.gz'
+        if self.outFilterMatchNmin == 0:
+            self.outFilterMatchNmin = 35
+            
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
