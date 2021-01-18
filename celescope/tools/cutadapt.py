@@ -55,9 +55,9 @@ def read_adapter_fasta(adapter_fasta):
     return adapter_args
 
 @log 
-def consensus_fq(fq, outdir, sample):
+def consensus_fq(fq, outdir, sample, thread):
     fq_obj = Fastq(fq)
-    fq_obj.umi_dumb_consensus()
+    fq_obj.umi_dumb_consensus_concurrent(thread)
     out_fastq = fq_obj.write_consensus_fastq(outdir,sample)
     return out_fastq
 
@@ -99,7 +99,7 @@ def cutadapt(args):
     format_stat(args.outdir + '/cutadapt.log', args.sample)
 
     if args.umi_consensus:
-        _out_fastq = consensus_fq(out_fq2, args.outdir, args.sample)
+        _out_fastq = consensus_fq(out_fq2, args.outdir, args.sample, args.thread)
 
     t = reporter(
         name='cutadapt',
