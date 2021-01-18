@@ -1,52 +1,29 @@
-#!/bin/env python
-# coding=utf8
-
 import os
-import logging
-logger1 = logging.getLogger(__name__)
+import subprocess
+from celescope.tools.utils import log
+from celescope.tools.STAR import Step_mapping
 
-
+@log
 def STAR_virus(args):
 
-    logger1.info('align virus genome...')
-
-    sample = args.sample
-    outdir = args.outdir
-    input_read = args.input_read
-    virus_genomeDir = args.virus_genomeDir
-    thread = args.thread
-    outFilterMatchNmin = args.outFilterMatchNmin
-
     # check dir
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % (outdir))
+    if not os.path.exists(args.outdir):
+        os.system('mkdir -p %s' % (args.outdir))
 
-    out_prefix = outdir + "/" + sample + "_virus_"
-    out_BAM = out_prefix + "Aligned.sortedByCoord.out.bam"
-
-    # host genome align
-    cmd = "STAR \
- --genomeDir {genome} \
- --readFilesIn {input_read}\
- --outFilterMatchNmin 35\
- --outSAMtype BAM SortedByCoordinate\
- --runThreadN {runThreadN}\
- --limitBAMsortRAM 1933647594\
- --outFileNamePrefix {out_prefix}".format(genome=virus_genomeDir,
-                                          input_read=input_read, runThreadN=thread, out_prefix=out_prefix)
-
-    # add gz
-    if input_read[len(input_read) - 2:] == "gz":
-        cmd += ' --readFilesCommand zcat'
-
-    logger1.info(cmd)
-    os.system(cmd)
-    logger1.info("align virus genome done.")
-
-    cmd = "samtools index {out_BAM}".format(out_BAM=out_BAM)
-    logger1.info(cmd)
-    os.system(cmd)
-    logger1.info("index done.")
+    mapping = Step_mapping(
+        args.sample, 
+        args.outdir, 
+        args.assay, 
+        args.thread,
+        args.input_read, 
+        args.virus_genomeDir,
+        outFilterMultimapNmax=10,
+        outFilterMatchNmin=args.outFilterMatchNmin,
+        sort_BAM=False
+    )
+    mapping.STAR()
+    mapping.sort_bam()
+    mapping.index_bam()
 
 
 def get_opts_STAR_virus(parser, sub_program):

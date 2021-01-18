@@ -16,7 +16,9 @@ from celescope.tools.report import reporter
 class Step_mapping():
 
     def __init__(self, sample, outdir, assay, thread, fq, genomeDir, 
-    out_unmapped=False, debug=False, outFilterMatchNmin=0, STAR_param="", sort_BAM=True):
+    out_unmapped=False, debug=False, outFilterMatchNmin=0, STAR_param="", sort_BAM=True,
+    outFilterMultimapNmax=1,
+    ):
         self.sample = sample
         self.outdir = outdir
         self.assay = assay
@@ -28,6 +30,7 @@ class Step_mapping():
         self.outFilterMatchNmin = outFilterMatchNmin
         self.STAR_param = STAR_param
         self.sort_BAM = sort_BAM
+        self.outFilterMultimapNmax = outFilterMultimapNmax
 
         # set param
         self.outPrefix = f'{self.outdir}/{self.sample}_'
@@ -149,11 +152,13 @@ class Step_mapping():
     @log
     def STAR(self):
         cmd = ['STAR', '--runThreadN', str(self.thread), '--genomeDir', self.genomeDir,
-            '--readFilesIn', self.fq, '--readFilesCommand', 'zcat', '--outFilterMultimapNmax',
-            '1', '--outFileNamePrefix', self.outPrefix, '--outSAMtype', 'BAM', self.sort_suffix,
+            '--readFilesIn', self.fq, '--outFilterMultimapNmax', str(self.outFilterMultimapNmax), 
+            '--outFileNamePrefix', self.outPrefix, '--outSAMtype', 'BAM', self.sort_suffix,
             '--outFilterMatchNmin', str(self.outFilterMatchNmin)]
         if self.out_unmapped:
             cmd += ['--outReadsUnmapped', 'Fastx']
+        if self.fq[len(self.fq) - 2:] == "gz":
+            cmd += ['--readFilesCommand', 'zcat']
         cmd = ' '.join(cmd)
         if self.STAR_param:
             cmd += (" " + self.STAR_param)
@@ -207,6 +212,13 @@ class Step_mapping():
         cmd = f'samtools sort {self.unsort_STAR_bam} -o {self.STAR_bam}'
         Step_mapping.sort_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
+
+    @log
+    def index_bam(self):
+        cmd = f"samtools index {self.STAR_bam}"
+        Step_mapping.index_bam.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+
 
 def STAR(args):
     mapping = Step_mapping(
