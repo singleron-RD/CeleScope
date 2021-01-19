@@ -10,6 +10,7 @@ def STAR_virus(args):
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % (args.outdir))
 
+    sample = f'{args.sample}_virus'
     mapping = Step_mapping(
         args.sample, 
         args.outdir, 
