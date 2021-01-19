@@ -12,7 +12,7 @@ def STAR_virus(args):
 
     sample = f'{args.sample}_virus'
     mapping = Step_mapping(
-        args.sample, 
+        sample, 
         args.outdir, 
         args.assay, 
         args.thread,
