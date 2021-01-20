@@ -55,6 +55,25 @@ class Analysis():
         table_dict['id'] = id
         return table_dict
 
+    @staticmethod
+    def cluster_tsne_list(tsne_df):
+        """
+        tSNE_1	tSNE_2	cluster Gene_Counts
+        return data list
+        """
+        sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
+        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
+        res = []
+        for cluster in sorted(tsne_df.cluster.unique()):
+            sub_df = tsne_df[tsne_df.cluster == cluster]
+            name = "cluster {cluster}({percent}%)".format(
+                cluster=cluster, percent=percent_df[cluster])
+            tSNE_1 = list(sub_df.tSNE_1)
+            tSNE_2 = list(sub_df.tSNE_2)
+            res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
+        return res
+
+
     def report(self, stat=True):
         if stat:
             stat_file = self.outdir + "/stat.txt"
