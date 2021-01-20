@@ -63,8 +63,9 @@ class Multi_snp(Multi):
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
-        vcf_anno = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}.vcf'
-        index_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_cell_index.tsv'
+        vcf = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_merged.vcf'
+        CID_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_CID.tsv'
+        variant_count_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_variant_count.tsv'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -73,11 +74,12 @@ class Multi_snp(Multi):
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
             f'--match_dir {self.col4_dict[sample]} '
-            f'--vcf_anno {vcf_anno} '
-            f'--index_file {index_file} '
+            f'--vcf {vcf} '
+            f'--CID_file {CID_file} '
             f'--annovar_config {self.annovar_config} '
+            f'--variant_count_file {variant_count_file} '
         )
-        self.process_cmd(cmd, step, sample, m=8, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=8, x=1)
 
 
 def main():

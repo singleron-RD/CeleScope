@@ -18,7 +18,7 @@
                 dom: 'Bfrtip',
                 buttons: ['excel']
             });
-            table.columns(-1).order('desc').draw();
+            table.draw();
     });
 </script>
 
@@ -136,9 +136,9 @@
       
       <hr />
 
-        <h3>{{variant_table['title'] | safe}}</h3>
+        <h3>{{table_dict['title'] | safe}}</h3>
         <div style=" margin-left: 3%; margin-right:3%;">
-            {{variant_table['table'] | safe}}
+            {{table_dict['table'] | safe}}
         </div>
         
 

@@ -691,9 +691,9 @@ def report_prepare(outdir, **kwargs):
         json.dump(data, fh)
 
 
-def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['DP', 'CELL', 'DP4']):
+def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['VID','CID']):
     vcf = pysam.VariantFile(vcf_file)
-    df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos + ['GT'])
+    df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
     rec_dict = {}
     for rec in vcf.fetch():
 
@@ -705,9 +705,11 @@ def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['DP', 'CELL', '
         for info in infos:
             rec_dict[info] = rec.info[info]
 
+        '''
         rec_dict['GT'] = [s['GT'] for s in rec.samples.values()][0]
         rec_dict['GT'] = [str(item) for item in rec_dict['GT']]
         rec_dict['GT'] = '/'.join(rec_dict['GT'])
+        '''
 
         df = df.append(pd.Series(rec_dict),ignore_index=True)
     return df
