@@ -38,7 +38,7 @@ setuptools.setup(
         'jinja2>=2.10',
         'matplotlib>=2.2.2',
         'xopen>=0.5.0',
-        'editdistance>=0.5.3'
-        'mutract'
+        'editdistance>=0.5.3',
+        'mutract',
     ]
 )
