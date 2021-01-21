@@ -32,7 +32,7 @@ class Test_Fastq(unittest.TestCase):
         fq_obj.write_consensus_fasta(outdir,sample)
         fq_obj.write_consensus_fastq(outdir,sample)
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_concurrent(self):
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/variant/20201224_indel/consensus/')
         outdir = './S32_SUR0528_drug_S203_TS/02.cutadapt'
@@ -43,7 +43,7 @@ class Test_Fastq(unittest.TestCase):
         #fq_obj.write_consensus_fasta(outdir,sample)
         #fq_obj.write_consensus_fastq(outdir,sample)
 
-    @unittest.skip('pass')
+    #@unittest.skip('pass')
     def test_single(self):
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/variant/20201224_indel/consensus/')
         outdir = './S32_SUR0528_drug_S203_TS/02.cutadapt'

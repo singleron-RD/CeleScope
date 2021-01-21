@@ -106,10 +106,14 @@ class Fastq():
         '''
         consensus_dict = genDict(dim=2, valType = list)
         fq_dict = self.split_fq()
+        n_umi = 0
         for barcode in fq_dict:
             for umi in fq_dict[barcode]:
                 consenesus, consensus_qual = Fastq.dumb_consensus(fq_dict[barcode][umi], threshold=threshold)
                 consensus_dict[barcode][umi] = [consenesus, consensus_qual]
+                n_umi += 1
+                if n_umi % 10000 == 0:
+                    Fastq.umi_dumb_consensus.logger.info(f'{n_umi} UMI done.')
         self.consensus_dict = consensus_dict
 
     @staticmethod
