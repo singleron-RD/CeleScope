@@ -180,7 +180,7 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
 
 
 @log 
-def consensus_fq(fq, outdir, sample):
+def consensus_fq(fq, outdir, sample, thread):
     fq_obj = Fastq(fq)
     fq_obj.umi_dumb_consensus()
     out_fasta = fq_obj.write_consensus_fasta(outdir,sample)
@@ -220,7 +220,7 @@ def mapping_vdj(args):
     type = args.type
     debug = args.debug
     assay = args.assay
-    thread = args.thread
+    thread = int(args.thread)
     not_consensus = args.not_consensus
     species = args.species
 
@@ -230,7 +230,7 @@ def mapping_vdj(args):
     # umi consensus
     input_file = fq
     if not not_consensus:
-        input_file = consensus_fq(fq, outdir, sample)
+        input_file = consensus_fq(fq, outdir, sample, thread)
     alignments = mixcr(outdir, sample, input_file, thread, species)
 
     # summary

@@ -57,7 +57,7 @@ def read_adapter_fasta(adapter_fasta):
 @log 
 def consensus_fq(fq, outdir, sample, thread):
     fq_obj = Fastq(fq)
-    fq_obj.umi_dumb_consensus_concurrent(thread)
+    fq_obj.umi_dumb_consensus()
     out_fastq = fq_obj.write_consensus_fastq(outdir,sample)
     return out_fastq
 
