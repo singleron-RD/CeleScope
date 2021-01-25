@@ -195,6 +195,7 @@ def mixcr(outdir, sample, input_file, thread, species):
 
     cmd = f"""
 mixcr align \
+--force-overwrite \
 --species {species} \
 -t {thread} \
 --not-aligned-R1 {not_align_fq} \
