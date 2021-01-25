@@ -18,7 +18,10 @@ class analysis_variant(Analysis):
     def get_df_count_tsne(self, variant_count_file, CID_file):
         df_vc = pd.read_csv(variant_count_file, sep='\t')
         df_vc = df_vc[df_vc["alt_count"] > 0]
-        df_vc_cell = df_vc.groupby('CID').agg('count')
+        df_vc_cell = df_vc.groupby('CID').agg({
+            'alt_count':'count',
+            'VID':list,
+        })
 
         df_CID, df_valid = read_CID(CID_file)
         df_CID = df_CID.reset_index()
@@ -26,17 +29,18 @@ class analysis_variant(Analysis):
 
         df_vc_barcode = pd.merge(df_vc_cell, df_CID, on='CID')
         df_vc_barcode_tsne = pd.merge(df_vc_barcode, self.tsne_df, on=['barcode','CID'], how='right')
-        df_vc_barcode_tsne['value'] = df_vc_barcode_tsne['VID']
+        df_vc_barcode_tsne['value'] = df_vc_barcode_tsne['alt_count']
         df_vc_barcode_tsne['value'] = df_vc_barcode_tsne['value'].fillna(0)
         df_vc_barcode_tsne['value'].astype('int32')
         self.df_count_tsne = df_vc_barcode_tsne
 
     def get_count_tsne(self):
         def return_text(row):
-            text = f'Variants:{str(int(row["value"]))}<br>CID:{row["CID"]}'
+            text = f'CID:{row["CID"]} <br>Variants:{str(int(row["value"]))} <br>VID:{row["VID"]}'
             return text
         tSNE_1 = list(self.df_count_tsne.tSNE_1)
         tSNE_2 = list(self.df_count_tsne.tSNE_2)
+        print(self.df_count_tsne)
         text = list(self.df_count_tsne.apply(return_text, axis=1))
         value = list(self.df_count_tsne.value)
         title = 't-SNE plot Colored by Cell Variant Counts'
