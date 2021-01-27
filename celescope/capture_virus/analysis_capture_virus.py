@@ -11,6 +11,7 @@ from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
 from celescope.tools.utils import glob_genomeDir, log
 from celescope.tools.Analysis import Analysis
+from .otsu import *
 import celescope.tools
 
 toolsdir = os.path.dirname(celescope.tools.__file__)
@@ -52,6 +53,22 @@ class Analysis_capture_virus(Analysis):
         )
         self.report()
 
+@log
+def otsu_thresh(virus_file, outdir, sample):
+    df = pd.read_csv(virus_file, sep='\t')
+    array = np.log10(df["UMI"])
+    hist = array2hist(array)
+    thresh = threshold_otsu(hist)
+    fname = f'{outdir}/{sample}_otsu_plot.png'
+    makePlot(hist, thresh, fname)
+
+    threshold = int(10 ** thresh + 1)
+    otsu_thresh.logger.info(f'otsu UMI threshold: {threshold}')
+    df_thresh = df[df["UMI"] >= threshold]
+    otsu_virus_file = f'{outdir}/{sample}_otsu_count.tsv'
+    df_thresh.to_csv(otsu_virus_file, sep='\t')
+    return otsu_virus_file
+
 
 @log
 def analysis_capture_virus(args):
@@ -62,9 +79,13 @@ def analysis_capture_virus(args):
     virus_file = args.virus_file
     match_dir = args.match_dir
     assay = args.assay
+    umi_threshold = args.umi_threshold
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % (outdir))
+
+    if umi_threshold == 'otsu':
+        virus_file = otsu_thresh(virus_file, outdir, sample)        
 
     ana = Analysis_capture_virus(     
         sample,
@@ -77,7 +98,10 @@ def analysis_capture_virus(args):
     ana.run()
 
 
+
 def get_opts_analysis_capture_virus(parser, sub_program):
+    parser.add_argument("--umi_threshold", help='method to find virus UMI threshold', 
+        choices=['otsu', 'none'], default='otsu')
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)

@@ -7,10 +7,13 @@ class Multi_capture_virus(Multi):
     def custome_args(self):
         self.STAR_args()
         self.parser.add_argument('--virus_genomeDir', help='virus_genomeDir', required=True)
+        self.parser.add_argument("--umi_threshold", help='method to find virus UMI threshold', 
+            choices=['otsu', 'none'], default='otsu')
 
     def read_custome_args(self):
         self.read_STAR_args()
         self.virus_genomeDir = self.args.virus_genomeDir
+        self.umi_threshold = self.args.umi_threshold
 
     def STAR_virus(self, sample):
         step = 'STAR_virus'
@@ -55,9 +58,9 @@ class Multi_capture_virus(Multi):
             f'--assay {self.__ASSAY__} '
             f'--virus_file {virus_file} '
             f'--match_dir {self.col4_dict[sample]} '
-
+            f'--umi_threshold {self.umi_threshold} '
         )
-        self.process_cmd(cmd, step, sample, m=15, x=1)
+        self.process_cmd(cmd, step, sample, m=5, x=1)
 
 
 def main():
