@@ -17,7 +17,7 @@ matrix_dir = argv$matrix_dir
 threshold = as.numeric(argv$threshold)
 
 mtx = Seurat::Read10X(matrix_dir)
-bcrank = barcodeRanks(mtx, lower=threshold/10)
+bcrank = barcodeRanks(mtx, lower=threshold/2)
 uniq <- !duplicated(bcrank$rank)
 inflection = as.numeric(bcrank$inflection)
 knee = as.numeric(bcrank$knee)
