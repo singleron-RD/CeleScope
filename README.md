@@ -12,30 +12,25 @@ GEXSCOPE Single Cell Analysis Tool Kit
 ## Installation
 
 
-1. `git clone https://github.com/zhouyiqi91/CeleScope.git`
-2. Add channels to ~/.condarc
-```
-channels:
-  - conda-forge
-  - bioconda
-  - r
-  - defaults
-  - imperial-college-research-computing
-```
-3. Install conda packages
+1. Clone repo
+`git clone https://github.com/singleron-RD/CeleScope.git`
+
+2. Install conda packages
 ```
 cd CeleScope
 conda create -n celescope
 conda activate celescope
-conda install --file conda_pkgs.txt
+conda install --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
 ```
-4. Install celescope
+
+3. Install celescope
 ```
 pip install celescope
 # if you are in china, you can use pypi mirror to accelerate downloading
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope
 ```
-5. Install Beta version(optional)
+
+4. Install Beta version(optional)
 ```
 # if you want to use Beta version of celescope
 python setup.py install
