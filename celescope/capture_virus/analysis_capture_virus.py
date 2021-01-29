@@ -62,7 +62,7 @@ def otsu_thresh(virus_file, outdir, sample):
     fname = f'{outdir}/{sample}_otsu_plot.png'
     makePlot(hist, thresh, fname)
 
-    threshold = int(10 ** thresh + 1)
+    threshold = int(10 ** thresh)
     otsu_thresh.logger.info(f'otsu UMI threshold: {threshold}')
     df_thresh = df[df["UMI"] >= threshold]
     otsu_virus_file = f'{outdir}/{sample}_otsu_count.tsv'

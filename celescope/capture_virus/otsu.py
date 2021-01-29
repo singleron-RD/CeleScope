@@ -31,7 +31,8 @@ def threshold_otsu(hist):
     # The last value of ``weight1``/``mean1`` should pair with zero values in
     # ``weight2``/``mean2``, which do not exist.
     variance12 = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
-
+    if len(variance12) == 0:
+        return 0
     idx = np.nanargmax(variance12)
     threshold = bin_centers[idx]
 
