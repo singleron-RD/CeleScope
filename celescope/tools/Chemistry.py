@@ -20,8 +20,8 @@ class Chemistry():
             chemistry = self.get_chemistry(fastq1)
             chemistry_list.append(chemistry)
         if len(set(chemistry_list)) != 1:
-            raise Exception('multiple chemistry found!' + str(chemistry_list))
-        return chemistry
+           Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
+        return chemistry_list
 
     @log
     def get_chemistry(self, fq1):
@@ -34,6 +34,7 @@ class Chemistry():
         linker_4_file, _whitelist = get_scope_bc('scopeV2.2.1')
         linker_4_list, _num = read_one_col(linker_4_file)
         linker_4_dict = defaultdict(int)
+        linker_wrong_dict = defaultdict(int)
         pattern_dict = parse_pattern('C8L16C8L16C8L1U12T18')
         T4_n = 0
         L57C_n = 0
@@ -51,6 +52,8 @@ class Chemistry():
                 linker = seq_ranges(seq, pattern_dict=pattern_dict['L'])
                 if linker in linker_4_list:
                     linker_4_dict[linker] += 1
+                else:
+                    linker_wrong_dict[linker] += 1
 
         percent_T4 =  T4_n / self.nRead 
         percent_L57C = L57C_n / self.nRead
@@ -67,6 +70,7 @@ class Chemistry():
                     valid_linker_type += 1
             Chemistry.get_chemistry.logger.info(linker_4_dict)
             if valid_linker_type == 0:
+                print(linker_wrong_dict)
                 raise Exception('auto chemistry detection failed!')
             elif valid_linker_type == 1:
                 chemistry = 'scopeV2.1.1'

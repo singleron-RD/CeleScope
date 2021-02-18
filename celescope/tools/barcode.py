@@ -232,43 +232,14 @@ def barcode(args):
     # get chemistry
     if args.chemistry == 'auto':
             ch = Chemistry(fq1)
-            chemistry = ch.check_chemistry()
+            chemistry_list = ch.check_chemistry()
     else:
-        chemistry = args.chemistry
-
-    # get linker and whitelist
-    bc_pattern = __PATTERN_DICT__[chemistry]
-    if (bc_pattern):
-        (linker, whitelist) = get_scope_bc(chemistry)
-    else:
-        bc_pattern = args.pattern
-        linker = args.linker
-        whitelist = args.whitelist
-    if (not linker) or (not whitelist) or (not bc_pattern):
-        raise Exception("invalid chemistry or [pattern,linker,whitelist]")
-        
-    # parse pattern to dict, C8L10C8L10C8U8
-    # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
-    # [[44, 52]], 'L': [[8, 18], [26, 36]]})
-    pattern_dict = parse_pattern(bc_pattern)
-
-    # check linker
-    check_seq(linker, pattern_dict, "L")
-
-    bool_T = True if 'T' in pattern_dict else False
-    bool_L = True if 'L' in pattern_dict else False
-
-    C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
+        chemistry_list = [args.chemistry]
 
     barcode_qual_Counter = Counter()
     umi_qual_Counter = Counter()
     C_U_base_Counter = Counter()
     args.lowQual = ord2chr(args.lowQual)
-
-    # generate list with mismatch 1, substitute one base in raw sequence with
-    # A,T,C,G
-    barcode_dict = generate_seq_dict(whitelist, n=1)
-    linker_dict = generate_seq_dict(linker, n=2)
 
     # prepare
     out_fq2 = args.outdir + '/' + args.sample + '_2.fq.gz'
@@ -299,6 +270,31 @@ def barcode(args):
     if fq_number != len(fq2_list):
         raise Exception('fastq1 and fastq2 do not have same file number!')
     for i in range(fq_number):
+
+        chemistry = chemistry_list[i]
+        # get linker and whitelist
+        bc_pattern = __PATTERN_DICT__[chemistry]
+        if (bc_pattern):
+            (linker, whitelist) = get_scope_bc(chemistry)
+        else:
+            bc_pattern = args.pattern
+            linker = args.linker
+            whitelist = args.whitelist
+        if (not linker) or (not whitelist) or (not bc_pattern):
+            raise Exception("invalid chemistry or [pattern,linker,whitelist]")
+        # parse pattern to dict, C8L10C8L10C8U8
+        # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
+        # [[44, 52]], 'L': [[8, 18], [26, 36]]})
+        pattern_dict = parse_pattern(bc_pattern)
+        # check linker
+        check_seq(linker, pattern_dict, "L")
+        bool_T = True if 'T' in pattern_dict else False
+        bool_L = True if 'L' in pattern_dict else False
+        C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
+        # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
+        barcode_dict = generate_seq_dict(whitelist, n=1)
+        linker_dict = generate_seq_dict(linker, n=2)
+
         fh1 = xopen(fq1_list[i])
         fh2 = xopen(fq2_list[i])
         g1 = read_fastq(fh1)
@@ -394,6 +390,7 @@ def barcode(args):
 
             # new readID: @barcode_umi_old readID
             fh3.write(f'@{cb}_{umi}_{read_name_probe}_{total_num}\n{seq2}\n+\n{qual2}\n')
+        barcode.logger.info(fq1_list[i] + ' finished.')
 
     fh3.close()
 

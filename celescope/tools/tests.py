@@ -110,7 +110,7 @@ class Tests(unittest.TestCase):
 
     @unittest.skip('pass')
     def test_call_cells(self):
-        df = pd.read_csv('/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz',sep='\t')
+        #df = pd.read_csv('/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz',sep='\t')
         os.chdir = '/SGRNJ02/RandD4/RD2019016/20201209/'
         sample = 'J-Demo_Y1'
         outdir = f'{sample}/05.count'
@@ -138,10 +138,10 @@ class Tests(unittest.TestCase):
 
     @unittest.skip('pass')
     def test_count_pipe(self):
-        count_detail_file = '/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz'
+        #count_detail_file = '/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz'
         df = pd.read_csv(count_detail_file, sep='\t')
         dir_name = 'all_matrix'
-        os.chdir('/SGRNJ02/RandD4/RD2019016/20201209/')
+        #os.chdir('/SGRNJ02/RandD4/RD2019016/20201209/')
         sample = 'J-Demo_Y1'
         outdir = f'{sample}/05.count'
         rescue = True

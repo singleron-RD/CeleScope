@@ -26,8 +26,10 @@ def sample_info(args):
         fq1 = args.fq1
         ch = Chemistry(fq1)
         chemistry = ch.check_chemistry()
+        chemistry = ",".join(set(chemistry))
     else:
         chemistry = args.chemistry
+    
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % outdir)
