@@ -158,13 +158,21 @@ def link_data(outdir, fq_dict):
             fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
 
 
+def generic_open(file_name, mode='rt'):
+    if file_name.endswith('.gz'):
+        file_obj = gzip.open(file_name, mode)
+    else:
+        file_obj = open(file_name, mode)
+    return file_obj
+
+
 def gene_convert(gtf_file):
 
     gene_id_pattern = re.compile(r'gene_id "(\S+)";')
     gene_name_pattern = re.compile(r'gene_name "(\S+)"')
     id_name = {}
     c = Counter()
-    with open(gtf_file) as f:
+    with generic_open(gtf_file) as f:
         for line in f:
             if not line.strip():
                 continue
