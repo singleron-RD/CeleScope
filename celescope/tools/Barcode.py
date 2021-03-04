@@ -57,11 +57,11 @@ class Barcode():
     '''
     @log
     def get_chemistry(self):
-        '''
-        'scopeV2.0.1': 'C8L16C8L16C8L1U8T18'
-        'scopeV2.1.1': 'C8L16C8L16C8L1U12T18'
-        'scopeV2.2.1': 'C8L16C8L16C8L1U12T18' with 4 types of linkers
-        '''
+
+        # scopeV2.0.1: 'C8L16C8L16C8L1U8T18'
+        # scopeV2.1.1: 'C8L16C8L16C8L1U12T18'
+        # scopeV2.2.1: 'C8L16C8L16C8L1U12T18' with 4 types of linkers
+
         # init
         linker_4_file, _whitelist = Barcode.get_scope_bc('scopeV2.2.1')
         linker_4_list, _num = read_one_col(linker_4_file)
