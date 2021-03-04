@@ -67,7 +67,7 @@ class analysis_variant(Analysis):
         df_vcf = parse_vcf(vcf_file, infos=['VID','CID'])
         df_annovar = self.annovar(vcf_file, annovar_config)
         df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
-        df_vcf["nCell"] = df_vcf["CID"].apply(func=lambda row:len(row))
+        df_vcf["nCell"] = df_vcf["CID"].apply(func=lambda row:1 if isinstance(row,str) else len(row))
 
         out_df_vcf = f'{self.outdir}/{self.sample}_variant_table.tsv'
         df_vcf.to_csv(out_df_vcf, sep='\t', index=False)
