@@ -73,7 +73,10 @@ def add_tag(bam, gtf):
 def featureCounts(args):
 
     # check
-    _refFlat, gtf = glob_genomeDir(args.genomeDir)
+    if args.genomeDir and args.genomeDir != "None":
+        _refFlat, gtf = glob_genomeDir(args.genomeDir)
+    else:
+        gtf = args.gtf
 
     # check dir
     if not os.path.exists(args.outdir):
@@ -125,13 +128,13 @@ def featureCounts(args):
 
 
 def get_opts_featureCounts(parser, sub_program):
-
+    parser.add_argument('--gtf', help='gtf file path')
     parser.add_argument(
         '--gtf_type',
         help='Specify feature type in GTF annotation',
         default='exon')
     if sub_program:
-        parser.add_argument('--genomeDir', required=True)
+        parser.add_argument('--genomeDir')
         parser.add_argument('--thread', default=1)
         parser.add_argument('--input', required=True)
         #parser.add_argument('--format', default='BAM')

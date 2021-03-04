@@ -372,7 +372,10 @@ def count(args):
     rescue = args.rescue
 
     # check
-    refFlat, gtf_file = glob_genomeDir(args.genomeDir)
+    if args.genomeDir and args.genomeDir != "None":
+        _refFlat, gtf_file = glob_genomeDir(args.genomeDir)
+    else:
+        gtf_file = args.gtf
 
     # 检查和创建输出目录
     if not os.path.exists(outdir):
@@ -436,10 +439,8 @@ def get_opts_count(parser, sub_program):
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--bam', required=True)
         parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument(
-            '--genomeDir',
-            help='genome directory',
-            required=True)
+        parser.add_argument('--genomeDir', help='genome directory')
+        parser.add_argument('--gtf', help='gtf file path')
     parser.add_argument(
         '--cells',
         help='expected number of cells',
