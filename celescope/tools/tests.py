@@ -115,7 +115,7 @@ class Tests(unittest.TestCase):
         outdir = f'{sample}/05.count'
         df = pd.read_csv(f'{outdir}/{sample}_count_detail.txt.gz',sep='\t')
         outdir = f'{sample}/05.count'
-        cell_calling_method = 'force'
+        cell_calling_method = 'cellranger3'
         force_cell_num = 1000
         expected_cell_num = 3000
         all_matrix_10X_dir = f'{outdir}/{sample}_all_matrix'

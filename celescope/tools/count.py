@@ -16,6 +16,7 @@ from scipy.sparse import csr_matrix, coo_matrix
 import pysam
 from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
 from celescope.tools.report import reporter
+from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 
 
 toolsdir = os.path.dirname(__file__)
@@ -119,7 +120,7 @@ def cell_calling(cell_calling_method, force_cell_num, expected_cell_num, all_mat
     elif cell_calling_method == 'auto':
         cell_bc, UMI_threshold = auto_cell(df_sum, expected_cell_num)
     elif cell_calling_method == 'cellranger3':
-        cell_bc, UMI_threshold = cellranger3_cell()
+        cell_bc, UMI_threshold = cellranger3_cell(all_matrix_10X_dir, expected_cell_num, df_sum)
     elif cell_calling_method == 'inflection':
         _cell_bc, UMI_threshold = auto_cell(df_sum, expected_cell_num)
         cell_bc, UMI_threshold = inflection_cell(outdir, sample, all_matrix_10X_dir, df_sum, UMI_threshold)
@@ -150,9 +151,13 @@ def force_cell(force_cell_num, df_sum):
     df_sub = sorted_df.iloc[index_low:index_high + 1, :]
     threshold = df_sub.iloc[np.argmax(
         np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
-    validated_barcodes = get_validated_barcodes(df_sum, threshold, col='UMI')
+    cell_bc = get_cell_bc(df_sum, threshold, col='UMI')
 
-    return validated_barcodes, threshold
+    return cell_bc, threshold
+
+
+def find_threshold(df_sum, idx):
+    return int(df_sum.iloc[idx - 1, df_sum.columns == 'UMI'])
 
 
 @log
@@ -164,15 +169,18 @@ def auto_cell(df_sum, expected_cell_num):
     if idx == 0:
         sys.exit("cell number equals zero!")
     # calculate read counts threshold
-    threshold = int(df_sum.iloc[idx - 1, df_sum.columns == col] * 0.1)
+    threshold = int(find_threshold(df_sum, idx) * 0.1)
     threshold = max(1, threshold)
-    validated_barcodes = get_validated_barcodes(df_sum, threshold)
+    cell_bc = get_cell_bc(df_sum, threshold)
 
-    return validated_barcodes, threshold
+    return cell_bc, threshold
 
 
-def cellranger3_cell():
-    pass
+@log
+def cellranger3_cell(all_matrix_10X_dir, expected_cell_num, df_sum):
+    cell_bc, initial_cell_num = cell_calling_3(all_matrix_10X_dir, expected_cell_num)
+    threshold = find_threshold(df_sum, initial_cell_num)
+    return cell_bc, threshold
 
 
 @log
@@ -191,9 +199,9 @@ def inflection_cell(outdir, sample, all_matrix_10X_dir, df_sum, threshold):
     df = pd.read_csv(out_file, sep='\t')
     inflection = int(df.loc[:,'inflection'])
     threshold = inflection
-    validated_barcodes = get_validated_barcodes(df_sum, threshold)
+    cell_bc = get_cell_bc(df_sum, threshold)
 
-    return validated_barcodes, threshold
+    return cell_bc, threshold
 
 
 @log
@@ -210,7 +218,7 @@ def get_df_sum(df, col='UMI'):
     df_sum = df_sum.sort_values(col, ascending=False) 
     return df_sum
 
-def get_validated_barcodes(df_sum, threshold, col='UMI'):
+def get_cell_bc(df_sum, threshold, col='UMI'):
     return list(df_sum[df_sum[col] >= threshold].index)
 
 @log
@@ -229,14 +237,13 @@ def plot_barcode_UMI(df_sum, threshold, expected_cell_num, cell_num, outdir, sam
     plt.savefig(out_plot)
 
 
-def get_cell_stats(df_sum, threshold, marked_counts_file):
-    validated_barcodes = get_validated_barcodes(df_sum, threshold)
+def get_cell_stats(df_sum, cell_bc, marked_counts_file):
     df_sum.loc[:, 'mark'] = 'UB'
-    df_sum.loc[df_sum.index.isin(validated_barcodes), 'mark'] = 'CB'
+    df_sum.loc[df_sum.index.isin(cell_bc), 'mark'] = 'CB'
     df_sum.to_csv(marked_counts_file, sep='\t')
     CB_describe = df_sum.loc[df_sum['mark'] == 'CB', :].describe()
 
-    return validated_barcodes, CB_describe
+    return CB_describe
 
 
 def write_matrix_10X(table, id_name, matrix_10X_dir):
@@ -255,14 +262,14 @@ def write_matrix_10X(table, id_name, matrix_10X_dir):
 
 
 @log
-def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=None):
+def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None):
     matrix_10X_dir = f"{outdir}/{sample}_{dir_name}/"
     if not os.path.exists(matrix_10X_dir):
         os.mkdir(matrix_10X_dir)
     id_name = gene_convert(gtf_file)
 
-    if validated_barcodes:
-        df = df.loc[df['Barcode'].isin(validated_barcodes), :]
+    if cell_bc is not None:
+        df = df.loc[df['Barcode'].isin(cell_bc), :]
     
     df_UMI = df.groupby(['geneID','Barcode']).agg({'UMI':'count'})
     mtx= coo_matrix((df_UMI.UMI, (df_UMI.index.labels[0], df_UMI.index.labels[1])))
@@ -280,12 +287,12 @@ def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_ba
 
 
 @log
-def expression_matrix(df, validated_barcodes, outdir, sample, gtf_file):
+def expression_matrix(df, cell_bc, outdir, sample, gtf_file):
 
     id_name = gene_convert(gtf_file)
 
     df.loc[:, 'mark'] = 'UB'
-    df.loc[df['Barcode'].isin(validated_barcodes), 'mark'] = 'CB'
+    df.loc[df['Barcode'].isin(cell_bc), 'mark'] = 'CB'
     CB_total_Genes = df.loc[df['mark'] == 'CB', 'geneID'].nunique()
     CB_reads_count = df.loc[df['mark'] == 'CB', 'count'].sum()
     reads_mapped_to_transcriptome = df['count'].sum()
@@ -368,7 +375,7 @@ def sample(p, df, bc):
 
 
 @log
-def downsample(detail_file, validated_barcodes, downsample_file):
+def downsample(detail_file, cell_bc, downsample_file):
     df = pd.read_table(detail_file, index_col=[0, 1, 2])
     df = df.index.repeat(df['count']).to_frame()
     format_str = "%.2f\t%.2f\t%.2f\n"
@@ -378,7 +385,7 @@ def downsample(detail_file, validated_barcodes, downsample_file):
 
         saturation = 0
         for p in np.arange(0.1, 1.1, 0.1):
-            r, s = sample(p=p, df=df, bc=validated_barcodes)
+            r, s = sample(p=p, df=df, bc=cell_bc)
             fh.write(r)
             saturation = s
     return saturation
@@ -426,20 +433,20 @@ def count(args):
     
     # get cell stats
     marked_counts_file = outdir + '/' + sample + '_counts.txt'
-    cell_bc, CB_describe = get_cell_stats(df_sum, threshold, marked_counts_file)
+    CB_describe = get_cell_stats(df_sum, cell_bc, marked_counts_file)
 
     # export cell matrix
-    matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=cell_bc)
+    matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=cell_bc)
     (CB_total_Genes, CB_reads_count,
         reads_mapped_to_transcriptome) = expression_matrix(
             df, cell_bc, outdir, sample, gtf_file)
 
     # downsampling
-    validated_barcodes = set(cell_bc)
+    cell_bc = set(cell_bc)
     downsample_file = args.outdir + '/' + args.sample + '_downsample.txt'
     Saturation = downsample(
         count_detail_file,
-        validated_barcodes,
+        cell_bc,
         downsample_file)
 
     # summary
