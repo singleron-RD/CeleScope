@@ -106,11 +106,13 @@ def parse_pattern(pattern):
     return pattern_dict
 
 
-def get_scope_bc(bctype):
+def get_scope_bc(chemistry):
     import celescope
     root_path = os.path.dirname(celescope.__file__)
-    linker_f = glob.glob(f'{root_path}/data/chemistry/{bctype}/linker*')[0]
-    whitelist_f = f'{root_path}/data/chemistry/{bctype}/bclist'
+    if chemistry == 'scopeV1':
+        return None, None
+    linker_f = glob.glob(f'{root_path}/data/chemistry/{chemistry}/linker*')[0]
+    whitelist_f = f'{root_path}/data/chemistry/{chemistry}/bclist'
     return linker_f, whitelist_f
 
 
@@ -234,7 +236,7 @@ def barcode(args):
             ch = Chemistry(fq1)
             chemistry_list = ch.check_chemistry()
     else:
-        chemistry_list = [args.chemistry]
+        chemistry_list = [args.chemistry] * len(fq1_list)
 
     barcode_qual_Counter = Counter()
     umi_qual_Counter = Counter()
