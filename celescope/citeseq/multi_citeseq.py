@@ -14,7 +14,7 @@ def main():
     # init
     assay = __ASSAY__
     steps = __STEPS__
-    conda = 
+    conda = os.environ['CONDA_DEFAULT_ENV']
     app = 'celescope'
 
     # parser

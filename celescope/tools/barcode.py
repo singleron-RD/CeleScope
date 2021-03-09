@@ -247,7 +247,11 @@ def barcode(args):
     C_U_base_Counter = Counter()
 
     # prepare
-    out_fq2 = args.outdir + '/' + args.sample + '_2.fq.gz'
+    if not args.not_gzip:
+        suffix = ".gz"
+    else:
+        suffix = ""
+    out_fq2 = f'{args.outdir}/{args.sample}_2.fq{suffix}'
     fh3 = xopen(out_fq2, 'w')
 
     (total_num, clean_num, no_polyT_num, lowQual_num,
@@ -521,4 +525,5 @@ def get_opts_barcode(parser, sub_program):
     parser.add_argument('--probe_file', help="probe fasta file")
     parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
     parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
+    parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
     return parser

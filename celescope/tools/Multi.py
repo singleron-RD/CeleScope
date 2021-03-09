@@ -36,6 +36,7 @@ class Multi():
         parser.add_argument('--rm_files', action='store_true', help='remove redundant fq.gz and bam after running')
         parser.add_argument('--steps_run', help='steps to run', default='all')
         parser.add_argument('--debug', help='debug or not', action='store_true')
+        parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
         self.parser = parser
         return parser
 
@@ -136,6 +137,7 @@ class Multi():
         self.mod = self.args.mod
         self.rm_files = self.args.rm_files
         self.steps_run = self.args.steps_run
+        self.not_gzip_str = Multi.arg_str(self.args.not_gzip, 'not_gzip')
         if self.__CONDA__ == 'celescope_RD':
             self.debug_str = '--debug'
         else:
@@ -264,6 +266,7 @@ job_end
             f'{self.allowNoLinker_str} '
             f'{self.noLinker_str} '
             f'{self.nopolyT_str} '
+            f'{self.not_gzip_str} '
             f'--probe_file {self.probe_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
@@ -271,7 +274,11 @@ job_end
     def cutadapt(self, sample):
         # adapt
         step = "cutadapt"
-        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq.gz'
+        if not self.args.not_gzip:
+            suffix = ".gz"
+        else:
+            suffix = ""
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -285,12 +292,17 @@ job_end
             f'--insert {self.insert} '
             f'--adapter_fasta {self.adapter_fasta} '
             f'{self.umi_consensus_str} '
+            f'{self.not_gzip_str} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def STAR(self, sample):
         step = 'STAR'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        if not self.args.not_gzip:
+            suffix = ".gz"
+        else:
+            suffix = ""
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
