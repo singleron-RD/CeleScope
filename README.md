@@ -1,6 +1,6 @@
 
 # CeleScope
-GEXSCOPE Single Cell Analysis Tool Kit  
+GEXSCOPE Single Cell Analysis Pipelines  
 [中文文档](https://github.com/zhouyiqi91/CeleScope/wiki)
 
 ## Requirements
