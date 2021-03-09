@@ -40,5 +40,6 @@ setuptools.setup(
         'xopen>=0.5.0',
         'editdistance>=0.5.3',
         'mutract',
+        'sklearn',
     ]
 )
