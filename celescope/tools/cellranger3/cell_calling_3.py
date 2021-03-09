@@ -20,7 +20,7 @@ import celescope.tools.cellranger3.sgt as cr_sgt ## modified sgt.py
 import sys
 import random
 from subprocess import check_call
-from celescope.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
+from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
 
 
 # Set random seed

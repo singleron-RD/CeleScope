@@ -17,6 +17,7 @@ import pysam
 from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
 from celescope.tools.report import reporter
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
+from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
 
 
 toolsdir = os.path.dirname(__file__)
@@ -280,9 +281,9 @@ def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None
     genes.columns = ['gene_id', 'gene_name']
 
     barcodes = df_UMI.index.levels[1].to_series()
-    genes.to_csv(f'{matrix_10X_dir}/genes.tsv', index=False, sep='\t', header=False)
-    barcodes.to_csv(f'{matrix_10X_dir}/barcodes.tsv', index=False, sep='\t')
-    mmwrite(f'{matrix_10X_dir}/matrix', mtx)
+    genes.to_csv(f'{matrix_10X_dir}/{FEATURE_FILE_NAME}', index=False, sep='\t', header=False)
+    barcodes.to_csv(f'{matrix_10X_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t')
+    mmwrite(f'{matrix_10X_dir}/{MATRIX_FILE_NAME}', mtx)
     return matrix_10X_dir
 
 

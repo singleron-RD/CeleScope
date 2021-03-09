@@ -17,8 +17,3 @@ ASSAY_DICT = {
     'citeseq': 'Single Cell CITE-Seq',
     'tcr_fl': 'Single Cell full length TCR',
 }
-
-# count
-MATRIX_FILE_NAME = 'matrix.mtx'
-FEATURE_FILE_NAME = 'genes.tsv'
-BARCODE_FILE_NAME = 'barcodes.tsv'
