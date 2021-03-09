@@ -1,4 +1,3 @@
-from celescope.__init__ import __CONDA__
 from celescope.vdj.__init__ import __STEPS__, __ASSAY__
 from celescope.tools.Multi import Multi
 
@@ -60,7 +59,7 @@ class Multi_vdj(Multi):
 
 
 def main():
-    multi = Multi_vdj(__ASSAY__, __STEPS__, __CONDA__)
+    multi = Multi_vdj(__ASSAY__, __STEPS__)
     multi.col4_default = None
     multi.run()
 

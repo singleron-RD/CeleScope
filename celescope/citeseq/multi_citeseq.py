@@ -4,7 +4,6 @@ import sys
 import argparse
 import re
 from collections import defaultdict
-from celescope.__init__ import __CONDA__
 from .__init__ import __STEPS__, __ASSAY__
 from celescope.tools.utils import merge_report, generate_sjm
 from celescope.tools.utils import parse_map_col4, multi_opts, link_data
@@ -15,7 +14,7 @@ def main():
     # init
     assay = __ASSAY__
     steps = __STEPS__
-    conda = __CONDA__
+    conda = 
     app = 'celescope'
 
     # parser

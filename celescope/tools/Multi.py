@@ -4,17 +4,16 @@ import sys
 import argparse
 import re
 from collections import defaultdict
-from celescope.__init__ import __CONDA__
 from celescope.tools.utils import merge_report
 from celescope.tools.utils import parse_map_col4, link_data
 from celescope.tools.__init__ import __PATTERN_DICT__
 
 class Multi():
 
-    def __init__(self, __ASSAY__, __STEPS__, __CONDA__):
+    def __init__(self, __ASSAY__, __STEPS__):
         self.__ASSAY__ = __ASSAY__
         self.__STEPS__ = __STEPS__
-        self.__CONDA__ = __CONDA__
+        self.__CONDA__ = os.environ['CONDA_DEFAULT_ENV']
         self.__APP__ = 'celescope'
         self.col4_default = None
         self.last_step = ''

@@ -1,4 +1,3 @@
-from celescope.__init__ import __CONDA__
 from celescope.capture_virus.__init__ import __STEPS__, __ASSAY__
 from celescope.tools.Multi import Multi
 
@@ -64,7 +63,7 @@ class Multi_capture_virus(Multi):
 
 
 def main():
-    multi = Multi_capture_virus(__ASSAY__, __STEPS__, __CONDA__)
+    multi = Multi_capture_virus(__ASSAY__, __STEPS__)
     multi.col4_default = None
     multi.run()
 
