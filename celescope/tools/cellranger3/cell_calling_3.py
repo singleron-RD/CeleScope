@@ -1,12 +1,3 @@
-# Modified from cell_calling.py in 10X Genomics cellranger script by Runxi Shen
-# example code usage: 
-# python cell_calling_runxi.py "/SGRNJ03/PROJ03/PROJ_20.10X/P20122409_3RNA/20210124/NB03T/NB03T_RNA_10X/outs/raw_feature_bc_matrix" 6000 > P20122409_3RNA_NB03T_RNA_10X.out
-# 1st argument: the directory of raw matrix info
-# 2nd argument: # of expected cells (also input argument in cellranger software)
-# the output file (.out) stores the summary of Runxi's results
-
-""" Functions for calling cell-associated barcodes """
-
 import csv
 import os
 import gzip

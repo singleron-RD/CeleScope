@@ -116,7 +116,7 @@ def bam2table(bam, detail_file):
 
 @log
 def cell_calling(cell_calling_method, force_cell_num, expected_cell_num, all_matrix_10X_dir, df_sum, outdir, sample):
-    if cell_calling_method == 'force':
+    if (force_cell_num is not None) and (force_cell_num != 'None'):
         cell_bc, UMI_threshold = force_cell(force_cell_num, df_sum)
     elif cell_calling_method == 'auto':
         cell_bc, UMI_threshold = auto_cell(df_sum, expected_cell_num)
@@ -476,4 +476,4 @@ def get_opts_count(parser, sub_program):
     parser.add_argument('--force_cell_num', help='force cell number', default=None)
     parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
     parser.add_argument('--cell_calling_method', help='cell calling methods', 
-        choices=['auto', 'cellranger3', 'inflection', 'force'], default='auto')
+        choices=['auto', 'cellranger3', 'inflection',], default='auto')
