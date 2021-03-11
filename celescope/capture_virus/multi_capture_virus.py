@@ -64,7 +64,6 @@ class Multi_capture_virus(Multi):
 
 def main():
     multi = Multi_capture_virus(__ASSAY__, __STEPS__)
-    multi.col4_default = None
     multi.run()
 
 

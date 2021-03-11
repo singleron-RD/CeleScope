@@ -72,7 +72,6 @@ class Multi_rna_virus(Multi):
 
 def main():
     multi = Multi_rna_virus(__ASSAY__, __STEPS__)
-    multi.col4_default = 'auto'
     multi.run()
 
 

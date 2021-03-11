@@ -53,7 +53,6 @@ class Multi_mut(Multi):
 
 def main():
     multi = Multi_mut(__ASSAY__, __STEPS__)
-    multi.col4_default = None
     multi.run()
 
 if __name__ == '__main__':

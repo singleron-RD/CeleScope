@@ -50,7 +50,6 @@ class Multi_fusion(Multi):
 
 def main():
     multi = Multi_fusion(__ASSAY__, __STEPS__)
-    multi.col4_default = None
     multi.run()
 
 
