@@ -106,7 +106,7 @@ def featureCounts(args):
         'sort',
         '-n',
         '-@',
-        '3',
+        str(args.thread),
         '-o',
         outPrefix +
         '_name_sorted.bam',
