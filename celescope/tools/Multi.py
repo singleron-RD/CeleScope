@@ -115,7 +115,7 @@ class Multi():
     def count_args(self):
         self.parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
         self.parser.add_argument('--cell_calling_method', help='cell calling methods', 
-            choices=['auto', 'cellranger3', 'inflection', 'force'], default='auto')
+            choices=['auto', 'cellranger3', 'inflection'], default='auto')
 
     def analysis_args(self):
         self.parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
