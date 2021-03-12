@@ -15,4 +15,5 @@ ASSAY_DICT = {
     'tag': 'Single Cell tag',
     'citeseq': 'Single Cell CITE-Seq',
     'tcr_fl': 'Single Cell full length TCR',
+    'vdj10X': 'vdj 10X',
 }

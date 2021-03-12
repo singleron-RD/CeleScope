@@ -562,6 +562,28 @@ def main():
     get_opts_assemble(parser_tmp, True)
     parser_tmp.set_defaults(func=assemble)
 
+
+    # vdj10X
+    assay = 'vdj10X'
+    text = ASSAY_DICT[assay]
+    subparsers_assay = subparsers.add_parser(
+        assay, help=text, description=text)
+    subparsers_assay_sub = subparsers_assay.add_subparsers()
+
+    parser_tmp = subparsers_assay_sub.add_parser('sample')
+    get_opts_sample(parser_tmp, True)
+    parser_tmp.set_defaults(func=sample_info)
+
+    from celescope.vdj10X.convert import convert, get_opts_convert
+    parser_tmp = subparsers_assay_sub.add_parser('convert')
+    get_opts_convert(parser_tmp, True)
+    parser_tmp.set_defaults(func=convert)
+
+    from celescope.vdj10X.vdj_10X import vdj_10X, get_opts_vdj_10X
+    parser_tmp = subparsers_assay_sub.add_parser('vdj_10X')
+    get_opts_vdj_10X(parser_tmp, True)
+    parser_tmp.set_defaults(func=vdj_10X)
+
     args = parser.parse_args()
     args.func(args)
 
