@@ -1,6 +1,7 @@
 import subprocess
 from celescope.tools.utils import log
 import os
+from celescope.vdj10X.__init__ import ref_dict
 
 @log
 def vdj_10X(args):
@@ -8,6 +9,8 @@ def vdj_10X(args):
     outdir = args.outdir
     thread = args.thread
     mem = args.mem
+    species = args.species
+    ref = ref_dict[species]
 
     # check dir
     if not os.path.exists(args.outdir):
@@ -16,7 +19,7 @@ def vdj_10X(args):
     cmd = (
         f'/SGRNJ/Database/script/soft/cellranger/cellranger-3.0.2/cellranger vdj '
         f'--id={sample} '
-        f'--reference=/SGRNJ/Database/script/genome/10X/vdj/refdata-cellranger-vdj-GRCm38-alts-ensembl-2.2.0 '
+        f'--reference={ref} '
         f'--fastqs=../01.convert '
         f'--sample={sample} '
         f'--localcores={thread} '
@@ -30,6 +33,7 @@ def vdj_10X(args):
 
 
 def get_opts_vdj_10X(parser, sub_program):
+    parser.add_argument('--species', help='species', choices=['hs','mmu'], required=True)
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--assay', help='assay', required=True)

@@ -42,11 +42,13 @@ class Multi_vdj(Multi):
 
     def vdj_10X_args(self):
         parser = self.parser
+        parser.add_argument('--species', help='species', choices=['hs','mmu'], required=True)
         parser.add_argument('--mem', help='memory (G)', default=10)
         self.parser = parser
 
     def read_vdj_10X_args(self):
         self.mem = self.args.mem
+        self.species = self.args.species
 
     def convert(self, sample):
         step = 'convert'
@@ -84,6 +86,7 @@ class Multi_vdj(Multi):
             f'--assay {self.__ASSAY__} '
             f'--mem {self.mem} '
             f'--thread {self.thread} '
+            f'--species {self.species} '
         )
         self.process_cmd(cmd, step, sample, m=self.mem, x=self.thread)
 
