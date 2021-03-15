@@ -18,6 +18,8 @@ barcode_corrected_num = 0
 BARCODES_10X_FILE = "/SGRNJ/Database/script/soft/cellranger/cellranger-3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes/737K-august-2016.txt"
 UMI_10X_LEN = 10
 TSO = "TTTCTTATATGGG"
+SEQ_LEN = 150
+BCR_UTR = 'AGTGAGGTCATAGCTCCACCCATTGTAGCTAGCTAGTAGTTTGATTCAGCTCAGCTGTGAGAGAACAGGACCAGGT'
 
 # 定义输出格式
 stat_info = '''
@@ -219,9 +221,14 @@ def merge_fastq(fq1, fq2, sample, outdir):
         merge_fastq.logger.info(fq2_cmd)
         os.system(fq2_cmd)
     return fq1_file, fq2_file
- 
 
-def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X):
+
+def rev_compl(seq):
+    base_dict = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'}
+    return "".join(base_dict[base] for base in reversed(seq))
+
+
+def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq2, seq2_insert=90):
     '''
     barcode_dict - key:SGR barcode; value:10X barcode
     '''
@@ -237,10 +244,13 @@ def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X):
         umi_10X = umi + 'C' * (UMI_10X_LEN - len(umi))
     else:
         umi_10X = umi
+
+    seq1_add = rev_compl(seq2[seq2_insert:])
     
-    new_seq = barcode_10X + umi_10X + TSO + 'C' * (150 - len(barcode_10X) - len(umi_10X) - len(TSO))
-    new_qual = 'F' * 150
-    return new_seq, new_qual
+    new_seq1 = barcode_10X + umi_10X + TSO + seq1_add
+    new_qual = 'J' * len(new_seq1)
+
+    return new_seq1, new_qual
     
 
 
@@ -446,9 +456,12 @@ def convert(args):
             umi_qual_Counter.update(C_U_quals_ascii[C_len:])
             C_U_base_Counter.update(raw_cb + umi)
 
-            new_seq, new_qual = convert_seq(cb, umi, barcodes_dict, barcodes_10X)
-            out_fq1_h.write(fastq_line(header1, new_seq, new_qual))
-            out_fq2_h.write(fastq_line(header2, seq2, qual2))
+            seq2_insert = 90
+            new_seq1, new_qual1 = convert_seq(cb, umi, barcodes_dict, barcodes_10X, seq2, seq2_insert=seq2_insert)
+            new_seq2 = seq2[0:seq2_insert]
+            new_qual2 = qual2[0:seq2_insert]
+            out_fq1_h.write(fastq_line(header1, new_seq1, new_qual1))
+            out_fq2_h.write(fastq_line(header2, new_seq2, new_qual2))
         convert.logger.info(fq1_list[i] + ' finished.')
 
     out_fq1_h.close()
