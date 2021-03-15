@@ -108,18 +108,28 @@ class Tests(unittest.TestCase):
         gtf_file = '/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92/Homo_sapiens.GRCh38.92.chr.gtf'
         matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X_new', validated_barcodes=validated_barcodes)
 
-    @unittest.skip('pass')
+    #@unittest.skip('pass')
     def test_call_cells(self):
-        #df = pd.read_csv('/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz',sep='\t')
-        os.chdir = '/SGRNJ02/RandD4/RD2019016/20201209/'
-        sample = 'J-Demo_Y1'
+        os.chdir = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/'
+        sample = 'test1'
         outdir = f'{sample}/05.count'
-        cells = 'auto'
-        pdf =  outdir + '/barcode_filter_magnitude.pdf'
-        marked_counts_file = outdir + '/' + sample + '_counts.txt'
-        (validated_barcodes, threshold, cell_num, CB_describe) = call_cells(
-            df, cells, pdf, marked_counts_file)
-        print(threshold)
+        df = pd.read_csv(f'{outdir}/{sample}_count_detail.txt.gz',sep='\t')
+        outdir = f'{sample}/05.count'
+        cell_calling_method = 'cellranger3'
+        force_cell_num = 1000
+        expected_cell_num = 3000
+        all_matrix_10X_dir = f'{outdir}/{sample}_all_matrix'
+
+        # df_sum
+        df_sum = get_df_sum(df)
+
+        # call cells
+        cell_bc, threshold = cell_calling(
+            cell_calling_method, force_cell_num, expected_cell_num, all_matrix_10X_dir, df_sum, outdir, sample)
+
+        # plot
+        cell_num = len(cell_bc)
+        plot_barcode_UMI(df_sum, threshold, expected_cell_num, cell_num, outdir, sample, cell_calling_method,col='UMI')
 
     @unittest.skip('pass')
     def test_rescue(self):
@@ -138,7 +148,7 @@ class Tests(unittest.TestCase):
 
     @unittest.skip('pass')
     def test_count_pipe(self):
-        #count_detail_file = '/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz'
+        count_detail_file = '/SGRNJ02/RandD4/RD2019016/20201209/J-Demo_Y1/05.count/J-Demo_Y1_count_detail.txt.gz'
         df = pd.read_csv(count_detail_file, sep='\t')
         dir_name = 'all_matrix'
         #os.chdir('/SGRNJ02/RandD4/RD2019016/20201209/')
@@ -197,6 +207,7 @@ class Tests(unittest.TestCase):
         adapter_args = read_adapter_fasta(adapter_fasta)
         assert adapter_args == ['a1=ATCG','a2=TGCAA']
 
+    @unittest.skip('pass')
     def test_chemistry_jiace(self):
         fq = '/SGRNJ03/DATA03/2004/20201224_18/R20067441-PCRD-201207-1-R2012093_combined_R1.fastq.gz\
 ,/SGRNJ03/DATA03/2004/20201228_6/R2012093-PCRD-201207-1_combined_R1.fastq.gz'

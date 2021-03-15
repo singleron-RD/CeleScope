@@ -4,19 +4,18 @@ import sys
 import argparse
 import re
 from collections import defaultdict
-from celescope.__init__ import __CONDA__
 from celescope.tools.utils import merge_report
 from celescope.tools.utils import parse_map_col4, link_data
 from celescope.tools.__init__ import __PATTERN_DICT__
 
 class Multi():
 
-    def __init__(self, __ASSAY__, __STEPS__, __CONDA__):
+    def __init__(self, __ASSAY__, __STEPS__):
         self.__ASSAY__ = __ASSAY__
         self.__STEPS__ = __STEPS__
-        self.__CONDA__ = __CONDA__
+        self.__CONDA__ = os.environ['CONDA_DEFAULT_ENV']
         self.__APP__ = 'celescope'
-        self.col4_default = 'auto'
+        self.col4_default = None
         self.last_step = ''
 
     def multi_opts(self):
@@ -37,6 +36,7 @@ class Multi():
         parser.add_argument('--rm_files', action='store_true', help='remove redundant fq.gz and bam after running')
         parser.add_argument('--steps_run', help='steps to run', default='all')
         parser.add_argument('--debug', help='debug or not', action='store_true')
+        parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
         self.parser = parser
         return parser
 
@@ -113,7 +113,9 @@ class Multi():
         self.parser.add_argument('--STAR_param', help='STAR parameters', default="")
 
     def count_args(self):
-        self.parser.add_argument('--rescue', help='rescue low UMI cells', action='store_true')
+        self.parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
+        self.parser.add_argument('--cell_calling_method', help='cell calling methods', 
+            choices=['auto', 'cellranger3', 'inflection'], default='auto')
 
     def analysis_args(self):
         self.parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
@@ -135,7 +137,8 @@ class Multi():
         self.mod = self.args.mod
         self.rm_files = self.args.rm_files
         self.steps_run = self.args.steps_run
-        if self.__CONDA__ == 'celescope_RD':
+        self.not_gzip_str = Multi.arg_str(self.args.not_gzip, 'not_gzip')
+        if os.path.basename(self.__CONDA__) == 'celescope_RD':
             self.debug_str = '--debug'
         else:
             self.debug_str = Multi.arg_str(self.args.debug, 'debug')
@@ -162,7 +165,8 @@ class Multi():
         self.STAR_param = self.args.STAR_param
 
     def read_count_args(self):
-        self.rescue_str = Multi.arg_str(self.args.rescue, 'rescue')
+        self.expected_cell_num = self.args.expected_cell_num
+        self.cell_calling_method = self.args.cell_calling_method
     
     def read_analysis_args(self):
         self.save_rds = self.args.save_rds
@@ -262,6 +266,7 @@ job_end
             f'{self.allowNoLinker_str} '
             f'{self.noLinker_str} '
             f'{self.nopolyT_str} '
+            f'{self.not_gzip_str} '
             f'--probe_file {self.probe_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
@@ -269,7 +274,11 @@ job_end
     def cutadapt(self, sample):
         # adapt
         step = "cutadapt"
-        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq.gz'
+        if not self.args.not_gzip:
+            suffix = ".gz"
+        else:
+            suffix = ""
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -283,12 +292,17 @@ job_end
             f'--insert {self.insert} '
             f'--adapter_fasta {self.adapter_fasta} '
             f'{self.umi_consensus_str} '
+            f'{self.not_gzip_str} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def STAR(self, sample):
         step = 'STAR'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        if not self.args.not_gzip:
+            suffix = ".gz"
+        else:
+            suffix = ""
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -334,9 +348,10 @@ job_end
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
             f'--bam {bam} '
-            f'--cells {self.col4_dict[sample]} '
+            f'--force_cell_num {self.col4_dict[sample]} '
             f'--genomeDir {self.genomeDir} '
-            f'{self.rescue_str} '
+            f'--cell_calling_method {self.cell_calling_method} '
+            f'--expected_cell_num {self.expected_cell_num} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
 

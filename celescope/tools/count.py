@@ -16,6 +16,8 @@ from scipy.sparse import csr_matrix, coo_matrix
 import pysam
 from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
 from celescope.tools.report import reporter
+from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
+from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
 
 
 toolsdir = os.path.dirname(__file__)
@@ -111,8 +113,100 @@ def bam2table(bam, detail_file):
                                                     res_dict[geneID][umi]))
 
 
+
 @log
-def call_cells(df, expected_num, pdf):
+def cell_calling(cell_calling_method, force_cell_num, expected_cell_num, all_matrix_10X_dir, df_sum, outdir, sample):
+    if (force_cell_num is not None) and (force_cell_num != 'None'):
+        cell_bc, UMI_threshold = force_cell(force_cell_num, df_sum)
+    elif cell_calling_method == 'auto':
+        cell_bc, UMI_threshold = auto_cell(df_sum, expected_cell_num)
+    elif cell_calling_method == 'cellranger3':
+        cell_bc, UMI_threshold = cellranger3_cell(all_matrix_10X_dir, expected_cell_num, df_sum)
+    elif cell_calling_method == 'inflection':
+        _cell_bc, UMI_threshold = auto_cell(df_sum, expected_cell_num)
+        cell_bc, UMI_threshold = inflection_cell(outdir, sample, all_matrix_10X_dir, df_sum, UMI_threshold)
+    cell_calling.logger.info(f'UMI_threshold: {UMI_threshold}')
+    return cell_bc, UMI_threshold
+
+
+@log
+def force_cell(force_cell_num, df_sum):
+    force_cell_num = int(force_cell_num)
+    cell_range = int(force_cell_num * 0.1)
+    cell_low = force_cell_num - cell_range
+    cell_high = force_cell_num + cell_range
+
+    df_barcode_count = df_sum.groupby(
+        ['UMI']).size().reset_index(
+        name='barcode_counts')
+    sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
+    sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
+    for i in range(sorted_df.shape[0]):
+        if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_low:
+            index_low = i - 1
+            break
+    for i in range(sorted_df.shape[0]):
+        if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_high:
+            index_high = i
+            break
+    df_sub = sorted_df.iloc[index_low:index_high + 1, :]
+    threshold = df_sub.iloc[np.argmax(
+        np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
+    cell_bc = get_cell_bc(df_sum, threshold, col='UMI')
+
+    return cell_bc, threshold
+
+
+def find_threshold(df_sum, idx):
+    return int(df_sum.iloc[idx - 1, df_sum.columns == 'UMI'])
+
+
+@log
+def auto_cell(df_sum, expected_cell_num):
+    col = "UMI"
+    idx = int(expected_cell_num * 0.01)
+    barcode_number = df_sum.shape[0]
+    idx = int(min(barcode_number, idx))
+    if idx == 0:
+        sys.exit("cell number equals zero!")
+    # calculate read counts threshold
+    threshold = int(find_threshold(df_sum, idx) * 0.1)
+    threshold = max(1, threshold)
+    cell_bc = get_cell_bc(df_sum, threshold)
+
+    return cell_bc, threshold
+
+
+@log
+def cellranger3_cell(all_matrix_10X_dir, expected_cell_num, df_sum):
+    cell_bc, initial_cell_num = cell_calling_3(all_matrix_10X_dir, expected_cell_num)
+    threshold = find_threshold(df_sum, initial_cell_num)
+    return cell_bc, threshold
+
+
+@log
+def inflection_cell(outdir, sample, all_matrix_10X_dir, df_sum, threshold):
+    app = f'{toolsdir}/rescue.R'
+    cmd = (
+        f'Rscript {app} '
+        f'--matrix_dir {all_matrix_10X_dir} '
+        f'--outdir {outdir} '
+        f'--sample {sample} '
+        f'--threshold {threshold}'
+    )
+    inflection_cell.logger.info(cmd)
+    subprocess.check_call(cmd, shell=True)
+    out_file = f'{outdir}/{sample}_rescue.tsv'
+    df = pd.read_csv(out_file, sep='\t')
+    inflection = int(df.loc[:,'inflection'])
+    threshold = inflection
+    cell_bc = get_cell_bc(df_sum, threshold)
+
+    return cell_bc, threshold
+
+
+@log
+def get_df_sum(df, col='UMI'):
     def num_gt2(x):
         return pd.Series.sum(x[x > 1])
 
@@ -122,81 +216,35 @@ def call_cells(df, expected_num, pdf):
         'geneID': 'nunique'
     })
     df_sum.columns = ['readcount', 'UMI2', 'UMI', 'geneID']
-    (validated_barcodes, threshold, cell_num) = barcode_filter_with_magnitude(
-        df_sum, col='UMI', plot=pdf, expected_cell_num=expected_num)
-    #Saturation = (1 - tmp.loc[tmp['UMI'] == 1, :].shape[0] / total)*100
-    #Saturation = (df_sum['UMI2'].sum() + 0.0) / df_sum['UMI'].sum() * 100
+    df_sum = df_sum.sort_values(col, ascending=False) 
+    return df_sum
 
-    return df_sum, threshold
-
-def get_validated_barcodes(df_sum, threshold, col='UMI'):
+def get_cell_bc(df_sum, threshold, col='UMI'):
     return list(df_sum[df_sum[col] >= threshold].index)
 
 @log
-def barcode_filter_with_magnitude(
-        df_sum, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1, rescue=False):
-    # col can be readcount or UMI
-    # determine validated barcodes
-
-    df_sum = df_sum.sort_values(col, ascending=False)
-    if expected_cell_num == "auto":
-        idx = int(3000 * 0.01)
-        barcode_number = df_sum.shape[0]
-        idx = int(min(barcode_number, idx))
-        if idx == 0:
-            sys.exit("cell number equals zero!")
-        # calculate read counts threshold
-        threshold = int(df_sum.iloc[idx - 1, df_sum.columns == col] * 0.1)
-        threshold = max(1, threshold)
-    else:
-        expected_cell_num = int(expected_cell_num)
-        cell_range = int(expected_cell_num * 0.1)
-        cell_low = expected_cell_num - cell_range
-        cell_high = expected_cell_num + cell_range
-
-        df_barcode_count = df_sum.groupby(
-            ['UMI']).size().reset_index(
-            name='barcode_counts')
-        sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
-        sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_low:
-                index_low = i - 1
-                break
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_high:
-                index_high = i
-                break
-        df_sub = sorted_df.iloc[index_low:index_high + 1, :]
-        threshold = df_sub.iloc[np.argmax(
-            np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
-        barcode_filter_with_magnitude.logger.info(
-            "UMI threshold: " + str(threshold))
-    validated_barcodes = get_validated_barcodes(df_sum, threshold, col='UMI')
-
+def plot_barcode_UMI(df_sum, threshold, expected_cell_num, cell_num, outdir, sample, cell_calling_method, col='UMI'):
+    out_plot = f'{outdir}/{sample}_barcode_UMI_plot.pdf'
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     fig = plt.figure()
-    plt.plot(df_sum[col])
-    plt.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
-    plt.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
-    plt.title('expected cell num: %s\n%s threshold: %s\ncell num: %s' %
-              (expected_cell_num, col, threshold, len(validated_barcodes)))
+    plt.plot(df_sum['UMI'])
+    plt.hlines(threshold, 0, cell_num, linestyle='dashed')
+    plt.vlines(cell_num, 0, threshold, linestyle='dashed')
+    plt.title('cell_calling_method: %s, expected_cell_num: %s\n %s threshold: %s, cell num: %s' %
+              (cell_calling_method, expected_cell_num, col, threshold, cell_num))
     plt.loglog()
-    plt.savefig(plot)
-
-    return (validated_barcodes, threshold, len(validated_barcodes))
+    plt.savefig(out_plot)
 
 
-def get_cell_stats(df_sum, threshold, marked_counts_file):
-    validated_barcodes = get_validated_barcodes(df_sum, threshold)
+def get_cell_stats(df_sum, cell_bc, marked_counts_file):
     df_sum.loc[:, 'mark'] = 'UB'
-    df_sum.loc[df_sum.index.isin(validated_barcodes), 'mark'] = 'CB'
+    df_sum.loc[df_sum.index.isin(cell_bc), 'mark'] = 'CB'
     df_sum.to_csv(marked_counts_file, sep='\t')
     CB_describe = df_sum.loc[df_sum['mark'] == 'CB', :].describe()
 
-    return validated_barcodes, CB_describe
+    return CB_describe
 
 
 def write_matrix_10X(table, id_name, matrix_10X_dir):
@@ -215,14 +263,14 @@ def write_matrix_10X(table, id_name, matrix_10X_dir):
 
 
 @log
-def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=None):
+def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None):
     matrix_10X_dir = f"{outdir}/{sample}_{dir_name}/"
     if not os.path.exists(matrix_10X_dir):
         os.mkdir(matrix_10X_dir)
     id_name = gene_convert(gtf_file)
 
-    if validated_barcodes:
-        df = df.loc[df['Barcode'].isin(validated_barcodes), :]
+    if cell_bc is not None:
+        df = df.loc[df['Barcode'].isin(cell_bc), :]
     
     df_UMI = df.groupby(['geneID','Barcode']).agg({'UMI':'count'})
     mtx= coo_matrix((df_UMI.UMI, (df_UMI.index.labels[0], df_UMI.index.labels[1])))
@@ -233,18 +281,19 @@ def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_ba
     genes.columns = ['gene_id', 'gene_name']
 
     barcodes = df_UMI.index.levels[1].to_series()
-    genes.to_csv(f'{matrix_10X_dir}/genes.tsv', index=False, sep='\t', header=False)
-    barcodes.to_csv(f'{matrix_10X_dir}/barcodes.tsv', index=False, sep='\t')
-    mmwrite(f'{matrix_10X_dir}/matrix', mtx)
+    genes.to_csv(f'{matrix_10X_dir}/{FEATURE_FILE_NAME}', index=False, sep='\t', header=False)
+    barcodes.to_csv(f'{matrix_10X_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t')
+    mmwrite(f'{matrix_10X_dir}/{MATRIX_FILE_NAME}', mtx)
+    return matrix_10X_dir
 
 
 @log
-def expression_matrix(df, validated_barcodes, outdir, sample, gtf_file):
+def expression_matrix(df, cell_bc, outdir, sample, gtf_file):
 
     id_name = gene_convert(gtf_file)
 
     df.loc[:, 'mark'] = 'UB'
-    df.loc[df['Barcode'].isin(validated_barcodes), 'mark'] = 'CB'
+    df.loc[df['Barcode'].isin(cell_bc), 'mark'] = 'CB'
     CB_total_Genes = df.loc[df['mark'] == 'CB', 'geneID'].nunique()
     CB_reads_count = df.loc[df['mark'] == 'CB', 'count'].sum()
     reads_mapped_to_transcriptome = df['count'].sum()
@@ -327,7 +376,7 @@ def sample(p, df, bc):
 
 
 @log
-def downsample(detail_file, validated_barcodes, downsample_file):
+def downsample(detail_file, cell_bc, downsample_file):
     df = pd.read_table(detail_file, index_col=[0, 1, 2])
     df = df.index.repeat(df['count']).to_frame()
     format_str = "%.2f\t%.2f\t%.2f\n"
@@ -337,29 +386,10 @@ def downsample(detail_file, validated_barcodes, downsample_file):
 
         saturation = 0
         for p in np.arange(0.1, 1.1, 0.1):
-            r, s = sample(p=p, df=df, bc=validated_barcodes)
+            r, s = sample(p=p, df=df, bc=cell_bc)
             fh.write(r)
             saturation = s
     return saturation
-
-@log
-def rescue_cells(outdir, sample, matrix_dir, threshold):
-    app = f'{toolsdir}/rescue.R'
-    cmd = (
-        f'Rscript {app} '
-        f'--matrix_dir {matrix_dir} '
-        f'--outdir {outdir} '
-        f'--sample {sample} '
-        f'--threshold {threshold}'
-    )
-    rescue_cells.logger.info(cmd)
-    subprocess.check_call(cmd, shell=True)
-    out_file = f'{outdir}/{sample}_rescue.tsv'
-    df = pd.read_csv(out_file, sep='\t')
-    inflection = int(df.loc[:,'inflection'])
-    if inflection > threshold:
-        return threshold
-    return inflection
 
 
 @log
@@ -368,11 +398,15 @@ def count(args):
     outdir = args.outdir
     sample = args.sample
     assay = args.assay
-    cells = args.cells
-    rescue = args.rescue
+    force_cell_num = args.force_cell_num
+    cell_calling_method = args.cell_calling_method
+    expected_cell_num = int(args.expected_cell_num)
 
     # check
-    refFlat, gtf_file = glob_genomeDir(args.genomeDir)
+    if args.genomeDir and args.genomeDir != "None":
+        _refFlat, gtf_file = glob_genomeDir(args.genomeDir)
+    else:
+        gtf_file = args.gtf
 
     # 检查和创建输出目录
     if not os.path.exists(outdir):
@@ -386,33 +420,34 @@ def count(args):
 
     # export all matrix
     dir_name = 'all_matrix'
-    matrix_10X(df, outdir, sample, gtf_file, dir_name=dir_name)
+    all_matrix_10X_dir = matrix_10X(df, outdir, sample, gtf_file, dir_name=dir_name)
+
+    # df_sum
+    df_sum = get_df_sum(df)
 
     # call cells
-    pdf = outdir + '/barcode_filter_magnitude.pdf'
-    df_sum, threshold = call_cells(df, cells, pdf)
+    cell_bc, threshold = cell_calling(cell_calling_method, force_cell_num, expected_cell_num, all_matrix_10X_dir, df_sum, outdir, sample)
 
-    # rescue low UMI cells
-    if rescue:
-        matrix_dir = f"{outdir}/{sample}_{dir_name}/"
-        threshold = rescue_cells(outdir, sample, matrix_dir, threshold)
+    # plot
+    cell_num = len(cell_bc)
+    plot_barcode_UMI(df_sum, threshold, expected_cell_num, cell_num, outdir, sample, cell_calling_method, col='UMI')
     
     # get cell stats
     marked_counts_file = outdir + '/' + sample + '_counts.txt'
-    validated_barcodes, CB_describe = get_cell_stats(df_sum, threshold, marked_counts_file)
+    CB_describe = get_cell_stats(df_sum, cell_bc, marked_counts_file)
 
     # export cell matrix
-    matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', validated_barcodes=validated_barcodes)
+    matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=cell_bc)
     (CB_total_Genes, CB_reads_count,
         reads_mapped_to_transcriptome) = expression_matrix(
-            df, validated_barcodes, outdir, sample, gtf_file)
+            df, cell_bc, outdir, sample, gtf_file)
 
     # downsampling
-    validated_barcodes = set(validated_barcodes)
+    cell_bc = set(cell_bc)
     downsample_file = args.outdir + '/' + args.sample + '_downsample.txt'
     Saturation = downsample(
         count_detail_file,
-        validated_barcodes,
+        cell_bc,
         downsample_file)
 
     # summary
@@ -436,12 +471,9 @@ def get_opts_count(parser, sub_program):
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--bam', required=True)
         parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument(
-            '--genomeDir',
-            help='genome directory',
-            required=True)
-    parser.add_argument(
-        '--cells',
-        help='expected number of cells',
-        default="auto")
-    parser.add_argument('--rescue', help='rescue low UMI cells', action='store_true')
+        parser.add_argument('--genomeDir', help='genome directory')
+        parser.add_argument('--gtf', help='gtf file path')
+    parser.add_argument('--force_cell_num', help='force cell number', default=None)
+    parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
+    parser.add_argument('--cell_calling_method', help='cell calling methods', 
+        choices=['auto', 'cellranger3', 'inflection',], default='auto')

@@ -17,7 +17,7 @@ class Step_mapping():
 
     def __init__(self, sample, outdir, assay, thread, fq, genomeDir, 
     out_unmapped=False, debug=False, outFilterMatchNmin=0, STAR_param="", sort_BAM=True,
-    outFilterMultimapNmax=1,
+    outFilterMultimapNmax=1, STAR_index=None, refFlat=None,
     ):
         self.sample = sample
         self.outdir = outdir
@@ -30,7 +30,12 @@ class Step_mapping():
         self.outFilterMatchNmin = outFilterMatchNmin
         self.STAR_param = STAR_param
         self.sort_BAM = sort_BAM
-        self.outFilterMultimapNmax = outFilterMultimapNmax
+        self.multi_max = outFilterMultimapNmax
+        if self.genomeDir and self.genomeDir != "None":
+            self.STAR_index = self.genomeDir
+        else:
+            self.STAR_index = STAR_index
+            self.refFlat = refFlat
 
         # set param
         self.outPrefix = f'{self.outdir}/{self.sample}_'
@@ -151,8 +156,8 @@ class Step_mapping():
     
     @log
     def STAR(self):
-        cmd = ['STAR', '--runThreadN', str(self.thread), '--genomeDir', self.genomeDir,
-            '--readFilesIn', self.fq, '--outFilterMultimapNmax', str(self.outFilterMultimapNmax), 
+        cmd = ['STAR', '--runThreadN', str(self.thread), '--genomeDir', self.STAR_index,
+            '--readFilesIn', self.fq, '--outFilterMultimapNmax', str(self.multi_max), 
             '--outFileNamePrefix', self.outPrefix, '--outSAMtype', 'BAM', self.sort_suffix,
             '--outFilterMatchNmin', str(self.outFilterMatchNmin)]
         if self.out_unmapped:
@@ -167,7 +172,7 @@ class Step_mapping():
 
     @log
     def picard(self):
-        self.refFlat, self.gtf = glob_genomeDir(self.genomeDir)
+        self.refFlat, _gtf = glob_genomeDir(self.genomeDir)
         self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
         cmd = [
             'picard',
@@ -228,10 +233,15 @@ def STAR(args):
         args.thread,
         args.fq, 
         args.genomeDir, 
-        args.out_unmapped, 
-        args.debug,
-        args.outFilterMatchNmin,
-        args.STAR_param)
+        out_unmapped=args.out_unmapped, 
+        debug=args.debug,
+        outFilterMatchNmin=args.outFilterMatchNmin,
+        STAR_param=args.STAR_param,
+        sort_BAM=True,
+        outFilterMultimapNmax=args.outFilterMultimapNmax,
+        STAR_index=args.STAR_index,
+        refFlat=args.refFlat,
+        )
     mapping.run()
 
 
@@ -245,5 +255,8 @@ def get_opts_STAR(parser, sub_program):
     parser.add_argument('--debug', help='debug', action='store_true')
     parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
     parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
-    parser.add_argument('--genomeDir', help='genome directory', required=True)
+    parser.add_argument('--genomeDir', help='genome directory')
     parser.add_argument('--STAR_param', help='STAR parameters', default="")
+    parser.add_argument('--STAR_index', help='STAR index directory')
+    parser.add_argument('--refFlat', help='refFlat file path')
+    parser.add_argument('--outFilterMultimapNmax', help='STAR outFilterMultimapNmax', default=1)

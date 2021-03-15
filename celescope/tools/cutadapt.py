@@ -76,7 +76,11 @@ def cutadapt(args):
         adapt.append('-a')
         adapt.append(a)
 
-    out_fq2 = args.outdir + '/' + args.sample + '_clean_2.fq.gz'
+    if not args.not_gzip:
+        suffix = ".gz"
+    else:
+        suffix = ""
+    out_fq2 = f'{args.outdir}/{args.sample}_clean_2.fq{suffix}'
     cmd = ['cutadapt'] + adapt + ['-n',
                                   str(len(adapter_args)),
                                   '-j',
@@ -118,6 +122,7 @@ def get_opts_cutadapt(parser, sub_program):
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--assay', help='assay', required=True)
+        parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
     parser.add_argument('--adapt',action='append',default=[
             'polyT=A{18}',
             'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',])
@@ -128,4 +133,5 @@ def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--thread', default=2)
     parser.add_argument('--insert', help="read2 insert length", default=150)
     parser.add_argument('--umi_consensus', help="perform umi consensus. not recommended for scRNA-Seq", action='store_true')
+
 

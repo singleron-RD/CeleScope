@@ -1,4 +1,3 @@
-from celescope.__init__ import __CONDA__
 from celescope.capture_rna.__init__ import __STEPS__, __ASSAY__
 from celescope.tools.Multi import Multi
 
@@ -40,8 +39,7 @@ class Multi_capture_rna(Multi):
 
 
 def main():
-    multi = Multi_capture_rna(__ASSAY__, __STEPS__, __CONDA__)
-    multi.col4_default = None
+    multi = Multi_capture_rna(__ASSAY__, __STEPS__)
     multi.run()
 
 if __name__ == '__main__':
