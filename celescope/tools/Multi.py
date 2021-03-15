@@ -138,7 +138,7 @@ class Multi():
         self.rm_files = self.args.rm_files
         self.steps_run = self.args.steps_run
         self.not_gzip_str = Multi.arg_str(self.args.not_gzip, 'not_gzip')
-        if self.__CONDA__ == 'celescope_RD':
+        if os.path.basename(self.__CONDA__) == 'celescope_RD':
             self.debug_str = '--debug'
         else:
             self.debug_str = Multi.arg_str(self.args.debug, 'debug')
