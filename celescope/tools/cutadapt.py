@@ -54,12 +54,6 @@ def read_adapter_fasta(adapter_fasta):
                 adapter_args.append(f'{read.name}={read.sequence}')
     return adapter_args
 
-@log 
-def consensus_fq(fq, outdir, sample, thread):
-    fq_obj = Fastq(fq)
-    fq_obj.umi_dumb_consensus()
-    out_fastq = fq_obj.write_consensus_fastq(outdir,sample)
-    return out_fastq
 
 @log
 def cutadapt(args):
@@ -102,9 +96,6 @@ def cutadapt(args):
 
     format_stat(args.outdir + '/cutadapt.log', args.sample)
 
-    if args.umi_consensus:
-        _out_fastq = consensus_fq(out_fq2, args.outdir, args.sample, args.thread)
-
     t = reporter(
         name='cutadapt',
         assay=args.assay,
@@ -132,6 +123,5 @@ def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--overlap',help='minimum overlap length',default=10)
     parser.add_argument('--thread', default=2)
     parser.add_argument('--insert', help="read2 insert length", default=150)
-    parser.add_argument('--umi_consensus', help="perform umi consensus. not recommended for scRNA-Seq", action='store_true')
 
 

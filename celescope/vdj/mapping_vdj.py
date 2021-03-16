@@ -228,10 +228,10 @@ def mapping_vdj(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % outdir)
 
-    # umi consensus
     input_file = fq
-    if not not_consensus:
-        input_file = consensus_fq(fq, outdir, sample, thread)
+    if not args.not_consensus:
+        fq_css = Fastq(fq)
+        input_file, _n = fq_css.wrap_consensus(outdir, sample)
     alignments = mixcr(outdir, sample, input_file, thread, species)
 
     # summary
@@ -241,8 +241,8 @@ def mapping_vdj(args):
 def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument("--debug", action='store_true')
-    parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
     parser.add_argument('--species', choices=['hs', 'mmu'], help='human or mouse', default='hs')
+    parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)

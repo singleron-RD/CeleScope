@@ -2,16 +2,76 @@ from collections import defaultdict
 import pysam
 import gzip
 import numpy as np
+import subprocess
+from xopen import xopen
 from concurrent.futures import ProcessPoolExecutor
-from celescope.tools.utils import genDict, log
+from celescope.tools.utils import genDict, log, fastq_line
 
 class Fastq():
     """
-    Manipulate fastq from 02.cutadapt
+    Manipulate fastq file
     """
 
     def __init__(self, fq):
         self.fq = fq
+    
+    @log
+    def sort_fastq(self, fq_tmp_file):
+        cmd = (
+            f'zcat {self.fq} | paste - - - - | sort -k1,1 -t " " | tr "\t" "\n" > {fq_tmp_file};'
+        )
+        subprocess.check_call(cmd, shell=True)
+
+    @staticmethod
+    @log
+    def sorted_dumb_consensus(fq, outfile):
+        '''
+        read in name sorted fastq, output (barcode,umi) consensus fastq
+        '''
+        curr_combine = ""
+        read_list = []
+        n = 0
+        out_h = xopen(outfile, 'w')
+
+        with pysam.FastxFile(fq) as fh:
+            for entry in fh:
+                attr = entry.name.split('_')
+                barcode = attr[0]
+                umi = attr[1]
+                combine = [barcode,umi]
+                if combine != curr_combine:
+                    # first
+                    if curr_combine == "":
+                        curr_combine = combine
+                        read_list.append([entry.sequence,entry.quality])
+                        continue
+                    consensus, consensus_qual = Fastq.dumb_consensus(read_list, threshold=0.5, ambiguous="N")
+                    n += 1
+                    prefix = "_".join(curr_combine)
+                    read_name = f'{prefix}_{n}'
+                    out_h.write(fastq_line(read_name,consensus,consensus_qual))
+                    if n % 10000 == 0:
+                        Fastq.sorted_dumb_consensus.logger.info(f'{n} UMI done.')
+                    read_list = []
+                    curr_combine = combine
+                read_list.append([entry.sequence,entry.quality])
+        #last
+        consensus, consensus_qual = Fastq.dumb_consensus(read_list, threshold=0.5, ambiguous="N")  
+        n += 1
+        read_name = f'{barcode}_{umi}_{n}'
+        out_h.write(fastq_line(read_name,consensus,consensus_qual))
+
+        out_h.close()
+        return n
+
+    @log
+    def wrap_consensus(self, outdir, sample):
+        fq_tmp_file = f'{outdir}/{sample}_sorted.fq.tmp'
+        self.sort_fastq(fq_tmp_file)
+        outfile = f'{outdir}/{sample}_consensus.fq'
+        n = self.sorted_dumb_consensus(fq=fq_tmp_file, outfile=outfile)
+        return outfile, n
+
 
     @log
     def split_fq(self):

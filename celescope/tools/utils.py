@@ -851,3 +851,6 @@ def parse_pattern(pattern):
         start = end
     return pattern_dict
     
+
+def fastq_line(name, seq, qual):
+    return f'@{name}\n{seq}\n+\n{qual}\n'
