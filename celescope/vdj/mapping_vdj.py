@@ -180,13 +180,6 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
 
 
 @log 
-def consensus_fq(fq, outdir, sample, thread):
-    fq_obj = Fastq(fq)
-    fq_obj.umi_dumb_consensus()
-    out_fasta = fq_obj.write_consensus_fasta(outdir,sample)
-    return out_fasta
-
-@log 
 def mixcr(outdir, sample, input_file, thread, species):
     report = f"{outdir}/{sample}_align.txt"
     not_align_fq = f"{outdir}/not_align.fq"
