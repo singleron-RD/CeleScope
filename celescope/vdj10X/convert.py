@@ -228,7 +228,7 @@ def rev_compl(seq):
     return "".join(base_dict[base] for base in reversed(seq))
 
 
-def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq2, seq2_insert=90):
+def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq1, seq2, qual1, qual2, seq2_insert=90, method='read2'):
     '''
     barcode_dict - key:SGR barcode; value:10X barcode
     '''
@@ -245,12 +245,19 @@ def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq2, seq2_insert=
     else:
         umi_10X = umi
 
-    seq1_add = rev_compl(seq2[seq2_insert:])
-    
+    seq2_insert = 90
+    seq1_insert = 14
+    if method == 'read2':
+        seq1_add = rev_compl(seq2[seq2_insert:])
+        new_seq2 = seq2[0:seq2_insert]  
+    elif method == 'read1':
+        seq1_add = seq1[SEQ_LEN-seq1_insert+1:]
+        new_seq2 = seq2
     new_seq1 = barcode_10X + umi_10X + TSO + seq1_add
-    new_qual = 'J' * len(new_seq1)
+    new_qual1 = 'J' * len(new_seq1)
+    new_qual2 = qual2[0:len(new_seq2)]
 
-    return new_seq1, new_qual
+    return new_seq1, new_qual1, new_seq2, new_qual2
     
 
 
@@ -456,10 +463,8 @@ def convert(args):
             umi_qual_Counter.update(C_U_quals_ascii[C_len:])
             C_U_base_Counter.update(raw_cb + umi)
 
-            seq2_insert = 90
-            new_seq1, new_qual1 = convert_seq(cb, umi, barcodes_dict, barcodes_10X, seq2, seq2_insert=seq2_insert)
-            new_seq2 = seq2[0:seq2_insert]
-            new_qual2 = qual2[0:seq2_insert]
+            new_seq1, new_qual1, new_seq2, new_qual2 = convert_seq(cb, umi, barcodes_dict, barcodes_10X, 
+                seq1, seq2, qual1, qual2, method=args.method)
             out_fq1_h.write(fastq_line(header1, new_seq1, new_qual1))
             out_fq2_h.write(fastq_line(header2, new_seq2, new_qual2))
         convert.logger.info(fq1_list[i] + ' finished.')
@@ -580,4 +585,5 @@ def get_opts_convert(parser, sub_program):
     parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
     parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
     parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
+    parser.add_argument('--method', help="read1 14bp or read2 60bp", choices=['read1', 'read2'], default='read2')
     return parser

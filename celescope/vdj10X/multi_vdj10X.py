@@ -24,6 +24,7 @@ class Multi_vdj(Multi):
         parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
         parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
         parser.add_argument('--thread', help='number of threads', default=1)
+        parser.add_argument('--method', help="read1 14bp or read2 60bp", choices=['read1', 'read2'], default='read2')
         self.parser = parser
 
     def read_convert_args(self):
@@ -39,6 +40,7 @@ class Multi_vdj(Multi):
         self.allowNoPolyT_str = Multi.arg_str(self.args.allowNoPolyT, 'allowNoPolyT')
         self.allowNoLinker_str = Multi.arg_str(self.args.allowNoLinker, 'allowNoLinker')
         self.thread = self.args.thread
+        self.method = self.args.method
 
     def vdj_10X_args(self):
         parser = self.parser
@@ -71,6 +73,7 @@ class Multi_vdj(Multi):
             f'{self.nopolyT_str} '
             f'{self.not_gzip_str} '
             f'--probe_file {self.probe_file} '
+            f'--method {self.method} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
