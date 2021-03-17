@@ -180,6 +180,10 @@ class Multi():
         self.read_cutadapt_args()
         self.read_custome_args()
 
+        if not self.args.not_gzip:
+            self.fq_suffix = ".gz"
+        else:
+            self.fq_suffix = ""
 
 
     def prepare(self):
@@ -278,11 +282,7 @@ job_end
     def cutadapt(self, sample):
         # adapt
         step = "cutadapt"
-        if not self.args.not_gzip:
-            suffix = ".gz"
-        else:
-            suffix = ""
-        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{suffix}'
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{self.fq_suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -301,11 +301,7 @@ job_end
 
     def STAR(self, sample):
         step = 'STAR'
-        if not self.args.not_gzip:
-            suffix = ".gz"
-        else:
-            suffix = ""
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{suffix}'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -373,6 +369,31 @@ job_end
             f'--type_marker_tsv {self.type_marker_tsv} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
+
+    def consensus_args(self):
+        self.parser.add_argument("--threshold", help='valid base threshold', default=0.5)
+
+    def read_consensus_args(self):
+        self.threshold = self.args.threshold
+
+    def consensus(self, sample):
+        step = 'consensus'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        cmd = (
+            f'{self.__APP__} '
+            f'{self.__ASSAY__} '
+            f'{step } '
+            f'--outdir {self.outdir_dic[sample][step]} '
+            f'--sample {sample} '
+            f'--assay {self.__ASSAY__} '
+            f'--fq {fq} '
+            f'--threshold {self.threshold} '
+        )
+        fq_size = os.path.getsize(fq)
+        mem = int(fq_size / (10 ** 9) / 5)
+        self.process_cmd(cmd, step, sample, m=mem, x=1)
+        outfile = f'{self.outdir_dic[sample][step]}/{sample}_consensus.fq'
+        return outfile
 
     def run_steps(self):
         if self.steps_run == 'all':

@@ -281,6 +281,11 @@ def main():
     get_opts_cutadapt(parser_tmp, True)
     parser_tmp.set_defaults(func=cutadapt)
 
+    from celescope.tools.consensus import consensus, get_opts_consensus
+    parser_tmp = subparsers_assay_sub.add_parser('consensus')
+    get_opts_consensus(parser_tmp, True)
+    parser_tmp.set_defaults(func=consensus)
+
     from celescope.vdj.mapping_vdj import mapping_vdj, get_opts_mapping_vdj
     parser_tmp = subparsers_assay_sub.add_parser('mapping_vdj')
     get_opts_mapping_vdj(parser_tmp, True)

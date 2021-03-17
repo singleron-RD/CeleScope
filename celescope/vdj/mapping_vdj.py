@@ -1,7 +1,6 @@
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
 from celescope.tools.utils import format_number, gen_stat, log
-from celescope.tools.Fastq import Fastq
 import os
 import logging
 import gzip
@@ -222,9 +221,6 @@ def mapping_vdj(args):
         os.system('mkdir -p %s' % outdir)
 
     input_file = fq
-    if not args.not_consensus:
-        fq_css = Fastq(fq)
-        input_file, _n = fq_css.wrap_consensus(outdir, sample)
     alignments = mixcr(outdir, sample, input_file, thread, species)
 
     # summary
@@ -235,7 +231,7 @@ def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument("--debug", action='store_true')
     parser.add_argument('--species', choices=['hs', 'mmu'], help='human or mouse', default='hs')
-    parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
+    parser.add_argument("--not_consensus", action='store_true', help="input fastq is not consensus")
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)

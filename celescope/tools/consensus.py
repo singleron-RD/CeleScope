@@ -61,7 +61,7 @@ def sorted_dumb_consensus(fq, outfile, threshold):
 @log
 def wrap_consensus(fq, outdir, sample, threshold):
     fq_tmp_file = f'{outdir}/{sample}_sorted.fq.tmp'
-    sort_fastq(fq_tmp_file)
+    sort_fastq(fq, fq_tmp_file)
     outfile = f'{outdir}/{sample}_consensus.fq'
     n = sorted_dumb_consensus(fq=fq_tmp_file, outfile=outfile, threshold=threshold)
     return outfile, n
@@ -145,20 +145,17 @@ def consensus(args):
     assay = args.assay
     fq = args.fq
     threshold = float(args.threshold)
-    not_consensus = args.not_consensus
 
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % outdir)
 
     wrap_consensus(fq, outdir, sample, threshold)
-
     
 
 
 
-def get_opts_mapping_vdj(parser, sub_program):
+def get_opts_consensus(parser, sub_program):
     parser.add_argument("--threshold", help='valid base threshold', default=0.5)
-    parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
