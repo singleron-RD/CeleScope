@@ -5,7 +5,7 @@ import numpy as np
 import subprocess
 import os
 from xopen import xopen
-from celescope.tools.utils import format_metrics, genDict, log, fastq_line, gen_stat
+from celescope.tools.utils import format_metrics, format_ratios, log, fastq_line, gen_stat
 from celescope.tools.report import reporter
 
 
@@ -167,20 +167,22 @@ def consensus(args):
 
     # metrics
     metrics = {}
-    ratios = {}
     metrics["UMI Counts"] = n
     metrics["Median UMI Length"] = np.median(length_list)
-    metrics["Ambiguous Base Counts"] = total_ambiguous_base_n
-    
+    metrics["Ambiguous Base Counts"] = total_ambiguous_base_n    
     format_metrics(metrics)
+
+    ratios = {}
+    ratios["Ambiguous Base Counts Ratio"] = total_ambiguous_base_n / sum(length_list)
+    format_ratios(ratios)
 
     # stat file
     stat_file = f'{outdir}/stat.txt'
-    with open( stat_file, 'w') as stat_h:
+    with open(stat_file, 'w') as stat_h:
         stat_str = (
             f'UMI Counts: {metrics["UMI Counts"]}\n'
             f'Median UMI Length: {metrics["Median UMI Length"]}\n'
-            f'Ambiguous Base Counts: {metrics["Ambiguous Base Counts"]}\n'
+            f'Ambiguous Base Counts: {metrics["Ambiguous Base Counts"]}({ratios["Ambiguous Base Counts Ratio"]}%)\n'
         )
         stat_h.write(stat_str)
 

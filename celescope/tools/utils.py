@@ -445,6 +445,10 @@ def format_metrics(metrics: dict):
         value = metrics[key]
         metrics[key] = format_number(value)
 
+def format_ratios(ratios: dict):
+    for key in ratios:
+        ratios[key] = round(ratios[key] * 100, 2)
+
 
 @log
 def glob_genomeDir(genomeDir, fa=False):
