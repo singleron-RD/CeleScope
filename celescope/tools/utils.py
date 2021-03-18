@@ -440,6 +440,12 @@ def format_number(number: int) -> str:
     return format(number, ",")
 
 
+def format_metrics(metrics: dict):
+    for key in metrics:
+        value = metrics[key]
+        metrics[key] = format_number(value)
+
+
 @log
 def glob_genomeDir(genomeDir, fa=False):
     refFlat = glob.glob(genomeDir + "/*.refFlat")
@@ -851,3 +857,6 @@ def parse_pattern(pattern):
         start = end
     return pattern_dict
     
+
+def fastq_line(name, seq, qual):
+    return f'@{name}\n{seq}\n+\n{qual}\n'

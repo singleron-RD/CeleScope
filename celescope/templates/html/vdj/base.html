@@ -137,6 +137,10 @@
       {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
 
+      {% if consensus_summary is defined %}
+      {% include "html/common/consensus_summary.html"%}
+      {% endif %}
+
       {% if TCR_mapping_vdj_summary is defined %}
       {% include "html/vdj/TCR_mapping_vdj_summary.html"%}
       {% endif %}

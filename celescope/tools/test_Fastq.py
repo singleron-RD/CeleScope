@@ -43,7 +43,7 @@ class Test_Fastq(unittest.TestCase):
         #fq_obj.write_consensus_fasta(outdir,sample)
         #fq_obj.write_consensus_fastq(outdir,sample)
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_single(self):
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/variant/20201224_indel/consensus/')
         outdir = './S32_SUR0528_drug_S203_TS/02.cutadapt'
@@ -54,6 +54,11 @@ class Test_Fastq(unittest.TestCase):
         #fq_obj.write_consensus_fasta(outdir,sample)
         #fq_obj.write_consensus_fastq(outdir,sample)
 
+    def test_sorted_dumb_consensus(self):
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/test1/01.barcode')
+        fastq = 'sorted.fastq'
+        fq_css = Fastq(fastq)
+        fq_css.sorted_dumb_consensus(outfile = 'consensus.fq.gz')
 
 
 

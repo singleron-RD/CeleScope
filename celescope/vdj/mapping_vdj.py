@@ -1,7 +1,6 @@
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
 from celescope.tools.utils import format_number, gen_stat, log
-from celescope.tools.Fastq import Fastq
 import os
 import logging
 import gzip
@@ -51,14 +50,6 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
 
     # init row list
     mapping_summary_row_list = []
-
-    # total
-    if not not_consensus:
-        mapping_summary_row_list.append({
-        "item": f"{stat_prefix} Count",
-        "count": total_read,
-        "total_count": np.nan,
-    })
 
     # mapped
     alignment = pd.read_csv(alignments, sep="\t")
@@ -180,13 +171,6 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
 
 
 @log 
-def consensus_fq(fq, outdir, sample, thread):
-    fq_obj = Fastq(fq)
-    fq_obj.umi_dumb_consensus()
-    out_fasta = fq_obj.write_consensus_fasta(outdir,sample)
-    return out_fasta
-
-@log 
 def mixcr(outdir, sample, input_file, thread, species):
     report = f"{outdir}/{sample}_align.txt"
     not_align_fq = f"{outdir}/not_align.fq"
@@ -228,10 +212,7 @@ def mapping_vdj(args):
     if not os.path.exists(outdir):
         os.system('mkdir -p %s' % outdir)
 
-    # umi consensus
     input_file = fq
-    if not not_consensus:
-        input_file = consensus_fq(fq, outdir, sample, thread)
     alignments = mixcr(outdir, sample, input_file, thread, species)
 
     # summary
@@ -241,8 +222,8 @@ def mapping_vdj(args):
 def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument("--debug", action='store_true')
-    parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
     parser.add_argument('--species', choices=['hs', 'mmu'], help='human or mouse', default='hs')
+    parser.add_argument("--not_consensus", action='store_true', help="input fastq is not consensus")
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)

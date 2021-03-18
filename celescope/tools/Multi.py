@@ -18,7 +18,7 @@ class Multi():
         self.col4_default = None
         self.last_step = ''
 
-    def multi_opts(self):
+    def common_args(self):
         readme = f'{self.__ASSAY__} multi-samples'
         parser = argparse.ArgumentParser(readme, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
@@ -37,8 +37,21 @@ class Multi():
         parser.add_argument('--steps_run', help='steps to run', default='all')
         parser.add_argument('--debug', help='debug or not', action='store_true')
         parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
+        parser.add_argument('--thread', help='thread', default=4)
         self.parser = parser
         return parser
+
+    def read_common_args(self):
+        self.outdir = self.args.outdir
+        self.mod = self.args.mod
+        self.rm_files = self.args.rm_files
+        self.steps_run = self.args.steps_run
+        self.not_gzip_str = Multi.arg_str(self.args.not_gzip, 'not_gzip')
+        if os.path.basename(self.__CONDA__) == 'celescope_RD':
+            self.debug_str = '--debug'
+        else:
+            self.debug_str = Multi.arg_str(self.args.debug, 'debug')
+        self.thread = self.args.thread
 
     def barcode_args(self):
         parser = self.parser
@@ -90,7 +103,6 @@ class Multi():
         parser.add_argument('--overlap', help='minimum overlap length', default=10)
         parser.add_argument('--insert', help="read2 insert length", default=150)
         parser.add_argument('--adapter_fasta', help='addtional adapter fasta file')
-        parser.add_argument('--umi_consensus', help="perform umi consensus. not recommended for scRNA-Seq", action='store_true')
         self.parser = parser
 
     def read_cutadapt_args(self):
@@ -98,7 +110,6 @@ class Multi():
         self.minimum_length = self.args.minimum_length
         self.insert = self.args.insert
         self.adapter_fasta = self.args.adapter_fasta
-        self.umi_consensus_str = Multi.arg_str(self.args.umi_consensus, 'umi_consensus')
 
     def STAR_args(self):
         self.parser.add_argument('--starMem', help='starMem', default=30)
@@ -107,10 +118,10 @@ class Multi():
             '--gtf_type',
             help='Specify attribute type in GTF annotation',
             default='exon')
-        self.parser.add_argument('--thread', help='thread', default=6)
         self.parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
         self.parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
         self.parser.add_argument('--STAR_param', help='STAR parameters', default="")
+        self.parser.add_argument("--consensus_fq", action='store_true', help="input fastq is consensus")
 
     def count_args(self):
         self.parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
@@ -125,26 +136,6 @@ class Multi():
         self.STAR_args()
         self.count_args()
         self.analysis_args()
-
-    def parse_args(self):
-        self.multi_opts()
-        self.barcode_args()
-        self.cutadapt_args()
-        self.custome_args()
-        self.args = self.parser.parse_args()
-        # read args
-        self.outdir = self.args.outdir
-        self.mod = self.args.mod
-        self.rm_files = self.args.rm_files
-        self.steps_run = self.args.steps_run
-        self.not_gzip_str = Multi.arg_str(self.args.not_gzip, 'not_gzip')
-        if os.path.basename(self.__CONDA__) == 'celescope_RD':
-            self.debug_str = '--debug'
-        else:
-            self.debug_str = Multi.arg_str(self.args.debug, 'debug')
-        self.read_barcode_args()
-        self.read_cutadapt_args()
-        self.read_custome_args()
 
     @staticmethod
     def arg_str(arg, arg_name):
@@ -163,6 +154,8 @@ class Multi():
         self.out_unmapped = Multi.arg_str(self.args.out_unmapped, 'out_unmapped')
         self.outFilterMatchNmin = self.args.outFilterMatchNmin
         self.STAR_param = self.args.STAR_param
+        self.consensus_fq = self.args.consensus_fq
+        self.consensus_str = Multi.arg_str(self.args.consensus_fq, 'consensus_fq')
 
     def read_count_args(self):
         self.expected_cell_num = self.args.expected_cell_num
@@ -177,6 +170,24 @@ class Multi():
         self.read_STAR_args()
         self.read_count_args()
         self.read_analysis_args()
+
+    def parse_args(self):
+        self.common_args()
+        self.barcode_args()
+        self.cutadapt_args()
+        self.custome_args()
+        self.args = self.parser.parse_args()
+
+        self.read_common_args()
+        self.read_barcode_args()
+        self.read_cutadapt_args()
+        self.read_custome_args()
+
+        if not self.args.not_gzip:
+            self.fq_suffix = ".gz"
+        else:
+            self.fq_suffix = ""
+
 
     def prepare(self):
         # parse_mapfile
@@ -274,11 +285,7 @@ job_end
     def cutadapt(self, sample):
         # adapt
         step = "cutadapt"
-        if not self.args.not_gzip:
-            suffix = ".gz"
-        else:
-            suffix = ""
-        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{suffix}'
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{self.fq_suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -291,18 +298,13 @@ job_end
             f'--minimum_length {self.minimum_length} '
             f'--insert {self.insert} '
             f'--adapter_fasta {self.adapter_fasta} '
-            f'{self.umi_consensus_str} '
             f'{self.not_gzip_str} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def STAR(self, sample):
         step = 'STAR'
-        if not self.args.not_gzip:
-            suffix = ".gz"
-        else:
-            suffix = ""
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{suffix}'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -370,6 +372,29 @@ job_end
             f'--type_marker_tsv {self.type_marker_tsv} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
+
+    def consensus_args(self):
+        self.parser.add_argument("--threshold", help='valid base threshold', default=0.5)
+
+    def read_consensus_args(self):
+        self.threshold = self.args.threshold
+
+    def consensus(self, sample):
+        step = 'consensus'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        cmd = (
+            f'{self.__APP__} '
+            f'{self.__ASSAY__} '
+            f'{step } '
+            f'--outdir {self.outdir_dic[sample][step]} '
+            f'--sample {sample} '
+            f'--assay {self.__ASSAY__} '
+            f'--fq {fq} '
+            f'--threshold {self.threshold} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)
+        outfile = f'{self.outdir_dic[sample][step]}/{sample}_consensus.fq'
+        return outfile
 
     def run_steps(self):
         if self.steps_run == 'all':
