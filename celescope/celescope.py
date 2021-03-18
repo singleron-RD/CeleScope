@@ -448,6 +448,11 @@ def main():
     get_opts_cutadapt(parser_cutadapt, True)
     parser_cutadapt.set_defaults(func=cutadapt)
 
+    from celescope.tools.consensus import consensus, get_opts_consensus
+    parser_tmp = subparsers_snp.add_parser('consensus')
+    get_opts_consensus(parser_tmp, True)
+    parser_tmp.set_defaults(func=consensus)
+
     from celescope.tools.STAR import STAR, get_opts_STAR
     parser_STAR = subparsers_snp.add_parser('STAR')
     get_opts_STAR(parser_STAR, True)

@@ -121,6 +121,7 @@ class Multi():
         self.parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
         self.parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
         self.parser.add_argument('--STAR_param', help='STAR parameters', default="")
+        self.parser.add_argument("--consensus_fq", action='store_true', help="input fastq is consensus")
 
     def count_args(self):
         self.parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
@@ -153,6 +154,8 @@ class Multi():
         self.out_unmapped = Multi.arg_str(self.args.out_unmapped, 'out_unmapped')
         self.outFilterMatchNmin = self.args.outFilterMatchNmin
         self.STAR_param = self.args.STAR_param
+        self.consensus_fq = self.args.consensus_fq
+        self.consensus_str = Multi.arg_str(self.args.consensus_fq, 'consensus_fq')
 
     def read_count_args(self):
         self.expected_cell_num = self.args.expected_cell_num
@@ -389,9 +392,7 @@ job_end
             f'--fq {fq} '
             f'--threshold {self.threshold} '
         )
-        fq_size = os.path.getsize(fq)
-        mem = int(fq_size / (10 ** 9) / 5)
-        self.process_cmd(cmd, step, sample, m=mem, x=1)
+        self.process_cmd(cmd, step, sample, m=5, x=1)
         outfile = f'{self.outdir_dic[sample][step]}/{sample}_consensus.fq'
         return outfile
 

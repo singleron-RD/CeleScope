@@ -440,6 +440,12 @@ def format_number(number: int) -> str:
     return format(number, ",")
 
 
+def format_metrics(metrics: dict):
+    for key in metrics:
+        value = metrics[key]
+        metrics[key] = format_number(value)
+
+
 @log
 def glob_genomeDir(genomeDir, fa=False):
     refFlat = glob.glob(genomeDir + "/*.refFlat")

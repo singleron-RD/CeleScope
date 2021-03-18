@@ -51,14 +51,6 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
     # init row list
     mapping_summary_row_list = []
 
-    # total
-    if not not_consensus:
-        mapping_summary_row_list.append({
-        "item": f"{stat_prefix} Count",
-        "count": total_read,
-        "total_count": np.nan,
-    })
-
     # mapped
     alignment = pd.read_csv(alignments, sep="\t")
     alignment.readId = alignment.readId.astype(int)
