@@ -120,6 +120,10 @@
       {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
 
+      {% if consensus_summary is defined %}
+      {% include "html/common/consensus_summary.html"%}
+      {% endif %}
+      
       {% if STAR_summary is defined %}
       {% include "html/rna/STAR_summary.html"%}
       {% endif %}
