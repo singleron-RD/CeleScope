@@ -43,7 +43,8 @@ def sorted_dumb_consensus(fq, outfile, threshold):
                     curr_combine = combine
                     read_list.append([entry.sequence,entry.quality])
                     continue
-                consensus, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(read_list, threshold=threshold, ambiguous="N")
+                consensus, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(
+                    read_list, threshold=threshold, ambiguous="N")
                 n += 1
                 prefix = "_".join(curr_combine)
                 read_name = f'{prefix}_{n}'
@@ -56,7 +57,8 @@ def sorted_dumb_consensus(fq, outfile, threshold):
                 curr_combine = combine
             read_list.append([entry.sequence,entry.quality])
     #last
-    consensus, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(read_list, threshold=threshold, ambiguous="N")
+    consensus, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(
+        read_list, threshold=threshold, ambiguous="N")
     n += 1
     prefix = "_".join(curr_combine)
     read_name = f'{prefix}_{n}'
@@ -75,7 +77,8 @@ def wrap_consensus(fq, outdir, sample, threshold):
     fq_tmp_file = f'{outdir}/{sample}_sorted.fq.tmp'
     sort_fastq(fq, fq_tmp_file, outdir)
     outfile = f'{outdir}/{sample}_consensus.fq'
-    n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(fq=fq_tmp_file, outfile=outfile, threshold=threshold)
+    n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
+        fq=fq_tmp_file, outfile=outfile, threshold=threshold)
     return outfile, n, total_ambiguous_base_n, length_list
 
 
