@@ -444,6 +444,9 @@ def format_metrics(metrics: dict):
     for key in metrics:
         value = metrics[key]
         metrics[key] = format_number(value)
+        if isinstance(value, float):
+            metrics[key] = round(value, 2)
+
 
 def format_ratios(ratios: dict):
     for key in ratios:

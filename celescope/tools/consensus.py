@@ -171,7 +171,7 @@ def consensus(args):
     # metrics
     metrics = {}
     metrics["UMI Counts"] = n
-    metrics["Median UMI Length"] = np.median(length_list)
+    metrics["Mean UMI Length"] = np.mean(length_list)
     metrics["Ambiguous Base Counts"] = total_ambiguous_base_n    
     format_metrics(metrics)
 
@@ -184,7 +184,7 @@ def consensus(args):
     with open(stat_file, 'w') as stat_h:
         stat_str = (
             f'UMI Counts: {metrics["UMI Counts"]}\n'
-            f'Median UMI Length: {metrics["Median UMI Length"]}\n'
+            f'Mean UMI Length: {metrics["Mean UMI Length"]}\n'
             f'Ambiguous Base Counts: {metrics["Ambiguous Base Counts"]}({ratios["Ambiguous Base Counts Ratio"]}%)\n'
         )
         stat_h.write(stat_str)

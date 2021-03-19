@@ -36,7 +36,7 @@ class analysis_variant(Analysis):
         # out
         out_file = f'{self.outdir}/{self.sample}_count_tsne.tsv'
         df_out = df_vc_barcode_tsne[df_vc_barcode_tsne['value'] > 0]
-        cols = ['CID', 'alt_count', 'VID', 'barcode', 'cluster', 'Gene_Counts']
+        cols = ['CID', 'alt_count', 'VID', 'barcode', 'cluster', 'tSNE_1', 'tSNE_2', 'Gene_Counts']
         df_out = df_out[cols]
         df_out.to_csv(out_file, sep='\t')
 
