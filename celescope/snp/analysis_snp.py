@@ -33,6 +33,12 @@ class analysis_variant(Analysis):
         df_vc_barcode_tsne['value'] = df_vc_barcode_tsne['value'].fillna(0)
         df_vc_barcode_tsne['value'].astype('int32')
         self.df_count_tsne = df_vc_barcode_tsne
+        # out
+        out_file = f'{self.outdir}/{self.sample}_count_tsne.tsv'
+        df_out = df_vc_barcode_tsne[df_vc_barcode_tsne['value'] > 0]
+        cols = ['CID', 'alt_count', 'VID', 'barcode', 'cluster', 'Gene_Counts']
+        df_out = df_out[cols]
+        df_out.to_csv(out_file, sep='\t')
 
     def get_count_tsne(self):
         def return_text(row):
@@ -40,7 +46,6 @@ class analysis_variant(Analysis):
             return text
         tSNE_1 = list(self.df_count_tsne.tSNE_1)
         tSNE_2 = list(self.df_count_tsne.tSNE_2)
-        print(self.df_count_tsne)
         text = list(self.df_count_tsne.apply(return_text, axis=1))
         value = list(self.df_count_tsne.value)
         title = 't-SNE plot Colored by Cell Variant Counts'
