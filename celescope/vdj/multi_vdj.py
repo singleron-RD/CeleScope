@@ -3,24 +3,44 @@ from celescope.tools.Multi import Multi
 
 
 class Multi_vdj(Multi):
-    def custome_args(self):
+
+    def mapping_vdj_args(self):
         self.parser.add_argument("--type", help='TCR or BCR', required=True)
-        self.parser.add_argument(
-        '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)
-        self.parser.add_argument('--thread', help='thread', default=6)
         self.parser.add_argument("--not_consensus", action='store_true', help="do not perform UMI consensus, use read instead")
         self.parser.add_argument('--species', choices=['hs', 'mmu'], help='human or mouse', default='hs')
 
-    def read_custome_args(self):
-        self.iUMI =  self.args.iUMI
+    def read_mapping_vdj_args(self):
         self.type = self.args.type 
-        self.thread = self.args.thread
-        self.not_consensus_str = Multi.arg_str(self.args.not_consensus, 'not_consensus')
         self.species = self.args.species
+        self.not_consensus = self.args.not_consensus
+        self.not_consensus_str = Multi.arg_str(self.args.not_consensus, 'not_consensus')
+    
+    def count_vdj_args(self):
+        self.parser.add_argument(
+        '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)
+
+    def read_count_vdj_args(self):
+        self.iUMI =  self.args.iUMI
+    
+    def custome_args(self):
+        self.consensus_args()
+        self.mapping_vdj_args()
+        self.count_vdj_args()
+
+    def read_custome_args(self):
+        self.read_consensus_args()
+        self.read_mapping_vdj_args()
+        self.read_count_vdj_args()
+
+        if self.not_consensus:
+            self.steps_run = ','.join(['sample', 'barcode', 'cutadapt', 'mapping_vdj', 'count_vdj'])
 
     def mapping_vdj(self, sample):
         step = 'mapping_vdj'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        if self.not_consensus:
+            fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        else:
+            fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -31,8 +51,8 @@ class Multi_vdj(Multi):
             f'--fq {fq} '
             f'--type {self.type} '
             f'--thread {self.thread} '
+            f'--species {self.species} '
             f'{self.not_consensus_str} '
-            f'--species {self.species}'
         )
         self.process_cmd(cmd, step, sample, m=15, x=self.thread)
 

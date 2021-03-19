@@ -1,0 +1,34 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>Consensus    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+    <div class="box">
+      <div class="description" style="display: none;">
+        <p><b>UMI Counts</b> : total UMI from FASTQ files.</p>
+        <p><b>Mean UMI Length</b> : mean of all UMI length.</p>
+        <p><b>Ambiguous Base Counts</b> : number of bases that do not pass consensus threshold.</p>
+      </div>
+      <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+        {% for item in consensus_summary %}
+          {% if loop.index <= (loop.length+1)/2 %}
+          <tr>
+            {% for i in item %} 
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+
+      <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+        {% for item in consensus_summary %}
+          {% if loop.index > (loop.length+1)/2 %}
+          <tr>
+            {% for i in item %} 
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+      <div class="clear" ></div>
+    </div>
+  </div>

@@ -17,7 +17,7 @@ class Step_mapping():
 
     def __init__(self, sample, outdir, assay, thread, fq, genomeDir, 
     out_unmapped=False, debug=False, outFilterMatchNmin=0, STAR_param="", sort_BAM=True,
-    outFilterMultimapNmax=1, STAR_index=None, refFlat=None,
+    outFilterMultimapNmax=1, STAR_index=None, refFlat=None, consensus_fq=False
     ):
         self.sample = sample
         self.outdir = outdir
@@ -36,6 +36,7 @@ class Step_mapping():
         else:
             self.STAR_index = STAR_index
             self.refFlat = refFlat
+        self.consensus_fq = consensus_fq
 
         # set param
         self.outPrefix = f'{self.outdir}/{self.sample}_'
@@ -55,6 +56,11 @@ class Step_mapping():
         self.step_name = 'STAR'
 
     def format_stat(self):
+
+        stat_prefix = 'Reads'
+        if self.consensus_fq:
+            stat_prefix = 'UMIs'
+
         fh1 = open(self.STAR_map_log, 'r')
         UNIQUE_READS = []
         MULTI_MAPPING_READS = []
@@ -95,11 +101,11 @@ class Step_mapping():
 
         self.stats = self.stats.append(pd.Series(
             f'{format_number(int(UNIQUE_READS[0]))}({UNIQUE_READS[1]})',
-            index=['Uniquely Mapped Reads']
+            index=[f'Uniquely Mapped {stat_prefix}']
         ))
         self.stats = self.stats.append(pd.Series(
             f'{format_number(int(MULTI_MAPPING_READS[0]))}({MULTI_MAPPING_READS[1]})',
-            index=['Multi-Mapped Reads']
+            index=[f'Multi-Mapped {stat_prefix}']
         ))
         # ribo
         if self.debug:
@@ -114,7 +120,7 @@ class Step_mapping():
 
             self.stats = self.stats.append(pd.Series(
                 format_stat(Reads_Mapped_to_rRNA, Reads_Total),
-                index=['Reads Mapped to rRNA']
+                index=[f'{stat_prefix} Mapped to rRNA']
             ))
             f.close()
 
@@ -241,6 +247,7 @@ def STAR(args):
         outFilterMultimapNmax=args.outFilterMultimapNmax,
         STAR_index=args.STAR_index,
         refFlat=args.refFlat,
+        consensus_fq=args.consensus_fq
         )
     mapping.run()
 
@@ -260,3 +267,4 @@ def get_opts_STAR(parser, sub_program):
     parser.add_argument('--STAR_index', help='STAR index directory')
     parser.add_argument('--refFlat', help='refFlat file path')
     parser.add_argument('--outFilterMultimapNmax', help='STAR outFilterMultimapNmax', default=1)
+    parser.add_argument("--consensus_fq", action='store_true', help="input fastq is umi consensus")

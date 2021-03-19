@@ -1,7 +1,7 @@
 
 # CeleScope
 GEXSCOPE Single Cell Analysis Pipelines  
-[中文文档](https://github.com/zhouyiqi91/CeleScope/wiki)
+中文文档: https://gitee.com/singleron-rd/celescope/wikis/
 
 ## Requirements
 
@@ -13,7 +13,11 @@ GEXSCOPE Single Cell Analysis Pipelines
 
 
 1. Clone repo
-`git clone https://github.com/singleron-RD/CeleScope.git`
+```
+git clone https://github.com/singleron-RD/CeleScope.git
+# if github is blocked
+git clone https://gitee.com/singleron-rd/celescope.git
+```
 
 2. Install conda packages
 ```
@@ -26,7 +30,7 @@ conda install --file conda_pkgs.txt --channel conda-forge --channel bioconda --c
 3. Install celescope
 ```
 pip install celescope
-# if you are in china, you can use pypi mirror to accelerate downloading
+# Use pypi mirror to accelerate downloading if you are in china
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope
 ```
 
