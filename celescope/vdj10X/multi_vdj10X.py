@@ -46,11 +46,13 @@ class Multi_vdj(Multi):
         parser = self.parser
         parser.add_argument('--species', help='species', choices=['hs','mmu'], required=True)
         parser.add_argument('--mem', help='memory (G)', default=10)
+        parser.add_argument('--soft', help='cellranger version', choices=['3.0','3.1'], default='3.0')
         self.parser = parser
 
     def read_vdj_10X_args(self):
         self.mem = self.args.mem
         self.species = self.args.species
+        self.soft = self.args.soft
 
     def convert(self, sample):
         step = 'convert'
@@ -90,6 +92,7 @@ class Multi_vdj(Multi):
             f'--mem {self.mem} '
             f'--thread {self.thread} '
             f'--species {self.species} '
+            f'--soft {self.soft} '
         )
         self.process_cmd(cmd, step, sample, m=self.mem, x=self.thread)
 
