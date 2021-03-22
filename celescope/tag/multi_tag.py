@@ -4,7 +4,6 @@ from celescope.tools.Multi import Multi
 
 class Multi_tag(Multi):
     def custome_args(self):
-        self.parser.add_argument('--thread', help='thread', default=6)
         self.parser.add_argument(
             "--UMI_min",
             help="cells have tag_UMI>=UMI_min are considered as valid cell",
@@ -19,7 +18,6 @@ class Multi_tag(Multi):
         self.parser.add_argument("--barcode_fasta", help="barcode fasta", required=True)
 
     def read_custome_args(self):
-        self.thread = self.args.thread
         self.UMI_min = self.args.UMI_min
         self.dim = self.args.dim
         self.SNR_min = self.args.SNR_min
