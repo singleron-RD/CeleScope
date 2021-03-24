@@ -108,7 +108,7 @@ class Tests(unittest.TestCase):
         gtf_file = '/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92/Homo_sapiens.GRCh38.92.chr.gtf'
         matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X_new', validated_barcodes=validated_barcodes)
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_call_cells(self):
         os.chdir = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/'
         sample = 'test1'
@@ -213,6 +213,13 @@ class Tests(unittest.TestCase):
 ,/SGRNJ03/DATA03/2004/20201228_6/R2012093-PCRD-201207-1_combined_R1.fastq.gz'
         ch = Chemistry(fq)
         print(ch.check_chemistry())
+
+
+    def test_report_prepare(self):
+        outdir = "/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/05.count"
+        count_file = f"{outdir}/NJXK01_1_counts.txt"
+        downsample_file = f"{outdir}/NJXK01_1_downsample.txt"
+        report_prepare(count_file, downsample_file, outdir)
 
 
 if __name__ == '__main__':
