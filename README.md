@@ -1,7 +1,7 @@
 
 # CeleScope
 GEXSCOPE Single Cell Analysis Pipelines  
-中文文档: https://gitee.com/singleron-rd/celescope/wikis/
+Chinese Docs(中文文档): https://gitee.com/singleron-rd/celescope/wikis/
 
 ## Requirements
 
@@ -11,11 +11,10 @@ GEXSCOPE Single Cell Analysis Pipelines
 
 ## Installation
 
-
 1. Clone repo
 ```
 git clone https://github.com/singleron-RD/CeleScope.git
-# if github is blocked
+# If github is blocked
 git clone https://gitee.com/singleron-rd/celescope.git
 ```
 
@@ -36,7 +35,7 @@ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope
 
 4. Install Beta version(optional)
 ```
-# if you want to use Beta version of celescope
+# If you want to use Beta version of celescope
 python setup.py install
 ```
 
@@ -45,48 +44,50 @@ python setup.py install
 ### Homo sapiens
 
 ```
+mkdir -p hs/ensembl_99
+cd hs/ensembl_99
+
 wget ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
 wget ftp://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz
 
-mkdir -p references/Homo_sapiens/Ensembl/GRCh38
-gzip -c -d Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz > references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.fa
-gzip -c -d Homo_sapiens.GRCh38.99.gtf.gz > references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf
+gunzip Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+gunzip Homo_sapiens.GRCh38.99.gtf.gz
 
 conda activate celescope
-
-gtfToGenePred -genePredExt -geneNameAsName2 references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf /dev/stdout | \
-    awk '{print $12"\t"$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10}' > references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.refFlat
+gtfToGenePred -genePredExt -geneNameAsName2 Homo_sapiens.GRCh38.99.gtf /dev/stdout | \
+    awk '{print $12"\t"$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10}' > Homo_sapiens.GRCh38.99.refFlat
 
 STAR \
     --runMode genomeGenerate \
     --runThreadN 6 \
-    --genomeDir references/Homo_sapiens/Ensembl/GRCh38 \
-    --genomeFastaFiles references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.fa \
-    --sjdbGTFfile references/Homo_sapiens/Ensembl/GRCh38/Homo_sapiens.GRCh38.99.gtf \
+    --genomeDir ./ \
+    --genomeFastaFiles Homo_sapiens.GRCh38.dna.primary_assembly.fa \
+    --sjdbGTFfile Homo_sapiens.GRCh38.99.gtf \
     --sjdbOverhang 100
 ```
 
 ### Mus musculus
 
 ```
+mkdir -p mmu/ensembl_99
+cd mmu/ensembl_99
+
 wget ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
 wget ftp://ftp.ensembl.org/pub/release-99/gtf/mus_musculus/Mus_musculus.GRCm38.99.gtf.gz
 
-mkdir -p references/Mus_musculus/Ensembl/GRCm38
-gzip -c -d Mus_musculus.GRCm38.dna.primary_assembly.fa.gz > references/Mus_musculus/Ensembl/GRCm38/Mus_musculus.GRCm38.fa
-gzip -c -d Mus_musculus.GRCm38.99.gtf.gz > references/Mus_musculus/Ensembl/GRCm38/Mus_musculus.GRCm38.99.gtf
+gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz 
+gunzip Mus_musculus.GRCm38.99.gtf.gz
 
 conda activate celescope
-
-gtfToGenePred -genePredExt -geneNameAsName2 references/Mus_musculus/Ensembl/GRCm38/Mus_musculus.GRCm38.99.gtf /dev/stdout | \
-    awk '{print $12"\t"$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10}' > references/Mus_musculus/Ensembl/GRCm38/Mus_musculus.GRCm38.99.refFlat
+gtfToGenePred -genePredExt -geneNameAsName2 Mus_musculus.GRCm38.99.gtf /dev/stdout | \
+    awk '{print $12"\t"$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10}' > Mus_musculus.GRCm38.99.refFlat
 
 STAR \
     --runMode genomeGenerate \
     --runThreadN 6 \
-    --genomeDir references/Mus_musculus/Ensembl/GRCm38 \
-    --genomeFastaFiles references/Mus_musculus/Ensembl/GRCm38/Mus_musculus.GRCm38.fa \
-    --sjdbGTFfile references/Mus_musculus/Ensembl/GRCm38/Mus_musculus.GRCm38.99.gtf \
+    --genomeDir ./ \
+    --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa \
+    --sjdbGTFfile Mus_musculus.GRCm38.99.gtf \
     --sjdbOverhang 100
 ```
 
@@ -94,55 +95,80 @@ STAR \
 
 ### Single cell RNA-Seq
 
+1. Prepare mapfile
+
+mapfile is a tab-delimited text file(.tsv) containing at least three columns. Each line of mapfile represents a pair of fastq files(Read 1 and Read 2).
+
+First column: Fastq file prefix. Fastq files must be gzipped.
+
+Second column: Fastq directory.
+
+Third column: Sample name, which is the prefix of all generated files. One sample can have multiple fastq files.
+
+Fourth column: Optional, force cell number (scRNA-Seq) or match_dir (scVDJ).
+
+Sample mapfile:
+```
+$cat ./my.mapfile
+R2007197    /SGRNJ/DATA_PROJ/dir1	sample1
+R2007199    /SGRNJ/DATA_PROJ/dir2	sample1
+R2007198    /SGRNJ/DATA_PROJ/dir1   sample2
+
+$ls /SGRNJ/DATA_PROJ/dir1
+R2007198_L2_2.fq.gz
+R2007198_L2_1.fq.gz
+R2007197_L2_2.fq.gz
+R2007197_L2_1.fq.gz
+
+$ls /SGRNJ/DATA_PROJ/dir2
+R2007199_L2_2.fq.gz
+R2007199_L2_1.fq.gz
+```
+
+2. Run `multi_rna` to create shell scripts
 ```
 conda activate celescope
-celescope rna run\
- --fq1 ./data/R2005212_L1_1.fq.gz\
- --fq2 ./data/R2005212_L1_2.fq.gz\
- --genomeDir /SGR/references/Homo_sapiens/Ensembl/GRCh38\
- --sample R2005212\
- --chemistry auto\
- --thread 4\
+multi_rna \
+ --mapfile ./my.mapfile \
+ --genomeDir {some path}/hs/ensembl_99 \
+ --thread 8 \
+ --mod shell
 ```
 
-`--fq1` Required. Gzipped FASTQ read 1 file path.
+`--mapfile` Required, mapfile path.
 
-`--fq2` Required. Gzipped FASTQ read 2 file path.
+`--genomeDir` Required, genomeDir directory.
 
-`--genomeDir` Required. Reference genome directory.  
+`--thread` Maximum number of threads to use, default=4.  
 
-`--sample` Required. Sample name. 
+`--mod` Create "sjm"(simple job manager https://github.com/StanfordBioinformatics/SJM) or "shell" scripts. 
 
-`--chemistry` Chemistry version, default=auto. 
+Shell scripts will be created in `./shell` directory, one script per sample. The shell scripts contains all the steps that need to be run.
 
-`--thread` Number of threads to use, default=1.
+3. Run shell scripts under current directory
+
+`sh ./shell/{sample}.sh`
 
 ### Single Cell VDJ
 
+Running single Cell VDJ is almost the same as running single Cell RNA-Seq, except that the arguments of `multi_vdj` are somewhat different.
+
+1. Prepare mapfile
+
+2. Run `multi_vdj` to create shell scripts
+
 ```
 conda activate celescope
-celescope vdj run\   
- --fq1 {vdj fq1.gz}\
- --fq2 {vdj fq2.gz}\
- --type {TCR or BCR}\
- --sample {sample name}\
- --chemistry auto\
- --thread {thread}\
- --match_dir {match_dir}\
+multi_vdj \
+ --mapfile ./my.mapfile \
+ --type TCR \
+ --match_dir {scRNA-Seq celescope directory}
+ --thread 8 \
+ --mod shell \
 ```  
-
-`--fq1` Required. Gzipped FASTQ read 1 file path.
-
-`--fq2` Required. Gzipped FASTQ read 2 file path.
 
 `--type` Required. TCR or BCR.   
 
-`--sample` Required. Sample name. 
+`--match_dir` Optional. Matched single cell RNA-Seq directory after running CeleScope.  
 
-`--chemistry` Chemistry version, default=auto. 
-
-`--thread` Number of threads to use, default=1.
-
-`--match_dir` Optional. Matched scRNA-Seq directory after running CeleScope.  
-
-
+3. Run shell scripts under current directory

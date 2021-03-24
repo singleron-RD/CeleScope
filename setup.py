@@ -32,7 +32,7 @@ setuptools.setup(
     install_requires=[
         'cutadapt==1.17',
         'pysam>=0.15.0',
-        'scipy>=0.19.1',
+        'scipy>=1.0.1',
         'numpy>=1.15.4',
         'pandas==0.23.4',
         'jinja2>=2.10',
