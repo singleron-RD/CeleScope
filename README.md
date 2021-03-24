@@ -86,8 +86,8 @@ STAR \
     --runMode genomeGenerate \
     --runThreadN 6 \
     --genomeDir ./ \
-    --genomeFastaFiles Mus_musculus.GRCm38.fa \
-    --sjdbGTFfile Mus_musculus.GRCm38.dna.primary_assembly.fa \
+    --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa \
+    --sjdbGTFfile Mus_musculus.GRCm38.99.gtf \
     --sjdbOverhang 100
 ```
 
@@ -101,7 +101,7 @@ mapfile is a tab-delimited text file(.tsv) containing at least three columns. Ea
 
 First column: Fastq file prefix. Fastq files must be gzipped.
 
-Second column: The folder where fastq is located.
+Second column: Fastq directory.
 
 Third column: Sample name, which is the prefix of all generated files. One sample can have multiple fastq files.
 
@@ -125,19 +125,19 @@ R2007199_L2_2.fq.gz
 R2007199_L2_1.fq.gz
 ```
 
-2. Run multi_rna to create shell scripts
+2. Run `multi_rna` to create shell scripts
 ```
 conda activate celescope
 multi_rna \
  --mapfile ./my.mapfile \
- --genomeDir {path}/hs/ensembl_99 \
+ --genomeDir {some path}/hs/ensembl_99 \
  --thread 8 \
  --mod shell
 ```
 
 `--mapfile` Required, mapfile path.
 
-`--genomeDir` Required, genomeDir path.
+`--genomeDir` Required, genomeDir directory.
 
 `--thread` Maximum number of threads to use, default=4.  
 
@@ -151,31 +151,24 @@ Shell scripts will be created in `./shell` directory, one script per sample. The
 
 ### Single Cell VDJ
 
+Running single Cell VDJ is almost the same as running single Cell RNA-Seq, except that the arguments of `multi_vdj` are somewhat different.
+
+1. Prepare mapfile
+
+2. Run `multi_vdj` to create shell scripts
 
 ```
 conda activate celescope
-celescope vdj run\   
- --fq1 {vdj fq1.gz}\
- --fq2 {vdj fq2.gz}\
- --type {TCR or BCR}\
- --sample {sample name}\
- --chemistry auto\
- --thread {thread}\
- --match_dir {match_dir}\
+multi_vdj \
+ --mapfile ./my.mapfile \
+ --type TCR \
+ --match_dir {scRNA-Seq celescope directory}
+ --thread 8 \
+ --mod shell \
 ```  
-
-`--fq1` Required. Gzipped FASTQ read 1 file path.
-
-`--fq2` Required. Gzipped FASTQ read 2 file path.
 
 `--type` Required. TCR or BCR.   
 
-`--sample` Required. Sample name. 
+`--match_dir` Optional. Matched single cell RNA-Seq directory after running CeleScope.  
 
-`--chemistry` Chemistry version, default=auto. 
-
-`--thread` Number of threads to use, default=1.
-
-`--match_dir` Optional. Matched scRNA-Seq directory after running CeleScope.  
-
-
+3. Run shell scripts under current directory
