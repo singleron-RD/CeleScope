@@ -154,6 +154,7 @@ Shell scripts will be created in `./shell` directory, one script per sample. The
 Running single Cell VDJ is almost the same as running single Cell RNA-Seq, except that the arguments of `multi_vdj` are somewhat different.
 
 1. Prepare mapfile
+
 If you have paired single cell RNA-seq and VDJ samples, the single cell RNA-Seq directory after running CeleScope is called `matched_dir`. You can write matched_dir's path as the fourth column of mapfile(optional).
 
 ```
