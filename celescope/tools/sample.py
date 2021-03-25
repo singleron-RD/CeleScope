@@ -13,10 +13,11 @@ from .Chemistry import Chemistry
 
 
 @log
-def sample_info(args):
+def sample(args):
 
-    sample = args.sample
-    ASSAY = ASSAY_DICT[args.assay]
+    sample_name = args.sample
+    assay = args.assay
+    assay_description = ASSAY_DICT[assay]
     version = __VERSION__
     outdir = args.outdir
     chemistry = args.chemistry
@@ -36,7 +37,7 @@ def sample_info(args):
 
     stat = pd.DataFrame({
         "item": ["Sample ID", "Assay", "Chemistry", "Software Version"],
-        "count": [sample, ASSAY, chemistry, version],
+        "count": [sample_name, assay_description, chemistry, version],
         },
         columns=["item", "count"]
     )
@@ -45,8 +46,8 @@ def sample_info(args):
 
     t = reporter(
         name='sample',
-        assay=args.assay,
-        sample=args.sample,
+        assay=assay,
+        sample=sample_name,
         stat_file=stat_file,
         outdir=outdir + '/..')
     t.get_report()
