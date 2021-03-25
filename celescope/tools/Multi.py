@@ -4,19 +4,26 @@ import sys
 import argparse
 import re
 from collections import defaultdict
-from celescope.tools.utils import merge_report
-from celescope.tools.utils import parse_map_col4, link_data
+from celescope.tools.utils import *
 from celescope.tools.__init__ import __PATTERN_DICT__
 
 class Multi():
 
-    def __init__(self, __ASSAY__, __STEPS__):
-        self.__ASSAY__ = __ASSAY__
-        self.__STEPS__ = __STEPS__
+    def __init__(self, assay):
+        self.__ASSAY__ = assay
+        init_module = find_assay_init(assay)
+        self.__STEPS__ = init_module.__STEPS__
         self.__CONDA__ = os.environ['CONDA_DEFAULT_ENV']
         self.__APP__ = 'celescope'
         self.col4_default = None
         self.last_step = ''
+        self.step_prefix = (
+            '{self.__APP__} {self.__ASSAY__} {step}'
+            '--outdir {self.outdir_dic[sample][step]} '
+            '--sample {sample} '
+            '--assay {self.__ASSAY__} '
+        )
+        self.args = None
 
     def common_args(self):
         readme = f'{self.__ASSAY__} multi-samples'
@@ -32,157 +39,37 @@ class Multi():
                 4th col: Cell number or match_dir, optional;
             ''',
             required=True)
-        parser.add_argument('--outdir', help='output dir', default="./")
         parser.add_argument('--rm_files', action='store_true', help='remove redundant fq.gz and bam after running')
         parser.add_argument('--steps_run', help='steps to run', default='all')
+        # sub_program parser do not have
+        parser.add_argument('--outdir', help='output dir', default="./")
         parser.add_argument('--debug', help='debug or not', action='store_true')
-        parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
         parser.add_argument('--thread', help='thread', default=4)
         self.parser = parser
         return parser
 
     def read_common_args(self):
-        self.outdir = self.args.outdir
-        self.mod = self.args.mod
-        self.rm_files = self.args.rm_files
-        self.steps_run = self.args.steps_run
         self.not_gzip_str = Multi.arg_str(self.args.not_gzip, 'not_gzip')
         if os.path.basename(self.__CONDA__) == 'celescope_RD':
             self.debug_str = '--debug'
         else:
             self.debug_str = Multi.arg_str(self.args.debug, 'debug')
-        self.thread = self.args.thread
 
-    def barcode_args(self):
-        parser = self.parser
-        parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
-        parser.add_argument('--pattern', help='')
-        parser.add_argument('--whitelist', help='')
-        parser.add_argument('--linker', help='')
-        parser.add_argument('--lowQual', type=int, help='max phred of base as lowQual', default=0)
-        parser.add_argument('--lowNum', type=int, help='max number with lowQual allowed', default=2)
-        parser.add_argument('--nopolyT', action='store_true', help='output nopolyT fq')
-        parser.add_argument('--noLinker', action='store_true', help='output noLinker fq')
-        parser.add_argument('--probe_file', help="probe fasta file")
-        parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
-        parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
-        self.parser = parser
+    def step_args(self):
+        for step in self.
 
-    def read_barcode_args(self):
-        self.chemistry = self.args.chemistry
-        self.pattern = self.args.pattern
-        self.whitelist = self.args.whitelist
-        self.linker = self.args.linker
-        self.lowQual = self.args.lowQual
-        self.lowNum = self.args.lowNum
-        self.nopolyT_str = Multi.arg_str(self.args.nopolyT, 'nopolyT')
-        self.noLinker_str = Multi.arg_str(self.args.noLinker, 'noLinker')
-        self.probe_file = self.args.probe_file
-        self.allowNoPolyT_str = Multi.arg_str(self.args.allowNoPolyT, 'allowNoPolyT')
-        self.allowNoLinker_str = Multi.arg_str(self.args.allowNoLinker, 'allowNoLinker')
+    def parse_step_args(self, step):
+        step_module = find_step_module(self.__ASSAY__, step)
+        func_opts = getattr(step_module, f"get_opts_{step}")
+        parser = func_opts(self.parser, sub_program=False)
+        args = parser.parse_known_args()
+        return args
 
-    def cutadapt_args(self):
-        parser = self.parser
-        parser.add_argument(
-            '--adapt',
-            action='append',
-            help='adapter sequence',
-            default=[
-                'polyT=A{15}',
-                'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
-        parser.add_argument(
-            '--minimum_length',
-            dest='minimum_length',
-            help='minimum_length',
-            default=20)
-        parser.add_argument(
-            '--nextseq-trim',
-            dest='nextseq_trim',
-            help='nextseq_trim',
-            default=20)
-        parser.add_argument('--overlap', help='minimum overlap length', default=10)
-        parser.add_argument('--insert', help="read2 insert length", default=150)
-        parser.add_argument('--adapter_fasta', help='addtional adapter fasta file')
-        self.parser = parser
-
-    def read_cutadapt_args(self):
-        self.overlap = self.args.overlap
-        self.minimum_length = self.args.minimum_length
-        self.insert = self.args.insert
-        self.adapter_fasta = self.args.adapter_fasta
-
-    def STAR_args(self):
-        self.parser.add_argument('--starMem', help='starMem', default=30)
-        self.parser.add_argument('--genomeDir', help='genome index dir', required=True)
-        self.parser.add_argument(
-            '--gtf_type',
-            help='Specify attribute type in GTF annotation',
-            default='exon')
-        self.parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
-        self.parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
-        self.parser.add_argument('--STAR_param', help='STAR parameters', default="")
-        self.parser.add_argument("--consensus_fq", action='store_true', help="input fastq is consensus")
-
-    def count_args(self):
-        self.parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
-        self.parser.add_argument('--cell_calling_method', help='cell calling methods', 
-            choices=['auto', 'cellranger3', 'inflection'], default='auto')
-
-    def analysis_args(self):
-        self.parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
-        self.parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
-
-    def custome_args(self):
-        self.STAR_args()
-        self.count_args()
-        self.analysis_args()
-
-    @staticmethod
-    def arg_str(arg, arg_name):
-        '''
-        return action store_true arguments as string
-        '''
-        if arg:
-            return '--' + arg_name
-        return ''
-
-    def read_STAR_args(self):
-        self.thread = self.args.thread
-        self.genomeDir = self.args.genomeDir
-        self.starMem = self.args.starMem
-        self.gtf_type = self.args.gtf_type
-        self.out_unmapped = Multi.arg_str(self.args.out_unmapped, 'out_unmapped')
-        self.outFilterMatchNmin = self.args.outFilterMatchNmin
-        self.STAR_param = self.args.STAR_param
-        self.consensus_fq = self.args.consensus_fq
-        self.consensus_str = Multi.arg_str(self.args.consensus_fq, 'consensus_fq')
-
-    def read_count_args(self):
-        self.expected_cell_num = self.args.expected_cell_num
-        self.cell_calling_method = self.args.cell_calling_method
-    
-    def read_analysis_args(self):
-        self.save_rds = self.args.save_rds
-        self.save_rds_str = Multi.arg_str(self.save_rds, 'save_rds')
-        self.type_marker_tsv = self.args.type_marker_tsv
-
-    def read_custome_args(self):
-        self.read_STAR_args()
-        self.read_count_args()
-        self.read_analysis_args()
 
     def parse_args(self):
         self.common_args()
-        self.barcode_args()
-        self.cutadapt_args()
-        self.custome_args()
+        self.step_args()
         self.args = self.parser.parse_args()
-
-        self.read_common_args()
-        self.read_barcode_args()
-        self.read_cutadapt_args()
-        self.read_custome_args()
-
         if not self.args.not_gzip:
             self.fq_suffix = ".gz"
         else:
@@ -246,13 +133,8 @@ job_end
         step = "sample"
         arr = self.fq_dict[sample]
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
-            f'--chemistry {self.chemistry} '
+            f"{f'{self.step_prefix}'} "
+            f'--chemistry {self.args.chemistry} '
             f'--fq1 {arr[0]}'
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)
@@ -268,12 +150,12 @@ job_end
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
-            f'--chemistry {self.chemistry} '
+            f'--chemistry {self.args.chemistry} '
             f'--fq1 {arr[0]} --fq2 {arr[1]} '
-            f'--pattern {self.pattern} --whitelist {self.whitelist} --linker {self.linker} '
-            f'--lowQual {self.lowQual} --thread {self.thread} '
-            f'--lowNum {self.lowNum} '
-            f'{self.allowNoPolyT_str} '
+            f'--pattern {self.args.pattern} --whitelist {self.args.whitelist} --linker {self.args.linker} '
+            f'--lowQual {self.args.lowQual} --thread {self.args.thread} '
+            f'--lowNum {self.args.lowNum} '
+            f'{self.args.allowNoPolyT_str} '
             f'{self.allowNoLinker_str} '
             f'{self.noLinker_str} '
             f'{self.nopolyT_str} '

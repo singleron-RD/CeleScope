@@ -8,7 +8,7 @@ import argparse
 from celescope.tools.utils import log
 
 
-@log
+@add_log
 def merge_report():
     parser = argparse.ArgumentParser('merge report')
     parser.add_argument('--outdir', help='outdir', required=True)
@@ -54,7 +54,7 @@ def merge_report():
         rm_files()
 
 
-@log
+@add_log
 def rm_files():
     cmd = '''
         find . -iname '*.fq*' -delete;

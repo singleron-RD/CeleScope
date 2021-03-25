@@ -12,7 +12,7 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir, gene_convert, log
+from celescope.tools.utils import *
 import celescope.tools
 
 toolsdir = os.path.dirname(celescope.tools.__file__)
@@ -81,14 +81,14 @@ def marker_table(marker_df):
     return marker_gene_table
 
 
-@log
+@add_log
 def seurat(sample, outdir, matrix_file):
     app = toolsdir + "/run_analysis.R"
     cmd = f"Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file}"
     os.system(cmd)
 
 
-@log
+@add_log
 def analysis_rna_virus(args):
 
     # check dir

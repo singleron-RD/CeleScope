@@ -5,8 +5,7 @@ import argparse
 import re
 from collections import defaultdict
 from celescope.smk.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.utils import merge_report, generate_sjm
-from celescope.tools.utils import parse_map_col4, multi_opts, link_data
+from celescope.tools.utils import *
 
 
 def main():

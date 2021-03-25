@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import glob
 from celescope.tools.report import reporter
-from celescope.tools.utils import log
+from celescope.tools.utils import *
 from celescope.tools.Analysis import Analysis
 
 class Analysis_tag(Analysis):

@@ -1,6 +1,3 @@
-#!/bin/env python
-# coding=utf8
-
 import os
 import re
 import sys
@@ -9,8 +6,7 @@ import logging
 import subprocess
 import glob
 import pandas as pd
-from celescope.tools.utils import format_number, log, format_stat
-from celescope.tools.utils import glob_genomeDir
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
 class Step_mapping():
@@ -142,7 +138,7 @@ class Step_mapping():
 
         self.stats.to_csv(self.stats_file, sep=':', header=False)
 
-    @log
+    @add_log
     def ribo(self):
         import celescope
         root_path = os.path.dirname(celescope.__file__)
@@ -160,7 +156,7 @@ class Step_mapping():
         Step_mapping.ribo.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
     
-    @log
+    @add_log
     def STAR(self):
         cmd = ['STAR', '--runThreadN', str(self.thread), '--genomeDir', self.STAR_index,
             '--readFilesIn', self.fq, '--outFilterMultimapNmax', str(self.multi_max), 
@@ -176,7 +172,7 @@ class Step_mapping():
         Step_mapping.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @log
+    @add_log
     def picard(self):
         self.refFlat, _gtf = glob_genomeDir(self.genomeDir)
         self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
@@ -197,7 +193,7 @@ class Step_mapping():
         Step_mapping.picard.logger.info(cmd_str)
         subprocess.check_call(cmd)
 
-    @log
+    @add_log
     def run(self):
         self.STAR()
         self.picard()
@@ -218,13 +214,13 @@ class Step_mapping():
             plot=self.plot)
         t.get_report()
 
-    @log
+    @add_log
     def sort_bam(self):
         cmd = f'samtools sort {self.unsort_STAR_bam} -o {self.STAR_bam}'
         Step_mapping.sort_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @log
+    @add_log
     def index_bam(self):
         cmd = f"samtools index {self.STAR_bam}"
         Step_mapping.index_bam.logger.info(cmd)
@@ -253,13 +249,7 @@ def STAR(args):
 
 
 def get_opts_STAR(parser, sub_program):
-    if sub_program:
-        parser.add_argument('--fq', required=True)
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--thread', default=1)
-        parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument('--debug', help='debug', action='store_true')
+    parser = s_common(parser)
     parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
     parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
     parser.add_argument('--genomeDir', help='genome directory')
@@ -268,3 +258,5 @@ def get_opts_STAR(parser, sub_program):
     parser.add_argument('--refFlat', help='refFlat file path')
     parser.add_argument('--outFilterMultimapNmax', help='STAR outFilterMultimapNmax', default=1)
     parser.add_argument("--consensus_fq", action='store_true', help="input fastq is umi consensus")
+    if sub_program:
+        parser.add_argument('--fq', required=True)

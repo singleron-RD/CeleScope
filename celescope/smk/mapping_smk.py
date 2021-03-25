@@ -1,6 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, log
-from celescope.tools.utils import read_fasta, process_read, gen_stat
+from celescope.tools.utils import *
 from celescope.tools.barcode import parse_pattern
 import gzip
 import os
@@ -130,7 +129,7 @@ class smk_mapping:
         df_umi_count = df_umi_count.astype(int)
         df_umi_count.to_csv(self.UMI_count_file, sep="\t")
 
-    @log
+    @add_log
     def run(self):
         self.read_to_dic()
         self.tag_count()

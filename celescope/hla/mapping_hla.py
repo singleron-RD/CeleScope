@@ -4,10 +4,10 @@ from concurrent.futures import ProcessPoolExecutor
 import celescope
 import pysam
 import pandas as pd
-from celescope.tools.utils import format_number, log, read_barcode_file
+from celescope.tools.utils import *
 
 
-@log
+@add_log
 def razer(fq, outdir, sample, thread):
 
     # get ref
@@ -35,7 +35,7 @@ def razer(fq, outdir, sample, thread):
     return out_bam
 
 
-@log
+@add_log
 def split_bam(out_bam, barcodes, outdir, sample):
     '''
     input:
@@ -132,7 +132,7 @@ def read_index(index_file):
     return df_valid
 
 
-@log
+@add_log
 def hla_typing(index_file, outdir, thread):
     all_res = []
     df_valid = read_index(index_file)
@@ -144,7 +144,7 @@ def hla_typing(index_file, outdir, thread):
             all_res.append(res)
 
 
-@log
+@add_log
 def summary(index_file, outdir, sample):
     
     n = 0
@@ -170,7 +170,7 @@ def summary(index_file, outdir, sample):
     all_df.to_csv(out_file, sep='\t', index=False)
 
 
-@log
+@add_log
 def mapping_hla(args):
 
     sample = args.sample

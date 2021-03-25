@@ -8,8 +8,7 @@ import subprocess
 import glob
 import sys
 import pysam
-from celescope.tools.utils import format_number, log
-from celescope.tools.utils import glob_genomeDir, gene_convert
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
 
@@ -46,7 +45,7 @@ def format_stat(log, samplename):
             stat_fh.write('%s: %s\n' % (t, s))
     fh.close()
 
-@log
+@add_log
 def add_tag(bam, gtf):
     id_name = gene_convert(gtf)
     samfile = pysam.AlignmentFile(bam, "rb")
@@ -69,7 +68,7 @@ def add_tag(bam, gtf):
     cmd = f'mv {bam}.temp {bam}'
     subprocess.check_call(cmd, shell=True)
 
-@log
+@add_log
 def featureCounts(args):
 
     # check
@@ -128,6 +127,7 @@ def featureCounts(args):
 
 
 def get_opts_featureCounts(parser, sub_program):
+    parser = s_common(parser)
     parser.add_argument('--gtf', help='gtf file path')
     parser.add_argument(
         '--gtf_type',
@@ -135,9 +135,5 @@ def get_opts_featureCounts(parser, sub_program):
         default='exon')
     if sub_program:
         parser.add_argument('--genomeDir')
-        parser.add_argument('--thread', default=1)
         parser.add_argument('--input', required=True)
-        #parser.add_argument('--format', default='BAM')
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+

@@ -12,7 +12,7 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir
+from celescope.tools.utils import *
 
 logger1 = logging.getLogger(__name__)
 

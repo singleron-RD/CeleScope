@@ -1,5 +1,3 @@
-#!/bin/env python
-# coding=utf8
 import os
 import re
 import io
@@ -12,7 +10,7 @@ import pysam
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
-from celescope.tools.utils import format_number, log, seq_ranges, read_fasta, genDict, read_one_col
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 
@@ -25,7 +23,7 @@ class Barcode():
         self.L57C = 0
         self.fq1_file, self.fq2_file = self.fq1, self.fq2
 
-    @log
+    @add_log
     def merge_fastq(self):
         '''
         merge fastq if len(fq1) > 1
@@ -55,7 +53,7 @@ class Barcode():
         return self.fq1_file, self.fq2_file
 
     '''
-    @log
+    @add_log
     def get_chemistry(self):
 
         # scopeV2.0.1: 'C8L16C8L16C8L1U8T18'

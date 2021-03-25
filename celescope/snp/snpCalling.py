@@ -6,14 +6,12 @@ import pysam
 import numpy as np
 import pandas as pd
 import logging
-from celescope.tools.utils import format_number, log, read_barcode_file
-from celescope.tools.utils import format_stat
-from celescope.tools.utils import read_one_col, gene_convert, glob_genomeDir
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from mutract.utils import Mutract
 
 
-@log
+@add_log
 def snpCalling(args):
 
     sample = args.sample

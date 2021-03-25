@@ -4,15 +4,14 @@
 import os
 import pandas as pd
 import sys
-import logging
 from celescope.__init__ import __VERSION__, ASSAY_DICT
-from celescope.tools.utils import log
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
 
 
-@log
+@add_log
 def sample(args):
 
     sample_name = args.sample

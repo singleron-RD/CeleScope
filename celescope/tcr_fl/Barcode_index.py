@@ -1,4 +1,4 @@
-from celescope.tools.utils import format_number, log, read_barcode_file
+from celescope.tools.utils import *
 import pandas as pd
 
 class Barcode_index():

@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, read_barcode_file, log, format_stat
+from celescope.tools.utils import *
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
@@ -86,7 +86,7 @@ def write_and_plot(df, column_name, count_file, plot_file):
     fig.savefig(plot_file)
 
 
-@log
+@add_log
 def count_smk(args):
 
     read_file = args.read_file

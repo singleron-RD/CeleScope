@@ -5,11 +5,11 @@ import numpy as np
 import subprocess
 import os
 from xopen import xopen
-from celescope.tools.utils import format_metrics, format_ratios, log, fastq_line, gen_stat
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
 
-@log
+@add_log
 def sort_fastq(fq, fq_tmp_file, outdir):
     tmp_dir = f'{outdir}/tmp'
     cmd = (
@@ -19,7 +19,7 @@ def sort_fastq(fq, fq_tmp_file, outdir):
     subprocess.check_call(cmd, shell=True)
 
 
-@log
+@add_log
 def sorted_dumb_consensus(fq, outfile, threshold):
     '''
     read in name sorted fastq, output (barcode,umi) consensus fastq
@@ -72,7 +72,7 @@ def sorted_dumb_consensus(fq, outfile, threshold):
     return n, total_ambiguous_base_n, length_list
 
 
-@log
+@add_log
 def wrap_consensus(fq, outdir, sample, threshold):
     fq_tmp_file = f'{outdir}/{sample}_sorted.fq.tmp'
     sort_fastq(fq, fq_tmp_file, outdir)

@@ -3,11 +3,11 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 import pysam
 import pandas as pd
-from celescope.tools.utils import genDict, format_number, log, read_barcode_file
+from celescope.tools.utils import *
 from celescope.tcr_fl.Barcode_index import Barcode_index
 
 
-@log
+@add_log
 def get_nCell_barcodes(fq, nCell):
     '''
     get top nCell's barcodes(rank by UMI counts)
@@ -27,7 +27,7 @@ def get_nCell_barcodes(fq, nCell):
     return barcodes
 
 
-@log
+@add_log
 def split_run(fq, fq_outdir, barcodes=None, nCell=None):
     '''
     split fastq 
@@ -56,7 +56,7 @@ def split_run(fq, fq_outdir, barcodes=None, nCell=None):
     return bi
 
 
-@log
+@add_log
 def split_fq(args):
     nCell = args.nCell
     outdir = args.outdir

@@ -6,7 +6,7 @@ import pysam
 import os
 import glob
 from collections import defaultdict
-from celescope.tools.utils import format_number, read_barcode_file, log
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
 
@@ -17,7 +17,7 @@ def genDict(dim=3):
         return defaultdict(lambda: genDict(dim - 1))
 
 
-@log
+@add_log
 def sum_virus(validated_barcodes, virus_bam,
               out_read_count_file, out_umi_count_file, min_query_length):
     # process bam
@@ -54,7 +54,7 @@ def sum_virus(validated_barcodes, virus_bam,
     df_umi.to_csv(out_umi_count_file, sep="\t")
 
 
-@log
+@add_log
 def count_capture_virus(args):
 
 

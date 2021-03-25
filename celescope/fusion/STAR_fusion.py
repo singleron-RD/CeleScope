@@ -1,9 +1,9 @@
 import os
-from celescope.tools.utils import log
+from celescope.tools.utils import *
 from celescope.tools.STAR import Step_mapping
 
 
-@log
+@add_log
 def STAR_fusion(args):
     s = Step_mapping(
         args.sample,

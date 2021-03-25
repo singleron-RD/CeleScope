@@ -3,7 +3,7 @@ import unittest
 import os
 import pandas as pd
 from celescope.tools.STAR import Step_mapping
-from celescope.tools.utils import read_barcode_file, gene_convert, get_fq
+from celescope.tools.utils import *
 from .Chemistry import Chemistry
 from celescope.tools.count import *
 from celescope.tools.cutadapt import *

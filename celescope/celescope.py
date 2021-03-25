@@ -1,12 +1,14 @@
 import argparse
 import importlib
+from celescope.tools.utils import *
 from celescope.__init__ import __VERSION__, ASSAY_DICT
 
 
 def main():
     """celescope cli
     """
-    parser = argparse.ArgumentParser(description='CeleScope')
+    parser = argparse.ArgumentParser(description='CeleScope', 
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-v', '--version', action='version', version=__VERSION__)
     subparsers = parser.add_subparsers()
 
@@ -17,24 +19,16 @@ def main():
         subparser_2ed = subparser_1st.add_subparsers()
 
         # import __STEPS__
-        init_module = importlib.import_module(f"celescope.{assay}.__init__")
+        init_module = find_assay_init(assay)
         __STEPS__ = init_module.__STEPS__
 
         for step in __STEPS__:
             # import function and opts
-            try:
-                step_module = importlib.import_module(f"celescope.{assay}.{step}")
-            except ModuleNotFoundError as error:
-                try:
-                    step_module = importlib.import_module(f"celescope.tools.{step}")
-                except ModuleNotFoundError as error:
-                    module_path = init_module.IMPORT_DICT[step]
-                    step_module = importlib.import_module(f"{module_path}.{step}")
-
+            step_module = find_step_module(assay, step)
             func = getattr(step_module, step)
             func_opts = getattr(step_module, f"get_opts_{step}")
-            parser_step = subparser_2ed.add_parser(step)
-            func_opts(parser_step, True)
+            parser_step = subparser_2ed.add_parser(step, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+            func_opts(parser_step, sub_program=True)
             parser_step.set_defaults(func=func)
 
     args = parser.parse_args()

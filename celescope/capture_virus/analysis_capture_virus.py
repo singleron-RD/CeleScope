@@ -9,7 +9,7 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir, log
+from celescope.tools.utils import *
 from celescope.tools.Analysis import Analysis
 from .otsu import *
 import celescope.tools
@@ -53,7 +53,7 @@ class Analysis_capture_virus(Analysis):
         )
         self.report()
 
-@log
+@add_log
 def otsu_thresh(virus_file, outdir, sample):
     df = pd.read_csv(virus_file, sep='\t')
     array = np.log10(df["UMI"])
@@ -70,7 +70,7 @@ def otsu_thresh(virus_file, outdir, sample):
     return otsu_virus_file
 
 
-@log
+@add_log
 def analysis_capture_virus(args):
 
     # check dir

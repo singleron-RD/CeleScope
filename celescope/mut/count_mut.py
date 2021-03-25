@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, log, genDict, parse_match_dir
+from celescope.tools.utils import *
 import pysam
 import os
 import pandas as pd
@@ -34,7 +34,7 @@ def is_fusion(pos, read_start, read_length, flanking_base):
     return (test_start and test_end)
 
 
-@log
+@add_log
 def count_mut(args):
 
     outdir = args.outdir

@@ -14,7 +14,7 @@ import subprocess
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix, coo_matrix
 import pysam
-from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
@@ -88,7 +88,7 @@ def correct_umi(fh1, barcode, gene_umi_dict, percent=0.1):
     return res_dict
 
 
-@log
+@add_log
 def bam2table(bam, detail_file):
     # 提取bam中相同barcode的reads，统计比对到基因的reads信息
     #
@@ -119,7 +119,7 @@ def bam2table(bam, detail_file):
 
 
 
-@log
+@add_log
 def cell_calling(cell_calling_method, force_cell_num, expected_cell_num, all_matrix_10X_dir, df_sum, outdir, sample):
     if (force_cell_num is not None) and (force_cell_num != 'None'):
         cell_bc, UMI_threshold = force_cell(force_cell_num, df_sum)
@@ -134,7 +134,7 @@ def cell_calling(cell_calling_method, force_cell_num, expected_cell_num, all_mat
     return cell_bc, UMI_threshold
 
 
-@log
+@add_log
 def force_cell(force_cell_num, df_sum):
     force_cell_num = int(force_cell_num)
     cell_range = int(force_cell_num * 0.1)
@@ -166,7 +166,7 @@ def find_threshold(df_sum, idx):
     return int(df_sum.iloc[idx - 1, df_sum.columns == 'UMI'])
 
 
-@log
+@add_log
 def auto_cell(df_sum, expected_cell_num):
     col = "UMI"
     idx = int(expected_cell_num * 0.01)
@@ -182,14 +182,14 @@ def auto_cell(df_sum, expected_cell_num):
     return cell_bc, threshold
 
 
-@log
+@add_log
 def cellranger3_cell(all_matrix_10X_dir, expected_cell_num, df_sum):
     cell_bc, initial_cell_num = cell_calling_3(all_matrix_10X_dir, expected_cell_num)
     threshold = find_threshold(df_sum, initial_cell_num)
     return cell_bc, threshold
 
 
-@log
+@add_log
 def inflection_cell(outdir, sample, all_matrix_10X_dir, df_sum, threshold):
     app = f'{toolsdir}/rescue.R'
     cmd = (
@@ -210,7 +210,7 @@ def inflection_cell(outdir, sample, all_matrix_10X_dir, df_sum, threshold):
     return cell_bc, threshold
 
 
-@log
+@add_log
 def get_df_sum(df, col='UMI'):
     def num_gt2(x):
         return pd.Series.sum(x[x > 1])
@@ -227,7 +227,7 @@ def get_df_sum(df, col='UMI'):
 def get_cell_bc(df_sum, threshold, col='UMI'):
     return list(df_sum[df_sum[col] >= threshold].index)
 
-@log
+@add_log
 def plot_barcode_UMI(df_sum, threshold, expected_cell_num, cell_num, outdir, sample, cell_calling_method, col='UMI'):
     out_plot = f'{outdir}/{sample}_barcode_UMI_plot.pdf'
     import matplotlib
@@ -267,7 +267,7 @@ def write_matrix_10X(table, id_name, matrix_10X_dir):
     return id, name
 
 
-@log
+@add_log
 def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None):
     matrix_10X_dir = f"{outdir}/{sample}_{dir_name}/"
     if not os.path.exists(matrix_10X_dir):
@@ -292,7 +292,7 @@ def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None
     return matrix_10X_dir
 
 
-@log
+@add_log
 def expression_matrix(df, cell_bc, outdir, sample, gtf_file):
 
     id_name = gene_convert(gtf_file)
@@ -380,7 +380,7 @@ def sample(p, df, bc):
     return format_str % (p, geneNum_median, saturation), saturation
 
 
-@log
+@add_log
 def downsample(detail_file, cell_bc, downsample_file):
     df = pd.read_table(detail_file, index_col=[0, 1, 2])
     df = df.index.repeat(df['count']).to_frame()
@@ -397,7 +397,7 @@ def downsample(detail_file, cell_bc, downsample_file):
     return saturation
 
 
-@log
+@add_log
 def count(args):
     # args
     outdir = args.outdir
@@ -471,11 +471,9 @@ def count(args):
 
 
 def get_opts_count(parser, sub_program):
+    parser = s_common(parser)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument('--bam', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
         parser.add_argument('--genomeDir', help='genome directory')
         parser.add_argument('--gtf', help='gtf file path')
     parser.add_argument('--force_cell_num', help='force cell number', default=None)

@@ -1,7 +1,7 @@
 import glob
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, log, read_barcode_file
+from celescope.tools.utils import *
 from celescope.tools.Analysis import Analysis
 import gzip
 import os
@@ -37,7 +37,7 @@ def report_prepare(df, outdir):
         json.dump(data, fh)
 
 
-@log
+@add_log
 def count_vdj(args):
 
     sample = args.sample
