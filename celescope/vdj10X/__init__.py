@@ -7,6 +7,7 @@ ref_dict = {
 }
 
 soft_dict = {
-    '3.0':'/SGRNJ/Database/script/soft/cellranger/cellranger-3.0.2/cellranger',
-    '3.1':'/SGRNJ/Database/script/soft/cellranger/cellranger-3.1.0/cellranger'
+    '3.0': '/SGRNJ/Database/script/soft/cellranger/cellranger-3.0.2/cellranger',
+    '3.1': '/SGRNJ/Database/script/soft/cellranger/cellranger-3.1.0/cellranger',
+    '6.0': '/SGRNJ/Database/script/soft/cellranger/cellranger-6.0.0/cellranger'
 }

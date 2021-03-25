@@ -46,7 +46,7 @@ class Multi_vdj(Multi):
         parser = self.parser
         parser.add_argument('--species', help='species', choices=['hs','mmu'], required=True)
         parser.add_argument('--mem', help='memory (G)', default=10)
-        parser.add_argument('--soft', help='cellranger version', choices=['3.0','3.1'], default='3.0')
+        parser.add_argument('--soft', help='cellranger version', choices=['3.0', '3.1', '6.0'], default='3.0')
         self.parser = parser
 
     def read_vdj_10X_args(self):

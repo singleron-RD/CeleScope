@@ -35,7 +35,7 @@ def vdj_10X(args):
 
 def get_opts_vdj_10X(parser, sub_program):
     parser.add_argument('--species', help='species', choices=['hs','mmu'], required=True)
-    parser.add_argument('--soft', help='cellranger version', choices=['3.0','3.1'], default='3.0')
+    parser.add_argument('--soft', help='cellranger version', choices=['3.0', '3.1', '6.0'], default='3.0')
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--assay', help='assay', required=True)
