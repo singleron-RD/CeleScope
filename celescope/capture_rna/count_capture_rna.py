@@ -449,16 +449,11 @@ def count_capture_rna(args):
 
 def get_opts_count_capture_rna(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--bam', required=True)
+        s_common(parser)
         parser.add_argument("--match_dir", default=None)
-        parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument(
-            '--genomeDir',
+    parser.add_argument('--genomeDir',
             help='genome directory',
             required=True)
-    parser.add_argument(
-        '--cells',
+    parser.add_argument('--cells',
         help='expected number of cells',
         default="auto")

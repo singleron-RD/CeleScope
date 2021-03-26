@@ -83,7 +83,6 @@ def get_opts_count_capture_virus(parser, sub_program):
         required=True)
     parser.add_argument("--min_query_length", help='minimum query length', default=35)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
         parser.add_argument('--virus_bam', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+
