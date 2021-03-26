@@ -31,7 +31,7 @@ class Multi_mut(Multi):
             f'--thread {self.thread} '
             f'--indel_genomeDir {self.indel_genomeDir} '
         )
-        self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def count_mut(self, sample):
         step = 'count_mut'
@@ -52,7 +52,7 @@ class Multi_mut(Multi):
 
 
 def main():
-    multi = Multi_mut(__ASSAY__, __STEPS__)
+    multi = Multi_mut(__ASSAY__)
     multi.run()
 
 if __name__ == '__main__':

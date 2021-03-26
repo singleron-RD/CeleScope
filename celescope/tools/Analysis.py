@@ -5,8 +5,7 @@ import numpy as np
 import pandas as pd
 import glob
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir, log, parse_annovar
-from celescope.tools.utils import cluster_tsne_list, parse_match_dir
+from celescope.tools.utils import *
 
 class Analysis():
 

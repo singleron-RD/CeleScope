@@ -34,7 +34,7 @@ class Multi_rna_virus(Multi):
             f'--virus_genomeDir {self.virus_genomeDir} '
             f'--thread {self.thread} '
         )
-        self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def count_virus(self, sample):
         step = 'count_virus'

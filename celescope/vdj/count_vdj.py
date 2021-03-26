@@ -1,7 +1,7 @@
 import glob
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, log, read_barcode_file
+from celescope.tools.utils import *
 from celescope.tools.Analysis import Analysis
 import gzip
 import os
@@ -37,7 +37,7 @@ def report_prepare(df, outdir):
         json.dump(data, fh)
 
 
-@log
+@add_log
 def count_vdj(args):
 
     sample = args.sample
@@ -400,14 +400,11 @@ def count_vdj(args):
 
 def get_opts_count_vdj(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        parser = s_common(parser)
         parser.add_argument("--UMI_count_filter1_file", required=True)
-        parser.add_argument("--assay", required=True)
     parser.add_argument("--match_dir", default=None)
     parser.add_argument("--type", required=True)
     parser.add_argument('--UMI_min', dest='UMI_min',
                         help='minimum UMI number to filter', default="auto")
-    parser.add_argument('--debug', dest='debug', default=False)
     parser.add_argument(
         '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)

@@ -6,7 +6,7 @@ import pysam
 import logging
 import os
 from collections import defaultdict
-from celescope.tools.utils import format_number, log
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
 
@@ -52,7 +52,7 @@ def sum_virus(validated_barcodes, virus_bam,
     df_umi.to_csv(out_umi_count_file, sep="\t")
 
 
-@log
+@add_log
 def count_virus(args):
 
     # 检查和创建输出目录

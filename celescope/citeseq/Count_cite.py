@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, read_barcode_file, log, format_stat
+from celescope.tools.utils import *
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
@@ -36,7 +36,7 @@ class Count_cite():
         # out
         self.mtx = f'{outdir}/{sample}_citeseq.mtx.gz'
 
-    @log
+    @add_log
     def run(self):
         stats = pd.Series()
         outdir = self.outdir

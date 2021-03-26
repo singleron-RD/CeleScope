@@ -1,4 +1,4 @@
-__VERSION__ = "1.1.8-Beta"
+__VERSION__ = "1.1.8"
 __version__ = __VERSION__
 
 ASSAY_DICT = {
@@ -6,7 +6,6 @@ ASSAY_DICT = {
     "rna_virus": "Single Cell RNA-Seq Virus",
     'capture_virus': "Single Cell Capture Virus",
     'fusion': "Single Cell Fusion Gene",
-    'smk': "Single Cell SMK",
     'vdj': "Single Cell VDJ",
     'mut': 'Single Cell Insertion and Deletion',
     'hla': 'Single Cell HLA',

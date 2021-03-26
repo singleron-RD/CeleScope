@@ -1,9 +1,9 @@
 import os
 import subprocess
-from celescope.tools.utils import log
+from celescope.tools.utils import *
 from celescope.tools.STAR import Step_mapping
 
-@log
+@add_log
 def STAR_virus(args):
 
     # check dir

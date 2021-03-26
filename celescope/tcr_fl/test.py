@@ -5,7 +5,7 @@ import glob
 from celescope.tcr_fl.Barcode_index import Barcode_index
 from celescope.tcr_fl.split_fq import *
 from celescope.tcr_fl.assemble import *
-from celescope.tools.utils import read_barcode_file, glob_genomeDir
+from celescope.tools.utils import *
 
 
 class test_snp(unittest.TestCase):

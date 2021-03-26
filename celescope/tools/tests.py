@@ -3,10 +3,11 @@ import unittest
 import os
 import pandas as pd
 from celescope.tools.STAR import Step_mapping
-from celescope.tools.utils import read_barcode_file, gene_convert, get_fq
+from celescope.tools.utils import *
 from .Chemistry import Chemistry
 from celescope.tools.count import *
 from celescope.tools.cutadapt import *
+from celescope.tools.Multi import *
 
 class Tests(unittest.TestCase):
     def setUp(self):
@@ -108,7 +109,7 @@ class Tests(unittest.TestCase):
         gtf_file = '/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92/Homo_sapiens.GRCh38.92.chr.gtf'
         matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X_new', validated_barcodes=validated_barcodes)
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_call_cells(self):
         os.chdir = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/'
         sample = 'test1'
@@ -213,6 +214,36 @@ class Tests(unittest.TestCase):
 ,/SGRNJ03/DATA03/2004/20201228_6/R2012093-PCRD-201207-1_combined_R1.fastq.gz'
         ch = Chemistry(fq)
         print(ch.check_chemistry())
+
+    @unittest.skip('pass')
+    def test_report_prepare(self):
+        outdir = "/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/05.count"
+        count_file = f"{outdir}/NJXK01_1_counts.txt"
+        downsample_file = f"{outdir}/NJXK01_1_downsample.txt"
+        report_prepare(count_file, downsample_file, outdir)
+
+    def test_Multi(self):
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild')
+        multi = Multi('rna')
+
+        sys.argv = ['celescope', '--mapfile', 'test.mapfile', '--not_gzip']
+        '''
+        multi.parse_args()
+        print(multi.parse_step_args('sample'))
+        multi.prepare()
+        multi.sample('test1')
+        multi.barcode('test1')
+        print(multi.sjm_cmd)
+        '''
+
+        multi.run()
+        print(multi.sjm_cmd)
+
+
+
+
+
+
 
 
 if __name__ == '__main__':

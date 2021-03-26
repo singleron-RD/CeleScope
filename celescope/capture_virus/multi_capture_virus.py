@@ -1,34 +1,18 @@
-from celescope.capture_virus.__init__ import __STEPS__, __ASSAY__
+from celescope.capture_virus.__init__ import __ASSAY__
 from celescope.tools.Multi import Multi
 
 
 class Multi_capture_virus(Multi):
-    def custome_args(self):
-        self.STAR_args()
-        self.parser.add_argument('--virus_genomeDir', help='virus_genomeDir', required=True)
-        self.parser.add_argument("--umi_threshold", help='method to find virus UMI threshold', 
-            choices=['otsu', 'none'], default='otsu')
-
-    def read_custome_args(self):
-        self.read_STAR_args()
-        self.virus_genomeDir = self.args.virus_genomeDir
-        self.umi_threshold = self.args.umi_threshold
 
     def STAR_virus(self, sample):
         step = 'STAR_virus'
+        cmd_line = self.get_cmd_line(step, sample)
         input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--input_read {input_read} '
-            f'--virus_genomeDir {self.virus_genomeDir} '
-            f'--thread {self.thread} '
         )
-        self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def count_capture_virus(self, sample):
         step = 'count_capture_virus'
@@ -63,7 +47,7 @@ class Multi_capture_virus(Multi):
 
 
 def main():
-    multi = Multi_capture_virus(__ASSAY__, __STEPS__)
+    multi = Multi_capture_virus(__ASSAY__)
     multi.run()
 
 

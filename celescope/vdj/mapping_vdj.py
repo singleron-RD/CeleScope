@@ -1,6 +1,6 @@
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
-from celescope.tools.utils import format_number, gen_stat, log
+from celescope.tools.utils import *
 import os
 import logging
 import gzip
@@ -15,7 +15,7 @@ mpl.use('Agg')
 from matplotlib import pyplot as plt
 
 
-@log
+@add_log
 def summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus):
     chains = CHAINS[type]
 
@@ -170,7 +170,7 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
     t.get_report()
 
 
-@log 
+@add_log 
 def mixcr(outdir, sample, input_file, thread, species):
     report = f"{outdir}/{sample}_align.txt"
     not_align_fq = f"{outdir}/not_align.fq"
@@ -197,7 +197,7 @@ mixcr exportAlignments \
     return alignments
 
 
-@log
+@add_log
 def mapping_vdj(args):
     sample = args.sample
     outdir = args.outdir
@@ -221,12 +221,9 @@ def mapping_vdj(args):
 
 def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help='TCR or BCR', required=True)
-    parser.add_argument("--debug", action='store_true')
     parser.add_argument('--species', choices=['hs', 'mmu'], help='human or mouse', default='hs')
     parser.add_argument("--not_consensus", action='store_true', help="input fastq is not consensus")
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        parser = s_common(parser)
         parser.add_argument("--fq", required=True)
-        parser.add_argument("--thread", default=1)
-        parser.add_argument('--assay', help='assay', required=True)
+

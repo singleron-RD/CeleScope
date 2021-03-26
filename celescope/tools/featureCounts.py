@@ -8,8 +8,7 @@ import subprocess
 import glob
 import sys
 import pysam
-from celescope.tools.utils import format_number, log
-from celescope.tools.utils import glob_genomeDir, gene_convert
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
 
@@ -46,7 +45,7 @@ def format_stat(log, samplename):
             stat_fh.write('%s: %s\n' % (t, s))
     fh.close()
 
-@log
+@add_log
 def add_tag(bam, gtf):
     id_name = gene_convert(gtf)
     samfile = pysam.AlignmentFile(bam, "rb")
@@ -69,7 +68,7 @@ def add_tag(bam, gtf):
     cmd = f'mv {bam}.temp {bam}'
     subprocess.check_call(cmd, shell=True)
 
-@log
+@add_log
 def featureCounts(args):
 
     # check
@@ -84,10 +83,16 @@ def featureCounts(args):
 
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
-    cmd = ['featureCounts', 
+    cmd = [
+        'featureCounts', 
         '-s', '1',
-        '-a', gtf, '-o', outPrefix, '-R', 'BAM',
-        '-T', str(args.thread), '-t', args.gtf_type, args.input]
+        '-a', gtf, 
+        '-o', outPrefix, 
+        '-R', 'BAM',
+        '-T', str(args.thread), 
+        '-t', args.gtf_type, 
+        args.input,
+    ]
     featureCounts.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
 
@@ -133,11 +138,9 @@ def get_opts_featureCounts(parser, sub_program):
         '--gtf_type',
         help='Specify feature type in GTF annotation',
         default='exon')
+    parser.add_argument('--genomeDir')
     if sub_program:
-        parser.add_argument('--genomeDir')
-        parser.add_argument('--thread', default=1)
+        parser = s_common(parser)
         parser.add_argument('--input', required=True)
-        #parser.add_argument('--format', default='BAM')
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+    return parser
+

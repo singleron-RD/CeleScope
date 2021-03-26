@@ -40,11 +40,11 @@ class Multi_tcr_fl(Multi):
             f'--fastq_dir {fastq_dir} '
             f'--thread {self.thread} '
         )
-        self.process_cmd(cmd, step, sample, m=4 * int(self.thread), x=self.thread)
+        self.process_cmd(cmd, step, sample, m=4 * int(self.args.thread), x=self.args.thread)
 
 
 def main():
-    multi = Multi_tcr_fl(__ASSAY__, __STEPS__)
+    multi = Multi_tcr_fl(__ASSAY__)
     multi.run()
 
 if __name__ == '__main__':

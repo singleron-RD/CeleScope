@@ -7,8 +7,7 @@ import pysam
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir, log, parse_annovar
-from celescope.tools.utils import parse_vcf
+from celescope.tools.utils import *
 from mutract.utils import read_CID
 from celescope.tools.Analysis import Analysis
 
@@ -98,7 +97,7 @@ class analysis_variant(Analysis):
         )
         self.report(stat=False)
 
-    @log
+    @add_log
     def annovar(self, vcf_file, annovar_config):
 
         # config
@@ -141,7 +140,7 @@ class analysis_variant(Analysis):
         return df_annovar
 
 
-@log
+@add_log
 def analysis_snp(args):
     step = 'analysis_snp'
     step_snp = analysis_variant(
@@ -156,10 +155,8 @@ def analysis_snp(args):
 def get_opts_analysis_snp(parser, sub_program):
     parser.add_argument('--annovar_config', help='annovar soft config file', required=True)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
         parser.add_argument('--match_dir', help='match_dir', required=True)
         parser.add_argument('--vcf', help='vcf file', required=True)
         parser.add_argument('--CID_file', help='CID_file', required=True)
         parser.add_argument('--variant_count_file', help='variant count file', required=True)
-        parser.add_argument('--assay', help='assay', required=True)

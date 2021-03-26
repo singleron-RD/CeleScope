@@ -1,15 +1,14 @@
-from .Mapping_tag import Mapping_tag
 import argparse
+from celescope.tools.utils import *
+from .Mapping_tag import Mapping_tag
 
 def get_opts_mapping_tag(parser, sub_program):
     parser.add_argument("--fq_pattern", help="read2 fastq pattern")
     parser.add_argument("--linker_fasta", help="linker fasta")
     parser.add_argument("--barcode_fasta", help="barcode fasta")
     if sub_program:
+        s_common(parser)
         parser.add_argument("--fq", help="clean read2", required=True)
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
 
 
 def mapping_tag(args):

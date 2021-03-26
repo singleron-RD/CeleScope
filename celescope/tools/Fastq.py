@@ -5,7 +5,7 @@ import numpy as np
 import subprocess
 from xopen import xopen
 from concurrent.futures import ProcessPoolExecutor
-from celescope.tools.utils import genDict, log, fastq_line
+from celescope.tools.utils import *
 
 class Fastq():
     """
@@ -15,7 +15,7 @@ class Fastq():
     def __init__(self, fq):
         self.fq = fq
     
-    @log
+    @add_log
     def sort_fastq(self, fq_tmp_file):
         cmd = (
             f'zcat {self.fq} | paste - - - - | sort -k1,1 -t " " | tr "\t" "\n" > {fq_tmp_file};'
@@ -23,7 +23,7 @@ class Fastq():
         subprocess.check_call(cmd, shell=True)
 
     @staticmethod
-    @log
+    @add_log
     def sorted_dumb_consensus(fq, outfile):
         '''
         read in name sorted fastq, output (barcode,umi) consensus fastq
@@ -64,7 +64,7 @@ class Fastq():
         out_h.close()
         return n
 
-    @log
+    @add_log
     def wrap_consensus(self, outdir, sample):
         fq_tmp_file = f'{outdir}/{sample}_sorted.fq.tmp'
         self.sort_fastq(fq_tmp_file)
@@ -73,7 +73,7 @@ class Fastq():
         return outfile, n
 
 
-    @log
+    @add_log
     def split_fq(self):
         '''
         split reads into barcode_UMI dict
@@ -159,7 +159,7 @@ class Fastq():
             if fraction >= threshold:
                 return length
     
-    @log
+    @add_log
     def umi_dumb_consensus(self, threshold=0.5):
         '''
         dumb_consensus for barcode,umi
@@ -177,7 +177,7 @@ class Fastq():
         self.consensus_dict = consensus_dict
 
     @staticmethod
-    @log
+    @add_log
     def dumb_consensus_worker(fq_dict, threshold):
         consensus_dict = {}        
         for barcode in fq_dict:
@@ -189,13 +189,13 @@ class Fastq():
         return consensus_dict
 
     @staticmethod
-    @log 
+    @add_log 
     def split_dict(input_dict: dict, num_parts: int) -> list:
         return [dict(list(input_dict.items())[i::num_parts])
             for i in range(num_parts)]
 
 
-    @log
+    @add_log
     def umi_dumb_consensus_concurrent(self, thread, threshold=0.5):
         '''
         dumb_consensus for barcode,umi
@@ -223,7 +223,7 @@ class Fastq():
                 consensus_dict.update(res)
         self.consensus_dict = consensus_dict
 
-    @log
+    @add_log
     def write_consensus_fasta(self, outdir, sample):
         out_fasta = f'{outdir}/{sample}_consensus.fasta'
         index = 0
@@ -239,7 +239,7 @@ class Fastq():
                     handle.write(seq + '\n')
         return out_fasta
 
-    @log
+    @add_log
     def write_consensus_fastq(self, outdir, sample, use_gzip=True):
         suffix = ''
         if gzip:

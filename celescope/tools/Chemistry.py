@@ -1,9 +1,7 @@
 from collections import defaultdict
 import os
 import pysam
-from .utils import log, read_one_col
-from .utils import seq_ranges, get_scope_bc, parse_pattern
-
+from .utils import *
 
 class Chemistry():
 
@@ -12,7 +10,7 @@ class Chemistry():
         self.fq1_list = fq1.split(',')
         self.nRead = 10000
 
-    @log
+    @add_log
     def check_chemistry(self):
         chemistry_list = []
         for fastq1 in self.fq1_list:
@@ -23,7 +21,7 @@ class Chemistry():
            Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
         return chemistry_list
 
-    @log
+    @add_log
     def get_chemistry(self, fq1):
         '''
         'scopeV2.0.1': 'C8L16C8L16C8L1U8T18'

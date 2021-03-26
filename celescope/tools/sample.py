@@ -4,19 +4,19 @@
 import os
 import pandas as pd
 import sys
-import logging
 from celescope.__init__ import __VERSION__, ASSAY_DICT
-from celescope.tools.utils import log
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
 
 
-@log
-def sample_info(args):
+@add_log
+def sample(args):
 
-    sample = args.sample
-    ASSAY = ASSAY_DICT[args.assay]
+    sample_name = args.sample
+    assay = args.assay
+    assay_description = ASSAY_DICT[assay]
     version = __VERSION__
     outdir = args.outdir
     chemistry = args.chemistry
@@ -36,7 +36,7 @@ def sample_info(args):
 
     stat = pd.DataFrame({
         "item": ["Sample ID", "Assay", "Chemistry", "Software Version"],
-        "count": [sample, ASSAY, chemistry, version],
+        "count": [sample_name, assay_description, chemistry, version],
         },
         columns=["item", "count"]
     )
@@ -45,8 +45,8 @@ def sample_info(args):
 
     t = reporter(
         name='sample',
-        assay=args.assay,
-        sample=args.sample,
+        assay=assay,
+        sample=sample_name,
         stat_file=stat_file,
         outdir=outdir + '/..')
     t.get_report()
@@ -55,9 +55,8 @@ def sample_info(args):
 
 def get_opts_sample(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+        parser = s_common(parser)
         parser.add_argument('--fq1', help='read1 fq file')
     parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+    return parser
     
