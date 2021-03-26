@@ -155,10 +155,8 @@ def analysis_snp(args):
 def get_opts_analysis_snp(parser, sub_program):
     parser.add_argument('--annovar_config', help='annovar soft config file', required=True)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
         parser.add_argument('--match_dir', help='match_dir', required=True)
         parser.add_argument('--vcf', help='vcf file', required=True)
         parser.add_argument('--CID_file', help='CID_file', required=True)
         parser.add_argument('--variant_count_file', help='variant count file', required=True)
-        parser.add_argument('--assay', help='assay', required=True)

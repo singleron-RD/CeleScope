@@ -19,19 +19,12 @@ class Multi_snp(Multi):
 
     def snpCalling(self, sample):
         step = 'snpCalling'
+        cmd_line = self.get_cmd_line(step, sample)
         bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--bam {bam} '
             f'--match_dir {self.col4_dict[sample]} '
-            f'--genomeDir {self.genomeDir} '
-            f'--gene_list {self.gene_list} '
-            f'--thread {self.thread} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
@@ -40,21 +33,33 @@ class Multi_snp(Multi):
         vcf = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_merged.vcf'
         CID_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_CID.tsv'
         variant_count_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_variant_count.tsv'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--match_dir {self.col4_dict[sample]} '
             f'--vcf {vcf} '
             f'--CID_file {CID_file} '
-            f'--annovar_config {self.annovar_config} '
             f'--variant_count_file {variant_count_file} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=1)
 
+    def run_steps(self):
+        """ steps --not_consensus
+        """
+        if self.args.steps_run == 'all':
+            self.steps_run = self.__STEPS__
+        elif self.args.steps_run:
+            self.steps_run = self.args.steps_run.strip().split(',')
+        if self.args.not_consensus:
+            try:
+                self.steps_run.remove('consensus')
+            except ValueError as error:
+                pass
+
+        for sample in self.fq_dict:
+            self.last_step = ''
+            for step in self.steps_run:
+                eval(f'self.{step}(sample)')
 
 def main():
     multi = Multi_snp(__ASSAY__)
