@@ -5,7 +5,7 @@ from collections import defaultdict
 import os
 import json
 import argparse
-from celescope.tools.utils import log
+from celescope.tools.utils import *
 
 
 @add_log
