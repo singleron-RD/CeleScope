@@ -402,7 +402,7 @@ def get_opts_count_vdj(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument("--UMI_count_filter1_file", required=True)
-    parser.add_argument("--match_dir", default=None)
+        parser.add_argument("--match_dir", default=None)
     parser.add_argument("--type", required=True)
     parser.add_argument('--UMI_min', dest='UMI_min',
                         help='minimum UMI number to filter', default="auto")
