@@ -16,10 +16,10 @@ def get_opts_count_tag(parser, sub_program):
         "--combine_cluster",
         help="conbine cluster tsv file",
         default=None)
-    parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path", required=True)
     if sub_program:
         parser = s_common(parser)
         parser.add_argument("--read_count_file", help="tag read count file")
+        parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path", required=True)
 
 
 def count_tag(args):
