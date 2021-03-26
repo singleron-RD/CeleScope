@@ -221,12 +221,9 @@ def mapping_vdj(args):
 
 def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help='TCR or BCR', required=True)
-    parser.add_argument("--debug", action='store_true')
     parser.add_argument('--species', choices=['hs', 'mmu'], help='human or mouse', default='hs')
     parser.add_argument("--not_consensus", action='store_true', help="input fastq is not consensus")
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        parser = s_common(parser)
         parser.add_argument("--fq", required=True)
-        parser.add_argument("--thread", default=1)
-        parser.add_argument('--assay', help='assay', required=True)
+

@@ -887,6 +887,7 @@ def find_assay_init(assay):
 
 
 def find_step_module(assay, step):
+    init_module = find_assay_init(assay)
     try:
         step_module = importlib.import_module(f"celescope.{assay}.{step}")
     except ModuleNotFoundError as error:

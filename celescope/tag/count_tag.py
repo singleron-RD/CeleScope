@@ -1,5 +1,6 @@
 import argparse
 from .Count_tag import Count_tag
+from celescope.tools.utils import *
 
 def get_opts_count_tag(parser, sub_program):
     parser.add_argument(
@@ -17,9 +18,7 @@ def get_opts_count_tag(parser, sub_program):
         default=None)
     parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path", required=True)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+        parser = s_common(parser)
         parser.add_argument("--read_count_file", help="tag read count file")
 
 

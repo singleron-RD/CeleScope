@@ -12,6 +12,9 @@ from celescope.tools.report import reporter
 from celescope.tools.Fastq import Fastq
 
 
+ADAPT = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
+
+
 def format_stat(cutadapt_log, sample_name):
     fh = open(cutadapt_log, 'r')
     stat_file = os.path.dirname(cutadapt_log) + '/stat.txt'
@@ -45,7 +48,7 @@ def read_adapter_fasta(adapter_fasta):
     return ['adapter1=AAA','adapter2=BBB']
     '''
     adapter_args = []
-    if adapter_fasta and adapter_fasta!='None':
+    if adapter_fasta and adapter_fasta != 'None':
         with pysam.FastxFile(adapter_fasta) as fh:
             for read in fh:
                 adapter_args.append(f'{read.name}={read.sequence}')
@@ -59,7 +62,7 @@ def cutadapt(args):
         os.system('mkdir -p %s' % (args.outdir))
 
     adapter_args = read_adapter_fasta(args.adapter_fasta)
-    adapter_args += args.adapt
+    adapter_args += ADAPT
 
     # run cutadapt
     adapt = []
@@ -105,17 +108,15 @@ def cutadapt(args):
 
 
 def get_opts_cutadapt(parser, sub_program):
-    parser.add_argument('--adapt',action='append',
-        default=['polyT=A{18}',
-        'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC',])
     parser.add_argument('--adapter_fasta', help='addtional adapter fasta file')
     parser.add_argument('--minimum_length',dest='minimum_length',help='minimum_length', default=20)
-    parser.add_argument('--nextseq-trim',dest='nextseq_trim',help='nextseq_trim', default=20)
+    parser.add_argument('--nextseq_trim', help='nextseq_trim', default=20)
     parser.add_argument('--overlap',help='minimum overlap length', default=10)
     parser.add_argument('--insert', help="read2 insert length", default=150)
     if sub_program:
         parser.add_argument('--fq', help='fq file', required=True)
         parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
         parser = s_common(parser)
+    return parser
 
 

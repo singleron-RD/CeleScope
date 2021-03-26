@@ -83,10 +83,16 @@ def featureCounts(args):
 
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
-    cmd = ['featureCounts', 
+    cmd = [
+        'featureCounts', 
         '-s', '1',
-        '-a', gtf, '-o', outPrefix, '-R', 'BAM',
-        '-T', str(args.thread), '-t', args.gtf_type, args.input]
+        '-a', gtf, 
+        '-o', outPrefix, 
+        '-R', 'BAM',
+        '-T', str(args.thread), 
+        '-t', args.gtf_type, 
+        args.input,
+    ]
     featureCounts.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
 
@@ -127,13 +133,14 @@ def featureCounts(args):
 
 
 def get_opts_featureCounts(parser, sub_program):
-    parser = s_common(parser)
     parser.add_argument('--gtf', help='gtf file path')
     parser.add_argument(
         '--gtf_type',
         help='Specify feature type in GTF annotation',
         default='exon')
+    parser.add_argument('--genomeDir')
     if sub_program:
-        parser.add_argument('--genomeDir')
+        parser = s_common(parser)
         parser.add_argument('--input', required=True)
+    return parser
 

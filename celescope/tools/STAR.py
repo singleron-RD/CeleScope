@@ -249,7 +249,6 @@ def STAR(args):
 
 
 def get_opts_STAR(parser, sub_program):
-    parser = s_common(parser)
     parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
     parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
     parser.add_argument('--genomeDir', help='genome directory')
@@ -258,5 +257,7 @@ def get_opts_STAR(parser, sub_program):
     parser.add_argument('--refFlat', help='refFlat file path')
     parser.add_argument('--outFilterMultimapNmax', help='STAR outFilterMultimapNmax', default=1)
     parser.add_argument("--consensus_fq", action='store_true', help="input fastq is umi consensus")
+    parser.add_argument('--starMem', help='starMem', default=30)
     if sub_program:
         parser.add_argument('--fq', required=True)
+        parser = s_common(parser)

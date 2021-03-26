@@ -18,7 +18,7 @@ class Multi():
         self.col4_default = None
         self.last_step = ''
         self.step_prefix = (
-            '{self.__APP__} {self.__ASSAY__} {step}'
+            '{self.__APP__} {self.__ASSAY__} {step} '
             '--outdir {self.outdir_dic[sample][step]} '
             '--sample {sample} '
             '--assay {self.__ASSAY__} '
@@ -27,7 +27,9 @@ class Multi():
 
     def common_args(self):
         readme = f'{self.__ASSAY__} multi-samples'
-        parser = argparse.ArgumentParser(readme, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser = argparse.ArgumentParser(readme, 
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+            conflict_handler='resolve')
         parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
         parser.add_argument(
             '--mapfile',
@@ -49,22 +51,16 @@ class Multi():
         return parser
 
     def read_common_args(self):
-        self.not_gzip_str = Multi.arg_str(self.args.not_gzip, 'not_gzip')
         if os.path.basename(self.__CONDA__) == 'celescope_RD':
             self.debug_str = '--debug'
         else:
             self.debug_str = Multi.arg_str(self.args.debug, 'debug')
 
     def step_args(self):
-        for step in self.
-
-    def parse_step_args(self, step):
-        step_module = find_step_module(self.__ASSAY__, step)
-        func_opts = getattr(step_module, f"get_opts_{step}")
-        parser = func_opts(self.parser, sub_program=False)
-        args = parser.parse_known_args()
-        return args
-
+        for step in self.__STEPS__:
+            step_module = find_step_module(self.__ASSAY__, step)
+            func_opts = getattr(step_module, f"get_opts_{step}")
+            func_opts(self.parser, sub_program=False)
 
     def parse_args(self):
         self.common_args()
@@ -81,10 +77,10 @@ class Multi():
         self.fq_dict, self.col4_dict = parse_map_col4(self.args.mapfile, self.col4_default)
 
         # link
-        link_data(self.outdir, self.fq_dict)      
+        link_data(self.args.outdir, self.fq_dict)      
 
         # mk log dir
-        self.logdir = self.outdir + '/log'
+        self.logdir = self.args.outdir + '/log'
         os.system('mkdir -p %s' % (self.logdir))
 
         # script init
@@ -98,7 +94,7 @@ class Multi():
             self.outdir_dic[sample] = {}
             index = 0
             for step in self.__STEPS__:
-                step_outdir = f"{self.outdir}/{sample}/{index:02d}.{step}"
+                step_outdir = f"{self.args.outdir}/{sample}/{index:02d}.{step}"
                 self.outdir_dic[sample].update({step: step_outdir})
                 index += 1
     
@@ -118,171 +114,126 @@ job_end
             self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
         self.last_step = step
 
-    def generate_first(self, cmd, step, sample, m=1, x=1):
-        self.generate_cmd(cmd, step, sample, m=1, x=1)
-        self.shell_dict[sample] += cmd + '\n'
-        self.last_step = step
+    def parse_step_args(self, step):
+        step_module = find_step_module(self.__ASSAY__, step)
+        func_opts = getattr(step_module, f"get_opts_{step}")
+        step_parser = argparse.ArgumentParser(step_module)
+        func_opts(step_parser, sub_program=False)
+        args = step_parser.parse_known_args()
+        return args
 
-    def generate_other(self, cmd, step, sample, m=1, x=1):
-        self.generate_cmd(cmd, step, sample, m=1, x=1)
-        self.shell_dict[sample] += cmd + '\n'
-        self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
-        self.last_step = step
+    def get_cmd_line(self, step, sample):
+        """ get cmd line without input
+            return str
+        """
+        args = self.parse_step_args(step)
+        args_dict = args[0].__dict__
+        step_prefix = (
+            f'{self.__APP__} {self.__ASSAY__} {step} '
+            f'--outdir {self.outdir_dic[sample][step]} '
+            f'--sample {sample} '
+            f'--assay {self.__ASSAY__} '
+            f'--thread {self.args.thread} '
+        )
+        cmd_line = step_prefix
+        for arg in args_dict:
+            if args_dict[arg] is False:
+                continue
+            if args_dict[arg] is True:
+                cmd_line += f'--{arg} '
+            else:
+                if args_dict[arg]:
+                    cmd_line += f'--{arg} {args_dict[arg]} '
+        return cmd_line
 
     def sample(self, sample):
         step = "sample"
         arr = self.fq_dict[sample]
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f"{f'{self.step_prefix}'} "
-            f'--chemistry {self.args.chemistry} '
-            f'--fq1 {arr[0]}'
+            f'{cmd_line} '
+            f'--fq1 {arr[0]} '
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)
     
     def barcode(self, sample):
-        # barcode
-        arr = self.fq_dict[sample]
         step = "barcode"
+        arr = self.fq_dict[sample]
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
-            f'--chemistry {self.args.chemistry} '
+            f'{cmd_line} '
             f'--fq1 {arr[0]} --fq2 {arr[1]} '
-            f'--pattern {self.args.pattern} --whitelist {self.args.whitelist} --linker {self.args.linker} '
-            f'--lowQual {self.args.lowQual} --thread {self.args.thread} '
-            f'--lowNum {self.args.lowNum} '
-            f'{self.args.allowNoPolyT_str} '
-            f'{self.allowNoLinker_str} '
-            f'{self.noLinker_str} '
-            f'{self.nopolyT_str} '
-            f'{self.not_gzip_str} '
-            f'--probe_file {self.probe_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def cutadapt(self, sample):
-        # adapt
         step = "cutadapt"
         fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{self.fq_suffix}'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step } '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--fq {fq} '
-            f'--overlap {self.overlap} '
-            f'--minimum_length {self.minimum_length} '
-            f'--insert {self.insert} '
-            f'--adapter_fasta {self.adapter_fasta} '
-            f'{self.not_gzip_str} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def STAR(self, sample):
         step = 'STAR'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--fq {fq} '
-            f'--genomeDir {self.genomeDir} '
-            f'--thread {self.thread} '
-            f'{self.debug_str} '
-            f'--outFilterMatchNmin {self.outFilterMatchNmin} '
-            f'{self.out_unmapped} '
-            f'--STAR_param \"{self.STAR_param}\" '
         )
-        self.process_cmd(cmd, step, sample, m=self.starMem, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def featureCounts(self, sample):
         step = 'featureCounts'
         input = f'{self.outdir_dic[sample]["STAR"]}/{sample}_Aligned.sortedByCoord.out.bam'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
-            f'--input {input} --gtf_type {self.gtf_type} '
-            f'--genomeDir {self.genomeDir} '
-            f'--thread {self.thread} '
-            f'--gtf_type {self.gtf_type} '
+            f'{cmd_line} '
+            f'--input {input} '
         )
-        self.process_cmd(cmd, step, sample, m=5, x=self.thread)
+        self.process_cmd(cmd, step, sample, m=5, x=self.args.thread)
 
     def count(self, sample):
         step = 'count'
         bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--bam {bam} '
-            f'--force_cell_num {self.col4_dict[sample]} '
-            f'--genomeDir {self.genomeDir} '
-            f'--cell_calling_method {self.cell_calling_method} '
-            f'--expected_cell_num {self.expected_cell_num} '
         )
+
         self.process_cmd(cmd, step, sample, m=10, x=1)
 
     def analysis(self, sample):
         step = 'analysis'
         matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix.tsv.gz'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step } '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--matrix_file {matrix_file} '
-            f'{self.save_rds_str} '
-            f'--type_marker_tsv {self.type_marker_tsv} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
-
-    def consensus_args(self):
-        self.parser.add_argument("--threshold", help='valid base threshold', default=0.5)
-
-    def read_consensus_args(self):
-        self.threshold = self.args.threshold
 
     def consensus(self, sample):
         step = 'consensus'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step } '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--fq {fq} '
-            f'--threshold {self.threshold} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
         outfile = f'{self.outdir_dic[sample][step]}/{sample}_consensus.fq'
         return outfile
 
     def run_steps(self):
-        if self.steps_run == 'all':
+        if self.args.steps_run == 'all':
             self.steps_run = self.__STEPS__
-        elif self.steps_run:
-            self.steps_run = self.steps_run.strip().split(',')
+        elif self.args.steps_run:
+            self.steps_run = self.args.steps_run.strip().split(',')
 
         for sample in self.fq_dict:
             self.last_step = ''
@@ -290,7 +241,7 @@ job_end
                 eval(f'self.{step}(sample)')
 
     def end(self):
-        if self.mod == 'sjm':
+        if self.args.mod == 'sjm':
             step = 'merge_report'
             merge_report(
                 self.fq_dict,
@@ -300,10 +251,10 @@ job_end
                 self.sjm_order,
                 self.logdir,
                 self.__CONDA__,
-                self.outdir,
-                self.rm_files,
+                self.args.outdir,
+                self.args.rm_files,
             )
-        if self.mod == 'shell':
+        if self.args.mod == 'shell':
             os.system('mkdir -p ./shell/')
             for sample in self.shell_dict:
                 with open(f'./shell/{sample}.sh', 'w') as f:

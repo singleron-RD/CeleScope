@@ -159,8 +159,8 @@ def analysis(args):
 
 
 def get_opts_analysis(parser, sub_program):
-    parser = s_common(parser)
     if sub_program:
+        parser = s_common(parser)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
     parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
     parser.add_argument('--type_marker_tsv', help='cell type marker tsv')

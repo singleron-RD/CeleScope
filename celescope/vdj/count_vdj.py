@@ -400,14 +400,11 @@ def count_vdj(args):
 
 def get_opts_count_vdj(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        parser = s_common(parser)
         parser.add_argument("--UMI_count_filter1_file", required=True)
-        parser.add_argument("--assay", required=True)
     parser.add_argument("--match_dir", default=None)
     parser.add_argument("--type", required=True)
     parser.add_argument('--UMI_min', dest='UMI_min',
                         help='minimum UMI number to filter', default="auto")
-    parser.add_argument('--debug', dest='debug', default=False)
     parser.add_argument(
         '--iUMI', help='minimum number of UMI of identical receptor type and CDR3', default=1)

@@ -55,9 +55,8 @@ def sample(args):
 
 def get_opts_sample(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+        parser = s_common(parser)
         parser.add_argument('--fq1', help='read1 fq file')
     parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+    return parser
     
