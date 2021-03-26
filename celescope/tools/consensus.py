@@ -197,7 +197,5 @@ def consensus(args):
 def get_opts_consensus(parser, sub_program):
     parser.add_argument("--threshold", help='valid base threshold', default=0.5)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
         parser.add_argument("--fq", required=True)
-        parser.add_argument('--assay', help='assay', required=True)
