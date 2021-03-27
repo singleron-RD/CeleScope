@@ -516,11 +516,11 @@ def get_opts_barcode(parser, sub_program=True):
     parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
     parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
     parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
+    parser.add_argument(
+        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
     if sub_program:
         parser.add_argument('--fq1', help='read1 fq file', required=True)
         parser.add_argument('--fq2', help='read2 fq file', required=True)
-        parser.add_argument(
-            '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
         parser = s_common(parser)
 
     return parser
