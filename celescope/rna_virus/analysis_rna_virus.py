@@ -122,11 +122,10 @@ def analysis_rna_virus(args):
 
 def get_opts_analysis_rna_virus(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
         parser.add_argument(
             '--virus_file',
             help='virus UMI count file',
             required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+        

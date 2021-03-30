@@ -4,35 +4,15 @@ from celescope.tools.Multi import Multi
 
 class Multi_rna_virus(Multi):
 
-    def STAR_virus_args(self):
-        self.parser.add_argument('--virus_genomeDir', help='virus_genomeDir', required=True)
-
-    def read_STAR_virus_args(self):
-        self.virus_genomeDir = self.args.virus_genomeDir
-
-    def custome_args(self):
-        self.STAR_args()
-        self.STAR_virus_args()
-        self.count_args()
-
-    def read_custome_args(self):
-        self.read_STAR_args()
-        self.read_STAR_virus_args()
-        self.read_count_args()
 
     def STAR_virus(self, sample):
         step = 'STAR_virus'
         input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--input_read {input_read} '
-            f'--virus_genomeDir {self.virus_genomeDir} '
-            f'--thread {self.thread} '
+
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
@@ -40,13 +20,9 @@ class Multi_rna_virus(Multi):
         step = 'count_virus'
         barcode_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix_10X/barcodes.tsv'
         virus_bam = f'{self.outdir_dic[sample]["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--virus_bam {virus_bam} '
             f'--barcode_file {barcode_file} '
         )
@@ -56,13 +32,9 @@ class Multi_rna_virus(Multi):
         step = 'analysis_rna_virus'
         virus_file = f'{self.outdir_dic[sample]["count_virus"]}/{sample}_virus_UMI_count.tsv'
         matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix.tsv.gz'
+        cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--virus_file {virus_file} '
             f'--matrix_file {matrix_file} '
 
@@ -71,7 +43,7 @@ class Multi_rna_virus(Multi):
 
 
 def main():
-    multi = Multi_rna_virus(__ASSAY__, __STEPS__)
+    multi = Multi_rna_virus(__ASSAY__)
     multi.run()
 
 
