@@ -13,16 +13,10 @@ class Multi():
         self.__ASSAY__ = assay
         init_module = find_assay_init(assay)
         self.__STEPS__ = init_module.__STEPS__
-        self.__CONDA__ = os.environ['CONDA_DEFAULT_ENV']
+        self.__CONDA__ = os.path.basename(os.environ['CONDA_DEFAULT_ENV'])
         self.__APP__ = 'celescope'
         self.col4_default = None
         self.last_step = ''
-        self.step_prefix = (
-            '{self.__APP__} {self.__ASSAY__} {step} '
-            '--outdir {self.outdir_dic[sample][step]} '
-            '--sample {sample} '
-            '--assay {self.__ASSAY__} '
-        )
         self.args = None
 
     def common_args(self):
@@ -136,6 +130,8 @@ job_end
             f'--thread {self.args.thread} '
         )
         cmd_line = step_prefix
+        if self.__CONDA__ == "celescope_RD":
+            cmd_line += " --debug "
         for arg in args_dict:
             if args_dict[arg] is False:
                 continue
