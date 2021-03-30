@@ -451,6 +451,7 @@ def get_opts_count_capture_rna(parser, sub_program):
     if sub_program:
         s_common(parser)
         parser.add_argument("--match_dir", default=None)
+        parser.add_argument("--bam", default=None)
     parser.add_argument('--genomeDir',
             help='genome directory',
             required=True)
