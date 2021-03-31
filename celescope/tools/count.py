@@ -1,11 +1,9 @@
-#!/bin/env python
-# coding=utf8
-
 import os
 import sys
 import json
 import functools
 import gzip
+import random
 from collections import defaultdict
 from itertools import groupby
 import numpy as np
@@ -21,6 +19,7 @@ from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCOD
 
 
 toolsdir = os.path.dirname(__file__)
+random.seed(0)
 
 
 def report_prepare(count_file, downsample_file, outdir):
@@ -366,33 +365,52 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
     summary.to_csv(stat_file, header=False, sep=':')
 
 
-def sample(p, df, bc):
-    tmp = df.sample(frac=p)
+@add_log
+def sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI"):
+    cell_read = df_cell['count'].sum()
+    frac_n_read = int(cell_read * fraction)
+    subsample_read_index = cell_read_index[:frac_n_read]
+    index_counts = Counter(subsample_read_index)
+
+    dedup = 0
+    for value in index_counts.values():
+        if value == 1:
+            dedup += 1
+
+    index_dedup = np.unique(subsample_read_index)
+    if total == "UMI":
+        n_total = len(index_dedup)
+    elif total == "read":
+        n_total = frac_n_read
+    saturation = round((1 - dedup / n_total) * 100, 2)
+
+    # gene median
+    df_cell_subsample = df_cell.loc[index_dedup,]
+    geneNum_median = df_cell_subsample.groupby('Barcode').agg({'geneID': 'nunique'}).median()
+
     format_str = "%.2f\t%.2f\t%.2f\n"
-    tmp.reset_index(drop=True, inplace=True)
-    tmp = tmp.loc[tmp['Barcode'].isin(bc), :]
-    geneNum_median = tmp.groupby('Barcode').agg({
-        'geneID': 'nunique'
-    })['geneID'].median()
-    tmp = tmp.groupby(['Barcode', 'geneID', 'UMI']).agg({'UMI': 'count'})
-    total = float(tmp['UMI'].count())
-    saturation = (1 - tmp.loc[tmp['UMI'] == 1, :].shape[0] / total) * 100
-    return format_str % (p, geneNum_median, saturation), saturation
+    return format_str % (fraction, geneNum_median, saturation), saturation
 
 
 @add_log
-def downsample(detail_file, cell_bc, downsample_file):
-    df = pd.read_table(detail_file, index_col=[0, 1, 2])
-    df = df.index.repeat(df['count']).to_frame()
+def downsample(df, cell_bc, downsample_file):
+    """saturation and median gene
+    return fraction=1 saturation
+    """
+    df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
+    cell_read_index = list(df_cell.index.repeat(df_cell['count']))
+    random.shuffle(cell_read_index)
+
     format_str = "%.2f\t%.2f\t%.2f\n"
+
     with open(downsample_file, 'w') as fh:
         fh.write('percent\tmedian_geneNum\tsaturation\n')
         fh.write(format_str % (0, 0, 0))
-
         saturation = 0
-        for p in np.arange(0.1, 1.1, 0.1):
-            r, s = sample(p=p, df=df, bc=cell_bc)
+        for fraction in np.arange(0.1, 1.1, 0.1):
+            r, s = sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI")
             fh.write(r)
+            #downsample.logger.info(r)
             saturation = s
     return saturation
 
@@ -443,17 +461,13 @@ def count(args):
 
     # export cell matrix
     matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=cell_bc)
-    (CB_total_Genes, CB_reads_count,
-        reads_mapped_to_transcriptome) = expression_matrix(
+    (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = expression_matrix(
             df, cell_bc, outdir, sample, gtf_file)
 
     # downsampling
     cell_bc = set(cell_bc)
     downsample_file = args.outdir + '/' + args.sample + '_downsample.txt'
-    Saturation = downsample(
-        count_detail_file,
-        cell_bc,
-        downsample_file)
+    Saturation = downsample(df, cell_bc, downsample_file)
 
     # summary
     stat_file = outdir + '/stat.txt'

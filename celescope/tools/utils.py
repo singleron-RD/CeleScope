@@ -605,7 +605,7 @@ def genDict(dim=3, valType=int):
     else:
         return defaultdict(lambda: genDict(dim - 1, valType=valType))
 
-
+'''
 @add_log
 def downsample(bam, barcodes, percent):
     """
@@ -663,6 +663,7 @@ def downsample(bam, barcodes, percent):
 
     return "%.2f\t%.2f\t%.2f\n" % (
         percent, median_geneNum, saturation), saturation
+'''
 
 
 def cluster_tsne_list(tsne_df):
