@@ -115,7 +115,7 @@ def bam2table(bam, detail_file):
                 for umi in res_dict[geneID]:
                     fh1.write('%s\t%s\t%s\t%s\n' % (barcode, geneID, umi,
                                                     res_dict[geneID][umi]))
-
+    samfile.close()
 
 
 @add_log

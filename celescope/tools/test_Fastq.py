@@ -55,10 +55,10 @@ class Test_Fastq(unittest.TestCase):
         #fq_obj.write_consensus_fastq(outdir,sample)
 
     def test_sorted_dumb_consensus(self):
-        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/test1/01.barcode')
-        fastq = 'sorted.fastq'
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/vdj/rebuild/TCR_20201221_consensus/03.consensus')
+        fastq = 'TCR_20201221_consensus_sorted.fq.tmp'
         fq_css = Fastq(fastq)
-        fq_css.sorted_dumb_consensus(outfile = 'consensus.fq.gz')
+        fq_css.sorted_dumb_consensus(fastq, outfile = 'update_consensus.fq.gz')
 
 
 

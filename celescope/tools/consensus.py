@@ -1,10 +1,11 @@
-from collections import defaultdict
 import pysam
 import gzip
 import numpy as np
 import subprocess
 import os
 from xopen import xopen
+from collections import defaultdict
+from itertools import groupby
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
@@ -22,54 +23,37 @@ def sort_fastq(fq, fq_tmp_file, outdir):
 @add_log
 def sorted_dumb_consensus(fq, outfile, threshold):
     '''
-    read in name sorted fastq, output (barcode,umi) consensus fastq
+    consensusread in name-sorted fastq
+    output (barcode,umi) consensus fastq
     '''
-    curr_combine = ""
     read_list = []
-    n = 0
+    n_umi = 0
     total_ambiguous_base_n = 0
     length_list = []
     out_h = xopen(outfile, 'w')
 
+    def keyfunc(read):
+        attr = read.name.split('_')
+        return (attr[0], attr[1])
+
     with pysam.FastxFile(fq) as fh:
-        for entry in fh:
-            attr = entry.name.split('_')
-            barcode = attr[0]
-            umi = attr[1]
-            combine = [barcode,umi]
-            if combine != curr_combine:
-                # first
-                if curr_combine == "":
-                    curr_combine = combine
-                    read_list.append([entry.sequence,entry.quality])
-                    continue
-                consensus, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(
-                    read_list, threshold=threshold, ambiguous="N")
-                n += 1
-                prefix = "_".join(curr_combine)
-                read_name = f'{prefix}_{n}'
-                out_h.write(fastq_line(read_name,consensus,consensus_qual))
-                if n % 10000 == 0:
-                    sorted_dumb_consensus.logger.info(f'{n} UMI done.')
-                total_ambiguous_base_n += ambiguous_base_n
-                length_list.append(con_len)
-                read_list = []
-                curr_combine = combine
-            read_list.append([entry.sequence,entry.quality])
-    #last
-    consensus, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(
-        read_list, threshold=threshold, ambiguous="N")
-    n += 1
-    prefix = "_".join(curr_combine)
-    read_name = f'{prefix}_{n}'
-    out_h.write(fastq_line(read_name,consensus,consensus_qual))
-    if n % 10000 == 0:
-        sorted_dumb_consensus.logger.info(f'{n} UMI done.')
-    total_ambiguous_base_n += ambiguous_base_n
-    length_list.append(con_len)
+        for (barcode, umi), g in groupby(fh, key=keyfunc):
+            read_list = []
+            for read in g:
+                read_list.append([read.sequence, read.quality])
+            consensus_seq, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(
+                read_list, threshold=threshold, ambiguous="N")
+            n_umi += 1
+            prefix = "_".join([barcode, umi])
+            read_name = f'{prefix}_{n_umi}'
+            out_h.write(fastq_line(read_name, consensus_seq, consensus_qual))
+            if n_umi % 10000 == 0:
+                sorted_dumb_consensus.logger.info(f'{n_umi} UMI done.')
+            total_ambiguous_base_n += ambiguous_base_n
+            length_list.append(con_len)
     
     out_h.close()
-    return n, total_ambiguous_base_n, length_list
+    return n_umi, total_ambiguous_base_n, length_list
 
 
 @add_log
