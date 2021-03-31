@@ -29,7 +29,7 @@ def sum_virus(validated_barcodes, virus_bam,
         attr = read.query_name.split('_')
         barcode = attr[0]
         umi = attr[1]
-        if (barcode in validated_barcodes) and (query_length >= min_query_length):
+        if (barcode in validated_barcodes) and (query_length >= int(min_query_length)):
             count_dic[barcode][tag][umi] += 1
 
     # write dic to pandas df
@@ -73,7 +73,7 @@ def count_capture_virus(args):
         args.virus_bam,
         out_read_count_file,
         out_umi_count_file,
-        args.min_query_length)
+        int(args.min_query_length))
 
 
 def get_opts_count_capture_virus(parser, sub_program):

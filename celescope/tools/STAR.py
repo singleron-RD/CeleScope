@@ -23,10 +23,10 @@ class Step_mapping():
         self.genomeDir = genomeDir
         self.out_unmapped = out_unmapped
         self.debug = debug
-        self.outFilterMatchNmin = outFilterMatchNmin
+        self.outFilterMatchNmin = int(outFilterMatchNmin)
         self.STAR_param = STAR_param
         self.sort_BAM = sort_BAM
-        self.multi_max = outFilterMultimapNmax
+        self.multi_max = int(outFilterMultimapNmax)
         if self.genomeDir and self.genomeDir != "None":
             self.STAR_index = self.genomeDir
         else:
