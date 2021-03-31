@@ -392,7 +392,8 @@ def parse_map_col4(mapfile, default_val):
                 fq_dict[sample_name][1].append(fq2)
             else:
                 fq_dict[sample_name] = [[fq1], [fq2]]
-            col4_dict[sample_name] = col4
+            if col4 and col4 != default_val:
+                col4_dict[sample_name] = col4
 
     for sample_name in fq_dict:
         fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
