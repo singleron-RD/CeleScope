@@ -78,7 +78,7 @@ def dumb_consensus(read_list, threshold=0.5, ambiguous='N', default_qual='F'):
     '''
 
     con_len = get_read_length(read_list, threshold=threshold)
-    consensus = ""
+    consensus_seq = ""
     consensus_qual = ""
     ambiguous_base_n = 0
     for n in range(con_len):
@@ -105,7 +105,7 @@ def dumb_consensus(read_list, threshold=0.5, ambiguous='N', default_qual='F'):
                 break
         if consensus_atom == ambiguous:
             ambiguous_base_n += 1
-        consensus += consensus_atom
+        consensus_seq += consensus_atom
 
         max_freq_qual = 0
         consensus_base_qual = default_qual
@@ -115,7 +115,7 @@ def dumb_consensus(read_list, threshold=0.5, ambiguous='N', default_qual='F'):
                 consensus_base_qual = base_qual
 
         consensus_qual += consensus_base_qual
-    return consensus, consensus_qual, ambiguous_base_n, con_len
+    return consensus_seq, consensus_qual, ambiguous_base_n, con_len
 
 
 def get_read_length(read_list, threshold=0.5):
