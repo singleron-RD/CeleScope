@@ -23,7 +23,7 @@ def sort_fastq(fq, fq_tmp_file, outdir):
 @add_log
 def sorted_dumb_consensus(fq, outfile, threshold):
     '''
-    consensusread in name-sorted fastq
+    consensus read in name-sorted fastq
     output (barcode,umi) consensus fastq
     '''
     read_list = []

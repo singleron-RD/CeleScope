@@ -44,12 +44,6 @@ class Multi():
         self.parser = parser
         return parser
 
-    def read_common_args(self):
-        if os.path.basename(self.__CONDA__) == 'celescope_RD':
-            self.debug_str = '--debug'
-        else:
-            self.debug_str = Multi.arg_str(self.args.debug, 'debug')
-
     def step_args(self):
         for step in self.__STEPS__:
             step_module = find_step_module(self.__ASSAY__, step)
@@ -199,6 +193,7 @@ job_end
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
+            f'--force_cell_num {self.col4_dict[sample]} '
         )
 
         self.process_cmd(cmd, step, sample, m=10, x=1)

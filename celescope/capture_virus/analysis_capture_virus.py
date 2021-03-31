@@ -98,15 +98,11 @@ def analysis_capture_virus(args):
     ana.run()
 
 
-
 def get_opts_analysis_capture_virus(parser, sub_program):
     parser.add_argument("--umi_threshold", help='method to find virus UMI threshold', 
         choices=['otsu', 'none'], default='otsu')
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help='match_dir', required=True)
-        parser.add_argument(
-            '--virus_file',
-            help='virus UMI count file',
-            required=True)
+        parser.add_argument('--virus_file', help='virus UMI count file', required=True)
         

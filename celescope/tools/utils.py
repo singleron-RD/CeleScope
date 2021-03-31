@@ -27,7 +27,6 @@ tools_dir = os.path.dirname(celescope.tools.__file__)
 
 def add_log(func):
     '''
-    return logger.
     logging start and done.
     '''
     logging.basicConfig(

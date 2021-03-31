@@ -39,3 +39,4 @@ def get_opts_STAR_virus(parser, sub_program):
         help='virus genome dir',
         required=True)
     parser.add_argument("--outFilterMatchNmin", help='STAR outFilterMatchNmin', default=35)
+    parser.add_argument('--starMem', help='starMem', default=30)

@@ -16,14 +16,10 @@ class Multi_capture_virus(Multi):
 
     def count_capture_virus(self, sample):
         step = 'count_capture_virus'
+        cmd_line = self.get_cmd_line(step, sample)
         virus_bam = f'{self.outdir_dic[sample]["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--virus_bam {virus_bam} '
             f'--match_dir {self.col4_dict[sample]} '
         )
@@ -31,17 +27,12 @@ class Multi_capture_virus(Multi):
 
     def analysis_capture_virus(self, sample):        
         step = 'analysis_capture_virus'
+        cmd_line = self.get_cmd_line(step, sample)
         virus_file = f'{self.outdir_dic[sample]["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
         cmd = (
-            f'{self.__APP__} '
-            f'{self.__ASSAY__} '
-            f'{step} '
-            f'--outdir {self.outdir_dic[sample][step]} '
-            f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
+            f'{cmd_line} '
             f'--virus_file {virus_file} '
             f'--match_dir {self.col4_dict[sample]} '
-            f'--umi_threshold {self.umi_threshold} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
