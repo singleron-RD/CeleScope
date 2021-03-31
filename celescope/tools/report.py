@@ -77,6 +77,6 @@ class reporter:
                 fh.write(html)
 
         with open(json_file, 'w') as fh:
-            json.dump(data, fh)
+            json.dump(data, fh, indent=4)
 
         logger1.info('generate report done!')
