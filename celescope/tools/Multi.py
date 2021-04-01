@@ -59,10 +59,43 @@ class Multi():
         else:
             self.fq_suffix = ""
 
+    @staticmethod
+    def parse_map_col4(mapfile, default_val):
+        fq_dict = defaultdict(list)
+        col4_dict = {}
+        with open(mapfile) as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                tmp = line.split()
+                library_id, library_path, sample_name = tmp[:3]
+                if len(tmp) == 4:
+                    col4 = tmp[3]
+                else:
+                    col4 = default_val
+                fq1, fq2 = get_fq(library_id, library_path)
+
+                if sample_name in fq_dict:
+                    fq_dict[sample_name][0].append(fq1)
+                    fq_dict[sample_name][1].append(fq2)
+                else:
+                    fq_dict[sample_name] = [[fq1], [fq2]]
+                    col4_dict[sample_name] = col4
+
+
+        for sample_name in fq_dict:
+            fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
+            fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
+
+        if not fq_dict:
+            raise Exception('empty mapfile!')
+        return fq_dict, col4_dict
+
 
     def prepare(self):
         # parse_mapfile
-        self.fq_dict, self.col4_dict = parse_map_col4(self.args.mapfile, self.col4_default)
+        self.fq_dict, self.col4_dict = self.parse_map_col4(self.args.mapfile, self.col4_default)
 
         # link
         link_data(self.args.outdir, self.fq_dict)      

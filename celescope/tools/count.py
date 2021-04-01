@@ -488,9 +488,9 @@ def get_opts_count(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--bam', required=True)
+        parser.add_argument('--force_cell_num', help='force cell number', default=None)
     parser.add_argument('--genomeDir', help='genome directory')
     parser.add_argument('--gtf', help='gtf file path')
-    parser.add_argument('--force_cell_num', help='force cell number', default=None)
     parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
     parser.add_argument('--cell_calling_method', help='cell calling methods', 
         choices=['auto', 'cellranger3', 'inflection',], default='auto')
