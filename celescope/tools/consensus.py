@@ -139,9 +139,10 @@ def get_read_length(read_list, threshold=0.5):
         if fraction >= threshold:
             return length
 
-
+@add_log
 def consensus(args):
     if args.not_consensus:
+        consensus.logger.warning("not_consensus!")
         return
     sample = args.sample
     outdir = args.outdir

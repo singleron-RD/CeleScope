@@ -32,23 +32,6 @@ class Multi_vdj(Multi):
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
-    def run_steps(self):
-        """ steps --not_consensus
-        """
-        if self.args.steps_run == 'all':
-            self.steps_run = self.__STEPS__
-        elif self.args.steps_run:
-            self.steps_run = self.args.steps_run.strip().split(',')
-        if self.args.not_consensus:
-            try:
-                self.steps_run.remove('consensus')
-            except ValueError as error:
-                pass
-
-        for sample in self.fq_dict:
-            self.last_step = ''
-            for step in self.steps_run:
-                eval(f'self.{step}(sample)')
 
 
 def main():
