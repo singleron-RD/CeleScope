@@ -141,6 +141,8 @@ def get_read_length(read_list, threshold=0.5):
 
 
 def consensus(args):
+    if args.not_consensus:
+        return
     sample = args.sample
     outdir = args.outdir
     assay = args.assay
@@ -180,6 +182,7 @@ def consensus(args):
 
 def get_opts_consensus(parser, sub_program):
     parser.add_argument("--threshold", help='valid base threshold', default=0.5)
+    parser.add_argument("--not_consensus", help="input fastq is not consensus", action='store_true')
     if sub_program:
         s_common(parser)
         parser.add_argument("--fq", required=True)

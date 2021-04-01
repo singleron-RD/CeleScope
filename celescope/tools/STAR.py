@@ -256,8 +256,8 @@ def get_opts_STAR(parser, sub_program):
     parser.add_argument('--STAR_index', help='STAR index directory')
     parser.add_argument('--refFlat', help='refFlat file path')
     parser.add_argument('--outFilterMultimapNmax', help='STAR outFilterMultimapNmax', default=1)
-    parser.add_argument("--consensus_fq", action='store_true', help="input fastq is umi consensus")
     parser.add_argument('--starMem', help='starMem', default=30)
     if sub_program:
         parser.add_argument('--fq', required=True)
+        parser.add_argument("--consensus_fq", action='store_true', help="input fastq is umi consensus")
         parser = s_common(parser)

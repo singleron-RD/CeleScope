@@ -10,7 +10,9 @@ class Multi_snp(Multi):
         if self.args.not_consensus:
             fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
         else:
-            fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'         
+            fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'
+            cmd_line += ' --consensus_fq '
+   
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '
@@ -43,23 +45,6 @@ class Multi_snp(Multi):
         )
         self.process_cmd(cmd, step, sample, m=8, x=1)
 
-    def run_steps(self):
-        """ steps --not_consensus
-        """
-        if self.args.steps_run == 'all':
-            self.steps_run = self.__STEPS__
-        elif self.args.steps_run:
-            self.steps_run = self.args.steps_run.strip().split(',')
-        if self.args.not_consensus:
-            try:
-                self.steps_run.remove('consensus')
-            except ValueError as error:
-                pass
-
-        for sample in self.fq_dict:
-            self.last_step = ''
-            for step in self.steps_run:
-                eval(f'self.{step}(sample)')
 
 def main():
     multi = Multi_snp(__ASSAY__)
