@@ -9,8 +9,7 @@ import pandas as pd
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
-from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
-from celescope.tools.utils import read_barcode_file, genDict
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
 
@@ -45,7 +44,7 @@ def report_prepare(count_file, downsample_file, outdir):
         json.dump(data, fh)
 
 
-@log
+@add_log
 def barcode_filter_with_magnitude(
         df, expected_cell_num, plot='magnitude.pdf', col='UMI', percent=0.1):
     # col can be readcount or UMI
@@ -130,7 +129,7 @@ def correct_umi(fh1, barcode, gene_umi_dict, percent=0.1):
     return res_dict
 
 
-@log
+@add_log
 def bam2table(bam, detail_file, id_name):
     # 提取bam中相同barcode的reads，统计比对到基因的reads信息
     # probe
@@ -196,7 +195,7 @@ def bam2table(bam, detail_file, id_name):
     return df_probe
 
 
-@log
+@add_log
 def call_cells(df, expected_num, pdf, marked_counts_file):
     def num_gt2(x):
         return pd.Series.sum(x[x > 1])
@@ -220,7 +219,7 @@ def call_cells(df, expected_num, pdf, marked_counts_file):
     return validated_barcodes, threshold, cell_num, CB_describe
 
 
-@log
+@add_log
 def expression_matrix(
         df, validated_barcodes,
         outdir, sample, id_name,
@@ -362,7 +361,7 @@ def sample(p, df, bc):
     return format_str % (p, geneNum_median, saturation), saturation
 
 
-@log
+@add_log
 def downsample(detail_file, validated_barcodes, downsample_file):
     df = pd.read_table(detail_file, index_col=[0, 1, 2])
     df = df.index.repeat(df['count']).to_frame()
@@ -379,7 +378,7 @@ def downsample(detail_file, validated_barcodes, downsample_file):
     return saturation
 
 
-@log
+@add_log
 def count_capture_rna(args):
 
     # check
@@ -450,16 +449,12 @@ def count_capture_rna(args):
 
 def get_opts_count_capture_rna(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--bam', required=True)
+        s_common(parser)
         parser.add_argument("--match_dir", default=None)
-        parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument(
-            '--genomeDir',
+        parser.add_argument("--bam", default=None)
+    parser.add_argument('--genomeDir',
             help='genome directory',
             required=True)
-    parser.add_argument(
-        '--cells',
+    parser.add_argument('--cells',
         help='expected number of cells',
         default="auto")

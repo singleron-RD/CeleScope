@@ -5,14 +5,14 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 import pysam
 import pandas as pd
-from celescope.tools.utils import genDict, format_number, log, read_barcode_file
+from celescope.tools.utils import *
 
 TRACER_PATH = '/SGRNJ/Public/Software/tracer/tracer'
 CONF_PATH = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/tcr_fl/20201103/tracer_SGR.conf'
 CONDA = 'vdjpuzzle1'
 CONDA_SUB = 'celescope_tracer'
 
-@log
+@add_log
 def tracer_summarise(outdir):
     tracer_outdir = f'{outdir}/tracer'
     cmd = (
@@ -42,7 +42,7 @@ def tracer(fq, outdir):
     os.system(cmd)
     
 
-@log
+@add_log
 def run_assemble(sample, outdir, fastq_dir, thread):
     fqs = [join(fastq_dir, f) for f in listdir(fastq_dir) if isfile(join(fastq_dir, f))]
     outdirs = [outdir] * len(fqs)

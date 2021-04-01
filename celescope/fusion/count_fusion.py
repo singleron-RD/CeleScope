@@ -1,5 +1,4 @@
-from celescope.tools.utils import format_number
-from celescope.tools.report import reporter
+
 from collections import defaultdict
 import pysam
 import gzip
@@ -15,7 +14,8 @@ import json
 import glob
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-from celescope.tools.utils import log, format_number, genDict, parse_match_dir, read_barcode_file
+from celescope.tools.utils import *
+from celescope.tools.report import reporter
 import celescope.fusion
 
 fusionDir = os.path.dirname(celescope.fusion.__file__)
@@ -35,7 +35,7 @@ def is_fusion(pos, read_start, read_length, flanking_base):
     return (test_start and test_end)
 
 
-@log
+@add_log
 def count_fusion(args):
 
     outdir = args.outdir
@@ -139,10 +139,9 @@ def count_fusion(args):
 
 def get_opts_count_fusion(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
         parser.add_argument("--bam", required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+
     #parser.add_argument("--fusion_fasta",help="fusion fasta",required=True)
     parser.add_argument(
         "--fusion_pos",

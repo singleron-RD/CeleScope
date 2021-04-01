@@ -1,8 +1,8 @@
 import os
-from celescope.tools.utils import format_number, log, STAR_util
+from celescope.tools.utils import *
 
 
-@log
+@add_log
 def mapping_mut(args):
     STAR_util(
         args.sample,

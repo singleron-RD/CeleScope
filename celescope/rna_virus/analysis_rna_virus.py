@@ -12,7 +12,7 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir, gene_convert, log
+from celescope.tools.utils import *
 import celescope.tools
 
 toolsdir = os.path.dirname(celescope.tools.__file__)
@@ -81,14 +81,14 @@ def marker_table(marker_df):
     return marker_gene_table
 
 
-@log
+@add_log
 def seurat(sample, outdir, matrix_file):
     app = toolsdir + "/run_analysis.R"
     cmd = f"Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file}"
     os.system(cmd)
 
 
-@log
+@add_log
 def analysis_rna_virus(args):
 
     # check dir
@@ -122,11 +122,10 @@ def analysis_rna_virus(args):
 
 def get_opts_analysis_rna_virus(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
         parser.add_argument(
             '--virus_file',
             help='virus UMI count file',
             required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+        

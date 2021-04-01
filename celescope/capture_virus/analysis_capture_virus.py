@@ -9,7 +9,7 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir, log
+from celescope.tools.utils import *
 from celescope.tools.Analysis import Analysis
 from .otsu import *
 import celescope.tools
@@ -53,7 +53,7 @@ class Analysis_capture_virus(Analysis):
         )
         self.report()
 
-@log
+@add_log
 def otsu_thresh(virus_file, outdir, sample):
     df = pd.read_csv(virus_file, sep='\t')
     array = np.log10(df["UMI"])
@@ -70,7 +70,7 @@ def otsu_thresh(virus_file, outdir, sample):
     return otsu_virus_file
 
 
-@log
+@add_log
 def analysis_capture_virus(args):
 
     # check dir
@@ -98,16 +98,11 @@ def analysis_capture_virus(args):
     ana.run()
 
 
-
 def get_opts_analysis_capture_virus(parser, sub_program):
     parser.add_argument("--umi_threshold", help='method to find virus UMI threshold', 
         choices=['otsu', 'none'], default='otsu')
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
         parser.add_argument('--match_dir', help='match_dir', required=True)
-        parser.add_argument(
-            '--virus_file',
-            help='virus UMI count file',
-            required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+        parser.add_argument('--virus_file', help='virus UMI count file', required=True)
+        

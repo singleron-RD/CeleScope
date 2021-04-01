@@ -1,11 +1,9 @@
-#!/bin/env python
-# coding=utf8
-
 import os
 import sys
 import json
 import functools
 import gzip
+import random
 from collections import defaultdict
 from itertools import groupby
 import numpy as np
@@ -14,18 +12,21 @@ import subprocess
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix, coo_matrix
 import pysam
-from celescope.tools.utils import format_number, log, gene_convert, glob_genomeDir
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
 
 
 toolsdir = os.path.dirname(__file__)
+random.seed(0)
 
 
 def report_prepare(count_file, downsample_file, outdir):
+    """write data of saturation, gene, barcode-rank plot to .data.json
+    """
 
-    json_file = outdir + '/.data.json'
+    json_file = outdir + '/../.data.json'
     if not os.path.exists(json_file):
         data = {}
     else:
@@ -38,15 +39,18 @@ def report_prepare(count_file, downsample_file, outdir):
     data['MedianGeneNum'] = df0['median_geneNum'].tolist()
     data['Saturation'] = df0['saturation'].tolist()
 
-    #data['count' + '_summary'] = df0.T.values.tolist()
-
     df = pd.read_table(count_file, header=0)
     df = df.sort_values('UMI', ascending=False)
-    data['CB_num'] = df[df['mark'] == 'CB'].shape[0]
-    data['Cells'] = list(df.loc[df['mark'] == 'CB', 'UMI'])
 
-    data['UB_num'] = df[df['mark'] == 'UB'].shape[0]
-    data['Background'] = list(df.loc[df['mark'] == 'UB', 'UMI'])
+    # cellranger3 compatible
+    # density TODO
+    n_cell = df[df['mark'] == 'CB'].shape[0]
+    data['CB_num'] = n_cell
+    data['Cells'] = list(df.iloc[:n_cell,]["UMI"])
+
+    n_background = df[df['mark'] == 'UB'].shape[0]
+    data['UB_num'] = n_background
+    data['Background'] = list(df.iloc[n_cell:,]["UMI"])
 
     data['umi_summary'] = True
 
@@ -83,7 +87,7 @@ def correct_umi(fh1, barcode, gene_umi_dict, percent=0.1):
     return res_dict
 
 
-@log
+@add_log
 def bam2table(bam, detail_file):
     # 提取bam中相同barcode的reads，统计比对到基因的reads信息
     #
@@ -111,10 +115,10 @@ def bam2table(bam, detail_file):
                 for umi in res_dict[geneID]:
                     fh1.write('%s\t%s\t%s\t%s\n' % (barcode, geneID, umi,
                                                     res_dict[geneID][umi]))
+    samfile.close()
 
 
-
-@log
+@add_log
 def cell_calling(cell_calling_method, force_cell_num, expected_cell_num, all_matrix_10X_dir, df_sum, outdir, sample):
     if (force_cell_num is not None) and (force_cell_num != 'None'):
         cell_bc, UMI_threshold = force_cell(force_cell_num, df_sum)
@@ -129,7 +133,7 @@ def cell_calling(cell_calling_method, force_cell_num, expected_cell_num, all_mat
     return cell_bc, UMI_threshold
 
 
-@log
+@add_log
 def force_cell(force_cell_num, df_sum):
     force_cell_num = int(force_cell_num)
     cell_range = int(force_cell_num * 0.1)
@@ -161,7 +165,7 @@ def find_threshold(df_sum, idx):
     return int(df_sum.iloc[idx - 1, df_sum.columns == 'UMI'])
 
 
-@log
+@add_log
 def auto_cell(df_sum, expected_cell_num):
     col = "UMI"
     idx = int(expected_cell_num * 0.01)
@@ -177,14 +181,14 @@ def auto_cell(df_sum, expected_cell_num):
     return cell_bc, threshold
 
 
-@log
+@add_log
 def cellranger3_cell(all_matrix_10X_dir, expected_cell_num, df_sum):
     cell_bc, initial_cell_num = cell_calling_3(all_matrix_10X_dir, expected_cell_num)
     threshold = find_threshold(df_sum, initial_cell_num)
     return cell_bc, threshold
 
 
-@log
+@add_log
 def inflection_cell(outdir, sample, all_matrix_10X_dir, df_sum, threshold):
     app = f'{toolsdir}/rescue.R'
     cmd = (
@@ -205,7 +209,7 @@ def inflection_cell(outdir, sample, all_matrix_10X_dir, df_sum, threshold):
     return cell_bc, threshold
 
 
-@log
+@add_log
 def get_df_sum(df, col='UMI'):
     def num_gt2(x):
         return pd.Series.sum(x[x > 1])
@@ -222,7 +226,7 @@ def get_df_sum(df, col='UMI'):
 def get_cell_bc(df_sum, threshold, col='UMI'):
     return list(df_sum[df_sum[col] >= threshold].index)
 
-@log
+@add_log
 def plot_barcode_UMI(df_sum, threshold, expected_cell_num, cell_num, outdir, sample, cell_calling_method, col='UMI'):
     out_plot = f'{outdir}/{sample}_barcode_UMI_plot.pdf'
     import matplotlib
@@ -262,7 +266,7 @@ def write_matrix_10X(table, id_name, matrix_10X_dir):
     return id, name
 
 
-@log
+@add_log
 def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None):
     matrix_10X_dir = f"{outdir}/{sample}_{dir_name}/"
     if not os.path.exists(matrix_10X_dir):
@@ -287,7 +291,7 @@ def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None
     return matrix_10X_dir
 
 
-@log
+@add_log
 def expression_matrix(df, cell_bc, outdir, sample, gtf_file):
 
     id_name = gene_convert(gtf_file)
@@ -361,38 +365,57 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
     summary.to_csv(stat_file, header=False, sep=':')
 
 
-def sample(p, df, bc):
-    tmp = df.sample(frac=p)
+@add_log
+def sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI"):
+    cell_read = df_cell['count'].sum()
+    frac_n_read = int(cell_read * fraction)
+    subsample_read_index = cell_read_index[:frac_n_read]
+    index_counts = Counter(subsample_read_index)
+
+    dedup = 0
+    for value in index_counts.values():
+        if value == 1:
+            dedup += 1
+
+    index_dedup = np.unique(subsample_read_index)
+    if total == "UMI":
+        n_total = len(index_dedup)
+    elif total == "read":
+        n_total = frac_n_read
+    saturation = round((1 - dedup / n_total) * 100, 2)
+
+    # gene median
+    df_cell_subsample = df_cell.loc[index_dedup,]
+    geneNum_median = df_cell_subsample.groupby('Barcode').agg({'geneID': 'nunique'}).median()
+
     format_str = "%.2f\t%.2f\t%.2f\n"
-    tmp.reset_index(drop=True, inplace=True)
-    tmp = tmp.loc[tmp['Barcode'].isin(bc), :]
-    geneNum_median = tmp.groupby('Barcode').agg({
-        'geneID': 'nunique'
-    })['geneID'].median()
-    tmp = tmp.groupby(['Barcode', 'geneID', 'UMI']).agg({'UMI': 'count'})
-    total = float(tmp['UMI'].count())
-    saturation = (1 - tmp.loc[tmp['UMI'] == 1, :].shape[0] / total) * 100
-    return format_str % (p, geneNum_median, saturation), saturation
+    return format_str % (fraction, geneNum_median, saturation), saturation
 
 
-@log
-def downsample(detail_file, cell_bc, downsample_file):
-    df = pd.read_table(detail_file, index_col=[0, 1, 2])
-    df = df.index.repeat(df['count']).to_frame()
+@add_log
+def downsample(df, cell_bc, downsample_file):
+    """saturation and median gene
+    return fraction=1 saturation
+    """
+    df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
+    cell_read_index = list(df_cell.index.repeat(df_cell['count']))
+    random.shuffle(cell_read_index)
+
     format_str = "%.2f\t%.2f\t%.2f\n"
+
     with open(downsample_file, 'w') as fh:
         fh.write('percent\tmedian_geneNum\tsaturation\n')
         fh.write(format_str % (0, 0, 0))
-
         saturation = 0
-        for p in np.arange(0.1, 1.1, 0.1):
-            r, s = sample(p=p, df=df, bc=cell_bc)
+        for fraction in np.arange(0.1, 1.1, 0.1):
+            r, s = sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI")
             fh.write(r)
+            #downsample.logger.info(r)
             saturation = s
     return saturation
 
 
-@log
+@add_log
 def count(args):
     # args
     outdir = args.outdir
@@ -438,17 +461,13 @@ def count(args):
 
     # export cell matrix
     matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=cell_bc)
-    (CB_total_Genes, CB_reads_count,
-        reads_mapped_to_transcriptome) = expression_matrix(
+    (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = expression_matrix(
             df, cell_bc, outdir, sample, gtf_file)
 
     # downsampling
     cell_bc = set(cell_bc)
     downsample_file = args.outdir + '/' + args.sample + '_downsample.txt'
-    Saturation = downsample(
-        count_detail_file,
-        cell_bc,
-        downsample_file)
+    Saturation = downsample(df, cell_bc, downsample_file)
 
     # summary
     stat_file = outdir + '/stat.txt'
@@ -456,7 +475,7 @@ def count(args):
                 CB_reads_count, reads_mapped_to_transcriptome, stat_file,
                 outdir + '/../')
 
-    report_prepare(marked_counts_file, downsample_file, outdir + '/..')
+    report_prepare(marked_counts_file, downsample_file, outdir)
 
     t = reporter(assay=assay,
                  name='count', sample=args.sample,
@@ -467,12 +486,10 @@ def count(args):
 
 def get_opts_count(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        parser = s_common(parser)
         parser.add_argument('--bam', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument('--genomeDir', help='genome directory')
-        parser.add_argument('--gtf', help='gtf file path')
+    parser.add_argument('--genomeDir', help='genome directory')
+    parser.add_argument('--gtf', help='gtf file path')
     parser.add_argument('--force_cell_num', help='force cell number', default=None)
     parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
     parser.add_argument('--cell_calling_method', help='cell calling methods', 

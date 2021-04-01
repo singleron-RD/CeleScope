@@ -6,7 +6,7 @@ import pandas as pd
 import io
 import logging
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
-from celescope.tools.utils import log
+from celescope.tools.utils import *
 
 env = Environment(
     loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
@@ -77,6 +77,6 @@ class reporter:
                 fh.write(html)
 
         with open(json_file, 'w') as fh:
-            json.dump(data, fh)
+            json.dump(data, fh, indent=4)
 
         logger1.info('generate report done!')

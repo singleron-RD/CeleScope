@@ -12,7 +12,7 @@ import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
-from celescope.tools.utils import glob_genomeDir, log, gene_convert
+from celescope.tools.utils import *
 from celescope.rna.__init__ import __ASSAY__
 from celescope.tools.Analysis import Analysis
 
@@ -80,7 +80,7 @@ def marker_table(marker_df):
     return marker_gene_table
 
 
-@log
+@add_log
 def generate_matrix(gtf_file, matrix_file):
 
     id_name = gene_convert(gtf_file)
@@ -94,7 +94,7 @@ def generate_matrix(gtf_file, matrix_file):
     return matrix
 
 
-@log
+@add_log
 def seurat(sample, outdir, matrix_file, save_rds):
     app = toolsdir + "/run_analysis.R"
     cmd = (
@@ -105,7 +105,7 @@ def seurat(sample, outdir, matrix_file, save_rds):
     os.system(cmd)
 
 
-@log
+@add_log
 def auto_assign(sample, outdir, type_marker_tsv):
     rds = f'{outdir}/{sample}.rds'
     app = toolsdir + "/auto_assign.R"
@@ -120,7 +120,7 @@ def auto_assign(sample, outdir, type_marker_tsv):
     os.system(cmd)
 
 
-@log
+@add_log
 def analysis(args):
 
     # check dir
@@ -160,10 +160,8 @@ def analysis(args):
 
 def get_opts_analysis(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        parser = s_common(parser)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
     parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
     parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
 

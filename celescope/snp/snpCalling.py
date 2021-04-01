@@ -6,14 +6,12 @@ import pysam
 import numpy as np
 import pandas as pd
 import logging
-from celescope.tools.utils import format_number, log, read_barcode_file
-from celescope.tools.utils import format_stat
-from celescope.tools.utils import read_one_col, gene_convert, glob_genomeDir
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from mutract.utils import Mutract
 
 
-@log
+@add_log
 def snpCalling(args):
 
     sample = args.sample
@@ -42,12 +40,9 @@ def snpCalling(args):
 
 def get_opts_snpCalling(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument("--thread", help='number of thread', default=1)
+        s_common(parser)
         parser.add_argument("--bam", help='featureCounts bam', required=True)
-        parser.add_argument("--genomeDir", help='genomeDir', required=True)
+    parser.add_argument("--genomeDir", help='genomeDir', required=True)
     parser.add_argument(
         "--match_dir", help="match scRNA-Seq dir", required=True)
     parser.add_argument("--gene_list", help='gene_list', required=True)

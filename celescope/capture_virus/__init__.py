@@ -7,3 +7,7 @@ __STEPS__ = [
     "analysis_capture_virus",
 ]
 __ASSAY__ = 'capture_virus'
+
+IMPORT_DICT = {
+    'STAR_virus': 'celescope.rna_virus',
+}

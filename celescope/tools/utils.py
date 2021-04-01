@@ -10,6 +10,7 @@ import subprocess
 import time
 import argparse
 import pysam
+import importlib
 from datetime import timedelta
 from collections import defaultdict
 from functools import wraps
@@ -24,9 +25,8 @@ from celescope.tools.__init__ import __PATTERN_DICT__
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
 
-def log(func):
+def add_log(func):
     '''
-    return logger.
     logging start and done.
     '''
     logging.basicConfig(
@@ -194,7 +194,7 @@ def gene_convert(gtf_file):
     return id_name
 
 
-@log
+@add_log
 def process_read(
     read2_file, pattern_dict, barcode_dict, linker_dict,
     barcode_length, linker_length):
@@ -392,7 +392,8 @@ def parse_map_col4(mapfile, default_val):
                 fq_dict[sample_name][1].append(fq2)
             else:
                 fq_dict[sample_name] = [[fq1], [fq2]]
-            col4_dict[sample_name] = col4
+            if col4 and col4 != default_val:
+                col4_dict[sample_name] = col4
 
     for sample_name in fq_dict:
         fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
@@ -440,7 +441,20 @@ def format_number(number: int) -> str:
     return format(number, ",")
 
 
-@log
+def format_metrics(metrics: dict):
+    for key in metrics:
+        value = metrics[key]
+        metrics[key] = format_number(value)
+        if isinstance(value, float):
+            metrics[key] = round(value, 2)
+
+
+def format_ratios(ratios: dict):
+    for key in ratios:
+        ratios[key] = round(ratios[key] * 100, 2)
+
+
+@add_log
 def glob_genomeDir(genomeDir, fa=False):
     refFlat = glob.glob(genomeDir + "/*.refFlat")
     if (len(refFlat) > 1):
@@ -591,8 +605,8 @@ def genDict(dim=3, valType=int):
     else:
         return defaultdict(lambda: genDict(dim - 1, valType=valType))
 
-
-@log
+'''
+@add_log
 def downsample(bam, barcodes, percent):
     """
     calculate median_geneNum and saturation based on a given percent of reads
@@ -649,6 +663,7 @@ def downsample(bam, barcodes, percent):
 
     return "%.2f\t%.2f\t%.2f\n" % (
         percent, median_geneNum, saturation), saturation
+'''
 
 
 def cluster_tsne_list(tsne_df):
@@ -781,7 +796,7 @@ def parse_match_dir(match_dir):
     return match_dict
 
 
-@log
+@add_log
 def STAR_util(
     sample,
     outdir,
@@ -831,7 +846,7 @@ def get_scope_bc(bctype):
     whitelist_f = f'{root_path}/data/chemistry/{bctype}/bclist'
     return linker_f, whitelist_f
 
-@log
+@add_log
 def parse_pattern(pattern):
     # 解析接头结构，返回接头结构字典
     # key: 字母表示的接头, value: 碱基区间列表
@@ -851,3 +866,36 @@ def parse_pattern(pattern):
         start = end
     return pattern_dict
     
+
+def fastq_line(name, seq, qual):
+    return f'@{name}\n{seq}\n+\n{qual}\n'
+
+
+def s_common(parser):
+    """subparser common arguments
+    """
+    parser.add_argument('--outdir', help='output dir', required=True)
+    parser.add_argument('--assay', help='assay', required=True)
+    parser.add_argument('--sample', help='sample name', required=True)
+    parser.add_argument('--thread', default=4)
+    parser.add_argument('--debug', help='debug', action='store_true')
+    return parser
+
+
+def find_assay_init(assay):
+    init_module = importlib.import_module(f"celescope.{assay}.__init__")
+    return init_module
+
+
+def find_step_module(assay, step):
+    init_module = find_assay_init(assay)
+    try:
+        step_module = importlib.import_module(f"celescope.{assay}.{step}")
+    except ModuleNotFoundError as error:
+        try:
+            step_module = importlib.import_module(f"celescope.tools.{step}")
+        except ModuleNotFoundError as error:
+            module_path = init_module.IMPORT_DICT[step]
+            step_module = importlib.import_module(f"{module_path}.{step}")
+
+    return step_module

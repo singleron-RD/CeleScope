@@ -2,7 +2,7 @@ import unittest
 import os
 import pandas as pd
 from celescope.capture_rna.count_capture_rna import expression_matrix
-from celescope.tools.utils import read_barcode_file, read_one_col, glob_genomeDir
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.Analysis import Analysis
 

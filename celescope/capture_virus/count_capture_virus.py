@@ -6,7 +6,7 @@ import pysam
 import os
 import glob
 from collections import defaultdict
-from celescope.tools.utils import format_number, read_barcode_file, log
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 
 
@@ -17,7 +17,7 @@ def genDict(dim=3):
         return defaultdict(lambda: genDict(dim - 1))
 
 
-@log
+@add_log
 def sum_virus(validated_barcodes, virus_bam,
               out_read_count_file, out_umi_count_file, min_query_length):
     # process bam
@@ -29,7 +29,7 @@ def sum_virus(validated_barcodes, virus_bam,
         attr = read.query_name.split('_')
         barcode = attr[0]
         umi = attr[1]
-        if (barcode in validated_barcodes) and (query_length >= min_query_length):
+        if (barcode in validated_barcodes) and (query_length >= int(min_query_length)):
             count_dic[barcode][tag][umi] += 1
 
     # write dic to pandas df
@@ -54,7 +54,7 @@ def sum_virus(validated_barcodes, virus_bam,
     df_umi.to_csv(out_umi_count_file, sep="\t")
 
 
-@log
+@add_log
 def count_capture_virus(args):
 
 
@@ -73,17 +73,13 @@ def count_capture_virus(args):
         args.virus_bam,
         out_read_count_file,
         out_umi_count_file,
-        args.min_query_length)
+        int(args.min_query_length))
 
 
 def get_opts_count_capture_virus(parser, sub_program):
-    parser.add_argument(
-        '--match_dir',
-        help='matched rna_virus directory',
-        required=True)
     parser.add_argument("--min_query_length", help='minimum query length', default=35)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
+        s_common(parser)
+        parser.add_argument('--match_dir', help='matched rna_virus directory', required=True)
         parser.add_argument('--virus_bam', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+
