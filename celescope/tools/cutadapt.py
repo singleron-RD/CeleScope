@@ -3,13 +3,12 @@ import sys
 import re
 import subprocess
 import logging
-from itertools import islice
 import pandas as pd
 import pysam
 
+from itertools import islice
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
-from celescope.tools.Fastq import Fastq
 
 
 ADAPT = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
