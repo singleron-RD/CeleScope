@@ -10,17 +10,19 @@ def vdj_10X(args):
     thread = args.thread
     mem = args.mem
     species = args.species
-    ref = ref_dict[species]
-    soft = soft_dict[args.soft]
+    soft = args.soft
+
+    ref_path = ref_dict[soft][species]
+    soft_path = soft_dict[soft]
 
     # check dir
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % args.outdir)
 
     cmd = (
-        f'{soft} vdj '
+        f'{soft_path} vdj '
         f'--id={sample} '
-        f'--reference={ref} '
+        f'--reference={ref_path} '
         f'--fastqs=../01.convert '
         f'--sample={sample} '
         f'--localcores={thread} '
@@ -35,7 +37,8 @@ def vdj_10X(args):
 
 def get_opts_vdj_10X(parser, sub_program):
     parser.add_argument('--species', help='species', choices=['hs','mmu'], required=True)
-    parser.add_argument('--soft', help='cellranger version', choices=['3.0', '3.1', '6.0'], default='3.0')
+    parser.add_argument('--soft', help='cellranger version', choices=['3.0.2', '3.1.0', '4.0.0', '6.0.0'], 
+        default='4.0.0')
     if sub_program:
         parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--assay', help='assay', required=True)
