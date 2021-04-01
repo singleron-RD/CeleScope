@@ -9,7 +9,7 @@ import pandas as pd
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
-from celescope.tools.utils import format_number, log, seq_ranges, read_fasta, genDict
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from celescope.tools.Chemistry import Chemistry
@@ -65,7 +65,7 @@ def generate_mis_seq(seq, n=1, bases='ACGTN'):
     return(res)
 
 
-@log
+@add_log
 def generate_seq_dict(seqlist, n=1):
     seq_dict = {}
     with open(seqlist, 'r') as fh:
@@ -84,7 +84,7 @@ def generate_seq_dict(seqlist, n=1):
     return seq_dict
 
 
-@log
+@add_log
 def parse_pattern(pattern):
     # 解析接头结构，返回接头结构字典
     # key: 字母表示的接头, value: 碱基区间列表
@@ -195,7 +195,7 @@ def check_seq(seq_file, pattern_dict, seq_abbr):
                     f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
 
 
-@log
+@add_log
 def merge_fastq(fq1, fq2, sample, outdir):
     '''
     merge fastq if len(fq1) > 1
@@ -265,7 +265,7 @@ def fastq_line(name, seq, qual):
     return f'@{name}\n{seq}\n+\n{qual}\n'
 
 
-@log
+@add_log
 def convert(args):
     # init
     outdir = args.outdir
@@ -562,11 +562,9 @@ def convert(args):
 
 def get_opts_convert(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument('--sample', help='sample name', required=True)
-    parser.add_argument('--fq1', help='read1 fq file', required=True)
-    parser.add_argument('--fq2', help='read2 fq file', required=True)
+        s_common(parser)
+        parser.add_argument('--fq1', help='read1 fq file', required=True)
+        parser.add_argument('--fq2', help='read2 fq file', required=True)
     parser.add_argument(
         '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
     parser.add_argument('--pattern', help='')
@@ -580,7 +578,6 @@ def get_opts_convert(parser, sub_program):
                         help='output nopolyT fq')
     parser.add_argument('--noLinker', action='store_true',
                         help='output noLinker fq')
-    parser.add_argument('--thread', help='number of threads', default=1)
     parser.add_argument('--probe_file', help="probe fasta file")
     parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
     parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')

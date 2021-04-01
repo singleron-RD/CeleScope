@@ -9,7 +9,6 @@ import pysam
 
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
-from celescope.tools.Fastq import Fastq
 
 
 ADAPT = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']

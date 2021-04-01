@@ -1,9 +1,9 @@
 import subprocess
-from celescope.tools.utils import log
+from celescope.tools.utils import *
 import os
 from celescope.vdj10X.__init__ import ref_dict, soft_dict
 
-@log
+@add_log
 def vdj_10X(args):
     sample = args.sample
     outdir = args.outdir
@@ -39,10 +39,7 @@ def get_opts_vdj_10X(parser, sub_program):
     parser.add_argument('--species', help='species', choices=['hs','mmu'], required=True)
     parser.add_argument('--soft', help='cellranger version', choices=['3.0.2', '3.1.0', '4.0.0', '6.0.0'], 
         default='4.0.0')
+    parser.add_argument('--mem', help='memory (G)', default=10)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--thread', help='number of threads', default=4)
-        parser.add_argument('--mem', help='memory (G)', default=10)
+        s_common(parser)
     return parser
