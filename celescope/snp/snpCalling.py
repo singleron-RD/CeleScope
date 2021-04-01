@@ -42,7 +42,7 @@ def get_opts_snpCalling(parser, sub_program):
     if sub_program:
         s_common(parser)
         parser.add_argument("--bam", help='featureCounts bam', required=True)
-    parser.add_argument("--genomeDir", help='genomeDir', required=True)
-    parser.add_argument(
+        parser.add_argument(
         "--match_dir", help="match scRNA-Seq dir", required=True)
+    parser.add_argument("--genomeDir", help='genomeDir', required=True)
     parser.add_argument("--gene_list", help='gene_list', required=True)
