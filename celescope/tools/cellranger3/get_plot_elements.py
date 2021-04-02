@@ -246,8 +246,8 @@ def build_plot_data_dict(plot_segment, counts):
         "type": "scattergl",
         "mode": "lines",
         "line": {
+            "width": 3,
             "color": BC_PLOT_CMAP(plot_segment.cell_density),
-            "width": 3
         },
         "showlegend": plot_segment.legend,
     }
@@ -292,7 +292,7 @@ def plot_barcode_rank(count_file_path):
     plot_data = get_plot_data(plot_segments, sorted_counts)
 
     plotly_data = [go.Scatter(x=dat['x'], y=dat['y'], name=dat['name'], mode=dat['mode'], showlegend=dat['showlegend'],
-                              marker={'color': dat['line']['color'], 'line': dat['line']}, text=dat['text']) for dat in
+                              marker={'color': dat['line']['color']}, line=dat['line'], text=dat['text']) for dat in
                    plot_data]
 
     layout = go.Layout(width=470, height=313,
