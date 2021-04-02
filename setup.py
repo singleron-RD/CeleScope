@@ -41,5 +41,6 @@ setuptools.setup(
         'editdistance>=0.5.3',
         'mutract',
         'sklearn',
+        'plotly',
     ]
 )
