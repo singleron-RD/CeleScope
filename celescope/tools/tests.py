@@ -239,20 +239,26 @@ class Tests(unittest.TestCase):
         multi.run()
         print(multi.sjm_cmd)
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     @add_mem
     def test_downsample(self):
-        count_detail_file = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/05.count/test1_count_detail.txt.gz'
-        cell_bc, _ = read_barcode_file("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/")
+        assay = 'rna'
+        step = 'count'
+        outdir = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/05.count/'
+        sample = 'test1'
+        count_detail_file = f'{outdir}/{sample}_count_detail.txt.gz'
+        cell_bc, _ = read_barcode_file(f"{outdir}/../")
         df = pd.read_table(count_detail_file, header=0)
         df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
-        '''
-        fraction = 0.1
-        res = sub_sample(fraction, df_cell, cell_bc, total="UMI")
-        print(res)
-        '''
+
+        json_file = f'{outdir}/data.json'
+        reporter = Reporter(assay, 'count', sample, outdir, json_file)
         downsample_file = "/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/05.count/new.downsample"
-        downsample(df, cell_bc, downsample_file)
+        Saturation, res_dict = downsample(df, cell_bc, downsample_file)
+        print(res_dict)
+        reporter.add_data_item(downsample_summary=res_dict)
+
+        reporter.dump_json()
     
     @unittest.skip('pass')
     @add_mem
@@ -264,11 +270,58 @@ class Tests(unittest.TestCase):
 
         downsample_file = "/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/05.count/test.downsample"
         downsample(df, cell_bc, downsample_file)
-      
+    
+    @unittest.skip('pass')
+    @add_mem
+    def test_downsample_real1(self):
+        count_detail_file = '/SGRNJ03/PROJ03/PROJ_20.SC/PN20122407_SCOPEv2/temp/CK2101_origin/CK2101/05.count/CK2101_count_detail.txt.gz'
+        cell_bc, _ = read_barcode_file("/SGRNJ03/PROJ03/PROJ_20.SC/PN20122407_SCOPEv2/temp/CK2101_origin/CK2101/")
+        df = pd.read_table(count_detail_file, header=0)
+        #df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
 
+        downsample_file = "/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/downsample/CK2101_origin.downsample.txt"
+        downsample(df, cell_bc, downsample_file)
 
+    @unittest.skip('pass')
+    @add_mem
+    def test_downsample_large1(self):
+        assay = 'rna'
+        step = 'count'
+        outdir = '/SGRNJ03/PROJ03/PROJ_20.SC/PN20122407_SCOPEv2/temp/CK2101_origin/CK2101/05.count/'
+        sample = 'CK2101'
+        count_detail_file = f'{outdir}/{sample}_count_detail.txt.gz'
+        cell_bc, _ = read_barcode_file(f"{outdir}/../")
+        df = pd.read_table(count_detail_file, header=0)
+        df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
 
+        json_file = f'/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/downsample/CK2101_origin.json'
+        reporter = Reporter(assay, 'count', sample, outdir, json_file)
+        downsample_file = "/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/downsample/CK2101_origin.downsample.txt"
+        Saturation, res_dict = downsample(df, cell_bc, downsample_file)
+        print(res_dict)
+        reporter.add_data_item(downsample_summary=res_dict)
 
+        reporter.dump_json()
+
+    @add_mem
+    def test_downsample_large2(self):
+        assay = 'rna'
+        step = 'count'
+        outdir = '/SGRNJ03/PROJ03/PROJ_20.SC/PN20122407_SCOPEv2/temp/CK816_1-1/CK816_1-1/05.count/'
+        sample = 'CK816_1-1'
+        count_detail_file = f'{outdir}/{sample}_count_detail.txt.gz'
+        cell_bc, _ = read_barcode_file(f"{outdir}/../")
+        df = pd.read_table(count_detail_file, header=0)
+        df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
+
+        json_file = f'/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/downsample/CK816_1-1.json'
+        reporter = Reporter(assay, 'count', sample, outdir, json_file)
+        downsample_file = "/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/downsample/CK816_1-1.downsample.txt"
+        Saturation, res_dict = downsample(df, cell_bc, downsample_file)
+        print(res_dict)
+        reporter.add_data_item(downsample_summary=res_dict)
+
+        reporter.dump_json()
 
 if __name__ == '__main__':
     unittest.main()

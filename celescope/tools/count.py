@@ -12,11 +12,12 @@ import subprocess
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix, coo_matrix
 import pysam
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log, format_number, glob_genomeDir, gene_convert
 from celescope.tools.report import reporter
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
 from celescope.tools.cellranger3 import get_plot_elements
+from celescope.tools.Reporter import Reporter
 
 
 toolsdir = os.path.dirname(__file__)
@@ -357,7 +358,7 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
 
 
 @add_log
-def sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI"):
+def sub_sample(fraction, df_cell, cell_bc, cell_read_index):
     '''
     cell_bc - cell barcode
     cell_read_index - df_cell repeat index
@@ -367,18 +368,17 @@ def sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI"):
     subsample_read_index = cell_read_index[:frac_n_read]
     index_dedup, counts = np.unique(subsample_read_index, return_counts=True)
     n_count_once = np.sum(counts == 1)
-    if total == "UMI":
-        n_total = len(index_dedup)
-    elif total == "read":
-        n_total = frac_n_read
-    saturation = round((1 - n_count_once / n_total) * 100, 2)
+    # total = UMI
+    umi_total = len(index_dedup)
+    umi_saturation = round((1 - n_count_once / umi_total) * 100, 2)
+    read_total = frac_n_read
+    read_saturation = round((1 - n_count_once / read_total) * 100, 2)
 
     # gene median
     df_cell_subsample = df_cell.loc[index_dedup,]
-    geneNum_median = df_cell_subsample.groupby('Barcode').agg({'geneID': 'nunique'}).median()
+    geneNum_median = float(df_cell_subsample.groupby('Barcode').agg({'geneID': 'nunique'}).median())
 
-    format_str = "%.2f\t%.2f\t%.2f\n"
-    return format_str % (fraction, geneNum_median, saturation), saturation
+    return umi_saturation, read_saturation, geneNum_median
 
 
 @add_log
@@ -391,15 +391,24 @@ def downsample(df, cell_bc, downsample_file):
     np.random.shuffle(cell_read_index)
 
     format_str = "%.2f\t%.2f\t%.2f\n"
-
+    res_dict = {
+        "fraction": [],
+        "umi_saturation": [],
+        "read_saturation": [],
+        "median_gene": []
+    }
     with open(downsample_file, 'w') as fh:
         fh.write('percent\tmedian_geneNum\tsaturation\n')
         fh.write(format_str % (0, 0, 0))
-        saturation = 0
         for fraction in np.arange(0.1, 1.1, 0.1):
-            frac_line, saturation = sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI")
-            fh.write(frac_line)
-    return saturation
+            umi_saturation, read_saturation, geneNum_median = sub_sample(fraction, df_cell, cell_bc, cell_read_index)
+            fh.write(format_str % (fraction, geneNum_median, umi_saturation))
+            res_dict["fraction"].append(fraction)
+            res_dict["umi_saturation"].append(umi_saturation)
+            res_dict["read_saturation"].append(read_saturation)
+            res_dict["median_gene"].append(geneNum_median)
+
+    return umi_saturation, res_dict
 
 
 @add_log
@@ -411,6 +420,8 @@ def count(args):
     force_cell_num = args.force_cell_num
     cell_calling_method = args.cell_calling_method
     expected_cell_num = int(args.expected_cell_num)
+    json_file = f'{outdir}/../.data.json'
+    report = Reporter(assay, 'count', sample, outdir, json_file)
 
     # check
     if args.genomeDir and args.genomeDir != "None":
@@ -454,7 +465,8 @@ def count(args):
     # downsampling
     cell_bc = set(cell_bc)
     downsample_file = args.outdir + '/' + args.sample + '_downsample.txt'
-    Saturation = downsample(df, cell_bc, downsample_file)
+    Saturation, res_dict = downsample(df, cell_bc, downsample_file)
+    report.add_data_item(downsample_summary=res_dict)
 
     # summary
     stat_file = outdir + '/stat.txt'
@@ -469,6 +481,7 @@ def count(args):
                  stat_file=outdir + '/stat.txt',
                  outdir=outdir + '/..')
     t.get_report()
+    report.dump_json(json_file)
 
 
 def get_opts_count(parser, sub_program):

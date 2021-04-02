@@ -32,6 +32,7 @@ def add_log(func):
     '''
     logging.basicConfig(
         level=logging.INFO,
+        stream=sys.stdout,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     module = func.__module__
