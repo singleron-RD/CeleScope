@@ -166,7 +166,13 @@ job_end
                 cmd_line += f'--{arg} '
             else:
                 if args_dict[arg]:
-                    cmd_line += f'--{arg} {args_dict[arg]} '
+                    matches = [' ', '-']
+                    arg_string = str(args_dict[arg])
+                    if any(char in arg_string for char in matches): # need quote
+                        cmd_line += f'--{arg} "{arg_string}" '
+                    else:
+                        cmd_line += f'--{arg} {arg_string} '
+
         return cmd_line
 
     def sample(self, sample):
