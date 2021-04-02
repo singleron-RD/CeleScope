@@ -1,4 +1,3 @@
-from celescope.tools.Fastq import Fastq
 import unittest
 import os
 import pandas as pd
@@ -240,7 +239,7 @@ class Tests(unittest.TestCase):
         multi.run()
         print(multi.sjm_cmd)
 
-    @unittest.skip('pass')
+    #@unittest.skip('pass')
     def test_downsample(self):
         count_detail_file = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/05.count/test1_count_detail.txt.gz'
         cell_bc, _ = read_barcode_file("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/")
@@ -254,7 +253,7 @@ class Tests(unittest.TestCase):
         downsample_file = "/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/05.count/new.downsample"
         downsample(df, cell_bc, downsample_file)
     
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_downsample_large(self):
         count_detail_file = '/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/05.count/NJXK01_1_count_detail.txt.gz'
         cell_bc, _ = read_barcode_file("/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/")

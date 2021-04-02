@@ -20,6 +20,7 @@ from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCOD
 
 toolsdir = os.path.dirname(__file__)
 random.seed(0)
+np.random.seed(0)
 
 
 def report_prepare(count_file, downsample_file, outdir):
@@ -398,8 +399,8 @@ def downsample(df, cell_bc, downsample_file):
     return fraction=1 saturation
     """
     df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
-    cell_read_index = list(df_cell.index.repeat(df_cell['count']))
-    random.shuffle(cell_read_index)
+    cell_read_index = np.array(df_cell.index.repeat(df_cell['count']))
+    np.random.shuffle(cell_read_index)
 
     format_str = "%.2f\t%.2f\t%.2f\n"
 
