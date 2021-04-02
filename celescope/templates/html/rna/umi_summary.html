@@ -21,72 +21,10 @@
           {% endfor %}
         </table>
         <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
-          <script>
-              var index1 = [];
-              for (var i = 0; i < {{ CB_num }}; i++) {
-                  index1.push(i + 1)
-              }
-
-              var index2 = [];
-              for (var i = 0; i < {{ UB_num }}; i++) {
-                  index2.push(i + 1 + {{ CB_num }})
-              }
-
-              var trace0 = {
-                  x: index1,
-                  y: {{ Cells }},
-                  mode: 'lines',
-                  name: 'Cells',
-                  line: {
-                      color: '#337bb6',
-                      width: 3
-                  }
-              };
-              var trace1 = {
-                  x: index2,
-                  y: {{ Background }},
-                  mode: 'lines',
-                  name: 'Background',
-                  line: {
-                      color: '#D3D3D3',
-                      width: 3
-                  }
-              };
-              var data = [ trace0, trace1 ];
-              var layout = {
-                  height: 313,
-                  width: 470,
-                  margin: {
-                        l: 50,
-                        r: 0,
-                        b: 30,
-                        t: 30,
-                  },
-                  title: 'Barcode Rank', 
-                  xaxis: {
-                      title: 'Barcodes',
-                      type: 'log'
-                  },
-                  yaxis: {
-                      title: 'UMI counts',
-                      type: 'log'
-                  },
-              };
-
-              var config = { 
-                "displayModeBar": true, 
-                "staticPlot": false, 
-                "showAxisDragHandles": false, 
-                "modeBarButtons": [["toImage", "resetScale2d"]], 
-                "scrollZoom": false,
-                "displaylogo": false, 
-            };
-              Plotly.newPlot('myDivUMI', data, layout, config);
-          </script>       
+          {{ chart|safe }}
         </div>
-        
+
         <hr />
-        
 
         <div id="myDivSaturation" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
           <script>

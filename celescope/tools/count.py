@@ -16,6 +16,7 @@ from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
+from celescope.tools.cellranger3 import get_plot_elements
 
 
 toolsdir = os.path.dirname(__file__)
@@ -24,8 +25,6 @@ np.random.seed(0)
 
 
 def report_prepare(count_file, downsample_file, outdir):
-    """write data of saturation, gene, barcode-rank plot to .data.json
-    """
 
     json_file = outdir + '/../.data.json'
     if not os.path.exists(json_file):
@@ -40,18 +39,9 @@ def report_prepare(count_file, downsample_file, outdir):
     data['MedianGeneNum'] = df0['median_geneNum'].tolist()
     data['Saturation'] = df0['saturation'].tolist()
 
-    df = pd.read_table(count_file, header=0)
-    df = df.sort_values('UMI', ascending=False)
+    #data['count' + '_summary'] = df0.T.values.tolist()
 
-    # cellranger3 compatible
-    # density TODO
-    n_cell = df[df['mark'] == 'CB'].shape[0]
-    data['CB_num'] = n_cell
-    data['Cells'] = list(df.iloc[:n_cell,]["UMI"])
-
-    n_background = df[df['mark'] == 'UB'].shape[0]
-    data['UB_num'] = n_background
-    data['Background'] = list(df.iloc[n_cell:,]["UMI"])
+    data['chart'] = get_plot_elements.plot_barcode_rank(count_file)
 
     data['umi_summary'] = True
 
