@@ -11,6 +11,7 @@ import time
 import argparse
 import pysam
 import importlib
+import resource
 from datetime import timedelta
 from collections import defaultdict
 from functools import wraps
@@ -46,6 +47,37 @@ def add_log(func):
         end = time.time()
         used = timedelta(seconds=end - start)
         logger.info(f'done. time used: {used}')
+        return result
+
+    wrapper.logger = logger
+    return wrapper
+
+
+def using(point=""):
+    usage=resource.getrusage(resource.RUSAGE_SELF)
+    return '''%s: usertime=%s systime=%s mem=%s mb
+        '''%(point,usage[0],usage[1],
+                usage[2]/1024.0 )
+
+
+def add_mem(func):
+    '''
+    logging mem.
+    '''
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+    module = func.__module__
+    name = func.__name__
+    logger_name = f'{module}.{name}'
+    logger = logging.getLogger(logger_name)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logger.info(using("before"))
+        result = func(*args, **kwargs)
+        logger.info(using("after"))
         return result
 
     wrapper.logger = logger

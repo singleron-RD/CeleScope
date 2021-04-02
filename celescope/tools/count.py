@@ -368,22 +368,20 @@ def get_summary(df, sample, Saturation, CB_describe, CB_total_Genes,
 
 @add_log
 def sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI"):
+    '''
+    cell_bc - cell barcode
+    cell_read_index - df_cell repeat index
+    '''
     cell_read = df_cell['count'].sum()
     frac_n_read = int(cell_read * fraction)
     subsample_read_index = cell_read_index[:frac_n_read]
-    index_counts = Counter(subsample_read_index)
-
-    dedup = 0
-    for value in index_counts.values():
-        if value == 1:
-            dedup += 1
-
-    index_dedup = np.unique(subsample_read_index)
+    index_dedup, counts = np.unique(subsample_read_index, return_counts=True)
+    n_count_once = np.sum(counts == 1)
     if total == "UMI":
         n_total = len(index_dedup)
     elif total == "read":
         n_total = frac_n_read
-    saturation = round((1 - dedup / n_total) * 100, 2)
+    saturation = round((1 - n_count_once / n_total) * 100, 2)
 
     # gene median
     df_cell_subsample = df_cell.loc[index_dedup,]
@@ -409,10 +407,8 @@ def downsample(df, cell_bc, downsample_file):
         fh.write(format_str % (0, 0, 0))
         saturation = 0
         for fraction in np.arange(0.1, 1.1, 0.1):
-            r, s = sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI")
-            fh.write(r)
-            #downsample.logger.info(r)
-            saturation = s
+            frac_line, saturation = sub_sample(fraction, df_cell, cell_bc, cell_read_index, total="UMI")
+            fh.write(frac_line)
     return saturation
 
 

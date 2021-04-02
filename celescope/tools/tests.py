@@ -240,6 +240,7 @@ class Tests(unittest.TestCase):
         print(multi.sjm_cmd)
 
     #@unittest.skip('pass')
+    @add_mem
     def test_downsample(self):
         count_detail_file = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/05.count/test1_count_detail.txt.gz'
         cell_bc, _ = read_barcode_file("/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/")
@@ -254,19 +255,16 @@ class Tests(unittest.TestCase):
         downsample(df, cell_bc, downsample_file)
     
     @unittest.skip('pass')
+    @add_mem
     def test_downsample_large(self):
-        count_detail_file = '/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/05.count/NJXK01_1_count_detail.txt.gz'
+        count_detail_file = '/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/old.count/NJXK01_1_count_detail.txt.gz'
         cell_bc, _ = read_barcode_file("/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/")
         df = pd.read_table(count_detail_file, header=0)
         #df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
-        '''
-        fraction = 0.1
-        res = sub_sample(fraction, df_cell, cell_bc, total="UMI")
-        print(res)
-        '''
-        downsample_file = "/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/05.count/new.downsample"
-        downsample(df, cell_bc, downsample_file)
 
+        downsample_file = "/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/05.count/test.downsample"
+        downsample(df, cell_bc, downsample_file)
+      
 
 
 
