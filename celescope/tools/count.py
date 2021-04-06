@@ -420,7 +420,7 @@ def count(args):
     force_cell_num = args.force_cell_num
     cell_calling_method = args.cell_calling_method
     expected_cell_num = int(args.expected_cell_num)
-    json_file = f'{outdir}/../.data.json'
+    json_file = f'{outdir}/../.metrics.json'
     report = Reporter(assay, 'count', sample, outdir, json_file)
 
     # check
@@ -481,7 +481,7 @@ def count(args):
                  stat_file=outdir + '/stat.txt',
                  outdir=outdir + '/..')
     t.get_report()
-    report.dump_json(json_file)
+    report.dump_json()
 
 
 def get_opts_count(parser, sub_program):
