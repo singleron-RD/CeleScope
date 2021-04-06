@@ -133,6 +133,8 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
         sep="\t",
         index=False)
 
+    '''
+    #TODO
     if debug:
         unique_UMI = df_UMI.shape[0]
         mapping_summary_row_list.append({
@@ -146,6 +148,7 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
             "count": UMI_after_Contamination_Filtering,
             "total_count": unique_UMI,
         })
+    '''
 
     # stat file
     df = pd.DataFrame(
