@@ -5,6 +5,7 @@ from celescope.tools.STAR import Step_mapping
 from celescope.tools.utils import *
 from .Chemistry import Chemistry
 from celescope.tools.count import *
+from celescope.tools.count import report_prepare as report_p
 from celescope.tools.cutadapt import *
 from celescope.tools.Multi import *
 
@@ -108,7 +109,7 @@ class Tests(unittest.TestCase):
         gtf_file = '/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92/Homo_sapiens.GRCh38.92.chr.gtf'
         matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X_new', validated_barcodes=validated_barcodes)
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_call_cells(self):
         os.chdir('/SGRNJ03/PROJ03/PROJ_20.SC/PN20122407_SCOPEv2/temp/CK2101_origin/')
         sample = 'CK2101'
@@ -147,12 +148,14 @@ class Tests(unittest.TestCase):
         ch = Chemistry(fq)
         print(ch.check_chemistry())
 
+    '''
     @unittest.skip('pass')
     def test_report_prepare(self):
         outdir = "/SGRNJ03/randd/P19112803_SCOPEv1/test1/NJXK01_1/05.count"
         count_file = f"{outdir}/NJXK01_1_counts.txt"
         downsample_file = f"{outdir}/NJXK01_1_downsample.txt"
         report_prepare(count_file, downsample_file, outdir)
+    '''
 
     @unittest.skip('pass')
     def test_Multi(self):
@@ -256,6 +259,25 @@ class Tests(unittest.TestCase):
         reporter.add_data_item(downsample_summary=res_dict)
 
         reporter.dump_json()
+
+    @unittest.skip('pass')
+    def test_report_prepare(self):
+        os.chdir("/SGRNJ03/randd/P19112803_SCOPEv1/test1/")
+        marked_counts_file = 'NJXK01_1/05.count/NJXK01_1_counts.txt'
+        downsample_file = 'NJXK01_1/05.count/NJXK01_1_downsample.txt'
+        outdir = 'NJXK01_1/05.count/'
+        report_p(marked_counts_file, downsample_file, outdir)
+
+    def test_report(self):
+        os.chdir("/SGRNJ03/randd/P19112803_SCOPEv1/test1/")
+        assay = 'rna'
+        sample = 'NJXK01_1'
+        outdir = 'NJXK01_1/05.count/'
+        t = reporter(assay=assay,
+                 name='count', sample=sample,
+                 stat_file=outdir + '/stat.txt',
+                 outdir=outdir + '/..')
+        t.get_report()
 
 if __name__ == '__main__':
     unittest.main()
