@@ -12,7 +12,7 @@ import subprocess
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix, coo_matrix
 import pysam
-from celescope.tools.utils import add_log, format_number, glob_genomeDir, gene_convert, s_common
+from celescope.tools.utils import add_log, format_number, glob_genomeDir, gene_convert, s_common, add_mem
 from celescope.tools.report import reporter
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
@@ -25,6 +25,8 @@ random.seed(0)
 np.random.seed(0)
 
 
+@add_log
+@add_mem
 def report_prepare(count_file, downsample_file, outdir):
 
     json_file = outdir + '/../.data.json'
@@ -48,7 +50,6 @@ def report_prepare(count_file, downsample_file, outdir):
 
     with open(json_file, 'w') as fh:
         json.dump(data, fh)
-
 
 
 def hd(x, y):

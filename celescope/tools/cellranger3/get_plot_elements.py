@@ -2,12 +2,13 @@ import collections
 import numpy as np
 import math
 import pandas as pd
-
 import plotly as py
 import plotly.graph_objs as go
 import plotly.express as px
 from plotly import tools
 import plotly.offline as pltoff
+
+from celescope.tools.utils import add_log
 
 
 BarcodeRankPlotSegment = collections.namedtuple('BarcodeRankPlotSegment', ['start', 'end', 'cell_density', 'legend'])
@@ -148,6 +149,7 @@ def convert_numpy_array_to_line_chart(array, ntype):
     return rows
 
 
+@add_log
 def counter_barcode_rank_plot_data(count_data_path):
     """
     get cell density for each plot_segments
@@ -155,13 +157,13 @@ def counter_barcode_rank_plot_data(count_data_path):
     :return: sorted_counts, plot_segments, cell_nums
     """
     count_data = pd.read_csv(count_data_path, index_col=0, sep='\t')
-    cell_bc = count_data[count_data['mark'] == 'CB'].index.tolist()
-    count_data = count_data.sort_values('UMI', ascending=False)
-    sorted_bc = count_data.index.tolist()
-    sorted_counts = list(count_data['UMI'])
+    cell_bc = np.array(count_data[count_data['mark'] == 'CB'].index)
+    sorted_bc = np.array(count_data.index)
+    sorted_counts = np.array(count_data['UMI'])
     cell_nums = len(cell_bc)
+    total_bc = len(sorted_bc)
     # find the first barcode which is not a cell
-    first_non_cell = len(sorted_bc)
+    first_non_cell = total_bc
     for i, bc in enumerate(sorted_bc):
         if bc not in cell_bc:
             first_non_cell = i
@@ -169,12 +171,12 @@ def counter_barcode_rank_plot_data(count_data_path):
 
     # find the last barcode which is a cell
     last_cell = 0
-    for i in reversed(range(len(sorted_bc))):
+    for i in reversed(range(total_bc)):
         if sorted_bc[i] in cell_bc:
             last_cell = i
             break
 
-    ranges = [0, first_non_cell, last_cell+1, len(sorted_bc)]
+    ranges = [0, first_non_cell, last_cell+1, total_bc]
     plot_segments = []
     plot_segments.append(BarcodeRankPlotSegment(start=0, end=ranges[1], cell_density=1.0, legend=True))
     plot_segments.append(BarcodeRankPlotSegment(start=ranges[2], end=ranges[3], cell_density=0.0, legend=True))
@@ -279,6 +281,7 @@ def _plot_counter_barcode_rank(chart, counts, plot_segments):
     return chart
 
 
+@add_log
 def get_plot_data(plot_segments, counts):
     plot_data = []
     for segment in plot_segments:

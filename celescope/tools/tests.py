@@ -261,6 +261,7 @@ class Tests(unittest.TestCase):
         reporter.dump_json()
 
     @unittest.skip('pass')
+    @add_mem
     def test_report_prepare(self):
         os.chdir("/SGRNJ03/randd/P19112803_SCOPEv1/test1/")
         marked_counts_file = 'NJXK01_1/05.count/NJXK01_1_counts.txt'
@@ -268,6 +269,7 @@ class Tests(unittest.TestCase):
         outdir = 'NJXK01_1/05.count/'
         report_p(marked_counts_file, downsample_file, outdir)
 
+    #@unittest.skip('pass')
     def test_report(self):
         os.chdir("/SGRNJ03/randd/P19112803_SCOPEv1/test1/")
         assay = 'rna'
