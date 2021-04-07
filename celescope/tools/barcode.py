@@ -1,5 +1,3 @@
-#!/bin/env python
-# coding=utf8
 import os
 import re
 import io
@@ -11,10 +9,11 @@ import pandas as pd
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
-from celescope.tools.utils import format_number, log, seq_ranges, read_fasta, genDict
+from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
+
 
 barcode_corrected_num = 0
 
@@ -62,7 +61,7 @@ def generate_mis_seq(seq, n=1, bases='ACGTN'):
     return(res)
 
 
-@log
+@add_log
 def generate_seq_dict(seqlist, n=1):
     seq_dict = {}
     with open(seqlist, 'r') as fh:
@@ -81,7 +80,7 @@ def generate_seq_dict(seqlist, n=1):
     return seq_dict
 
 
-@log
+@add_log
 def parse_pattern(pattern):
     # 解析接头结构，返回接头结构字典
     # key: 字母表示的接头, value: 碱基区间列表
@@ -192,7 +191,7 @@ def check_seq(seq_file, pattern_dict, seq_abbr):
                     f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
 
 
-@log
+@add_log
 def merge_fastq(fq1, fq2, sample, outdir):
     '''
     merge fastq if len(fq1) > 1
@@ -218,9 +217,84 @@ def merge_fastq(fq1, fq2, sample, outdir):
         merge_fastq.logger.info(fq2_cmd)
         os.system(fq2_cmd)
     return fq1_file, fq2_file
- 
 
-@log
+
+def polyT_filter(pattern_dict, args, header1, seq1, qual1, header2, seq2, qual2, bool_T, bool_L,
+                 lowQual, lowNum, linker_dict, bool_whitelist, barcode_dict):
+
+    if bool_T and (not args.allowNoPolyT):
+        polyT = seq_ranges(seq1, pattern_dict['T'])
+
+        if no_polyT(polyT):
+            if args.nopolyT:
+                fh1_without_polyT = xopen(args.outdir + '/noPolyT_1.fq', 'a')
+                fh2_without_polyT = xopen(args.outdir + '/noPolyT_2.fq', 'a')
+                fh1_without_polyT.write(
+                    '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                fh2_without_polyT.write(
+                    '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def lowQual_filter(pattern_dict, args, header1, seq1, qual1, header2, seq2, qual2, bool_T, bool_L,
+                   lowQual, lowNum, linker_dict, bool_whitelist, barcode_dict):
+    # lowQual filter
+    C_U_quals_ascii = seq_ranges(
+        qual1, pattern_dict['C'] + pattern_dict['U'])
+    # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
+    if low_qual(C_U_quals_ascii, lowQual, lowNum):
+        return True, C_U_quals_ascii, "Qual"
+    else:
+        return False, C_U_quals_ascii, "Qual"
+
+
+def linker_filter(pattern_dict, args, header1, seq1, qual1, header2, seq2, qual2, bool_T, bool_L,
+                  lowQual, lowNum, linker_dict, bool_whitelist, barcode_dict):
+
+    # linker filter
+    if bool_L and (not args.allowNoLinker):
+        linker = seq_ranges(seq1, pattern_dict['L'])
+
+        if (no_linker(linker, linker_dict)):
+            if args.noLinker:
+                fh1_without_linker = xopen(args.outdir + '/noLinker_1.fq', 'a')
+                fh2_without_linker = xopen(args.outdir + '/noLinker_2.fq', 'a')
+                fh1_without_linker.write(
+                    '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                fh2_without_linker.write(
+                    '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+            return True, "linker"
+        else:
+            return False, "linker"
+    else:
+        return False, 'linker'
+
+
+def barcode_filter(pattern_dict, args, header1, seq1, qual1, header2, seq2, qual2, bool_T, bool_L,
+                   lowQual, lowNum, linker_dict, bool_whitelist, barcode_dict):
+    # barcode filter
+    # barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
+    # raw_cb = ''.join(barcode_arr)
+    barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
+    raw_cb = ''.join(barcode_arr)
+    res = "correct"
+    if bool_whitelist:
+        res = no_barcode(barcode_arr, barcode_dict)
+    if res is True:
+        return True, "barcode"
+    elif res == "correct":
+        cb = raw_cb
+        return False, cb, raw_cb, "barcode"
+    else:
+        cb = res
+        return False, cb, raw_cb, "barcode"
+
+
+@add_log
 def barcode(args):
     # init
     outdir = args.outdir
@@ -229,6 +303,8 @@ def barcode(args):
     fq2 = args.fq2
     fq1_list = fq1.split(",")
     fq2_list = fq2.split(",")
+    filter_order = args.filter_order
+    filter_order = filter_order.split(",")
     fq_number = len(fq1_list)
 
     # check dir
@@ -237,8 +313,8 @@ def barcode(args):
 
     # get chemistry
     if args.chemistry == 'auto':
-            ch = Chemistry(fq1)
-            chemistry_list = ch.check_chemistry()
+        ch = Chemistry(fq1)
+        chemistry_list = ch.check_chemistry()
     else:
         chemistry_list = [args.chemistry] * fq_number
 
@@ -259,12 +335,12 @@ def barcode(args):
     Barcode_dict = defaultdict(int)
 
     if args.nopolyT:
-        fh1_without_polyT = xopen(outdir + '/noPolyT_1.fq', 'w')
-        fh2_without_polyT = xopen(outdir + '/noPolyT_2.fq', 'w')
+        fh1_without_polyT = xopen(args.outdir + '/noPolyT_1.fq', 'w')
+        fh2_without_polyT = xopen(args.outdir + '/noPolyT_2.fq', 'w')
 
     if args.noLinker:
-        fh1_without_linker = xopen(outdir + '/noLinker_1.fq', 'w')
-        fh2_without_linker = xopen(outdir + '/noLinker_2.fq', 'w')
+        fh1_without_linker = xopen(args.outdir + '/noLinker_1.fq', 'w')
+        fh2_without_linker = xopen(args.outdir + '/noLinker_2.fq', 'w')
 
     bool_probe = False
     if args.probe_file and args.probe_file != 'None':
@@ -273,6 +349,11 @@ def barcode(args):
         valid_count_dic = genDict(dim=2)
         probe_dic = read_fasta(args.probe_file)
         reads_without_probe = 0
+
+    filter_dict = {'polyT': [polyT_filter, no_polyT_num],
+                   'Qual': [lowQual_filter, lowQual_num],
+                   'linker': [linker_filter, no_linker_num],
+                   'barcode': [barcode_filter, no_barcode_num]}
 
     # process
     if fq_number != len(fq2_list):
@@ -289,7 +370,7 @@ def barcode(args):
             barcode.logger.info(f'scopeV1: lowNum={lowNum}, lowQual={lowQual} ')
         # get linker and whitelist
         bc_pattern = __PATTERN_DICT__[chemistry]
-        if (bc_pattern):
+        if bc_pattern:
             (linker, whitelist) = get_scope_bc(chemistry)
         else:
             bc_pattern = args.pattern
@@ -335,53 +416,99 @@ def barcode(args):
             total_num += 1
 
             # polyT filter
-            if bool_T and (not args.allowNoPolyT):
-                polyT = seq_ranges(seq1, pattern_dict['T'])
-                if no_polyT(polyT):
-                    no_polyT_num += 1
-                    if args.nopolyT:
-                        fh1_without_polyT.write(
-                            '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                        fh2_without_polyT.write(
-                            '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+            filter1 = filter_dict[filter_order[0]][0](pattern_dict, args, header1, seq1, qual1, header2, seq2, qual2,
+                                                      bool_T, bool_L, lowQual, lowNum, linker_dict,
+                                                      bool_whitelist, barcode_dict)
+
+            if filter_order[0] == 'polyT':
+                if filter1:
+                    filter_dict[filter_order[0]][1] += 1
                     continue
+                else:
+                    pass
+            else:
+                if filter1[0]:
+                    filter_dict[filter_order[0]][1] += 1
+                    continue
+                else:
+                    pass
+
+            if filter_order[0] == 'barcode':
+                cb = filter1[1]
+                raw_cb = filter1[2]
+            if filter_order[0] == 'Qual':
+                C_U_quals_ascii = filter1[1]
 
             # lowQual filter
-            C_U_quals_ascii = seq_ranges(
-                qual1, pattern_dict['C'] + pattern_dict['U'])
-            # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
-            if low_qual(C_U_quals_ascii, lowQual, lowNum):
-                lowQual_num += 1
-                continue
+            filter2 = filter_dict[filter_order[1]][0](pattern_dict, args, header1, seq1, qual1, header2, seq2, qual2,
+                                                      bool_T, bool_L, lowQual, lowNum, linker_dict,
+                                                      bool_whitelist, barcode_dict)
+            if filter_order[1] == 'polyT':
+                if filter2:
+                    filter_dict[filter_order[1]][1] += 1
+                    continue
+                else:
+                    pass
+            else:
+                if filter2[0]:
+                    filter_dict[filter_order[1]][1] += 1
+                    continue
+                else:
+                    pass
+
+            if filter_order[1] == 'barcode':
+                cb = filter2[1]
+                raw_cb = filter2[2]
+            if filter_order[1] == 'Qual':
+                C_U_quals_ascii = filter2[1]
 
             # linker filter
-            barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
-            raw_cb = ''.join(barcode_arr)
-            if bool_L and (not args.allowNoLinker):
-                linker = seq_ranges(seq1, pattern_dict['L'])
-                if (no_linker(linker, linker_dict)):
-                    no_linker_num += 1
-
-                    if args.noLinker:
-                        fh1_without_linker.write(
-                            '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                        fh2_without_linker.write(
-                            '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+            filter3 = filter_dict[filter_order[2]][0](pattern_dict, args, header1, seq1, qual1, header2, seq2, qual2,
+                                                      bool_T, bool_L, lowQual, lowNum, linker_dict,
+                                                      bool_whitelist, barcode_dict)
+            if filter_order[2] == 'polyT':
+                if filter3:
+                    filter_dict[filter_order[2]][1] += 1
                     continue
+                else:
+                    pass
+            else:
+                if filter3[0]:
+                    filter_dict[filter_order[2]][1] += 1
+                    continue
+                else:
+                    pass
+
+            if filter_order[2] == 'barcode':
+                cb = filter3[1]
+                raw_cb = filter3[2]
+            if filter_order[2] == 'Qual':
+                C_U_quals_ascii = filter3[1]
 
             # barcode filter
             # barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
             # raw_cb = ''.join(barcode_arr)
-            res = "correct"
-            if bool_whitelist:
-                res = no_barcode(barcode_arr, barcode_dict)
-            if res is True:
-                no_barcode_num += 1
-                continue
-            elif res == "correct":
-                cb = raw_cb
+            filter4 = filter_dict[filter_order[3]][0](pattern_dict, args, header1, seq1, qual1, header2, seq2, qual2,
+                                                      bool_T, bool_L, lowQual, lowNum, linker_dict,
+                                                      bool_whitelist, barcode_dict)
+            if filter_order[3] == 'polyT':
+                if filter4:
+                    filter_dict[filter_order[3]][1] += 1
+                    continue
+                else:
+                    pass
             else:
-                cb = res
+                if filter4[0]:
+                    filter_dict[filter_order[3]][1] += 1
+                    continue
+                else:
+                    pass
+
+            if filter_order[3] == 'barcode':
+                cb = filter4[1]
+                raw_cb = filter4[2]
+            if filter_order[3] == 'Qual':
+                C_U_quals_ascii = filter4[1]
 
             umi = seq_ranges(seq1, pattern_dict['U'])
             Barcode_dict[cb] += 1
@@ -405,7 +532,6 @@ def barcode(args):
 
                 if not find_probe:
                     reads_without_probe += 1
-
             barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
             umi_qual_Counter.update(C_U_quals_ascii[C_len:])
             C_U_base_Counter.update(raw_cb + umi)
@@ -422,7 +548,13 @@ def barcode(args):
             f'processed reads: {format_number(total_num)}. '
             f'valid reads: {format_number(clean_num)}. '
         )
-
+    filter_count_dict = {}
+    for i in filter_order:
+        filter_count_dict[i] = filter_dict[i][1]
+    no_linker_num = filter_count_dict['linker']
+    no_polyT_num = filter_count_dict['polyT']
+    lowQual_num = filter_count_dict['Qual']
+    no_barcode_num = filter_count_dict['barcode']
     barcode.logger.info(f'no polyT reads number : {no_polyT_num}')
     barcode.logger.info(f'low qual reads number: {lowQual_num}')
     barcode.logger.info(f'no_linker: {no_linker_num}')
@@ -501,15 +633,7 @@ def barcode(args):
     t.get_report()
 
 
-def get_opts_barcode(parser, sub_program):
-    if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument('--sample', help='sample name', required=True)
-    parser.add_argument('--fq1', help='read1 fq file', required=True)
-    parser.add_argument('--fq2', help='read2 fq file', required=True)
-    parser.add_argument(
-        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+def get_opts_barcode(parser, sub_program=True):
     parser.add_argument('--pattern', help='')
     parser.add_argument('--whitelist', help='')
     parser.add_argument('--linker', help='')
@@ -521,9 +645,16 @@ def get_opts_barcode(parser, sub_program):
                         help='output nopolyT fq')
     parser.add_argument('--noLinker', action='store_true',
                         help='output noLinker fq')
-    parser.add_argument('--thread', help='number of threads', default=1)
     parser.add_argument('--probe_file', help="probe fasta file")
     parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
     parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
     parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
+    parser.add_argument('--filter_order', help='filter order', default='polyT,Qual,linker,barcode')
+    if sub_program:
+        parser.add_argument('--fq1', help='read1 fq file', required=True)
+        parser.add_argument('--fq2', help='read2 fq file', required=True)
+        parser.add_argument(
+            '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+        parser = s_common(parser)
+
     return parser
