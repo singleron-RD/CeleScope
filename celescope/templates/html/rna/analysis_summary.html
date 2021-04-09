@@ -151,15 +151,16 @@
             }
             Plotly.newPlot('gene_tsne', data, layout, config);
         </script>       
-      </div>
+    </div>
 
-      <hr />
-
+    <hr />
+    {% if table_dict is defined %}
         <h3>{{table_dict['title']}}</h3>
         <div style=" margin-left: 3%; margin-right:3%;">
             {{table_dict['table'] | safe}}
         </div>
-        
+    {% endif %}
+    
 
 
       <div class="clear" ></div>

@@ -5,14 +5,17 @@ import argparse
 import pandas as pd
 import io
 import logging
-from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
+from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader, Undefined
 from celescope.tools.utils import *
+
+
+logger1 = logging.getLogger(__name__)
+
 
 env = Environment(
     loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
-    autoescape=select_autoescape(['html', 'xml'])
+    autoescape=select_autoescape(['html', 'xml']),
 )
-logger1 = logging.getLogger(__name__)
 
 
 class reporter:

@@ -55,7 +55,7 @@ def sample(args):
     # metrics
     report = Reporter(
         args.assay,
-        'analysis',
+        'sample',
         args.sample,
         args.outdir,
     )
