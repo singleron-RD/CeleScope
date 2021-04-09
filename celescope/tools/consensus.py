@@ -8,6 +8,7 @@ from collections import defaultdict
 from itertools import groupby
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
+from celescope.tools.Reporter import Reporter
 
 
 @add_log
@@ -179,6 +180,16 @@ def consensus(args):
     t = reporter(name='consensus', assay=args.assay, sample=args.sample,
                  stat_file=stat_file, outdir=args.outdir + '/..')
     t.get_report()
+
+    # metrics
+    report = Reporter(
+        args.assay,
+        'consensus',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.dump_json()
 
 
 def get_opts_consensus(parser, sub_program):

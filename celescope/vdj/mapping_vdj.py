@@ -13,7 +13,7 @@ import json
 import argparse
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-
+from celescope.tools.Reporter import Reporter
 
 @add_log
 def summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus):
@@ -220,6 +220,16 @@ def mapping_vdj(args):
 
     # summary
     summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus)
+
+    # metrics
+    report = Reporter(
+        args.assay,
+        'mapping_vdj',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.dump_json()
 
 
 def get_opts_mapping_vdj(parser, sub_program):

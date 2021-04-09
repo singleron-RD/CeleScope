@@ -10,6 +10,7 @@ import sys
 import pysam
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
+from celescope.tools.Reporter import Reporter
 
 
 def format_stat(log, samplename):
@@ -130,6 +131,16 @@ def featureCounts(args):
         outdir=args.outdir +
         '/..')
     t.get_report()
+
+    # metrics
+    report = Reporter(
+        args.assay,
+        'featureCounts',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.dump_json()
 
 
 def get_opts_featureCounts(parser, sub_program):

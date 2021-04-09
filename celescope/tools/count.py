@@ -404,9 +404,10 @@ def downsample(df, cell_bc, downsample_file):
         for fraction in np.arange(0.1, 1.1, 0.1):
             umi_saturation, read_saturation, geneNum_median = sub_sample(fraction, df_cell, cell_bc, cell_read_index)
             fh.write(format_str % (fraction, geneNum_median, umi_saturation))
-            res_dict["fraction"].append(fraction)
-            res_dict["umi_saturation"].append(umi_saturation)
-            res_dict["read_saturation"].append(read_saturation)
+            format_float = lambda x: round(x / 100, 4)
+            res_dict["fraction"].append(round(fraction, 1))
+            res_dict["umi_saturation"].append(format_float(umi_saturation))
+            res_dict["read_saturation"].append(format_float(read_saturation))
             res_dict["median_gene"].append(geneNum_median)
 
     return umi_saturation, res_dict
@@ -421,8 +422,6 @@ def count(args):
     force_cell_num = args.force_cell_num
     cell_calling_method = args.cell_calling_method
     expected_cell_num = int(args.expected_cell_num)
-    json_file = f'{outdir}/../.metrics.json'
-    report = Reporter(assay, 'count', sample, outdir, json_file)
 
     # check
     if args.genomeDir and args.genomeDir != "None":
@@ -467,7 +466,6 @@ def count(args):
     cell_bc = set(cell_bc)
     downsample_file = args.outdir + '/' + args.sample + '_downsample.txt'
     Saturation, res_dict = downsample(df, cell_bc, downsample_file)
-    report.add_data_item(downsample_summary=res_dict)
 
     # summary
     stat_file = outdir + '/stat.txt'
@@ -482,6 +480,16 @@ def count(args):
                  stat_file=outdir + '/stat.txt',
                  outdir=outdir + '/..')
     t.get_report()
+
+    # metrics
+    report = Reporter(
+        args.assay,
+        'count',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.add_data_item(downsample_summary=res_dict)
     report.dump_json()
 
 

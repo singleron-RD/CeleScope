@@ -8,6 +8,7 @@ import glob
 import pandas as pd
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
+from celescope.tools.Reporter import Reporter
 
 class Step_mapping():
 
@@ -246,7 +247,16 @@ def STAR(args):
         consensus_fq=args.consensus_fq
         )
     mapping.run()
-
+    
+    # metrics
+    report = Reporter(
+        args.assay,
+        'STAR',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.dump_json()
 
 def get_opts_STAR(parser, sub_program):
     parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)

@@ -269,7 +269,7 @@ class Tests(unittest.TestCase):
         outdir = 'NJXK01_1/05.count/'
         report_p(marked_counts_file, downsample_file, outdir)
 
-    #@unittest.skip('pass')
+    @unittest.skip('pass')
     def test_report(self):
         os.chdir("/SGRNJ03/randd/P19112803_SCOPEv1/test1/")
         assay = 'rna'
@@ -280,6 +280,30 @@ class Tests(unittest.TestCase):
                  stat_file=outdir + '/stat.txt',
                  outdir=outdir + '/..')
         t.get_report()
+
+    def test_metrics(self):
+        assay = 'rna'
+        sample = 'test1'
+        __STEPS__ = [
+            'sample',
+            'barcode',
+            'cutadapt',
+            'STAR',
+            "featureCounts",
+            "count",
+            'analysis',
+        ]
+        for index, step in enumerate(__STEPS__):
+            print(index, step)
+            outdir = f'/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/0{index}.{step}'
+            report = Reporter(
+                assay,
+                step,
+                sample,
+                outdir,
+            )
+            report.stat_to_json()
+            report.dump_json()
 
 if __name__ == '__main__':
     unittest.main()

@@ -15,6 +15,7 @@ import re
 import json
 mpl.use('Agg')
 from matplotlib import pyplot as plt
+from celescope.tools.Reporter import Reporter
 
 
 def report_prepare(df, outdir):
@@ -397,6 +398,15 @@ def count_vdj(args):
         other_metrics.to_csv(other_metrics_file,sep=":",header=None,index=False)
     """
 
+    # metrics
+    report = Reporter(
+        args.assay,
+        'count_vdj',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.dump_json()
 
 def get_opts_count_vdj(parser, sub_program):
     if sub_program:

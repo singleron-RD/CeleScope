@@ -9,6 +9,7 @@ from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
+from celescope.tools.Reporter import Reporter
 
 
 @add_log
@@ -50,6 +51,17 @@ def sample(args):
         stat_file=stat_file,
         outdir=outdir + '/..')
     t.get_report()
+
+    # metrics
+    report = Reporter(
+        args.assay,
+        'analysis',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.dump_json()  
+
     return chemistry
 
 

@@ -13,6 +13,7 @@ from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
+from celescope.tools.Reporter import Reporter
 
 
 barcode_corrected_num = 0
@@ -498,6 +499,26 @@ def barcode(args):
     t = reporter(name='barcode', assay=args.assay, sample=args.sample,
                  stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
     t.get_report()
+
+    # metrics
+    report = Reporter(
+        args.assay,
+        'barcode',
+        args.sample,
+        args.outdir,
+    )
+    '''
+    barcode_summary = {
+        'Raw Reads': total_num,
+        'Valid Reads': clean_num,
+        'Valid Reads Fraction': clean_num / total_num * 100,
+        'Q30 of Barcodes': BarcodesQ30,
+        'Q30 of UMIs': UMIsQ30,
+    }
+    report.add_data_item(barcode_summary=barcode_summary)
+    '''
+    report.stat_to_json()
+    report.dump_json()
 
 
 def get_opts_barcode(parser, sub_program=True):

@@ -15,6 +15,7 @@ from celescope.tools.report import reporter
 from celescope.tools.utils import *
 from celescope.rna.__init__ import __ASSAY__
 from celescope.tools.Analysis import Analysis
+from celescope.tools.Reporter import Reporter
 
 toolsdir = os.path.dirname(__file__)
 
@@ -156,6 +157,16 @@ def analysis(args):
         step='analysis',     
     )
     ana.run()
+
+    # metrics
+    report = Reporter(
+        args.assay,
+        'analysis',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.dump_json()   
 
 
 def get_opts_analysis(parser, sub_program):

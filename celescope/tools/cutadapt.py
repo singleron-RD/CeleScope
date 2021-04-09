@@ -9,6 +9,7 @@ import pysam
 from itertools import islice
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
+from celescope.tools.Reporter import Reporter
 
 
 ADAPT = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
@@ -104,6 +105,17 @@ def cutadapt(args):
         outdir=args.outdir +
         '/..')
     t.get_report()
+
+    # metrics
+    report = Reporter(
+        args.assay,
+        'cutadapt',
+        args.sample,
+        args.outdir,
+    )
+    report.stat_to_json()
+    report.dump_json()
+    
 
 
 def get_opts_cutadapt(parser, sub_program):

@@ -6,6 +6,7 @@ import pandas as pd
 import glob
 from celescope.tools.report import reporter
 from celescope.tools.utils import *
+from celescope.tools.Reporter import Reporter
 
 class Analysis():
 
