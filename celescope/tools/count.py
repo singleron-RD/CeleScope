@@ -410,7 +410,7 @@ def downsample(df, cell_bc, downsample_file):
             res_dict["read_saturation"].append(format_float(read_saturation))
             res_dict["median_gene"].append(geneNum_median)
 
-    return umi_saturation, res_dict
+    return read_saturation, res_dict
 
 
 @add_log
