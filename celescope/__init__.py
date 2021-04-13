@@ -1,4 +1,4 @@
-__VERSION__ = "1.1.9b0"
+__VERSION__ = "1.1.9b1"
 __version__ = __VERSION__
 
 ASSAY_DICT = {
