@@ -141,15 +141,12 @@ def get_opts_count_fusion(parser, sub_program):
     if sub_program:
         s_common(parser)
         parser.add_argument("--bam", required=True)
+        parser.add_argument("--match_dir", help="match scRNA-Seq dir", required=True)
 
     #parser.add_argument("--fusion_fasta",help="fusion fasta",required=True)
     parser.add_argument(
         "--fusion_pos",
         help="first base position of the second gene(0-start),tsv file",
-        required=True)
-    parser.add_argument(
-        "--match_dir",
-        help="match scRNA-Seq dir",
         required=True)
     parser.add_argument("--flanking_base", default=5)
     parser.add_argument("--UMI_min", default=1)

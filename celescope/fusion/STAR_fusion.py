@@ -29,3 +29,4 @@ def get_opts_STAR_fusion(parser, sub_program):
         help='fusion gene STAR index genome directory',
         required=True)
     parser.add_argument("--outFilterMatchNmin", help='STAR outFilterMatchNmin', default=35)
+    parser.add_argument('--starMem', help='starMem', default=30)
