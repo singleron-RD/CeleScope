@@ -64,6 +64,8 @@ class Count_tag():
         row_sorted = sorted(row, reverse=True)            
         noise = row_sorted[dim]
         signal = row_sorted[dim - 1]
+        if signal == 0:
+            return 0
         if noise == 0:
             return np.inf
         return float(signal) / noise
