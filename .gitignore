@@ -4,6 +4,9 @@
 # test data
 test_data/
 
+# tests
+celescope/tests/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -9,9 +9,6 @@ from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoad
 from celescope.tools.utils import *
 
 
-logger1 = logging.getLogger(__name__)
-
-
 env = Environment(
     loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
     autoescape=select_autoescape(['html', 'xml']),
@@ -38,7 +35,7 @@ class reporter:
         self.html_flag = html_flag
 
     def get_report(self):
-        logger1.info(f'generate report: {self.assay} {self.name}')
+
 
         json_file = self.outdir + '/.data.json'
         if not os.path.exists(json_file):
@@ -82,4 +79,3 @@ class reporter:
         with open(json_file, 'w') as fh:
             json.dump(data, fh, indent=4)
 
-        logger1.info('generate report done!')

@@ -19,6 +19,18 @@ class Multi_snp(Multi):
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
+    def target_metrics(self, sample):
+        step = 'target_metrics'
+        cmd_line = self.get_cmd_line(step, sample)
+        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
+        cmd = (
+            f'{cmd_line} '
+            f'--bam {bam} '
+            #f'--match_dir {self.col4_dict[sample]} '
+        )
+        self.process_cmd(cmd, step, sample, m=2, x=1)
+
+
     def snpCalling(self, sample):
         step = 'snpCalling'
         cmd_line = self.get_cmd_line(step, sample)

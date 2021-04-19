@@ -132,6 +132,10 @@
       {% include "html/rna/featureCounts_summary.html"%}
       {% endif %}
 
+      {% if target_metrics_summary is defined%}
+      {% include "html/snp/target_metrics_summary.html"%}
+      {% endif %}
+
       {% if snpCalling_summary is defined %}
       {% include "html/snp/snpCalling_summary.html"%}
       {% endif %}
