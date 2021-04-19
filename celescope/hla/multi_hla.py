@@ -88,7 +88,7 @@ def main():
 
         # adapt
         step = "cutadapt"
-        fq = f'{outdir_dic["barcode"]}/{sample}_2.fq.gz'
+        fq = f'{outdir_dic["barcode"]}/{sample}_2.fq'
         cmd = (
             f'{app} {assay} {step} '
             f'--fq {fq} --sample {sample} --outdir '
@@ -101,7 +101,7 @@ def main():
 
         # mapping_hla
         step = 'mapping_hla'
-        fq = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq.gz'
+        fq = f'{outdir_dic["cutadapt"]}/{sample}_clean_2.fq'
         cmd = (
             f'{app} {assay} {step} '
             f'--fq {fq} --sample {sample} '

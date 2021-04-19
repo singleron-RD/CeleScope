@@ -16,7 +16,7 @@ def merge_report():
         '--samples', help='samples, seperated by comma', required=True)
     parser.add_argument('--steps', help='steps', required=True)
     parser.add_argument('--rm_files', action='store_true',
-                        help='remove all fq.gz and bam after running')
+                        help='remove all fq and bam after running')
     args = vars(parser.parse_args())
 
     outdir = args['outdir']

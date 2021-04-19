@@ -7,7 +7,7 @@ class Multi_rna_virus(Multi):
 
     def STAR_virus(self, sample):
         step = 'STAR_virus'
-        input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

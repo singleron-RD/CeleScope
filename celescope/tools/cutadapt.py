@@ -70,7 +70,7 @@ def cutadapt(args):
         adapt.append('-a')
         adapt.append(a)
 
-    if not args.not_gzip:
+    if args.gzip:
         suffix = ".gz"
     else:
         suffix = ""
@@ -126,7 +126,7 @@ def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--insert', help="read2 insert length", default=150)
     if sub_program:
         parser.add_argument('--fq', help='fq file', required=True)
-        parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
+        parser.add_argument('--gzip', help="output gzipped fastq", action='store_true')
         parser = s_common(parser)
     return parser
 

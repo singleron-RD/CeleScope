@@ -13,7 +13,7 @@ class Multi_tcr_fl(Multi):
 
     def split_fq(self, sample):
         step = 'split_fq'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '

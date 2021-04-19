@@ -54,7 +54,7 @@ class Multi():
         self.common_args()
         self.step_args()
         self.args = self.parser.parse_args()
-        if not self.args.not_gzip:
+        if self.args.gzip:
             self.fq_suffix = ".gz"
         else:
             self.fq_suffix = ""
