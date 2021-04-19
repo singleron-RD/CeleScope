@@ -105,7 +105,7 @@ class Step:
             f_stat.write(line + '\n')
         f_stat.close()
 
-    def _clean_up(self):
+    def clean_up_with_stat(self):
         self.get_fraction()
         self.get_stat()
         self._get_report()

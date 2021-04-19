@@ -490,18 +490,22 @@ def run(args):
 
 
 @add_log
+def fastqc(args, out_fq2):
+    cmd = ['fastqc', '-t', str(args.thread), '-o', args.outdir, out_fq2]
+    fastqc.logger.info('%s' % (' '.join(cmd)))
+    subprocess.check_call(cmd)
+
+
+@add_log
 def barcode(args):
     step_name = "barcode"
     step = Step(args, step_name)
 
     out_fq2 = run(args)
 
-    cmd = ['fastqc', '-t', str(args.thread), '-o', args.outdir, out_fq2]
-    barcode.logger.info('%s' % (' '.join(cmd)))
-    subprocess.check_call(cmd)
+    # fastqc(args, out_fq2)
 
     step.clean_up()
-
 
 
 def get_opts_barcode(parser, sub_program=True):

@@ -23,7 +23,7 @@ def target_metrics(args):
             UMI = record.get_tag('UB')
             
 
-    step._clean_up()
+    step.clean_up_with_stat()
 
 
 def get_opts_target_metrics(parser, sub_program):
