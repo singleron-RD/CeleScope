@@ -105,10 +105,13 @@ class Step:
             f_stat.write(line + '\n')
         f_stat.close()
 
-    def clean_up(self):
+    def _clean_up(self):
         self.get_fraction()
         self.get_stat()
         self._get_report()
         self.get_report()
 
+    def clean_up(self):
+        self._get_report()
+        self.get_report()
     #def tuple_to_metrcis

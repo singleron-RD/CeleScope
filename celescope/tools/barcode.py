@@ -14,6 +14,7 @@ from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
 from celescope.tools.Reporter import Reporter
+from celescope.tools.Step import Step
 
 
 barcode_corrected_num = 0
@@ -218,10 +219,10 @@ def merge_fastq(fq1, fq2, sample, outdir):
         merge_fastq.logger.info(fq2_cmd)
         os.system(fq2_cmd)
     return fq1_file, fq2_file
- 
+
 
 @add_log
-def barcode(args):
+def run(args):
     # init
     outdir = args.outdir
     sample = args.sample
@@ -230,10 +231,6 @@ def barcode(args):
     fq1_list = fq1.split(",")
     fq2_list = fq2.split(",")
     fq_number = len(fq1_list)
-
-    # check dir
-    if not os.path.exists(args.outdir):
-        os.system('mkdir -p %s' % args.outdir)
 
     # get chemistry
     if args.chemistry == 'auto':
@@ -252,7 +249,7 @@ def barcode(args):
     else:
         suffix = ""
     out_fq2 = f'{args.outdir}/{args.sample}_2.fq{suffix}'
-    fh3 = xopen(out_fq2, 'w')
+    fh3 = open(out_fq2, 'w', buffering=1024 * 1024 * 512)
 
     (total_num, clean_num, no_polyT_num, lowQual_num,
         no_linker_num, no_barcode_num) = (0, 0, 0, 0, 0, 0)
@@ -489,36 +486,22 @@ def barcode(args):
                                  UMIsQ30)
         stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
         fh.write(stat_info)
+    return out_fq2
 
-    barcode.logger.info('fastqc ...!')
+
+@add_log
+def barcode(args):
+    step_name = "barcode"
+    step = Step(args, step_name)
+
+    out_fq2 = run(args)
+
     cmd = ['fastqc', '-t', str(args.thread), '-o', args.outdir, out_fq2]
     barcode.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
-    barcode.logger.info('fastqc done!')
 
-    t = reporter(name='barcode', assay=args.assay, sample=args.sample,
-                 stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
-    t.get_report()
+    step.clean_up()
 
-    # metrics
-    report = Reporter(
-        args.assay,
-        'barcode',
-        args.sample,
-        args.outdir,
-    )
-    '''
-    barcode_summary = {
-        'Raw Reads': total_num,
-        'Valid Reads': clean_num,
-        'Valid Reads Fraction': clean_num / total_num * 100,
-        'Q30 of Barcodes': BarcodesQ30,
-        'Q30 of UMIs': UMIsQ30,
-    }
-    report.add_data_item(barcode_summary=barcode_summary)
-    '''
-    report.stat_to_json()
-    report.dump_json()
 
 
 def get_opts_barcode(parser, sub_program=True):

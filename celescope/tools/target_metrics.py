@@ -1,7 +1,8 @@
 import itertools
+import pysam
+
 from celescope.tools.utils import add_log, read_one_col
 from celescope.tools.Step import Step, s_common
-
 
 
 @add_log
@@ -22,7 +23,7 @@ def target_metrics(args):
             UMI = record.get_tag('UB')
             
 
-    step.clean_up()
+    step._clean_up()
 
 
 def get_opts_target_metrics(parser, sub_program):
