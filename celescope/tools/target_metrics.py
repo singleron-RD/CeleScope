@@ -1,6 +1,7 @@
 import itertools
-from celescope.tools.utils import add_log
+from celescope.tools.utils import add_log, read_one_col
 from celescope.tools.Step import Step, s_common
+
 
 
 @add_log
@@ -8,7 +9,11 @@ def target_metrics(args):
     step_name = "target_metrics"
     step = Step(args, step_name)
 
-    
+    gene_list, n_gene = read_one_col(args.gene_list)
+    step.add_metric(
+        name="Number of Target Genes",
+        value=n_gene,
+    )
 
     step.clean_up()
 
