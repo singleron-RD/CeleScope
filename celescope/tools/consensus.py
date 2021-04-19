@@ -16,7 +16,7 @@ def sort_fastq(fq, fq_tmp_file, outdir):
     tmp_dir = f'{outdir}/tmp'
     cmd = (
         f'mkdir {tmp_dir};'
-        f'zcat {fq} | paste - - - - | sort -T {tmp_dir} -k1,1 -t " " | tr "\t" "\n" > {fq_tmp_file};'
+        f'less {fq} | paste - - - - | sort -T {tmp_dir} -k1,1 -t " " | tr "\t" "\n" > {fq_tmp_file};'
     )
     subprocess.check_call(cmd, shell=True)
 
