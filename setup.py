@@ -31,7 +31,7 @@ setuptools.setup(
     entry_points=entry_dict,
     install_requires=[
         'cutadapt==1.17',
-        'pysam>=0.15.0',
+        'pysam>=0.16.0',
         'scipy>=1.0.1',
         'numpy>=1.15.4',
         'pandas==0.23.4',
