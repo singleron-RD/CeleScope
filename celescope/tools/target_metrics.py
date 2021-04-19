@@ -15,6 +15,13 @@ def target_metrics(args):
         value=n_gene,
     )
 
+    with pysam.AlignmentFile(args.bam, "rb") as reader:
+        for record in reader:
+            gene_name = record.get_tag('GN')
+            barcode = record.get_tag('CB')
+            UMI = record.get_tag('UB')
+            
+
     step.clean_up()
 
 
