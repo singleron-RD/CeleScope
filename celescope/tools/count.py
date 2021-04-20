@@ -13,12 +13,10 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix, coo_matrix
 import pysam
 from celescope.tools.utils import add_log, format_number, glob_genomeDir, gene_convert, s_common, add_mem
-from celescope.tools.report import reporter
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
 from celescope.tools.cellranger3 import get_plot_elements
-from celescope.tools.Reporter import Reporter
-
+from celescope.tools.Step import Step
 
 toolsdir = os.path.dirname(__file__)
 random.seed(0)
@@ -26,31 +24,14 @@ np.random.seed(0)
 
 
 @add_log
-@add_mem
-def report_prepare(count_file, downsample_file, outdir):
-
-    json_file = outdir + '/../.data.json'
-    if not os.path.exists(json_file):
-        data = {}
-    else:
-        fh = open(json_file)
-        data = json.load(fh)
-        fh.close()
+def report_prepare(count_file, downsample_file, step_obj):
 
     df0 = pd.read_table(downsample_file, header=0)
-    data['percentile'] = df0['percent'].tolist()
-    data['MedianGeneNum'] = df0['median_geneNum'].tolist()
-    data['Saturation'] = df0['saturation'].tolist()
-
-    #data['count' + '_summary'] = df0.T.values.tolist()
-
-    data['chart'] = get_plot_elements.plot_barcode_rank(count_file)
-
-    data['umi_summary'] = True
-
-    with open(json_file, 'w') as fh:
-        json.dump(data, fh)
-
+    step_obj.report.add_data_item(percentile=df0['percent'].tolist())
+    step_obj.report.add_data_item(MedianGeneNum=df0['median_geneNum'].tolist())
+    step_obj.report.add_data_item(Saturation=df0['saturation'].tolist())
+    step_obj.report.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_file))
+    step_obj.report.add_data_item(umi_summary=True)
 
 def hd(x, y):
     return len([i for i in range(len(x)) if x[i] != y[i]])
@@ -415,6 +396,10 @@ def downsample(df, cell_bc, downsample_file):
 
 @add_log
 def count(args):
+
+    step_name = "count"
+    step = Step(args, step_name)
+
     # args
     outdir = args.outdir
     sample = args.sample
@@ -428,10 +413,6 @@ def count(args):
         _refFlat, gtf_file = glob_genomeDir(args.genomeDir)
     else:
         gtf_file = args.gtf
-
-    # 检查和创建输出目录
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % (outdir))
 
     # umi纠错，输出Barcode geneID  UMI     count为表头的表格
     count_detail_file = outdir + '/' + sample + '_count_detail.txt.gz'
@@ -473,24 +454,12 @@ def count(args):
                 CB_reads_count, reads_mapped_to_transcriptome, stat_file,
                 outdir + '/../')
 
-    report_prepare(marked_counts_file, downsample_file, outdir)
+    report_prepare(marked_counts_file, downsample_file, step)
 
-    t = reporter(assay=assay,
-                 name='count', sample=args.sample,
-                 stat_file=outdir + '/stat.txt',
-                 outdir=outdir + '/..')
-    t.get_report()
+    step.report.add_content_item('metric', downsample_summary=res_dict)
+    step.clean_up()
 
-    # metrics
-    report = Reporter(
-        args.assay,
-        'count',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.add_data_item(downsample_summary=res_dict)
-    report.dump_json()
+
 
 
 def get_opts_count(parser, sub_program):

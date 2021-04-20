@@ -11,10 +11,8 @@ from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
 from celescope.tools.utils import *
-from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
-from celescope.tools.Reporter import Reporter
 from celescope.tools.Step import Step
 
 
@@ -279,7 +277,7 @@ def run(args):
 
         chemistry = chemistry_list[i]
         lowNum = int(args.lowNum)
-        print(args.lowQual)
+        run.logger.info(f'lowQual score: {args.lowQual}')
         lowQual = int(args.lowQual)
         if chemistry == 'scopeV1':
             lowNum = min(0, lowNum)
@@ -500,7 +498,7 @@ def barcode(args):
 
     out_fq2 = run(args)
 
-    # fastqc(args, out_fq2)
+    fastqc(args, out_fq2)
 
     step.clean_up()
 

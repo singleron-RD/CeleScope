@@ -1,5 +1,4 @@
 from celescope.vdj.__init__ import CHAINS
-from celescope.tools.report import reporter
 from celescope.tools.utils import *
 import os
 import logging
@@ -13,7 +12,8 @@ import json
 import argparse
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-from celescope.tools.Reporter import Reporter
+from celescope.tools.Step import Step
+
 
 @add_log
 def summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus):
@@ -160,18 +160,6 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
     stat_file = f'{outdir}/stat.txt'
     gen_stat(df, stat_file)
 
-    # report
-    STEP = 'mapping_vdj'
-    name = f'{type}_{STEP}'
-    t = reporter(
-        name=name,
-        sample=sample,
-        stat_file=stat_file,
-        outdir=outdir + '/..',
-        assay=assay,
-    )
-    t.get_report()
-
 
 @add_log 
 def mixcr(outdir, sample, input_file, thread, species):
@@ -202,6 +190,10 @@ mixcr exportAlignments \
 
 @add_log
 def mapping_vdj(args):
+
+    step_name = "mapping_vdj"
+    step = Step(args, step_name)
+
     sample = args.sample
     outdir = args.outdir
     fq = args.fq
@@ -212,24 +204,14 @@ def mapping_vdj(args):
     not_consensus = args.not_consensus
     species = args.species
 
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % outdir)
-
     input_file = fq
     alignments = mixcr(outdir, sample, input_file, thread, species)
 
     # summary
     summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus)
 
-    # metrics
-    report = Reporter(
-        args.assay,
-        'mapping_vdj',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.dump_json()
+    step.clean_up()
+
 
 
 def get_opts_mapping_vdj(parser, sub_program):

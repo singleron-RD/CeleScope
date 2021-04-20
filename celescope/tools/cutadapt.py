@@ -8,8 +8,7 @@ import pysam
 
 from itertools import islice
 from celescope.tools.utils import *
-from celescope.tools.report import reporter
-from celescope.tools.Reporter import Reporter
+from celescope.tools.Step import Step
 
 
 ADAPT = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
@@ -57,9 +56,9 @@ def read_adapter_fasta(adapter_fasta):
 
 @add_log
 def cutadapt(args):
-    # check dir
-    if not os.path.exists(args.outdir):
-        os.system('mkdir -p %s' % (args.outdir))
+
+    step_name = "cutadapt"
+    step = Step(args, step_name)
 
     adapter_args = read_adapter_fasta(args.adapter_fasta)
     adapter_args += ADAPT
@@ -96,26 +95,7 @@ def cutadapt(args):
 
     format_stat(args.outdir + '/cutadapt.log', args.sample)
 
-    t = reporter(
-        name='cutadapt',
-        assay=args.assay,
-        sample=args.sample,
-        stat_file=args.outdir +
-        '/stat.txt',
-        outdir=args.outdir +
-        '/..')
-    t.get_report()
-
-    # metrics
-    report = Reporter(
-        args.assay,
-        'cutadapt',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.dump_json()
-    
+    step.clean_up()    
 
 
 def get_opts_cutadapt(parser, sub_program):

@@ -7,9 +7,7 @@ from xopen import xopen
 from collections import defaultdict
 from itertools import groupby
 from celescope.tools.utils import *
-from celescope.tools.report import reporter
-from celescope.tools.Reporter import Reporter
-
+from celescope.tools.Step import Step
 
 @add_log
 def sort_fastq(fq, fq_tmp_file, outdir):
@@ -142,6 +140,10 @@ def get_read_length(read_list, threshold=0.5):
 
 @add_log
 def consensus(args):
+
+    step_name = "consensus"
+    step = Step(args, step_name)
+
     if args.not_consensus:
         consensus.logger.warning("not_consensus!")
         return
@@ -150,9 +152,6 @@ def consensus(args):
     assay = args.assay
     fq = args.fq
     threshold = float(args.threshold)
-
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % outdir)
 
     outfile, n, total_ambiguous_base_n, length_list = wrap_consensus(fq, outdir, sample, threshold)
 
@@ -177,19 +176,8 @@ def consensus(args):
         )
         stat_h.write(stat_str)
 
-    t = reporter(name='consensus', assay=args.assay, sample=args.sample,
-                 stat_file=stat_file, outdir=args.outdir + '/..')
-    t.get_report()
+    step.clean_up()
 
-    # metrics
-    report = Reporter(
-        args.assay,
-        'consensus',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.dump_json()
 
 
 def get_opts_consensus(parser, sub_program):

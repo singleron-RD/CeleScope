@@ -9,11 +9,14 @@ from celescope.tools.utils import *
 from celescope.tools.report import reporter
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
-from celescope.tools.Reporter import Reporter
+from celescope.tools.Step import Step
 
 
 @add_log
 def sample(args):
+    
+    step_name = "sample"
+    step = Step(args, step_name)
 
     sample_name = args.sample
     assay = args.assay
@@ -44,23 +47,7 @@ def sample(args):
     stat_file = outdir + "/stat.txt"
     stat.to_csv(stat_file, sep=":", header=None, index=False)
 
-    t = reporter(
-        name='sample',
-        assay=assay,
-        sample=sample_name,
-        stat_file=stat_file,
-        outdir=outdir + '/..')
-    t.get_report()
-
-    # metrics
-    report = Reporter(
-        args.assay,
-        'sample',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.dump_json()  
+    step.clean_up()
 
     return chemistry
 

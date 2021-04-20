@@ -11,11 +11,11 @@ import pandas as pd
 import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
-from celescope.tools.report import reporter
 from celescope.tools.utils import *
 from celescope.rna.__init__ import __ASSAY__
 from celescope.tools.Analysis import Analysis
-from celescope.tools.Reporter import Reporter
+from celescope.tools.Step import Step
+
 
 toolsdir = os.path.dirname(__file__)
 
@@ -124,6 +124,9 @@ def auto_assign(sample, outdir, type_marker_tsv):
 @add_log
 def analysis(args):
 
+    step_name = "analysis"
+    step = Step(args, step_name)
+
     # check dir
     outdir = args.outdir
     sample = args.sample
@@ -138,9 +141,6 @@ def analysis(args):
     if auto_assign_bool:
         save_rds = True
 
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % (outdir))
-
     # run_R
     seurat(sample, outdir, matrix_file, save_rds)
 
@@ -154,19 +154,14 @@ def analysis(args):
         outdir,
         assay,
         match_dir=outdir+'/../',
-        step='analysis',     
+        step='analysis',
     )
     ana.run()
 
-    # metrics
-    report = Reporter(
-        args.assay,
-        'analysis',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.dump_json()   
+    step.report.add_data_item(cluster_tsne=ana.cluster_tsne)
+    step.report.add_data_item(gene_tsne=ana.gene_tsne)
+    step.report.add_data_item(table_dict=ana.table_dict)
+    step.clean_up()
 
 
 def get_opts_analysis(parser, sub_program):

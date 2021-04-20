@@ -8,7 +8,7 @@ import glob
 import pandas as pd
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
-from celescope.tools.Reporter import Reporter
+from celescope.tools.Step import Step
 
 class Step_mapping():
 
@@ -201,19 +201,9 @@ class Step_mapping():
         if self.debug:
             self.ribo()
         self.format_stat()
-        self.report()
         if not self.sort_BAM:
             self.sort_bam()
     
-    def report(self):
-        t = reporter(
-            name=self.step_name,
-            assay=self.assay,
-            sample=self.sample,
-            stat_file=self.stats_file,
-            outdir=self.outdir + '/..',
-            plot=self.plot)
-        t.get_report()
 
     @add_log
     def sort_bam(self):
@@ -229,6 +219,10 @@ class Step_mapping():
 
 
 def STAR(args):
+
+    step_name = "STAR"
+    step = Step(args, step_name)
+
     mapping = Step_mapping(
         args.sample, 
         args.outdir, 
@@ -248,15 +242,9 @@ def STAR(args):
         )
     mapping.run()
     
-    # metrics
-    report = Reporter(
-        args.assay,
-        'STAR',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.dump_json()
+    step.report.add_content_item("data", STAR_plot=mapping.plot)
+    step.clean_up()
+
 
 def get_opts_STAR(parser, sub_program):
     parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)

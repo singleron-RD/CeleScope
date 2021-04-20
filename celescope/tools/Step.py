@@ -1,9 +1,8 @@
 import os
 import numbers
 from collections import namedtuple
-from celescope.tools.report import reporter
+from celescope.tools.utils import add_log
 from celescope.tools.Reporter import Reporter
-
 
 def s_common(parser):
     """subparser common arguments
@@ -31,40 +30,23 @@ class Step:
         self.stat_file = f'{self.outdir}/stat.txt'
         self.metric_list = []
         self.Metric = namedtuple("Metric", "name value total fraction")
+        self.report = Reporter(
+            self.assay,
+            self.step_name,
+            self.sample,
+            self.outdir,
+        )
 
         # check dir
         if not os.path.exists(self.outdir):
             os.system('mkdir -p %s' % self.outdir)
 
     def add_metric(self, name, value=None, total=None, fraction=None):
+        '''add metric to metric_list
+        '''
         self.metric_list.append(self.Metric(
             name=name, value=value, total=total, fraction=fraction
         ))
-
-
-    def _get_report(self):
-        report = reporter(
-            name=self.step_name,
-            assay=self.assay,
-            sample=self.sample,
-            stat_file=self.stat_file,
-            outdir=self.outdir + '/..'
-        )
-        report.get_report()
-
-    def get_report(self):
-        '''
-        need stat.txt
-        '''
-        report = Reporter(
-            self.assay,
-            self.step_name,
-            self.sample,
-            self.outdir,
-            json_file = f'{self.outdir}/../.metrics.json'
-        )
-        report.stat_to_json()
-        report.dump_json()
 
     def get_fraction(self):
         '''
@@ -85,19 +67,19 @@ class Step:
             ))
         self.metric_list = metric_list
 
-    def get_stat(self):
+    def metric_list_to_stat(self):
         f_stat = open(self.stat_file, 'w')
         for metric in self.metric_list:
             line = f'{metric.name}: '
             value = metric.value
             fraction = metric.fraction
             if fraction:
-                fraction = fraction * 100            
+                fraction = round(fraction * 100, 2)
             if value:
                 if isinstance(value, numbers.Number):
                     line += format(value, ',')
                     if fraction:
-                        line += f'({metric.fraction}%)'
+                        line += f'({fraction}%)'
                 else:
                     line += value
             elif fraction:
@@ -105,13 +87,15 @@ class Step:
             f_stat.write(line + '\n')
         f_stat.close()
 
-    def clean_up_with_stat(self):
-        self.get_fraction()
-        self.get_stat()
-        self._get_report()
-        self.get_report()
-
+    @add_log
     def clean_up(self):
-        self._get_report()
-        self.get_report()
-    #def tuple_to_metrcis
+        if self.metric_list:
+            self.get_fraction()
+            self.metric_list_to_stat()
+        self.report.stat_to_metric()
+        self.report.stat_to_data()
+        self.report.dump_content(slot="data")
+        self.report.dump_content(slot="metric")
+        self.report.render_html()
+
+

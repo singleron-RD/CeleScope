@@ -10,7 +10,7 @@ import sys
 import pysam
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
-from celescope.tools.Reporter import Reporter
+from celescope.tools.Step import Step
 
 
 def format_stat(log, samplename):
@@ -72,15 +72,14 @@ def add_tag(bam, gtf):
 @add_log
 def featureCounts(args):
 
+    step_name = "featureCounts"
+    step = Step(args, step_name)
+
     # check
     if args.genomeDir and args.genomeDir != "None":
         _refFlat, gtf = glob_genomeDir(args.genomeDir)
     else:
         gtf = args.gtf
-
-    # check dir
-    if not os.path.exists(args.outdir):
-        os.mkdir(args.outdir)
 
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
@@ -122,25 +121,8 @@ def featureCounts(args):
     featureCounts.logger.info('samtools sort done.')
 
     format_stat(args.outdir + '/' + args.sample + '.summary', args.sample)
-    t = reporter(
-        name='featureCounts',
-        assay=args.assay,
-        sample=args.sample,
-        stat_file=args.outdir +
-        '/stat.txt',
-        outdir=args.outdir +
-        '/..')
-    t.get_report()
 
-    # metrics
-    report = Reporter(
-        args.assay,
-        'featureCounts',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.dump_json()
+    step.clean_up()
 
 
 def get_opts_featureCounts(parser, sub_program):

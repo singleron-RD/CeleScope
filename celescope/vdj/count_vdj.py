@@ -15,8 +15,7 @@ import re
 import json
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-from celescope.tools.Reporter import Reporter
-
+from celescope.tools.Step import Step
 
 def report_prepare(df, outdir):
 
@@ -41,6 +40,9 @@ def report_prepare(df, outdir):
 @add_log
 def count_vdj(args):
 
+    step_name = "count_vdj"
+    step = Step(args, step_name)
+
     sample = args.sample
     match_dir = args.match_dir
     UMI_min = args.UMI_min
@@ -51,9 +53,6 @@ def count_vdj(args):
     debug = args.debug
     iUMI = int(args.iUMI)
     chains = CHAINS[type]
-
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % outdir)
 
     # out file
     cell_confident_file = f"{outdir}/{sample}_cell_confident.tsv"
@@ -347,16 +346,7 @@ def count_vdj(args):
 
     cell_stat_file = "{}/stat.txt".format(outdir)
     gen_stat(cell_summary, cell_stat_file)
-    name = type + '_count_vdj'
-    t = reporter(
-        name=name,
-        sample=args.sample,
-        stat_file=cell_stat_file,
-        outdir=outdir + '/..',
-        assay=args.assay,
-        parameters={"iUMI": iUMI},
-    )
-    t.get_report()
+    step.report.add_data_item(iUMI=iUMI)
 
     # cloneytpes table
     def format_table(df_clonetypes):
@@ -379,18 +369,9 @@ def count_vdj(args):
         df_table, table_header = format_table(df_match_clonetypes)
         title = 'Match Clonetypes'
 
-    ana = Analysis(sample, outdir ,assay, match_dir=None, step='count_vdj')
-    table_dict = Analysis.get_table(title, 'clonetypes_table', df_table)
-    ana.report_prepare(table_dict=table_dict)
+    table_dict = step.report.get_table(title, 'clonetypes_table', df_table)
+    step.report.add_data_item(table_dict=table_dict)
     
-    t = reporter(
-        name="clonetypes",
-        sample=args.sample,
-        outdir=outdir + '/..',
-        assay=args.assay,
-    )
-    t.get_report()
-
     # other_metrics_file
     """
     if len(other_metrics_row_list) != 0:
@@ -398,15 +379,8 @@ def count_vdj(args):
         other_metrics.to_csv(other_metrics_file,sep=":",header=None,index=False)
     """
 
-    # metrics
-    report = Reporter(
-        args.assay,
-        'count_vdj',
-        args.sample,
-        args.outdir,
-    )
-    report.stat_to_json()
-    report.dump_json()
+    step.clean_up()
+
 
 def get_opts_count_vdj(parser, sub_program):
     if sub_program:

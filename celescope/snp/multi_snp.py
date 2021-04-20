@@ -26,7 +26,7 @@ class Multi_snp(Multi):
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
-            #f'--match_dir {self.col4_dict[sample]} '
+            f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 

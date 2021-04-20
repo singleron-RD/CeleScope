@@ -4,9 +4,9 @@ import json
 import numpy as np
 import pandas as pd
 import glob
-from celescope.tools.report import reporter
 from celescope.tools.utils import *
-from celescope.tools.Reporter import Reporter
+from celescope.tools.Step import Step
+
 
 class Analysis():
 
@@ -32,9 +32,6 @@ class Analysis():
             self.marker_df = pd.read_csv(marker_df_file, sep="\t")
             self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
             self.cluster_tsne = cluster_tsne_list(self.tsne_df)
-
-        if not os.path.exists(outdir):
-            os.system('mkdir -p %s' % outdir)
 
     def add_attrs(self, *kwargs):
         for kwarg in kwargs:
@@ -72,20 +69,6 @@ class Analysis():
             tSNE_2 = list(sub_df.tSNE_2)
             res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
         return res
-
-
-    def report(self, stat=True):
-        if stat:
-            stat_file = self.outdir + "/stat.txt"
-        else:
-            stat_file = ''
-        t = reporter(
-        name=self.step,
-        assay=self.assay,
-        sample=self.sample,
-        outdir=self.outdir + '/..',
-        stat_file=stat_file)
-        t.get_report()
 
     def get_cluster_tsne(self, colname, show_tag=True, dfname='tsne_df'):
         """
@@ -127,21 +110,6 @@ class Analysis():
         marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
         return marker_df
 
-    def report_prepare(self, **kwargs):
-        json_file = self.outdir + '/../.data.json'
-        if not os.path.exists(json_file):
-            data = {}
-        else:
-            fh = open(json_file)
-            data = json.load(fh)
-            fh.close()
-
-        for key in kwargs:
-            data[key] = kwargs[key]
-
-        with open(json_file, 'w') as fh:
-            json.dump(data, fh)
-
     def get_marker_gene_table(self):
         marker_df = self.process_marker_table()
         table_dict = Analysis.get_table(
@@ -166,12 +134,6 @@ class Analysis():
         return marker_gene_table
 
     def run(self):
-        cluster_tsne = self.get_cluster_tsne(colname='cluster')
-        gene_tsne = self.get_gene_tsne()
-        table_dict = self.get_marker_gene_table()
-        self.report_prepare(
-            cluster_tsne=cluster_tsne,
-            gene_tsne=gene_tsne,
-            table_dict=table_dict,
-        )
-        self.report()
+        self.cluster_tsne = self.get_cluster_tsne(colname='cluster')
+        self.gene_tsne = self.get_gene_tsne()
+        self.table_dict = self.get_marker_gene_table()
