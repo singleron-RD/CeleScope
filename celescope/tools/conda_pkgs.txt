@@ -1,0 +1,12 @@
+python=3.6.7 
+star=2.6.1b
+fastqc=0.11.7 
+picard=2.18.17
+ucsc-gtftogenepred=377
+subread=2.0.1
+samtools=1.9
+r-seurat=4.0.1
+r-argparser
+r-tidyverse
+mixcr=3.0.3
+bioconductor-dropletutils
