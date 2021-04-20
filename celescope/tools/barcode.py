@@ -6,6 +6,7 @@ import subprocess
 import sys
 import glob
 import pandas as pd
+import pysam
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
@@ -249,7 +250,7 @@ def run(args):
     else:
         suffix = ""
     out_fq2 = f'{args.outdir}/{args.sample}_2.fq{suffix}'
-    fh3 = open(out_fq2, 'w', buffering=1024 * 1024 * 512)
+    fh3 = xopen(out_fq2, 'w')
 
     (total_num, clean_num, no_polyT_num, lowQual_num,
         no_linker_num, no_barcode_num) = (0, 0, 0, 0, 0, 0)
@@ -312,17 +313,13 @@ def run(args):
             # check linker
             check_seq(linker, pattern_dict, "L")
 
-        fh1 = xopen(fq1_list[i])
-        fh2 = xopen(fq2_list[i])
-        g1 = read_fastq(fh1)
-        g2 = read_fastq(fh2)
+        fq1 = pysam.FastxFile(fq1_list[i], persist=False)
+        fq2 = pysam.FastxFile(fq2_list[i], persist=False)
 
-        while True:
-            try:
-                (header1, seq1, qual1) = next(g1)
-                (header2, seq2, qual2) = next(g2)
-            except BaseException:
-                break
+        for entry1 in fq1:
+            entry2 = fq2.__next__()
+            header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
+            header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
             if total_num > 0 and total_num % 1000000 == 0:
                 barcode.logger.info(
                     f'processed reads: {format_number(total_num)}.'
