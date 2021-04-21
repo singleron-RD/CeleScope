@@ -306,3 +306,8 @@ class Tests(unittest.TestCase):
             )
             report.stat_to_json()
             report.dump_json()
+
+    def test_sorted_dumb_consensus(self):
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/vdj/rebuild/TCR_20201221_consensus/03.consensus')
+        fastq = 'TCR_20201221_consensus_sorted.fq.tmp'
+        sorted_dumb_consensus(fastq, outfile = 'update_consensus.fq.gz', threshold=0.5)
