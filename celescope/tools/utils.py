@@ -12,6 +12,7 @@ import argparse
 import pysam
 import importlib
 import resource
+import xopen
 from datetime import timedelta
 from collections import defaultdict
 from functools import wraps
@@ -235,7 +236,7 @@ def process_read(
     # if valid, return (True)
     metrics = defaultdict(int)
     res_dict = genDict(dim=3)
-    read2 = gzip.open(read2_file, "rt")
+    read2 = xopen.xopen(read2_file, "rt")
     while True:
         line1 = read2.readline()
         line2 = read2.readline()

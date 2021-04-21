@@ -1,7 +1,3 @@
-from celescope.tools.report import reporter
-from celescope.tools.utils import *
-from celescope.tools.barcode import parse_pattern
-import gzip
 import os
 import pandas as pd
 import logging
@@ -14,6 +10,10 @@ from collections import defaultdict
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
+
+from celescope.tools.report import reporter
+from celescope.tools.barcode import parse_pattern
+import celescope.tools.utils as utils
 
 
 class Mapping_tag():
@@ -39,9 +39,9 @@ class Mapping_tag():
         self.barcode_fasta = barcode_fasta
 
         # process
-        self.barcode_dic, self.barcode_length = read_fasta(self.barcode_fasta, equal=True)
+        self.barcode_dic, self.barcode_length = utils.read_fasta(self.barcode_fasta, equal=True)
         if self.linker_fasta and self.linker_fasta != 'None':
-            self.linker_dic, self.linker_length = read_fasta(self.linker_fasta, equal=True)
+            self.linker_dic, self.linker_length = utils.read_fasta(self.linker_fasta, equal=True)
         else:
             self.linker_dic, self.linker_length = {}, 0
         self.pattern_dict = parse_pattern(self.fq_pattern)
@@ -56,8 +56,8 @@ class Mapping_tag():
                 != pattern barcode length {pattern_barcode_length}'''
             )
 
-        self.res_dic = genDict()
-        self.res_sum_dic = genDict(dim=2)
+        self.res_dic = utils.genDict()
+        self.res_sum_dic = utils.genDict(dim=2)
 
         self.match_barcode = []
         self.read_count_file = f'{outdir}/{sample}_read_count.tsv'
@@ -69,7 +69,7 @@ class Mapping_tag():
 
     def read_to_dic(self):
 
-        self.res_dic, self.metrics = process_read(
+        self.res_dic, self.metrics = utils.process_read(
             self.fq,
             self.pattern_dict,
             self.barcode_dic,
@@ -115,7 +115,7 @@ class Mapping_tag():
             columns=["item", "count"]
         )
         stat['total_count'] = self.metrics["Total Reads"]
-        gen_stat(stat, self.stat_file)
+        utils.gen_stat(stat, self.stat_file)
 
     def tag_count(self):
         for barcode in self.res_dic:
@@ -138,7 +138,7 @@ class Mapping_tag():
             outdir=self.outdir + '/..')
         t.get_report()
 
-    @add_log
+    @utils.add_log
     def run(self):
         self.read_to_dic()
         self.tag_count()
