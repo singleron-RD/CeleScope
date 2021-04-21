@@ -25,6 +25,7 @@ class Count_tag():
         SNR_min,
         combine_cluster,
         dim,
+        coefficient,
         ):
         self.sample = sample
         self.outdir = outdir
@@ -39,6 +40,7 @@ class Count_tag():
         self.df_read_count = pd.read_csv(read_count_file, sep="\t", index_col=0)
         self.tsne_file = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
         self.no_noise = False
+        self.coefficient = coefficient
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % outdir)
 
@@ -70,7 +72,7 @@ class Count_tag():
             return np.inf
         return float(signal) / noise
 
-    def get_SNR_min(self, df_cell_UMI, dim, SNR_min, UMI_min, coefficient=0.1):
+    def get_SNR_min(self, df_cell_UMI, dim, SNR_min, UMI_min):
         UMIs = df_cell_UMI.apply(Count_tag.get_UMI, axis=1)
         df_valid_cell_UMI = df_cell_UMI[UMIs >= UMI_min]
         if SNR_min == "auto":
@@ -82,7 +84,7 @@ class Count_tag():
             SNRs = df_valid_cell_UMI.apply(Count_tag.get_SNR, dim=dim, axis=1)
             if np.median(SNRs) == np.inf:
                 return 10
-            return max(np.median(SNRs) * coefficient, 2)
+            return max(np.median(SNRs) * self.coefficient, 2)
         else:
             return float(SNR_min)
 
@@ -232,14 +234,8 @@ class Count_tag():
         ))
         self.stats = stats
 
-    def report(self):
+    def stat(self):
 
         self.stat_file = f'{self.outdir}/stat.txt'
         self.stats.to_csv(self.stat_file, sep=':', header=False)
-        t = reporter(
-        name='count_tag', 
-        assay=self.assay, 
-        sample=self.sample,
-        stat_file=self.stat_file, 
-        outdir=self.outdir + '/..')
-        t.get_report()
+

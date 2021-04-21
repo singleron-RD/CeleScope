@@ -1,5 +1,6 @@
 import argparse
 from .Count_tag import Count_tag
+from celescope.tools.Step import Step, s_common
 from celescope.tools.utils import *
 
 def get_opts_count_tag(parser, sub_program):
@@ -16,6 +17,7 @@ def get_opts_count_tag(parser, sub_program):
         "--combine_cluster",
         help="conbine cluster tsv file",
         default=None)
+    parser.add_argument("--coefficient", "-c", help="SNR coefficient", default=0.1)
     if sub_program:
         parser = s_common(parser)
         parser.add_argument("--read_count_file", help="tag read count file")
@@ -23,6 +25,9 @@ def get_opts_count_tag(parser, sub_program):
 
 
 def count_tag(args):
+
+    step_name = "count_tag"
+    step = Step(args, step_name)
 
     count_tag_object = Count_tag(
         args.sample,
@@ -34,6 +39,9 @@ def count_tag(args):
         args.SNR_min,
         args.combine_cluster,
         args.dim,
+        args.coefficient
     )
     count_tag_object.run()
-    count_tag_object.report()
+    count_tag_object.stat()
+
+    step.clean_up()
