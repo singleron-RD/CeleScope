@@ -38,6 +38,7 @@ def target_metrics(args):
 
 
     for barcode in count_dict:
+        barcode_enriched_UMI = 0
         for gene_name in count_dict[barcode]:
             gene_UMI = len(count_dict[barcode][gene_name])
             UMIs += gene_UMI
@@ -45,7 +46,10 @@ def target_metrics(args):
                 enriched_UMIs += gene_UMI
                 if barcode in match_barcode:
                     enriched_UMIs_in_cells += gene_UMI
-                    enriched_UMIs_per_cell.append(gene_UMI)
+                    barcode_enriched_UMI += gene_UMI
+        if barcode in match_barcode:
+            enriched_UMIs_per_cell.append(barcode_enriched_UMI)
+    target_metrics.logger.debug(enriched_UMIs_per_cell)
 
     step.add_metric(
         name="Enriched UMIs",

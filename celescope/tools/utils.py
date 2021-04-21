@@ -43,6 +43,9 @@ def add_log(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        if hasattr(args[0], 'debug') and args[0].debug:
+            logger.setLevel(10) # debug
+
         logger.info('start...')
         start = time.time()
         result = func(*args, **kwargs)
@@ -59,7 +62,7 @@ def using(point=""):
     usage=resource.getrusage(resource.RUSAGE_SELF)
     return '''%s: usertime=%s systime=%s mem=%s mb
         '''%(point,usage[0],usage[1],
-                usage[2]/1024.0 )
+                usage[2]/1024.0)
 
 
 def add_mem(func):
