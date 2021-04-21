@@ -456,7 +456,7 @@ def count(args):
 
     report_prepare(marked_counts_file, downsample_file, step)
 
-    step.report.add_content_item('metric', downsample_summary=res_dict)
+    step.add_content_item('metric', downsample_summary=res_dict)
     step.clean_up()
 
 

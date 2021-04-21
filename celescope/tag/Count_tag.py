@@ -70,7 +70,7 @@ class Count_tag():
             return np.inf
         return float(signal) / noise
 
-    def get_SNR_min(self, df_cell_UMI, dim, SNR_min, UMI_min):
+    def get_SNR_min(self, df_cell_UMI, dim, SNR_min, UMI_min, coefficient=0.1):
         UMIs = df_cell_UMI.apply(Count_tag.get_UMI, axis=1)
         df_valid_cell_UMI = df_cell_UMI[UMIs >= UMI_min]
         if SNR_min == "auto":
@@ -82,7 +82,7 @@ class Count_tag():
             SNRs = df_valid_cell_UMI.apply(Count_tag.get_SNR, dim=dim, axis=1)
             if np.median(SNRs) == np.inf:
                 return 10
-            return max(np.median(SNRs) / 10, 2)
+            return max(np.median(SNRs) * coefficient, 2)
         else:
             return float(SNR_min)
 

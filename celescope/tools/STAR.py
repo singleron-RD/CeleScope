@@ -242,7 +242,7 @@ def STAR(args):
         )
     mapping.run()
     
-    step.report.add_content_item("data", STAR_plot=mapping.plot)
+    step.add_content_item("data", STAR_plot=mapping.plot)
     step.clean_up()
 
 

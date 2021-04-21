@@ -346,7 +346,7 @@ def count_vdj(args):
 
     cell_stat_file = "{}/stat.txt".format(outdir)
     gen_stat(cell_summary, cell_stat_file)
-    step.report.add_data_item(iUMI=iUMI)
+    step.add_data_item(iUMI=iUMI)
 
     # cloneytpes table
     def format_table(df_clonetypes):
@@ -369,8 +369,8 @@ def count_vdj(args):
         df_table, table_header = format_table(df_match_clonetypes)
         title = 'Match Clonetypes'
 
-    table_dict = step.report.get_table(title, 'clonetypes_table', df_table)
-    step.report.add_data_item(table_dict=table_dict)
+    table_dict = step.get_table(title, 'clonetypes_table', df_table)
+    step.add_data_item(table_dict=table_dict)
     
     # other_metrics_file
     """

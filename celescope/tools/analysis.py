@@ -158,9 +158,9 @@ def analysis(args):
     )
     ana.run()
 
-    step.report.add_data_item(cluster_tsne=ana.cluster_tsne)
-    step.report.add_data_item(gene_tsne=ana.gene_tsne)
-    step.report.add_data_item(table_dict=ana.table_dict)
+    step.add_data_item(cluster_tsne=ana.cluster_tsne)
+    step.add_data_item(gene_tsne=ana.gene_tsne)
+    step.add_data_item(table_dict=ana.table_dict)
     step.clean_up()
 
 
