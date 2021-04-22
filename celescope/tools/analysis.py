@@ -13,72 +13,11 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.utils import *
 from celescope.rna.__init__ import __ASSAY__
-from celescope.tools.Analysis import Analysis
+from celescope.tools.analysisMixin import AnalysisMixin 
 from celescope.tools.Step import Step
 
 
-toolsdir = os.path.dirname(__file__)
-
-
-def report_prepare(outdir, tsne_df, marker_df):
-    json_file = outdir + '/../.data.json'
-    if not os.path.exists(json_file):
-        data = {}
-    else:
-        fh = open(json_file)
-        data = json.load(fh)
-        fh.close()
-
-    data["cluster_tsne"] = cluster_tsne_list(tsne_df)
-    data["gene_tsne"] = gene_tsne_list(tsne_df)
-    data["marker_gene_table"] = marker_table(marker_df)
-
-    with open(json_file, 'w') as fh:
-        json.dump(data, fh)
-
-
-def cluster_tsne_list(tsne_df):
-    """
-    tSNE_1	tSNE_2	cluster Gene_Counts
-    return data list
-    """
-    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
-    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-    res = []
-    for cluster in sorted(tsne_df.cluster.unique()):
-        sub_df = tsne_df[tsne_df.cluster == cluster]
-        name = "cluster {cluster}({percent}%)".format(
-            cluster=cluster, percent=percent_df[cluster])
-        tSNE_1 = list(sub_df.tSNE_1)
-        tSNE_2 = list(sub_df.tSNE_2)
-        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
-    return res
-
-
-def gene_tsne_list(tsne_df):
-    """
-    return data dic
-    """
-    tSNE_1 = list(tsne_df.tSNE_1)
-    tSNE_2 = list(tsne_df.tSNE_2)
-    Gene_Counts = list(tsne_df.Gene_Counts)
-    res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "Gene_Counts": Gene_Counts}
-    return res
-
-
-def marker_table(marker_df):
-    """
-    return html code
-    """
-    marker_df = marker_df.loc[:, ["cluster", "gene",
-                                  "avg_logFC", "pct.1", "pct.2", "p_val_adj"]]
-    marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
-    marker_gene_table = marker_df.to_html(
-        escape=False,
-        index=False,
-        table_id="marker_gene_table",
-        justify="center")
-    return marker_gene_table
+TOOLSDIR = os.path.dirname(__file__)
 
 
 @add_log
@@ -97,7 +36,7 @@ def generate_matrix(gtf_file, matrix_file):
 
 @add_log
 def seurat(sample, outdir, matrix_file, save_rds):
-    app = toolsdir + "/run_analysis.R"
+    app = TOOLSDIR + "/run_analysis.R"
     cmd = (
         f'Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file} '
         f'--save_rds {save_rds}'
@@ -109,7 +48,7 @@ def seurat(sample, outdir, matrix_file, save_rds):
 @add_log
 def auto_assign(sample, outdir, type_marker_tsv):
     rds = f'{outdir}/{sample}.rds'
-    app = toolsdir + "/auto_assign.R"
+    app = TOOLSDIR + "/auto_assign.R"
     cmd = (
         f'Rscript {app} '
         f'--rds {rds} '
@@ -121,47 +60,36 @@ def auto_assign(sample, outdir, type_marker_tsv):
     os.system(cmd)
 
 
+class Analysis_rna(Step, AnalysisMixin):
+    def __init__(self, args, step_name):
+        Step.__init__(self, args, step_name)
+        AnalysisMixin.__init__(self, args)
+        self.matrix_file = args.matrix_file
+        self.type_marker_tsv = args.type_marker_tsv
+        self.auto_assign_bool = False
+        self.save_rds = args.save_rds
+        if args.type_marker_tsv and args.type_marker_tsv != 'None':
+            self.auto_assign_bool = True
+            self.save_rds = True
+
+    def run(self):
+        seurat(self.sample, self.outdir, self.matrix_file, self.save_rds)
+        self.run_analysis()
+        if self.auto_assign_bool:
+            auto_assign(self.sample, self.outdir, self.type_marker_tsv)
+        self.add_data_item(cluster_tsne=self.cluster_tsne)
+        self.add_data_item(gene_tsne=self.gene_tsne)
+        self.add_data_item(table_dict=self.table_dict)
+
+        self.clean_up()
+
+
 @add_log
 def analysis(args):
 
     step_name = "analysis"
-    step = Step(args, step_name)
-
-    # check dir
-    outdir = args.outdir
-    sample = args.sample
-    assay = args.assay 
-
-    matrix_file = args.matrix_file
-    save_rds = args.save_rds
-    type_marker_tsv = args.type_marker_tsv
-    auto_assign_bool = False
-    if type_marker_tsv and type_marker_tsv != 'None':
-        auto_assign_bool = True
-    if auto_assign_bool:
-        save_rds = True
-
-    # run_R
-    seurat(sample, outdir, matrix_file, save_rds)
-
-    # auto_assign
-    if auto_assign_bool:
-        auto_assign(sample, outdir, type_marker_tsv)
-
-    # report
-    ana = Analysis(     
-        sample,
-        outdir,
-        assay,
-        match_dir=outdir+'/../',
-        step='analysis',
-    )
+    ana = Analysis_rna(args, step_name)
     ana.run()
-
-    step.add_data_item(cluster_tsne=ana.cluster_tsne)
-    step.add_data_item(gene_tsne=ana.gene_tsne)
-    step.add_data_item(table_dict=ana.table_dict)
-    step.clean_up()
 
 
 def get_opts_analysis(parser, sub_program):

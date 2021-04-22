@@ -50,6 +50,7 @@ class Step:
             else:
                 with open(path) as f:
                     self.content_dict[slot] = json.load(f)
+
         self.env = Environment(
             loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
             autoescape=select_autoescape(['html', 'xml'])
@@ -105,8 +106,9 @@ class Step:
     def dump_content(self, slot):
         '''dump content to json file
         '''
-        with open(self.path_dict[slot], 'w') as f:
-            json.dump(self.content_dict[slot], f, indent=4)
+        if self.content_dict[slot]:
+            with open(self.path_dict[slot], 'w') as f:
+                json.dump(self.content_dict[slot], f, indent=4)
 
     @add_log
     def render_html(self):
@@ -176,7 +178,7 @@ class Step:
             index=False,
             table_id=table_id,
             justify="center")
-        table_dict['id'] = id
+        table_dict['id'] = table_id
         return table_dict
 
     @add_log
@@ -184,8 +186,9 @@ class Step:
         if self.metric_list:
             self.get_fraction()
             self.metric_list_to_stat()
-        self.stat_to_metric()
-        self.stat_to_data()
+        if os.path.exists(self.stat_file):
+            self.stat_to_metric()
+            self.stat_to_data()
         self.dump_content(slot="data")
         self.dump_content(slot="metric")
         self.render_html()
