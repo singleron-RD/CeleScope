@@ -1,18 +1,14 @@
-#!/bin/env python
-# coding=utf8
-
 import os
 import pandas as pd
-import sys
+
 from celescope.__init__ import __VERSION__, ASSAY_DICT
-from celescope.tools.utils import *
-from celescope.tools.report import reporter
+import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
 from .Chemistry import Chemistry
-from celescope.tools.Step import Step
+from celescope.tools.Step import Step, s_common
 
 
-@add_log
+@utils.add_log
 def sample(args):
     
     step_name = "sample"

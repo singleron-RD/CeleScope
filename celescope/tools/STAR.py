@@ -6,9 +6,11 @@ import logging
 import subprocess
 import glob
 import pandas as pd
-from celescope.tools.utils import *
+
+import celescope.tools.utils as utils
+from celescope.tools.utils import format_number, format_stat, glob_genomeDir
 from celescope.tools.report import reporter
-from celescope.tools.Step import Step
+from celescope.tools.Step import Step, s_common
 
 class Step_mapping():
 
@@ -139,7 +141,7 @@ class Step_mapping():
 
         self.stats.to_csv(self.stats_file, sep=':', header=False)
 
-    @add_log
+    @utils.add_log
     def ribo(self):
         import celescope
         root_path = os.path.dirname(celescope.__file__)
@@ -157,7 +159,7 @@ class Step_mapping():
         Step_mapping.ribo.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
     
-    @add_log
+    @utils.add_log
     def STAR(self):
         cmd = ['STAR', '--runThreadN', str(self.thread), '--genomeDir', self.STAR_index,
             '--readFilesIn', self.fq, '--outFilterMultimapNmax', str(self.multi_max), 
@@ -173,7 +175,7 @@ class Step_mapping():
         Step_mapping.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @add_log
+    @utils.add_log
     def picard(self):
         self.refFlat, _gtf = glob_genomeDir(self.genomeDir)
         self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
@@ -194,7 +196,7 @@ class Step_mapping():
         Step_mapping.picard.logger.info(cmd_str)
         subprocess.check_call(cmd)
 
-    @add_log
+    @utils.add_log
     def run(self):
         self.STAR()
         self.picard()
@@ -205,13 +207,13 @@ class Step_mapping():
             self.sort_bam()
     
 
-    @add_log
+    @utils.add_log
     def sort_bam(self):
         cmd = f'samtools sort {self.unsort_STAR_bam} -o {self.STAR_bam}'
         Step_mapping.sort_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @add_log
+    @utils.add_log
     def index_bam(self):
         cmd = f"samtools index {self.STAR_bam}"
         Step_mapping.index_bam.logger.info(cmd)
