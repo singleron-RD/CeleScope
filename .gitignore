@@ -5,7 +5,7 @@
 test_data/
 
 # tests
-celescope/tests/
+celescope/tests/test_legacy.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

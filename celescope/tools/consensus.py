@@ -1,15 +1,15 @@
 import pysam
-import gzip
 import numpy as np
 import subprocess
-import os
 from xopen import xopen
 from collections import defaultdict
 from itertools import groupby
-from celescope.tools.utils import *
-from celescope.tools.Step import Step
 
-@add_log
+from celescope.tools.Step import Step, s_common
+import celescope.tools.utils as utils
+
+
+@utils.add_log
 def sort_fastq(fq, fq_tmp_file, outdir):
     tmp_dir = f'{outdir}/tmp'
     cmd = (
@@ -19,7 +19,7 @@ def sort_fastq(fq, fq_tmp_file, outdir):
     subprocess.check_call(cmd, shell=True)
 
 
-@add_log
+@utils.add_log
 def sorted_dumb_consensus(fq, outfile, threshold):
     '''
     consensus read in name-sorted fastq
@@ -45,7 +45,7 @@ def sorted_dumb_consensus(fq, outfile, threshold):
             n_umi += 1
             prefix = "_".join([barcode, umi])
             read_name = f'{prefix}_{n_umi}'
-            out_h.write(fastq_line(read_name, consensus_seq, consensus_qual))
+            out_h.write(utils.fastq_line(read_name, consensus_seq, consensus_qual))
             if n_umi % 10000 == 0:
                 sorted_dumb_consensus.logger.info(f'{n_umi} UMI done.')
             total_ambiguous_base_n += ambiguous_base_n
@@ -55,7 +55,7 @@ def sorted_dumb_consensus(fq, outfile, threshold):
     return n_umi, total_ambiguous_base_n, length_list
 
 
-@add_log
+@utils.add_log
 def wrap_consensus(fq, outdir, sample, threshold):
     fq_tmp_file = f'{outdir}/{sample}_sorted.fq.tmp'
     sort_fastq(fq, fq_tmp_file, outdir)
@@ -138,7 +138,7 @@ def get_read_length(read_list, threshold=0.5):
         if fraction >= threshold:
             return length
 
-@add_log
+@utils.add_log
 def consensus(args):
 
     step_name = "consensus"
@@ -160,11 +160,11 @@ def consensus(args):
     metrics["UMI Counts"] = n
     metrics["Mean UMI Length"] = np.mean(length_list)
     metrics["Ambiguous Base Counts"] = total_ambiguous_base_n    
-    format_metrics(metrics)
+    utils.format_metrics(metrics)
 
     ratios = {}
     ratios["Ambiguous Base Counts Ratio"] = total_ambiguous_base_n / sum(length_list)
-    format_ratios(ratios)
+    utils.format_ratios(ratios)
 
     # stat file
     stat_file = f'{outdir}/stat.txt'
