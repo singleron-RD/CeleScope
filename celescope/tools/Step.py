@@ -123,34 +123,50 @@ class Step:
         self.content_dict['data'][self.step_name + '_summary'] = df.values.tolist()
 
     def stat_to_metric(self):
+        '''
+        can be:
+        1. value
+        2. value(fraction%)
+        3. fraction%
+        '''
+
         df = pd.read_table(self.stat_file, header=None, sep=':', dtype=str)
         dic = dict(zip(df.iloc[:, 0], df.iloc[:, 1].str.strip()))
         metrics = dict()
-        for key, value in dic.items():
+        for metric_name, string in dic.items():
             bool_fraction = False
-            if '%' in value:
+            bool_value = False 
+            if '%' in string:
                 bool_fraction = True
+                if "(" in string:
+                    bool_value = True
             chars = [',', '%', ')']
-            for c in chars:
-                value = value.replace(c, '')
-            fraction = None
-            try:
-                number, fraction = value.split('(')
-            except ValueError:
-                number = value
-            if not number.isnumeric():
-                try:
-                    number = float(number)
-                    if bool_fraction:
-                        number = round(number / 100, 4)
-                except ValueError:
-                    pass
-            else:
-                number = int(number)
-            metrics[key] = number
-            if fraction:
-                fraction = round(float(fraction) / 100, 4)
-                metrics[key + ' Fraction'] = fraction
+            for character in chars:
+                string = string.replace(character, '')
+            
+            if bool_fraction:
+                if bool_value: # case 2
+                    value, fraction = string.split('(')
+                    fraction = round(float(fraction) / 100, 4)
+                    metrics[metric_name] = int(value)
+                    metrics[metric_name + ' Fraction'] = fraction
+                else: # case 3
+                    fraction = round(float(string) / 100, 4)
+                    metrics[metric_name] = fraction
+            else: # case 1
+                value = string
+                if '.' in string:
+                    try:
+                        value = round(float(string), 4)
+                    except ValueError:
+                        pass
+                else:
+                    try:
+                        value = int(string)
+                    except ValueError:
+                        pass
+                metrics[metric_name] = value
+
         self.content_dict['metric'][self.step_name + '_summary'] = metrics
 
     def add_content_item(self, slot, **kwargs):

@@ -14,7 +14,7 @@ class Tests(unittest.TestCase):
     def setUp(self):
         self.test_dir = "/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/multi_tests/"
 
-    @unittest.skip("pass")
+    #@unittest.skip("pass")
     def test_rna(self):
         assay = 'rna'
         os.chdir(self.test_dir + assay)

@@ -1,0 +1,27 @@
+import unittest
+import pandas as pd
+import os
+from collections import namedtuple
+from celescope.tools.Step import Step
+
+class Tests(unittest.TestCase):
+
+    def setUp(self):
+        pass    
+    
+    def test_stat_to_metric(self):
+        os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/multi_tests/rna')
+        args_dict = {
+            'sample': 'test1',
+            'assay': 'rna',
+            'thread': 1,
+            'outdir': 'test1/06.analysis',
+            'debug': True,
+        }
+        Args = namedtuple('Args', args_dict.keys())
+        args = Args(**args_dict)
+
+        obj = Step(args, 'analysis')
+        obj.stat_to_metric()
+        print(obj.content_dict['metric'])
+
