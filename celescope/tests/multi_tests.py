@@ -5,6 +5,7 @@ import unittest
 import os
 import subprocess
 import shutil
+import glob
 
 
 
@@ -30,8 +31,7 @@ class Tests(unittest.TestCase):
         if os.path.exists("test1"):
             shutil.rmtree("test1")
         subprocess.check_call('sh ./shell/test1.sh', shell=True)
-        assert os.path.exists("test1/*.count_vdj/stat.txt")
-
+        stat_file = glob.glob("test1/*.count_vdj/stat.txt")[0]
 
 
 if __name__ == '__main__':
