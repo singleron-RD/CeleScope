@@ -27,11 +27,11 @@ np.random.seed(0)
 def report_prepare(count_file, downsample_file, step_obj):
 
     df0 = pd.read_table(downsample_file, header=0)
-    step_obj.report.add_data_item(percentile=df0['percent'].tolist())
-    step_obj.report.add_data_item(MedianGeneNum=df0['median_geneNum'].tolist())
-    step_obj.report.add_data_item(Saturation=df0['saturation'].tolist())
-    step_obj.report.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_file))
-    step_obj.report.add_data_item(umi_summary=True)
+    step_obj.add_data_item(percentile=df0['percent'].tolist())
+    step_obj.add_data_item(MedianGeneNum=df0['median_geneNum'].tolist())
+    step_obj.add_data_item(Saturation=df0['saturation'].tolist())
+    step_obj.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_file))
+    step_obj.add_data_item(umi_summary=True)
 
 def hd(x, y):
     return len([i for i in range(len(x)) if x[i] != y[i]])
