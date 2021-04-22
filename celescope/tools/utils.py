@@ -43,7 +43,7 @@ def add_log(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if hasattr(args[0], 'debug') and args[0].debug:
+        if args and hasattr(args[0], 'debug') and args[0].debug:
             logger.setLevel(10) # debug
 
         logger.info('start...')

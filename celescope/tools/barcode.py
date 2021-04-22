@@ -7,27 +7,22 @@ import sys
 import glob
 import pandas as pd
 import pysam
+
 from collections import defaultdict, Counter
 from itertools import combinations, permutations, islice
 from xopen import xopen
-from celescope.tools.utils import *
+
+import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from .Chemistry import Chemistry
-from celescope.tools.Step import Step
+from celescope.tools.Chemistry import Chemistry
+from celescope.tools.Step import Step, s_common
 
 
-barcode_corrected_num = 0
-
-# 定义输出格式
-stat_info = '''
-    Raw Reads: %s
-    Valid Reads: %s(%s)
-    Q30 of Barcodes: %.2f%%
-    Q30 of UMIs: %.2f%%
-'''
+def seq_ranges(seq, pattern_dict):
+    # get subseq with intervals in arr and concatenate
+    return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
 
 
-# 生成错配字典
 def generate_mis_seq(seq, n=1, bases='ACGTN'):
     # 以随机bases中的碱基替换seq中的n个位置，产生的错配字典
     # 返回字典，错配序列为key，
@@ -62,7 +57,7 @@ def generate_mis_seq(seq, n=1, bases='ACGTN'):
     return(res)
 
 
-@add_log
+@utils.add_log
 def generate_seq_dict(seqlist, n=1):
     seq_dict = {}
     with open(seqlist, 'r') as fh:
@@ -81,7 +76,7 @@ def generate_seq_dict(seqlist, n=1):
     return seq_dict
 
 
-@add_log
+@utils.add_log
 def parse_pattern(pattern):
     # 解析接头结构，返回接头结构字典
     # key: 字母表示的接头, value: 碱基区间列表
@@ -114,6 +109,7 @@ def get_scope_bc(chemistry):
 
 def read_fastq(f):
     """
+    Deprecated!
     Return tuples: (name, sequence, qualities).
     qualities is a string and it contains the unmodified, encoded qualities.
     """
@@ -157,21 +153,6 @@ def no_polyT(seq, strictT=0, minT=10):
         return False
 
 
-def no_barcode(seq_arr, mis_dict, err_tolerance=1):
-    global barcode_corrected_num
-    tmp = [mis_dict[seq][0:2] if seq in mis_dict else (
-        'X', 100) for seq in seq_arr]
-    err = sum([t[1] for t in tmp])
-    if err > err_tolerance:
-        return True
-    else:
-        if err > 0:
-            barcode_corrected_num += 1
-            return ''.join([t[0] for t in tmp])
-        else:
-            return "correct"
-
-
 def no_linker(seq, linker_dict):
     return False if seq in linker_dict else True
 
@@ -192,315 +173,303 @@ def check_seq(seq_file, pattern_dict, seq_abbr):
                     f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
 
 
-@add_log
-def merge_fastq(fq1, fq2, sample, outdir):
-    '''
-    merge fastq if len(fq1) > 1
-    '''
-    fq1_list = fq1.split(",")
-    fq2_list = fq2.split(",")
-    if len(fq1_list) == 0:
-        raise Exception('empty fastq file path!')
-    elif len(fq1_list) == 1:
-        fq1_file, fq2_file = fq1, fq2
-    else:
-        fastq_dir = f'{outdir}/../merge_fastq'
-        if not os.path.exists(fastq_dir):
-            os.system('mkdir -p %s' % fastq_dir)
-        fq1_file = f"{fastq_dir}/{sample}_1.fq.gz"
-        fq2_file = f"{fastq_dir}/{sample}_2.fq.gz"
-        fq1_files = " ".join(fq1_list)
-        fq2_files = " ".join(fq2_list)
-        fq1_cmd = f"cat {fq1_files} > {fq1_file}"
-        fq2_cmd = f"cat {fq2_files} > {fq2_file}"
-        merge_fastq.logger.info(fq1_cmd)
-        os.system(fq1_cmd)
-        merge_fastq.logger.info(fq2_cmd)
-        os.system(fq2_cmd)
-    return fq1_file, fq2_file
+class Barcode(Step):
 
+    '''barcode step class
+    '''   
+    def __init__(self, args, step_name):
+        Step.__init__(self, args, step_name)
 
-@add_log
-def run(args):
-    # init
-    outdir = args.outdir
-    sample = args.sample
-    fq1 = args.fq1
-    fq2 = args.fq2
-    fq1_list = fq1.split(",")
-    fq2_list = fq2.split(",")
-    fq_number = len(fq1_list)
-
-    # get chemistry
-    if args.chemistry == 'auto':
-            ch = Chemistry(fq1)
-            chemistry_list = ch.check_chemistry()
-    else:
-        chemistry_list = [args.chemistry] * fq_number
-
-    barcode_qual_Counter = Counter()
-    umi_qual_Counter = Counter()
-    C_U_base_Counter = Counter()
-
-    # prepare
-    if args.gzip:
-        suffix = ".gz"
-    else:
-        suffix = ""
-    out_fq2 = f'{args.outdir}/{args.sample}_2.fq{suffix}'
-    fh3 = xopen.xopen(out_fq2, 'w')
-
-    (total_num, clean_num, no_polyT_num, lowQual_num,
-        no_linker_num, no_barcode_num) = (0, 0, 0, 0, 0, 0)
-    Barcode_dict = defaultdict(int)
-
-    if args.nopolyT:
-        fh1_without_polyT = xopen(outdir + '/noPolyT_1.fq', 'w')
-        fh2_without_polyT = xopen(outdir + '/noPolyT_2.fq', 'w')
-
-    if args.noLinker:
-        fh1_without_linker = xopen(outdir + '/noLinker_1.fq', 'w')
-        fh2_without_linker = xopen(outdir + '/noLinker_2.fq', 'w')
-
-    bool_probe = False
-    if args.probe_file and args.probe_file != 'None':
-        bool_probe = True
-        count_dic = genDict(dim=3)
-        valid_count_dic = genDict(dim=2)
-        probe_dic = read_fasta(args.probe_file)
-        reads_without_probe = 0
-
-    # process
-    if fq_number != len(fq2_list):
-        raise Exception('fastq1 and fastq2 do not have same file number!')
-    for i in range(fq_number):
-
-        chemistry = chemistry_list[i]
-        lowNum = int(args.lowNum)
-        run.logger.info(f'lowQual score: {args.lowQual}')
-        lowQual = int(args.lowQual)
-        if chemistry == 'scopeV1':
-            lowNum = min(0, lowNum)
-            lowQual = max(10, lowQual)
-            barcode.logger.info(f'scopeV1: lowNum={lowNum}, lowQual={lowQual} ')
-        # get linker and whitelist
-        bc_pattern = __PATTERN_DICT__[chemistry]
-        if (bc_pattern):
-            (linker, whitelist) = get_scope_bc(chemistry)
+        self.fq1_list = args.fq1.split(",")
+        self.fq2_list = args.fq2.split(",")
+        self.fq_number = len(self.fq1_list)
+        if self.fq_number != len(self.fq2_list):
+            raise Exception('fastq1 and fastq2 do not have same file number!')
+        if args.chemistry == 'auto':
+                ch = Chemistry(args.fq1)
+                self.chemistry_list = ch.check_chemistry()
         else:
-            bc_pattern = args.pattern
-            linker = args.linker
-            whitelist = args.whitelist
-        if not bc_pattern:
-            raise Exception("invalid bc_pattern!")
+            self.chemistry_list = [args.chemistry] * self.fq_number
+        self.barcode_corrected_num = 0
+        self.total_num = 0
+        self.clean_num = 0
+        self.no_polyT_num = 0
+        self.lowQual_num = 0
+        self.no_linker_num = 0
+        self.no_barcode_num = 0
+        self.barcode_qual_Counter = Counter()
+        self.umi_qual_Counter = Counter()
+        self.C_U_base_Counter = Counter()
+        if args.gzip:
+            suffix = ".gz"
+        else:
+            suffix = ""
+        self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
+        self.Barcode_dict = defaultdict(int)
+        self.nopolyT = args.nopolyT
+        self.noLinker = args.noLinker
+        self.bool_probe = False
+        if args.probe_file and args.probe_file != 'None':
+            self.bool_probe = True
+            self.probe_count_dic = utils.genDict(dim=3)
+            self.valid_count_dic = utils.genDict(dim=2)
+            self.probe_dic = utils.read_fasta(args.probe_file)
+            self.reads_without_probe = 0
+        self.pattern = args.pattern
+        self.linker = args.linker
+        self.whitelist = args.whitelist
+        self.lowNum = args.lowNum
+        self.lowQual = args.lowQual
+        self.allowNoPolyT = args.allowNoPolyT
+        self.allowNoLinker = args.allowNoLinker
 
-        # parse pattern to dict, C8L10C8L10C8U8
-        # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
-        # [[44, 52]], 'L': [[8, 18], [26, 36]]})
-        pattern_dict = parse_pattern(bc_pattern)
 
-        bool_T = True if 'T' in pattern_dict else False
-        bool_L = True if 'L' in pattern_dict else False
-        bool_whitelist = (whitelist is not None) and whitelist != "None"
-        C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
-        # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
-        if bool_whitelist:
-            barcode_dict = generate_seq_dict(whitelist, n=1)
-        if bool_L:
-            linker_dict = generate_seq_dict(linker, n=2)
-            # check linker
-            check_seq(linker, pattern_dict, "L")
-
-        fq1 = pysam.FastxFile(fq1_list[i], persist=False)
-        fq2 = pysam.FastxFile(fq2_list[i], persist=False)
-
-        for entry1 in fq1:
-            entry2 = fq2.__next__()
-            header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
-            header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
-            if total_num > 0 and total_num % 1000000 == 0:
-                barcode.logger.info(
-                    f'processed reads: {format_number(total_num)}.'
-                    f'valid reads: {format_number(clean_num)}.'
-                )
-
-            total_num += 1
-
-            # polyT filter
-            if bool_T and (not args.allowNoPolyT):
-                polyT = seq_ranges(seq1, pattern_dict['T'])
-                if no_polyT(polyT):
-                    no_polyT_num += 1
-                    if args.nopolyT:
-                        fh1_without_polyT.write(
-                            '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                        fh2_without_polyT.write(
-                            '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
-                    continue
-
-            # lowQual filter
-            C_U_quals_ascii = seq_ranges(
-                qual1, pattern_dict['C'] + pattern_dict['U'])
-            # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
-            if low_qual(C_U_quals_ascii, lowQual, lowNum):
-                lowQual_num += 1
-                continue
-
-            # linker filter
-            barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
-            raw_cb = ''.join(barcode_arr)
-            if bool_L and (not args.allowNoLinker):
-                linker = seq_ranges(seq1, pattern_dict['L'])
-                if (no_linker(linker, linker_dict)):
-                    no_linker_num += 1
-
-                    if args.noLinker:
-                        fh1_without_linker.write(
-                            '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                        fh2_without_linker.write(
-                            '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
-                    continue
-
-            # barcode filter
-            # barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
-            # raw_cb = ''.join(barcode_arr)
-            res = "correct"
-            if bool_whitelist:
-                res = no_barcode(barcode_arr, barcode_dict)
-            if res is True:
-                no_barcode_num += 1
-                continue
-            elif res == "correct":
-                cb = raw_cb
+    def no_barcode(self, seq_arr, mis_dict, err_tolerance=1):
+        tmp = [mis_dict[seq][0:2] if seq in mis_dict else (
+            'X', 100) for seq in seq_arr]
+        err = sum([t[1] for t in tmp])
+        if err > err_tolerance:
+            return True
+        else:
+            if err > 0:
+                self.barcode_corrected_num += 1
+                return ''.join([t[0] for t in tmp])
             else:
-                cb = res
-
-            umi = seq_ranges(seq1, pattern_dict['U'])
-            Barcode_dict[cb] += 1
-            clean_num += 1
-            read_name_probe = 'None'
-
-            if bool_probe:
-                # valid count
-                valid_count_dic[cb][umi] += 1
-
-                # output probe UMi and read count
-                find_probe = False
-                for probe_name in probe_dic:
-                    probe_seq = probe_dic[probe_name]
-                    probe_seq = probe_seq.upper()
-                    if seq1.find(probe_seq) != -1:
-                        count_dic[probe_name][cb][umi] += 1
-                        read_name_probe = probe_name
-                        find_probe = True
-                        break
-
-                if not find_probe:
-                    reads_without_probe += 1
-
-            barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
-            umi_qual_Counter.update(C_U_quals_ascii[C_len:])
-            C_U_base_Counter.update(raw_cb + umi)
-
-            # new readID: @barcode_umi_old readID
-            fh3.write(f'@{cb}_{umi}_{read_name_probe}_{total_num}\n{seq2}\n+\n{qual2}\n')
-        barcode.logger.info(fq1_list[i] + ' finished.')
-
-    fh3.close()
-
-    # logging
-    if total_num % 1000000 != 0:
-        barcode.logger.info(
-            f'processed reads: {format_number(total_num)}. '
-            f'valid reads: {format_number(clean_num)}. '
-        )
-
-    barcode.logger.info(f'no polyT reads number : {no_polyT_num}')
-    barcode.logger.info(f'low qual reads number: {lowQual_num}')
-    barcode.logger.info(f'no_linker: {no_linker_num}')
-    barcode.logger.info(f'no_barcode: {no_barcode_num}')
-
-    if clean_num == 0:
-        raise Exception(
-            'no valid reads found! please check the --chemistry parameter.')
-
-    if bool_probe:
-        # total probe summary
-        total_umi = 0
-        total_valid_read = 0
-        for cb in valid_count_dic:
-            total_umi += len(valid_count_dic[cb])
-            total_valid_read += sum(valid_count_dic[cb].values())
-        barcode.logger.info("total umi:"+str(total_umi))
-        barcode.logger.info("total valid read:"+str(total_valid_read))
-        barcode.logger.info("reads without probe:"+str(reads_without_probe))
-
-        # probe summary
-        count_list = []
-        for probe_name in probe_dic:
-            UMI_count = 0
-            read_count = 0
-            if probe_name in count_dic:
-                for cb in count_dic[probe_name]:
-                    UMI_count += len(count_dic[probe_name][cb])
-                    read_count += sum(count_dic[probe_name][cb].values())
-            count_list.append(
-                {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
-
-        df_count = pd.DataFrame(count_list, columns=[
-                                "probe_name", "read_count", "UMI_count"])
-
-        def format_percent(x):
-            x = str(round(x*100, 2))+"%"
-            return x
-        df_count["read_fraction"] = (
-            df_count["read_count"]/total_valid_read).apply(format_percent)
-        df_count["UMI_fraction"] = (
-            df_count["UMI_count"]/total_umi).apply(format_percent)
-        df_count.sort_values(by="UMI_count", inplace=True, ascending=False)
-        df_count_file = args.outdir + '/' + args.sample + '_probe_count.tsv'
-        df_count.to_csv(df_count_file, sep="\t", index=False)
-
-    # stat
-    BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(
-        30)]) / float(sum(barcode_qual_Counter.values())) * 100
-    UMIsQ30 = sum([umi_qual_Counter[k] for k in umi_qual_Counter if k >= ord2chr(
-        30)]) / float(sum(umi_qual_Counter.values())) * 100
-
-    global stat_info
-    def cal_percent(x): return "{:.2%}".format((x + 0.0) / total_num)
-    with open(args.outdir + '/stat.txt', 'w') as fh:
-        """
-        Raw Reads: %s
-        Valid Reads: %s(%s)
-        Q30 of Barcodes: %.2f%%
-        Q30 of UMIs: %.2f%%
-        """
-        stat_info = stat_info % (format_number(total_num), format_number(clean_num),
-                                 cal_percent(clean_num), BarcodesQ30,
-                                 UMIsQ30)
-        stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
-        fh.write(stat_info)
-    return out_fq2
+                return "correct"
 
 
-@add_log
-def fastqc(args, out_fq2):
-    cmd = ['fastqc', '-t', str(args.thread), '-o', args.outdir, out_fq2]
-    fastqc.logger.info('%s' % (' '.join(cmd)))
-    subprocess.check_call(cmd)
+    @utils.add_log
+    def run(self):
+
+        fh3 = xopen(self.out_fq2, 'w')
+
+        if self.nopolyT:
+            fh1_without_polyT = xopen(self.outdir + '/noPolyT_1.fq', 'w')
+            fh2_without_polyT = xopen(self.outdir + '/noPolyT_2.fq', 'w')
+
+        if self.noLinker:
+            fh1_without_linker = xopen(self.outdir + '/noLinker_1.fq', 'w')
+            fh2_without_linker = xopen(self.outdir + '/noLinker_2.fq', 'w')
+
+        for i in range(self.fq_number):
+
+            chemistry = self.chemistry_list[i]
+            lowNum = int(self.lowNum)
+            Barcode.run.logger.info(f'lowQual score: {self.lowQual}')
+            lowQual = int(self.lowQual)
+            if chemistry == 'scopeV1':
+                lowNum = min(0, lowNum)
+                lowQual = max(10, lowQual)
+                Barcode.run.logger.info(f'scopeV1: lowNum={lowNum}, lowQual={lowQual} ')
+            # get linker and whitelist
+            bc_pattern = __PATTERN_DICT__[chemistry]
+            if (bc_pattern):
+                (linker, whitelist) = get_scope_bc(chemistry)
+            else:
+                bc_pattern = self.pattern
+                linker = self.linker
+                whitelist = self.whitelist
+            if not bc_pattern:
+                raise Exception("invalid bc_pattern!")
+
+            # parse pattern to dict, C8L10C8L10C8U8
+            # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
+            # [[44, 52]], 'L': [[8, 18], [26, 36]]})
+            pattern_dict = parse_pattern(bc_pattern)
+
+            bool_T = True if 'T' in pattern_dict else False
+            bool_L = True if 'L' in pattern_dict else False
+            bool_whitelist = (whitelist is not None) and whitelist != "None"
+            C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
+            # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
+            if bool_whitelist:
+                barcode_dict = generate_seq_dict(whitelist, n=1)
+            if bool_L:
+                linker_dict = generate_seq_dict(linker, n=2)
+                # check linker
+                check_seq(linker, pattern_dict, "L")
+
+            fq1 = pysam.FastxFile(self.fq1_list[i], persist=False)
+            fq2 = pysam.FastxFile(self.fq2_list[i], persist=False)
+
+            for entry1 in fq1:
+                entry2 = next(fq2)
+                header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
+                header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
+                if self.total_num > 0 and self.total_num % 1000000 == 0:
+                    Barcode.run.logger.info(
+                        f'processed reads: {utils.format_number(self.total_num)}.'
+                        f'valid reads: {utils.format_number(self.clean_num)}.'
+                    )
+
+                self.total_num += 1
+
+                # polyT filter
+                if bool_T and (not self.allowNoPolyT):
+                    polyT = seq_ranges(seq1, pattern_dict['T'])
+                    if no_polyT(polyT):
+                        self.no_polyT_num += 1
+                        if self.nopolyT:
+                            fh1_without_polyT.write(
+                                '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                            fh2_without_polyT.write(
+                                '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+                        continue
+
+                # lowQual filter
+                C_U_quals_ascii = seq_ranges(
+                    qual1, pattern_dict['C'] + pattern_dict['U'])
+                # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
+                if low_qual(C_U_quals_ascii, lowQual, lowNum):
+                    self.lowQual_num += 1
+                    continue
+
+                # linker filter
+                barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
+                raw_cb = ''.join(barcode_arr)
+                if bool_L and (not self.allowNoLinker):
+                    linker = seq_ranges(seq1, pattern_dict['L'])
+                    if (no_linker(linker, linker_dict)):
+                        self.no_linker_num += 1
+
+                        if self.noLinker:
+                            fh1_without_linker.write(
+                                '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                            fh2_without_linker.write(
+                                '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+                        continue
+
+                # barcode filter
+                # barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
+                # raw_cb = ''.join(barcode_arr)
+                res = "correct"
+                if bool_whitelist:
+                    res = self.no_barcode(barcode_arr, barcode_dict)
+                if res is True:
+                    self.no_barcode_num += 1
+                    continue
+                elif res == "correct":
+                    cb = raw_cb
+                else:
+                    cb = res
+
+                umi = seq_ranges(seq1, pattern_dict['U'])
+                self.Barcode_dict[cb] += 1
+                self.clean_num += 1
+                read_name_probe = 'None'
+
+                if self.bool_probe:
+                    # valid count
+                    self.valid_count_dic[cb][umi] += 1
+
+                    # output probe UMi and read count
+                    find_probe = False
+                    for probe_name in self.probe_dic:
+                        probe_seq = self.probe_dic[probe_name]
+                        probe_seq = probe_seq.upper()
+                        if seq1.find(probe_seq) != -1:
+                            self.probe_count_dic[probe_name][cb][umi] += 1
+                            read_name_probe = probe_name
+                            find_probe = True
+                            break
+
+                    if not find_probe:
+                        self.reads_without_probe += 1
+
+                self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
+                self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
+                self.C_U_base_Counter.update(raw_cb + umi)
+
+                # new readID: @barcode_umi_old readID
+                fh3.write(f'@{cb}_{umi}_{read_name_probe}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+            Barcode.run.logger.info(self.fq1_list[i] + ' finished.')
+        fh3.close()
+
+        # logging
+        if self.total_num % 1000000 != 0:
+            Barcode.run.logger.info(
+                f'processed reads: {utils.format_number(self.total_num)}. '
+                f'valid reads: {utils.format_number(self.clean_num)}. '
+            )
+
+        Barcode.run.logger.info(f'no polyT reads number : {self.no_polyT_num}')
+        Barcode.run.logger.info(f'low qual reads number: {self.lowQual_num}')
+        Barcode.run.logger.info(f'no_linker: {self.no_linker_num}')
+        Barcode.run.logger.info(f'no_barcode: {self.no_barcode_num}')
+
+        if self.clean_num == 0:
+            raise Exception(
+                'no valid reads found! please check the --chemistry parameter.')
+
+        if self.bool_probe:
+            # total probe summary
+            total_umi = 0
+            total_valid_read = 0
+            for cb in self.valid_count_dic:
+                total_umi += len(self.valid_count_dic[cb])
+                total_valid_read += sum(self.valid_count_dic[cb].values())
+
+            # probe summary
+            count_list = []
+            for probe_name in self.probe_dic:
+                UMI_count = 0
+                read_count = 0
+                if probe_name in self.count_dic:
+                    for cb in self.count_dic[probe_name]:
+                        UMI_count += len(self.count_dic[probe_name][cb])
+                        read_count += sum(self.count_dic[probe_name][cb].values())
+                count_list.append(
+                    {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
+
+            df_count = pd.DataFrame(count_list, columns=[
+                                    "probe_name", "read_count", "UMI_count"])
+
+            def format_percent(x):
+                x = str(round(x*100, 2))+"%"
+                return x
+            df_count["read_fraction"] = (
+                df_count["read_count"]/total_valid_read).apply(format_percent)
+            df_count["UMI_fraction"] = (
+                df_count["UMI_count"]/total_umi).apply(format_percent)
+            df_count.sort_values(by="UMI_count", inplace=True, ascending=False)
+            df_count_file = self.outdir + '/' + self.sample + '_probe_count.tsv'
+            df_count.to_csv(df_count_file, sep="\t", index=False)
+
+        # stat
+        BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
+            30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
+        UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= ord2chr(
+            30)]) / float(sum(self.umi_qual_Counter.values())) * 100
+
+        def cal_percent(x): return "{:.2%}".format((x + 0.0) / self.total_num)
+        stat_info = '''
+            Raw Reads: %s
+            Valid Reads: %s(%s)
+            Q30 of Barcodes: %.2f%%
+            Q30 of UMIs: %.2f%%
+        '''
+        with open(self.outdir + '/stat.txt', 'w') as fh:
+            stat_info = stat_info % (utils.format_number(self.total_num), utils.format_number(self.clean_num),
+                                    cal_percent(self.clean_num), BarcodesQ30,
+                                    UMIsQ30)
+            stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
+            fh.write(stat_info)
+        
+        self.clean_up()
 
 
-@add_log
+    @utils.add_log
+    def fastqc(self):
+        cmd = ['fastqc', '-t', str(self.thread), '-o', self.outdir, self.out_fq2]
+        Barcode.fastqc.logger.info('%s' % (' '.join(cmd)))
+        subprocess.check_call(cmd)
+
+
+@utils.add_log
 def barcode(args):
     step_name = "barcode"
-    step = Step(args, step_name)
-
-    out_fq2 = run(args)
-
-    fastqc(args, out_fq2)
-
-    step.clean_up()
+    barcode_obj = Barcode(args, step_name)
+    barcode_obj.run()
 
 
 def get_opts_barcode(parser, sub_program=True):

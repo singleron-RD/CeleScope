@@ -3,7 +3,6 @@ import sys
 import json
 import numpy as np
 import pandas as pd
-import glob
 import celescope.tools.utils as utils
 from celescope.tools.Step import Step
 
