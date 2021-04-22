@@ -74,9 +74,9 @@ class Analysis_rna(Step, AnalysisMixin):
 
     def run(self):
         seurat(self.sample, self.outdir, self.matrix_file, self.save_rds)
-        self.run_analysis()
         if self.auto_assign_bool:
             auto_assign(self.sample, self.outdir, self.type_marker_tsv)
+        self.run_analysis()
         self.add_data_item(cluster_tsne=self.cluster_tsne)
         self.add_data_item(gene_tsne=self.gene_tsne)
         self.add_data_item(table_dict=self.table_dict)

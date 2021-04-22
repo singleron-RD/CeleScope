@@ -248,7 +248,7 @@ def run(args):
     else:
         suffix = ""
     out_fq2 = f'{args.outdir}/{args.sample}_2.fq{suffix}'
-    fh3 = xopen(out_fq2, 'w')
+    fh3 = xopen.xopen(out_fq2, 'w')
 
     (total_num, clean_num, no_polyT_num, lowQual_num,
         no_linker_num, no_barcode_num) = (0, 0, 0, 0, 0, 0)
