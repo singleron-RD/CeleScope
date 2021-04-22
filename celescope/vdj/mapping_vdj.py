@@ -191,13 +191,13 @@ mixcr exportAlignments \
 @add_log
 def mapping_vdj(args):
 
-    step_name = "mapping_vdj"
+    step_name = f"{args.type}_mapping_vdj"
     step = Step(args, step_name)
 
     sample = args.sample
     outdir = args.outdir
     fq = args.fq
-    type = args.type
+    receptor_type = args.type
     debug = args.debug
     assay = args.assay
     thread = int(args.thread)
@@ -208,7 +208,7 @@ def mapping_vdj(args):
     alignments = mixcr(outdir, sample, input_file, thread, species)
 
     # summary
-    summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus)
+    summary(input_file, alignments, receptor_type, outdir, sample, assay, debug, not_consensus)
 
     step.clean_up()
 

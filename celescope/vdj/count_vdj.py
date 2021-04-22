@@ -1,8 +1,4 @@
 import glob
-from celescope.vdj.__init__ import CHAINS
-from celescope.tools.report import reporter
-from celescope.tools.utils import *
-from celescope.tools.Analysis import Analysis
 import gzip
 import os
 import pandas as pd
@@ -15,7 +11,13 @@ import re
 import json
 mpl.use('Agg')
 from matplotlib import pyplot as plt
-from celescope.tools.Step import Step
+
+from celescope.tools.Step import Step, s_common
+from celescope.vdj.__init__ import CHAINS
+from celescope.tools.report import reporter
+import celescope.tools.utils as utils
+from celescope.tools.Analysis import Analysis
+
 
 def report_prepare(df, outdir):
 
@@ -37,10 +39,10 @@ def report_prepare(df, outdir):
         json.dump(data, fh)
 
 
-@add_log
+@utils.add_log
 def count_vdj(args):
 
-    step_name = "count_vdj"
+    step_name = f"{args.type}_count_vdj"
     step = Step(args, step_name)
 
     sample = args.sample
@@ -67,7 +69,7 @@ def count_vdj(args):
     else:
         match_bool = True
     if match_bool:
-        match_cell_barcodes, match_cell_number = read_barcode_file(match_dir)
+        match_cell_barcodes, match_cell_number = utils.read_barcode_file(match_dir)
 
     cell_summary_row_list = []
 
@@ -325,7 +327,7 @@ def count_vdj(args):
         (cell_summary.total_count.astype("float")) * 100
     cell_summary["percent"] = cell_summary["percent"].apply(
         lambda x: round(x, 2))
-    cell_summary["count"] = cell_summary["count"].apply(format_number)
+    cell_summary["count"] = cell_summary["count"].apply(utils.format_number)
 
     def percent_str_func(row):
         need_percent = bool(
