@@ -1,7 +1,5 @@
 import os
 import re
-import io
-import gzip
 import subprocess
 import sys
 import glob
@@ -9,7 +7,7 @@ import pandas as pd
 import pysam
 
 from collections import defaultdict, Counter
-from itertools import combinations, permutations, islice
+from itertools import combinations, product
 from xopen import xopen
 
 import celescope.tools.utils as utils
@@ -23,57 +21,9 @@ def seq_ranges(seq, pattern_dict):
     return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
 
 
-def generate_mis_seq(seq, n=1, bases='ACGTN'):
-    # 以随机bases中的碱基替换seq中的n个位置，产生的错配字典
-    # 返回字典，错配序列为key，
-    # (正确序列，错配碱基数目，错配碱基位置，原始碱基，新碱基)组成的元组
-    # 作为字典的值
-
-    length = len(seq)
-    assert length >= n, "err number should not be larger than sequence length!"
-    res = {}
-    seq_arr = list(seq)
-    pos_group = list(combinations(range(0, length), n))
-    bases_group = list(permutations(bases, n))
-
-    for g in pos_group:
-        for b in bases_group:
-            seq_tmp = seq_arr[:]
-            mis_num = n
-            raw_tmp = []
-            for i in range(n):
-                raw_base = seq_tmp[g[i]]
-                new_base = b[i]
-
-                if raw_base == new_base:
-                    mis_num -= 1
-
-                raw_tmp.append(raw_base)
-                seq_tmp[g[i]] = new_base
-
-            if mis_num != 0:
-                res[''.join(seq_tmp)] = (seq, mis_num, ','.join(
-                    [str(i) for i in g]), ','.join(raw_tmp), ','.join(b))
-    return(res)
-
-
-@utils.add_log
-def generate_seq_dict(seqlist, n=1):
-    seq_dict = {}
-    with open(seqlist, 'r') as fh:
-        for seq in fh:
-            seq = seq.strip()
-            if seq == '':
-                continue
-            seq_dict[seq] = (seq, 0, -1, 'X', 'X')
-            for k, v in generate_mis_seq(seq, n).items():
-                # duplicate key
-                if k in seq_dict:
-                    generate_seq_dict.logger.warning('barcode %s, %s\n%s, %s' %
-                                                     (v, k, seq_dict[k], k))
-                else:
-                    seq_dict[k] = v
-    return seq_dict
+def get_seq_list(seq, pattern_dict, abbr):
+    # get subseq list
+    return [seq[item[0]: item[1]] for item in pattern_dict[abbr]]
 
 
 @utils.add_log
@@ -173,6 +123,69 @@ def check_seq(seq_file, pattern_dict, seq_abbr):
                     f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
 
 
+def get_mismatch(seq, n_mismatch=1, bases='ACGTN'):
+    '''
+    choose locations where there's going to be a mismatch using combinations
+    and then construct all satisfying lists using product
+
+    Return:
+    all mismatch <= n_mismatch dict. Key: mismatch_seq, value: orig_seq
+    '''
+    seq_set = set()
+    mismatch_dict = {}
+    seq_len = len(seq)
+    if n_mismatch > seq_len:
+        n_mismatch = seq_len
+    for locs in combinations(range(seq_len), n_mismatch):
+        seq_locs = [[base] for base in seq]
+        for loc in locs:
+            seq_locs[loc] = list(bases)
+        for poss in product(*seq_locs):
+            seq_set.add(''.join(poss))
+    for mismatch_seq in seq_set:
+        mismatch_dict[mismatch_seq] = seq
+    return mismatch_dict
+
+
+@utils.add_log
+def get_all_mismatch(seq_list, n_mismatch=1):
+    '''
+    Return:
+    all mismatch <= n_mismatch dict. Key: mismatch_seq, value: orig_seq from seq_file
+    '''
+    mismatch_dict = {}
+    correct_set = set()
+
+    for seq in seq_list:
+        seq = seq.strip()
+        if seq == '':
+            continue
+        correct_set.add(seq)
+        mismatch_dict.update(get_mismatch(seq, n_mismatch=n_mismatch))
+
+    return correct_set, mismatch_dict
+
+
+def check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list):
+    '''
+    Return bool_valid, bool_corrected
+    '''
+    bool_valid = True
+    bool_corrected = False
+    corrected_seq = ''
+    for index, seq in enumerate(seq_list):
+        if seq not in correct_set_list[index]:
+            if seq not in mismatch_dict_list[index]:
+                bool_valid = False
+                return bool_valid, bool_corrected, corrected_seq
+            else:
+                bool_corrected = True
+                corrected_seq += mismatch_dict_list[index][seq]
+        else:
+            corrected_seq += seq
+    return bool_valid, bool_corrected, corrected_seq
+
+
 class Barcode(Step):
 
     '''barcode step class
@@ -191,6 +204,7 @@ class Barcode(Step):
         else:
             self.chemistry_list = [args.chemistry] * self.fq_number
         self.barcode_corrected_num = 0
+        self.linker_corrected_num = 0
         self.total_num = 0
         self.clean_num = 0
         self.no_polyT_num = 0
@@ -199,13 +213,11 @@ class Barcode(Step):
         self.no_barcode_num = 0
         self.barcode_qual_Counter = Counter()
         self.umi_qual_Counter = Counter()
-        self.C_U_base_Counter = Counter()
         if args.gzip:
             suffix = ".gz"
         else:
             suffix = ""
         self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
-        self.Barcode_dict = defaultdict(int)
         self.nopolyT = args.nopolyT
         self.noLinker = args.noLinker
         self.bool_probe = False
@@ -222,20 +234,7 @@ class Barcode(Step):
         self.lowQual = args.lowQual
         self.allowNoPolyT = args.allowNoPolyT
         self.allowNoLinker = args.allowNoLinker
-
-
-    def no_barcode(self, seq_arr, mis_dict, err_tolerance=1):
-        tmp = [mis_dict[seq][0:2] if seq in mis_dict else (
-            'X', 100) for seq in seq_arr]
-        err = sum([t[1] for t in tmp])
-        if err > err_tolerance:
-            return True
-        else:
-            if err > 0:
-                self.barcode_corrected_num += 1
-                return ''.join([t[0] for t in tmp])
-            else:
-                return "correct"
+         
 
 
     @utils.add_log
@@ -281,13 +280,25 @@ class Barcode(Step):
             bool_L = True if 'L' in pattern_dict else False
             bool_whitelist = (whitelist is not None) and whitelist != "None"
             C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
-            # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
+
             if bool_whitelist:
-                barcode_dict = generate_seq_dict(whitelist, n=1)
+                seq_list, _ = utils.read_one_col(whitelist)
+                barcode_correct_set, barcode_mismatch_dict = get_all_mismatch(seq_list, n_mismatch=1)
+                barcode_correct_set_list = [barcode_correct_set] * 3
+                barcode_mismatch_dict_list = [barcode_mismatch_dict] * 3
             if bool_L:
-                linker_dict = generate_seq_dict(linker, n=2)
-                # check linker
+                seq_list, _ = utils.read_one_col(linker)
                 check_seq(linker, pattern_dict, "L")
+                linker_correct_set_list = []
+                linker_mismatch_dict_list = []
+                start = 0
+                for item in pattern_dict['L']:
+                    end = start + item[1] - item[0]
+                    linker_seq_list = [seq[start:end] for seq in seq_list]
+                    linker_correct_set, linker_mismatch_dict = get_all_mismatch(linker_seq_list, n_mismatch=2)
+                    linker_correct_set_list.append(linker_correct_set)
+                    linker_mismatch_dict_list.append(linker_mismatch_dict)
+                    start = end
 
             fq1 = pysam.FastxFile(self.fq1_list[i], persist=False)
             fq2 = pysam.FastxFile(self.fq2_list[i], persist=False)
@@ -325,36 +336,36 @@ class Barcode(Step):
                     continue
 
                 # linker filter
-                barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
-                raw_cb = ''.join(barcode_arr)
                 if bool_L and (not self.allowNoLinker):
-                    linker = seq_ranges(seq1, pattern_dict['L'])
-                    if (no_linker(linker, linker_dict)):
+                    seq_list = get_seq_list(seq1, pattern_dict, 'L')
+                    bool_valid, bool_corrected, _ = check_seq_mismatch(
+                        seq_list, linker_correct_set_list, linker_mismatch_dict_list)
+                    if not bool_valid:
                         self.no_linker_num += 1
-
                         if self.noLinker:
                             fh1_without_linker.write(
                                 '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
                             fh2_without_linker.write(
                                 '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                         continue
-
+                    elif bool_corrected:
+                        self.linker_corrected_num += 1
+                
                 # barcode filter
-                # barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
-                # raw_cb = ''.join(barcode_arr)
-                res = "correct"
                 if bool_whitelist:
-                    res = self.no_barcode(barcode_arr, barcode_dict)
-                if res is True:
+                    seq_list = get_seq_list(seq1, pattern_dict, 'C')
+                    bool_valid, bool_corrected, corrected_seq = check_seq_mismatch(
+                        seq_list, barcode_correct_set_list, barcode_mismatch_dict_list)
+
+                if not bool_valid:
                     self.no_barcode_num += 1
                     continue
-                elif res == "correct":
-                    cb = raw_cb
-                else:
-                    cb = res
+                elif bool_corrected:
+                    self.barcode_corrected_num += 1
+                cb = corrected_seq
 
                 umi = seq_ranges(seq1, pattern_dict['U'])
-                self.Barcode_dict[cb] += 1
+
                 self.clean_num += 1
                 read_name_probe = 'None'
 
@@ -378,10 +389,9 @@ class Barcode(Step):
 
                 self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                 self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
-                self.C_U_base_Counter.update(raw_cb + umi)
 
                 # new readID: @barcode_umi_old readID
-                fh3.write(f'@{cb}_{umi}_{read_name_probe}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                fh3.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
             Barcode.run.logger.info(self.fq1_list[i] + ' finished.')
         fh3.close()
 
@@ -396,6 +406,8 @@ class Barcode(Step):
         Barcode.run.logger.info(f'low qual reads number: {self.lowQual_num}')
         Barcode.run.logger.info(f'no_linker: {self.no_linker_num}')
         Barcode.run.logger.info(f'no_barcode: {self.no_barcode_num}')
+        Barcode.run.logger.info(f'corrected barcode: {self.barcode_corrected_num}')
+        Barcode.run.logger.info(f'corrected linker: {self.linker_corrected_num}')
 
         if self.clean_num == 0:
             raise Exception(
@@ -414,10 +426,10 @@ class Barcode(Step):
             for probe_name in self.probe_dic:
                 UMI_count = 0
                 read_count = 0
-                if probe_name in self.count_dic:
-                    for cb in self.count_dic[probe_name]:
-                        UMI_count += len(self.count_dic[probe_name][cb])
-                        read_count += sum(self.count_dic[probe_name][cb].values())
+                if probe_name in self.probe_count_dic:
+                    for cb in self.probe_count_dic[probe_name]:
+                        UMI_count += len(self.probe_count_dic[probe_name][cb])
+                        read_count += sum(self.probe_count_dic[probe_name][cb].values())
                 count_list.append(
                     {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
 
@@ -455,6 +467,7 @@ class Barcode(Step):
             stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
             fh.write(stat_info)
         
+        self.fastqc()
         self.clean_up()
 
 
