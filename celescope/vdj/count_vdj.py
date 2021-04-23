@@ -86,7 +86,14 @@ def count_vdj(args):
     df_UMI_cell = df_UMI_sum[df_UMI_sum.UMI >= UMI_min]
     df_UMI_sum["mark"] = df_UMI_sum["UMI"].apply(
         lambda x: "CB" if (x >= UMI_min) else "UB")
-    report_prepare(df_UMI_sum, outdir + "/../")
+    
+    # data
+    df = df_UMI_sum.sort_values('UMI', ascending=False)
+    step.add_data_item(CB_num=df[df['mark'] == 'CB'].shape[0])
+    step.add_data_item(Cells=list(df.loc[df['mark'] == 'CB', 'UMI']))
+    step.add_data_item(UB_num= df[df['mark'] == 'UB'].shape[0])
+    step.add_data_item(Background=list(df.loc[df['mark'] == 'UB', 'UMI']))
+
 
     cell_barcodes = set(df_UMI_cell.barcode)
     cell_number = len(cell_barcodes)
