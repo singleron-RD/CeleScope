@@ -367,10 +367,10 @@ class Barcode(Step):
                 umi = seq_ranges(seq1, pattern_dict['U'])
 
                 self.clean_num += 1
-                read_name_probe = 'None'
 
                 if self.bool_probe:
                     # valid count
+                    read_name_probe = 'None'
                     self.valid_count_dic[cb][umi] += 1
 
                     # output probe UMi and read count
@@ -390,7 +390,6 @@ class Barcode(Step):
                 self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                 self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
-                # new readID: @barcode_umi_old readID
                 fh3.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
             Barcode.run.logger.info(self.fq1_list[i] + ' finished.')
         fh3.close()
@@ -406,8 +405,8 @@ class Barcode(Step):
         Barcode.run.logger.info(f'low qual reads number: {self.lowQual_num}')
         Barcode.run.logger.info(f'no_linker: {self.no_linker_num}')
         Barcode.run.logger.info(f'no_barcode: {self.no_barcode_num}')
-        Barcode.run.logger.info(f'corrected barcode: {self.barcode_corrected_num}')
         Barcode.run.logger.info(f'corrected linker: {self.linker_corrected_num}')
+        Barcode.run.logger.info(f'corrected barcode: {self.barcode_corrected_num}')
 
         if self.clean_num == 0:
             raise Exception(
