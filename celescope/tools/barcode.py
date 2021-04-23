@@ -199,8 +199,8 @@ class Barcode(Step):
         if self.fq_number != len(self.fq2_list):
             raise Exception('fastq1 and fastq2 do not have same file number!')
         if args.chemistry == 'auto':
-                ch = Chemistry(args.fq1)
-                self.chemistry_list = ch.check_chemistry()
+            ch = Chemistry(args.fq1)
+            self.chemistry_list = ch.check_chemistry()
         else:
             self.chemistry_list = [args.chemistry] * self.fq_number
         self.barcode_corrected_num = 0
