@@ -384,14 +384,14 @@ def downsample(df, cell_bc, downsample_file):
         fh.write(format_str % (0, 0, 0))
         for fraction in np.arange(0.1, 1.1, 0.1):
             umi_saturation, read_saturation, geneNum_median = sub_sample(fraction, df_cell, cell_bc, cell_read_index)
-            fh.write(format_str % (fraction, geneNum_median, read_saturation))
+            fh.write(format_str % (fraction, geneNum_median, umi_saturation))
             format_float = lambda x: round(x / 100, 4)
             res_dict["fraction"].append(round(fraction, 1))
             res_dict["umi_saturation"].append(format_float(umi_saturation))
             res_dict["read_saturation"].append(format_float(read_saturation))
             res_dict["median_gene"].append(geneNum_median)
 
-    return read_saturation, res_dict
+    return umi_saturation, res_dict
 
 
 @add_log
