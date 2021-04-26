@@ -33,7 +33,7 @@ setuptools.setup(
         'cutadapt==1.17',
         'pysam==0.16.0.1',
         'scipy>=1.0.1',
-        'numpy>=1.15.4',
+        'numpy==1.19.5',
         'pandas==0.23.4',
         'jinja2>=2.10',
         'matplotlib>=2.2.2',
