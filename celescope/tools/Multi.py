@@ -329,8 +329,8 @@ def get_read(library_id, library_path, read='1'):
         for suffix in suffix_list
     ]
     fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
-    fq_list = sorted(non_empty for non_empty in fq_list if non_empty)
-    fq_list = list(itertools.chain(*fq_list))
+    fq_list = (non_empty for non_empty in fq_list if non_empty)
+    fq_list = sorted(list(itertools.chain(*fq_list)))
     if len(fq_list) == 0:
         print("Allowed R1 patterns:")
         for pattern in read_pattern_list:
