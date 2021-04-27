@@ -12,12 +12,14 @@ import glob
 class Tests(unittest.TestCase):
 
     def setUp(self):
-        self.test_dir = "/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/multi_tests/"
+        self.test_dir = "/SGRNJ/Database/script/tests/multi_tests/"
 
     #@unittest.skip("pass")
     def test_rna(self):
         assay = 'rna'
         os.chdir(self.test_dir + assay)
+        print('running ' + assay)
+        print(os.getcwd())
         subprocess.check_call('sh run_shell.sh', shell=True)
         if os.path.exists("test1"):
             shutil.rmtree("test1")
@@ -27,6 +29,7 @@ class Tests(unittest.TestCase):
     def test_vdj(self):
         assay = 'vdj'
         os.chdir(self.test_dir + assay)
+        print('running ' + assay)
         subprocess.check_call('sh run_shell.sh', shell=True)
         if os.path.exists("test1"):
             shutil.rmtree("test1")

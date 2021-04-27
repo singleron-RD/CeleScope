@@ -3,25 +3,28 @@ import os
 import glob
 import sys
 import re
-import gzip
-import pandas as pd
-import numpy as np
 import subprocess
-import time
-import argparse
-import pysam
 import importlib
 import resource
-import xopen
+import time
+import argparse
+import gzip
+import itertools
 from datetime import timedelta
 from collections import defaultdict
 from functools import wraps
 from collections import Counter
 import json
-import celescope.tools
+
+import pandas as pd
+import numpy as np
+import pysam
+import xopen
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
+import celescope.tools
 from celescope.tools.__init__ import __PATTERN_DICT__
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
@@ -385,22 +388,39 @@ def gen_stat(df, stat_file):
     df.to_csv(stat_file, sep=":", header=None, index=False)
 
 
+def get_read(library_id, library_path, read='1'):
+    read1_list = [f'_{read}', f'R{read}', f'R{read}_001']
+    fq_list = ['fq', 'fastq']
+    suffix_list = ["", ".gz"]
+    read_pattern_list = [
+        f'{library_path}/*{library_id}*{read}.{fq_str}{suffix}' 
+        for read in read1_list 
+        for fq_str in fq_list 
+        for suffix in suffix_list
+    ]
+    fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
+    fq_list = sorted(non_empty for non_empty in fq_list if non_empty)
+    fq_list = list(itertools.chain(*fq_list))
+    if len(fq_list) == 0:
+        print("Allowed R1 patterns:")
+        for pattern in read_pattern_list:
+            print(pattern)
+        raise Exception(
+            '\n'
+            f'Invalid Read{read} path! \n'
+            f'library_id: {library_id}\n'
+            f'library_path: {library_path}\n'
+        )
+    return fq_list
+
+
 def get_fq(library_id, library_path):
-    try:
-        pattern1_1 = library_path + '/' + library_id + '*' + '_1.fq.gz'
-        pattern1_2 = f'{library_path}/*{library_id}*R1.fastq.gz'
-        pattern1_3 = f'{library_path}/*{library_id}*R1_001.fastq.gz'
-        pattern2_1 = library_path + '/' + library_id + '*' + '_2.fq.gz'
-        pattern2_2 = f'{library_path}/*{library_id}*R2.fastq.gz'
-        pattern2_3 = f'{library_path}/*{library_id}*R2_001.fastq.gz'
-        fq1_list = sorted(glob.glob(pattern1_1) + glob.glob(pattern1_2) + glob.glob(pattern1_3))
-        fq2_list = sorted(glob.glob(pattern2_1) + glob.glob(pattern2_2) + glob.glob(pattern2_3))
-        fq1 = ",".join(fq1_list)
-        fq2 = ",".join(fq2_list)
-        if len(fq1) == 0:
-            sys.exit('Invalid fastq name pattern!')
-    except IndexError as e:
-        sys.exit("Mapfile Error:" + str(e))
+    fq1_list = get_read(library_id, library_path, read='1')
+    fq2_list = get_read(library_id, library_path, read='2')
+    if len(fq1_list) != len(fq2_list):
+        raise Exception("Read1 and Read2 fastq number do not match!")
+    fq1 = ",".join(fq1_list)
+    fq2 = ",".join(fq2_list)
     return fq1, fq2
 
 
