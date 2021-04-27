@@ -352,17 +352,19 @@ class Barcode(Step):
                         self.linker_corrected_num += 1
                 
                 # barcode filter
+                seq_list = get_seq_list(seq1, pattern_dict, 'C')
                 if bool_whitelist:
-                    seq_list = get_seq_list(seq1, pattern_dict, 'C')
                     bool_valid, bool_corrected, corrected_seq = check_seq_mismatch(
                         seq_list, barcode_correct_set_list, barcode_mismatch_dict_list)
 
-                if not bool_valid:
-                    self.no_barcode_num += 1
-                    continue
-                elif bool_corrected:
-                    self.barcode_corrected_num += 1
-                cb = corrected_seq
+                    if not bool_valid:
+                        self.no_barcode_num += 1
+                        continue
+                    elif bool_corrected:
+                        self.barcode_corrected_num += 1
+                    cb = corrected_seq
+                else:
+                    cb = "".join(seq_list)
 
                 umi = seq_ranges(seq1, pattern_dict['U'])
 
