@@ -1,11 +1,9 @@
-#!/bin/env python
-# coding=utf8
-
 from collections import defaultdict
 import os
 import json
 import argparse
-from celescope.tools.utils import *
+
+from celescope.tools.utils import add_log
 
 
 @add_log
@@ -31,7 +29,15 @@ def merge_report():
         data_dic = json.load(open(data_json))
         for summary in summarys:
             if summary not in data_dic.keys():
-                continue
+                # TCR and BCR data_dict has prefix
+                bool_in = False
+                for key in data_dic.keys():
+                    if key.find(summary) != -1:
+                        summary = key
+                        bool_in = True
+                if not bool_in:
+                    continue
+
             # add title
             if sample == samples[0]:
                 result_dict[summary].append(
@@ -42,9 +48,7 @@ def merge_report():
             )
 
     with open('./merge.xls', 'w') as fh:
-        for summary in summarys:
-            if summary not in data_dic.keys():
-                continue
+        for summary in result_dict.keys():
             fh.write('##' + summary + '\n')
             for k in result_dict[summary]:
                 fh.write(k + '\n')

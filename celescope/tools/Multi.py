@@ -1,11 +1,15 @@
 import os
 import glob
-import sys
 import argparse
-import re
+import itertools
 from collections import defaultdict
-from celescope.tools.utils import *
-from celescope.tools.__init__ import __PATTERN_DICT__
+
+import celescope
+from celescope.tools.utils import find_assay_init, find_step_module
+
+
+TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
+
 
 class Multi():
 
@@ -92,13 +96,21 @@ class Multi():
             raise Exception('empty mapfile!')
         return fq_dict, col4_dict
 
+    def link_data(self):
+        raw_dir = f'{self.args.outdir}/data_give/rawdata'
+        os.system('mkdir -p %s' % (raw_dir))
+        with open(raw_dir + '/ln.sh', 'w') as fh:
+            fh.write('cd %s\n' % (raw_dir))
+            for s, arr in self.fq_dict.items():
+                fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
+                fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
 
     def prepare(self):
         # parse_mapfile
         self.fq_dict, self.col4_dict = self.parse_map_col4(self.args.mapfile, self.col4_default)
 
         # link
-        link_data(self.args.outdir, self.fq_dict)      
+        self.link_data()      
 
         # mk log dir
         self.logdir = self.args.outdir + '/log'
@@ -119,10 +131,12 @@ class Multi():
                 self.outdir_dic[sample].update({step: step_outdir})
                 index += 1
     
-    def generate_cmd(self, cmd, step, sample, m, x):
+    def generate_cmd(self, cmd, step, sample, m=1, x=1):
+        if sample:
+            sample = "_" + sample
         self.sjm_cmd += f'''
 job_begin
-    name {step}_{sample}
+    name {step}{sample}
     sched_options -w n -cwd -V -l vf={m}g,p={x}
     cmd source activate {self.__CONDA__}; {cmd}
 job_end
@@ -270,20 +284,27 @@ job_end
             for step in self.steps_run:
                 eval(f'self.{step}(sample)')
 
+    def merge_report(self):    
+        step = "merge_report"
+        steps_str = ",".join(self.__STEPS__)
+        samples = ','.join(self.fq_dict.keys())
+        app = TOOLS_DIR + '/merge_table.py'
+        cmd = (
+            f'python {app} --samples {samples} '
+            f'--steps {steps_str} --outdir {self.args.outdir}'
+        )
+        if self.args.rm_files:
+            cmd += ' --rm_files'
+        self.generate_cmd(cmd, step, sample="")
+        for sample in self.fq_dict:
+            self.sjm_order += f'order {step} after {self.last_step}_{sample}\n'
+
     def end(self):
         if self.args.mod == 'sjm':
-            step = 'merge_report'
-            merge_report(
-                self.fq_dict,
-                self.__STEPS__,
-                self.last_step,
-                self.sjm_cmd,
-                self.sjm_order,
-                self.logdir,
-                self.__CONDA__,
-                self.args.outdir,
-                self.args.rm_files,
-            )
+            self.merge_report()
+            with open(self.logdir + '/sjm.job', 'w') as fh:
+                fh.write(self.sjm_cmd + '\n')
+                fh.write(self.sjm_order)
         if self.args.mod == 'shell':
             os.system('mkdir -p ./shell/')
             for sample in self.shell_dict:
@@ -297,5 +318,41 @@ job_end
         self.end()
 
 
+def get_read(library_id, library_path, read='1'):
+    read1_list = [f'_{read}', f'R{read}', f'R{read}_001']
+    fq_list = ['fq', 'fastq']
+    suffix_list = ["", ".gz"]
+    read_pattern_list = [
+        f'{library_path}/*{library_id}*{read}.{fq_str}{suffix}'
+        for read in read1_list
+        for fq_str in fq_list
+        for suffix in suffix_list
+    ]
+    fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
+    fq_list = sorted(non_empty for non_empty in fq_list if non_empty)
+    fq_list = list(itertools.chain(*fq_list))
+    if len(fq_list) == 0:
+        print("Allowed R1 patterns:")
+        for pattern in read_pattern_list:
+            print(pattern)
+        raise Exception(
+            '\n'
+            f'Invalid Read{read} path! \n'
+            f'library_id: {library_id}\n'
+            f'library_path: {library_path}\n'
+        )
+    return fq_list
 
-    
+
+def get_fq(library_id, library_path):
+    fq1_list = get_read(library_id, library_path, read='1')
+    fq2_list = get_read(library_id, library_path, read='2')
+    if len(fq1_list) != len(fq2_list):
+        raise Exception("Read1 and Read2 fastq number do not match!")
+    fq1 = ",".join(fq1_list)
+    fq2 = ",".join(fq2_list)
+    return fq1, fq2
+
+
+
+
