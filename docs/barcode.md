@@ -1,7 +1,7 @@
 # barcode
 
 ## Features
-- Demultiplex barcode.
+- Demultiplex barcodes.
 - Filter invalid R1 reads, which includes:
     - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
     - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
@@ -27,15 +27,15 @@
 - `scopeV1` For legacy Singleron GEXSCOPE scopeV1 libraries.  
 - `customized` For user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the same time.
 
-`--pattern` the pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number of bases.  
+`--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number of bases.  
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
 - `T`: poly T
 
-`--whitelist` cell barcode whitelist file path, one cell barcode per line.
+`--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
-`--linker` linker whitelist file path, one linker per line.
+`--linker` Linker whitelist file path, one linker per line.
 
 `--lowQual` Bases in cell barcode and UMI whose phred value are lower than lowQual will be regarded as low-quality bases. Default=0.  
 
