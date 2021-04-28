@@ -1,13 +1,15 @@
+"""barcode step."""
+
 import os
 import re
 import subprocess
 import sys
 import glob
-import pandas as pd
-import pysam
-
 from collections import defaultdict, Counter
 from itertools import combinations, product
+
+import pandas as pd
+import pysam
 from xopen import xopen
 
 import celescope.tools.utils as utils
@@ -23,7 +25,7 @@ def seq_ranges(seq, pattern_dict):
 
 def get_seq_list(seq, pattern_dict, abbr):
     # get subseq list
-    return [seq[item[0]: item[1]] for item in pattern_dict[abbr]]
+    return (seq[item[0]: item[1]] for item in pattern_dict[abbr])
 
 
 @utils.add_log
@@ -233,9 +235,7 @@ class Barcode(Step):
         self.lowNum = args.lowNum
         self.lowQual = args.lowQual
         self.allowNoPolyT = args.allowNoPolyT
-        self.allowNoLinker = args.allowNoLinker
-         
-
+        self.allowNoLinker = args.allowNoLinker   
 
     @utils.add_log
     def run(self):
@@ -307,12 +307,6 @@ class Barcode(Step):
                 entry2 = next(fq2)
                 header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
                 header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
-                if self.total_num > 0 and self.total_num % 1000000 == 0:
-                    Barcode.run.logger.info(
-                        f'processed reads: {utils.format_number(self.total_num)}.'
-                        f'valid reads: {utils.format_number(self.clean_num)}.'
-                    )
-
                 self.total_num += 1
 
                 # polyT filter
@@ -327,11 +321,11 @@ class Barcode(Step):
                                 '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                         continue
 
-                # lowQual filter
+                # lowQual filter                
                 C_U_quals_ascii = seq_ranges(
                     qual1, pattern_dict['C'] + pattern_dict['U'])
                 # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
-                if low_qual(C_U_quals_ascii, lowQual, lowNum):
+                if lowQual > 0 and low_qual(C_U_quals_ascii, lowQual, lowNum):
                     self.lowQual_num += 1
                     continue
 
@@ -397,11 +391,10 @@ class Barcode(Step):
         fh3.close()
 
         # logging
-        if self.total_num % 1000000 != 0:
-            Barcode.run.logger.info(
-                f'processed reads: {utils.format_number(self.total_num)}. '
-                f'valid reads: {utils.format_number(self.clean_num)}. '
-            )
+        Barcode.run.logger.info(
+            f'processed reads: {utils.format_number(self.total_num)}. '
+            f'valid reads: {utils.format_number(self.clean_num)}. '
+        )
 
         Barcode.run.logger.info(f'no polyT reads number : {self.no_polyT_num}')
         Barcode.run.logger.info(f'low qual reads number: {self.lowQual_num}')
@@ -468,7 +461,7 @@ class Barcode(Step):
             stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
             fh.write(stat_info)
         
-        self.fastqc()
+        # self.fastqc()
         self.clean_up()
 
 
