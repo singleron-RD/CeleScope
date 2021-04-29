@@ -3,6 +3,7 @@
 ## Features
 - Cell clustering.
 - Calculate the marker gene of each cluster.
+- Cell type annotation. Provide markers of known cell types, and annotate cell types for each cluster.
 
 ## Input
 - 10X count matrix.
@@ -13,11 +14,16 @@
 
 - `tsne_coord.tsv` tSNE coordinates and clustering information.
 
+- `{sample}/06.analsis/{sample}_auto_assign/` This result will only be obtained when `--type_marker_tsv` parameter is provided. The result contains three files:
+	- `{sample}_auto_cluster_type.tsv` The cell type of each cluster; if cell_type is "NA", it means that the given marker is not enough to identify the cluster.
+	- `{sample}_png/{cluster}_pctdiff.png` Percentage of marker expression in this cluster-Percentage of marker expression in other clusters.
+	- `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker in this cluster / average expression in other clusters + 1)
+
 ## Paramaters
 
 `--matrix_file count` {sample}_matrix.tsv.gz from step count.
 
-`--type_marker_tsv` A tsv file with a header, cell_type in the first column, marker in the second column. Example:
+`--type_marker_tsv` A tsv file with a header, cell_type in the first column, marker in the second column. If this parameter is provided, cell type will be annotated. Example:
 
 ```
 cell_type	marker
