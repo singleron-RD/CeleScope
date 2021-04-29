@@ -19,11 +19,13 @@
 
 ## Parameters
 
-`--fq` R2 reads from step cutadapt.
+`--fq` R2 reads from step cutadapt. Required.
 
-`--species` Default 'hs'. 'hs' or 'mmu'.
+`--species` Default `hs`. `hs` or `mmu`.
 
-`--type` 'TCR' or 'BCR'.
+`--type` `TCR` or `BCR`. Required.
+
+`--not_consensus` Input fastq is not consensus.
 
 ## Metrics
 If '--not_consensus' argument was used, Reads were used instead of UMIs.

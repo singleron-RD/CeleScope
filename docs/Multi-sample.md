@@ -25,6 +25,22 @@ Note: When a sample has multiple fastqs, each fastq occupies one line, and the s
 	-rw-r--r--. 1 download ssh.bioinfo 1.4G Jul 28 23:23 R2007197_L2_1.fq.gz
 	```
 
+## Parameters
+
+`--mod` Out file mode, `sjm` or `shell`. Default `sjm`.
+
+`--mapfile` Mapfile path. Required.
+
+`--rm_files` Remove redundant fq.gz and bam after running.
+
+`--steps_run` Steps to run. Default `all`.
+
+`--outdir` Output dir. Default `./`.
+
+`--debug` Debug or not.
+
+`--thread` Thread to use. Default `4`.
+
 ## Usage
 - Multi example(Single Cell RNA-Seq):
 

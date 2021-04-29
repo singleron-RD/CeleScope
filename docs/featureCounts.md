@@ -23,9 +23,11 @@ GX gene id
 
 `--genomeDir` Required. Directory contains genome Fasta, GTF and refFLAT file.
 
-`--gtf_type` Default "exon". Single-nuclei RNA-seq uses 'gene'.
+`--gtf_type` Default `exon`. Single-nuclei RNA-seq uses `gene`. Specify feature type in GTF annotation.
 
-`--input` BAM file path.
+`--input` BAM file path. Required
+
+`--gtf` gtf file path.
 
 ## Metrics
 - Assigned : reads that can be successfully assigned without ambiguity.

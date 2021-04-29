@@ -18,15 +18,15 @@
 
 ## Parameters
 
-`--type` TCR or BCR. Required.
+`--type` `TCR` or `BCR`. Required.
 
-`--match_dir` CeleScope transcriptome analysis path.
+`--match_dir` CeleScope transcriptome analysis path. Default `None`.
 
-`--UMI_count_filter1_file`
+`--UMI_count_filter1_file` Required.
 
-`--UMI_min` Minimum UMI number to filter. Default 'auto'. The barcode with UMI>=UMI_min is considered as the cell barcode.
+`--UMI_min` Minimum UMI number to filter. Default `auto`. The barcode with UMI>=UMI_min is considered as the cell barcode.
 
-`--iUMI` Minimum number of UMI of identical receptor type and CDR3. For each (barcode, chain) combination, only UMI>=iUMI is considered confident.
+`--iUMI` Minimum number of UMI of identical receptor type and CDR3. For each (barcode, chain) combination, only UMI>=iUMI is considered confident. Default `1`.
 
 ## Metrics
 - Estimated Number of cells : number of barcodes considered as cell-associated.

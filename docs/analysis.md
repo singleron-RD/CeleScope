@@ -21,7 +21,9 @@
 
 ## Paramaters
 
-`--matrix_file count` {sample}_matrix.tsv.gz from step count.
+`--matrix_file count` {sample}_matrix.tsv.gz from step count. Required.
+
+`--save_rds` Whether save RDS file.
 
 `--type_marker_tsv` A tsv file with a header, cell_type in the first column, marker in the second column. If this parameter is provided, cell type will be annotated. Example:
 

@@ -35,11 +35,15 @@
 
 `--bam` Required. BAM file from featureCounts.
 
-`--force_cell_num` Default 'None'.
+`--force_cell_num` Default `None`.
 
-`--cells` Expect the number of cells, select the point with the largest slope within this value ±10% to determine the UMI threshold, see celescope.tools.count.barcode_filter_with_magnitud.
+`--genomeDir` Genome directory. Required.
 
-`--resue` Determine the cell based on the inflection point of the barcode-UMI curve, see celescope.tools.count.rescue_cells.
+`--gtf` GTF file path.
+
+`--expected_cell_num` Default `3000`. Expected cell number.
+
+`--cell_calling_method` Cell calling methods. Default `auto`. Choose from `auto`, `cellranger3` and `inflection`.
 
 ## Metrics
 - Estimated Number of Cells : the number of barcodes considered as cell-associated.

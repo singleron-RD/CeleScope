@@ -26,11 +26,11 @@
 
 `--STAR_index` STAR index directory path.
 
-`--consensus_fq` Default 'store_rtue'. Input Fastq file is UMI consensus.
+`--consensus_fq` Input Fastq file is UMI consensus.
 
 `--refFlat` refFlat file path for Picard.
 
-`--starMem` Default 30. Maximum memory that STAR can use.
+`--starMem` Default `30`. Maximum memory that STAR can use.
 
 ## STAR parameters
 
@@ -38,9 +38,11 @@
 mate of a paired end read) reads into separate Unmapped.out.mate1(2), formatted the same
 way as input read (i.e. FASTQ or FASTA).
 
-`--outFilterMatchNmin` Default 0. Alignment will be output only if the number of matched bases is higher than or equal to this value.
+`--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
-`--STAR_param` Default ''. Other STAR parameters.
+`--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases is higher than or equal to this value.
+
+`--STAR_param` Default `''`. Other STAR parameters.
 
 ## Metrics
 - Uniquely Mapped Reads: reads that mapped uniquely to the genome.
