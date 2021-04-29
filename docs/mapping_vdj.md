@@ -1,10 +1,10 @@
 # mapping_vdj
 
 ## Features
-- VDJ mapping
+- VDJ mapping.
 
 ## Input
-- R2 reads from cutadapt
+- R2 reads from cutadapt.
 
 ## Output
 - `{sample}_consensus.fasta` Fasta file after UMI consensus.
