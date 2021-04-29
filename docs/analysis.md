@@ -1,0 +1,47 @@
+# analysis
+
+## Features
+- Cell clustering.
+- Calculate the marker gene of each cluster.
+
+## Input
+- 10X count matrix.
+- Cell type markers.
+
+## Output
+- `markers.tsv` Marker genes of each cluster.
+
+- `tsne_coord.tsv` tSNE coordinates and clustering information.
+
+## Paramaters
+
+`--matrix_file count` {sample}_matrix.tsv.gz from step count.
+
+`--type_marker_tsv` A tsv file with a header, cell_type in the first column, marker in the second column. Example:
+
+```
+cell_type	marker
+Alveolar	"CLDN18,FOLR1,AQP4,PEBP4"
+Endothelial	"CLDN5,FLT1,CDH5,RAMP2"
+Epithelial	"CAPS,TMEM190,PIFO,SNTN"
+Fibroblast	"COL1A1,DCN,COL1A2,C1R"
+B_cell	"CD79A,IGKC,IGLC3,IGHG3"
+Myeloid	"LYZ,MARCO,FCGR3A"
+T_cell	"CD3D,TRBC1,TRBC2,TRAC"
+Mast_cell	"KIT,GATA2"
+Langerhans_cells	"CD207,FCER1A"
+LUAD	"NKX2-1,NAPSA,EPCAM"
+LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
+```
+
+## Metrics
+- Top Marker Genes by Cluster : differential expression analysis based on the non-parameteric Wilcoxon rank sum test.
+
+- avg_logFC : log fold-change of the average expression between the cluster and the rest of the sample.
+
+- pct.1 : The percentage of cells where the gene is detected in the cluster.
+
+- pct.2 : The percentage of cells where the gene is detected in the rest of the sample.
+
+- p_val_adj : Adjusted p-value, based on bonferroni correction using all genes in the dataset.
+
