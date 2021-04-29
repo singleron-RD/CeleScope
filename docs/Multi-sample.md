@@ -42,7 +42,7 @@ Note: When a sample has multiple fastqs, each fastq occupies one line, and the s
 `--thread` Thread to use. Default `4`.
 
 ## Usage
-- Multi example(Single Cell RNA-Seq):
+- Multi-sample example(Single Cell RNA-Seq):
 
 	```
 	conda activate celescope
