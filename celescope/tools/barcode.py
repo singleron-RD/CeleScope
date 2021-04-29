@@ -18,6 +18,8 @@ from celescope.tools.Chemistry import Chemistry
 from celescope.tools.Step import Step, s_common
 
 
+MIN_T = 10
+
 def seq_ranges(seq, pattern_dict):
     # get subseq with intervals in arr and concatenate
     return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
@@ -97,16 +99,11 @@ def low_qual(quals, minQ, num):
     return True if len([q for q in quals if qual_int(q) < minQ]) > num else False
 
 
-def no_polyT(seq, strictT=0, minT=10):
+def no_polyT(seq, minT=10):
     # strictT requires the first nth position to be T
-    if seq[:strictT] != 'T' * strictT or seq.count('T') < minT:
+    if seq.count('T') < minT:
         return True
-    else:
-        return False
-
-
-def no_linker(seq, linker_dict):
-    return False if seq in linker_dict else True
+    return False
 
 
 def check_seq(seq_file, pattern_dict, seq_abbr):
@@ -312,7 +309,7 @@ class Barcode(Step):
                 # polyT filter
                 if bool_T and (not self.allowNoPolyT):
                     polyT = seq_ranges(seq1, pattern_dict['T'])
-                    if no_polyT(polyT):
+                    if polyT.count('T') < MIN_T:
                         self.no_polyT_num += 1
                         if self.nopolyT:
                             fh1_without_polyT.write(
