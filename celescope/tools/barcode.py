@@ -99,13 +99,6 @@ def low_qual(quals, minQ, num):
     return True if len([q for q in quals if qual_int(q) < minQ]) > num else False
 
 
-def no_polyT(seq, minT=10):
-    # strictT requires the first nth position to be T
-    if seq.count('T') < minT:
-        return True
-    return False
-
-
 def check_seq(seq_file, pattern_dict, seq_abbr):
     length = 0
     for item in pattern_dict[seq_abbr]:
