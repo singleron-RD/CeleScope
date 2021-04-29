@@ -5,7 +5,7 @@
 - Generate expression matrix.
 
 ## Input
-BAM file from step featureCounts.
+- BAM file from step featureCounts.
 
 ## Output
 - `{sample}_all_matrix` The expression matrix of all detected barcodes.
