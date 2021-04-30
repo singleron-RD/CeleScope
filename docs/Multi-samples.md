@@ -2,7 +2,7 @@
 
 ## Features
 - CeleScope contains multi samples running scripts, the interface is multi_{assay}.
-- Analysis step-by-step.
+- Step-by-step analysis.
 
 ## Input
 - Mapfile. Mapfile is a text file divided by tabs, containing three columns, each line represents a sample.
