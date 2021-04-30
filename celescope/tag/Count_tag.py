@@ -33,7 +33,7 @@ class Count_tag():
         self.read_count_file = read_count_file
         self.match_dir = match_dir
         self.UMI_min = UMI_min
-        self.SNR_min = float(SNR_min)
+        self.SNR_min = SNR_min
         self.combine_cluster = combine_cluster
         self.dim = int(dim)
         self.match_barcode, self.cell_total = read_barcode_file(match_dir)
