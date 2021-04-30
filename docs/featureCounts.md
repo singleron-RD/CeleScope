@@ -1,7 +1,7 @@
 # featureCounts
 
 ## Features
-- Quantify genes in BAM files.
+- Assigning uniquely mapped reads to genomic features with FeatureCounts.
 
 ## Input
 - BAM file from step STAR.
@@ -21,11 +21,11 @@
 
 ## Parameters
 
-`--genomeDir` Required. Directory contains genome Fasta, GTF and refFLAT file.
+`--input` Required. BAM file path.
 
-`--gtf_type` Default `exon`. Single-nuclei RNA-seq uses `gene`. Specify feature type in GTF annotation.
+`--genomeDir` Required. Directory contains genome Fasta, GTF and refFLAT file. If this argument is not provided, you need to provide `--gtf`.
 
-`--input` BAM file path. Required
+`--gtf_type` Default `exon`. Single-nuclei RNA-seq uses `gene`. Specified feature type in GTF.
 
 `--gtf` gtf file path.
 

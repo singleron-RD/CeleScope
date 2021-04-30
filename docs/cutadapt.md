@@ -1,17 +1,17 @@
 # cutadapt
 
 ## Features
-- Cut adapters in R2 reads by cutadapt. Default adapters including:
-	- polyT=A{18}, 18 A bases. If the poly A(T) sequence is detected in Read 2, it means that the insert is too short, which leads to test penetration.
-	- p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA， Illumina p5 adapter.
+- Trim adapters in R2 reads with cutadapt. Default adapters includes:
+	- polyT=A{18}, 18 A bases. 
+	- p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
 ## Input
 - R2 reads from step Barcode.
 
 ## Output
-- `cutadapt.log` Recording results summary and adapters(polyT and p5) information.
+- `cutadapt.log` cutadapt output log file.
 
-- `{sample}_clean_2.fq.gz` Fastq file without adapters.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
 
 ## Parameters
 

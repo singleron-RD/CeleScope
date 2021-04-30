@@ -1,13 +1,15 @@
 # STAR
 
 ## Features
-- Align. Call STAR to compare R2 reads with the reference genome.
+- Align R2 reads to the reference genome with STAR.
+- Collect Metrics with Picard.
 
 ## Input
 - R2 clean reads from step cutadapt.
 
 ## Output
 - `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
+
 - `{sample}_SJ.out.tab` SJ.out.tab contains high confidence collapsed splice junctions in tab-delimited format.
 
 - `{sample}_Log.out` Main log with a lot of detailed information about the run. This is most useful for troubleshooting and debugging.
@@ -22,17 +24,13 @@
 
 `--fq` Required. R2 reads from step cutadapt.
 
-`--genomeDir` Required. Directory contains genome Fasta, GTF and refFLAT file.
+`--genomeDir` Directory contains genome Fasta, GTF and refFLAT file. If this argument is not provided, you need to provide `--STAR_index` and `--refFlat`
 
 `--STAR_index` STAR index directory path.
 
-`--consensus_fq` Input Fastq file is UMI consensus.
-
-`--refFlat` refFlat file path for Picard.
+`--refFlat` refFlat file path.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
-
-## STAR parameters
 
 `--out_unmapped` will output unmapped and partially mapped (i.e. mapped only one
 mate of a paired end read) reads into separate Unmapped.out.mate1(2), formatted the same
