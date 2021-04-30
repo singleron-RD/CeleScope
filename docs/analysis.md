@@ -1,31 +1,31 @@
 # analysis
 
 ## Features
-- Cell clustering.
+- Cell clustering with Seurat.
 - Calculate the marker gene of each cluster.
-- Cell type annotation. Provide markers of known cell types, and annotate cell types for each cluster.
+- Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
 
 ## Input
-- 10X count matrix.
-- Cell type markers.
+- gene expression matrix from step Count.
+- Cell type markers(optional).
 
 ## Output
 - `markers.tsv` Marker genes of each cluster.
 
-- `tsne_coord.tsv` tSNE coordinates and clustering information.
+- `tsne_coord.tsv` t-SNE coordinates and clustering information.
 
-- `{sample}/06.analsis/{sample}_auto_assign/` This result will only be obtained when `--type_marker_tsv` parameter is provided. The result contains three files:
+- `{sample}/06.analsis/{sample}_auto_assign/` This result will only be obtained when `--type_marker_tsv` parameter is provided. The result contains 3 files:
 	- `{sample}_auto_cluster_type.tsv` The cell type of each cluster; if cell_type is "NA", it means that the given marker is not enough to identify the cluster.
-	- `{sample}_png/{cluster}_pctdiff.png` Percentage of marker expression in this cluster-Percentage of marker expression in other clusters.
-	- `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker in this cluster / average expression in other clusters + 1)
+	- `{sample}_png/{cluster}_pctdiff.png` Percentage of marker gene expression in this cluster - percentage in all other clusters.
+	- `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
 
 ## Paramaters
 
-`--matrix_file count` {sample}_matrix.tsv.gz from step count. Required.
+`--matrix_file count` Required. {sample}_matrix.tsv.gz from step count.
 
-`--save_rds` Whether save RDS file.
+`--save_rds` Save RDS file.
 
-`--type_marker_tsv` A tsv file with a header, cell_type in the first column, marker in the second column. If this parameter is provided, cell type will be annotated. Example:
+`--type_marker_tsv` A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
 
 ```
 cell_type	marker

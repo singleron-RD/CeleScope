@@ -1,10 +1,10 @@
 # mapping_vdj
 
 ## Features
-- VDJ mapping.
+- Align R2 reads to IGMT(http://www.imgt.org/) database sequences with mixcr.
 
 ## Input
-- R2 reads from cutadapt.
+- R2 reads from step cutadapt.
 
 ## Output
 - `{sample}_consensus.fasta` Fasta file after UMI consensus.
@@ -19,13 +19,12 @@
 
 ## Parameters
 
-`--fq` R2 reads from step cutadapt. Required.
+`--fq` Required. R2 reads from step cutadapt. 
+
+`--type` Required. `TCR` or `BCR`.
 
 `--species` Default `hs`. `hs` or `mmu`.
 
-`--type` `TCR` or `BCR`. Required.
-
-`--not_consensus` Input fastq is not consensus.
 
 ## Metrics
 If '--not_consensus' argument was used, Reads were used instead of UMIs.

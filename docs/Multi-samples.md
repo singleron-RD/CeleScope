@@ -1,8 +1,8 @@
-# Multi-sample and step-by-step
+# Multi-samples and step-by-step
 
 ## Features
-- CeleScope contains multiple sample running scripts, the interface is multi_{assay}.
-- Analysis step-by-step.
+- CeleScope contains multi samples running scripts, the interface is multi_{assay}.
+- Step-by-step analysis.
 
 ## Input
 - Mapfile. Mapfile is a text file divided by tabs, containing three columns, each line represents a sample.
@@ -42,7 +42,7 @@ Note: When a sample has multiple fastqs, each fastq occupies one line, and the s
 `--thread` Thread to use. Default `4`.
 
 ## Usage
-- Multi example(Single Cell RNA-Seq):
+- Multi-sample example(Single Cell RNA-Seq):
 
 	```
 	conda activate celescope

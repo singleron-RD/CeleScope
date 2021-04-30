@@ -8,9 +8,9 @@
 - `{sample}_UMI_count_filtered1.tsv` from mapping_vdj.
 
 ## Output
-- `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, one chain (TRA and TRB) one line.
+- `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, each chain occupies one line.
 
-- `{sample}_cell_confident_count.tsv` The clone type of VDJ cell barcode, one cell one line.
+- `{sample}_cell_confident_count.tsv` The clone type of VDJ cell barcode, each cell occupies one line.
 
 - `{sample}_clonetypes.tsv` The count and percentage of each clonotype of VDJ cell barcode.
 
@@ -18,15 +18,15 @@
 
 ## Parameters
 
-`--type` `TCR` or `BCR`. Required.
+`--type` Required. `TCR` or `BCR`.
 
-`--match_dir` CeleScope transcriptome analysis path. Default `None`.
+`--UMI_count_filter1_file` Required. File from step mapping_vdj.
 
-`--UMI_count_filter1_file` Required.
+`--match_dir` Default `None`. CeleScope rna analysis path. 
 
-`--UMI_min` Minimum UMI number to filter. Default `auto`. The barcode with UMI>=UMI_min is considered as the cell barcode.
+`--UMI_min` Default `auto`. Minimum UMI number to filter. The barcode with UMI>=UMI_min is considered to be cell.
 
-`--iUMI` Minimum number of UMI of identical receptor type and CDR3. For each (barcode, chain) combination, only UMI>=iUMI is considered confident. Default `1`.
+`--iUMI` Default `1`. Minimum number of UMI of identical receptor type and CDR3. For each (barcode, chain) combination, only UMI>=iUMI is considered confident. 
 
 ## Metrics
 - Estimated Number of cells : number of barcodes considered as cell-associated.

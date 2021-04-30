@@ -37,9 +37,9 @@
 
 `--linker` Linker whitelist file path, one linker per line.
 
-`--lowQual` Bases in cell barcode and UMI whose phred value are lower than lowQual will be regarded as low-quality bases. Default=0.  
+`--lowQual` Default `0`. Bases in cell barcode and UMI whose phred value are lower than lowQual will be regarded as low-quality bases.
 
-`--lowNum` The maximum allowed lowQual bases in cell barcode and UMI. Default=2.
+`--lowNum` Default `2`. The maximum allowed lowQual bases in cell barcode and UMI.
 
 `--nopolyT` Outputs R1 reads without polyT.
     
