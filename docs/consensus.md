@@ -1,11 +1,10 @@
 # consensus
 
 ## Features
-- Sort fastq by read name.
-- Consensus read in name-sorted fastq.
+- Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI).
 
 ## Input
-- Name-sorted fastq.
+- R2 Fastq.
 
 ## Output
 - Consensus fastq.
@@ -16,10 +15,12 @@
 
 `--threshold` Default `0.5`. Valid base threshold.
 
-`--not_consensus` Input fastq is not consensus.
+`--not_consensus` Skip the consensus step.
 
 ## Metrics
 
-- UMI Counts: Total UMIs num.
+- UMI Counts: Total UMIs number after consensus.
+
 - Mean UMI Length: Mean UMI length after consensus.
-- Ambiguous Base Counts: Total ambiguous bases num.
+
+- Ambiguous Base Counts: Total ambiguous bases number.

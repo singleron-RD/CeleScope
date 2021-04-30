@@ -30,7 +30,7 @@ This works like regular quality trimming (where one would use `-q 20` instead), 
 
 `--insert` Default `150`. Read2 insert length. To shorten each read down to a certain length, use the `--length` option or the short version `-l`.
 
-`--gzip` Output gzipped Fastq.
+`--gzip` Output gzipped fastq.
 
 ## Metrics
 - Reads with Adapters : reads with sequencing adapters or reads two with poly A(read-through adpaters).
