@@ -1,7 +1,7 @@
-# Multi-sample and step-by-step
+# Multi-samples and step-by-step
 
 ## Features
-- CeleScope contains multiple sample running scripts, the interface is multi_{assay}.
+- CeleScope contains multi samples running scripts, the interface is multi_{assay}.
 - Analysis step-by-step.
 
 ## Input
