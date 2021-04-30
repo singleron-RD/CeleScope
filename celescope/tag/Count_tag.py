@@ -33,14 +33,14 @@ class Count_tag():
         self.read_count_file = read_count_file
         self.match_dir = match_dir
         self.UMI_min = UMI_min
-        self.SNR_min = SNR_min
+        self.SNR_min = float(SNR_min)
         self.combine_cluster = combine_cluster
         self.dim = int(dim)
         self.match_barcode, self.cell_total = read_barcode_file(match_dir)
         self.df_read_count = pd.read_csv(read_count_file, sep="\t", index_col=0)
         self.tsne_file = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
         self.no_noise = False
-        self.coefficient = coefficient
+        self.coefficient = float(coefficient)
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % outdir)
 
