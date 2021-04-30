@@ -1,21 +1,26 @@
 
 # CeleScope
-GEXSCOPE Single Cell Analysis Pipelines  
-Chinese Docs(中文文档): https://gitee.com/singleron-rd/celescope/wikis/
+CeleScope is a collection of bioinfomatics analysis pipelines to process SCOPE single cell data.
+Currently it can analyze:
 
-## Requirements
+- Single Cell RNA-Seq data  
+- Single Cell Immune Profiling(VDJ) data
 
+Detailed docs can be found in wiki.
+
+## Hardware/Software Requirements
+
+- minimum 32GB RAM(to run STAR aligner)
 - conda
 - git
-- minimum 32GB RAM(to run STAR aligner)
 
 ## Installation
 
 1. Clone repo
 ```
-git clone https://github.com/singleron-RD/CeleScope.git
-# If github is blocked
 git clone https://gitee.com/singleron-rd/celescope.git
+# or 
+git clone https://github.com/singleron-RD/CeleScope.git
 ```
 
 2. Install conda packages
@@ -91,13 +96,13 @@ STAR \
     --sjdbOverhang 100
 ```
 
-## Usage
+## Quick start
 
 ### Single cell RNA-Seq
 
 1. Prepare mapfile
 
-mapfile is a tab-delimited text file(.tsv) containing at least three columns. Each line of mapfile represents a pair of fastq files(Read 1 and Read 2).
+Mapfile is a tab-delimited text file(.tsv) containing at least three columns. Each line of mapfile represents a pair of fastq files(Read 1 and Read 2).
 
 First column: Fastq file prefix. Fastq files must be gzipped.
 

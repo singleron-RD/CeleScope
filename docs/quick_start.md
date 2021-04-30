@@ -1,11 +1,11 @@
 # Introduction
 
-CeleScope is a biological information analysis process for processing the data of the new grid single cell library.
-It can currently be analyzed:
-- Single Cell RNA-Seq.
-- Single Cell VDJ.
+CeleScope is a bioinfomatics analysis pipeline to process SCOPE single cell data.
+Currently it can analyze:
+- Single Cell RNA-Seq data
+- Single Cell Immune Profiling(VDJ) data
 
-# Operational requirements
+# HARDWARE/SOFTWARE Requirements
 
 - Linux server, minimum 32GB RAM.
 - Conda.
