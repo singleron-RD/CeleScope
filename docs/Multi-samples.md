@@ -1,7 +1,7 @@
 # Multi-samples and step-by-step
 
 ## Features
-- CeleScope contains multi samples running scripts, the interface is multi_{assay}.
+- CeleScope contains an interface to run multiple samples, which is `multi_{assay}`.
 - Step-by-step analysis.
 
 ## Input
@@ -27,19 +27,19 @@ Note: When a sample has multiple fastqs, each fastq occupies one line, and the s
 
 ## Parameters
 
-`--mod` Out file mode, `sjm` or `shell`. Default `sjm`.
+`--mod` Default `sjm`. Out file mode, `sjm` or `shell`. 
 
-`--mapfile` Mapfile path. Required.
+`--mapfile` Required. Mapfile path.
 
 `--rm_files` Remove redundant fq.gz and bam after running.
 
-`--steps_run` Steps to run. Default `all`.
+`--steps_run` Default `all`. Steps to run.
 
-`--outdir` Output dir. Default `./`.
+`--outdir` Default `./`. Output dir.
 
 `--debug` Debug or not.
 
-`--thread` Thread to use. Default `4`.
+`--thread`  Default `4`. Thread to use.
 
 ## Usage
 - Multi-sample example(Single Cell RNA-Seq):
