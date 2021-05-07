@@ -12,6 +12,7 @@ import subprocess
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix, coo_matrix
 import pysam
+import h5py
 from celescope.tools.utils import add_log, format_number, glob_genomeDir, gene_convert, s_common, add_mem
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
@@ -262,6 +263,26 @@ def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None
     genes.to_csv(f'{matrix_10X_dir}/{FEATURE_FILE_NAME}', index=False, sep='\t', header=False)
     barcodes.to_csv(f'{matrix_10X_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t')
     mmwrite(f'{matrix_10X_dir}/{MATRIX_FILE_NAME}', mtx)
+
+    bc_list = df_UMI.index.levels[1].tolist()
+    gene_name = list(genes['gene_name'])
+    gene_id = list(genes['gene_id'])
+    X_data, X_indices, X_indptr = df_UMI.UMI, df_UMI.index.labels[0], df_UMI.index.labels[1]
+
+    f = h5py.File(f"{outdir}/{sample}.h5", "w")
+    dt = h5py.string_dtype(encoding='utf-8')
+    g1 = f.create_group('obs')
+    g1_d1 = g1.create_dataset('_index', data=bc_list, dtype=dt)
+    g2 = f.create_group('var')
+    g2_d1 = g2.create_dataset('_index', data=gene_name, dtype=dt)
+    g2_d2 = g2.create_dataset('gene_ids', data=gene_id, dtype=dt)
+    g3 = f.create_group('X')
+    g3_d1 = g3.create_dataset('data', data=X_data)
+    g3_d2 = g3.create_dataset('indices', data=X_indices)
+    g3_d3 = g3.create_dataset('indptr', data=X_indptr)
+
+    f.close()
+
     return matrix_10X_dir
 
 
