@@ -40,7 +40,7 @@ class Count_tag():
         self.df_read_count = pd.read_csv(read_count_file, sep="\t", index_col=0)
         self.tsne_file = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
         self.no_noise = False
-        self.coefficient = coefficient
+        self.coefficient = float(coefficient)
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % outdir)
 

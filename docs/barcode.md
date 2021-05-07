@@ -49,6 +49,8 @@
 
 `--allowNoLinker` Allow reads with incorrect linker.
 
+`--gzip` Output gzipped fastq.
+
 ## Metrics
 -  Raw Reads: total read pairs from FASTQ files.
 
