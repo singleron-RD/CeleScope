@@ -22,7 +22,7 @@ class Multi_snp(Multi):
     def target_metrics(self, sample):
         step = 'target_metrics'
         cmd_line = self.get_cmd_line(step, sample)
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
+        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam'
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
@@ -34,7 +34,7 @@ class Multi_snp(Multi):
     def snpCalling(self, sample):
         step = 'snpCalling'
         cmd_line = self.get_cmd_line(step, sample)
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
+        bam = f'{self.outdir_dic[sample]["target_metrics"]}/{sample}_filtered.bam'
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '

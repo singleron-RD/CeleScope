@@ -107,6 +107,7 @@ class Analysis_variant(Step, AnalysisMixin):
         self.add_data_item(cluster_tsne=cluster_tsne)
         self.add_data_item(count_tsne=count_tsne)
         self.add_data_item(table_dict=table_dict)
+        self.clean_up()
 
     @utils.add_log
     def annovar(self):

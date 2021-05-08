@@ -89,16 +89,18 @@ class Step:
             line = f'{metric.name}: '
             value = metric.value
             fraction = metric.fraction
-            if fraction:
+            value_bool = value == 0 or value
+            fraction_bool = fraction == 0 or fraction
+            if fraction_bool:
                 fraction = round(fraction * 100, 2)
-            if value:
+            if value_bool:
                 if isinstance(value, numbers.Number):
                     line += format(value, ',')
-                    if fraction:
+                    if fraction_bool:
                         line += f'({fraction}%)'
                 else:
                     line += value
-            elif fraction:
+            elif fraction_bool:
                 line += f'{fraction}%'
             f_stat.write(line + '\n')
         f_stat.close()
