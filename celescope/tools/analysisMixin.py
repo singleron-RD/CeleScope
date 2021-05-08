@@ -1,13 +1,13 @@
-import os
-import sys
-import json
-import numpy as np
 import pandas as pd
+
 import celescope.tools.utils as utils
 from celescope.tools.Step import Step
 
 
 class AnalysisMixin():
+    """
+    mixin class for analysis
+    """    
 
     def __init__(self, args):
         if hasattr(args, "match_dir") and args.match_dir:
