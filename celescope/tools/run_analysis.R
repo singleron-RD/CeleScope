@@ -3,7 +3,7 @@ library(tidyverse)
 library(argparser)
 
 argv <- arg_parser('')
-argv <- add_argument(argv,"--matrix_file", help="matrix file")
+argv <- add_argument(argv,"--matrix_dir", help="cell 10X matrix dir")
 argv <- add_argument(argv,"--outdir", help="outdir")
 argv <- add_argument(argv,"--sample", help="sample")
 argv <- add_argument(argv,"--save_rds", help="write rds to disk")
@@ -17,7 +17,7 @@ save_rds = argv$save_rds
 resolution = 0.6
 res_str = paste0('res.', resolution)
 
-matrix = read.table(matrix_file,sep="\t",header=TRUE,row.names=1,quote = "")
+matrix = Seurat::Read10X(matrix_dir, gene.column=2)
 tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")
