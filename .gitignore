@@ -149,4 +149,7 @@ cython_debug/
 #temp
 /temp/
 
+# .DS_store
+.DS_store
+
 
