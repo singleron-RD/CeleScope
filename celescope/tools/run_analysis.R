@@ -20,10 +20,7 @@ save_rds = argv$save_rds
 resolution = 0.6
 res_str = paste0('res.', resolution)
 
-<<<<<<< HEAD
-=======
 matrix = Seurat::Read10X(matrix_dir, gene.column=2)
->>>>>>> 39b2447c47c4295f6fdbbe970dc21e2e43b5ee5b
 tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")
