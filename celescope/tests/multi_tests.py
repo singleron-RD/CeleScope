@@ -12,7 +12,7 @@ import glob
 class Tests(unittest.TestCase):
 
     def setUp(self):
-        self.test_dir = "/SGRNJ/Database/script/tests/multi_tests/"
+        self.test_dir = "/SGRNJ03/randd/user/zhouyiqi/multi_tests/"
 
     def _run(self, assay):
         os.chdir(self.test_dir + assay)
