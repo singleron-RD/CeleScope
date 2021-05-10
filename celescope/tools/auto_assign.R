@@ -31,7 +31,7 @@ n_cell_name <- length(cell_name)
 
 #reset
 #all_data <- SetAllIdent(object = all_data, id = origin.cluster)
-clusters <- sort(unique(all_data@ident))
+clusters <- sort(unique(all_data@active.ident))
 
 #create dir
 auto_dir <- stringr::str_glue('{outdir}/{sample}_auto_assign/')
@@ -47,9 +47,9 @@ for (cluster in clusters){
     index = index + 1
     pos = unlist(strsplit(marker_file[index,2,drop=T],","))
     neg = tryCatch(unlist(strsplit(marker_file[index,3,drop=T],",")) ,error=function(e){} )
-    for (feature in pos){
+    for (F in pos){
       tryCatch({
-        dat <- FindMarkers(all_data,genes.use=feature,ident.1=cluster,min.pct = 0,logfc.threshold = -Inf)
+        dat <- FindMarkers(all_data,feature=F,ident.1=cluster,min.pct = 0,logfc.threshold = -Inf)
         dat$cell_type <- cell
         dat$cluster <- cluster
         dat <- rownames_to_column(dat,var="gene")
@@ -61,13 +61,13 @@ for (cluster in clusters){
           all_dat <- rbind(all_dat,dat)
           }
         }
-        ,error=function(e){print(paste0(feature," not found in cluster ",cluster)) })
+        ,error=function(e){print(paste0(F," not found in cluster ",cluster)) })
     }
 
     if (!is.na(neg) && !is.null(neg)){
-    	for (feature in neg){
+    	for (F in neg){
       	tryCatch({
-        dat <- FindMarkers(all_data,genes.use=feature,ident.1=cluster,min.pct = 0,logfc.threshold = -Inf)
+        dat <- FindMarkers(all_data,feature=F,ident.1=cluster,min.pct = 0,logfc.threshold = -Inf)
         dat$cell_type <- cell
         dat$cluster <- cluster
         dat <- rownames_to_column(dat,var="gene")
@@ -79,13 +79,14 @@ for (cluster in clusters){
           all_dat <- rbind(all_dat,dat)
           }
         }
-        ,error=function(e){print(paste0(feature," not found in cluster ",cluster)) })
+        ,error=function(e){print(paste0(F," not found in cluster ",cluster)) })
     	}
     }
 
   }
 }
 
+all_dat$cluster <- as.numeric(all_dat$cluster) + 1
 all_dat <- mutate(all_dat,pct.diff=pct.1-pct.2)
 exp.out = stringr::str_glue('{auto_dir}/{sample}_type_marker_exp.tsv')
 write_tsv(all_dat, exp.out)
@@ -109,16 +110,16 @@ for (cluster in clusters){
   dev.off()
 
   png(paste0(png_dir,cluster,"_logfc.png"),width=1200,height=1000)
-  p2 <- ggplot(c,aes(x=interaction(gene,cell_type,type),avg_logFC,fill=cell_type)) +geom_bar(stat="identity")+ coord_flip() + scale_fill_manual(values=color2)
+  p2 <- ggplot(c,aes(x=interaction(gene,cell_type,type),avg_log2FC,fill=cell_type)) +geom_bar(stat="identity")+ coord_flip() + scale_fill_manual(values=color2)
   print (p2)
   dev.off()
 }
 
 # auto assign
-exp[exp$type=="negative",]$avg_logFC = -(exp[exp$type=="negative",]$avg_logFC)
+exp[exp$type=="negative",]$avg_log2FC = -(exp[exp$type=="negative",]$avg_log2FC)
 exp[exp$type=="negative",]$pct.diff = -(exp[exp$type=="negative",]$pct.diff)
 a <- group_by(exp,cluster,cell_type)
-as <- summarize(a,avg_pct.diff=mean(pct.diff),avg_logfc=mean(avg_logFC),max_p_val_adj=max(p_val_adj))    
+as <- summarize(a,avg_pct.diff=mean(pct.diff),avg_logfc=mean(avg_log2FC),max_p_val_adj=max(p_val_adj))
 as1 <- group_by(ungroup(as),cluster)
 as1 <- mutate(as1,pct_rank = rank(avg_pct.diff),
               logfc_rank= rank(avg_logfc),total_rank=pct_rank+logfc_rank)
