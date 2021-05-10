@@ -12,6 +12,7 @@ import subprocess
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix, coo_matrix
 import pysam
+import h5py
 from celescope.tools.utils import add_log, format_number, glob_genomeDir, gene_convert, s_common, add_mem
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
@@ -262,6 +263,8 @@ def matrix_10X(df, outdir, sample, gtf_file, dir_name='matrix_10X', cell_bc=None
     genes.to_csv(f'{matrix_10X_dir}/{FEATURE_FILE_NAME}', index=False, sep='\t', header=False)
     barcodes.to_csv(f'{matrix_10X_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t')
     mmwrite(f'{matrix_10X_dir}/{MATRIX_FILE_NAME}', mtx)
+
+
     return matrix_10X_dir
 
 
