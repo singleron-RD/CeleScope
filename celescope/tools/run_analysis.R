@@ -62,8 +62,7 @@ write_delim(mito_df, mito.out, col_names=F, delim=":")
 
 
 rds <- NormalizeData(rds, normalization.method = "LogNormalize",scale.factor = 10000)
-rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = 2000, mean.cutoff = c(0.1, 8), dispersion.cutoff = c(1, Inf),
-                            mean.function = ExpMean, dispersion.function = LogVMR)
+rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = 10000)
 
 use.genes <- rds@assays$RNA@var.features
 rds <- ScaleData(rds, vars.to.regress = c("nCount_RNA", "percent.mito"), features = use.genes)
