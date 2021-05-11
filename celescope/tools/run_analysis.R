@@ -32,9 +32,13 @@ rds = CreateSeuratObject(matrix, pro=sample)
 # generate h5ad file
 x = GetAssayData(rds,slot="count")
 mtx = as.matrix(x)
-barcode = colnames(rds)
-geneid = rownames(rds)
+barcode =  data.frame(colnames(rds))
+geneid =  data.frame(rownames(rds))
 h5.out = stringr::str_glue('{outdir}/{sample}.h5')
+if (file.exists(h5.out)) {
+  #Delete file if it exists
+  file.remove(h5.out)
+}
 path <- path.expand(h5.out)
 h5createFile(path)
 h5f <- H5Fopen(path)
