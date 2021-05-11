@@ -6,21 +6,21 @@ library(rhdf5)
 
 
 argv <- arg_parser('')
-argv <- add_argument(argv,"--matrix_dir", help="cell 10X matrix dir")
+argv <- add_argument(argv,"--matrix_file", help="cell 10X matrix dir")
 argv <- add_argument(argv,"--outdir", help="outdir")
 argv <- add_argument(argv,"--sample", help="sample")
 argv <- add_argument(argv,"--save_rds", help="write rds to disk")
 argv <- parse_args(argv)
 
 #args
-matrix_dir = argv$matrix_dir
+matrix_file = argv$matrix_file
 outdir = argv$outdir
 sample = argv$sample
 save_rds = argv$save_rds
 resolution = 0.6
 res_str = paste0('res.', resolution)
 
-matrix = Seurat::Read10X(matrix_dir, gene.column=2)
+matrix = Seurat::Read10X(matrix_file, gene.column=2)
 tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")

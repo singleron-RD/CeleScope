@@ -35,10 +35,10 @@ def generate_matrix(gtf_file, matrix_file):
 
 
 @add_log
-def seurat(sample, outdir, matrix_dir, save_rds):
+def seurat(sample, outdir, matrix_file, save_rds):
     app = TOOLSDIR + "/run_analysis.R"
     cmd = (
-        f'Rscript {app} --sample {sample} --outdir {outdir} --matrix_dir {matrix_dir} '
+        f'Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file} '
         f'--save_rds {save_rds}'
     )
     seurat.logger.info(cmd)
@@ -64,7 +64,7 @@ class Analysis_rna(Step, AnalysisMixin):
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
         AnalysisMixin.__init__(self, args)
-        self.matrix_dir = args.matrix_dir
+        self.matrix_file = args.matrix_file
         self.type_marker_tsv = args.type_marker_tsv
         self.auto_assign_bool = False
         self.save_rds = args.save_rds
@@ -73,7 +73,7 @@ class Analysis_rna(Step, AnalysisMixin):
             self.save_rds = True
 
     def run(self):
-        seurat(self.sample, self.outdir, self.matrix_dir, self.save_rds)
+        seurat(self.sample, self.outdir, self.matrix_file, self.save_rds)
         if self.auto_assign_bool:
             auto_assign(self.sample, self.outdir, self.type_marker_tsv)
         self.run_analysis()
@@ -95,7 +95,7 @@ def analysis(args):
 def get_opts_analysis(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--matrix_dir', help='matrix dir', required=True)
+        parser.add_argument('--matrix_file', help='matrix file', required=True)
     parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
     parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
 
