@@ -253,7 +253,7 @@ job_end
 
     def analysis(self, sample):
         step = 'analysis'
-        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix.tsv.gz'
+        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix_10X'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
