@@ -45,7 +45,7 @@ LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
 ## Metrics
 - Top Marker Genes by Cluster : differential expression analysis based on the non-parameteric Wilcoxon rank sum test.
 
-- avg_logFC : log fold-change of the average expression between the cluster and the rest of the sample.
+- avg_log2FC : log fold-change of the average expression between the cluster and the rest of the sample.
 
 - pct.1 : The percentage of cells where the gene is detected in the cluster.
 
