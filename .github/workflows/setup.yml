@@ -1,14 +1,14 @@
-name: Python package
+name: CeleScope
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
+  setup:
     strategy:
       matrix:
         python-version: [3.6]
+        os: [centos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
