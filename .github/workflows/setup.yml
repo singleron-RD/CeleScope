@@ -22,4 +22,5 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Install
       run: |
+        pip install celescope
         python setup.py install
