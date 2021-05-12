@@ -32,7 +32,7 @@ setuptools.setup(
     install_requires=[
         'cutadapt==1.17',
         'pysam==0.16.0.1',
-        'scipy==1.0.1',
+        'scipy==1.4.1',
         'numpy==1.19.5',
         'pandas==0.23.4',
         'jinja2>=2.10',
@@ -40,7 +40,7 @@ setuptools.setup(
         'xopen>=0.5.0',
         'editdistance>=0.5.3',
         'mutract',
-        'sklearn==0.24.2',
-        'plotly',
+        'sklearn==0.0',
+        'plotly==4.14.3',
     ]
 )
