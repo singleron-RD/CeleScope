@@ -30,6 +30,7 @@ setuptools.setup(
     include_package_data=True,
     entry_points=entry_dict,
     install_requires=[
+        'Cython==0.29.15',
         'cutadapt==1.17',
         'pysam==0.16.0.1',
         'scipy==1.4.1',
