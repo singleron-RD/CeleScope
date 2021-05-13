@@ -2,9 +2,7 @@
 assign cell identity based on SNR and UMI_min
 """
 
-import os
 import glob
-from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -142,11 +140,11 @@ class Count_tag(Step):
         types = df_plot["tag"].drop_duplicates()
         margin_bottom = np.zeros(len(df_plot[column_name].drop_duplicates()))
 
-        for num, type in enumerate(types):
-            values = list(df_plot.loc[df_plot["tag"] == type, "percent"])
-            df_plot[df_plot['tag'] == type].plot.bar(
+        for num, tag_type in enumerate(types):
+            values = list(df_plot.loc[df_plot["tag"] == tag_type, "percent"])
+            df_plot[df_plot['tag'] == tag_type].plot.bar(
                 x=column_name, y='percent', ax=ax, stacked=True,
-                bottom=margin_bottom, label=type, color=colors[num * 3 + 1])
+                bottom=margin_bottom, label=tag_type, color=colors[num * 3 + 1])
             margin_bottom += values
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.title("tag fraction")
@@ -244,7 +242,7 @@ class Count_tag(Step):
 
         df_tag_count = df_UMI_cell["tag"].value_counts().reset_index()
         df_tag_count.columns = ["item", "count"]
-        for index, row in df_tag_count.iterrows():
+        for _index, row in df_tag_count.iterrows():
             self.add_metric(
                 name=row['item'] + ' Cells',
                 value=row['count'],
