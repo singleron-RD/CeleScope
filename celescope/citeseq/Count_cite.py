@@ -8,8 +8,7 @@ import numpy as np
 import argparse
 import glob
 from collections import defaultdict
-import matplotlib as mpl
-mpl.use('Agg')
+
 
 class Count_cite():
 

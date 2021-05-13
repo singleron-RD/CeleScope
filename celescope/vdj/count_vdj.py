@@ -6,10 +6,9 @@ import logging
 import numpy as np
 import sys
 import argparse
-import matplotlib as mpl
 import re
 import json
-mpl.use('Agg')
+
 from matplotlib import pyplot as plt
 
 from celescope.tools.step import Step, s_common

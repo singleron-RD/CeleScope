@@ -324,26 +324,17 @@ def read_one_col(file):
 def read_fasta(fasta_file, equal=False):
     # seq must have equal length
     fa_dict = {}
-    LENGTH = 0
-    with open(fasta_file, "rt") as f:
-        while True:
-            line1 = f.readline()
-            line2 = f.readline()
-            if not line2:
-                break
-            name = line1.strip(">").strip()
-            seq = line2.strip()
-            seq_length = len(seq)
+    length = None
+    with pysam.FastxFile(fasta_file) as infile:
+        for index, record in enumerate(infile):
+            seq = record.sequence
+            if index == 0:
+                length = len(seq)
             if equal:
-                if LENGTH == 0:
-                    LENGTH = seq_length
-                else:
-                    if LENGTH != seq_length:
-                        raise Exception(f"{fasta_file} have different seq length")
-            fa_dict[name] = seq
-    if equal:
-        return fa_dict, LENGTH
-    return fa_dict
+                if length != len(seq):
+                    raise Exception(f"{fasta_file} have different seq length")
+            fa_dict[record.name] = seq
+    return fa_dict, length
 
 
 def hamming_correct(string1, string2):

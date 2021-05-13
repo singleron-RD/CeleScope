@@ -87,7 +87,6 @@ def barcode_filter_with_magnitude(
     validated_barcodes = df[df[col] >= threshold].index
 
     import matplotlib
-    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     fig = plt.figure()
     plt.plot(df[col])

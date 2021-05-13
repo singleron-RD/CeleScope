@@ -217,7 +217,7 @@ class Barcode(Step):
             self.bool_probe = True
             self.probe_count_dic = utils.genDict(dim=3)
             self.valid_count_dic = utils.genDict(dim=2)
-            self.probe_dic = utils.read_fasta(args.probe_file)
+            self.probe_dic, _ = utils.read_fasta(args.probe_file)
             self.reads_without_probe = 0
         self.pattern = args.pattern
         self.linker = args.linker

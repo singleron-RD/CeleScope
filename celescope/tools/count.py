@@ -4,9 +4,6 @@ count step
 
 import os
 import sys
-import json
-import functools
-import gzip
 import random
 from collections import defaultdict
 from itertools import groupby
@@ -15,7 +12,7 @@ import subprocess
 import numpy as np
 import pandas as pd
 from scipy.io import mmwrite
-from scipy.sparse import csr_matrix, coo_matrix
+from scipy.sparse import coo_matrix
 import pysam
 
 import celescope.tools.utils as utils
@@ -49,7 +46,6 @@ class Count(Step):
         self.cell_matrix_10X_dir = f'{self.outdir}/{self.sample}_matrix_10X'
         self.downsample_file = f'{self.outdir}/{self.sample}_downsample.txt'
 
-
     def run(self):
         self.bam2table()
         df = pd.read_table(self.count_detail_file, header=0)
@@ -61,8 +57,8 @@ class Count(Step):
         self.write_matrix_10X(df, self.raw_matrix_10X_dir)
 
         # call cells
-        cell_bc, threshold = self.cell_calling(df_sum)
-       
+        cell_bc, _threshold = self.cell_calling(df_sum)
+
         # get cell stats
         CB_describe = self.get_cell_stats(df_sum, cell_bc)
 
@@ -77,8 +73,8 @@ class Count(Step):
         saturation, res_dict = self.downsample(df_cell)
 
         # summary
-        self.get_summary(df, saturation, CB_describe, CB_total_Genes,
-                    CB_reads_count, reads_mapped_to_transcriptome)
+        self.get_summary(saturation, CB_describe, CB_total_Genes,
+                         CB_reads_count, reads_mapped_to_transcriptome)
 
         self.report_prepare()
 
@@ -118,7 +114,6 @@ class Count(Step):
             res_dict[geneID] = _dict
         return res_dict
 
-
     @utils.add_log
     def bam2table(self):
         """
@@ -146,7 +141,6 @@ class Count(Step):
                                                         res_dict[geneID][umi]))
         samfile.close()
 
-
     @utils.add_log
     def cell_calling(self, df_sum):
         cell_calling_method = self.cell_calling_method
@@ -161,7 +155,6 @@ class Count(Step):
             _cell_bc, UMI_threshold = self.auto_cell(df_sum)
             cell_bc, UMI_threshold = self.inflection_cell(df_sum, UMI_threshold)
         return cell_bc, UMI_threshold
-
 
     @utils.add_log
     def force_cell(self, df_sum):
@@ -197,10 +190,8 @@ class Count(Step):
     def get_cell_bc(df_sum, threshold, col='UMI'):
         return list(df_sum[df_sum[col] >= threshold].index)
 
-
     @utils.add_log
     def auto_cell(self, df_sum):
-        col = "UMI"
         idx = int(self.expected_cell_num * 0.01)
         barcode_number = df_sum.shape[0]
         idx = int(min(barcode_number, idx))
@@ -233,7 +224,7 @@ class Count(Step):
         subprocess.check_call(cmd, shell=True)
         out_file = f'{self.outdir}/{self.sample}_rescue.tsv'
         df = pd.read_csv(out_file, sep='\t')
-        inflection = int(df.loc[:,'inflection'])
+        inflection = int(df.loc[:, 'inflection'])
         threshold = inflection
         cell_bc = Count.get_cell_bc(df_sum, threshold)
 
@@ -250,7 +241,7 @@ class Count(Step):
             'geneID': 'nunique'
         })
         df_sum.columns = ['readcount', 'UMI2', 'UMI', 'geneID']
-        df_sum = df_sum.sort_values(col, ascending=False) 
+        df_sum = df_sum.sort_values(col, ascending=False)
         return df_sum
 
     '''
@@ -258,7 +249,6 @@ class Count(Step):
     def plot_barcode_UMI(df_sum, threshold, expected_cell_num, cell_num, outdir, sample, cell_calling_method, col='UMI'):
         out_plot = f'{outdir}/{sample}_barcode_UMI_plot.pdf'
         import matplotlib
-        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         fig = plt.figure()
         plt.plot(df_sum['UMI'])
@@ -281,9 +271,9 @@ class Count(Step):
     def write_matrix_10X(self, df, matrix_dir):
         if not os.path.exists(matrix_dir):
             os.mkdir(matrix_dir)
-       
-        df_UMI = df.groupby(['geneID','Barcode']).agg({'UMI':'count'})
-        mtx= coo_matrix((df_UMI.UMI, (df_UMI.index.labels[0], df_UMI.index.labels[1])))
+
+        df_UMI = df.groupby(['geneID', 'Barcode']).agg({'UMI': 'count'})
+        mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.labels[0], df_UMI.index.labels[1])))
         gene_id = df_UMI.index.levels[0].to_series()
         # add gene symbol
         gene_name = gene_id.apply(lambda x: self.id_name[x])
@@ -305,7 +295,7 @@ class Count(Step):
         reads_mapped_to_transcriptome = df['count'].sum()
         return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome)
 
-    def get_summary(self, df, saturation, CB_describe, CB_total_Genes,
+    def get_summary(self, saturation, CB_describe, CB_total_Genes,
                     CB_reads_count, reads_mapped_to_transcriptome):
 
         # total read
@@ -364,8 +354,9 @@ class Count(Step):
         read_saturation = round((1 - n_count_once / read_total) * 100, 2)
 
         # gene median
-        df_cell_subsample = df_cell.loc[index_dedup,]
-        geneNum_median = float(df_cell_subsample.groupby('Barcode').agg({'geneID': 'nunique'}).median())
+        df_cell_subsample = df_cell.loc[index_dedup, ]
+        geneNum_median = float(df_cell_subsample.groupby(
+            'Barcode').agg({'geneID': 'nunique'}).median())
 
         return umi_saturation, read_saturation, geneNum_median
 
@@ -391,7 +382,7 @@ class Count(Step):
                 umi_saturation, read_saturation, geneNum_median = Count.sub_sample(
                     fraction, df_cell, cell_read_index)
                 fh.write(format_str % (fraction, geneNum_median, umi_saturation))
-                format_float = lambda x: round(x / 100, 4)
+                def format_float(x): return round(x / 100, 4)
                 res_dict["fraction"].append(round(fraction, 1))
                 res_dict["umi_saturation"].append(format_float(umi_saturation))
                 res_dict["read_saturation"].append(format_float(read_saturation))
@@ -415,5 +406,5 @@ def get_opts_count(parser, sub_program):
     parser.add_argument('--genomeDir', help='genome directory')
     parser.add_argument('--gtf', help='gtf file path')
     parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
-    parser.add_argument('--cell_calling_method', help='cell calling methods', 
-        choices=['auto', 'cellranger3', 'inflection',], default='auto')
+    parser.add_argument('--cell_calling_method', help='cell calling methods',
+                        choices=['auto', 'cellranger3', 'inflection', ], default='auto')

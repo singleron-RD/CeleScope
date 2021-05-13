@@ -6,9 +6,8 @@ import glob
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import matplotlib as mpl
-mpl.use('Agg')
+import matplotlib.pyplot as plt
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common

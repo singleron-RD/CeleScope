@@ -12,7 +12,6 @@ import matplotlib as mpl
 import re
 import json
 import glob
-mpl.use('Agg')
 from matplotlib import pyplot as plt
 from celescope.tools.utils import *
 from celescope.tools.report import reporter

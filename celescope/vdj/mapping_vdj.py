@@ -3,10 +3,10 @@ vdj mapping
 '''
 
 import os
+
 import pandas as pd
-import matplotlib as mpl
 import pysam
-mpl.use('Agg')
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 
 from celescope.tools.step import Step, s_common
@@ -83,8 +83,8 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
 
     # VDJ
     df_VJ = df_correct_CDR3[
-        (~pd.isnull(df_correct_CDR3['bestVGene'])) &
-        (~pd.isnull(df_correct_CDR3['bestJGene']))
+        (~ pd.isnull(df_correct_CDR3['bestVGene'])) &
+        (~ pd.isnull(df_correct_CDR3['bestJGene']))
     ]
     df_VJ = df_VJ[df_VJ.bestVGene.str[:3] == df_VJ.bestJGene.str[:3]]
     df_VJ["chain"] = df_VJ.bestVGene.str[:3]

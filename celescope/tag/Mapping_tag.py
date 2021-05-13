@@ -1,15 +1,6 @@
 import os
 import pandas as pd
-import logging
-import numpy as np
-import sys
-import argparse
-import re
-import glob
-from collections import defaultdict
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
+
 
 from celescope.tools.report import reporter
 from celescope.tools.barcode import parse_pattern
