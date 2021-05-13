@@ -2,7 +2,6 @@ import unittest
 import os
 from celescope.capture_rna.count_capture_rna import expression_matrix
 from celescope.tools.report import reporter
-from celescope.tools.Analysis import Analysis
 
 
 class testHLA(unittest.TestCase):
@@ -49,18 +48,6 @@ class testHLA(unittest.TestCase):
             outdir=self.outdir + '/..')
         t.get_report()
     
-    def test_match_dir(self):
-        os.chdir('/SGRNJ02/RandD4/RD20051303_Panel/20201216')
-        sample = 'drug_S_H1975_203_TS'
-        outdir = './/drug_S_H1975_203_TS/06.analysis'
-        assay = 'capture_rna'
-        ana = Analysis(     
-            sample,
-            outdir,
-            assay,
-            match_dir=outdir+'/../',
-            step='analysis',     
-    )
 
 
 

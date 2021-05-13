@@ -1,7 +1,8 @@
 import os
 import json
 import pandas as pd
-from celescope.tools.utils import cluster_tsne_list, parse_match_dir, reporter
+from celescope.tools.report import reporter
+from celescope.tools.utils import cluster_tsne_list, parse_match_dir
 
 
 class Analysis():

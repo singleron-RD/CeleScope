@@ -96,7 +96,6 @@ class Analysis_variant(Step, AnalysisMixin):
 
 
     def run(self):
-        self.read_match_dir()
         self.add_GT()
         cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
         df_count_tsne = self.get_df_count_tsne()

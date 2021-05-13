@@ -12,6 +12,7 @@ class AnalysisMixin():
     def __init__(self, args):
         if hasattr(args, "match_dir") and args.match_dir:
             self.match_dir = args.match_dir
+            self.read_match_dir()
         else:
             self.match_dir = args.outdir + "/../" # use self
 
@@ -68,6 +69,9 @@ class AnalysisMixin():
         return res
 
     def read_match_dir(self):
+        """
+        if match_dir is not self, should read match_dir
+        """
         match_dict = utils.parse_match_dir(self.match_dir)
         tsne_df_file = match_dict['tsne_coord']
         self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
@@ -76,7 +80,6 @@ class AnalysisMixin():
         self.marker_df = pd.read_csv(marker_df_file, sep="\t")
 
     def run_analysis(self):
-        self.read_match_dir()
 
         self.cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
         self.gene_tsne = self.get_gene_tsne()
