@@ -353,7 +353,7 @@ class Barcode(Step):
                 umi = seq_ranges(seq1, pattern_dict['U'])
 
                 self.clean_num += 1
-
+                '''
                 if self.bool_probe:
                     # valid count
                     read_name_probe = 'None'
@@ -372,7 +372,7 @@ class Barcode(Step):
 
                     if not find_probe:
                         self.reads_without_probe += 1
-
+                '''
                 self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                 self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
