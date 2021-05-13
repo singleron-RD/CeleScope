@@ -1,19 +1,8 @@
-import numpy as np
 import pandas as pd
-from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
 import pysam
 import os
 from collections import defaultdict
 from celescope.tools.utils import *
-from celescope.tools.report import reporter
-
-
-def genDict(dim=3):
-    if dim == 1:
-        return defaultdict(int)
-    else:
-        return defaultdict(lambda: genDict(dim - 1))
 
 
 @add_log

@@ -12,7 +12,6 @@ Based on S implementation in
 
 import numpy as np
 import scipy.stats as sp_stats
-import itertools
 
 
 class SimpleGoodTuringError(Exception):

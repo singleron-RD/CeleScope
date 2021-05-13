@@ -3,7 +3,6 @@
 # Copyright (c) 2015 10X Genomics, Inc. All rights reserved.
 #
 
-import array
 import numpy as np
 import scipy.stats as sp_stats
 import sys
@@ -11,7 +10,6 @@ import sys
 # import tenkit.constants as tk_constants
 # import tenkit.seq as tk_seq
 # import tenkit.stats as tk_stats
-import sklearn.mixture as sk_mix
 
 # def to_col_vec(a):
 #     """ Convert a 1-d array to a column vector """

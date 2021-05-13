@@ -2,8 +2,6 @@ import os
 from os import listdir
 from os.path import isfile, join
 from concurrent.futures import ProcessPoolExecutor
-import pysam
-import pandas as pd
 from celescope.tools.utils import *
 
 TRACER_PATH = '/SGRNJ/Public/Software/tracer/tracer'

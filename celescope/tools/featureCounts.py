@@ -6,7 +6,6 @@ import re
 import subprocess
 import pysam
 from celescope.tools.utils import *
-from celescope.tools.report import reporter
 from celescope.tools.step import Step
 
 

@@ -85,7 +85,6 @@ def barcode_filter_with_magnitude(
             "UMI threshold: " + str(threshold))
     validated_barcodes = df[df[col] >= threshold].index
 
-    import matplotlib
     import matplotlib.pyplot as plt
     plt.figure()
     plt.plot(df[col])

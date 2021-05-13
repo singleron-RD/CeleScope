@@ -1,6 +1,5 @@
 import unittest
 import os
-import pandas as pd
 from celescope.fusion.count_fusion import read_pos
 
 

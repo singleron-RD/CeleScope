@@ -1,9 +1,7 @@
 import os
 import json
-import numpy as np
 import pandas as pd
 from celescope.tools.utils import *
-from celescope.tools.step import Step
 
 
 class Analysis():

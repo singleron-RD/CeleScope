@@ -6,8 +6,6 @@ import os
 
 import pandas as pd
 import pysam
-import matplotlib as mpl
-from matplotlib import pyplot as plt
 
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS

@@ -2,8 +2,7 @@ import os
 import json
 import pandas as pd
 import io
-from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader, Undefined
-from celescope.tools.utils import *
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
 env = Environment(

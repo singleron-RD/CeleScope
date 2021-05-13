@@ -3,11 +3,8 @@
 
 import os
 import json
-import numpy as np
 import pandas as pd
 import glob
-from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter
 from celescope.tools.utils import *
 import celescope.tools

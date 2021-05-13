@@ -4,13 +4,10 @@ import numpy as np
 import re
 import json
 
-from matplotlib import pyplot as plt
 
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
-from celescope.tools.report import reporter
 import celescope.tools.utils as utils
-from celescope.tools.Analysis import Analysis
 
 
 def report_prepare(df, outdir):

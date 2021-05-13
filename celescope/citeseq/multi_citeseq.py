@@ -1,6 +1,6 @@
 import os
 from collections import defaultdict
-from .__init__ import __STEPS__, __ASSAY__
+from .__init__ import __ASSAY__
 from celescope.tools.utils import *
 
 
@@ -8,9 +8,7 @@ def main():
 
     # init
     assay = __ASSAY__
-    steps = __STEPS__
-    conda = os.environ['CONDA_DEFAULT_ENV']
-    app = 'celescope'
+    os.environ['CONDA_DEFAULT_ENV']
 
     # parser
     parser = multi_opts(assay)
@@ -22,15 +20,15 @@ def main():
 
     # read args
     outdir = args.outdir
-    chemistry = args.chemistry
-    pattern = args.pattern
-    whitelist = args.whitelist
-    linker = args.linker
-    lowQual = args.lowQual
-    lowNum = args.lowNum
-    mod = args.mod
-    rm_files = args.rm_files
-    minimum_length = args.minimum_length
+    args.chemistry
+    args.pattern
+    args.whitelist
+    args.linker
+    args.lowQual
+    args.lowNum
+    args.mod
+    args.rm_files
+    args.minimum_length
 
     # parse mapfile
     fq_dict, match_dict = parse_map_col4(args.mapfile, None)
@@ -39,10 +37,10 @@ def main():
     link_data(outdir, fq_dict)
 
     # custom args
-    thread = args.thread
-    fq_pattern = args.fq_pattern
-    linker_fasta = args.linker_fasta
-    barcode_fasta = args.barcode_fasta
+    args.thread
+    args.fq_pattern
+    args.linker_fasta
+    args.barcode_fasta
 
     # mk log dir
     logdir = outdir + '/log'
@@ -50,6 +48,5 @@ def main():
 
     # script init
     sjm_cmd = 'log_dir %s\n' % (logdir)
-    sjm_order = ''
-    shell_dict = defaultdict(str)
+    defaultdict(str)
 

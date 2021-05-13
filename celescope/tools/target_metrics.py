@@ -1,4 +1,3 @@
-import itertools
 
 import pysam
 import numpy as np

@@ -2,10 +2,7 @@ import collections
 import numpy as np
 import math
 import pandas as pd
-import plotly as py
 import plotly.graph_objs as go
-import plotly.express as px
-from plotly import tools
 import plotly.offline as pltoff
 
 from celescope.tools.utils import add_log

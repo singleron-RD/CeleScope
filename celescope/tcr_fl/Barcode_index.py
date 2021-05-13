@@ -1,4 +1,3 @@
-from celescope.tools.utils import *
 import pandas as pd
 
 class Barcode_index():

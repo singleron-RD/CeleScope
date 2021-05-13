@@ -1,6 +1,5 @@
 import unittest
 import os
-import pandas as pd
 from celescope.tcr_fl.Barcode_index import Barcode_index
 from celescope.tcr_fl.split_fq import *
 from celescope.tcr_fl.assemble import *

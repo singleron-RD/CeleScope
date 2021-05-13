@@ -1,4 +1,4 @@
-from celescope.rna_virus.__init__ import __STEPS__, __ASSAY__
+from celescope.rna_virus.__init__ import __ASSAY__
 from celescope.tools.Multi import Multi
 
 

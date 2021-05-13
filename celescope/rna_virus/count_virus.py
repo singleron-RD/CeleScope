@@ -1,13 +1,9 @@
-import numpy as np
 import pandas as pd
-from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
 import pysam
 import logging
 import os
 from collections import defaultdict
 from celescope.tools.utils import *
-from celescope.tools.report import reporter
 
 
 def genDict(dim=3):

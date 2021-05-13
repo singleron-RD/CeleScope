@@ -1,6 +1,5 @@
 import unittest
 import os
-import pandas as pd
 from celescope.hla.mapping_hla import split_bam, hla_typing, summary, read_index
 from celescope.tools.utils import *
 

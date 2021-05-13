@@ -5,7 +5,6 @@ import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.tools.utils import format_number, format_stat, glob_genomeDir
-from celescope.tools.report import reporter
 from celescope.tools.step import Step, s_common
 
 class Step_mapping():

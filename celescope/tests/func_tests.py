@@ -1,5 +1,4 @@
 import unittest
-import pandas as pd
 import os
 from collections import namedtuple
 from celescope.tools.step import Step

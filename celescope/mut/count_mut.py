@@ -1,4 +1,3 @@
-from celescope.tools.report import reporter
 from celescope.tools.utils import *
 import pysam
 import os

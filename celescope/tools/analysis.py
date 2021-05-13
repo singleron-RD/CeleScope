@@ -2,12 +2,8 @@
 # coding=utf8
 
 import os
-import numpy as np
 import pandas as pd
-from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
 from celescope.tools.utils import *
-from celescope.rna.__init__ import __ASSAY__
 from celescope.tools.analysisMixin import AnalysisMixin 
 from celescope.tools.step import Step
 

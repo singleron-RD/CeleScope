@@ -1,9 +1,7 @@
 import unittest
 import os
-import pandas as pd
 import glob
-from celescope.snp.snpCalling import *
-from celescope.tools.utils import read_barcode_file, glob_genomeDir, parse_vcf
+from celescope.tools.utils import glob_genomeDir
 from .analysis_snp import analysis_variant
 
 

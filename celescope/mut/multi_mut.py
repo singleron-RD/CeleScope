@@ -1,5 +1,5 @@
 
-from celescope.mut.__init__ import __STEPS__, __ASSAY__
+from celescope.mut.__init__ import __ASSAY__
 from celescope.tools.Multi import Multi
 
 
