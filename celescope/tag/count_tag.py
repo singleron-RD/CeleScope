@@ -246,7 +246,6 @@ class Count_tag(Step):
             self.add_metric(
                 name=row['item'] + ' Cells',
                 value=row['count'],
-                total=self.cell_total
-            )        
-
+                total=self.cell_total,
+            )
         self.clean_up()

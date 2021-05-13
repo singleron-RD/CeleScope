@@ -1,17 +1,11 @@
 import os
-from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
-import celescope
-import pysam
-import numpy as np
-import pandas as pd
-import logging
-from celescope.tools.utils import *
-from celescope.tools.report import reporter
+
+import celescope.tools.utils as utils
 from mutract.utils import Mutract
+from celescope.tools.step import s_common
 
 
-@add_log
+@utils.add_log
 def snpCalling(args):
 
     sample = args.sample
@@ -27,8 +21,8 @@ def snpCalling(args):
         os.system('mkdir -p %s' % (outdir))
 
     # get args
-    _refFlat, _gtf, fasta = glob_genomeDir(genomeDir, fa=True)
-    _match_barcode, _cell_total, match_barcode_file = read_barcode_file(match_dir, return_file=True)
+    _refFlat, _gtf, fasta = utils.glob_genomeDir(genomeDir, fa=True)
+    _match_barcode, (_cell_total, match_barcode_file) = utils.read_barcode_file(match_dir, return_file=True)
 
     # mutract
     obj = Mutract(

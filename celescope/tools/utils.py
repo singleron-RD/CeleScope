@@ -20,9 +20,6 @@ import pandas as pd
 import numpy as np
 import pysam
 import xopen
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 import celescope.tools
 from celescope.tools.__init__ import __PATTERN_DICT__
@@ -54,7 +51,7 @@ def add_log(func):
         result = func(*args, **kwargs)
         end = time.time()
         used = timedelta(seconds=end - start)
-        logger.info(f'done. time used: {used}')
+        logger.info('done. time used: %s', used)
         return result
 
     wrapper.logger = logger
@@ -118,7 +115,7 @@ def read_barcode_file(match_dir, return_file=False):
     match_barcode, cell_total = read_one_col(match_barcode_file)
     match_barcode = set(match_barcode)
     if return_file:
-        return match_barcode, cell_total, match_barcode_file
+        return match_barcode, (cell_total, match_barcode_file)
     return match_barcode, cell_total
 
 
@@ -142,7 +139,7 @@ def multi_opts(assay):
             4th col: Cell number or match_dir, optional;
         ''',
         required=True)
-    parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+    parser.add_argument('--chemistry', choices=list(__PATTERN_DICT__.keys()), help='chemistry version', default='auto')
     parser.add_argument('--whitelist', help='cellbarcode list')
     parser.add_argument('--linker', help='linker')
     parser.add_argument('--pattern', help='read1 pattern')
@@ -246,7 +243,7 @@ def process_read(
     while True:
         line1 = read2.readline()
         line2 = read2.readline()
-        line3 = read2.readline()
+        _line3 = read2.readline()
         line4 = read2.readline()
         if not line4:
             break
@@ -326,7 +323,7 @@ def read_one_col(file):
 
 def read_fasta(fasta_file, equal=False):
     # seq must have equal length
-    dict = {}
+    fa_dict = {}
     LENGTH = 0
     with open(fasta_file, "rt") as f:
         while True:
@@ -343,10 +340,10 @@ def read_fasta(fasta_file, equal=False):
                 else:
                     if LENGTH != seq_length:
                         raise Exception(f"{fasta_file} have different seq length")
-            dict[name] = seq
+            fa_dict[name] = seq
     if equal:
-        return dict, LENGTH
-    return dict
+        return fa_dict, LENGTH
+    return fa_dict
 
 
 def hamming_correct(string1, string2):
@@ -379,7 +376,7 @@ def gen_stat(df, stat_file):
 
     df.loc[:,'value'] = df.loc[:,'count']
     df.loc[~df['total_count'].isna(), 'value'] = df.loc[~df['total_count'].isna(), :].apply(
-        lambda row: add_percent(row), axis=1
+        add_percent, axis=1
     )
     df.loc[df['total_count'].isna(), 'value'] = df.loc[df['total_count'].isna(), :].apply(
         lambda row: f'{format_number(row["count"])}', axis=1
@@ -461,7 +458,7 @@ def parse_map_col4(mapfile, default_val):
     return fq_dict, col4_dict
 
 
-def generate_sjm(cmd, name, conda, m=1, x=1, steps_run='all'):
+def generate_sjm(cmd, name, conda, m=1, x=1):
     res_cmd = f'''
 job_begin
     name {name}
@@ -547,65 +544,6 @@ def glob_genomeDir(genomeDir, fa=False):
     return refFlat, gtf
 
 
-def barcode_filter_with_magnitude(
-        df, plot='magnitude.pdf', col='UMI', percent=0.1, expected_cell_num=3000):
-    # col can be readcount or UMI
-    # determine validated barcodes
-    df = df.sort_values(col, ascending=False)
-    idx = int(expected_cell_num * 0.01) - 1
-    idx = max(0, idx)
-
-    # calculate read counts threshold
-    threshold = int(df.iloc[idx, df.columns == col] * 0.1)
-    threshold = max(1, threshold)
-    validated_barcodes = df[df[col] > threshold].index
-
-    fig = plt.figure()
-    plt.plot(df[col])
-    plt.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
-    plt.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
-    plt.title('expected cell num: %s\n%s threshold: %s\ncell num: %s' %
-              (expected_cell_num, col, threshold, len(validated_barcodes)))
-    plt.loglog()
-    plt.savefig(plot)
-
-    return (validated_barcodes, threshold, len(validated_barcodes))
-
-
-def barcode_filter_with_kde(df, plot='kde.pdf', col='UMI'):
-    # col can be readcount or UMI
-    # filter low values
-    df = df.sort_values(col, ascending=False)
-    arr = np.log10([i for i in df[col] if i / float(df[col][0]) > 0.001])
-
-    # kde
-    x_grid = np.linspace(min(arr), max(arr), 10000)
-    density = gaussian_kde(arr, bw_method=0.1)
-    y = density(x_grid)
-
-    local_mins = argrelextrema(y, np.less)
-    log_threshold = x_grid[local_mins[-1][0]]
-    threshold = np.power(10, log_threshold)
-    validated_barcodes = df[df[col] > threshold].index
-
-    # plot
-    fig, (ax1, ax2) = plt.subplots(2, figsize=(6.4, 10))
-    ax1.plot(x_grid, y)
-    #ax1.axhline(y[local_mins[-1][0]], -0.5, log_threshold, linestyle='dashed')
-    ax1.vlines(log_threshold, 0, y[local_mins[-1][0]], linestyle='dashed')
-    ax1.set_ylim(0, 0.3)
-
-    ax2.plot(df[col])
-    ax2.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
-    ax2.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
-    ax2.set_title('%s threshold: %s\ncell num: %s' %
-                  (col, int(threshold), len(validated_barcodes)))
-    ax2.loglog()
-    plt.savefig(plot)
-
-    return (validated_barcodes, threshold, len(validated_barcodes))
-
-
 def get_slope(x, y, window=200, step=10):
     assert len(x) == len(y)
     start = 0
@@ -620,40 +558,6 @@ def get_slope(x, y, window=200, step=10):
         res[1].append(z[0])
         start += step
     return res
-
-
-def barcode_filter_with_derivative(
-        df, plot='derivative.pdf', col='UMI', window=500, step=5):
-    # col can be readcount or UMI
-    # filter low values
-    df = df.sort_values(col, ascending=False)
-    y = np.log10([i for i in df[col] if i / float(df[col][0]) > 0.001])
-    x = np.log10(np.arange(len(y)) + 1)
-
-    # derivative
-    res = get_slope(x, y, window=window, step=step)
-    res2 = get_slope(res[0], res[1], window=window, step=step)
-    g0 = [res2[0][i] for i, j in enumerate(res2[1]) if j > 0]
-    cell_num = int(np.power(10, g0[0]))
-    threshold = df[col][cell_num]
-    validated_barcodes = df.index[0:cell_num]
-
-    # plot
-    fig, (ax1, ax2, ax3) = plt.subplots(3, figsize=(6.4, 15))
-    ax1.plot(res[0], res[1])
-
-    ax2.plot(res2[0], res2[1])
-    ax2.set_ylim(-1, 1)
-
-    ax3.plot(df[col])
-    ax3.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
-    ax3.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')
-    ax3.set_title('%s threshold: %s\ncell num: %s' %
-                  (col, int(threshold), len(validated_barcodes)))
-    ax3.loglog()
-    plt.savefig(plot)
-
-    return (validated_barcodes, threshold, len(validated_barcodes))
 
 
 def genDict(dim=3, valType=int):
@@ -771,7 +675,7 @@ def report_prepare(outdir, **kwargs):
         json.dump(data, fh)
 
 
-def parse_vcf(vcf_file, cols=['chrom', 'pos', 'alleles'], infos=['VID','CID']):
+def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID','CID')):
     vcf = pysam.VariantFile(vcf_file)
     df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
     rec_dict = {}
@@ -848,7 +752,7 @@ def parse_match_dir(match_dir):
     match_dict['markers'] = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
     try:
         match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]
-    except Exception:
+    except IndexError:
         match_dict['rds'] = None
     return match_dict
 
@@ -889,7 +793,7 @@ def STAR_util(
         cmd += ' --outReadsUnmapped Fastx '
 
     STAR_util.logger.info(cmd)
-    os.system(cmd)
+    subprocess.check_call(cmd, shell=True)
 
     cmd = "samtools index {out_BAM}".format(out_BAM=out_BAM)
     STAR_util.logger.info(cmd)
@@ -897,7 +801,6 @@ def STAR_util(
 
 
 def get_scope_bc(bctype):
-    import celescope
     root_path = os.path.dirname(celescope.__file__)
     linker_f = glob.glob(f'{root_path}/data/chemistry/{bctype}/linker*')[0]
     whitelist_f = f'{root_path}/data/chemistry/{bctype}/bclist'
@@ -948,10 +851,10 @@ def find_step_module(assay, step):
     init_module = find_assay_init(assay)
     try:
         step_module = importlib.import_module(f"celescope.{assay}.{step}")
-    except ModuleNotFoundError as error:
+    except ModuleNotFoundError:
         try:
             step_module = importlib.import_module(f"celescope.tools.{step}")
-        except ModuleNotFoundError as error:
+        except ModuleNotFoundError:
             module_path = init_module.IMPORT_DICT[step]
             step_module = importlib.import_module(f"{module_path}.{step}")
 
