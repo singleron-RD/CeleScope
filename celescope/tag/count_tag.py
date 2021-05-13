@@ -4,10 +4,10 @@ assign cell identity based on SNR and UMI_min
 
 import glob
 
-import numpy as np
-import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common

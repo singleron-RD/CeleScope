@@ -2,8 +2,8 @@
 map read2 to barcode_fasta
 """
 
-import pysam
 import pandas as pd
+import pysam
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
