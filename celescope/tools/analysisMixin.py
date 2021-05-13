@@ -70,7 +70,8 @@ class AnalysisMixin():
 
     def read_match_dir(self):
         """
-        if match_dir is not self, should read match_dir
+        if match_dir is not self, should read match_dir at init
+        if it is self, read at run_analysis
         """
         match_dict = utils.parse_match_dir(self.match_dir)
         tsne_df_file = match_dict['tsne_coord']
@@ -80,7 +81,7 @@ class AnalysisMixin():
         self.marker_df = pd.read_csv(marker_df_file, sep="\t")
 
     def run_analysis(self):
-
+        self.read_match_dir()
         self.cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
         self.gene_tsne = self.get_gene_tsne()
         marker_table = self.get_marker_table()

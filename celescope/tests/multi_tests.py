@@ -33,6 +33,16 @@ class Tests(unittest.TestCase):
         stat_file = glob.glob("test1/*.count_vdj/stat.txt")[0]
         assert os.path.exists(stat_file)
 
+    def test_tag(self):
+        self._run('tag')
+        stat_file = glob.glob("test1/*.count_tag/stat.txt")[0]
+        assert os.path.exists(stat_file)
+
+    def test_capture_virus(self):
+        self._run('capture_virus')
+        stat_file = glob.glob("test1/*.analysis_capture_virus/stat.txt")[0]
+        assert os.path.exists(stat_file)
+
 
 if __name__ == '__main__':
     unittest.main()
