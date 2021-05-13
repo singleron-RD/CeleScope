@@ -3,31 +3,11 @@ name: CeleScope
 on: [push, pull_request]
 
 jobs:
-  setup:
+  setup_and_lint:
     strategy:
       matrix:
         os: [ubuntu-18.04]
     runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6.7
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pylint
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Install
-      run: |
-        python -m pip install --upgrade pip
-        pip install celescope
-        python setup.py install
-
-  lint_with_pylint:
-    runs-on: ubuntu-18.04
 
     steps:
     - uses: actions/checkout@v2
@@ -42,8 +22,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: lint
+    - name: Install
       run: |
+        pip install celescope
+        python setup.py install
+
+        # lint
         CHANGED_FILES=$(git diff --name-only ${{ github.event.before }}..${{ github.event.after }})
         for changed_file in $CHANGED_FILES; do
           if [[ $changed_file == *.py ]]
@@ -57,3 +41,5 @@ jobs:
             pylint --disable=all --enable=E,W --disable=W1618,E1101,W1633,W1619,W1655,W0105 $changed_file
           fi
         done
+
+  
