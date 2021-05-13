@@ -1,6 +1,10 @@
-import argparse
-from celescope.tools.utils import *
+"""
+map read2 to barcode_fasta
+"""
+
+# import celescope.tools.utils as utils
 from .Mapping_tag import Mapping_tag
+from celescope.tools.step import s_common
 
 def get_opts_mapping_tag(parser, sub_program):
     parser.add_argument("--fq_pattern", help="read2 fastq pattern")
