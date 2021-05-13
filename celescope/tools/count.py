@@ -22,7 +22,7 @@ import celescope.tools.utils as utils
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
 from celescope.tools.cellranger3 import get_plot_elements
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 
 TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)

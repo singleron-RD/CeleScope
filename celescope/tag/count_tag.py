@@ -1,6 +1,6 @@
 import argparse
 from .Count_tag import Count_tag
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 
 
 def get_opts_count_tag(parser, sub_program):

@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 import os
 from collections import namedtuple
-from celescope.tools.Step import Step
+from celescope.tools.step import Step
 
 class Tests(unittest.TestCase):
 

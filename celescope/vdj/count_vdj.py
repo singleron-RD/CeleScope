@@ -12,7 +12,7 @@ import json
 mpl.use('Agg')
 from matplotlib import pyplot as plt
 
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.report import reporter
 import celescope.tools.utils as utils

@@ -10,7 +10,7 @@ import sys
 import pysam
 from celescope.tools.utils import *
 from celescope.tools.report import reporter
-from celescope.tools.Step import Step
+from celescope.tools.step import Step
 
 
 def format_stat(log, samplename):

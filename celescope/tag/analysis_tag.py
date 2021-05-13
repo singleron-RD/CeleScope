@@ -2,7 +2,7 @@ import argparse
 import pandas as pd
 import celescope.tools.utils as utils
 from celescope.tools.analysisMixin import AnalysisMixin
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 
 
 class Analysis_tag(Step, AnalysisMixin):

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import glob
 from celescope.tools.utils import *
-from celescope.tools.Step import Step
+from celescope.tools.step import Step
 
 
 class Analysis():

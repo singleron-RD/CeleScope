@@ -8,7 +8,7 @@ import pysam
 
 from itertools import islice
 from celescope.tools.utils import *
-from celescope.tools.Step import Step
+from celescope.tools.step import Step
 
 
 ADAPT = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']

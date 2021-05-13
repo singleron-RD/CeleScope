@@ -5,7 +5,7 @@ import pysam
 import numpy as np
 
 import celescope.tools.utils as utils
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 
 
 class Target_metrics(Step):

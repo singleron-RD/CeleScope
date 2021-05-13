@@ -15,7 +15,7 @@ from xopen import xopen
 import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
 from celescope.tools.Chemistry import Chemistry
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 
 
 MIN_T = 10
@@ -486,7 +486,7 @@ def get_opts_barcode(parser, sub_program=True):
     parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
     parser.add_argument('--gzip', help="output gzipped fastq", action='store_true')
     parser.add_argument(
-        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+        '--chemistry', choices=list(__PATTERN_DICT__.keys()), help='chemistry version', default='auto')
     if sub_program:
         parser.add_argument('--fq1', help='read1 fq file', required=True)
         parser.add_argument('--fq2', help='read2 fq file', required=True)

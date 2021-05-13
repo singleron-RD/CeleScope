@@ -2,7 +2,7 @@ import unittest
 import os
 import pandas as pd
 from collections import namedtuple
-from celescope.tools.Step import Step
+from celescope.tools.step import Step
 from .consensus import *
 
 

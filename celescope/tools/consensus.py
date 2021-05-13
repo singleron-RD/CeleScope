@@ -5,7 +5,7 @@ from xopen import xopen
 from collections import defaultdict
 from itertools import groupby
 
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 
 

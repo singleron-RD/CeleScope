@@ -14,7 +14,7 @@ from scipy.sparse import csr_matrix
 from celescope.tools.utils import *
 from celescope.rna.__init__ import __ASSAY__
 from celescope.tools.analysisMixin import AnalysisMixin 
-from celescope.tools.Step import Step
+from celescope.tools.step import Step
 
 
 TOOLSDIR = os.path.dirname(__file__)

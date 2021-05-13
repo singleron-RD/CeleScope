@@ -1,7 +1,7 @@
 import pandas as pd
 
 import celescope.tools.utils as utils
-from celescope.tools.Step import Step
+from celescope.tools.step import Step
 
 
 class AnalysisMixin():
