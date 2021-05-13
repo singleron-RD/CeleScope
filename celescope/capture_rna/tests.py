@@ -1,5 +1,4 @@
 import unittest
-import os
 from celescope.capture_rna.count_capture_rna import expression_matrix
 from celescope.tools.report import reporter
 
