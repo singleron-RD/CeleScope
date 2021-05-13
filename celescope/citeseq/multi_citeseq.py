@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 from .__init__ import __ASSAY__
-from celescope.tools.utils import *
+from celescope.tools.utils import link_data, multi_opts, parse_map_col4
 
 
 def main():

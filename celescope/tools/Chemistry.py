@@ -1,6 +1,6 @@
 from collections import defaultdict
 import pysam
-from .utils import *
+from .utils import add_log, get_scope_bc, parse_pattern, read_one_col, seq_ranges
 
 class Chemistry():
 

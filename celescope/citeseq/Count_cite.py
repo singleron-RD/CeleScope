@@ -1,5 +1,5 @@
 from celescope.tools.report import reporter
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log, format_stat, read_barcode_file
 import os
 import pandas as pd
 import numpy as np

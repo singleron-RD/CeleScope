@@ -2,7 +2,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 from concurrent.futures import ProcessPoolExecutor
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log
 
 TRACER_PATH = '/SGRNJ/Public/Software/tracer/tracer'
 CONF_PATH = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/tcr_fl/20201103/tracer_SGR.conf'

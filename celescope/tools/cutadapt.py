@@ -5,7 +5,7 @@ import pandas as pd
 import pysam
 
 from itertools import islice
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log, s_common
 from celescope.tools.step import Step
 
 

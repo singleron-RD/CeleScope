@@ -4,7 +4,7 @@ from concurrent.futures import ProcessPoolExecutor
 import celescope
 import pysam
 import pandas as pd
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log, read_barcode_file
 
 
 @add_log

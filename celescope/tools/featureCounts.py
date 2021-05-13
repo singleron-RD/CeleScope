@@ -5,7 +5,7 @@ import os
 import re
 import subprocess
 import pysam
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log, format_number, gene_convert, glob_genomeDir, s_common
 from celescope.tools.step import Step
 
 

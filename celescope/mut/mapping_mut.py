@@ -1,4 +1,4 @@
-from celescope.tools.utils import *
+from celescope.tools.utils import STAR_util, add_log
 
 
 @add_log

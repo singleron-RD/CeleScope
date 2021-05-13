@@ -6,7 +6,7 @@ import json
 import pandas as pd
 import glob
 from celescope.tools.report import reporter
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log, s_common
 import celescope.tools
 
 toolsdir = os.path.dirname(celescope.tools.__file__)

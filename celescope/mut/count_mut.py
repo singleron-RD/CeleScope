@@ -1,4 +1,4 @@
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log, parse_match_dir
 import pysam
 import os
 import pandas as pd

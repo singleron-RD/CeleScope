@@ -3,7 +3,7 @@ import pysam
 import logging
 import os
 from collections import defaultdict
-from celescope.tools.utils import *
+from celescope.tools.utils import add_log, s_common
 
 
 def genDict(dim=3):
