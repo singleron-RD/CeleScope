@@ -26,6 +26,9 @@ jobs:
       run: |
         pip install celescope
         python setup.py install
+        
+        # test
+        celescope -h
 
         # lint
         CHANGED_FILES=$(git diff --name-only ${{ github.event.before }}..${{ github.event.after }})
