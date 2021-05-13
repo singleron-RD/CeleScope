@@ -1,4 +1,3 @@
-import os
 from celescope.tools.utils import *
 
 

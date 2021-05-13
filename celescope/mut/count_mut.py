@@ -3,8 +3,6 @@ from celescope.tools.utils import *
 import pysam
 import os
 import pandas as pd
-import argparse
-import glob
 import editdistance
 
 parentDir = os.path.dirname(__file__)
@@ -105,7 +103,7 @@ def count_mut(args):
         gene = str(row["gene"])
         ref_pos = int(row["ref_pos"])
         mut_type = str(row["type"])
-        seq_length = int(row["seq_length"])
+        int(row["seq_length"])
         seq = str(row["seq"])
         if gene not in mut_dic.keys():
             return False

@@ -4,7 +4,6 @@ from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 import pysam
 import os
-import glob
 from collections import defaultdict
 from celescope.tools.utils import *
 from celescope.tools.report import reporter

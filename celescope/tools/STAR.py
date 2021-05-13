@@ -1,10 +1,6 @@
 import os
 import re
-import sys
-import json
-import logging
 import subprocess
-import glob
 import pandas as pd
 
 import celescope.tools.utils as utils

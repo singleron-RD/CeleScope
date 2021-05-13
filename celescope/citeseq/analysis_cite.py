@@ -1,4 +1,3 @@
-import argparse
 import os
 from celescope.tools.utils import *
 

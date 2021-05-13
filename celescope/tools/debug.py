@@ -1,7 +1,6 @@
 import os
 import glob 
 import argparse
-import logging
 
 
 class Debug():

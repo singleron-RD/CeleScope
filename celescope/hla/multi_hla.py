@@ -1,9 +1,4 @@
 import os
-import glob
-import sys
-import argparse
-import re
-from collections import defaultdict
 from celescope.hla.__init__ import __STEPS__, __ASSAY__
 from celescope.tools.utils import *
 

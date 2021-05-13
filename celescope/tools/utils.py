@@ -243,7 +243,7 @@ def process_read(
     while True:
         line1 = read2.readline()
         line2 = read2.readline()
-        _line3 = read2.readline()
+        read2.readline()
         line4 = read2.readline()
         if not line4:
             break

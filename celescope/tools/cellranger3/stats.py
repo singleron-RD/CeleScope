@@ -11,7 +11,6 @@ import sys
 # import tenkit.constants as tk_constants
 # import tenkit.seq as tk_seq
 # import tenkit.stats as tk_stats
-import collections
 import sklearn.mixture as sk_mix
 
 # def to_col_vec(a):

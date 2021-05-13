@@ -1,6 +1,4 @@
-import csv
 import os
-import gzip
 import scipy.io
 import pandas as pd
 from collections import namedtuple
@@ -8,9 +6,7 @@ import numpy as np
 import numpy.ma as ma
 import celescope.tools.cellranger3.stats as cr_stats ## modified stats.py
 import celescope.tools.cellranger3.sgt as cr_sgt ## modified sgt.py
-import sys
 import random
-from subprocess import check_call
 from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
 
 
@@ -229,9 +225,9 @@ def cell_calling_3(all_matrix_10X_dir, expected_cell_num):
 
     raw_features_path = os.path.join(all_matrix_10X_dir, FEATURE_FILE_NAME)
     raw_features_df = pd.read_csv(raw_features_path, sep='\t', error_bad_lines=False, names=['id','name','type'])
-    raw_feature_ids = raw_features_df['id'].tolist()
-    raw_gene_names = raw_features_df['name'].tolist()
-    raw_feature_types = raw_features_df['type'].tolist()
+    raw_features_df['id'].tolist()
+    raw_features_df['name'].tolist()
+    raw_features_df['type'].tolist()
 
     raw_barcodes_path = os.path.join(all_matrix_10X_dir, BARCODE_FILE_NAME)
     raw_barcodes_df = pd.read_csv(raw_barcodes_path, sep='\t', error_bad_lines=False, names=['barcode'])

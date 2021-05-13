@@ -1,7 +1,6 @@
 import unittest
 import os
 import pandas as pd
-import glob
 from celescope.tcr_fl.Barcode_index import Barcode_index
 from celescope.tcr_fl.split_fq import *
 from celescope.tcr_fl.assemble import *
@@ -41,10 +40,6 @@ class test_snp(unittest.TestCase):
 
     def test_summary(self):
         os.chdir('/SGRNJ02/RandD4/RD2019016/20201202/GOT_TCR1118_1T/')
-        TRACER_PATH = '/SGRNJ/Public/Software/tracer/tracer'
-        CONF_PATH = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/tcr_fl/20201103/tracer_SGR.conf'
-        CONDA = 'vdjpuzzle1'
-        CONDA_SUB = 'celescope_tracer'
         outdir = '04.assemble'
         tracer_summarise(outdir)
 

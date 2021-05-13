@@ -2,10 +2,7 @@
 # coding=utf8
 
 import os
-import sys
 import json
-import logging
-import re
 import numpy as np
 import pandas as pd
 import glob

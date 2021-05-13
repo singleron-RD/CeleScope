@@ -1,8 +1,6 @@
 import os
-import sys
 import re
 import subprocess
-import logging
 import pandas as pd
 import pysam
 

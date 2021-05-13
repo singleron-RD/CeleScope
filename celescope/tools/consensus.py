@@ -149,7 +149,7 @@ def consensus(args):
         return
     sample = args.sample
     outdir = args.outdir
-    assay = args.assay
+    args.assay
     fq = args.fq
     threshold = float(args.threshold)
 

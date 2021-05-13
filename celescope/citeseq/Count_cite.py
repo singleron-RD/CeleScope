@@ -3,11 +3,8 @@ from celescope.tools.utils import *
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
-import logging
 import numpy as np
-import argparse
 import glob
-from collections import defaultdict
 
 
 class Count_cite():
@@ -40,7 +37,7 @@ class Count_cite():
         stats = pd.Series()
         outdir = self.outdir
         sample = self.sample
-        UMI_tag_file = f'{outdir}/{sample}_umi_tag.tsv'
+        f'{outdir}/{sample}_umi_tag.tsv'
         mapped_read = self.df_read_count['read_count'].sum()
 
         # in cell

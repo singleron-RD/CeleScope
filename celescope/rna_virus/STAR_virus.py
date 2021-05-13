@@ -1,5 +1,4 @@
 import os
-import subprocess
 from celescope.tools.utils import *
 from celescope.tools.STAR import Step_mapping
 

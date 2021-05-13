@@ -1,5 +1,4 @@
 import itertools
-import collections
 
 import pysam
 import numpy as np

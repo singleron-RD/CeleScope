@@ -1,10 +1,7 @@
 import os
-import sys
 import json
-import argparse
 import pandas as pd
 import io
-import logging
 from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader, Undefined
 from celescope.tools.utils import *
 

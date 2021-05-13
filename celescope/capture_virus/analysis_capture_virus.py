@@ -1,11 +1,6 @@
 import os
-import sys
-import json
-import logging
-import re
 import numpy as np
 import pandas as pd
-import glob
 from scipy.io import mmwrite
 from scipy.sparse import csr_matrix
 from celescope.tools.report import reporter

@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import functools
 from collections import defaultdict
 from itertools import groupby
 import numpy as np
@@ -88,7 +87,7 @@ def barcode_filter_with_magnitude(
 
     import matplotlib
     import matplotlib.pyplot as plt
-    fig = plt.figure()
+    plt.figure()
     plt.plot(df[col])
     plt.hlines(threshold, 0, len(validated_barcodes), linestyle='dashed')
     plt.vlines(len(validated_barcodes), 0, threshold, linestyle='dashed')

@@ -1,9 +1,7 @@
 import os
-import sys
 import json
 import numpy as np
 import pandas as pd
-import glob
 from celescope.tools.utils import *
 from celescope.tools.step import Step
 

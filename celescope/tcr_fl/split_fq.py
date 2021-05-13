@@ -1,6 +1,5 @@
 import os
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
 import pysam
 import pandas as pd
 from celescope.tools.utils import *
@@ -37,13 +36,12 @@ def split_run(fq, fq_outdir, barcodes=None, nCell=None):
     if nCell and nCell != 'None':
         barcodes = get_nCell_barcodes(fq, nCell)
     bi = Barcode_index(barcodes)
-    file_dict = {}
     entry_dict = defaultdict(list)
     with pysam.FastxFile(fq) as fh:
         for entry in fh:
             attr = entry.name.split('_')
             barcode = attr[0]
-            umi = attr[1]
+            attr[1]
             if barcode in barcodes:
                 cell_index = bi.index_dict[barcode]
                 entry_dict[cell_index].append(entry)

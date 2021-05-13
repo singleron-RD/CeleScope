@@ -9,7 +9,6 @@ from celescope.tools.Analysis import Analysis
 
 class testHLA(unittest.TestCase):
     def setUp(self):
-        pass
         '''
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/0910_panel/')
         self.sample = 'S20071508_D_TS'

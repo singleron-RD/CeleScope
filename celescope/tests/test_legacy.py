@@ -1,7 +1,6 @@
 import unittest
 import os
 import pandas as pd
-from collections import namedtuple
 from celescope.tools.STAR import Step_mapping
 from celescope.tools.utils import *
 from .Chemistry import Chemistry
@@ -180,7 +179,6 @@ class Tests(unittest.TestCase):
     @add_mem
     def test_downsample(self):
         assay = 'rna'
-        step = 'count'
         outdir = '/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/unittest/rna/rebuild/test1/05.count/'
         sample = 'test1'
         count_detail_file = f'{outdir}/{sample}_count_detail.txt.gz'
@@ -223,7 +221,6 @@ class Tests(unittest.TestCase):
     @add_mem
     def test_downsample_large1(self):
         assay = 'rna'
-        step = 'count'
         outdir = '/SGRNJ03/PROJ03/PROJ_20.SC/PN20122407_SCOPEv2/temp/CK2101_origin/CK2101/05.count/'
         sample = 'CK2101'
         count_detail_file = f'{outdir}/{sample}_count_detail.txt.gz'
@@ -244,7 +241,6 @@ class Tests(unittest.TestCase):
     @add_mem
     def test_downsample_large2(self):
         assay = 'rna'
-        step = 'count'
         outdir = '/SGRNJ03/PROJ03/PROJ_20.SC/PN20122407_SCOPEv2/temp/CK816_1-1/CK816_1-1/05.count/'
         sample = 'CK816_1-1'
         count_detail_file = f'{outdir}/{sample}_count_detail.txt.gz'

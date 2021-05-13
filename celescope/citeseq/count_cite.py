@@ -1,4 +1,3 @@
-import argparse
 from .Count_cite import Count_cite
 
 def get_opts_count_cite(parser, sub_program):

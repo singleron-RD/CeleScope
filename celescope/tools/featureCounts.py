@@ -3,10 +3,7 @@
 
 import os
 import re
-import logging
 import subprocess
-import glob
-import sys
 import pysam
 from celescope.tools.utils import *
 from celescope.tools.report import reporter

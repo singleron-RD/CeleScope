@@ -1,11 +1,6 @@
-import glob
-import gzip
 import os
 import pandas as pd
-import logging
 import numpy as np
-import sys
-import argparse
 import re
 import json
 
@@ -50,8 +45,8 @@ def count_vdj(args):
     outdir = args.outdir
     UMI_count_filter1_file = args.UMI_count_filter1_file
     type = args.type
-    assay = args.assay
-    debug = args.debug
+    args.assay
+    args.debug
     iUMI = int(args.iUMI)
     chains = CHAINS[type]
 
