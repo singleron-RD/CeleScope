@@ -2,10 +2,11 @@ import os
 import numbers
 import json
 import io
-import pandas as pd
 from collections import abc
 from collections import namedtuple
-from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
+
+import pandas as pd
+from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 from celescope.tools.utils import add_log
 
