@@ -33,7 +33,7 @@ class Tests(unittest.TestCase):
 
     def test_dumb_consensus(self):
         read_list = [('AAAA','FFFF'),('TTT','FF;'),('CCC','FFF'),('GGGGGGG','FFFFFFF')]
-        consensus_seq, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(read_list, 0.5)
+        consensus_seq, consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(read_list, 0.5)
         print(consensus_qual)
         assert consensus_seq == 'NNNA'
 

@@ -92,24 +92,39 @@ class Count(Step):
 
     @staticmethod
     def correct_umi(gene_umi_dict, percent=0.1):
+        """
+        Args:
+            gene_umi_dict: key is geneID, value is umi_seq:umi_count dict
+            percent: if hamming_distance(low_seq, high_seq) == 1 and 
+                low_count / high_count < percent, merge these two umis.
+
+        Returns:
+            corrected gene_umi_dict
+        """
+
         res_dict = defaultdict()
 
         for geneID in gene_umi_dict:
             _dict = gene_umi_dict[geneID]
+            # sort by value(UMI count) first, then key(UMI sequence)
             umi_arr = sorted(
-                _dict.keys(), key=lambda x: (_dict[x], x), reverse=True)
+                _dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
             while True:
-                # break when only one barcode or umi_low/umi_high great than 0.1
+                # break when only highest in umi_arr
                 if len(umi_arr) == 1:
                     break
                 umi_low = umi_arr.pop()
+                low_seq = umi_low[0]
+                low_count = umi_low[1]
 
-                for u in umi_arr:
-                    if float(_dict[umi_low]) / _dict[u] > percent:
+                for umi_kv in umi_arr:
+                    high_seq = umi_kv[0]
+                    high_count = umi_kv[1]
+                    if float(low_count / high_count) > percent:
                         break
-                    if utils.hamming_distance(umi_low, u) == 1:
-                        _dict[u] += _dict[umi_low]
-                        del (_dict[umi_low])
+                    if utils.hamming_distance(low_seq, high_seq) == 1:
+                        _dict[high_seq] += _dict[low_seq]
+                        del (_dict[low_seq])
                         break
             res_dict[geneID] = _dict
         return res_dict
