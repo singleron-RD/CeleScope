@@ -17,7 +17,7 @@ class Chemistry():
             chemistry = self.get_chemistry(fastq1)
             chemistry_list.append(chemistry)
         if len(set(chemistry_list)) != 1:
-           Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
+            Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
         return chemistry_list
 
     @add_log
@@ -37,7 +37,7 @@ class Chemistry():
         L57C_n = 0
 
         with pysam.FastxFile(fq1) as fh:
-            for i in range(self.nRead):
+            for _ in range(self.nRead):
                 entry = fh.__next__()
                 seq = entry.sequence
                 L57C = seq[56]
