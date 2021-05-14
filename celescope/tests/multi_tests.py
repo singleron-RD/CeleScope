@@ -16,7 +16,7 @@ class Tests(unittest.TestCase):
 
     def _run(self, assay):
         os.chdir(self.test_dir + assay)
-        print('running ' + assay)
+        print("*" * 20 + "running " + assay + "*" * 20)
         subprocess.check_call('sh run_shell.sh', shell=True)
         subprocess.check_call('sh sjm.sh', shell=True)
         if os.path.exists("test1"):

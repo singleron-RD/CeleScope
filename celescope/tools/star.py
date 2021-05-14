@@ -27,7 +27,6 @@ class Step_mapping():
         self.multi_max = int(outFilterMultimapNmax)
         if self.genomeDir and self.genomeDir != "None":
             self.STAR_index = self.genomeDir
-            self.refFlat, _gtf, _ = glob_genomeDir(self.genomeDir)
         else:
             self.STAR_index = STAR_index
             self.refFlat = refFlat
@@ -179,6 +178,7 @@ class Step_mapping():
 
     @utils.add_log
     def picard(self):
+        refFlat, _gtf, _ = glob_genomeDir(self.genomeDir)
         cmd = [
             'picard',
             '-Xmx20G',
@@ -189,7 +189,7 @@ class Step_mapping():
             'O=%s' %
             (self.picard_region_log),
             'REF_FLAT=%s' %
-            (self.refFlat),
+            (refFlat),
             'STRAND=NONE',
             'VALIDATION_STRINGENCY=SILENT']
         cmd_str = ' '.join(cmd)

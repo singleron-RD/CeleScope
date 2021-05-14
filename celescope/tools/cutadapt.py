@@ -87,13 +87,13 @@ def cutadapt(args):
                                   out_fq2,
                                   args.fq]
     cutadapt.logger.info('%s' % (' '.join(cmd)))
-    res = subprocess.check(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    res = subprocess.run(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, check=True)
     with open(args.outdir + '/cutadapt.log', 'wb') as fh:
         fh.write(res.stdout)
 
     format_stat(args.outdir + '/cutadapt.log')
 
-    step.clean_up()    
+    step.clean_up()
 
 
 def get_opts_cutadapt(parser, sub_program):

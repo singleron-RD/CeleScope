@@ -332,8 +332,7 @@ def count_vdj(args):
             return "(" + str(row["percent"]) + "%)"
         else:
             return ""
-    cell_summary["percent_str"] = cell_summary.apply(
-        lambda row: percent_str_func, axis=1)
+    cell_summary["percent_str"] = cell_summary.apply(percent_str_func, axis=1)
 
     # stat file
     def gen_stat(summary, stat_file):
