@@ -139,7 +139,7 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
     
     ### Choose candidate cell barcodes
     ### Regular ordmag filter
-    gg_filtered_indices, gg_filtered_metrics, msg = cr_stats.filter_cellular_barcodes_ordmag(umis_per_bc, recovered_cells=recovered_cells)
+    gg_filtered_indices, gg_filtered_metrics, _msg = cr_stats.filter_cellular_barcodes_ordmag(umis_per_bc, recovered_cells=recovered_cells)
 
     print('Cell-called barcodes metrics:')
     print('\n'.join(list(map(lambda x: '{}: {}'.format(*x), gg_filtered_metrics.items()))))
@@ -234,7 +234,7 @@ def cell_calling_3(all_matrix_10X_dir, expected_cell_num):
     raw_barcodes = np.array(raw_barcodes_df['barcode'].tolist())
 
     ### Run cell calling
-    filtered_bc_indices, round_1_filtered_metrics, non_ambient_barcode_result = find_nonambient_barcodes(
+    filtered_bc_indices, round_1_filtered_metrics, _non_ambient_barcode_result = find_nonambient_barcodes(
         raw_mat=raw_mat,recovered_cells=expected_cell_num)
     
     cell_bc = raw_barcodes[filtered_bc_indices]

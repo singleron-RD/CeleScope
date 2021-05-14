@@ -49,7 +49,7 @@ def simple_good_turing(xr, xnr):
 
     # Get Linear Good-Turing estimate
     xnrz = _averaging_transform(xr, xnr)
-    slope, intercept, _, _, _ = sp_stats.linregress(np.log(xr), np.log(xnrz))
+    slope, _intercept, _, _, _ = sp_stats.linregress(np.log(xr), np.log(xnrz))
 
     if slope > -1:
         raise SimpleGoodTuringError("The log-log slope is > -1 (%d); the SGT estimator is not applicable to these data." % slope)

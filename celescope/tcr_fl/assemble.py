@@ -40,7 +40,7 @@ def tracer(fq, outdir):
     
 
 @add_log
-def run_assemble(sample, outdir, fastq_dir, thread):
+def run_assemble(outdir, fastq_dir, thread):
     fqs = [join(fastq_dir, f) for f in listdir(fastq_dir) if isfile(join(fastq_dir, f))]
     outdirs = [outdir] * len(fqs)
     if not os.path.exists(f'{outdir}/tracer'):
@@ -58,8 +58,7 @@ def assemble(args):
     thread = int(args.thread)
     fastq_dir = args.fastq_dir
     outdir = args.outdir
-    sample = args.sample
-    run_assemble(sample, outdir, fastq_dir, thread)
+    run_assemble(outdir, fastq_dir, thread)
 
 
 def get_opts_assemble(parser, sub_program):

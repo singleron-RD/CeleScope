@@ -17,7 +17,7 @@ class Tests(unittest.TestCase):
             'outdir': 'test1/06.analysis',
             'debug': True,
         }
-        Args = namedtuple('Args', args_dict.keys())
+        Args = namedtuple('Args', list(args_dict.keys()))
         args = Args(**args_dict)
 
         obj = Step(args, 'analysis')

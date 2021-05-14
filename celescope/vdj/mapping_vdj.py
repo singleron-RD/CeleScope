@@ -13,8 +13,8 @@ import celescope.tools.utils as utils
 
 
 @utils.add_log
-def summary(input_file, alignments, type, outdir, sample, assay, debug, not_consensus):
-    chains = CHAINS[type]
+def summary(input_file, alignments, receptor_type, outdir, sample, not_consensus):
+    chains = CHAINS[receptor_type]
 
     '''
     # out files
@@ -81,8 +81,8 @@ def summary(input_file, alignments, type, outdir, sample, assay, debug, not_cons
 
     # VDJ
     df_VJ = df_correct_CDR3[
-        (~ pd.isnull(df_correct_CDR3['bestVGene'])) &
-        (~ pd.isnull(df_correct_CDR3['bestJGene']))
+        (~pd.isnull(df_correct_CDR3['bestVGene'])) &
+        (~pd.isnull(df_correct_CDR3['bestJGene']))
     ]
     df_VJ = df_VJ[df_VJ.bestVGene.str[:3] == df_VJ.bestJGene.str[:3]]
     df_VJ["chain"] = df_VJ.bestVGene.str[:3]
@@ -195,8 +195,6 @@ def mapping_vdj(args):
     outdir = args.outdir
     fq = args.fq
     receptor_type = args.type
-    debug = args.debug
-    assay = args.assay
     thread = int(args.thread)
     not_consensus = args.not_consensus
     species = args.species
@@ -205,7 +203,7 @@ def mapping_vdj(args):
     alignments = mixcr(outdir, sample, input_file, thread, species)
 
     # summary
-    summary(input_file, alignments, receptor_type, outdir, sample, assay, debug, not_consensus)
+    summary(input_file, alignments, receptor_type, outdir, sample, not_consensus)
 
     step.clean_up()
 

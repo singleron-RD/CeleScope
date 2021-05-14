@@ -38,13 +38,14 @@ class Count_capture_rna(Count):
                         continue
                     geneID = seg.get_tag('XT')
                     gene_umi_dict[geneID][umi] += 1
-                res_dict = Count.correct_umi(gene_umi_dict)
+                for gene_id in gene_umi_dict:
+                    Count.correct_umi(gene_umi_dict[gene_id])
 
                 # output
-                for geneID in res_dict:
-                    for umi in res_dict[geneID]:
-                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, geneID, umi,
-                                                        res_dict[geneID][umi]))
+                for gene_id in gene_umi_dict:
+                    for umi in gene_umi_dict[gene_id]:
+                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
+                                                        gene_umi_dict[gene_id][umi]))
 
         # out probe
         row_list = []

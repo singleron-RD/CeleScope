@@ -2,6 +2,7 @@ import unittest
 from collections import namedtuple
 from celescope.tools.step import Step
 from .consensus import dumb_consensus, get_read_length
+from celescope.tools.count import Count
 
 
 class Tests(unittest.TestCase):
@@ -36,6 +37,22 @@ class Tests(unittest.TestCase):
         consensus_seq, consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(read_list, 0.5)
         print(consensus_qual)
         assert consensus_seq == 'NNNA'
+
+    def test_correct_umi(self):
+        dic = {
+            "apple1": 2,
+            "apple2": 30,
+            "bears1": 5,
+            "bears2": 10,
+            "bears3": 100,
+            "ccccc1": 20,
+            "ccccc2": 199,
+        }
+        n_corrected_umi, n_corrected_read = Count.correct_umi(dic)
+        sorted_dic = sorted(dic.items(), key=lambda x:x[1])
+        assert sorted_dic == [('ccccc1', 20), ('apple2', 32), ('bears3', 115), ('ccccc2', 199)]
+        assert n_corrected_umi == 3
+        assert n_corrected_read == 2 + 5 + 10
 
 
 if __name__ == '__main__':

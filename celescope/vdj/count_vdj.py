@@ -41,11 +41,9 @@ def count_vdj(args):
     UMI_min = args.UMI_min
     outdir = args.outdir
     UMI_count_filter1_file = args.UMI_count_filter1_file
-    type = args.type
-    args.assay
-    args.debug
+    receptor_type = args.type
     iUMI = int(args.iUMI)
-    chains = CHAINS[type]
+    chains = CHAINS[receptor_type]
 
     # out file
     cell_confident_file = f"{outdir}/{sample}_cell_confident.tsv"
@@ -60,7 +58,7 @@ def count_vdj(args):
     else:
         match_bool = True
     if match_bool:
-        match_cell_barcodes, match_cell_number = utils.read_barcode_file(match_dir)
+        match_cell_barcodes, _match_cell_number = utils.read_barcode_file(match_dir)
 
     cell_summary_row_list = []
 
@@ -154,7 +152,7 @@ def count_vdj(args):
     # out clonetypes
     df_clonetypes.to_csv(clonetypes_file, sep="\t", index=False)
 
-    if type == "TCR":
+    if receptor_type == "TCR":
 
         UMI_col_dic = {"TRA": "UMI_TRA", "TRB": "UMI_TRB"}
         for chain in UMI_col_dic:
@@ -213,7 +211,7 @@ def count_vdj(args):
             })
 
     # BCR
-    elif type == "BCR":
+    elif receptor_type == "BCR":
 
         UMI_col_dic = {"IGH": "UMI_IGH", "IGL": "UMI_IGL", "IGK": "UMI_IGK"}
         for chain in UMI_col_dic:
@@ -335,7 +333,7 @@ def count_vdj(args):
         else:
             return ""
     cell_summary["percent_str"] = cell_summary.apply(
-        lambda row: percent_str_func(row), axis=1)
+        lambda row: percent_str_func, axis=1)
 
     # stat file
     def gen_stat(summary, stat_file):
@@ -363,10 +361,10 @@ def count_vdj(args):
         table_header = ["Clonetype_ID"] + cols + ["Frequency", "Percent"]
         return df_table, table_header
 
-    df_table, table_header = format_table(df_clonetypes)
+    df_table, _table_header = format_table(df_clonetypes)
     title = 'Clonetypes'
     if match_bool:
-        df_table, table_header = format_table(df_match_clonetypes)
+        df_table, _table_header = format_table(df_match_clonetypes)
         title = 'Match Clonetypes'
 
     table_dict = step.get_table(title, 'clonetypes_table', df_table)

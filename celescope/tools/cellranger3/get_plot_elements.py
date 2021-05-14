@@ -190,7 +190,7 @@ def _plot_barcode_rank(chart, counts, num_cells):
     """ Generate a generic barcode rank plot """
     rows = convert_numpy_array_to_line_chart(counts, int)
 
-    for i, row in enumerate(rows):
+    for _i, row in enumerate(rows):
         index, count = row[0], row[1]
         if index < num_cells:
             series_list = [chart['data'][0]]
@@ -288,7 +288,7 @@ def get_plot_data(plot_segments, counts):
 
 
 def plot_barcode_rank(count_file_path):
-    sorted_counts, plot_segments, cell_nums = counter_barcode_rank_plot_data(count_file_path)
+    sorted_counts, plot_segments, _cell_nums = counter_barcode_rank_plot_data(count_file_path)
     plot_data = get_plot_data(plot_segments, sorted_counts)
 
     plotly_data = [go.Scatter(x=dat['x'], y=dat['y'], name=dat['name'], mode=dat['mode'], showlegend=dat['showlegend'],

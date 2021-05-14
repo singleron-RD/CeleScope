@@ -41,7 +41,6 @@ def split_run(fq, fq_outdir, barcodes=None, nCell=None):
         for entry in fh:
             attr = entry.name.split('_')
             barcode = attr[0]
-            attr[1]
             if barcode in barcodes:
                 cell_index = bi.index_dict[barcode]
                 entry_dict[cell_index].append(entry)

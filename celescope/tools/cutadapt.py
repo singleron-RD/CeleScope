@@ -12,7 +12,7 @@ from celescope.tools.step import Step
 ADAPT = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
 
 
-def format_stat(cutadapt_log, sample_name):
+def format_stat(cutadapt_log):
     fh = open(cutadapt_log, 'r')
     stat_file = os.path.dirname(cutadapt_log) + '/stat.txt'
     # Total reads processed:...Total written (filtered):
@@ -87,11 +87,11 @@ def cutadapt(args):
                                   out_fq2,
                                   args.fq]
     cutadapt.logger.info('%s' % (' '.join(cmd)))
-    res = subprocess.run(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+    res = subprocess.check(cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     with open(args.outdir + '/cutadapt.log', 'wb') as fh:
         fh.write(res.stdout)
 
-    format_stat(args.outdir + '/cutadapt.log', args.sample)
+    format_stat(args.outdir + '/cutadapt.log')
 
     step.clean_up()    
 

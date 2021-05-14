@@ -91,43 +91,47 @@ class Count(Step):
         self.add_data_item(umi_summary=True)
 
     @staticmethod
-    def correct_umi(gene_umi_dict, percent=0.1):
+    def correct_umi(umi_dict, percent=0.1):
         """
+        Correct umi_dict in place.
+
         Args:
-            gene_umi_dict: key is geneID, value is umi_seq:umi_count dict
-            percent: if hamming_distance(low_seq, high_seq) == 1 and 
-                low_count / high_count < percent, merge these two umis.
+            umi_dict: {umi_seq: umi_count}
+            percent: if hamming_distance(low_seq, high_seq) == 1 and
+                low_count / high_count < percent, merge low to high.
 
         Returns:
-            corrected gene_umi_dict
+            n_corrected_umi: int
+            n_corrected_read: int
         """
+        n_corrected_umi = 0
+        n_corrected_read = 0
 
-        res_dict = defaultdict()
+        # sort by value(UMI count) first, then key(UMI sequence)
+        umi_arr = sorted(
+            umi_dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
+        while True:
+            # break when only highest in umi_arr
+            if len(umi_arr) == 1:
+                break
+            umi_low = umi_arr.pop()
+            low_seq = umi_low[0]
+            low_count = umi_low[1]
 
-        for geneID in gene_umi_dict:
-            _dict = gene_umi_dict[geneID]
-            # sort by value(UMI count) first, then key(UMI sequence)
-            umi_arr = sorted(
-                _dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
-            while True:
-                # break when only highest in umi_arr
-                if len(umi_arr) == 1:
+            for umi_kv in umi_arr:
+                high_seq = umi_kv[0]
+                high_count = umi_kv[1]
+                if float(low_count / high_count) > percent:
                     break
-                umi_low = umi_arr.pop()
-                low_seq = umi_low[0]
-                low_count = umi_low[1]
-
-                for umi_kv in umi_arr:
-                    high_seq = umi_kv[0]
-                    high_count = umi_kv[1]
-                    if float(low_count / high_count) > percent:
-                        break
-                    if utils.hamming_distance(low_seq, high_seq) == 1:
-                        _dict[high_seq] += _dict[low_seq]
-                        del (_dict[low_seq])
-                        break
-            res_dict[geneID] = _dict
-        return res_dict
+                if utils.hamming_distance(low_seq, high_seq) == 1:
+                    n_low = umi_dict[low_seq]
+                    n_corrected_umi += 1
+                    n_corrected_read += n_low
+                    # merge
+                    umi_dict[high_seq] += n_low
+                    del (umi_dict[low_seq])
+                    break
+        return n_corrected_umi, n_corrected_read
 
     @utils.add_log
     def bam2table(self):
@@ -145,15 +149,16 @@ class Count(Step):
                     (barcode, umi) = seg.query_name.split('_')[:2]
                     if not seg.has_tag('XT'):
                         continue
-                    geneID = seg.get_tag('XT')
-                    gene_umi_dict[geneID][umi] += 1
-                res_dict = Count.correct_umi(gene_umi_dict)
+                    gene_id = seg.get_tag('XT')
+                    gene_umi_dict[gene_id][umi] += 1
+                for gene_id in gene_umi_dict:
+                    Count.correct_umi(gene_umi_dict[gene_id])
 
                 # output
-                for geneID in res_dict:
-                    for umi in res_dict[geneID]:
-                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, geneID, umi,
-                                                        res_dict[geneID][umi]))
+                for gene_id in gene_umi_dict:
+                    for umi in gene_umi_dict[gene_id]:
+                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
+                                                        gene_umi_dict[gene_id][umi]))
         samfile.close()
 
     @utils.add_log
