@@ -27,6 +27,7 @@ class Step_mapping():
         self.multi_max = int(outFilterMultimapNmax)
         if self.genomeDir and self.genomeDir != "None":
             self.STAR_index = self.genomeDir
+            self.refFlat, _gtf, _ = glob_genomeDir(self.genomeDir)
         else:
             self.STAR_index = STAR_index
             self.refFlat = refFlat
@@ -47,7 +48,13 @@ class Step_mapping():
             os.system('mkdir -p %s' % (outdir))
         self.stats = pd.Series()
         self.stats_file = f'{outdir}/stat.txt'
-        self.step_name = 'STAR'
+        self.step_name = 'star'
+
+        # out 
+        self.ribo_log = f'{self.outdir}/{self.sample}_ribo_log.txt'
+        self.ribo_run_log = f'{self.outdir}/{self.sample}_ribo_run.log'
+        self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
+        self.plot = None
 
     def format_stat(self):
 
@@ -172,8 +179,6 @@ class Step_mapping():
 
     @utils.add_log
     def picard(self):
-        self.refFlat, _gtf = glob_genomeDir(self.genomeDir)
-        self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
         cmd = [
             'picard',
             '-Xmx20G',
@@ -215,9 +220,9 @@ class Step_mapping():
         subprocess.check_call(cmd, shell=True)
 
 
-def STAR(args):
+def star(args):
 
-    step_name = "STAR"
+    step_name = "star"
     step = Step(args, step_name)
 
     mapping = Step_mapping(
@@ -243,7 +248,7 @@ def STAR(args):
     step.clean_up()
 
 
-def get_opts_STAR(parser, sub_program):
+def get_opts_star(parser, sub_program):
     parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
     parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
     parser.add_argument('--genomeDir', help='genome directory')

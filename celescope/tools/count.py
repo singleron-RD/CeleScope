@@ -34,7 +34,7 @@ class Count(Step):
         self.expected_cell_num = int(args.expected_cell_num)
         self.bam = args.bam
         if args.genomeDir and args.genomeDir != "None":
-            _refFlat, self.gtf_file = utils.glob_genomeDir(args.genomeDir)
+            _refFlat, self.gtf_file, _ = utils.glob_genomeDir(args.genomeDir)
         else:
             self.gtf_file = args.gtf
         self.id_name = utils.gene_convert(self.gtf_file)

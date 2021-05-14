@@ -23,6 +23,21 @@ class Multi():
         self.last_step = ''
         self.args = None
 
+        # parse_args
+        self.common_args()
+        self.step_args()
+        self.args = self.parser.parse_args()
+        if self.args.gzip:
+            self.fq_suffix = ".gz"
+        else:
+            self.fq_suffix = ""
+        if self.args.steps_run == 'all':
+            self.steps_run = self.__STEPS__
+        elif self.args.steps_run:
+            self.steps_run = self.args.steps_run.strip().split(',')
+
+        self.prepare()
+
     def common_args(self):
         readme = f'{self.__ASSAY__} multi-samples'
         parser = argparse.ArgumentParser(readme, 
@@ -53,15 +68,6 @@ class Multi():
             step_module = find_step_module(self.__ASSAY__, step)
             func_opts = getattr(step_module, f"get_opts_{step}")
             func_opts(self.parser, sub_program=False)
-
-    def parse_args(self):
-        self.common_args()
-        self.step_args()
-        self.args = self.parser.parse_args()
-        if self.args.gzip:
-            self.fq_suffix = ".gz"
-        else:
-            self.fq_suffix = ""
 
     @staticmethod
     def parse_map_col4(mapfile, default_val):
@@ -106,11 +112,14 @@ class Multi():
                 fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
 
     def prepare(self):
+        """
+        parse_mapfile, link data, make log dir, init script variables, init outdir_dic
+        """
         # parse_mapfile
         self.fq_dict, self.col4_dict = self.parse_map_col4(self.args.mapfile, self.col4_default)
 
         # link
-        self.link_data()      
+        self.link_data()
 
         # mk log dir
         self.logdir = self.args.outdir + '/log'
@@ -219,8 +228,8 @@ job_end
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
-    def STAR(self, sample):
-        step = 'STAR'
+    def star(self, sample):
+        step = 'star'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
@@ -231,11 +240,11 @@ job_end
 
     def featureCounts(self, sample):
         step = 'featureCounts'
-        input = f'{self.outdir_dic[sample]["STAR"]}/{sample}_Aligned.sortedByCoord.out.bam'
+        input_bam = f'{self.outdir_dic[sample]["star"]}/{sample}_Aligned.sortedByCoord.out.bam'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--input {input} '
+            f'--input {input_bam} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=self.args.thread)
 
@@ -274,15 +283,16 @@ job_end
         return outfile
 
     def run_steps(self):
-        if self.args.steps_run == 'all':
-            self.steps_run = self.__STEPS__
-        elif self.args.steps_run:
-            self.steps_run = self.args.steps_run.strip().split(',')
-
         for sample in self.fq_dict:
             self.last_step = ''
             for step in self.steps_run:
-                eval(f'self.{step}(sample)')
+                try:
+                    method_to_call = getattr(self, step)
+                except AttributeError as attr_not_exist:
+                    raise NotImplementedError(
+                        "Class `{}` does not implement `{}`".format(self.__class__.__name__, step)
+                    ) from attr_not_exist
+                method_to_call(sample)
 
     def merge_report(self):    
         step = "merge_report"
@@ -312,8 +322,6 @@ job_end
                     f.write(self.shell_dict[sample])
 
     def run(self):
-        self.parse_args()
-        self.prepare()
         self.run_steps()
         self.end()
 
@@ -352,7 +360,3 @@ def get_fq(library_id, library_path):
     fq1 = ",".join(fq1_list)
     fq2 = ",".join(fq2_list)
     return fq1, fq2
-
-
-
-

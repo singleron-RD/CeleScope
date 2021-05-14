@@ -1,5 +1,5 @@
 from celescope.tools.utils import add_log, s_common
-from celescope.tools.STAR import Step_mapping
+from celescope.tools.star import Step_mapping
 
 
 @add_log

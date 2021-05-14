@@ -2,7 +2,7 @@ __STEPS__ = [
     'sample',
     'barcode',
     'cutadapt',
-    'STAR',
+    'star',
     "featureCounts",
     "count",
     'analysis']
@@ -14,5 +14,5 @@ RESOURCE = {
     'sample': {'m':1, 'x':1},
     'barcode': {'m':5, 'x':1},
     'cutadapt': {'m':5, 'x':1},
-    'STAR': {'m':30, 'x':1},
+    'star': {'m':30, 'x':1},
 }

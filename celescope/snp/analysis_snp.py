@@ -7,7 +7,7 @@ import pysam
 
 import celescope.tools.utils as utils
 from mutract.utils import read_CID
-from celescope.tools.analysisMixin import AnalysisMixin
+from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step, s_common
 
 

@@ -2,7 +2,7 @@ __STEPS__ = [
     'sample',
     'barcode',
     'cutadapt',
-    'STAR',
+    'star',
     "STAR_virus",
     "featureCounts",
     "count",

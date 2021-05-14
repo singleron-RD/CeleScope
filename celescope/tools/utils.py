@@ -532,7 +532,7 @@ def glob_genomeDir(genomeDir, fa=False):
             sys.exit("ERROR: Multiple fasta file in " + genomeDir)
         fasta = fasta[0]
         return refFlat, gtf, fasta
-    return refFlat, gtf
+    return refFlat, gtf, None
 
 
 def get_slope(x, y, window=200, step=10):

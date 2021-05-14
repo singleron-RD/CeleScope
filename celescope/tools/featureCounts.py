@@ -9,7 +9,7 @@ from celescope.tools.utils import add_log, format_number, gene_convert, glob_gen
 from celescope.tools.step import Step
 
 
-def format_stat(log, samplename):
+def format_stat(log):
     #Assigned, Unassigned_NoFeatures, Unassigned_Ambiguity=(0, 0, 0)
     tmp_arr = []
     fh = open(log, 'r')
@@ -73,7 +73,7 @@ def featureCounts(args):
 
     # check
     if args.genomeDir and args.genomeDir != "None":
-        _refFlat, gtf = glob_genomeDir(args.genomeDir)
+        _refFlat, gtf, _ = glob_genomeDir(args.genomeDir)
     else:
         gtf = args.gtf
 
@@ -116,7 +116,7 @@ def featureCounts(args):
     subprocess.check_call(cmd)
     featureCounts.logger.info('samtools sort done.')
 
-    format_stat(args.outdir + '/' + args.sample + '.summary', args.sample)
+    format_stat(args.outdir + '/' + args.sample + '.summary')
 
     step.clean_up()
 

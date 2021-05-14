@@ -4,7 +4,7 @@
 - Assigning uniquely mapped reads to genomic features with FeatureCounts.
 
 ## Input
-- BAM file from step STAR.
+- BAM file from step star.
 
 ## Output
 - `{sample}` Numbers of reads assigned to features (or meta-features).

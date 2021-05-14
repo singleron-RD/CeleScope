@@ -6,7 +6,7 @@ import pandas as pd
 import celescope.tools
 from celescope.tools.step import Step, s_common
 from celescope.tools.utils import add_log
-from celescope.tools.analysisMixin import AnalysisMixin
+from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.capture_virus.otsu import threshold_otsu, array2hist, makePlot
 
 

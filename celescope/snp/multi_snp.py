@@ -1,11 +1,11 @@
 from celescope.snp.__init__ import __ASSAY__
-from celescope.tools.Multi import Multi
+from celescope.tools.multi import Multi
 
 
 class Multi_snp(Multi):
 
-    def STAR(self, sample):
-        step = 'STAR'
+    def star(self, sample):
+        step = 'star'
         cmd_line = self.get_cmd_line(step, sample)
         if self.args.not_consensus:
             fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'

@@ -4,7 +4,7 @@
 import os
 import pandas as pd
 from celescope.tools.utils import add_log, gene_convert, s_common
-from celescope.tools.analysisMixin import AnalysisMixin 
+from celescope.tools.analysis_mixin import AnalysisMixin 
 from celescope.tools.step import Step
 
 

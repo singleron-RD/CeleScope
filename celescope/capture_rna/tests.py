@@ -1,5 +1,4 @@
 import unittest
-from celescope.capture_rna.count_capture_rna import expression_matrix
 from celescope.tools.report import reporter
 
 
@@ -18,26 +17,6 @@ class testHLA(unittest.TestCase):
         _refFlat, self.gtf = glob_genomeDir(self.genomeDir)
         self.assay = 'capture_rna'
         '''
-
-    @unittest.skip('pass')
-    def test_expression_matrix(self):
-        (
-            CB_total_Genes,
-            CB_reads_count,
-            reads_mapped_to_transcriptome,
-            match_cell_str,
-            match_UMI_median
-        ) = expression_matrix(
-            self.df,
-            self.validated_barcodes,
-            self.outdir,
-            self.sample,
-            self.gtf,
-            self.sc_cell_barcodes,
-            self.sc_cell_number
-            )
-        print(match_cell_str)
-        print(match_UMI_median)
 
     @unittest.skip('pass')
     def test_report(self):

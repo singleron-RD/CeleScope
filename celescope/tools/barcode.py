@@ -14,7 +14,7 @@ from xopen import xopen
 
 import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from celescope.tools.Chemistry import Chemistry
+from celescope.tools.chemistry import Chemistry
 from celescope.tools.step import Step, s_common
 
 

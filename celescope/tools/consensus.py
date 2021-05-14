@@ -149,11 +149,10 @@ def consensus(args):
         return
     sample = args.sample
     outdir = args.outdir
-    args.assay
     fq = args.fq
     threshold = float(args.threshold)
 
-    outfile, n, total_ambiguous_base_n, length_list = wrap_consensus(fq, outdir, sample, threshold)
+    _outfile, n, total_ambiguous_base_n, length_list = wrap_consensus(fq, outdir, sample, threshold)
 
     # metrics
     metrics = {}

@@ -4,7 +4,7 @@ import pandas as pd
 from celescope.__init__ import __VERSION__, ASSAY_DICT
 import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from .Chemistry import Chemistry
+from celescope.tools.chemistry import Chemistry
 from celescope.tools.step import Step, s_common
 
 
@@ -52,6 +52,6 @@ def get_opts_sample(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fq1', help='read1 fq file')
-    parser.add_argument('--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+    parser.add_argument('--chemistry', choices=list(__PATTERN_DICT__.keys()), help='chemistry version', default='auto')
     return parser
     

@@ -2,7 +2,7 @@ __STEPS__ = [
     'sample',
     'barcode',
     'cutadapt',
-    'STAR',
+    'star',
     "featureCounts",
     "count_capture_rna",
     'analysis']
