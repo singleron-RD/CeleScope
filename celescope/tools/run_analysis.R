@@ -35,13 +35,15 @@ mtx = as.matrix(x)
 barcode = colnames(rds)
 geneid = rownames(rds)
 h5.out = stringr::str_glue('{outdir}/{sample}.h5')
-path <- path.expand(h5.out)
-h5createFile(path)
-h5f <- H5Fopen(path)
-h5writeDataset(mtx,h5f,"X")
-h5writeDataset(barcode,h5f,"obs")
-h5writeDataset(geneid,h5f,"var")
-H5Fclose(h5f)
+if (file.exists(h5.out) == FALSE){
+  path <- path.expand(h5.out)
+  h5createFile(path)
+  h5f <- H5Fopen(path)
+  h5writeDataset(mtx,h5f,"X")
+  h5writeDataset(barcode,h5f,"obs")
+  h5writeDataset(geneid,h5f,"var")
+  H5Fclose(h5f)
+}
 
 # mito
 mito.genes <- grep(pattern = "^MT-", x = rownames(x = rds@assays$RNA@data), value = TRUE, ignore.case=TRUE)
