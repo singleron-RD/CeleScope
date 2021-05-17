@@ -3,7 +3,7 @@ from collections import defaultdict
 import pysam
 import pandas as pd
 from celescope.tools.utils import add_log, genDict, read_barcode_file
-from celescope.tcr_fl.Barcode_index import Barcode_index
+from celescope.tcr_fl.barcode_index import Barcode_index
 
 
 @add_log

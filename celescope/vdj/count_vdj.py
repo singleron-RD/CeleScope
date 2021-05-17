@@ -1,9 +1,9 @@
 import os
-import pandas as pd
-import numpy as np
 import re
 import json
 
+import pandas as pd
+import numpy as np
 
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS

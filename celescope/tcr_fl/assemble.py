@@ -1,7 +1,10 @@
+
 import os
 from os import listdir
 from os.path import isfile, join
 from concurrent.futures import ProcessPoolExecutor
+
+from celescope.tools.step import Step, s_common
 from celescope.tools.utils import add_log
 
 TRACER_PATH = '/SGRNJ/Public/Software/tracer/tracer'
@@ -62,9 +65,7 @@ def assemble(args):
 
 
 def get_opts_assemble(parser, sub_program):
+    s_common(parser)
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument("--fastq_dir", required=True)
-        parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument('--thread', help='thread', default=4)
+

@@ -359,8 +359,18 @@ class Count(Step):
     @staticmethod
     def sub_sample(fraction, df_cell, cell_read_index):
         '''
-        cell_bc - cell barcode
-        cell_read_index - df_cell repeat index
+        umi_saturation = 1 - n_deduped_reads / n_umis
+        read_saturation = 1 - n_deduped_reads / n_reads
+        Currently the html report shows umi_saturation.
+
+        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads.
+        n_umis = Total number of (confidently mapped, valid cell-barcode, valid UMI) UMIs.
+        n_reads = Total number of (confidently mapped, valid cell-barcode, valid UMI) reads.
+
+        Args:
+            fration: subsmaple fration
+            df_cell: in cell df with (Barcode geneID UMI count) 
+            cell_read_index: df_cell repeat index
         '''
         cell_read = df_cell['count'].sum()
         frac_n_read = int(cell_read * fraction)
