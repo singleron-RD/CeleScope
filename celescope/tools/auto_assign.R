@@ -16,8 +16,6 @@ outdir <- argv$outdir
 sample <- argv$sample
 rds <- argv$rds
 type_marker_tsv <- argv$type_marker_tsv
-#resolution <- argv$resolution
-rds <- argv$rds
 #origin.cluster <- paste("res.",resolution,sep="")
 
 print ("reading RDS")
