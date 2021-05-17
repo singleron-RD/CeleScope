@@ -13,14 +13,14 @@ def read_mut(mut_file):
 
     def convert_row(row):
         gene = row["gene"]
-        type = row["type"]
+        mut_type = row["type"]
         seq = row["seq"]
         ref_position = row["ref_position"]
         if gene not in mut_dic:
             mut_dic[gene] = {}
-        mut_dic[gene][type] = {}
-        mut_dic[gene][type]["pos"] = ref_position
-        mut_dic[gene][type]["seq"] = seq
+        mut_dic[gene][mut_type] = {}
+        mut_dic[gene][mut_type]["pos"] = ref_position
+        mut_dic[gene][mut_type]["seq"] = seq
     df.apply(func=convert_row, axis=1)
     return mut_dic
 
@@ -62,8 +62,8 @@ def count_mut(args):
 
     # process bam
     samfile = pysam.AlignmentFile(bam, "rb")
-    header = samfile.header
-    new_bam = pysam.AlignmentFile(out_prefix+"_mut.bam", "wb", header=header)
+    # header = samfile.header
+    # new_bam = pysam.AlignmentFile(out_prefix+"_mut.bam", "wb", header=header)
     rows = []
     for read in samfile:
         tag = read.reference_name
@@ -104,7 +104,7 @@ def count_mut(args):
         mut_type = str(row["type"])
         int(row["seq_length"])
         seq = str(row["seq"])
-        if gene not in mut_dic.keys():
+        if gene not in mut_dic:
             return False
         if mut_type not in mut_dic[gene].keys():
             return False

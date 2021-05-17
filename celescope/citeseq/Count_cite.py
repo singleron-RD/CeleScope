@@ -30,13 +30,12 @@ class Count_cite():
 
         # out
         self.mtx = f'{outdir}/{sample}_citeseq.mtx.gz'
+        self.stats = None
+        self.stat_file = f'{self.outdir}/stat.txt'
 
     @add_log
     def run(self):
         stats = pd.Series()
-        outdir = self.outdir
-        sample = self.sample
-        f'{outdir}/{sample}_umi_tag.tsv'
         mapped_read = self.df_read_count['read_count'].sum()
 
         # in cell
@@ -85,7 +84,6 @@ class Count_cite():
 
     def report(self):
 
-        self.stat_file = f'{self.outdir}/stat.txt'
         self.stats.to_csv(self.stat_file, sep=':', header=False)
         t = reporter(
         name='count_cite', 

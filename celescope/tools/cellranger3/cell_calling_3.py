@@ -142,7 +142,7 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
     gg_filtered_indices, gg_filtered_metrics, _msg = cr_stats.filter_cellular_barcodes_ordmag(umis_per_bc, recovered_cells=recovered_cells)
 
     print('Cell-called barcodes metrics:')
-    print('\n'.join(list(map(lambda x: '{}: {}'.format(*x), gg_filtered_metrics.items()))))
+    print('\n'.join(list(map(lambda x: '{}: {}'.format(*x), list(gg_filtered_metrics.items())))))
     print('==============================')
     
     orig_cell_bc_set = set(gg_filtered_indices)

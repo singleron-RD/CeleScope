@@ -45,7 +45,7 @@ class Tests(unittest.TestCase):
     def test_multi(self):
         thread = len(ASSAYS)
         executor = futures.ProcessPoolExecutor(max_workers=thread)
-        results = executor.map(run_single, ASSAYS.keys(), ASSAYS.values())
+        results = executor.map(run_single, list(ASSAYS.keys()), list(ASSAYS.values()))
         for result in results:
             print(result + ' done')
 

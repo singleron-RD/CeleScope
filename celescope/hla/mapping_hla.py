@@ -154,7 +154,7 @@ def summary(index_file, outdir, sample):
         try:
             sub_df = pd.read_csv(
                 f'{outdir}/cells/cell{index}/cell{index}_result.tsv', sep='\t', index_col=0)
-        except Exception:
+        except FileNotFoundError:
             continue
         n += 1
         sub_df['barcode'] = df_valid.loc[index, :]['barcode']
@@ -163,7 +163,7 @@ def summary(index_file, outdir, sample):
             all_df = sub_df
         else:
             all_df = all_df.append(sub_df, ignore_index=True)
-    all_df['Reads'] = all_df['Reads'].apply(lambda x: int(x))
+    all_df['Reads'] = all_df['Reads'].apply(int)
     all_df = all_df[all_df['Reads'] != 0]
     all_df = all_df.drop('Objective', axis=1)
     out_file = f'{outdir}/{sample}_typing.tsv'
