@@ -27,6 +27,8 @@
     Default `0.1`. Minimum signal-to-noise ratio is calulated as `SNR_min = max(median(SNRs) * coefficient, 2)`
 
 - Add `.metrics.json`
+
+- Add `scopeV1` chemistry support.
  
 ### Changed
   
@@ -94,3 +96,24 @@
 - `multi_rna` can use 3 paramters: `--STAR_index`, `--gtf` and `--refFlat` instead of `--genomeDir` 
 
 - Step `snpCalling` use mutract.
+
+
+## [1.1.7] - 2020-12-16
+
+### Added
+
+- Automatically detect Singleron chemistry version.
+
+### Changed
+
+- FeatureCounts use strand specificity.
+
+- Cutadapt default `overlap` change from `5` to `10`.
+
+- VDJ sort `NA` last.
+
+- `match clonetypes` are sorted by barcode_count(Frequency) first, then clonetype_ID.
+
+
+
+
