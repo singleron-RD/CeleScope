@@ -52,6 +52,7 @@ class Tests(unittest.TestCase):
             res_list.append(result)
         for result in res_list:
             print(result)
+        assert not any((string.find("failed") != -1 for string in res_list))
 
 
 if __name__ == '__main__':

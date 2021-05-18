@@ -2,7 +2,7 @@
 vdj mapping
 '''
 
-import os
+import subprocess
 
 import pandas as pd
 import pysam
@@ -181,7 +181,7 @@ mixcr exportAlignments \
 -readIds --force-overwrite -vGene -dGene -jGene -cGene \
 -nFeature CDR3 -aaFeature CDR3\n"""
     mixcr.logger.info(cmd)
-    os.system(cmd)
+    subprocess.check_call(cmd, shell=True)
     return alignments
 
 

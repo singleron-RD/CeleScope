@@ -1,8 +1,8 @@
-#!/bin/env python
-# coding=utf8
-
 import os
+import subprocess
+
 import pandas as pd
+
 from celescope.tools.utils import add_log, gene_convert, s_common
 from celescope.tools.analysis_mixin import AnalysisMixin 
 from celescope.tools.step import Step
@@ -33,7 +33,7 @@ def seurat(sample, outdir, matrix_file, save_rds):
         f'--save_rds {save_rds}'
     )
     seurat.logger.info(cmd)
-    os.system(cmd)
+    subprocess.check_call(cmd, shell=True)
 
 
 @add_log
@@ -48,7 +48,7 @@ def auto_assign(sample, outdir, type_marker_tsv):
         f'--sample {sample} '
     )
     auto_assign.logger.info(cmd)
-    os.system(cmd)
+    subprocess.check_call(cmd, shell=True)
 
 
 class Analysis_rna(Step, AnalysisMixin):

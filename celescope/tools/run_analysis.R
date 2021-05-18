@@ -20,32 +20,40 @@ save_rds = argv$save_rds
 resolution = 0.6
 res_str = paste0('res.', resolution)
 
-matrix = Seurat::Read10X(matrix_file, gene.column=2)
+# read matrix
+matrix_id = Seurat::Read10X(matrix_file, gene.column=1)
+matrix_name = Seurat::Read10X(matrix_file, gene.column=2)
+
+# out files
 tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")
 rds.out = paste0(outdir,'/',sample,'.rds')
-
-# read 10X
-rds = CreateSeuratObject(matrix, pro=sample)
-
-# generate h5ad file
-x = GetAssayData(rds,slot="count")
-mtx = as.matrix(x)
-barcode =  data.frame(colnames(rds))
-geneid =  data.frame(rownames(rds))
 h5.out = stringr::str_glue('{outdir}/{sample}.h5')
 if (file.exists(h5.out)) {
   #Delete file if it exists
   file.remove(h5.out)
 }
+
+# generate h5ad file
+df.barcode =  data.frame(colnames(matrix_name))
+colnames(df.barcode) = "_index"
+gene_name = rownames(matrix_name)
+gene_id = rownames(matrix_id)
+df.gene = data.frame(gene_name, gene_id)
+colnames(df.gene) = c("_index","gene_ids")
+mtx = as.matrix(matrix_name)
+
 path <- path.expand(h5.out)
 h5createFile(path)
 h5f <- H5Fopen(path)
-h5writeDataset(mtx,h5f,"X")
-h5writeDataset(barcode,h5f,"obs")
-h5writeDataset(geneid,h5f,"var")
+h5writeDataset(mtx, h5f, "X")
+h5writeDataset(df.barcode, h5f, "obs")
+h5writeDataset(df.gene, h5f, "var")
 H5Fclose(h5f)
+
+# create seurat obj
+rds = CreateSeuratObject(matrix_name, pro=sample)
 
 # mito
 mito.genes <- grep(pattern = "^MT-", x = rownames(x = rds@assays$RNA@data), value = TRUE, ignore.case=TRUE)
@@ -66,7 +74,8 @@ write_delim(mito_df, mito.out, col_names=F, delim=":")
 
 
 rds <- NormalizeData(rds, normalization.method = "LogNormalize",scale.factor = 10000)
-rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = 2000, mean.cutoff = c(0.1, 8), dispersion.cutoff = c(1, Inf),
+nfeatures = 20000
+rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = nfeatures, mean.cutoff = c(0.1, 8), dispersion.cutoff = c(1, Inf),
                             mean.function = ExpMean, dispersion.function = LogVMR)
 
 use.genes <- rds@assays$RNA@var.features
