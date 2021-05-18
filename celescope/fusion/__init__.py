@@ -1,2 +1,2 @@
-__STEPS__ = ['sample', 'barcode', 'cutadapt', "STAR_fusion", "count_fusion"]
+__STEPS__ = ['sample', 'barcode', 'cutadapt', "star_fusion", "count_fusion"]
 __ASSAY__ = 'fusion'

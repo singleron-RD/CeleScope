@@ -1,4 +1,3 @@
-import os
 import re
 import subprocess
 import pandas as pd
@@ -6,54 +5,38 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.tools.utils import format_number, format_stat, glob_genomeDir
 from celescope.tools.step import Step, s_common
+from celescope.__init__ import ROOT_PATH
 
-class Step_mapping():
 
-    def __init__(self, sample, outdir, assay, thread, fq, genomeDir, 
-    out_unmapped=False, debug=False, outFilterMatchNmin=0, STAR_param="", sort_BAM=True,
-    outFilterMultimapNmax=1, STAR_index=None, refFlat=None, consensus_fq=False
-    ):
-        self.sample = sample
-        self.outdir = outdir
-        self.assay = assay
-        self.thread = thread
-        self.fq = fq
-        self.genomeDir = genomeDir
-        self.out_unmapped = out_unmapped
-        self.debug = debug
-        self.outFilterMatchNmin = int(outFilterMatchNmin)
-        self.STAR_param = STAR_param
-        self.sort_BAM = sort_BAM
-        self.multi_max = int(outFilterMultimapNmax)
+class Star(Step):
+    def __init__(self, args, step_name):
+        Step.__init__(self, args, step_name)
+        self.fq = args.fq
+        self.genomeDir = args.genomeDir
+        self.out_unmapped = args.out_unmapped
+        self.debug = args.debug
+        self.outFilterMatchNmin = int(args.outFilterMatchNmin)
+        self.multi_max = int(args.outFilterMultimapNmax)
+        self.STAR_param = args.STAR_param
+        self.consensus_fq = args.consensus_fq
+
         if self.genomeDir and self.genomeDir != "None":
             self.STAR_index = self.genomeDir
         else:
-            self.STAR_index = STAR_index
-            self.refFlat = refFlat
-        self.consensus_fq = consensus_fq
-
-        # set param
-        self.outPrefix = f'{self.outdir}/{self.sample}_'
-        self.STAR_map_log = f'{self.outdir}/{self.sample}_Log.final.out'
-        self.STAR_bam = f'{self.outdir}/{self.sample}_Aligned.sortedByCoord.out.bam'
-        if self.sort_BAM:
-            self.sort_suffix = 'SortedByCoordinate'
-        else:
-            self.sort_suffix = 'Unsorted'
-            self.unsort_STAR_bam = f'{self.outdir}/{self.sample}_Aligned.out.bam'
-
-
-        if not os.path.exists(outdir):
-            os.system('mkdir -p %s' % (outdir))
-        self.stats = pd.Series()
-        self.stats_file = f'{outdir}/stat.txt'
-        self.step_name = 'star'
+            self.STAR_index = args.STAR_index
+            self.refFlat = args.refFlat
 
         # out 
+        self.outPrefix = f'{self.outdir}/{self.sample}_'
+        self.STAR_map_log = f'{self.outdir}/{self.sample}_Log.final.out'
+        self.unsort_STAR_bam = f'{self.outPrefix}Aligned.out.bam'
+        self.STAR_bam = f'{self.outPrefix}Aligned.sortedByCoord.out.bam'
         self.ribo_log = f'{self.outdir}/{self.sample}_ribo_log.txt'
         self.ribo_run_log = f'{self.outdir}/{self.sample}_ribo_run.log'
         self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
         self.plot = None
+        self.stats = pd.Series()
+        self.stats_file = f'{self.outdir}/stat.txt'
 
     def format_stat(self):
 
@@ -136,17 +119,15 @@ class Step_mapping():
             region_dict['Intergenic_Regions'],
             index=['Base Pairs Mapped to Intergenic Regions']
         ))
-        self.plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
+        region_plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                 'region_values': [Exonic_Regions, Intronic_Regions, Intergenic_Regions]}   
-
+        self.add_content_item("data", STAR_plot=region_plot)
 
         self.stats.to_csv(self.stats_file, sep=':', header=False)
 
     @utils.add_log
     def ribo(self):
-        import celescope
-        root_path = os.path.dirname(celescope.__file__)
-        human_ribo_fa = f'{root_path}/data/rRNA/human_ribo.fasta'
+        human_ribo_fa = f'{ROOT_PATH}/data/rRNA/human_ribo.fasta'
         self.ribo_log = f'{self.outdir}/{self.sample}_ribo_log.txt'
         self.ribo_run_log = f'{self.outdir}/{self.sample}_ribo_run.log'
         cmd = (
@@ -157,23 +138,29 @@ class Step_mapping():
             f'overwrite=t '
             f'> {self.ribo_run_log} 2>&1 '
         )
-        Step_mapping.ribo.logger.info(cmd)
+        Star.ribo.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
     
     @utils.add_log
     def STAR(self):
-        cmd = ['STAR', '--runThreadN', str(self.thread), '--genomeDir', self.STAR_index,
-            '--readFilesIn', self.fq, '--outFilterMultimapNmax', str(self.multi_max), 
-            '--outFileNamePrefix', self.outPrefix, '--outSAMtype', 'BAM', self.sort_suffix,
-            '--outFilterMatchNmin', str(self.outFilterMatchNmin)]
+        cmd = [
+            'STAR',
+            '--runThreadN', str(self.thread),
+            '--genomeDir', self.STAR_index,
+            '--readFilesIn', self.fq,
+            '--outFilterMultimapNmax', str(self.multi_max),
+            '--outFileNamePrefix', self.outPrefix,
+            '--outSAMtype', 'BAM', 'Unsorted', # controls sort by Coordinate or not
+            '--outFilterMatchNmin', str(self.outFilterMatchNmin)
+        ]
         if self.out_unmapped:
             cmd += ['--outReadsUnmapped', 'Fastx']
-        if self.fq[len(self.fq) - 2:] == "gz":
+        if self.fq[-3:] == ".gz":
             cmd += ['--readFilesCommand', 'zcat']
         cmd = ' '.join(cmd)
         if self.STAR_param:
             cmd += (" " + self.STAR_param)
-        Step_mapping.STAR.logger.info(cmd)
+        Star.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
@@ -184,68 +171,47 @@ class Step_mapping():
             '-Xmx20G',
             '-XX:ParallelGCThreads=4',
             'CollectRnaSeqMetrics',
-            'I=%s' %
-            (self.STAR_bam),
-            'O=%s' %
-            (self.picard_region_log),
-            'REF_FLAT=%s' %
-            (refFlat),
+            'I=%s' % (self.STAR_bam),
+            'O=%s' % (self.picard_region_log),
+            'REF_FLAT=%s' % (refFlat),
             'STRAND=NONE',
             'VALIDATION_STRINGENCY=SILENT']
         cmd_str = ' '.join(cmd)
-        Step_mapping.picard.logger.info(cmd_str)
+        Star.picard.logger.info(cmd_str)
         subprocess.check_call(cmd)
 
     @utils.add_log
     def run(self):
         self.STAR()
+        self.sort_bam()
+        self.index_bam()
         self.picard()
         if self.debug:
             self.ribo()
         self.format_stat()
-        if not self.sort_BAM:
-            self.sort_bam()
-    
+        self.clean_up()
 
     @utils.add_log
     def sort_bam(self):
-        cmd = f'samtools sort {self.unsort_STAR_bam} -o {self.STAR_bam}'
-        Step_mapping.sort_bam.logger.info(cmd)
+        cmd = (
+            f'samtools sort {self.unsort_STAR_bam} '
+            f'-o {self.STAR_bam} '
+            f'--threads {self.thread} '
+        )
+        Star.sort_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
     def index_bam(self):
         cmd = f"samtools index {self.STAR_bam}"
-        Step_mapping.index_bam.logger.info(cmd)
+        Star.index_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
 
 def star(args):
-
     step_name = "star"
-    step = Step(args, step_name)
-
-    mapping = Step_mapping(
-        args.sample, 
-        args.outdir, 
-        args.assay, 
-        args.thread,
-        args.fq, 
-        args.genomeDir, 
-        out_unmapped=args.out_unmapped, 
-        debug=args.debug,
-        outFilterMatchNmin=args.outFilterMatchNmin,
-        STAR_param=args.STAR_param,
-        sort_BAM=True,
-        outFilterMultimapNmax=args.outFilterMultimapNmax,
-        STAR_index=args.STAR_index,
-        refFlat=args.refFlat,
-        consensus_fq=args.consensus_fq
-        )
-    mapping.run()
-    
-    step.add_content_item("data", STAR_plot=mapping.plot)
-    step.clean_up()
+    runner = Star(args, step_name)
+    runner.run()
 
 
 def get_opts_star(parser, sub_program):

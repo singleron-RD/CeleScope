@@ -5,13 +5,13 @@ from celescope.tools.multi import Multi
 class Multi_rna_virus(Multi):
 
 
-    def STAR_virus(self, sample):
-        step = 'STAR_virus'
-        input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+    def star_virus(self, sample):
+        step = 'star_virus'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--input_read {input_read} '
+            f'--fq {fq} '
 
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
@@ -19,7 +19,7 @@ class Multi_rna_virus(Multi):
     def count_virus(self, sample):
         step = 'count_virus'
         barcode_file = f'{self.outdir_dic[sample]["count"]}/{sample}_cell_matrix_10X/barcodes.tsv'
-        virus_bam = f'{self.outdir_dic[sample]["STAR_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        virus_bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

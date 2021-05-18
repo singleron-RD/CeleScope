@@ -3,7 +3,7 @@ __STEPS__ = [
     'barcode',
     'cutadapt',
     'star',
-    "STAR_virus",
+    "star_virus",
     "featureCounts",
     "count",
     "count_virus",

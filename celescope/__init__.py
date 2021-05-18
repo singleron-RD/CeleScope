@@ -1,3 +1,5 @@
+import os
+
 __VERSION__ = "1.2.0"
 __version__ = __VERSION__
 
@@ -15,3 +17,4 @@ ASSAY_DICT = {
     'citeseq': 'Single Cell CITE-Seq',
     'tcr_fl': 'Single Cell full length TCR',
 }
+ROOT_PATH = os.path.dirname(__file__)

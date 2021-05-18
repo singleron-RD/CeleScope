@@ -1,4 +1,4 @@
-# STAR
+# star
 
 ## Features
 - Align R2 reads to the reference genome with STAR.

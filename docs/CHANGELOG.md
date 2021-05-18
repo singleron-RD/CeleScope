@@ -1,6 +1,6 @@
 # Change Log
  
-## [Unreleased] - 2021-05-17
+## [Unreleased] - 2021-05-18
 
  
 ### Added
@@ -10,6 +10,8 @@
 ### Changed
 
 - Update Seurat from 2.3.4 to 4.0.1.
+
+- `genomeDir` in `celescope.fusion.star_fusion` changed to `fusion_genomeDir` to avoid misunderstanding.
 
 ### Fixed
 

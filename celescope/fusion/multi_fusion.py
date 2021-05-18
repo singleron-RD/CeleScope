@@ -4,8 +4,8 @@ from celescope.tools.multi import Multi
 
 class Multi_fusion(Multi):
 
-    def STAR_fusion(self, sample):
-        step = 'STAR_fusion'
+    def star_fusion(self, sample):
+        step = 'star_fusion'
         cmd_line = self.get_cmd_line(step, sample)
         input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
@@ -17,7 +17,7 @@ class Multi_fusion(Multi):
     def count_fusion(self, sample):
         step = 'count_fusion'
         cmd_line = self.get_cmd_line(step, sample)
-        bam = f'{self.outdir_dic[sample]["STAR_fusion"]}/{sample}_Aligned.sortedByCoord.out.bam'
+        bam = f'{self.outdir_dic[sample]["star_fusion"]}/{sample}_Aligned.sortedByCoord.out.bam'
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '

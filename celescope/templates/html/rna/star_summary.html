@@ -9,7 +9,7 @@
           <p><b>Base Pairs Mapped to Intergenic Regions</b> : bases in primary alignments that do not align to any gene.</p>
         </div>
         <table style="float: left; margin-left: 0%; margin-top: 0%; margin-right:3%; width: 47%">
-          {% for item in STAR_summary %}
+          {% for item in star_summary %}
             <tr>
               {% for i in item %} 
               <td>{{ i|e }}</td>
