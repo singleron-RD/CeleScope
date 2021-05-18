@@ -80,13 +80,13 @@ def featureCounts(args):
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
     cmd = [
-        'featureCounts', 
+        'featureCounts',
         '-s', '1',
-        '-a', gtf, 
-        '-o', outPrefix, 
+        '-a', gtf,
+        '-o', outPrefix,
         '-R', 'BAM',
-        '-T', str(args.thread), 
-        '-t', args.gtf_type, 
+        '-T', str(args.thread),
+        '-t', args.gtf_type,
         args.input,
     ]
     featureCounts.logger.info('%s' % (' '.join(cmd)))
@@ -101,7 +101,7 @@ def featureCounts(args):
     add_tag(bam, gtf)
 
     # sort by name:BC and umi
-    featureCounts.logger.info('samtools sort ...!')
+    featureCounts.logger.info('samtools sort by name...!')
     cmd = [
         'samtools',
         'sort',
@@ -114,7 +114,7 @@ def featureCounts(args):
         bam]
     featureCounts.logger.info('%s' % (' '.join(cmd)))
     subprocess.check_call(cmd)
-    featureCounts.logger.info('samtools sort done.')
+    featureCounts.logger.info('samtools sort sort by name done.')
 
     format_stat(args.outdir + '/' + args.sample + '.summary')
 

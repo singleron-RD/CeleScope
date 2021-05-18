@@ -319,6 +319,7 @@ job_end
             os.system('mkdir -p ./shell/')
             for sample in self.shell_dict:
                 with open(f'./shell/{sample}.sh', 'w') as f:
+                    f.write("set -e\n")
                     f.write(self.shell_dict[sample])
 
     def run(self):

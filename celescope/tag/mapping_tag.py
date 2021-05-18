@@ -7,12 +7,13 @@ import pysam
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
+from celescope.tools.barcode import parse_pattern
 
 
 def get_opts_mapping_tag(parser, sub_program):
-    parser.add_argument("--fq_pattern", help="read2 fastq pattern")
+    parser.add_argument("--fq_pattern", help="read2 fastq pattern", required=True)
+    parser.add_argument("--barcode_fasta", help="barcode fasta", required=True)
     parser.add_argument("--linker_fasta", help="linker fasta")
-    parser.add_argument("--barcode_fasta", help="barcode fasta")
     if sub_program:
         s_common(parser)
         parser.add_argument("--fq", help="clean read2", required=True)
@@ -42,7 +43,7 @@ class Mapping_tag(Step):
             self.linker_dict, self.linker_length = utils.read_fasta(self.linker_fasta, equal=True)
         else:
             self.linker_dict, self.linker_length = {}, 0
-        self.pattern_dict = utils.parse_pattern(self.fq_pattern)
+        self.pattern_dict = parse_pattern(self.fq_pattern)
 
         # check barcode length
         barcode1 = self.pattern_dict["C"][0]

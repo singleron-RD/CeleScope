@@ -4,7 +4,7 @@ import pandas as pd
 from celescope.__init__ import __VERSION__, ASSAY_DICT
 import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from celescope.tools.chemistry import Chemistry
+from celescope.tools.barcode import Chemistry
 from celescope.tools.step import Step, s_common
 
 

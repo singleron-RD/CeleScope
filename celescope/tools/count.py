@@ -142,7 +142,8 @@ class Count(Step):
         with open(self.count_detail_file, 'wt') as fh1:
             fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
 
-            def keyfunc(x): return x.query_name.split('_', 1)[0]
+            def keyfunc(x): 
+                return x.query_name.split('_', 1)[0]
             for _, g in groupby(samfile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
                 for seg in g:

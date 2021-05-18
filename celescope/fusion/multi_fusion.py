@@ -7,10 +7,10 @@ class Multi_fusion(Multi):
     def star_fusion(self, sample):
         step = 'star_fusion'
         cmd_line = self.get_cmd_line(step, sample)
-        input_read = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
             f'{cmd_line} '
-            f'--input_read {input_read} '
+            f'--fq {fq} '
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 

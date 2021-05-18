@@ -30,14 +30,20 @@ class Step:
         self.step_name = step_name
         self.args = args
         self.outdir = args.outdir
-        # check dir
-        if not os.path.exists(self.outdir):
-            os.system('mkdir -p %s' % self.outdir)
         self.sample = args.sample
         self.assay = args.assay
         self.thread = args.thread
         self.debug = args.debug
+        # set 
+        self.out_prefix = f'{self.outdir}/{self.sample}'
+
+        # out file
         self.stat_file = f'{self.outdir}/stat.txt'
+
+        # important! make outdir before path_dict because path_dict use relative path.
+        if not os.path.exists(self.outdir):
+            os.system('mkdir -p %s' % self.outdir)
+
         self.metric_list = []
         self.Metric = namedtuple("Metric", "name value total fraction")
         self.path_dict = {
@@ -56,7 +62,6 @@ class Step:
             loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
             autoescape=select_autoescape(['html', 'xml'])
         )
-
 
     def add_metric(self, name, value=None, total=None, fraction=None):
         '''add metric to metric_list

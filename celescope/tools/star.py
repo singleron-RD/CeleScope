@@ -36,7 +36,6 @@ class Star(Step):
         self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
         self.plot = None
         self.stats = pd.Series()
-        self.stats_file = f'{self.outdir}/stat.txt'
 
     def format_stat(self):
 
@@ -123,7 +122,7 @@ class Star(Step):
                 'region_values': [Exonic_Regions, Intronic_Regions, Intergenic_Regions]}   
         self.add_content_item("data", STAR_plot=region_plot)
 
-        self.stats.to_csv(self.stats_file, sep=':', header=False)
+        self.stats.to_csv(self.stat_file, sep=':', header=False)
 
     @utils.add_log
     def ribo(self):

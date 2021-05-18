@@ -4,7 +4,8 @@ assign cell identity based on SNR and UMI_min
 
 import glob
 
-import matplotlib as mpl
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -24,7 +25,7 @@ def get_opts_count_tag(parser, sub_program):
     parser.add_argument("--coefficient", "-c", help="SNR coefficient", default=0.1)
     if sub_program:
         s_common(parser)
-        parser.add_argument("--read_count_file", help="tag read count file")
+        parser.add_argument("--read_count_file", help="tag read count file", required=True)
         parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path", required=True)
 
 
@@ -134,7 +135,7 @@ class Count_tag(Step):
         df_plot.rename({0: "percent"}, axis=1, inplace=True)
 
         # plot
-        colors = list(mpl.colors.cnames.keys())
+        colors = list(matplotlib.colors.cnames.keys())
         fig, ax = plt.subplots(figsize=(20, 10))
         types = df_plot["tag"].drop_duplicates()
         margin_bottom = np.zeros(len(df_plot[column_name].drop_duplicates()))
