@@ -6,7 +6,7 @@ Currently it can analyze:
 - Single Cell RNA-Seq data  
 - Single Cell Immune Profiling(VDJ) data
 
-Detailed docs can be found in wiki.
+Detailed docs can be found in [manual](./docs/manual.md).
 
 ## Hardware/Software Requirements
 
