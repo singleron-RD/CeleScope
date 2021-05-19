@@ -24,6 +24,8 @@
 
 - `genomeDir` in `celescope.fusion.star_fusion` changed to `fusion_genomeDir` to avoid misunderstanding.
 
+- Step `star` sort bam by samtools instead of STAR to avoid potential `not enough memory for BAM sorting` error: https://github.com/alexdobin/STAR/issues/1136
+
 ### Removed
 
 - Assay `rna` no longer outputs tab-delimited expression matrix file in 05.count directory.
