@@ -1,6 +1,10 @@
-name: CeleScope
+name: Lint code
 
-on: [push, pull_request]
+on: 
+  push:
+    tags-ignore:
+      - 'v*' # github.event.before is invalid on tags
+  pull_request:
 
 jobs:
   setup_and_lint:
