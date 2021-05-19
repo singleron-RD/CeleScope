@@ -2,9 +2,13 @@ name: Lint code
 
 on: 
   push:
-    tags-ignore:
-      - 'v*' # github.event.before is invalid on tags
+    branches:
+      - main
+      - dev
   pull_request:
+    branches:
+      - main
+      - dev
 
 jobs:
   setup_and_lint:
