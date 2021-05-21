@@ -5,8 +5,9 @@ import os
 import re
 import subprocess
 import pysam
-from celescope.tools.utils import add_log, format_number, gene_convert, glob_genomeDir, s_common
-from celescope.tools.step import Step
+from celescope.tools.utils import add_log, format_number, gene_convert
+from celescope.tools.step import Step, s_common
+from celescope.tools.mkref import parse_genomeDir
 
 
 def format_stat(log):
@@ -71,11 +72,8 @@ def featureCounts(args):
     step_name = "featureCounts"
     step = Step(args, step_name)
 
-    # check
-    if args.genomeDir and args.genomeDir != "None":
-        _refFlat, gtf, _ = glob_genomeDir(args.genomeDir)
-    else:
-        gtf = args.gtf
+    genome = parse_genomeDir(args.genomeDir)
+    gtf = f"{args.genomeDir}/{genome['gtf']}"
 
     # run featureCounts
     outPrefix = args.outdir + '/' + args.sample
@@ -122,7 +120,6 @@ def featureCounts(args):
 
 
 def get_opts_featureCounts(parser, sub_program):
-    parser.add_argument('--gtf', help='gtf file path')
     parser.add_argument(
         '--gtf_type',
         help='Specify feature type in GTF annotation',

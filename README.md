@@ -40,8 +40,8 @@ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope
 ### Homo sapiens
 
 ```
-mkdir -p hs/ensembl_99
-cd hs/ensembl_99
+mkdir hs_ensembl_99
+cd hs_ensembl_99
 
 wget ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
 wget ftp://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz
@@ -50,23 +50,17 @@ gunzip Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
 gunzip Homo_sapiens.GRCh38.99.gtf.gz
 
 conda activate celescope
-gtfToGenePred -genePredExt -geneNameAsName2 Homo_sapiens.GRCh38.99.gtf /dev/stdout | \
-    awk '{print $12"\t"$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10}' > Homo_sapiens.GRCh38.99.refFlat
-
-STAR \
-    --runMode genomeGenerate \
-    --runThreadN 6 \
-    --genomeDir ./ \
-    --genomeFastaFiles Homo_sapiens.GRCh38.dna.primary_assembly.fa \
-    --sjdbGTFfile Homo_sapiens.GRCh38.99.gtf \
-    --sjdbOverhang 100
+celescope rna mkref \
+ --genome_name Homo_sapiens_ensembl_99 \
+ --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \
+ --gtf Homo_sapiens.GRCh38.99.gtf
 ```
 
 ### Mus musculus
 
 ```
-mkdir -p mmu/ensembl_99
-cd mmu/ensembl_99
+mkdir mmu_ensembl_99
+cd mmu_ensembl_99
 
 wget ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
 wget ftp://ftp.ensembl.org/pub/release-99/gtf/mus_musculus/Mus_musculus.GRCm38.99.gtf.gz
@@ -75,16 +69,10 @@ gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
 gunzip Mus_musculus.GRCm38.99.gtf.gz
 
 conda activate celescope
-gtfToGenePred -genePredExt -geneNameAsName2 Mus_musculus.GRCm38.99.gtf /dev/stdout | \
-    awk '{print $12"\t"$1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10}' > Mus_musculus.GRCm38.99.refFlat
-
-STAR \
-    --runMode genomeGenerate \
-    --runThreadN 6 \
-    --genomeDir ./ \
-    --genomeFastaFiles Mus_musculus.GRCm38.dna.primary_assembly.fa \
-    --sjdbGTFfile Mus_musculus.GRCm38.99.gtf \
-    --sjdbOverhang 100
+celescope rna mkref \
+ --genome_name Mus_musculus_ensembl_99 \
+ --fasta Mus_musculus.GRCm38.dna.primary_assembly.fa \
+ --gtf Mus_musculus.GRCm38.99.gtf
 ```
 
 ## Quick start

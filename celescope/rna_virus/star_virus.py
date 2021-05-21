@@ -1,20 +1,22 @@
 import celescope.tools.utils as utils
-from celescope.tools.star import Star, get_opts_star
+from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
+from celescope.tools.step import Step
 
 
-class StarVirus(Star):
+class StarVirus(Step, StarMixin):
+    """
+    star virus class
+    """
     def __init__(self, args, step_name):
-        Star.__init__(self, args, step_name)
-        self.STAR_index = args.virus_genomeDir
+        Step.__init__(self, args, step_name)
+        StarMixin.__init__(self, args)
         # change outPrefix
         self.outPrefix = f'{self.outdir}/{self.sample}_virus_'
         self.unsort_STAR_bam = f'{self.outPrefix}Aligned.out.bam'
         self.STAR_bam = f'{self.outPrefix}Aligned.sortedByCoord.out.bam'
 
     def run(self):
-        self.STAR()
-        self.sort_bam()
-        self.index_bam()
+        self.run_star()
         self.clean_up()
 
 
@@ -26,6 +28,6 @@ def star_virus(args):
 
 
 def get_opts_star_virus(parser, sub_program):
-    get_opts_star(parser, sub_program)
+    get_opts_star_mixin(parser, sub_program)
     parser.add_argument('--virus_genomeDir', help='virus genome dir', required=True)
 

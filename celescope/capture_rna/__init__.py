@@ -7,3 +7,6 @@ __STEPS__ = [
     "count_capture_rna",
     'analysis']
 __ASSAY__ = 'capture_rna'
+IMPORT_DICT = {
+    'star': 'celescope.rna'
+}

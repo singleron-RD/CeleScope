@@ -22,7 +22,12 @@ class Multi():
         self.col4_default = None
         self.last_step = ''
         self.args = None
-        self.steps_not_run = ('mkref')
+        self.steps_not_run = ['mkref']
+        
+        # remove
+        for step in self.steps_not_run:
+            if step in self.__STEPS__:
+                self.__STEPS__.remove(step)
 
         # parse_args
         self.common_args()
@@ -287,7 +292,7 @@ job_end
         for sample in self.fq_dict:
             self.last_step = ''
             for step in self.steps_run:
-                if step in self.steps_not_run():
+                if step in self.steps_not_run:
                     continue
                 try:
                     method_to_call = getattr(self, step)
