@@ -22,6 +22,7 @@ class Multi():
         self.col4_default = None
         self.last_step = ''
         self.args = None
+        self.steps_not_run = ('mkref')
 
         # parse_args
         self.common_args()
@@ -286,6 +287,8 @@ job_end
         for sample in self.fq_dict:
             self.last_step = ''
             for step in self.steps_run:
+                if step in self.steps_not_run():
+                    continue
                 try:
                     method_to_call = getattr(self, step)
                 except AttributeError as attr_not_exist:
