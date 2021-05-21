@@ -168,7 +168,7 @@ task barcode {
   }
   output {
     File out_data = ".data.json"
-    File valid_fq = "01.barcode/~{sample_name}_2.fq.gz"
+    File valid_fq = "01.barcode/~{sample_name}_2.fq"
   }
 }
 
@@ -202,7 +202,7 @@ task cutadapt {
   }
   output {
     File out_data = ".data.json"
-    File clean_fq = "02.cutadapt/~{sample_name}_clean_2.fq.gz"
+    File clean_fq = "02.cutadapt/~{sample_name}_clean_2.fq"
   }
 }
 
@@ -300,7 +300,7 @@ task count {
   }
   output {
     File out_data = ".data.json"
-    File out_matrix = "05.count/~{sample_name}_matrix.tsv.gz"
+    File out_matrix = "05.count/~{sample_name}_matrix_10X"
     File out_barcode = "05.count/~{sample_name}_matrix_10X/barcodes.tsv"
     Int cell_num = read_int("cell_num.txt")
     Int gene_num = read_int("gene_num.txt")

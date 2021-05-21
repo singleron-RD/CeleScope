@@ -22,6 +22,8 @@
 
 - Update Seurat from 2.3.4 to 4.0.1.
 
+- `analysis` uses `{sample}_matrix_10X` instead of `{sample}_matrix.tsv.gz.` as input matrix.
+
 - `genomeDir` in `celescope.fusion.star_fusion` changed to `fusion_genomeDir` to avoid misunderstanding.
 
 - Step `star` sort bam by samtools instead of STAR to avoid potential `not enough memory for BAM sorting` error: https://github.com/alexdobin/STAR/issues/1136
