@@ -73,6 +73,6 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", required=True)
-        parser.add_argument("--gtf", required=True)
-        parser.add_argument("--mt_gene_list", default="None")
+        parser.add_argument("--fasta", help="fasta file", required=True)
+        parser.add_argument("--gtf", help="gtf file", required=True)
+        parser.add_argument("--mt_gene_list", help="mitochondria gene list file", default="None")

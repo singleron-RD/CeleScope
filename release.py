@@ -2,12 +2,13 @@ import subprocess
 
 from celescope.__init__ import __version__
 
+ENV_NAME = f'celescope{__version__}'
+
 def create_conda():
-    env_name = f'celescope{__version__}'
     cmd = f"""
     set -e
-    conda create -n {env_name}
-    source activate {env_name}
+    conda create -n {ENV_NAME}
+    source activate {ENV_NAME}
     conda install --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
 
     pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope

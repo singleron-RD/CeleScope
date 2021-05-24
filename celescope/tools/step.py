@@ -18,7 +18,7 @@ def s_common(parser):
     parser.add_argument('--outdir', help='output dir', required=True)
     parser.add_argument('--assay', help='assay', required=True)
     parser.add_argument('--sample', help='sample name', required=True)
-    parser.add_argument('--thread', default=4)
+    parser.add_argument('--thread', help='threads to use', default=4)
     parser.add_argument('--debug', help='debug', action='store_true')
     return parser
 

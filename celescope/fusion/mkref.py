@@ -56,6 +56,18 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", required=True)
-        parser.add_argument("--fusion_pos", required=True)
-        parser.add_argument("--genomeSAindexNbases", default=4)
+        parser.add_argument("--fasta", help="fusion fasta file",required=True)
+        parser.add_argument(
+            "--fusion_pos", 
+            help="""
+fusion position file. A two column tab-delimited text file with header.
+"pos" is the end postion of the first gene(1-based).
+e.g.
+tag\tpos
+PML_3\t183
+PML_4\t254
+PML_5\t326
+PML_6\t204 
+""",    
+        required=True,)
+        parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=4)
