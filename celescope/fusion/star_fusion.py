@@ -5,6 +5,7 @@ from celescope.tools.step import Step
 
 class StarFusion(Step, StarMixin):
     def __init__(self, args, step_name):
+        args.genomeDir = args.fusion_genomeDir
         Step.__init__(self, args, step_name)
         StarMixin.__init__(self, args)
 

@@ -1,8 +1,11 @@
+import subprocess
+
 import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step
 from celescope.rna.mkref import parse_genomeDir_rna
+from celescope.__init__ import ROOT_PATH
 
 
 class AnalysisMixin():
@@ -19,7 +22,7 @@ class AnalysisMixin():
             self.match_dir = args.outdir + "/../" # use self
 
     @utils.add_log
-    def seurat(matrix_file, save_rds, genomeDir):
+    def seurat(self, matrix_file, save_rds, genomeDir):
         app = ROOT_PATH + "/tools/run_analysis.R"
         genome = parse_genomeDir_rna(genomeDir)
         mt_gene_list = genome['mt_gene_list']
@@ -36,7 +39,7 @@ class AnalysisMixin():
 
 
     @utils.add_log
-    def auto_assign(type_marker_tsv):
+    def auto_assign(self, type_marker_tsv):
         rds = f'{self.outdir}/{self.sample}.rds'
         app = ROOT_PATH + "/tools/auto_assign.R"
         cmd = (

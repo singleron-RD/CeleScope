@@ -1,12 +1,9 @@
-import os
-import subprocess
-
 import pandas as pd
 
 from celescope.tools.utils import add_log, gene_convert, s_common
 from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step
-from celescope.__init__ import ROOT_PATH
+
 
 
 @add_log
@@ -60,7 +57,7 @@ def get_opts_analysis(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--matrix_file', help='matrix file', required=True)
-        parser.add_argument('--genomeDir', help='genomeDir', required=True)
+    parser.add_argument('--genomeDir', help='genomeDir', required=True)
     parser.add_argument('--save_rds', action='store_true', help='write rds to disk')
     parser.add_argument('--type_marker_tsv', help='cell type marker tsv')
 

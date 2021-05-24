@@ -4,11 +4,18 @@ import abc
 from celescope.tools.__init__ import GENOME_CONFIG
 
 
-def parse_genomeDir(genomeDir):
+def parse_genomeDir(genomeDir, entrys=None):
     config_file = f'{genomeDir}/{GENOME_CONFIG}'
     config = configparser.ConfigParser()
-    config.read(config_file)
+    config.read_file(open(config_file))
     genome = config['genome']
+    # add path
+    if entrys:
+        for entry in entrys:
+            if entry in genome and genome[entry] != 'None':
+                genome[entry] = f'{genomeDir}/{genome[entry]}'
+            else:
+                genome[entry] = "None"
     return genome
 
 

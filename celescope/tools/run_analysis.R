@@ -58,13 +58,17 @@ H5Fclose(h5f)
 rds = CreateSeuratObject(matrix_name, pro=sample)
 
 # mito
+all_genes = rownames(rds@assays$RNA@data)
 if (mt_gene_list != "None"){
-  mito.genes = read.table(mt_gene_list)[,1]
+  mito.genes = read.table(mt_gene_list, )[,1]
+  mito.genes = intersect(mito.genes, all_genes)
 } else {
-  mito.genes <- grep(pattern = "^MT-", x = rownames(x = rds@assays$RNA@data), value = TRUE, ignore.case=TRUE)
+  mito.genes <- grep(pattern = "^MT-", x = all_genes, value = TRUE, ignore.case=TRUE)
 }
+print("mito genes exp > 0")
+print(mito.genes)
 
-percent.mito <- Matrix::colSums(rds@assays$RNA@counts[mito.genes,])/Matrix::colSums(rds@assays$RNA@counts)
+percent.mito <- Matrix::colSums(rds@assays$RNA@counts[mito.genes,,drop=FALSE])/Matrix::colSums(rds@assays$RNA@counts)
 rds <- AddMetaData(object = rds, metadata = percent.mito, col.name = "percent.mito")
 meta = rds@meta.data
 total_cell = dim(meta)[1]

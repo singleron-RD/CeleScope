@@ -6,8 +6,8 @@ import pandas as pd
 import celescope.fusion
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
-
-fusionDir = os.path.dirname(celescope.fusion.__file__)
+from celescope.__init__ import ROOT_PATH
+from celescope.fusion.mkref import parse_genomeDir_fusion
 
 
 def is_fusion(pos, read_start, read_length, flanking_base):
@@ -22,7 +22,8 @@ class CountFusion(Step):
         self.flanking_base = int(args.flanking_base)
         self.UMI_min = int(args.UMI_min)
         self.match_dir = args.match_dir
-        self.fusion_pos_file = args.fusion_pos
+        self.fusion_genomeDir = args.fusion_genomeDir
+        self.fusion_pos_file = parse_genomeDir_fusion(self.fusion_genomeDir)['fusion_pos']
         self.bam = args.bam
 
         # out
@@ -110,18 +111,14 @@ class CountFusion(Step):
 
             # plot
             count_fusion.logger.info("plot fusion...!")
-            app = fusionDir + "/plot_fusion.R"
+            app = f'{ROOT_PATH}/fusion/plot_fusion.R'
             cmd = f"Rscript {app} --tsne_fusion {self.out_tsne_file} --outdir {self.outdir}"
             os.system(cmd)
             count_fusion.logger.info("plot done.")
 
 
     def run(self):
-        self.count_fusion()
-        
-        # TODO touch empty stat.txt for tests
-        self.add_metric(name="fusion_fake_metric", value=0)
-
+        self.count_fusion()        
         self.clean_up()
 
 
@@ -137,10 +134,6 @@ def get_opts_count_fusion(parser, sub_program):
         s_common(parser)
         parser.add_argument("--bam", required=True)
         parser.add_argument("--match_dir", help="match scRNA-Seq dir", required=True)
-    # parser.add_argument("--fusion_fasta",help="fusion fasta",required=True)
-    parser.add_argument("--fusion_pos",
-        help="first base position of the second gene(0-start),tsv file",
-        required=True,
-    )
+    parser.add_argument('--fusion_genomeDir', help='fusion genome directory', required=True)
     parser.add_argument("--flanking_base", default=5)
     parser.add_argument("--UMI_min", default=1)
