@@ -4,11 +4,9 @@ import subprocess
 import pandas as pd
 
 from celescope.tools.utils import add_log, gene_convert, s_common
-from celescope.tools.analysis_mixin import AnalysisMixin 
+from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step
-
-
-TOOLSDIR = os.path.dirname(__file__)
+from celescope.__init__ import ROOT_PATH
 
 
 @add_log
@@ -27,7 +25,7 @@ def generate_matrix(gtf_file, matrix_file):
 
 @add_log
 def seurat(sample, outdir, matrix_file, save_rds):
-    app = TOOLSDIR + "/run_analysis.R"
+    app = ROOT_PATH + "/tools/run_analysis.R"
     cmd = (
         f'Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file} '
         f'--save_rds {save_rds}'
@@ -39,7 +37,7 @@ def seurat(sample, outdir, matrix_file, save_rds):
 @add_log
 def auto_assign(sample, outdir, type_marker_tsv):
     rds = f'{outdir}/{sample}.rds'
-    app = TOOLSDIR + "/auto_assign.R"
+    app = ROOT_PATH + "/tools/auto_assign.R"
     cmd = (
         f'Rscript {app} '
         f'--rds {rds} '

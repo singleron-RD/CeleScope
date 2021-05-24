@@ -65,7 +65,7 @@ class Star_rna(Step, StarMixin):
         intronic_regions = int(region_dict['INTRONIC_BASES'])
         intergenic_regions = int(region_dict['INTERGENIC_BASES'])
         self.add_metric(
-            name=f'Genome',
+            name='Genome',
             value=self.genome['genome_name'],
         )
         self.add_metric(

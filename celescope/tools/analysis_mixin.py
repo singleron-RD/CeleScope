@@ -50,8 +50,12 @@ class AnalysisMixin():
         """
         return html code
         """
+
+        avg_logfc_col = "avg_log2FC" # seurat 4
+        if "avg_logFC" in self.marker_df.columns: # seurat 2.3.4
+            avg_logfc_col = "avg_logFC"
         marker_df = self.marker_df.loc[:,
-            ["cluster", "gene", "avg_log2FC", "pct.1", "pct.2", "p_val_adj"]
+            ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
         ]
         marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
 
@@ -71,7 +75,7 @@ class AnalysisMixin():
     def read_match_dir(self):
         """
         if match_dir is not self, should read match_dir at init
-        if it is self, read at run_analysis
+        if it is self, read at run_analysis - need to run seurat first
         """
         match_dict = utils.parse_match_dir(self.match_dir)
         tsne_df_file = match_dict['tsne_coord']
