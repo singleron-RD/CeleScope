@@ -9,11 +9,13 @@ argv <- arg_parser('')
 argv <- add_argument(argv,"--matrix_file", help="cell 10X matrix dir")
 argv <- add_argument(argv,"--outdir", help="outdir")
 argv <- add_argument(argv,"--sample", help="sample")
+argv <- add_argument(argv,"--mt_gene_list", help="write rds to disk")
 argv <- add_argument(argv,"--save_rds", help="write rds to disk")
 argv <- parse_args(argv)
 
 #args
 matrix_file = argv$matrix_file
+mt_gene_list = argv$mt_gene_list
 outdir = argv$outdir
 sample = argv$sample
 save_rds = argv$save_rds
@@ -56,7 +58,12 @@ H5Fclose(h5f)
 rds = CreateSeuratObject(matrix_name, pro=sample)
 
 # mito
-mito.genes <- grep(pattern = "^MT-", x = rownames(x = rds@assays$RNA@data), value = TRUE, ignore.case=TRUE)
+if (mt_gene_list != "None"){
+  mito.genes = read.table(mt_gene_list)[,1]
+} else {
+  mito.genes <- grep(pattern = "^MT-", x = rownames(x = rds@assays$RNA@data), value = TRUE, ignore.case=TRUE)
+}
+
 percent.mito <- Matrix::colSums(rds@assays$RNA@counts[mito.genes,])/Matrix::colSums(rds@assays$RNA@counts)
 rds <- AddMetaData(object = rds, metadata = percent.mito, col.name = "percent.mito")
 meta = rds@meta.data

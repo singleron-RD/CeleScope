@@ -2,11 +2,13 @@ import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step
+from celescope.rna.mkref import parse_genomeDir_rna
 
 
 class AnalysisMixin():
     """
     mixin class for analysis
+    child class must inherite Step class
     """    
 
     def __init__(self, args):
@@ -15,6 +17,37 @@ class AnalysisMixin():
             self.read_match_dir()
         else:
             self.match_dir = args.outdir + "/../" # use self
+
+    @utils.add_log
+    def seurat(matrix_file, save_rds, genomeDir):
+        app = ROOT_PATH + "/tools/run_analysis.R"
+        genome = parse_genomeDir_rna(genomeDir)
+        mt_gene_list = genome['mt_gene_list']
+        cmd = (
+            f'Rscript {app} '
+            f'--sample {self.sample} '
+            f'--outdir {self.outdir} '
+            f'--matrix_file {matrix_file} '
+            f'--mt_gene_list {mt_gene_list} '
+            f'--save_rds {save_rds}'
+        )
+        AnalysisMixin.seurat.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+
+
+    @utils.add_log
+    def auto_assign(type_marker_tsv):
+        rds = f'{self.outdir}/{self.sample}.rds'
+        app = ROOT_PATH + "/tools/auto_assign.R"
+        cmd = (
+            f'Rscript {app} '
+            f'--rds {rds} '
+            f'--type_marker_tsv {type_marker_tsv} '
+            f'--outdir {self.outdir} '
+            f'--sample {self.sample} '
+        )
+        AnalysisMixin.auto_assign.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
 
     @staticmethod
     def get_cluster_tsne(colname, tsne_df, show_colname=True):

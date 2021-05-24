@@ -2,8 +2,16 @@ import subprocess
 import configparser
 
 import celescope.tools.utils as utils
-from celescope.tools.mkref import Mkref, get_opts_mkref as opts
+from celescope.tools.mkref import Mkref, parse_genomeDir, get_opts_mkref as opts
 
+
+def parse_genomeDir_rna(genomeDir):
+    genome = parse_genomeDir(genomeDir)
+    entrys = ['fasta', 'gtf', 'mt_gene_list']
+    for entry in entrys:
+        genome[entry] = f'{genomeDir}/{genome[entry]}'
+    return genome
+    
 
 class Mkref_rna(Mkref):
     def __init__(self, genome_type, args):
@@ -56,7 +64,7 @@ class Mkref_rna(Mkref):
     
     def run(self):
         self.write_config()
-        self.build_refflat()
+        #self.build_refflat()
         #self.build_star_index()
 
 
