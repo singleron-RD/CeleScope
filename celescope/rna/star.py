@@ -1,4 +1,3 @@
-import re
 import subprocess
 
 import pandas as pd
@@ -27,25 +26,7 @@ class Star_rna(Step, StarMixin):
 
     def get_metrics(self):
 
-        stat_prefix = 'Reads'
-        if self.consensus_fq:
-            stat_prefix = 'UMIs'
-
-        with open(self.STAR_map_log, 'r') as map_log:
-            # number amd percent
-            unique_reads_list = []
-            multi_reads_list = []
-            for line in map_log:
-                if line.strip() == '':
-                    continue
-                if re.search(r'Uniquely mapped reads', line):
-                    unique_reads_list.append(line.strip().split()[-1])
-                if re.search(r'of reads mapped to too many loci', line):
-                    multi_reads_list.append(line.strip().split()[-1])
-        unique_reads = int(unique_reads_list[0])
-        unique_reads_fraction = float(unique_reads_list[1].strip('%')) / 100
-        multi_reads = int(multi_reads_list[0])
-        multi_reads_fraction = float(multi_reads_list[1].strip('%')) / 100
+        self.get_star_metrics()
 
 
         with open(self.picard_region_log, 'r') as picard_log:
@@ -64,20 +45,7 @@ class Star_rna(Step, StarMixin):
             int(region_dict['CODING_BASES'])
         intronic_regions = int(region_dict['INTRONIC_BASES'])
         intergenic_regions = int(region_dict['INTERGENIC_BASES'])
-        self.add_metric(
-            name='Genome',
-            value=self.genome['genome_name'],
-        )
-        self.add_metric(
-            name=f'Uniquely Mapped {stat_prefix}',
-            value=unique_reads,
-            fraction=unique_reads_fraction,
-        )
-        self.add_metric(
-            name=f'Multi-Mapped {stat_prefix}',
-            value=multi_reads,
-            fraction=multi_reads_fraction,
-        )
+
         self.add_metric(
             name='Base Pairs Mapped to Exonic Regions', 
             value=exonic_regions, 
@@ -105,7 +73,7 @@ class Star_rna(Step, StarMixin):
                         items = line.split()
                         Reads_Total = int(items[1])
                 self.add_metric(
-                    name=f'{stat_prefix} Mapped to rRNA',
+                    name=f'{self.stat_prefix} Mapped to rRNA',
                     value=Reads_Mapped_to_rRNA,
                     total=Reads_Total,
                 )

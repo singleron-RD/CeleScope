@@ -8,16 +8,12 @@ class StarVirus(Step, StarMixin):
     star virus class
     """
     def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
         # add genomeDir 
         args.genomeDir = args.virus_genomeDir
         
-        StarMixin.__init__(self, args)
+        Step.__init__(self, args, step_name)        
+        StarMixin.__init__(self, args, add_prefix='virus')
 
-        # change outPrefix
-        self.outPrefix = f'{self.outdir}/{self.sample}_virus_'
-        self.unsort_STAR_bam = f'{self.outPrefix}Aligned.out.bam'
-        self.STAR_bam = f'{self.outPrefix}Aligned.sortedByCoord.out.bam'
 
     def run(self):
         self.run_star()

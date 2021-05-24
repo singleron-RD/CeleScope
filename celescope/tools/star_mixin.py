@@ -1,4 +1,5 @@
 import subprocess
+import re
 
 
 import celescope.tools.utils as utils
@@ -9,7 +10,7 @@ class StarMixin():
     """
     Mixin class for STAR
     """
-    def __init__(self, args):
+    def __init__(self, args, add_prefix=None):
         self.fq = args.fq
         self.genomeDir = args.genomeDir
         self.out_unmapped = args.out_unmapped
@@ -21,10 +22,15 @@ class StarMixin():
 
         # parse
         self.genome = parse_genomeDir(self.genomeDir)
+        self.stat_prefix = 'Reads'
+        if self.consensus_fq:
+            self.stat_prefix = 'UMIs'
 
-        # out 
+        # out
         self.outPrefix = f'{self.outdir}/{self.sample}_'
-        self.STAR_map_log = f'{self.outdir}/{self.sample}_Log.final.out'
+        if add_prefix:
+            self.outPrefix += add_prefix + '_'
+        self.STAR_map_log = f'{self.outPrefix}Log.final.out'
         self.unsort_STAR_bam = f'{self.outPrefix}Aligned.out.bam'
         self.STAR_bam = f'{self.outPrefix}Aligned.sortedByCoord.out.bam'
     
@@ -52,6 +58,7 @@ class StarMixin():
 
     def run_star(self):
         self.STAR()
+        self.get_star_metrics()
         self.sort_bam()
         self.index_bam()
 
@@ -70,6 +77,43 @@ class StarMixin():
         cmd = f"samtools index {self.STAR_bam}"
         StarMixin.index_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
+    
+
+    def get_star_metrics(self):
+        """
+        step metrics
+        """
+
+        with open(self.STAR_map_log, 'r') as map_log:
+            # number amd percent
+            unique_reads_list = []
+            multi_reads_list = []
+            for line in map_log:
+                if line.strip() == '':
+                    continue
+                if re.search(r'Uniquely mapped reads', line):
+                    unique_reads_list.append(line.strip().split()[-1])
+                if re.search(r'of reads mapped to too many loci', line):
+                    multi_reads_list.append(line.strip().split()[-1])
+        unique_reads = int(unique_reads_list[0])
+        unique_reads_fraction = float(unique_reads_list[1].strip('%')) / 100
+        multi_reads = int(multi_reads_list[0])
+        multi_reads_fraction = float(multi_reads_list[1].strip('%')) / 100
+
+        self.add_metric(
+            name='Genome',
+            value=self.genome['genome_name'],
+        )
+        self.add_metric(
+            name=f'Uniquely Mapped {self.stat_prefix}',
+            value=unique_reads,
+            fraction=unique_reads_fraction,
+        )
+        self.add_metric(
+            name=f'Multi-Mapped {self.stat_prefix}',
+            value=multi_reads,
+            fraction=multi_reads_fraction,
+        )
 
 
 def get_opts_star_mixin(parser, sub_program):

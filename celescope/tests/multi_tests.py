@@ -6,14 +6,15 @@ import unittest
 import os
 import subprocess
 import shutil
+import sys
 from concurrent import futures
 
 
 ASSAYS = [
     'rna',
-    #'vdj',
-    #'tag',
-    #'capture_virus',
+    'vdj',
+    'tag',
+    'capture_virus',
     #'snp',
     'fusion',
 ]
@@ -42,11 +43,16 @@ class Tests(unittest.TestCase):
 
     def setUp(self):
         self.thread = len(ASSAYS)
+        if len(sys.argv) > 2:
+            print(sys.argv)
+            self.assays = sys.argv[2:]
+        else:
+            self.assays = ASSAYS
         # self.thread = 1
 
     def test_multi(self):
         executor = futures.ProcessPoolExecutor(max_workers=self.thread)
-        results = executor.map(run_single, ASSAYS)
+        results = executor.map(run_single, self.assays)
         res_list = []
         for result in results:
             res_list.append(result)
