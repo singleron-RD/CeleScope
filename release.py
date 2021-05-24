@@ -5,8 +5,9 @@ from celescope.__init__ import __version__
 def create_conda():
     env_name = f'celescope{__version__}'
     cmd = f"""
+    set -e
     conda create -n {env_name}
-    conda activate {env_name}
+    source activate {env_name}
     conda install --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
 
     pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope
@@ -17,6 +18,7 @@ def create_conda():
 
 def lint_code():
     cmd = """
+    set -e
     celescope -h
     # lint
         # W1618 (no-absolute-import)
