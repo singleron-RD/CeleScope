@@ -2,7 +2,8 @@ import os
 import numbers
 import json
 import io
-from collections import abc
+import abc
+import collections
 from collections import namedtuple
 
 import pandas as pd
@@ -180,7 +181,7 @@ class Step:
     def add_content_item(self, slot, **kwargs):
         for key, value in kwargs.items():
             # if value is a dict, and some value in this dict is float, format these value
-            if isinstance(value, abc.Mapping):
+            if isinstance(value, collections.abc.Mapping):
                 for value_key, value_value in value.items():
                     if isinstance(value_value, float):
                         value[value_key] = round(value_value, 4)
@@ -216,5 +217,9 @@ class Step:
         self.dump_content(slot="data")
         self.dump_content(slot="metric")
         self.render_html()
+
+    @abc.abstractmethod
+    def run(self):
+        return
 
 

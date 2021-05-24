@@ -1,12 +1,17 @@
+import subprocess
+
 import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step
+from celescope.rna.mkref import parse_genomeDir_rna
+from celescope.__init__ import ROOT_PATH
 
 
 class AnalysisMixin():
     """
     mixin class for analysis
+    child class must inherite Step class
     """    
 
     def __init__(self, args):
@@ -15,6 +20,37 @@ class AnalysisMixin():
             self.read_match_dir()
         else:
             self.match_dir = args.outdir + "/../" # use self
+
+    @utils.add_log
+    def seurat(self, matrix_file, save_rds, genomeDir):
+        app = ROOT_PATH + "/tools/run_analysis.R"
+        genome = parse_genomeDir_rna(genomeDir)
+        mt_gene_list = genome['mt_gene_list']
+        cmd = (
+            f'Rscript {app} '
+            f'--sample {self.sample} '
+            f'--outdir {self.outdir} '
+            f'--matrix_file {matrix_file} '
+            f'--mt_gene_list {mt_gene_list} '
+            f'--save_rds {save_rds}'
+        )
+        AnalysisMixin.seurat.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+
+
+    @utils.add_log
+    def auto_assign(self, type_marker_tsv):
+        rds = f'{self.outdir}/{self.sample}.rds'
+        app = ROOT_PATH + "/tools/auto_assign.R"
+        cmd = (
+            f'Rscript {app} '
+            f'--rds {rds} '
+            f'--type_marker_tsv {type_marker_tsv} '
+            f'--outdir {self.outdir} '
+            f'--sample {self.sample} '
+        )
+        AnalysisMixin.auto_assign.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
 
     @staticmethod
     def get_cluster_tsne(colname, tsne_df, show_colname=True):
@@ -50,8 +86,12 @@ class AnalysisMixin():
         """
         return html code
         """
+
+        avg_logfc_col = "avg_log2FC" # seurat 4
+        if "avg_logFC" in self.marker_df.columns: # seurat 2.3.4
+            avg_logfc_col = "avg_logFC"
         marker_df = self.marker_df.loc[:,
-            ["cluster", "gene", "avg_log2FC", "pct.1", "pct.2", "p_val_adj"]
+            ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
         ]
         marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
 
@@ -71,7 +111,7 @@ class AnalysisMixin():
     def read_match_dir(self):
         """
         if match_dir is not self, should read match_dir at init
-        if it is self, read at run_analysis
+        if it is self, read at run_analysis - need to run seurat first
         """
         match_dict = utils.parse_match_dir(self.match_dir)
         tsne_df_file = match_dict['tsne_coord']

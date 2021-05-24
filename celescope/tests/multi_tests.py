@@ -11,9 +11,9 @@ from concurrent import futures
 
 ASSAYS = [
     'rna',
-    'vdj',
-    'tag',
-    'capture_virus',
+    #'vdj',
+    #'tag',
+    #'capture_virus',
     #'snp',
     'fusion',
 ]

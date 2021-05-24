@@ -10,3 +10,6 @@ __STEPS__ = [
     'analysis_rna_virus',
 ]
 __ASSAY__ = 'rna_virus'
+IMPORT_DICT = {
+    'star': 'celescope.rna'
+}
