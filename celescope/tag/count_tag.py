@@ -240,12 +240,19 @@ class Count_tag(Step):
                 plot_file=self.combine_cluster_plot
             )
 
-        df_tag_count = df_UMI_cell["tag"].value_counts().reset_index()
-        df_tag_count.columns = ["item", "count"]
-        for _index, row in df_tag_count.iterrows():
+        sr_tag_count = df_UMI_cell["tag"].value_counts() # series(index:tag name, value:tag count)
+        for tag_name in ("Undetermined", "Multiplet"):
             self.add_metric(
-                name=row['item'] + ' Cells',
-                value=row['count'],
+                name=tag_name + ' Cells',
+                value=sr_tag_count[tag_name],
                 total=self.cell_total,
             )
+            sr_tag_count.drop(tag_name, inplace=True)
+        for tag_name in sorted(sr_tag_count.index):
+            self.add_metric(
+                name=tag_name + ' Cells',
+                value=sr_tag_count[tag_name],
+                total=self.cell_total,
+            )
+
         self.clean_up()

@@ -396,7 +396,7 @@ class Count(Step):
         """saturation and median gene
         return fraction=1 saturation
         """
-        cell_read_index = np.array(df_cell.index.repeat(df_cell['count']))
+        cell_read_index = np.array(df_cell.index.repeat(df_cell['count']), dtype='int32')
         np.random.shuffle(cell_read_index)
 
         format_str = "%.2f\t%.2f\t%.2f\n"
