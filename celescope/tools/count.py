@@ -137,6 +137,7 @@ class Count(Step):
     def bam2table(self):
         """
         bam to detail table
+        must be used on name_sorted bam
         """
         samfile = pysam.AlignmentFile(self.bam, "rb")
         with open(self.count_detail_file, 'wt') as fh1:

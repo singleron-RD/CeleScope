@@ -17,7 +17,7 @@ Celescope has interfaces `multi_{assay}` to generate scripts for multi-sample an
     - [cutadapt](cutadapt.md)
 
 - Single cell RNA-Seq
-    - [mkref](mkref.md)
+    - [mkref](mkref_rna.md)
     - [star](star.md)
     - [featureCounts](featureCounts.md)
     - [count](count.md)

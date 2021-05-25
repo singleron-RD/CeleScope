@@ -5,11 +5,13 @@
  
 ### Added
 
-- `mkref` subcommand. See `celescope rna mkref`, `celescope fusion mkref` for details.
+- `mkref` subcommand. See `celescope rna mkref`, `celescope fusion mkref` and `celescope virus mkref` for details.
 
 ### Changed
 
 ### Fixed
+
+- Fixed `count tag` metrics order in merge.xls
 
 ### Removed
 
