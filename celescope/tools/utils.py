@@ -203,9 +203,9 @@ def generic_open(file_name, mode='rt'):
     return file_obj
 
 @add_log
-def gene_convert(gtf_file):
+def get_id_name_dict(gtf_file):
     """
-    get all gene_id:gene_name from gtf file
+    get gene_id:gene_name from gtf file
     for line in gtf
         if gtf_type == 'gene'
             get gene_id and gene_name
@@ -240,7 +240,7 @@ def gene_convert(gtf_file):
                 c[gene_name] += 1
                 if c[gene_name] > 1:
                     if gene_id in id_name and gene_name == id_name[gene_id]:
-                        gene_convert.logger.warning(
+                        get_id_name_dict.logger.warning(
                             'duplicated gtf lines '
                             f'gene_id: {gene_id}, ' 
                             f'gene_name {gene_name}'

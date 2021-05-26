@@ -37,7 +37,7 @@ class Count(Step):
             _refFlat, self.gtf_file, _ = utils.glob_genomeDir(args.genomeDir)
         else:
             self.gtf_file = args.gtf
-        self.id_name = utils.gene_convert(self.gtf_file)
+        self.id_name = utils.get_id_name_dict(self.gtf_file)
 
         # output files
         self.count_detail_file = f'{self.outdir}/{self.sample}_count_detail.txt'

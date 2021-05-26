@@ -5,7 +5,7 @@ import os
 import re
 import subprocess
 import pysam
-from celescope.tools.utils import add_log, format_number, gene_convert
+from celescope.tools.utils import add_log, format_number, get_id_name_dict
 from celescope.tools.step import Step, s_common
 from celescope.tools.mkref import parse_genomeDir
 
@@ -45,7 +45,7 @@ def format_stat(log):
 
 @add_log
 def add_tag(bam, gtf):
-    id_name = gene_convert(gtf)
+    id_name = get_id_name_dict(gtf)
     samfile = pysam.AlignmentFile(bam, "rb")
     header = samfile.header
     new_bam = pysam.AlignmentFile(

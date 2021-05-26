@@ -1,6 +1,6 @@
 import pandas as pd
 
-from celescope.tools.utils import add_log, gene_convert, s_common
+from celescope.tools.utils import add_log, get_id_name_dict, s_common
 from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step
 
@@ -9,7 +9,7 @@ from celescope.tools.step import Step
 @add_log
 def generate_matrix(gtf_file, matrix_file):
 
-    id_name = gene_convert(gtf_file)
+    id_name = get_id_name_dict(gtf_file)
     matrix = pd.read_csv(matrix_file, sep="\t")
 
     gene_name_col = matrix.geneID.apply(lambda x: id_name[x])
