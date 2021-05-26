@@ -8,7 +8,6 @@ import glob
 from collections import defaultdict, Counter
 from itertools import combinations, product
 
-import pandas as pd
 import pysam
 from xopen import xopen
 
