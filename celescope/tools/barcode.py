@@ -293,13 +293,6 @@ class Barcode(Step):
         self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
         self.nopolyT = args.nopolyT
         self.noLinker = args.noLinker
-        self.bool_probe = False
-        if args.probe_file and args.probe_file != 'None':
-            self.bool_probe = True
-            self.probe_count_dic = utils.genDict(dim=3)
-            self.valid_count_dic = utils.genDict(dim=2)
-            self.probe_dic, _ = utils.read_fasta(args.probe_file)
-            self.reads_without_probe = 0
         self.pattern = args.pattern
         self.linker = args.linker
         self.whitelist = args.whitelist
@@ -310,6 +303,20 @@ class Barcode(Step):
 
     @utils.add_log
     def run(self):
+        """
+        Extract barcode and UMI from R1. Filter reads with 
+            - invalid polyT
+            - low quality in barcode and UMI
+            - invalid inlinker
+            - invalid barcode
+
+        for every sample
+            get chemistry
+            get linker_mismatch_dict and barcode_mismatch_dict
+            for every read in read1
+                filter
+                write valid R2 read to file
+        """
 
         fh3 = xopen(self.out_fq2, 'w')
 
@@ -434,26 +441,6 @@ class Barcode(Step):
                 umi = seq_ranges(seq1, pattern_dict['U'])
 
                 self.clean_num += 1
-                '''
-                if self.bool_probe:
-                    # valid count
-                    read_name_probe = 'None'
-                    self.valid_count_dic[cb][umi] += 1
-
-                    # output probe UMi and read count
-                    find_probe = False
-                    for probe_name in self.probe_dic:
-                        probe_seq = self.probe_dic[probe_name]
-                        probe_seq = probe_seq.upper()
-                        if seq1.find(probe_seq) != -1:
-                            self.probe_count_dic[probe_name][cb][umi] += 1
-                            read_name_probe = probe_name
-                            find_probe = True
-                            break
-
-                    if not find_probe:
-                        self.reads_without_probe += 1
-                '''
                 self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                 self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
@@ -477,40 +464,6 @@ class Barcode(Step):
         if self.clean_num == 0:
             raise Exception(
                 'no valid reads found! please check the --chemistry parameter.')
-
-        if self.bool_probe:
-            # total probe summary
-            total_umi = 0
-            total_valid_read = 0
-            for cb in self.valid_count_dic:
-                total_umi += len(self.valid_count_dic[cb])
-                total_valid_read += sum(self.valid_count_dic[cb].values())
-
-            # probe summary
-            count_list = []
-            for probe_name in self.probe_dic:
-                UMI_count = 0
-                read_count = 0
-                if probe_name in self.probe_count_dic:
-                    for cb in self.probe_count_dic[probe_name]:
-                        UMI_count += len(self.probe_count_dic[probe_name][cb])
-                        read_count += sum(self.probe_count_dic[probe_name][cb].values())
-                count_list.append(
-                    {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
-
-            df_count = pd.DataFrame(count_list, columns=[
-                                    "probe_name", "read_count", "UMI_count"])
-
-            def format_percent(x):
-                x = str(round(x*100, 2))+"%"
-                return x
-            df_count["read_fraction"] = (
-                df_count["read_count"]/total_valid_read).apply(format_percent)
-            df_count["UMI_fraction"] = (
-                df_count["UMI_count"]/total_umi).apply(format_percent)
-            df_count.sort_values(by="UMI_count", inplace=True, ascending=False)
-            df_count_file = self.outdir + '/' + self.sample + '_probe_count.tsv'
-            df_count.to_csv(df_count_file, sep="\t", index=False)
 
         # stat
         BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
@@ -562,7 +515,6 @@ def get_opts_barcode(parser, sub_program=True):
                         help='output nopolyT fq')
     parser.add_argument('--noLinker', action='store_true',
                         help='output noLinker fq')
-    parser.add_argument('--probe_file', help="probe fasta file")
     parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
     parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
     parser.add_argument('--gzip', help="output gzipped fastq", action='store_true')

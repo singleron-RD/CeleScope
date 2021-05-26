@@ -13,20 +13,20 @@ Currently, CeleScope includes the follwing pipelines:
 Celescope has interfaces `multi_{assay}` to generate scripts for multi-sample analysis. See `Multi-samples` for details.
 
 - Common Steps
-    - [barcode](barcode.md)
-    - [cutadapt](cutadapt.md)
+    - [barcode](tools/barcode.md)
+    - [cutadapt](tools/cutadapt.md)
 
 - Single cell RNA-Seq
-    - [mkref](mkref_rna.md)
-    - [star](star.md)
-    - [featureCounts](featureCounts.md)
-    - [count](count.md)
-    - [analysis](analysis.md)
+    - [mkref](rna/mkref.md)
+    - [star](rna/star.md)
+    - [featureCounts](tools/featureCounts.md)
+    - [count](rna/count.md)
+    - [analysis](rna/analysis.md)
 
 - Single cell VDJ
-    - [consensus](consensus.md)
-    - [mapping_vdj](mapping_vdj.md)
-    - [count_vdj](count_vdj.md)
+    - [consensus](tools/consensus.md)
+    - [mapping_vdj](vdj/mapping_vdj.md)
+    - [count_vdj](vdj/count_vdj.md)
 
 - [Multi-samples](multi-samples.md)
 
