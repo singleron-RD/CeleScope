@@ -9,6 +9,8 @@
 
 ### Changed
 
+- Duplicated (gene_id, gene_name) lines in gtf file will cause a warning instead of adding a `_{count}` suffix to gene_name. If gene_name is the same but gene_id is not, a `_{count}` suffix will still be added to gene_name.
+
 ### Fixed
 
 - Fixed `count tag` metrics order in merge.xls

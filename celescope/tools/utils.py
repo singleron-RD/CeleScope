@@ -202,9 +202,22 @@ def generic_open(file_name, mode='rt'):
         file_obj = open(file_name, mode)
     return file_obj
 
-
+@add_log
 def gene_convert(gtf_file):
+    """
+    get all gene_id:gene_name from gtf file
+    for line in gtf
+        if gtf_type == 'gene'
+            get gene_id and gene_name
+            if gene_name is duplicated
+                if gene_id is duplicated
+                    warning
+                else
+                    add "_count" to gene_name
 
+    Returns:
+        {gene_id: gene_name} dict
+    """
     gene_id_pattern = re.compile(r'gene_id "(\S+)";')
     gene_name_pattern = re.compile(r'gene_name "(\S+)"')
     id_name = {}
@@ -226,7 +239,15 @@ def gene_convert(gtf_file):
                     gene_name = gene_names[-1]
                 c[gene_name] += 1
                 if c[gene_name] > 1:
-                    gene_name = f'{gene_name}_{c[gene_name]}'
+                    if gene_id in id_name and gene_name == id_name[gene_id]:
+                        gene_convert.logger.warning(
+                            'duplicated gtf lines '
+                            f'gene_id: {gene_id}, ' 
+                            f'gene_name {gene_name}'
+                        )
+                        c[gene_name] -= 1
+                    else:
+                        gene_name = f'{gene_name}_{c[gene_name]}'
                 id_name[gene_id] = gene_name
     return id_name
 
