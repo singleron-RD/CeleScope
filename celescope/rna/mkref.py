@@ -57,21 +57,13 @@ class Mkref_rna(Mkref):
         )
         Mkref_rna.build_refflat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
-
-    def build_fasta_index(self):
-        cmd = (
-            f'samtools faidx {self.fasta}'
-        )
-        Mkref_rna.build_fasta_index.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
-
     
+    @utils.add_log
     def run(self):
+        if not self.dry_run:
+            self.build_refflat()
+            self.build_star_index()
         self.write_config()
-        self.build_fasta_index()
-        self.build_refflat()
-        self.build_star_index()
-
 
 def mkref(args):
     genome_type = 'rna'

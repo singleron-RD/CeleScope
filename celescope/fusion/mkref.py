@@ -43,7 +43,8 @@ class Mkref_fusion(Mkref):
             config.write(config_handle)
     
     def run(self):
-        self.build_star_index()
+        if not self.dry_run:
+            self.build_star_index()
         self.write_config()
 
 

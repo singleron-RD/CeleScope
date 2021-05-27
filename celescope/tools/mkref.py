@@ -24,6 +24,7 @@ class Mkref():
         self.genomeDir = args.genomeDir
         self.thread = args.thread
         self.genome_name = args.genome_name
+        self.dry_run = args.dry_run
         self.genome_type = genome_type
 
         # out file
@@ -43,3 +44,4 @@ def get_opts_mkref(parser, sub_program):
         parser.add_argument("--genomeDir", help="genome directory path", default='./')
         parser.add_argument("--thread", help="threads to use", default=6)
         parser.add_argument("--genome_name", help="genome name", required=True)
+        parser.add_argument("--dry_run", help="only write config file", action='store_true')
