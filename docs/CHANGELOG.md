@@ -9,7 +9,19 @@
 
 ### Changed
 
-- Duplicated (gene_id, gene_name) lines in gtf file will cause a warning instead of adding a `_{count}` suffix to gene_name. If gene_name is the same but gene_id is not, a `_{count}` suffix will still be added to gene_name.
+- Change the way to handle duplicate gene_name and gene_id in gtf file.
+
+Previous:
+
+    - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
+    - one gene_id with multiple gene_name: newer gene_name will overwrite older gene_name.
+    - duplicated (gene_name, gene_id): "_{count}" will be added to gene_name.
+
+Now:
+
+    - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
+    - one gene_id with multiple gene_name: error.
+    - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
 
 ### Fixed
 

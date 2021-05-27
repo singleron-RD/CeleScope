@@ -206,18 +206,14 @@ def generic_open(file_name, mode='rt'):
 def get_id_name_dict(gtf_file):
     """
     get gene_id:gene_name from gtf file
-    for line in gtf
-        if gtf_type == 'gene'
-            get gene_id and gene_name
-            if gene_name is duplicated
-                if gene_id is duplicated
-                    warning
-                else
-                    add "_count" to gene_name
+        - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
+        - one gene_id with multiple gene_name: error.
+        - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
 
     Returns:
         {gene_id: gene_name} dict
     """
+
     gene_id_pattern = re.compile(r'gene_id "(\S+)";')
     gene_name_pattern = re.compile(r'gene_name "(\S+)"')
     id_name = {}
@@ -239,12 +235,18 @@ def get_id_name_dict(gtf_file):
                     gene_name = gene_names[-1]
                 c[gene_name] += 1
                 if c[gene_name] > 1:
-                    if gene_id in id_name and gene_name == id_name[gene_id]:
+                    if gene_id in id_name:
+                        assert id_name[gene_id] == gene_name, (
+                                'one gene_id with multiple gene_name '
+                                f'gene_id: {gene_id}, '
+                                f'gene_name this line: {gene_name}'
+                                f'gene_name previous line: {id_name[gene_id]}'
+                            )
                         get_id_name_dict.logger.warning(
-                            'duplicated gtf lines '
-                            f'gene_id: {gene_id}, ' 
-                            f'gene_name {gene_name}'
-                        )
+                                'duplicated (gene_id, gene_name)'
+                                f'gene_id: {gene_id}, '
+                                f'gene_name {gene_name}'
+                            )
                         c[gene_name] -= 1
                     else:
                         gene_name = f'{gene_name}_{c[gene_name]}'
@@ -577,66 +579,6 @@ def genDict(dim=3, valType=int):
         return defaultdict(valType)
     else:
         return defaultdict(lambda: genDict(dim - 1, valType=valType))
-
-'''
-@add_log
-def downsample(bam, barcodes, percent):
-    """
-    calculate median_geneNum and saturation based on a given percent of reads
-
-    Args:
-        bam - bam file
-        barcodes(set) - validated barcodes
-        percent(float) - percent of reads in bam file.
-
-    Returns:
-        percent(float) - input percent
-        median_geneNum(int) - median gene number
-        saturation(float) - sequencing saturation
-
-    Description:
-        Sequencing Saturation = 1 - n_deduped_reads / n_reads.
-        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads.
-        n_reads = Total number of confidently mapped, valid cell-barcode, valid UMI reads.
-    """
-    logging.info('working' + str(percent))
-    cmd = ['samtools', 'view', '-s', str(percent), bam]
-    p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    # nesting defaultdicts in an arbitrary depth
-    readDict = genDict()
-
-    n_reads = 0
-    while True:
-        line = p1.stdout.readline()
-        if not line.strip():
-            break
-        tmp = line.strip().split()
-        if tmp[-1].startswith('XT:Z:'):
-            geneID = tmp[-1].replace('XT:Z:', '')
-            cell_barcode, umi = tmp[0].split('_')[0:2]
-            # filter invalid barcode
-            if cell_barcode in barcodes:
-                n_reads += 1
-                readDict[cell_barcode][umi][geneID] += 1
-    p1.stdout.close()
-
-    geneNum_list = []
-    n_deduped_reads = 0
-    for cell_barcode in readDict:
-        genes = set()
-        for umi in readDict[cell_barcode]:
-            for geneID in readDict[cell_barcode][umi]:
-                genes.add(geneID)
-                if readDict[cell_barcode][umi][geneID] == 1:
-                    n_deduped_reads += 1
-        geneNum_list.append(len(genes))
-
-    median_geneNum = np.median(geneNum_list) if geneNum_list else 0
-    saturation = (1 - float(n_deduped_reads) / n_reads) * 100
-
-    return "%.2f\t%.2f\t%.2f\n" % (
-        percent, median_geneNum, saturation), saturation
-'''
 
 
 def cluster_tsne_list(tsne_df):
