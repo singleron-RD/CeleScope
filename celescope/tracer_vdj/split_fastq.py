@@ -5,24 +5,26 @@ import argparse
 import datetime
 import pandas as pd
 from Bio.Seq import Seq
-from glob import glob
-from celescope.tools.utils import add_log
+import glob
+from celescope.tools import utils
+from celescope.tools.utils import *
 
 
-@add_log
-def annotation_barcodes(match_dir, mode):
+@utils.add_log
+def annotation_barcodes(match_dir, type):
     
-    cluster_data = glob(f'{match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-
+    cluster_data = glob.glob(f'{match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')
+    cluster_data = cluster_data[0]
     cluster_type = pd.read_csv(cluster_data, sep='\t')
 
     # filter barcodes
-    if mode == 'TCR':
+    if type == 'TCR':
         clusters = list(cluster_type[cluster_type['cell_type'] == 'T cells']['cluster'])
-    elif mode == 'BCR':
+    elif type == 'BCR':
         clusters = list(cluster_type[cluster_type['cell_type'] == 'B cells']['cluster'])
 
-    tsne = glob(f'{match_dir}/06.analysis/*_tsne_coord.tsv')[0]
+    tsne = glob.glob(f'{match_dir}/06.analysis/*_tsne_coord.tsv')
+    tsne = tsne[0]
     tsne_coord = pd.read_csv(tsne, sep='\t', index_col=0)
 
     barcodes = []
@@ -30,8 +32,8 @@ def annotation_barcodes(match_dir, mode):
         tmp = tsne_coord[tsne_coord['cluster'] == cluster].index.tolist()
         barcodes += tmp
     # write barcodes
-    barcodes_path = glob(f'{match_dir}/06.analysis/*_auto_assign/')[0]
-    
+    barcodes_path = glob.glob(f'{match_dir}/06.analysis/*_auto_assign/')
+    barcodes_path = barcodes_path[0] 
     with open(f'{barcodes_path}/reversed_barcodes.tsv', 'w') as fh:
         for barcode in barcodes:
             barcode = Seq(barcode)
@@ -44,7 +46,7 @@ def annotation_barcodes(match_dir, mode):
     return res
 
 
-@add_log
+@utils.add_log
 def get_fastq_to_assemble(fq_outdir, fq, barcodes):
     """
     split_fastq
@@ -82,25 +84,30 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
     barcodes_reads_cal = barcodes_reads_cal.reset_index().rename(columns={'index': 'barcode'})
     barcodes_reads_cal = barcodes_reads_cal.sort_values(by='counts', ascending=False)
 
+    barcodes_reads_cal.to_csv(f'{fq_outdir}/../reads_count.tsv', sep='\t')
+
+    stat_string = 'All cells:{}\nmatched cell:{}'.format(len(all_barcodes), len(barcode_reads_useful))
+    with open(f'{fq_outdir}/../stat.txt', 'w') as s:
+        s.write(stat_string)
+
     i = 1
     for barcode in list(barcode_reads_useful.keys()):
 
         with open(f'{fq_outdir}/{i}.fq', 'w') as f:
             for entry in barcode_reads_useful[barcode]:
                 f.write(str(entry) + '\n')
-        if i % 100 == 0:
+        if i % 1000 == 0:
             get_fastq_to_assemble.logger.info(f'processed {i} cells')
-        i += 1
-    #stat file
-    barcodes_reads_cal.to_csv(f'{fq_outdir}/reads_count.tsv', sep='\t')
 
-    stat_string = 'All cells:{}\nmatched cell:{}'.format(len(all_barcodes), len(barcode_reads_useful))
-    with open(f'{fq_outdir}/stat.txt', 'w') as s:
-        s.write(stat_string)
+        if i == len(list(barcode_reads_useful.keys())):
+            get_fastq_to_assemble.loogger.info(f'finnaly get {i} cells')
+
+        i += 1
+        
 
 
 def split_fastq(args):
-    mode = args.mode
+    type = args.type
     match_dir = args.match_dir
     sample = args.sample
     outdir = args.outdir
@@ -108,18 +115,17 @@ def split_fastq(args):
     fq = args.fq
 
     fq_outdir = f'{outdir}/fastq'
-    barcodes = annotation_barcodes(match_dir, mode)
+    barcodes = annotation_barcodes(match_dir, type)
         
     get_fastq_to_assemble(fq_outdir, fq, barcodes)
 
 
 def get_opts_split_fastq(parser, sub_program):
     if sub_program:
-        parser.add_argument('--sample',help='sample name', required=True)
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+        parser = s_common(parser)
         parser.add_argument('--fq', required=True)
-    parser.add_argument('--mode', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
-    parser.add_argument('--match_dir', help='matched rna_dir')
+        parser.add_argument('--match_dir', help='matched rna_dir')
+    parser.add_argument('--type', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    
 
 

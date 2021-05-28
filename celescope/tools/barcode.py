@@ -225,12 +225,17 @@ class Barcode(Step):
         self.lowNum = args.lowNum
         self.lowQual = args.lowQual
         self.allowNoPolyT = args.allowNoPolyT
-        self.allowNoLinker = args.allowNoLinker   
+        self.allowNoLinker = args.allowNoLinker
+        self.paired_fq = args.paired_fq
+        self.new_f1 = f'{self.outdir}/{self.sample}_new_R1.fq{suffix}'
+        self.new_f2 = f'{self.outdir}/{self.sample}_new_R2.fq{suffix}'   
 
     @utils.add_log
     def run(self):
 
         fh3 = xopen(self.out_fq2, 'w')
+        new_f1 = xopen(self.new_f1, 'w')
+        new_f2 = xopen(self.new_f2, 'w')
 
         if self.nopolyT:
             fh1_without_polyT = xopen(self.outdir + '/noPolyT_1.fq', 'w')
@@ -377,6 +382,12 @@ class Barcode(Step):
                 self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
                 fh3.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+
+                if self.paired_fq:
+
+                    new_f1.write(f'@{header1}\n{cb}{umi}\n+\n{C_U_quals_ascii}\n')
+                    new_f2.write(f'@{header2}\n{seq2}\n+\n{qual2}\n')
+
             Barcode.run.logger.info(self.fq1_list[i] + ' finished.')
         fh3.close()
 
@@ -487,6 +498,7 @@ def get_opts_barcode(parser, sub_program=True):
     parser.add_argument('--gzip', help="output gzipped fastq", action='store_true')
     parser.add_argument(
         '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+    parser.add_argument('--paired_fq', help="output R1 R2", action='store_true')
     if sub_program:
         parser.add_argument('--fq1', help='read1 fq file', required=True)
         parser.add_argument('--fq2', help='read2 fq file', required=True)

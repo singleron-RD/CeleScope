@@ -3,7 +3,8 @@ import os
 from os import listdir
 from os.path import isfile, join
 from concurrent.futures import ProcessPoolExecutor
-from celescope.tools.utils import add_log
+from celescope.tools import utils
+from celescope.tools.utils import *
 import datetime
 
 
@@ -16,7 +17,7 @@ BRACER_CONF = '/SGRNJ03/randd/zhouxin/software/bracer/bracer.conf'
 
 # 开始组装
 
-
+@utils.add_log
 def bracer_summarise(outdir):
     bracer_outdir = f'{outdir}/bracer'
     cmd = (
@@ -29,7 +30,7 @@ def bracer_summarise(outdir):
     bracer_summarise.logger.info(cmd)
     os.system(cmd)
 
-
+@utils.add_log
 def bracer(fq, outdir, species):
     prefix = os.path.basename(fq).strip('.fq')
     cmd = (
@@ -48,7 +49,7 @@ def bracer(fq, outdir, species):
     bracer.logger.info(cmd)
     os.system(cmd)
 
-
+@utils.add_log
 def tracer_summarise(outdir):
     tracer_outdir = f'{outdir}/tracer'
     cmd = (
@@ -61,7 +62,7 @@ def tracer_summarise(outdir):
     tracer_summarise.logger.info(cmd)
     os.system(cmd)
 
-
+@utils.add_log
 def tracer(fq, outdir, species):
     prefix = os.path.basename(fq).strip('.fq')
     cmd = (
@@ -82,7 +83,7 @@ def tracer(fq, outdir, species):
     os.system(cmd)
 
 
-@add_log
+@utils.add_log
 def run_tracer(outdir, fastq_dir, species, thread):
 
     fqs = [join(fastq_dir, f) for f in listdir(fastq_dir) if isfile(join(fastq_dir, f))]
@@ -99,7 +100,7 @@ def run_tracer(outdir, fastq_dir, species, thread):
     tracer_summarise(outdir)
 
 
-@add_log
+@utils.add_log
 def run_bracer(outdir, fastq_dir, species, thread):
     fqs = [join(fastq_dir, f) for f in listdir(fastq_dir) if isfile(join(fastq_dir, f))]
     outdirs = [outdir] * len(fqs)
@@ -121,20 +122,17 @@ def go_assemble(args):
     outdir = args.outdir
     species = args.species
     
-    mode = args.mode
-    if mode == 'TCR':
+    type = args.type
+    if type == 'TCR':
         run_tracer(outdir, fastq_dir, species, thread)
-    elif mode == 'BCR':
+    elif type == 'BCR':
         run_bracer(outdir, fastq_dir, species, thread)
 
 
 def get_opts_go_assemble(parser, sub_program):
     if sub_program:
-        parser.add_argument("--outdir", help="assemble outdir", required=True)
-        parser.add_argument("--sample", help="vdj sample name", required=True)
-        parser.add_argument('--assay', help='assay', required=True)
+        parser = s_common(parser)
         parser.add_argument('--fastq_dir', required=True)
-    parser.add_argument('--mode', help='select TCR or BCR', choices=["TCR", "BCR"], required=True)
+    parser.add_argument('--type', help='select TCR or BCR', choices=["TCR", "BCR"], required=True)
     parser.add_argument('--species', help='species', choices=["Mmus", "Hsap"], required=True)
-    parser.add_argument('--thread', help='thread', default=20)
 
