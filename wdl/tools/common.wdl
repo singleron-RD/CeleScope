@@ -1,10 +1,5 @@
 version 1.0
 
-struct RuntimeAttr {
-    Int? cpu
-    Int? memory_gb
-}
-
 workflow run_common {
     input {
         String sample_name
@@ -19,16 +14,34 @@ workflow run_common {
         Int min_length = 20
         Int insert = 150
 
-        RuntimeAttr? runtime_attr_sample
-        RuntimeAttr? runtime_attr_barcode
-        RuntimeAttr? runtime_attr_cutadapt
+        Int? cpu_sample
+        Int? mem_sample
+        Int? cpu_barcode
+        Int? mem_barcode
+        Int? cpu_cutadapt
+        Int? mem_cutadapt
     }
+
+    Int cpu_default = 1
+    Int mem_default = 1
+
+    Int runtime_cpu_sample = select_first([cpu_sample, cpu_default])
+    Int runtime_mem_sample = select_first([mem_sample, mem_default])
+
+    Int runtime_cpu_barcode = select_first([cpu_barcode, cpu_default])
+    Int runtime_mem_barcode = select_first([mem_barcode, mem_default])
+
+    Int runtime_cpu_cutadapt = select_first([cpu_cutadapt, cpu_default])
+    Int runtime_mem_cutadapt = select_first([mem_cutadapt, mem_default])
 
     call sample {
         input:
             sample_name = sample_name,
-            raw_fq1s = raw_fq1s
+            raw_fq1s = raw_fq1s,
+            runtime_cpu_sample = runtime_cpu_sample,
+            runtime_mem_sample = runtime_mem_sample,
     }
+
 
     call barcode {
         input:
@@ -41,8 +54,8 @@ workflow run_common {
         lowqual = lowqual,
         lownum = lownum,
         in_data = sample.data_json,
-
-        runtime_attr_override = runtime_attr_barcode
+        runtime_cpu_barcode = runtime_cpu_barcode,
+        runtime_mem_barcode = runtime_mem_barcode,
     }
 
     call cutadapt {
@@ -53,8 +66,8 @@ workflow run_common {
         min_length = min_length,
         insert = insert,
         in_data = barcode.data_json,
-
-        runtime_attr_override = runtime_attr_cutadapt
+        runtime_cpu_cutadapt = runtime_cpu_cutadapt,
+        runtime_mem_cutadapt = runtime_mem_cutadapt,
     }
 
     output {
@@ -67,25 +80,26 @@ task sample {
     input {
         String sample_name
         Array[File] raw_fq1s
-        RuntimeAttr? runtime_attr_override
+        Int runtime_cpu_sample
+        Int runtime_mem_sample
     }
+
+    runtime {
+        cpu: runtime_cpu_sample
+        memory: runtime_mem_sample + "GiB"
+    }
+
     command {
         set -euo pipefail
         celescope rna sample \
-        --outdir "00.sample" --sample "~{sample_name}" --assay "rna" \
-        --chemistry "auto" --fq1 "~{sep="," raw_fq1s}"
+        --outdir "00.sample" \
+        --sample "~{sample_name}" \
+        --assay "rna" \
+        --chemistry "auto" \
+        --fq1 "~{sep="," raw_fq1s}"
         ls -alh
     }
-    RuntimeAttr runtime_attr_default = object {
-    cpu: 1,
-    memory_gb: 1,
-}
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, runtime_attr_default])
 
-    runtime {
-        cpu: select_first([runtime_attr.cpu, runtime_attr_default.cpu])
-        memory: select_first([runtime_attr.memory_gb, runtime_attr_default.memory_gb])+"GiB"
-    }
     output {
         File data_json = ".data.json"
     }
@@ -102,15 +116,15 @@ task barcode {
         Int lowqual
         Int lownum
         File in_data
-
-        RuntimeAttr? runtime_attr_override
+        Int runtime_cpu_barcode
+        Int runtime_mem_barcode
     }
 
-    RuntimeAttr runtime_attr_default = object {
-        cpu: 1,
-        memory_gb: 1,
+    runtime {
+        cpu: runtime_cpu_barcode
+        memory: runtime_mem_barcode + "GiB"
     }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, runtime_attr_default])
+
 
     command {
         set -euo pipefail
@@ -126,14 +140,10 @@ task barcode {
         --whitelist "~{default="None" whitelist}" \
         --linker "~{default="None" linker}" \
         --lowQual "~{lowqual}" \
-        --thread ~{runtime_attr.cpu} \
         --lowNum "~{lownum}"
     }
 
-    runtime {
-        cpu: select_first([runtime_attr.cpu, runtime_attr_default.cpu])
-        memory: select_first([runtime_attr.memory_gb, runtime_attr_default.memory_gb])+"GiB"
-    }
+
     output {
         File data_json = ".data.json"
         File valid_fq = "01.barcode/~{sample_name}_2.fq"
@@ -149,15 +159,14 @@ task cutadapt {
         Int min_length
         Int insert
         File in_data
-
-        RuntimeAttr? runtime_attr_override
+        Int runtime_cpu_cutadapt
+        Int runtime_mem_cutadapt
     }
 
-    RuntimeAttr runtime_attr_default = object {
-        cpu: 1,
-        memory_gb: 1,
+    runtime {
+        cpu: runtime_cpu_cutadapt
+        memory: runtime_mem_cutadapt + "GiB"
     }
-    RuntimeAttr runtime_attr = select_first([runtime_attr_override, runtime_attr_default])
 
     command {
         set -euo pipefail
@@ -170,13 +179,9 @@ task cutadapt {
         --overlap "~{overlap}" \
         --minimum_length "~{min_length}" \
         --insert "~{insert}" \
-        --thread "~{runtime_attr.cpu}"
+        --thread "~{runtime_cpu_cutadapt}"
     }
 
-    runtime {
-        cpu: select_first([runtime_attr.cpu, runtime_attr_default.cpu])
-        memory: select_first([runtime_attr.memory_gb, runtime_attr_default.memory_gb])+"GiB"
-    }
     output {
         File data_json = ".data.json"
         File cutadapt_out_fq = "02.cutadapt/~{sample_name}_clean_2.fq"
