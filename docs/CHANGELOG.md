@@ -1,7 +1,13 @@
 # Change Log
 
-## [Unreleased] - 2021-05-24
+## [Unreleased] - 2021-05-28
 
+### Added
+### Changed
+### Fixed
+### Removed
+
+## [1.3.0] - 2021-05-28
  
 ### Added
 
@@ -25,7 +31,7 @@ Now:
 
 ### Fixed
 
-- Fixed `count tag` metrics order in merge.xls
+- Fix `count tag` metrics order in merge.xls
 
 ### Removed
 
