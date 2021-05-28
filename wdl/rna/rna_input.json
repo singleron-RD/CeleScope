@@ -1,0 +1,11 @@
+{
+    "run_rna.sample_name": "test1",
+    "run_rna.raw_fq1s": [
+        "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test1_1.fq.gz",
+        "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_1.fq.gz"
+    ],
+    "run_rna.raw_fq2s": [
+        "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test1_1.fq.gz",
+        "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_1.fq.gz"
+    ]
+}
