@@ -24,10 +24,12 @@ class Star_rna(Step, StarMixin):
         self.plot = None
         self.stats = pd.Series()
 
-    def get_metrics(self):
-
-        self.get_star_metrics()
-
+    def add_other_metrics(self):
+        """
+        add picard region bases
+        add region plot
+        if debug, add ribosomal RNA reads percent
+        """
 
         with open(self.picard_region_log, 'r') as picard_log:
             region_dict = {}
@@ -121,7 +123,7 @@ class Star_rna(Step, StarMixin):
         self.picard()
         if self.debug:
             self.ribo()
-        self.get_metrics()
+        self.add_other_metrics()
         self.clean_up()
 
 
