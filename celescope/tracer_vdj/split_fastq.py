@@ -86,7 +86,7 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
 
     barcodes_reads_cal.to_csv(f'{fq_outdir}/../reads_count.tsv', sep='\t')
 
-    stat_string = 'All cells:{}\nmatched cell:{}'.format(len(all_barcodes), len(barcode_reads_useful))
+    stat_string = 'All cells:{}\nmatched cell:{}\n'.format(len(all_barcodes), len(barcode_reads_useful))
     with open(f'{fq_outdir}/../stat.txt', 'w') as s:
         s.write(stat_string)
 

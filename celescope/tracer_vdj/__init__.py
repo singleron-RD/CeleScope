@@ -3,5 +3,6 @@ __STEPS__ = [
     'barcode',
     'cutadapt',
     'split_fastq',
-    'go_assemble']
+    'go_assemble',
+    'vdj_sum']
 __ASSAY__ = 'tracer_vdj'

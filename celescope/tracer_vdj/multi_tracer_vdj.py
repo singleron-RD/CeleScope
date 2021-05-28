@@ -26,6 +26,15 @@ class Multi_tracer_vdj(Multi):
         )
         self.process_cmd(cmd, step, sample, m=30, x=self.args.thread)
 
+    def vdj_sum(self, sample):
+        step = 'vdj_sum'
+        cmd_line = self.get_cmd_line(step, sample)
+        ass_dir = f'{self.outdir_dic[sample]["go_assemble"]}'
+        cmd = (
+            f'{cmd_line} '
+            f'--ass_dir {ass_dir} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=2)
 
 def main():
     multi = Multi_tracer_vdj(__ASSAY__)

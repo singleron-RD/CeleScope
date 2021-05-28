@@ -17,7 +17,7 @@ BRACER_CONF = '/SGRNJ03/randd/zhouxin/software/bracer/bracer.conf'
 
 # 开始组装
 
-@utils.add_log
+
 def bracer_summarise(outdir):
     bracer_outdir = f'{outdir}/bracer'
     cmd = (
@@ -30,7 +30,7 @@ def bracer_summarise(outdir):
     bracer_summarise.logger.info(cmd)
     os.system(cmd)
 
-@utils.add_log
+
 def bracer(fq, outdir, species):
     prefix = os.path.basename(fq).strip('.fq')
     cmd = (
@@ -49,7 +49,7 @@ def bracer(fq, outdir, species):
     bracer.logger.info(cmd)
     os.system(cmd)
 
-@utils.add_log
+
 def tracer_summarise(outdir):
     tracer_outdir = f'{outdir}/tracer'
     cmd = (
@@ -62,7 +62,7 @@ def tracer_summarise(outdir):
     tracer_summarise.logger.info(cmd)
     os.system(cmd)
 
-@utils.add_log
+
 def tracer(fq, outdir, species):
     prefix = os.path.basename(fq).strip('.fq')
     cmd = (
