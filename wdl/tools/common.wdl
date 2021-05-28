@@ -53,7 +53,7 @@ workflow run_common {
         linker = linker,
         lowqual = lowqual,
         lownum = lownum,
-        in_data = sample.data_json,
+        in_data = sample.out_data,
         runtime_cpu_barcode = runtime_cpu_barcode,
         runtime_mem_barcode = runtime_mem_barcode,
     }
@@ -65,13 +65,13 @@ workflow run_common {
         overlap = overlap,
         min_length = min_length,
         insert = insert,
-        in_data = barcode.data_json,
+        in_data = barcode.out_data,
         runtime_cpu_cutadapt = runtime_cpu_cutadapt,
         runtime_mem_cutadapt = runtime_mem_cutadapt,
     }
 
     output {
-        File data_json = cutadapt.data_json
+        File out_data = cutadapt.out_data
         File cutadapt_out_fq = cutadapt.cutadapt_out_fq     
     }
 }
@@ -101,7 +101,7 @@ task sample {
     }
 
     output {
-        File data_json = ".data.json"
+        File out_data = ".data.json"
     }
 }
 
@@ -145,7 +145,7 @@ task barcode {
 
 
     output {
-        File data_json = ".data.json"
+        File out_data = ".data.json"
         File valid_fq = "01.barcode/~{sample_name}_2.fq"
     }
 }
@@ -183,7 +183,7 @@ task cutadapt {
     }
 
     output {
-        File data_json = ".data.json"
+        File out_data = ".data.json"
         File cutadapt_out_fq = "02.cutadapt/~{sample_name}_clean_2.fq"
     }
 }

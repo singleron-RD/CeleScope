@@ -2,8 +2,12 @@ version 1.0
 
 import "../tools/common.wdl" as step_common
 import "star.wdl" as step_star
+import "../tools/featureCounts.wdl" as step_featureCounts
+import "count.wdl" as step_count
+import "analysis.wdl" as step_analysis
 
-workflow run_rna {
+
+workflow rna {
 
     input {
         String sample_name
@@ -32,6 +36,8 @@ workflow run_rna {
         Int? mem_featureCounts
         Int? cpu_count
         Int? mem_count
+        Int? cpu_analysis
+        Int? mem_analysis
     }
 
 
@@ -40,6 +46,7 @@ workflow run_rna {
             sample_name = sample_name,
             raw_fq1s = raw_fq1s,
             raw_fq2s = raw_fq2s,
+
             cpu_sample = cpu_sample,
             mem_sample = mem_sample,
             cpu_barcode = cpu_barcode,
@@ -48,8 +55,6 @@ workflow run_rna {
             mem_cutadapt = mem_cutadapt,      
     }
 
-    Int runtime_cpu_star = select_first([cpu_star, 6])
-    Int runtime_mem_star = select_first([mem_star, 30])
 
     call step_star.star {
             
@@ -57,13 +62,50 @@ workflow run_rna {
             sample_name = sample_name,
             cutadapt_out_fq = run_common.cutadapt_out_fq,
             genomeDir = genomeDir,
-            in_data = run_common.data_json,
-            runtime_cpu_star = runtime_cpu_star,
-            runtime_mem_star = runtime_mem_star,
+            in_data = run_common.out_data,
+            cpu_star = cpu_star,
+            mem_star = mem_star,
     } 
 
-    output {
-        File data_json = star.data_json
+    call step_featureCounts.featureCounts {            
+        input:
+            sample_name = sample_name,
+            in_bam = star.out_bam,
+            gtf_type = gtf_type,
+            genomeDir = genomeDir,
+            in_data = star.out_data,
+            cpu_featureCounts = cpu_featureCounts,
+            mem_featureCounts = mem_featureCounts,
+    } 
+
+    call step_count.count {
+        input:
+            sample_name = sample_name,
+            in_bam = featureCounts.out_bam,
+            genomeDir = genomeDir,
+            in_data = featureCounts.out_data,
+            mem_on_bam = featureCounts.mem_on_bam,
+            cpu_count = cpu_count,
+            mem_count = mem_count,
     }
+
+    call step_analysis.analysis {
+        input:
+            sample_name = sample_name,
+            in_matrix = count.out_matrix,
+            in_data = count.out_data,
+            mem_on_mtx = count.mem_on_mtx,
+            genomeDir = genomeDir,
+
+            cpu_analysis = cpu_analysis,
+            mem_analysis = mem_analysis,
+    }
+
+    output {
+        File bam = featureCounts.out_bam
+        File h5ad = analysis.out_h5ad
+        File report = analysis.out_report
+    }
+
 
 }

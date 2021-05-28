@@ -1,12 +1,13 @@
 {
-    "run_rna.sample_name": "test1",
-    "run_rna.raw_fq1s": [
+    "rna.sample_name": "test1",
+    "rna.raw_fq1s": [
         "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test1_1.fq.gz",
         "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_1.fq.gz"
     ],
-    "run_rna.raw_fq2s": [
-        "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test1_1.fq.gz",
-        "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_1.fq.gz"
+    "rna.raw_fq2s": [
+        "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test1_2.fq.gz",
+        "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_2.fq.gz"
     ],
-    "run_rna.genomeDir": "/SGRNJ03/randd/public/genome/rna/hs_ensembl_99"
+    "rna.genomeDir": "/SGRNJ03/randd/public/genome/rna/hs_ensembl_99",
+    "rna.cpu_star": 8
 }

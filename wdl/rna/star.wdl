@@ -6,9 +6,12 @@ task star {
         File cutadapt_out_fq
         String genomeDir
         File in_data
-        Int runtime_cpu_star
-        Int runtime_mem_star
+        Int? cpu_star
+        Int? mem_star
     }
+
+    Int runtime_cpu_star = select_first([cpu_star, 6])
+    Int runtime_mem_star = select_first([mem_star, 30])
 
     runtime {
         cpu: runtime_cpu_star
@@ -29,7 +32,7 @@ task star {
     }
 
     output {
-        File data_json = ".data.json"
+        File out_data = ".data.json"
         File out_bam = "03.STAR/~{sample_name}_Aligned.sortedByCoord.out.bam"
     }
 }
