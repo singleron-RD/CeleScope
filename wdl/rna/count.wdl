@@ -7,6 +7,7 @@ task count {
         String genomeDir
         File in_data
         Int mem_on_bam
+        String docker_use
         Int? cpu_count
         Int? mem_count
     }
@@ -17,6 +18,7 @@ task count {
     runtime {
         cpu: runtime_cpu_count
         memory:  if mem_on_bam > runtime_mem_count then mem_on_bam + "GiB" else runtime_mem_count + "GiB"
+        docker: docker_use
     }
 
     command {

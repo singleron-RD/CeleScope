@@ -24,6 +24,8 @@ workflow rna {
         String genomeDir
         String gtf_type = "exon"
 
+        String docker_use
+
         Int? cpu_sample
         Int? mem_sample
         Int? cpu_barcode
@@ -52,7 +54,8 @@ workflow rna {
             cpu_barcode = cpu_barcode,
             mem_barcode = mem_barcode,
             cpu_cutadapt = cpu_cutadapt,
-            mem_cutadapt = mem_cutadapt,      
+            mem_cutadapt = mem_cutadapt,   
+            docker_use = docker_use,
     }
 
 
@@ -65,6 +68,7 @@ workflow rna {
             in_data = run_common.out_data,
             cpu_star = cpu_star,
             mem_star = mem_star,
+            docker_use = docker_use
     } 
 
     call step_featureCounts.featureCounts {            
@@ -76,6 +80,7 @@ workflow rna {
             in_data = star.out_data,
             cpu_featureCounts = cpu_featureCounts,
             mem_featureCounts = mem_featureCounts,
+            docker_use = docker_use,
     } 
 
     call step_count.count {
@@ -87,6 +92,7 @@ workflow rna {
             mem_on_bam = featureCounts.mem_on_bam,
             cpu_count = cpu_count,
             mem_count = mem_count,
+            docker_use = docker_use,
     }
 
     call step_analysis.analysis {
@@ -99,6 +105,7 @@ workflow rna {
 
             cpu_analysis = cpu_analysis,
             mem_analysis = mem_analysis,
+            docker_use = docker_use,
     }
 
     output {

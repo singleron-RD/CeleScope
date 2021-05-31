@@ -6,6 +6,8 @@ task star {
         File cutadapt_out_fq
         String genomeDir
         File in_data
+        String docker_use
+
         Int? cpu_star
         Int? mem_star
     }
@@ -16,6 +18,7 @@ task star {
     runtime {
         cpu: runtime_cpu_star
         memory: runtime_mem_star + "GiB"
+        docker: docker_use
     }
 
     command {

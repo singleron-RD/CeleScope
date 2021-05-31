@@ -9,5 +9,6 @@
         "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_2.fq.gz"
     ],
     "rna.genomeDir": "/SGRNJ03/randd/public/genome/rna/hs_ensembl_99",
-    "rna.cpu_star": 8
+    "rna.cpu_star": 8,
+    "rna.docker_use": "test"
 }

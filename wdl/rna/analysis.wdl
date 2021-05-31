@@ -7,6 +7,7 @@ task analysis {
         File in_data
         Int mem_on_mtx
         String genomeDir
+        String docker_use
 
         Int? cpu_analysis
         Int? mem_analysis
@@ -18,6 +19,7 @@ task analysis {
     runtime {
         cpu: runtime_cpu_analysis
         memory:  if mem_on_mtx > runtime_mem_analysis then mem_on_mtx + "GiB" else runtime_mem_analysis + "GiB"
+        docker: docker_use
     }
 
     command {

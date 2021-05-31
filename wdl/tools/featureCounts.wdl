@@ -7,6 +7,7 @@ task featureCounts {
         String gtf_type
         String genomeDir
         File in_data
+        String docker_use
         Int? cpu_featureCounts
         Int? mem_featureCounts
     }
@@ -17,6 +18,7 @@ task featureCounts {
     runtime {
         cpu: runtime_cpu_featureCounts
         memory: runtime_mem_featureCounts + "GiB"
+        docker: docker_use
     }
 
     command {

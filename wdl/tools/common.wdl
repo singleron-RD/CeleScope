@@ -14,6 +14,8 @@ workflow run_common {
         Int min_length = 20
         Int insert = 150
 
+        String docker_use
+
         Int? cpu_sample
         Int? mem_sample
         Int? cpu_barcode
@@ -40,6 +42,7 @@ workflow run_common {
             raw_fq1s = raw_fq1s,
             runtime_cpu_sample = runtime_cpu_sample,
             runtime_mem_sample = runtime_mem_sample,
+            docker_use = docker_use,
     }
 
 
@@ -56,6 +59,7 @@ workflow run_common {
         in_data = sample.out_data,
         runtime_cpu_barcode = runtime_cpu_barcode,
         runtime_mem_barcode = runtime_mem_barcode,
+        docker_use = docker_use,
     }
 
     call cutadapt {
@@ -68,6 +72,7 @@ workflow run_common {
         in_data = barcode.out_data,
         runtime_cpu_cutadapt = runtime_cpu_cutadapt,
         runtime_mem_cutadapt = runtime_mem_cutadapt,
+        docker_use = docker_use,
     }
 
     output {
@@ -82,11 +87,13 @@ task sample {
         Array[File] raw_fq1s
         Int runtime_cpu_sample
         Int runtime_mem_sample
+        String docker_use
     }
 
     runtime {
         cpu: runtime_cpu_sample
         memory: runtime_mem_sample + "GiB"
+        docker: docker_use
     }
 
     command {
@@ -118,11 +125,13 @@ task barcode {
         File in_data
         Int runtime_cpu_barcode
         Int runtime_mem_barcode
+        String docker_use
     }
 
     runtime {
         cpu: runtime_cpu_barcode
         memory: runtime_mem_barcode + "GiB"
+        docker: docker_use
     }
 
 
@@ -161,11 +170,13 @@ task cutadapt {
         File in_data
         Int runtime_cpu_cutadapt
         Int runtime_mem_cutadapt
+        String docker_use
     }
 
     runtime {
         cpu: runtime_cpu_cutadapt
         memory: runtime_mem_cutadapt + "GiB"
+        docker: docker_use
     }
 
     command {
