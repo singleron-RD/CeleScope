@@ -89,7 +89,7 @@ Mapfile is a tab-delimited text file with as least three columns. Each line of m
 - `vdj` Optional, matched_dir.
 - `tag` Required, matched_dir.
 
-- Example
+### Example
 
 Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
 ```
