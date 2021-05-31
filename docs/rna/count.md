@@ -12,7 +12,7 @@
 
 - `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. Can be read in by calling the `Seurat::Read10X` function.
 
-- `{sample}_matrix.tsv.gz` The expression matrix of the barcode that is identified to be the cell, separated by tabs.
+- `{sample}_matrix.tsv.gz` The expression matrix of the barcode that is identified to be the cell, separated by tabs. CeleScope >=1.2.0 does not output this file.
 
 - `{sample}_count_detail.txt.gz` 4 columns: 
 	- barcode  

@@ -10,7 +10,7 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope tag` for Single-cell Multiplexing data generated with CLindex Sample Multiplexing kits. It performs preprocessing, tag counting, tag assignment and multiplets identification.
 
-Celescope has interfaces `multi_{assay}` to generate scripts for multi-sample analysis. See `Multi-samples` for details.
+- [Quick start](quick_start.md)
 
 - Common Steps
     - [barcode](tools/barcode.md)
@@ -27,7 +27,5 @@ Celescope has interfaces `multi_{assay}` to generate scripts for multi-sample an
     - [consensus](tools/consensus.md)
     - [mapping_vdj](vdj/mapping_vdj.md)
     - [count_vdj](vdj/count_vdj.md)
-
-- [Multi-samples](multi-samples.md)
 
 - [Change log](CHANGELOG.md)
