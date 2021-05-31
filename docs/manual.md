@@ -17,21 +17,21 @@ Currently, CeleScope includes the follwing pipelines:
 
 ## Common Steps
 
-    - [barcode](tools/barcode.md)
-    - [cutadapt](tools/cutadapt.md)
+- [barcode](tools/barcode.md)
+- [cutadapt](tools/cutadapt.md)
 
 ## Single cell RNA-Seq
 
-    - [mkref](rna/mkref.md)
-    - [star](rna/star.md)
-    - [featureCounts](tools/featureCounts.md)
-    - [count](rna/count.md)
-    - [analysis](rna/analysis.md)
+- [mkref](rna/mkref.md)
+- [star](rna/star.md)
+- [featureCounts](tools/featureCounts.md)
+- [count](rna/count.md)
+- [analysis](rna/analysis.md)
 
 ## Single cell VDJ
 
-    - [consensus](tools/consensus.md)
-    - [mapping_vdj](vdj/mapping_vdj.md)
-    - [count_vdj](vdj/count_vdj.md)
+- [consensus](tools/consensus.md)
+- [mapping_vdj](vdj/mapping_vdj.md)
+- [count_vdj](vdj/count_vdj.md)
 
 ## [Change log](CHANGELOG.md)
