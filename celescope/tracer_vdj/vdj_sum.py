@@ -90,7 +90,7 @@ def res_sum(type, ass_dir, sum_dir):
 		unpaired_cell = paired_cell[paired_cell['cell_name'] == 1]
 		paired_cell = paired_cell[paired_cell['cell_name'] == 2]
 		paired_cell = list(paired_cell.index)
-		string1 = f'productive TRA:\t{count_a}/{productive_cells}\nproductive TRB:\t{count_b}/{productive_cells}\npaired TRA and TRB:\t{len(paired_cell)}/{productive_cells}\n'
+		string1 = f'productive_TRA:\t{count_a}/{productive_cells}\nproductive_TRB:\t{count_b}/{productive_cells}\npaired_TRA_and_TRB:\t{len(paired_cell)}/{productive_cells}\n'
 
 		with open(f'{sum_dir}/stat.txt', 'w') as fh:
 			fh.write(string1)

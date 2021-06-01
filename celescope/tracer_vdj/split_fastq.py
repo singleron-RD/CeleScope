@@ -55,17 +55,25 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
         os.makedirs(fq_outdir)
     
     barcode_reads_dict = defaultdict(list)  # all barcodes from BCR vdj_dir paired with reads
+    umi_count = defaultdict()
     reads_count_dict = {}  # all barcodes and reads num for each barcode
     all_barcodes = []  # all barcodes
     with pysam.FastxFile(fq) as fq:
         for entry in fq:
             attr = entry.name.split('_')
             barcode = attr[0]
+            umi = attr[1]
+            umi_count[barcode][umi] += 1
             all_barcodes.append(barcode)
             barcode_reads_dict[barcode].append(entry)
         for barcode in list(barcode_reads_dict.keys()):
             reads_count_dict[barcode] = len(barcode_reads_dict[barcode])
+    
+        umi_count_df = pd.DataFrame([(k, list(v.keys())[0], list(v.values())[0]) for k, v in umi_count.items()], columns=['Barcode', 'umi', 'umi_reads_count'])
 
+        umi_df = umi_count_df.groupby(['Barcode']).agg({'UMI': 'count'})
+
+        umi_df.to_csv(f'{fq_outdir}/../umi_count.tsv', sep='\t')
         
         barcodes_for_match = []
         for barcode in barcodes:
@@ -86,7 +94,7 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
 
     barcodes_reads_cal.to_csv(f'{fq_outdir}/../reads_count.tsv', sep='\t')
 
-    stat_string = 'All cells:{}\nmatched cell:{}\n'.format(len(all_barcodes), len(barcode_reads_useful))
+    stat_string = 'All_cells:\t{}\nmatched_cell:\t{}\n'.format(len(all_barcodes), len(barcode_reads_useful))
     with open(f'{fq_outdir}/../stat.txt', 'w') as s:
         s.write(stat_string)
 
@@ -100,7 +108,7 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
             get_fastq_to_assemble.logger.info(f'processed {i} cells')
 
         if i == len(list(barcode_reads_useful.keys())):
-            get_fastq_to_assemble.loogger.info(f'finnaly get {i} cells')
+            get_fastq_to_assemble.logger.info(f'finnaly get {i} cells')
 
         i += 1
         
