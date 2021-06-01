@@ -1,7 +1,11 @@
 import setuptools
 from celescope.__init__ import __VERSION__, ASSAY_DICT
+
 with open("README.md", "r") as fh:
     long_description = fh.read()
+
+with open('requirements.txt') as fp:
+    install_requires = fp.read()
 
 entrys = ['celescope=celescope.celescope:main',]
 for assay in ASSAY_DICT:
@@ -29,18 +33,5 @@ setuptools.setup(
     python_requires='>=3.6',
     include_package_data=True,
     entry_points=entry_dict,
-    install_requires=[
-        'cutadapt==1.17',
-        'pysam==0.16.0.1',
-        'scipy==1.4.1',
-        'numpy==1.19.5',
-        'pandas==0.23.4',
-        'jinja2>=2.10',
-        'matplotlib==2.2.2',
-        'xopen>=0.5.0',
-        'editdistance>=0.5.3',
-        'mutract',
-        'sklearn==0.0',
-        'plotly==4.14.3',
-    ]
+    install_requires=install_requires,
 )
