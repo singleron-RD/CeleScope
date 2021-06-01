@@ -20,7 +20,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [barcode](tools/barcode.md)
 - [cutadapt](tools/cutadapt.md)
 
-## Single cell RNA-Seq
+## Single cell rna
 
 - [mkref](rna/mkref.md)
 - [star](rna/star.md)
@@ -28,10 +28,15 @@ Currently, CeleScope includes the follwing pipelines:
 - [count](rna/count.md)
 - [analysis](rna/analysis.md)
 
-## Single cell VDJ
+## Single cell vdj
 
 - [consensus](tools/consensus.md)
 - [mapping_vdj](vdj/mapping_vdj.md)
 - [count_vdj](vdj/count_vdj.md)
+
+## Single cell tag
+
+- [mapping_tag](tag/mapping_tag.md)
+- [count_tag](tag/count_tag.md)
 
 ## [Change log](CHANGELOG.md)

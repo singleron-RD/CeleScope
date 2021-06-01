@@ -22,11 +22,14 @@
 
 - `{sample}_counts.txt` 6 columns:
 	- Barcode: barcode sequence
-	- readcount: reads num of each barcode
-	- UMI2: UMI num (reads >= 2) for each barcode
-	- UMI: UMI num for each barcode
-	- geneID: Gene num for each barcode
-	- mark UB: background CB: cell
+	- readcount: read count of each barcode
+	- UMI2: UMI count (with reads per UMI >= 2) for each barcode
+	- UMI: UMI count for each barcode
+	- geneID: gene count for each barcode
+	- mark: cell barcode or backgound barcode.
+
+	  	`CB` cell  
+		`UB` background  
 
 - `{sample}_downsample.txt` 3 columns：
 	- percent: percentage of sampled reads

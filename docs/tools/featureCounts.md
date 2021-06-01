@@ -23,7 +23,7 @@
 
 `--input` Required. BAM file path.
 
-`--genomeDir` Required. Directory contains genome Fasta, GTF and refFLAT file. If this argument is not provided, you need to provide `--gtf`.
+`--genomeDir` Required. Genome directory.
 
 `--gtf_type` Default `exon`. Single-nuclei RNA-seq uses `gene`. Specified feature type in GTF.
 
