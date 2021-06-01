@@ -1,7 +1,7 @@
 # count_tag
 
 ## Features
-- Assign tag to each cell barcode and summarize
+- Assign tag to each cell barcode and summarize.
 
 ## Input
 - Read count file from mapping_tag
