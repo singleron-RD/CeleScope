@@ -31,7 +31,7 @@ conda install --file conda_pkgs.txt --channel conda-forge --channel bioconda --c
 ```
 pip install celescope
 # Use pypi mirror to accelerate downloading if you are in china
-pip install -i https://pypi.tuna.tsinghua.edu.cn/simple celescope
+pip install -i https://pypi.mirrors.ustc.edu.cn/simple/ celescope
 ```
 
 
