@@ -1,12 +1,10 @@
 {
     "rna.sample_name": "test1",
     "rna.raw_fq1s": [
-        "test_celescope/celescope_tests/rna/test_data_rna/test1_1.fq.gz",
-        "test_celescope/celescope_tests/rna/test_data_rna/test2_1.fq.gz"
+        "s3://singleronbio-ami/rawdata/R2101411-MG-210128-1_combined_R1.fastq.gz"
     ],
     "rna.raw_fq2s": [
-        "test_celescope/celescope_tests/rna/test_data_rna/test1_2.fq.gz",
-        "test_celescope/celescope_tests/rna/test_data_rna/test2_2.fq.gz"
+        "s3://singleronbio-ami/rawdata/R2101411-MG-210128-1_combined_R2.fastq.gz"
     ],
     "rna.genomeDir": "/usr/local/aws-cli/reference/genome/Homo_sapiens/ensembl_92",
     "rna.cpu_star": 8,
