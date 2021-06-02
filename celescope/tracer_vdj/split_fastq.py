@@ -7,7 +7,7 @@ import pandas as pd
 from Bio.Seq import Seq
 import glob
 from celescope.tools import utils
-from celescope.tools.utils import *
+from celescope.tools.Step import Step, s_common
 
 
 @utils.add_log
@@ -33,16 +33,17 @@ def annotation_barcodes(match_dir, type):
         barcodes += tmp
     # write barcodes
     barcodes_path = glob.glob(f'{match_dir}/06.analysis/*_auto_assign/')
-    barcodes_path = barcodes_path[0] 
+    barcodes_path = barcodes_path[0]
+
+    res = [] 
     with open(f'{barcodes_path}/reversed_barcodes.tsv', 'w') as fh:
         for barcode in barcodes:
             barcode = Seq(barcode)
             barcode_reversed = barcode.reverse_complement()
             bc = str(barcode_reversed)
+            res.append(bc)
             fh.write(bc + '\n')
 
-    with open(f'{barcodes_path}/reversed_barcodes.tsv') as res:
-        res = res.readlines()
     return res
 
 
@@ -55,62 +56,54 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
         os.makedirs(fq_outdir)
     
     barcode_reads_dict = defaultdict(list)  # all barcodes from BCR vdj_dir paired with reads
-    umi_count = defaultdict()
+    # umi_count = defaultdict(list)
     reads_count_dict = {}  # all barcodes and reads num for each barcode
-    all_barcodes = []  # all barcodes
+    umi_count_dict = defaultdict(list)
+    umi_count = {}
     with pysam.FastxFile(fq) as fq:
         for entry in fq:
             attr = entry.name.split('_')
             barcode = attr[0]
             umi = attr[1]
-            umi_count[barcode][umi] += 1
-            all_barcodes.append(barcode)
-            barcode_reads_dict[barcode].append(entry)
-        for barcode in list(barcode_reads_dict.keys()):
-            reads_count_dict[barcode] = len(barcode_reads_dict[barcode])
-    
-        umi_count_df = pd.DataFrame([(k, list(v.keys())[0], list(v.values())[0]) for k, v in umi_count.items()], columns=['Barcode', 'umi', 'umi_reads_count'])
-
-        umi_df = umi_count_df.groupby(['Barcode']).agg({'UMI': 'count'})
-
-        umi_df.to_csv(f'{fq_outdir}/../umi_count.tsv', sep='\t')
-        
-        barcodes_for_match = []
+            if barcode in barcodes:
+                barcode_reads_dict[barcode].append(entry)
+                if umi_count_dict[barcode].count(umi) == 0:
+                    umi_count_dict[barcode].append(umi)
         for barcode in barcodes:
-                barcode = barcode.strip('\n')
-                barcodes_for_match.append(barcode)
-        barcodes_to_use = list(set(barcodes_for_match).intersection(set(all_barcodes)))
-            # barcodes in both RNA data and BCR data
+            reads_count_dict[barcode] = len(barcode_reads_dict[barcode])
 
-    barcode_reads_useful = {barcode: barcode_reads_dict[barcode] for barcode in barcodes_to_use}
+            umi_count[barcode] = len(umi_count_dict[barcode])
 
+    df_umi = pd.DataFrame.from_dict(umi_count, orient='index',columns=['UMIs_count'])
+    df_umi = df_umi.reset_index().rename(columns={'index': 'barcode'})
 
-    barcodes_reads_count = {barcode: reads_count_dict[barcode] for barcode in
-                            list(barcode_reads_useful.keys())}
+    reads_count = pd.DataFrame.from_dict(reads_count_dict, orient='index',columns=['reads_count'])
+    reads_count = reads_count.reset_index().rename(columns={'index': 'barcode'})
 
-    barcodes_reads_cal = pd.DataFrame.from_dict(barcodes_reads_count, orient='index',columns=['counts'])
-    barcodes_reads_cal = barcodes_reads_cal.reset_index().rename(columns={'index': 'barcode'})
-    barcodes_reads_cal = barcodes_reads_cal.sort_values(by='counts', ascending=False)
+    df_f = pd.merge(reads_count, df_umi, on='barcode', how='inner')
 
-    barcodes_reads_cal.to_csv(f'{fq_outdir}/../reads_count.tsv', sep='\t')
-
-    stat_string = 'All_cells:\t{}\nmatched_cell:\t{}\n'.format(len(all_barcodes), len(barcode_reads_useful))
-    with open(f'{fq_outdir}/../stat.txt', 'w') as s:
-        s.write(stat_string)
+    df_f = df_f.set_index('barcode')
 
     i = 1
-    for barcode in list(barcode_reads_useful.keys()):
+
+    for barcode in barcodes:
+
+        df_f.loc[barcode, 'cell_name'] = i
 
         with open(f'{fq_outdir}/{i}.fq', 'w') as f:
-            for entry in barcode_reads_useful[barcode]:
+            for entry in barcode_reads_dict[barcode]:
                 f.write(str(entry) + '\n')
+
         if i % 1000 == 0:
             get_fastq_to_assemble.logger.info(f'processed {i} cells')
 
-        if i == len(list(barcode_reads_useful.keys())):
-            get_fastq_to_assemble.logger.info(f'finnaly get {i} cells')
+        if i == len(barcodes):
+            get_fastq_to_assemble.logger.info(f'finally get {i} cells')
 
         i += 1
+    
+    df_f = df_f.astype(int)
+    df_f.to_csv(f'{fq_outdir}/../reads_count.tsv', sep='\t')
         
 
 

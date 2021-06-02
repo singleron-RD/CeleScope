@@ -7,7 +7,9 @@ import pandas as pd
 from Bio.Seq import Seq
 import glob
 from celescope.tools import utils
-from celescope.tools.utils import *
+from celescope.tools.Step import Step, s_common
+import glob
+
 
 
 def tpm_count(ass_dir):
@@ -30,10 +32,10 @@ def tpm_count(ass_dir):
 	return productive
 
 
-def filtering(type, ass_dir, sum_dir):
+def filtering(type, ass_dir, outdir):
 
-	if not os.path.exists(sum_dir):
-		os.makedirs(sum_dir)
+	if not os.path.exists(outdir):
+		os.makedirs(outdir)
 
 	if type == 'TCR':
 		data = tpm_count(ass_dir)
@@ -51,7 +53,7 @@ def filtering(type, ass_dir, sum_dir):
 				trb = trb.sort_values(by='TPM', ascending=False)
 				trb = trb.head(1)
 				filtered = filtered.append(trb, ignore_index=True)
-		filtered.to_csv(f'{sum_dir}/filtered.txt', sep='\t')
+		filtered.to_csv(f'{outdir}/filtered.txt', sep='\t')
 
 	elif type == 'BCR':
 
@@ -74,13 +76,13 @@ def filtering(type, ass_dir, sum_dir):
 				count_k_l = count_k_l.head(1)
 				filtered = filtered.append(count_k_l, ignore_index=True)
 
-		filtered.to_csv(f'{sum_dir}/filtered.txt', sep='\t')
+		filtered.to_csv(f'{outdir}/filtered.txt', sep='\t')
 
 	return filtered
 
 
-def res_sum(type, ass_dir, sum_dir):
-	filtered = filtering(type, ass_dir, sum_dir)
+def res_sum(type, ass_dir, outdir):
+	filtered = filtering(type, ass_dir, outdir)
 
 	if type == 'TCR':
 		count_a = filtered[filtered['locus'] == 'A'].shape[0]
@@ -90,10 +92,6 @@ def res_sum(type, ass_dir, sum_dir):
 		unpaired_cell = paired_cell[paired_cell['cell_name'] == 1]
 		paired_cell = paired_cell[paired_cell['cell_name'] == 2]
 		paired_cell = list(paired_cell.index)
-		string1 = f'productive_TRA:\t{count_a}/{productive_cells}\nproductive_TRB:\t{count_b}/{productive_cells}\npaired_TRA_and_TRB:\t{len(paired_cell)}/{productive_cells}\n'
-
-		with open(f'{sum_dir}/stat.txt', 'w') as fh:
-			fh.write(string1)
 
 		aaseqs = []
 		for cell in paired_cell:
@@ -122,7 +120,9 @@ def res_sum(type, ass_dir, sum_dir):
 		clone_count['proportation'] = proportation
 		clone_count = clone_count.reset_index()
 		clone_count.rename(columns={'index': 'cdr3s_aa'}, inplace=True)
-		clone_count.to_csv(f'{sum_dir}/clone_count.tsv', sep='\t')
+		clone_count.to_csv(f'{outdir}/clone_count.tsv', sep='\t')
+
+		return productive_cells, count_a, count_b, paired_cell
 
 	elif type == 'BCR':
 		filtered_h = filtered[filtered['LOCUS'] == 'H']
@@ -184,15 +184,37 @@ def res_sum(type, ass_dir, sum_dir):
 		clone_count['proportation'] = proportation
 		clone_count = clone_count.reset_index()
 		clone_count.rename(columns={'index': 'cdr3s_aa'}, inplace=True)
-		clone_count.to_csv(f'{sum_dir}/clone_count.tsv', sep='\t')
+		clone_count.to_csv(f'{outdir}/clone_count.tsv', sep='\t')
 
-		stat_string_1 = f"BCR_H reconstruction:\t{filtered_h_count}/{productive_cells}\nBCR_K reconstruction:\t{filtered_k_count}/{productive_cells}\nBCR_L reconstruction:\t{filtered_l_count}/{productive_cells}\n"
-		
-		stat_string_2 = "Paired HK productive reconstruction:\t{}/{}\nPaired HL productive reconstruction:\t{}/{}\n".format(paired_k, productive_cells, paired_l, productive_cells)
+		return productive_cells, filtered_h_count, filtered_k_count, filtered_l_count, paired_k, paired_l
 
-		with open(f'{sum_dir}/stat.txt', 'w') as s:
-			s.write(stat_string_1)
-			s.write(stat_string_2)
+
+
+def get_stat(fastq_dir, ass_dir, outdir, type):
+	fqs = glob.glob(f'{fastq_dir}/*.fq')
+	matched_bcs = len(fqs)
+
+	stat_file = outdir + '/stat.txt'
+	if type == 'TCR':
+		productive_cells, TRA_num, TRB_num, paired_num = res_sum(type, ass_dir, outdir)
+
+		stat_text = pd.DataFrame({
+			'item': ['Matched cells', 'Productive cells', 'Cells with TRA', 'Cells with TRB', 'Cells with paired TRA and TRB'], 
+			'count': [matched_bcs, productive_cells, TRA_num, TRB_num, paired_num]
+		}, 
+		columns=['item', 'count'])
+		stat_text.to_csv(stat_file, sep=':', header=None, index=False)
+
+	elif type == 'BCR':
+		productive_cells, H_num, K_num, L_num, H_K_num, H_L_num = res_sum(type, ass_dir,outdir)
+
+		stat_text = pd.DataFrame({
+			'item': ['Matched cells', 'Productive cells', 'Cells with IGH', 'Cells with IGK', 'Cells with IGL', 'Cells with IGH and IGK', 'Cells with IGH and IGL'],
+			'count': [matched_bcs, productive_cells, H_num, K_num, L_num, H_K_num, H_L_num]
+		}, 
+		columns=['item', 'count'])
+		stat_text.to_csv(stat_file, sep=":", header=None, index=False)
+
 
 @utils.add_log					
 def vdj_sum(args):
@@ -200,14 +222,16 @@ def vdj_sum(args):
 	ass_dir = args.ass_dir
 	sample = args.sample
 	outdir = args.outdir
-	
-	res_sum(type, ass_dir, outdir)
+	fastq_dir = args.fastq_dir
+
+	get_stat(fastq_dir, ass_dir, outdir, type)
 
 
 def get_opts_vdj_sum(parser, sub_program):
 	if sub_program:
 		parser = s_common(parser)
 		parser.add_argument('--ass_dir', help='assemble dir', required=True)
+		parser.add_argument('--fastq_dir', help='dir contains fastq', required=True)
 	parser.add_argument('--type', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
 
 

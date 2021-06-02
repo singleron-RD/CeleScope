@@ -30,9 +30,13 @@ class Multi_tracer_vdj(Multi):
         step = 'vdj_sum'
         cmd_line = self.get_cmd_line(step, sample)
         ass_dir = f'{self.outdir_dic[sample]["go_assemble"]}'
+
+        fastq_dir = f'{self.outdir_dic[sample]["split_fastq"]}/fastq' 
+
         cmd = (
             f'{cmd_line} '
             f'--ass_dir {ass_dir} '
+            f'--fastq_dir {fastq_dir} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=2)
 
