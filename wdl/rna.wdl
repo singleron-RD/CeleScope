@@ -1,10 +1,10 @@
 version 1.0
 
-import "../tools/common.wdl" as step_common
-import "star.wdl" as step_star
-import "../tools/featureCounts.wdl" as step_featureCounts
-import "count.wdl" as step_count
-import "analysis.wdl" as step_analysis
+import "tools/common.wdl" as step_common
+import "rna/star.wdl" as step_star
+import "tools/featureCounts.wdl" as step_featureCounts
+import "rna/count.wdl" as step_count
+import "rna/analysis.wdl" as step_analysis
 
 
 workflow rna {
