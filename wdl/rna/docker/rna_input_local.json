@@ -1,10 +1,10 @@
 {
     "rna.sample_name": "test1",
     "rna.raw_fq1s": [
-        "celescope_tests/rna/test_data_rna/test1_1.fq.gz"
+        "/home/ubuntu/test_cn/celescope_tests/rna/test_data_rna/test1_1.fq.gz"
     ],
     "rna.raw_fq2s": [
-        "celescope_tests/rna/test_data_rna/test1_2.fq.gz"
+        "/home/ubuntu/test_cn/celescope_tests/rna/test_data_rna/test1_2.fq.gz"
     ],
     "rna.genomeDir": "/usr/local/aws-cli/reference/genome/Homo_sapiens/ensembl_92",
     "rna.runtime_sample": {
