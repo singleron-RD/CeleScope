@@ -1,6 +1,6 @@
 # Quick start
 
-CeleScope contains interfaces `multi_{assay}` to run pipelines for all assays. Assays can be one of:
+CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for all assays. Assays can be one of:
 
 - rna
 - vdj
