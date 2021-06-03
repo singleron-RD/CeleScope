@@ -2,7 +2,7 @@
 assign cell identity based on SNR and UMI_min
 """
 
-import glob
+import subprocess
 
 import matplotlib
 matplotlib.use('Agg')
@@ -51,11 +51,17 @@ class Count_tag(Step):
         self.dim = int(args.dim)
         self.coefficient = float(args.coefficient)
 
-        self.match_barcode, self.cell_total = utils.read_barcode_file(self.match_dir)
+        # read
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)
-        self.tsne_file = glob.glob(f'{self.match_dir}/*analysis/*tsne_coord.tsv')[0]
+        
+        match_dict = utils.parse_match_dir(self.match_dir)
+        self.match_barcode = match_dict['match_barcode'] 
+        self.cell_total = match_dict['cell_total']
+        self.tsne_file =  match_dict['tsne_coord']
+        self.matrix_dir = match_dict['matrix_dir']
+
+        # init
         self.no_noise = False
-        self.coefficient = float(args.coefficient)
 
         # out files
         self.UMI_tag_file = f'{self.outdir}/{self.sample}_umi_tag.tsv'
@@ -255,4 +261,22 @@ class Count_tag(Step):
                 total=self.cell_total,
             )
 
+        # seurat hashtag
+        if self.debug:
+            self.seurat_hashtag()
+
         self.clean_up()
+
+    @utils.add_log
+    def seurat_hashtag(self):
+
+        cmd = (
+            'Rscript /SGRNJ/Database/script/pipe/develop/dev_CeleScope/celescope/tag/seurat_hashtag.R '
+            f'--outdir {self.outdir} '
+            f'--sample {self.sample} '
+            f'--umi_tag {self.UMI_tag_file} '
+            f'--matrix_10X {self.matrix_dir} '
+        )
+        Count_tag.seurat_hashtag.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+

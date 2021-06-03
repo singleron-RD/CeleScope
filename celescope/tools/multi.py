@@ -186,7 +186,7 @@ job_end
             f'--thread {self.args.thread} '
         )
         cmd_line = step_prefix
-        if self.__CONDA__ == "celescope_RD":
+        if self.args.debug or self.__CONDA__ == "celescope_RD":
             cmd_line += " --debug "
         for arg in args_dict:
             if args_dict[arg] is False:
