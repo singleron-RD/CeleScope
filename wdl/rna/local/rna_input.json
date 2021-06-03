@@ -1,51 +1,51 @@
 {
-    "rna.sample_name": "test1",
-    "rna.raw_fq1s": [
+    "celescope_rna.sample_name": "test1",
+    "celescope_rna.raw_fq1s": [
         "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test1_1.fq.gz",
         "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_1.fq.gz"
     ],
-    "rna.raw_fq2s": [
+    "celescope_rna.raw_fq2s": [
         "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test1_2.fq.gz",
         "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_2.fq.gz"
     ],
-    "rna.genomeDir": "/SGRNJ03/randd/public/genome/rna/hs_ensembl_99",
-    "rna.runtime_sample": {
+    "celescope_rna.genomeDir": "/SGRNJ03/randd/public/genome/rna/hs_ensembl_99/",
+    "celescope_rna.runtime_sample": {
         "cpu": 1, 
         "memory_gb": 1, 
         "docker": "celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
-    "rna.runtime_barcode": {
+    "celescope_rna.runtime_barcode": {
         "cpu": 1, 
         "memory_gb": 1, 
         "docker": "celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
-    "rna.runtime_cutadapt": {
+    "celescope_rna.runtime_cutadapt": {
         "cpu": 1, 
         "memory_gb": 1, 
         "docker": "celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
-    "rna.runtime_star": {
+    "celescope_rna.runtime_star": {
         "cpu": 8,  
         "memory_gb": 32,  
         "docker": "celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
-    "rna.runtime_featurecounts": {
+    "celescope_rna.runtime_featureCounts": {
         "cpu": 8,  
         "memory_gb": 2,  
         "docker": "celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
-    "rna.runtime_count": {
+    "celescope_rna.runtime_count": {
         "cpu": 1,  
         "memory_gb": 8,  
         "docker": "celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
-    "rna.runtime_analysis": {
+    "celescope_rna.runtime_analysis": {
         "cpu": 1,  
         "memory_gb": 8,  
         "docker": "celescope",

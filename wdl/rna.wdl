@@ -8,7 +8,7 @@ import "rna/analysis.wdl" as step_analysis
 import "tools/structs.wdl"
 
 
-workflow rna {
+workflow celescope_rna {
 
     input {
         String sample_name

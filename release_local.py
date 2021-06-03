@@ -42,6 +42,24 @@ def lint_code():
     subprocess.check_call(cmd, shell=True)
 
 
+@add_log
+def zip_wdl():
+    cmd = "cd wdl/ && zip -r wdl.zip ./*"
+    print(cmd)
+    subprocess.check_call(cmd, shell=True)
+
+@add_log
+def test_wdl():
+    cmd = (
+        "cd /SGRNJ03/randd/user/zhouyiqi/temp/wdl "
+        "sh /SGRNJ/Database/script/pipe/develop/dev_CeleScope/wdl/rna/local/run.sh "
+    )
+    print(cmd)
+    subprocess.check_call(cmd, shell=True)
+
+
 if __name__ == '__main__':
     lint_code()
+    zip_wdl()
+    test_wdl()
     create_conda()
