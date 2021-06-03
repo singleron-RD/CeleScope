@@ -9,6 +9,46 @@
         "/SGRNJ03/randd/user/zhouyiqi/multi_tests/rna/test_data_rna/test2_2.fq.gz"
     ],
     "rna.genomeDir": "/SGRNJ03/randd/public/genome/rna/hs_ensembl_99",
-    "rna.cpu_star": 8,
-    "rna.docker_use": "test"
+    "rna.runtime_sample": {
+        "cpu": 1, 
+        "memory_gb": 1, 
+        "docker": "celescope",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_barcode": {
+        "cpu": 1, 
+        "memory_gb": 1, 
+        "docker": "celescope",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_cutadapt": {
+        "cpu": 1, 
+        "memory_gb": 1, 
+        "docker": "celescope",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_star": {
+        "cpu": 8,  
+        "memory_gb": 32,  
+        "docker": "celescope",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_featurecounts": {
+        "cpu": 8,  
+        "memory_gb": 2,  
+        "docker": "celescope",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_count": {
+        "cpu": 1,  
+        "memory_gb": 8,  
+        "docker": "celescope",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_analysis": {
+        "cpu": 1,  
+        "memory_gb": 8,  
+        "docker": "celescope",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    }
 }
