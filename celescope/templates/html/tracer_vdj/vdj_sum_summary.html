@@ -1,0 +1,29 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+  <h2>Cell    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+  <div class="box">
+    <div class="description" style="display: none;">
+      <p><b>Matched cells</b> : number of barcodes matched with transcriptome barcodes.</p>
+      <p><b>Productive cells</b> : number of cells which contain IGH, IGK or IGL.</p>
+      <p><b>Cells with IGH</b> : cells with full length IGH.</p>
+      <p><b>Cells with IGK</b> : cells with full length IGK.</p>
+      <p><b>Cells with IGL</b> : cells with full length IGL.</p>
+      <p><b>Cells with IGH and IGK</b> : cells with full length IGH and IGK.</p>
+      <p><b>Cells with IGH and IGL</b> : cells with full length IGH and IGL.</p>
+      <p><b>Median UMIs per cell</b> : Median total UMIs per cell.</p>
+      <p><b>Median IGH UMIs per cell</b> : Median UMIs mapped  to IGH.</p>
+      <p><b>Median IGK UMIs per cell</b> : Median UMIs mapped  to IGK.</p>
+      <p><b>Median IGL UMIs per cell</b> : Median UMIs mapped  to IGL.</p>
+  </div>
+    <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+      {% for item in vdj_sum_summary %}
+        <tr>
+          {% for i in item %} 
+          <td>{{ i|e }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>
+
+    <div class="clear" ></div>
+  </div>
+</div>

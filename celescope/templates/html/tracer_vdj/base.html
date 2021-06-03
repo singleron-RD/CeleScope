@@ -137,18 +137,18 @@
       {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
 
-      {% if consensus_summary is defined %}
-      {% include "html/common/consensus_summary.html"%}
-      {% endif %}
-
       {% if split_fastq is defined %}
       {% include "html/tracer_vdj/split_fastq_summary.html"%}
       {% endif %}
 
       {% if go_assemble_summary is defined %}
       {% include "html/tracer_vdj/go_assemble_summary.html"%}
-      {% endif %}      
+      {% endif %}
 
+      {% if vdj_sum_summary is defined %}
+      {% include "html/tracer_vdj/vdj_sum_summary.html"%}
+      {% endif %}
+      
       {% if table_dict is defined %}
       {% include "html/vdj/clonetypes_table.html"%}
       {% endif %}

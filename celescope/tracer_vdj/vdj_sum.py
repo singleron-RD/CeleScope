@@ -396,7 +396,7 @@ def vdj_sum(args):
 
 # clonetype table
 
-	clonetypes['Percent'] = clonetypes['Percent'].apply(lambda x: str(x*100) + '%')
+	clonetypes['Percent'] = clonetypes['Percent'].apply(lambda x: str(round(x*100, 2)) + '%')
 	title = 'Clonetypes'
 	table_dict = step.get_table(title, 'clonetypes_table', clonetypes)
 
