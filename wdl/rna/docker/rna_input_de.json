@@ -10,43 +10,43 @@
     "rna.runtime_sample": {
         "cpu": 1, 
         "memory_gb": 1, 
-        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "docker": "161533937926.dkr.ecr.eu-central-1.amazonaws.com/singleronbio-celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
     "rna.runtime_barcode": {
         "cpu": 1, 
         "memory_gb": 1, 
-        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "docker": "161533937926.dkr.ecr.eu-central-1.amazonaws.com/singleronbio-celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
     "rna.runtime_cutadapt": {
         "cpu": 1, 
         "memory_gb": 1, 
-        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "docker": "161533937926.dkr.ecr.eu-central-1.amazonaws.com/singleronbio-celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
     "rna.runtime_star": {
         "cpu": 8,  
         "memory_gb": 32,  
-        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "docker": "161533937926.dkr.ecr.eu-central-1.amazonaws.com/singleronbio-celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
     "rna.runtime_featureCounts": {
         "cpu": 8,  
         "memory_gb": 2,  
-        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "docker": "161533937926.dkr.ecr.eu-central-1.amazonaws.com/singleronbio-celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
     "rna.runtime_count": {
         "cpu": 1,  
         "memory_gb": 8,  
-        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "docker": "161533937926.dkr.ecr.eu-central-1.amazonaws.com/singleronbio-celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
     "rna.runtime_analysis": {
         "cpu": 1,  
         "memory_gb": 8,  
-        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "docker": "161533937926.dkr.ecr.eu-central-1.amazonaws.com/singleronbio-celescope",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     }
 }
