@@ -1,5 +1,7 @@
 version 1.0
 
+import "structs.wdl"
+
 workflow run_common {
     input {
         String sample_name
@@ -14,35 +16,17 @@ workflow run_common {
         Int min_length = 20
         Int insert = 150
 
-        String docker_use
-
-        Int? cpu_sample
-        Int? mem_sample
-        Int? cpu_barcode
-        Int? mem_barcode
-        Int? cpu_cutadapt
-        Int? mem_cutadapt
+        Runtime runtime_sample
+        Runtime runtime_barcode
+        Runtime runtime_cutadapt
     }
-
-    Int cpu_default = 1
-    Int mem_default = 1
-
-    Int runtime_cpu_sample = select_first([cpu_sample, cpu_default])
-    Int runtime_mem_sample = select_first([mem_sample, mem_default])
-
-    Int runtime_cpu_barcode = select_first([cpu_barcode, cpu_default])
-    Int runtime_mem_barcode = select_first([mem_barcode, mem_default])
-
-    Int runtime_cpu_cutadapt = select_first([cpu_cutadapt, cpu_default])
-    Int runtime_mem_cutadapt = select_first([mem_cutadapt, mem_default])
 
     call sample {
         input:
             sample_name = sample_name,
             raw_fq1s = raw_fq1s,
-            runtime_cpu_sample = runtime_cpu_sample,
-            runtime_mem_sample = runtime_mem_sample,
-            docker_use = docker_use,
+
+            runtime_sample = runtime_sample,
     }
 
 
@@ -57,9 +41,7 @@ workflow run_common {
         lowqual = lowqual,
         lownum = lownum,
         in_data = sample.out_data,
-        runtime_cpu_barcode = runtime_cpu_barcode,
-        runtime_mem_barcode = runtime_mem_barcode,
-        docker_use = docker_use,
+        runtime_barcode = runtime_barcode,
     }
 
     call cutadapt {
@@ -70,9 +52,7 @@ workflow run_common {
         min_length = min_length,
         insert = insert,
         in_data = barcode.out_data,
-        runtime_cpu_cutadapt = runtime_cpu_cutadapt,
-        runtime_mem_cutadapt = runtime_mem_cutadapt,
-        docker_use = docker_use,
+        runtime_cutadapt = runtime_cutadapt,
     }
 
     output {
@@ -85,15 +65,15 @@ task sample {
     input {
         String sample_name
         Array[File] raw_fq1s
-        Int runtime_cpu_sample
-        Int runtime_mem_sample
-        String docker_use
+        Runtime runtime_sample
+
     }
 
     runtime {
-        cpu: runtime_cpu_sample
-        memory: runtime_mem_sample + "GiB"
-        docker: docker_use
+        cpu: runtime_sample.cpu
+        memory: runtime_sample.memory_gb + "GiB"
+        docker: runtime_sample.docker
+        queue: runtime_sample.queue
     }
 
     command {
@@ -123,15 +103,14 @@ task barcode {
         Int lowqual
         Int lownum
         File in_data
-        Int runtime_cpu_barcode
-        Int runtime_mem_barcode
-        String docker_use
+        Runtime runtime_barcode
     }
 
     runtime {
-        cpu: runtime_cpu_barcode
-        memory: runtime_mem_barcode + "GiB"
-        docker: docker_use
+        cpu: runtime_barcode.cpu
+        memory: runtime_barcode.memory_gb + "GiB"
+        docker: runtime_barcode.docker
+        queue: runtime_barcode.queue
     }
 
 
@@ -168,15 +147,14 @@ task cutadapt {
         Int min_length
         Int insert
         File in_data
-        Int runtime_cpu_cutadapt
-        Int runtime_mem_cutadapt
-        String docker_use
+        Runtime runtime_cutadapt
     }
 
     runtime {
-        cpu: runtime_cpu_cutadapt
-        memory: runtime_mem_cutadapt + "GiB"
-        docker: docker_use
+        cpu: runtime_cutadapt.cpu
+        memory: runtime_cutadapt.memory_gb + "GiB"
+        docker: runtime_cutadapt.docker
+        queue: runtime_cutadapt.queue
     }
 
     command {
@@ -190,7 +168,7 @@ task cutadapt {
         --overlap "~{overlap}" \
         --minimum_length "~{min_length}" \
         --insert "~{insert}" \
-        --thread "~{runtime_cpu_cutadapt}"
+        --thread "~{runtime_cutadapt.cpu}"
     }
 
     output {

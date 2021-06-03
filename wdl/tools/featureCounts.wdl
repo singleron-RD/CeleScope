@@ -1,5 +1,7 @@
 version 1.0
 
+import "structs.wdl"
+
 task featureCounts {
     input {
         String sample_name
@@ -7,18 +9,14 @@ task featureCounts {
         String gtf_type
         String genomeDir
         File in_data
-        String docker_use
-        Int? cpu_featureCounts
-        Int? mem_featureCounts
+        Runtime runtime_featureCounts
     }
 
-    Int runtime_cpu_featureCounts = select_first([cpu_featureCounts, 6])
-    Int runtime_mem_featureCounts = select_first([mem_featureCounts, 2])
-
     runtime {
-        cpu: runtime_cpu_featureCounts
-        memory: runtime_mem_featureCounts + "GiB"
-        docker: docker_use
+        cpu: runtime_featureCounts.cpu
+        memory: runtime_featureCounts.memory_gb + "GiB"
+        docker: runtime_featureCounts.docker
+        queue: runtime_featureCounts.queue
     }
 
     command {
@@ -31,7 +29,7 @@ task featureCounts {
         --input "~{in_bam}" \
         --gtf_type "~{gtf_type}" \
         --genomeDir "~{genomeDir}" \
-        --thread ~{runtime_cpu_featureCounts}
+        --thread ~{runtime_featureCounts.cpu}
     }
 
     output {

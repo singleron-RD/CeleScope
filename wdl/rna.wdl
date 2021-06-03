@@ -5,6 +5,7 @@ import "rna/star.wdl" as step_star
 import "tools/featureCounts.wdl" as step_featureCounts
 import "rna/count.wdl" as step_count
 import "rna/analysis.wdl" as step_analysis
+import "tools/structs.wdl"
 
 
 workflow rna {
@@ -24,22 +25,13 @@ workflow rna {
         String genomeDir
         String gtf_type = "exon"
 
-        String docker_use
-
-        Int? cpu_sample
-        Int? mem_sample
-        Int? cpu_barcode
-        Int? mem_barcode
-        Int? cpu_cutadapt
-        Int? mem_cutadapt
-        Int? cpu_star
-        Int? mem_star
-        Int? cpu_featureCounts
-        Int? mem_featureCounts
-        Int? cpu_count
-        Int? mem_count
-        Int? cpu_analysis
-        Int? mem_analysis
+        Runtime runtime_sample
+        Runtime runtime_barcode
+        Runtime runtime_cutadapt
+        Runtime runtime_star
+        Runtime runtime_featureCounts
+        Runtime runtime_count
+        Runtime runtime_analysis
     }
 
 
@@ -49,13 +41,9 @@ workflow rna {
             raw_fq1s = raw_fq1s,
             raw_fq2s = raw_fq2s,
 
-            cpu_sample = cpu_sample,
-            mem_sample = mem_sample,
-            cpu_barcode = cpu_barcode,
-            mem_barcode = mem_barcode,
-            cpu_cutadapt = cpu_cutadapt,
-            mem_cutadapt = mem_cutadapt,   
-            docker_use = docker_use,
+            runtime_sample = runtime_sample,
+            runtime_barcode = runtime_barcode,
+            runtime_cutadapt = runtime_cutadapt,
     }
 
 
@@ -66,9 +54,8 @@ workflow rna {
             cutadapt_out_fq = run_common.cutadapt_out_fq,
             genomeDir = genomeDir,
             in_data = run_common.out_data,
-            cpu_star = cpu_star,
-            mem_star = mem_star,
-            docker_use = docker_use
+
+            runtime_star = runtime_star,
     } 
 
     call step_featureCounts.featureCounts {            
@@ -78,9 +65,8 @@ workflow rna {
             gtf_type = gtf_type,
             genomeDir = genomeDir,
             in_data = star.out_data,
-            cpu_featureCounts = cpu_featureCounts,
-            mem_featureCounts = mem_featureCounts,
-            docker_use = docker_use,
+
+            runtime_featureCounts = runtime_featureCounts,
     } 
 
     call step_count.count {
@@ -90,9 +76,7 @@ workflow rna {
             genomeDir = genomeDir,
             in_data = featureCounts.out_data,
             mem_on_bam = featureCounts.mem_on_bam,
-            cpu_count = cpu_count,
-            mem_count = mem_count,
-            docker_use = docker_use,
+            runtime_count = runtime_count,
     }
 
     call step_analysis.analysis {
@@ -103,9 +87,7 @@ workflow rna {
             mem_on_mtx = count.mem_on_mtx,
             genomeDir = genomeDir,
 
-            cpu_analysis = cpu_analysis,
-            mem_analysis = mem_analysis,
-            docker_use = docker_use,
+            runtime_analysis = runtime_analysis
     }
 
     output {

@@ -7,6 +7,46 @@
         "s3://singleronbio-ami/rawdata/R2101411-MG-210128-1_combined_R2.fastq.gz"
     ],
     "rna.genomeDir": "/usr/local/aws-cli/reference/genome/Homo_sapiens/ensembl_92",
-    "rna.cpu_star": 8,
-    "rna.docker_use": "161533937926.dkr.ecr.eu-central-1.amazonaws.com/singleronbio-celescope:lastest"
+    "rna.runtime_sample": {
+        "cpu": 1, 
+        "memory_gb": 1, 
+        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_barcode": {
+        "cpu": 1, 
+        "memory_gb": 1, 
+        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_cutadapt": {
+        "cpu": 1, 
+        "memory_gb": 1, 
+        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_star": {
+        "cpu": 8,  
+        "memory_gb": 32,  
+        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_featurecounts": {
+        "cpu": 8,  
+        "memory_gb": 2,  
+        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_count": {
+        "cpu": 1,  
+        "memory_gb": 8,  
+        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    },
+    "rna.runtime_analysis": {
+        "cpu": 1,  
+        "memory_gb": 8,  
+        "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
+        "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
+    }
 }
