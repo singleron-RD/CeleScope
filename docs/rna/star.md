@@ -24,11 +24,7 @@
 
 `--fq` Required. R2 reads from step cutadapt.
 
-`--genomeDir` Directory contains genome Fasta, GTF and refFLAT file. If this argument is not provided, you need to provide `--STAR_index` and `--refFlat`
-
-`--STAR_index` STAR index directory path.
-
-`--refFlat` refFlat file path.
+`--genomeDir` Required. Genome directory.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 

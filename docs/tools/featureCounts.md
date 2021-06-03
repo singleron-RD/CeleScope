@@ -27,8 +27,6 @@
 
 `--gtf_type` Default `exon`. Single-nuclei RNA-seq uses `gene`. Specified feature type in GTF.
 
-`--gtf` gtf file path.
-
 ## Metrics
 - Assigned : reads that can be successfully assigned without ambiguity.
 
