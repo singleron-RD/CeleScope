@@ -31,7 +31,7 @@
         "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
         "queue": "arn:aws-cn:batch:cn-northwest-1:972172958149:job-queue/default-BI"
     },
-    "rna.runtime_featurecounts": {
+    "rna.runtime_featureCounts": {
         "cpu": 8,  
         "memory_gb": 2,  
         "docker": "972172958149.dkr.ecr.cn-northwest-1.amazonaws.com.cn/singleronbio-celescope:1.2.0",
