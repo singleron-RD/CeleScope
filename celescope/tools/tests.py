@@ -56,18 +56,7 @@ class Tests(unittest.TestCase):
         sorted_dic = sorted(dic.items(), key=lambda x:x[1])
         assert sorted_dic == [('ccccc1', 20), ('apple2', 32), ('bears3', 115), ('ccccc2', 199)]
         assert n_corrected_umi == 3
-        assert n_corrected_read == 2 + 5 + 10
-
-    @unittest.skip('tested')
-    def test_generate_docs(self):
-        generate_single_step_doc(
-            assay='rna',
-            step='barcode',
-        )
-
-    def test_generate_all_docs(self):
-        generate_all_docs()
-    
+        assert n_corrected_read == 2 + 5 + 10  
 
 
 if __name__ == '__main__':
