@@ -3,8 +3,15 @@
 ## [Unreleased] - 2021-05-28
 
 ### Added
+
+- Add wdl workflow.
+
+- Add Seurat hashtag method in `celescope tag count_tag`. To get Seurat hashtag output, use `--debug`. However, there was a unsolved problem with this method: https://github.com/satijalab/seurat/issues/2549.
+
 ### Changed
+
 ### Fixed
+
 ### Removed
 
 ## [1.3.0] - 2021-05-28
