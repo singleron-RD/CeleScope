@@ -11,6 +11,8 @@ import numpy as np
 from celescope.tools import utils
 from celescope.tools.Step import Step, s_common
 import glob
+from celescope.tools.cellranger3 import get_plot_elements
+import json
 
 
 def tpm_count(ass_dir):
@@ -93,6 +95,7 @@ def vdj_sum(args):
 	sample = args.sample
 	outdir = args.outdir
 	fastq_dir = args.fastq_dir
+	UMI_min = args.UMI_min
 
 	filtered = filtering(type, ass_dir, outdir)
 
@@ -102,22 +105,12 @@ def vdj_sum(args):
 	stat_file = outdir + '/stat.txt'
 
 	vdj_sum_summary = []
+	
+	count_umi = f'{fastq_dir}/../umi_count.tsv'
 
 	if type == 'TCR':
 
-		CB = filtered['cell_name'].tolist()
-
-		df_umi = pd.read_csv(f'{outdir}/../03.split_fastq/reads_count.tsv', sep='\t')
-
-		all_cells = df_umi['cell_name'].tolist()
-
-		df_umi = df_umi.set_index('cell_name')
-
-		for i in all_cells:
-			if i in CB:
-				df_umi.loc[i, 'mark'] = 'CB'
-			else:
-				df_umi.loc[i, 'mark'] = 'UB'
+		step.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi))
 
 		count_a = filtered[filtered['locus'] == 'A'].shape[0]
 		count_b = filtered[filtered['locus'] == 'B'].shape[0]
@@ -213,19 +206,7 @@ def vdj_sum(args):
 
 	elif type == 'BCR':
 
-		CB = filtered['CELL'].tolist()
-
-		df_umi = pd.read_csv(f'{outdir}/../03.split_fastq/reads_count.tsv', sep='\t')
-
-		all_cells = df_umi['cell_name'].tolist()
-
-		df_umi = df_umi.set_index('cell_name')
-
-		for i in all_cells:
-			if i in CB:
-				df_umi.loc[i, 'mark'] = 'CB'
-			else:
-				df_umi.loc[i, 'mark'] = 'UB'
+		step.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi))
 
 		filtered_h = filtered[filtered['LOCUS'] == 'H']
 		filtered_k = filtered[filtered['LOCUS'] == 'K']
@@ -411,6 +392,7 @@ def get_opts_vdj_sum(parser, sub_program):
 		parser.add_argument('--ass_dir', help='assemble dir', required=True)
 		parser.add_argument('--fastq_dir', help='dir contains fastq', required=True)
 	parser.add_argument('--type', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+	parser.add_argument('--UMI_min', help='int, min UMI per cell, if not set, will be counted by UMI rank 20', default='auto')
 
 
 

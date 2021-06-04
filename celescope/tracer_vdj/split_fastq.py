@@ -60,6 +60,7 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
     reads_count_dict = {}  # all barcodes and reads num for each barcode
     umi_count_dict = defaultdict(list)
     umi_count = {}
+
     with pysam.FastxFile(fq) as fq:
         for entry in fq:
             attr = entry.name.split('_')
@@ -67,22 +68,25 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
             umi = attr[1]
             if barcode in barcodes:
                 barcode_reads_dict[barcode].append(entry)
-                if umi_count_dict[barcode].count(umi) == 0:
-                    umi_count_dict[barcode].append(umi)
+            if umi_count_dict[barcode].count(umi) == 0:
+                umi_count_dict[barcode].append(umi)
         for barcode in barcodes:
             reads_count_dict[barcode] = len(barcode_reads_dict[barcode])
-
+      
+        for barcode in list(umi_count_dict.keys()):
             umi_count[barcode] = len(umi_count_dict[barcode])
 
-    df_umi = pd.DataFrame.from_dict(umi_count, orient='index',columns=['UMIs_count'])
-    df_umi = df_umi.reset_index().rename(columns={'index': 'barcode'})
+    df_umi = pd.DataFrame.from_dict(umi_count, orient='index',columns=['UMI'])
+    df_umi = df_umi.reset_index().rename(columns={'index': 'Barcode'})
 
-    reads_count = pd.DataFrame.from_dict(reads_count_dict, orient='index',columns=['reads_count'])
-    reads_count = reads_count.reset_index().rename(columns={'index': 'barcode'})
+    df_umi.to_csv(f'{fq_outdir}/../umi_count.tsv', sep='\t')
 
-    df_f = pd.merge(reads_count, df_umi, on='barcode', how='inner')
+    reads_count = pd.DataFrame.from_dict(reads_count_dict, orient='index',columns=['readcount'])
+    reads_count = reads_count.reset_index().rename(columns={'index': 'Barcode'})
 
-    df_f = df_f.set_index('barcode')
+    df_f = pd.merge(reads_count, df_umi, on='Barcode', how='inner')
+
+    df_f = df_f.set_index('Barcode')
 
     i = 1
 

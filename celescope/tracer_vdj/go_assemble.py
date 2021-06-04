@@ -44,6 +44,7 @@ def bracer(fq, outdir, species):
         f'--single_end '
         f'--small_index '
         f'--no_trimming '
+        f'-r '
         f'--species {species} '
         f'-c {BRACER_CONF} '
         f'{prefix} '
@@ -75,6 +76,7 @@ def tracer(fq, outdir, species):
         f'--single_end '
         f'--small_index '
         f'-m assembly '
+        f'-r '
         f'--species {species} '
         f'-c {CONF_PATH} '
         f'{fq} '
@@ -159,18 +161,17 @@ def go_assemble_summary(outdir, type):
         medianA = int(np.median(TRA_UMIs))
         TRB_UMIs_count = sum(TRB_UMIs)
         medianB = int(np.median(TRB_UMIs))
-        total_counts = TRA_UMIs_count + TRB_UMIs_count
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to TRA',
             'count': TRA_UMIs_count,
-            'total_count': total_counts,
+            'total_count': all_UMIs,
         })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to TRB',
             'count': TRB_UMIs_count,
-            'total_count': total_counts,
+            'total_count': all_UMIs,
         })
 
         with open(f'{outdir}/tmp.txt', 'w') as f:
@@ -194,24 +195,22 @@ def go_assemble_summary(outdir, type):
         IGL = sum(IGL_UMIs)
         medianL = np.median(IGL_UMIs)
 
-        total_counts = IGH + IGK + IGL
-
         go_assemble_summary.append({
             'item': f'UMIs mapped to IGH',
             'count': IGH,
-            'total_count': total_counts,
+            'total_count': all_UMIs,
         })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to IGK',
             'count': IGK,
-            'total_count': total_counts,
+            'total_count': all_UMIs,
         })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to IGL',
             'count': IGL,
-            'total_count': total_counts,
+            'total_count': all_UMIs,
         })
 
         with open(f'{outdir}/tmp.txt', 'w') as f:
