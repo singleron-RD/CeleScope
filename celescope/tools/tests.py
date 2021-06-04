@@ -3,9 +3,13 @@ from collections import namedtuple
 from celescope.tools.step import Step
 from .consensus import dumb_consensus, get_read_length
 from celescope.tools.count import Count
+from celescope.tools.generate_docs import generate_single_step_doc, generate_all_docs
 
 
 class Tests(unittest.TestCase):
+    """
+    Run this test under a temp folder as it will generate some files.
+    """
     def setUp(self):
         pass
 
@@ -53,6 +57,17 @@ class Tests(unittest.TestCase):
         assert sorted_dic == [('ccccc1', 20), ('apple2', 32), ('bears3', 115), ('ccccc2', 199)]
         assert n_corrected_umi == 3
         assert n_corrected_read == 2 + 5 + 10
+
+    @unittest.skip('tested')
+    def test_generate_docs(self):
+        generate_single_step_doc(
+            assay='rna',
+            step='barcode',
+        )
+
+    def test_generate_all_docs(self):
+        generate_all_docs()
+    
 
 
 if __name__ == '__main__':

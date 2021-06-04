@@ -1,11 +1,7 @@
 
 
 ## Arguments
-`--type` TCR or BCR
-
-`--species` human or mouse
-
-`--not_consensus` input fastq is not consensus
+`--umi_threshold` method to find virus UMI threshold
 
 `--outdir` Output diretory.
 
@@ -17,5 +13,7 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` None
+`--match_dir` match_dir
+
+`--virus_file` virus UMI count file
 

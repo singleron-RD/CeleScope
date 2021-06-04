@@ -1,9 +1,7 @@
 
 
 ## Arguments
-`--type` TCR or BCR
-
-`--species` human or mouse
+`--threshold` valid base threshold
 
 `--not_consensus` input fastq is not consensus
 

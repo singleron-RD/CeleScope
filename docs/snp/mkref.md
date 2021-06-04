@@ -11,7 +11,3 @@
 
 `--fasta` fasta file
 
-`--gtf` gtf file
-
-`--mt_gene_list` mitochondria gene list file
-

@@ -1,11 +1,7 @@
 
 
 ## Arguments
-`--type` TCR or BCR
-
-`--species` human or mouse
-
-`--not_consensus` input fastq is not consensus
+`--annovar_config` annovar soft config file
 
 `--outdir` Output diretory.
 
@@ -17,5 +13,11 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` None
+`--match_dir` match_dir
+
+`--vcf` vcf file
+
+`--CID_file` CID_file
+
+`--variant_count_file` variant count file
 

@@ -1,12 +1,6 @@
 
 
 ## Arguments
-`--type` TCR or BCR
-
-`--species` human or mouse
-
-`--not_consensus` input fastq is not consensus
-
 `--outdir` Output diretory.
 
 `--assay` Assay name.
@@ -17,5 +11,7 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` None
+`--tsne_tag_file` tsne tag file
+
+`--match_dir` matched scRNA-Seq CeleScope directory path
 

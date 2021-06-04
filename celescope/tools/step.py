@@ -15,18 +15,18 @@ from celescope.tools.utils import add_log
 def s_common(parser):
     """subparser common arguments
     """
-    parser.add_argument('--outdir', help='output dir', required=True)
-    parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument('--sample', help='sample name', required=True)
-    parser.add_argument('--thread', help='threads to use', default=4)
-    parser.add_argument('--debug', help='debug', action='store_true')
+    parser.add_argument('--outdir', help='Output diretory.', required=True)
+    parser.add_argument('--assay', help='Assay name.', required=True)
+    parser.add_argument('--sample', help='Sample name.', required=True)
+    parser.add_argument('--thread', help='Thread to use.', default=4)
+    parser.add_argument('--debug', help='If this argument is used, celescope may output addtional file for debugging.', action='store_true')
     return parser
 
 
 class Step:
-    '''
+    """
     Step class
-    '''
+    """
     def __init__(self, args, step_name):
         self.step_name = step_name
         self.args = args
@@ -37,9 +37,6 @@ class Step:
         self.debug = args.debug
         # set 
         self.out_prefix = f'{self.outdir}/{self.sample}'
-
-        # out file
-        self.stat_file = f'{self.outdir}/stat.txt'
 
         # important! make outdir before path_dict because path_dict use relative path.
         if not os.path.exists(self.outdir):
@@ -59,10 +56,15 @@ class Step:
                 with open(path) as f:
                     self.content_dict[slot] = json.load(f)
 
+        # jinja env
         self.env = Environment(
             loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
             autoescape=select_autoescape(['html', 'xml'])
         )
+
+        # out file
+        self.out_file_dict = {}
+        self.out_file_dict['stat'] = f'{self.outdir}/stat.txt'
 
     def add_metric(self, name, value=None, total=None, fraction=None):
         '''add metric to metric_list
@@ -91,26 +93,26 @@ class Step:
         self.metric_list = metric_list
 
     def metric_list_to_stat(self):
-        f_stat = open(self.stat_file, 'w')
-        for metric in self.metric_list:
-            line = f'{metric.name}: '
-            value = metric.value
-            fraction = metric.fraction
-            value_bool = value == 0 or value
-            fraction_bool = fraction == 0 or fraction
-            if fraction_bool:
-                fraction = round(fraction * 100, 2)
-            if value_bool:
-                if isinstance(value, numbers.Number):
-                    line += format(value, ',')
-                    if fraction_bool:
-                        line += f'({fraction}%)'
-                else:
-                    line += value
-            elif fraction_bool:
-                line += f'{fraction}%'
-            f_stat.write(line + '\n')
-        f_stat.close()
+        with open(self.out_file_dict['stat'], 'w') as stat_handle:
+            for metric in self.metric_list:
+                line = f'{metric.name}: '
+                value = metric.value
+                fraction = metric.fraction
+                value_bool = value == 0 or value
+                fraction_bool = fraction == 0 or fraction
+                if fraction_bool:
+                    fraction = round(fraction * 100, 2)
+                if value_bool:
+                    if isinstance(value, numbers.Number):
+                        line += format(value, ',')
+                        if fraction_bool:
+                            line += f'({fraction}%)'
+                    else:
+                        line += value
+                elif fraction_bool:
+                    line += f'{fraction}%'
+                stat_handle.write(line + '\n')
+
 
     def dump_content(self, slot):
         '''dump content to json file
@@ -128,7 +130,7 @@ class Step:
             f.write(html)
 
     def stat_to_data(self):
-        df = pd.read_table(self.stat_file, header=None, sep=':', dtype=str)
+        df = pd.read_table(self.out_file_dict['stat'], header=None, sep=':', dtype=str)
         self.content_dict['data'][self.step_name + '_summary'] = df.values.tolist()
 
     def stat_to_metric(self):
@@ -139,7 +141,7 @@ class Step:
         3. fraction%
         '''
 
-        df = pd.read_table(self.stat_file, header=None, sep=':', dtype=str)
+        df = pd.read_table(self.out_file_dict['stat'], header=None, sep=':', dtype=str)
         dic = dict(zip(df.iloc[:, 0], df.iloc[:, 1].str.strip()))
         metrics = dict()
         for metric_name, string in dic.items():
@@ -211,7 +213,7 @@ class Step:
         if self.metric_list:
             self.get_fraction()
             self.metric_list_to_stat()
-        if os.path.exists(self.stat_file):
+        if os.path.exists(self.out_file_dict['stat']):
             self.stat_to_metric()
             self.stat_to_data()
         self.dump_content(slot="data")

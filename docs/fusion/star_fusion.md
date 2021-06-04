@@ -27,3 +27,5 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
+`--fusion_genomeDir` fusion gene STAR index genome directory
+

@@ -27,3 +27,5 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
+`--virus_genomeDir` virus genome dir
+

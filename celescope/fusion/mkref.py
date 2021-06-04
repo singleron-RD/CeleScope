@@ -63,12 +63,12 @@ def get_opts_mkref(parser, sub_program):
             help="""
 fusion position file. A two column tab-delimited text file with header.
 "pos" is the end postion of the first gene(1-based).
-e.g.
-tag\tpos
-PML_3\t183
-PML_4\t254
-PML_5\t326
-PML_6\t204 
+e.g.  
+tag\tpos  
+PML_3\t183  
+PML_4\t254  
+PML_5\t326  
+PML_6\t204   
 """,    
         required=True,)
         parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=4)

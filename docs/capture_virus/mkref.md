@@ -9,9 +9,7 @@
 
 `--dry_run` only write config file
 
-`--fasta` fasta file
+`--fasta` virus fasta file
 
-`--gtf` gtf file
-
-`--mt_gene_list` mitochondria gene list file
+`--genomeSAindexNbases` STAR genomeSAindexNbases
 

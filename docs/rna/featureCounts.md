@@ -1,11 +1,9 @@
 
 
 ## Arguments
-`--type` TCR or BCR
+`--gtf_type` Specify feature type in GTF annotation
 
-`--species` human or mouse
-
-`--not_consensus` input fastq is not consensus
+`--genomeDir` None
 
 `--outdir` Output diretory.
 
@@ -17,5 +15,5 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` None
+`--input` None
 

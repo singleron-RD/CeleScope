@@ -27,6 +27,10 @@ np.random.seed(0)
 
 
 class Count(Step):
+    """
+    Features
+    - count
+    """
     def __init__(self, args, step):
         Step.__init__(self, args, step)
         self.force_cell_num = args.force_cell_num
