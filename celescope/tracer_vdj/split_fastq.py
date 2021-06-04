@@ -76,13 +76,19 @@ def get_fastq_to_assemble(fq_outdir, fq, barcodes):
         for barcode in list(umi_count_dict.keys()):
             umi_count[barcode] = len(umi_count_dict[barcode])
 
-    df_umi = pd.DataFrame.from_dict(umi_count, orient='index',columns=['UMI'])
+    df_umi = pd.DataFrame.from_dict(umi_count, orient='index',columns=['UMI'])  
+    df_umi = df_umi.sort_values(by='UMI', ascending=False)
     df_umi = df_umi.reset_index().rename(columns={'index': 'Barcode'})
-
-    df_umi.to_csv(f'{fq_outdir}/../umi_count.tsv', sep='\t')
 
     reads_count = pd.DataFrame.from_dict(reads_count_dict, orient='index',columns=['readcount'])
     reads_count = reads_count.reset_index().rename(columns={'index': 'Barcode'})
+
+    CB = reads_count['Barcode'].tolist()
+
+    df_umi['mark'] = df_umi["Barcode"].apply(
+            lambda x: "CB" if (x in CB) else "UB")
+
+    df_umi.to_csv(f'{fq_outdir}/../umi_count.tsv', sep='\t')
 
     df_f = pd.merge(reads_count, df_umi, on='Barcode', how='inner')
 
