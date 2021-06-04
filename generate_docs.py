@@ -6,8 +6,9 @@ import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import ASSAY_DICT
 
-COMMON_STEPS = ('barcode', 'cutadapt')
+PRE_PROCESSING_STEPS = ('barcode', 'cutadapt')
 DOCS_ROOT = 'docs'
+PRE_PROCESSING_ROOT = 'pre_processing'
 
 
 def generate_single_step_doc(assay, step):
@@ -17,8 +18,8 @@ def generate_single_step_doc(assay, step):
     class_docs = get_class_docs(step_module)
     argument_docs = get_argument_docs(func_opts)
 
-    if step in COMMON_STEPS:
-        out_md = f'{DOCS_ROOT}/common/{step}.md'
+    if step in PRE_PROCESSING_STEPS:
+        out_md = f'{DOCS_ROOT}/{PRE_PROCESSING_ROOT}/{step}.md'
     else:
         out_md = f'{DOCS_ROOT}/{assay}/{step}.md'
 
@@ -61,7 +62,7 @@ def get_class_docs(step_module):
 
 @utils.add_log
 def generate_all_docs():
-    os.system(f'mkdir -p {DOCS_ROOT}/common')
+    os.system(f'mkdir -p {DOCS_ROOT}/{PRE_PROCESSING_ROOT}')
     for assay in ASSAY_DICT:
         init_module = utils.find_assay_init(assay)
         __STEPS__ = init_module.__STEPS__

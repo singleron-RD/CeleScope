@@ -31,7 +31,7 @@ same time.
 
 `--linker` Linker whitelist file path, one linker per line.
 
-`--lowQual` Default 0. Bases in cell barcode and UMI whose phred value are lower than lowQual will be regarded as low-quality bases
+`--lowQual` Default 0. Bases in cell barcode and UMI whose phred value are lower than lowQual will be regarded as low-quality bases.
 
 `--lowNum` The maximum allowed lowQual bases in cell barcode and UMI.
 

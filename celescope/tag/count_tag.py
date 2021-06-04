@@ -12,6 +12,7 @@ import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
+from celescope.__init__ import ROOT_PATH
 
 
 def get_opts_count_tag(parser, sub_program):
@@ -22,7 +23,7 @@ def get_opts_count_tag(parser, sub_program):
         help="minimum signal to noise ratio", default="auto")
     parser.add_argument("--combine_cluster",
         help="conbine cluster tsv file", default=None)
-    parser.add_argument("--coefficient", "-c", help="SNR coefficient", default=0.1)
+    parser.add_argument("--coefficient", help="SNR coefficient", default=0.1)
     if sub_program:
         s_common(parser)
         parser.add_argument("--read_count_file", help="tag read count file", required=True)
@@ -269,9 +270,9 @@ class Count_tag(Step):
 
     @utils.add_log
     def seurat_hashtag(self):
-
+        app = f'{ROOT_PATH}/tag/seurat_hashtag.R'
         cmd = (
-            'Rscript /SGRNJ/Database/script/pipe/develop/dev_CeleScope/celescope/tag/seurat_hashtag.R '
+            f'Rscript {app} '
             f'--outdir {self.outdir} '
             f'--sample {self.sample} '
             f'--umi_tag {self.UMI_tag_file} '

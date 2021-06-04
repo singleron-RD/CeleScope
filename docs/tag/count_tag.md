@@ -11,8 +11,6 @@
 
 `--coefficient` SNR coefficient
 
-`-c` SNR coefficient
-
 `--outdir` Output diretory.
 
 `--assay` Assay name.
