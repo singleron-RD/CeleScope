@@ -74,7 +74,7 @@ def assemble_summary(outdir, sample, type):
         totals = TRA_UMIs_count + TRB_UMIs_count
 
         go_assemble_summary.append({
-            'item': f'All UMIs mapped to TRA or TRB',
+            'item': f'All UMIs mapped to TRA and TRB',
             'count': totals,
             'total_count': all_UMIs, 
         })
@@ -115,7 +115,7 @@ def assemble_summary(outdir, sample, type):
         totals = IGH + IGK + IGL
 
         go_assemble_summary.append({
-            'item': f'All UMIs mapped to IGH, IGL or IGK',
+            'item': f'All UMIs mapped to IGH, IGL and IGK',
             'count': totals,
             'total_count': all_UMIs,            
         })
@@ -146,21 +146,7 @@ def assemble_summary(outdir, sample, type):
             
     df = pd.DataFrame(go_assemble_summary, columns=['item', 'count', 'total_count'])
 
-    df['count'] = df['count'].apply(int)
-    
-    df['percent'] = df['count']/(df.total_count.astype('float')) * 100
-
-    df['percent'] = df['percent'].apply(
-        lambda x: round(x, 2)
-    )
-    df['count'] = df['count'].apply(utils.format_number)
-
-    df['percent_str'] = df.apply(
-        lambda row: percent_str_func(row), axis=1
-    )        
-
-    gen_stat(df, stat_file)
-
+    utils.gen_stat(df, stat_file)
 
 
 def bracer_summarise(outdir):
@@ -287,6 +273,8 @@ class Go_assemble(Step):
             self.run_tracer()
         elif self.type == 'BCR':
             self.run_bracer()
+
+        self.clean_up()
 
 
 @utils.add_log

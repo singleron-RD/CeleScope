@@ -13,6 +13,7 @@ from celescope.tools.Step import Step, s_common
 import glob
 from celescope.tools.cellranger3 import get_plot_elements
 import json
+from celescope.tracer_vdj.go_assemble import percent_str_func, gen_stat
 
 
 def tpm_count(ass_dir):
@@ -82,333 +83,337 @@ def filtering(type, ass_dir, outdir):
 		filtered.to_csv(f'{outdir}/filtered.txt', sep='\t')
 
 	return filtered
-
-
-@utils.add_log					
-def vdj_sum(args):
-
-	step_name = f"vdj_sum"
-	step = Step(args, step_name)
-
-	type = args.type
-	ass_dir = args.ass_dir
-	sample = args.sample
-	outdir = args.outdir
-	fastq_dir = args.fastq_dir
-	UMI_min = args.UMI_min
-
-	filtered = filtering(type, ass_dir, outdir)
-
-	fqs = glob.glob(f'{fastq_dir}/*.fq')
-	matched_bcs = len(fqs)
-
-	stat_file = outdir + '/stat.txt'
-
-	vdj_sum_summary = []
 	
-	count_umi_file = f'{fastq_dir}/../count.txt'
 
-	count_umi = pd.read_csv(count_umi_file, sep='\t', index_col=0)
-	
-	all_cells = count_umi.shape[0]
+class Vdj_sum(Step):
+	"""
+	Features
 
-	if type == 'TCR':
+	- Filter tracer results by TPM.
+	- Calculate clonetypes.
 
-		productive_cells = set(filtered['cell_name'].tolist())
+	Output
 
-		count_umi['mark'] = count_umi['cell_name'].apply(lambda x: "CB" if (x in productive_cells) else "UB")
+	- `05.vdj_sum/filtered.txt` Filtered results of tracer. Each cell has unique chain for each locus.
+	- `05.vdj_sum/clonetypes.txt` Clonetypes calculation. 5 (TCR) or 6 (BCR) columns, clonetypeId, (detailed clonetypes), frequency, proportion.
+	"""
+	def __init__(self, args, step_name):
+		Step.__init__(self, args, step_name)
+		self.type = args.type
+		self.fastq_dir = args.fastq_dir
+		self.ass_dir = args.ass_dir
 
-		count_umi.to_csv(count_umi_file, sep='\t')
 
-		step.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi_file))
+	@utils.add_log					
+	def run(self):
+		ass_dir = self.ass_dir
+		outdir = self.outdir
+		fastq_dir = self.fastq_dir
+		type = self.type
 
-		productive_cells_num = len(productive_cells)
+		results = filtering(type, ass_dir, outdir)
 
-		TRA_chain = filtered[filtered['locus'] == 'A']
-		TRA_chain_num = TRA_chain.shape[0]
-		TRB_chain = filtered[filtered['locus'] == 'B']
-		TRB_chain_num = TRB_chain.shape[0]
+		stat_file = outdir + '/stat.txt'
 
-		TRAs, TRBs = [], []
-		paired_cell = 0
-		for cell in productive_cells:
-			tmp1 = TRA_chain[TRA_chain['cell_name'] == cell]
-			if tmp1.empty is not True:
-				chainA = tmp1['CDR3aa'].tolist()[0]
-				TRAs.append(chainA)
-			else:
-				TRAs.append('NaN')
-			
-			tmp2 = TRB_chain[TRB_chain['cell_name'] == cell]
-			if tmp2.empty is not True:
-				chainB = tmp2['CDR3aa'].tolist()[0]
-				TRBs.append(chainB)
-			else:
-				TRBs.append('NaN')
-			
-			if not tmp1.empty and not tmp2.empty:
-				paired_cell += 1
+		vdj_sum_summary = []
+		
+		count_umi_file = f'{fastq_dir}/../{self.sample}_count.txt'
 
-		clonetypes_table = pd.DataFrame()
-		clonetypes_table['TRA_chain'] = TRAs
-		clonetypes_table['TRB_chain'] = TRBs
-		clonetypes_table['Frequency'] = ''
+		count_umi = pd.read_csv(count_umi_file, sep='\t', index_col=0)
+		
+		all_cells = count_umi.shape[0]
 
-		clonetypes = clonetypes_table.groupby(['TRA_chain', 'TRB_chain']).agg({'Frequency': 'count'})
+		if type == 'TCR':
 
-		sum = clonetypes['Frequency'].sum()
-		proportions = []
-		for f in list(clonetypes['Frequency']):
-			p = f/sum
-			p = round(p, 4)
-			p = str(p * 100) + '%'
-			proportions.append(p)
-		clonetypes['Proportion'] = proportions
-		clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
-		clonetypes = clonetypes.reset_index()
+			productive_cells = set(results['cell_name'].tolist())
 
-		clonetypes['clonetypeId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
-		clonetypes = clonetypes.reindex(columns=list(['clonetypeId', 'TRA_chain', 'TRB_chain', 'Frequency', 'Proportion']))
+			count_umi['mark'] = count_umi['cell_name'].apply(lambda x: "CB" if (x in productive_cells) else "UB")
 
-		clonetypes.to_csv(f'{outdir}/clonetypes.txt', sep='\t')
+			count_umi.to_csv(count_umi_file, sep='\t')
 
-		vdj_sum_summary.append({
-			'item': 'Estimated Number of Cells',
-			'count': productive_cells_num,
-			'total_count': all_cells,
-		})
+			self.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi_file))
 
-		vdj_sum_summary.append({
-			'item': 'Cells with TRA',
-			'count': TRA_chain_num,
-			'total_count': all_cells,
-		})
+			productive_cells_num = len(productive_cells)
 
-		vdj_sum_summary.append({
-			'item': 'Cells with TRB',
-			'count': TRB_chain_num,
-			'total_count': all_cells,
-		})
+			TRA_chain = results[results['locus'] == 'A']
+			TRA_chain_num = TRA_chain.shape[0]
+			TRB_chain = results[results['locus'] == 'B']
+			TRB_chain_num = TRB_chain.shape[0]
 
-		vdj_sum_summary.append({
-			'item': 'Cells with paired TRA and TRB',
-			'count': paired_cell,
-			'total_count': all_cells,
-		})
+			TRAs, TRBs = [], []
+			paired_cell = 0
+			for cell in productive_cells:
+				tmp1 = TRA_chain[TRA_chain['cell_name'] == cell]
+				if tmp1.empty is not True:
+					chainA = tmp1['CDR3aa'].tolist()[0]
+					TRAs.append(chainA)
+				else:
+					TRAs.append('NaN')
+				
+				tmp2 = TRB_chain[TRB_chain['cell_name'] == cell]
+				if tmp2.empty is not True:
+					chainB = tmp2['CDR3aa'].tolist()[0]
+					TRBs.append(chainB)
+				else:
+					TRBs.append('NaN')
+				
+				if not tmp1.empty and not tmp2.empty:
+					paired_cell += 1
 
-		with open(f'{ass_dir}/tmp.txt', 'r') as f:
-			medians = []
-			for line in f:
-				line = line.rstrip('\n').split(':')
-				medians.append(int(line[1]))
+			clonetypes_table = pd.DataFrame()
+			clonetypes_table['TRA_chain'] = TRAs
+			clonetypes_table['TRB_chain'] = TRBs
+			clonetypes_table['Frequency'] = ''
 
-			vdj_sum_summary.append({
-				'item': 'Median UMIs per cell',
-				'count': medians[0],
-				'total_count': np.nan
-			})
+			clonetypes = clonetypes_table.groupby(['TRA_chain', 'TRB_chain']).agg({'Frequency': 'count'})
+
+			sum = clonetypes['Frequency'].sum()
+			proportions = []
+			for f in list(clonetypes['Frequency']):
+				p = f/sum
+				p = round(p, 4)
+				p = str(p * 100) + '%'
+				proportions.append(p)
+			clonetypes['Proportion'] = proportions
+			clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
+			clonetypes = clonetypes.reset_index()
+
+			clonetypes['clonetypeId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
+			clonetypes = clonetypes.reindex(columns=list(['clonetypeId', 'TRA_chain', 'TRB_chain', 'Frequency', 'Proportion']))
+
+			clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
 
 			vdj_sum_summary.append({
-				'item': 'Median TRA UMIs per cell',
-				'count': medians[1],
-				'total_count': np.nan	
-			})
-
-			vdj_sum_summary.append({
-				'item': 'Median TRB UMIs per cell',
-				'count': medians[2],
-				'total_count': np.nan
-			})
-
-
-	elif type == 'BCR':
-
-		productive_cells = set(filtered['CELL'].tolist())
-
-		productive_cells_num = len(productive_cells)
-
-		count_umi['mark'] = count_umi['cell_name'].apply(lambda x: "CB" if (x in productive_cells) else "UB")
-
-		count_umi.to_csv(count_umi_file, sep='\t')		
-
-		step.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi_file))
-
-		filtered_h = filtered[filtered['LOCUS'] == 'H']
-		filtered_k = filtered[filtered['LOCUS'] == 'K']
-		filtered_l = filtered[filtered['LOCUS'] == 'L']
-		filtered_h_count = filtered_h.shape[0]
-		filtered_k_count = filtered_k.shape[0]
-		filtered_l_count = filtered_l.shape[0]
-
-		IGHs, IGKs, IGLs = [], [], []
-
-		paired_k, paired_l = 0, 0
-
-		for cell in productive_cells:
-			tmp1 = filtered_h[filtered_h['CELL'] == cell]
-			if tmp1.empty is not True:
-				seq = tmp1['JUNCTION'].tolist()[0]
-				seq = Seq(seq)
-				aaseq = seq.translate()
-				IGHs.append(aaseq)
-			else:
-				IGHs.append('NaN')
-
-			tmp2 = filtered_l[filtered_l['CELL'] == cell]
-			if tmp2.empty is not True:
-				seq = tmp2['JUNCTION'].tolist()[0]
-				seq = Seq(seq)
-				aaseq = seq.translate()
-				IGLs.append(aaseq)
-			else:
-				IGLs.append('NaN')
-
-			tmp3 = filtered_k[filtered_k['CELL'] == cell]
-			if tmp3.empty is not True:
-				seq = tmp3['JUNCTION'].tolist()[0]
-				seq = Seq(seq)
-				aaseq = seq.translate()
-				IGKs.append(aaseq)
-			else:
-				IGKs.append('NaN')
-
-			if not tmp1.empty and not tmp2.empty:
-				paired_l += 1
-			if not tmp1.empty and not tmp3.empty:
-				paired_k += 1
-
-		clonetypes_table = pd.DataFrame()
-
-		clonetypes_table['IGH_chain'] = IGHs
-		clonetypes_table['IGL_chain'] = IGLs
-		clonetypes_table['IGK_chain'] = IGKs
-		clonetypes_table['Frequency'] = ''
-
-		clonetypes = clonetypes_table.groupby(['IGH_chain', 'IGL_chain', 'IGK_chain']).agg({'Frequency': 'count'})
-
-		Proportion = []
-		sum = clonetypes['Frequency'].sum()
-		for f in list(clonetypes['Frequency']):
-			p = f/sum
-			p = round(p, 4)
-			p = str(p*100) + '%'
-			Proportion.append(p)
-		clonetypes['Proportion'] = Proportion
-		clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
-		clonetypes = clonetypes.reset_index()
-
-		clonetypes['clonetypeId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
-		clonetypes = clonetypes.reindex(columns=list(['clonetypeId', 'IGH_chain', 'IGL_chain', 'IGK_chain', 'Frequency', 'Proportion']))
-		clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
-
-
-		vdj_sum_summary.append({
 				'item': 'Estimated Number of Cells',
 				'count': productive_cells_num,
-				'total_count': all_cells
-		})
-
-		vdj_sum_summary.append({
-				'item': 'Cells with IGH',
-				'count': filtered_h_count,
-				'total_count': all_cells
-		})	
-
-		vdj_sum_summary.append({
-				'item': 'Cells with IGK',
-				'count': filtered_k_count,
-				'total_count': all_cells
-		})
-
-		vdj_sum_summary.append({
-				'item': 'Cells with IGL',
-				'count': filtered_l_count,
-				'total_count': all_cells
-		})			
-
-		vdj_sum_summary.append({
-				'item': 'Cells with IGH and IGK',
-				'count': paired_k,
-				'total_count': all_cells
-		})
-
-		vdj_sum_summary.append({
-				'item': 'Cells with IGH and IGL',
-				'count': paired_l,
-				'total_count': all_cells
-		})
-
-		with open(f'{ass_dir}/tmp.txt', 'r') as f:
-			medians=[]
-			for line in f:
-				line = line.strip('\n').split(':')
-				medians.append(int(line[1]))
-
-			vdj_sum_summary.append({
-				'item': 'Median UMIs per cell',
-				'count': medians[0],
-				'total_count': np.nan
+				'total_count': all_cells,
 			})
 
 			vdj_sum_summary.append({
-				'item': 'Median IGH UMIs per cell',
-				'count': medians[1],
-				'total_count': np.nan
+				'item': 'Cells with TRA',
+				'count': TRA_chain_num,
+				'total_count': all_cells,
 			})
 
 			vdj_sum_summary.append({
-				'item': 'Median IGK UMIs per cell',
-				'count': medians[2],
-				'total_count': np.nan
+				'item': 'Cells with TRB',
+				'count': TRB_chain_num,
+				'total_count': all_cells,
 			})
 
 			vdj_sum_summary.append({
-				'item': 'Median IGL UMIs per cell',
-				'count': medians[3],
-				'total_count': np.nan
+				'item': 'Cells with paired TRA and TRB',
+				'count': paired_cell,
+				'total_count': all_cells,
 			})
 
-	df = pd.DataFrame(vdj_sum_summary, 
-		columns=['item', 'count', 'total_count'])
+			with open(f'{ass_dir}/tmp.txt', 'r') as f:
+				medians = []
+				for line in f:
+					line = line.rstrip('\n').split(':')
+					medians.append(int(line[1]))
 
-	df['count'] = df['count'].apply(int)
-	
-	df['percent'] = df['count']/(df.total_count.astype('float')) * 100
+				vdj_sum_summary.append({
+					'item': 'Median UMIs per cell',
+					'count': medians[0],
+					'total_count': np.nan
+				})
 
-	df['percent'] = df['percent'].apply(
-		lambda x: round(x, 2)
-	)
-	df['count'] = df['count'].apply(utils.format_number)
+				vdj_sum_summary.append({
+					'item': 'Median TRA UMIs per cell',
+					'count': medians[1],
+					'total_count': np.nan	
+				})
+
+				vdj_sum_summary.append({
+					'item': 'Median TRB UMIs per cell',
+					'count': medians[2],
+					'total_count': np.nan
+				})
 
 
-	def percent_str_func(row):
-		need_percent = bool(
-			re.search("Cells with", row["item"], flags=re.IGNORECASE))
-		if need_percent:
-			return "(" + str(row["percent"]) + "%)"
-		else:
-			return ""	
+		elif type == 'BCR':
 
-	df['percent_str'] = df.apply(
-		lambda row: percent_str_func(row), axis=1
-	)	
+			productive_cells = set(results['CELL'].tolist())
 
-	def gen_stat(summary, stat_file):
-		stat = summary
-		stat["new_count"] = stat["count"].astype(str) + stat["percent_str"]
-		stat = stat.loc[:, ["item", "new_count"]]
-		stat.to_csv(stat_file, sep=":", header=None, index=False)
+			productive_cells_num = len(productive_cells)
 
-	gen_stat(df, stat_file)
+			count_umi['mark'] = count_umi['cell_name'].apply(lambda x: "CB" if (x in productive_cells) else "UB")
 
-# clonetype table
+			count_umi.to_csv(count_umi_file, sep='\t')		
 
-	title = 'Clonetypes'
-	table_dict = step.get_table(title, 'clonetypes_table', clonetypes)
+			self.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi_file))
 
-	step.add_data_item(table_dict=table_dict)
+			results_h = results[results['LOCUS'] == 'H']
+			results_k = results[results['LOCUS'] == 'K']
+			results_l = results[results['LOCUS'] == 'L']
+			results_h_count = results_h.shape[0]
+			results_k_count = results_k.shape[0]
+			results_l_count = results_l.shape[0]
 
-	step.clean_up()
+			IGHs, IGKs, IGLs = [], [], []
+
+			paired_k, paired_l = 0, 0
+
+			for cell in productive_cells:
+				tmp1 = results_h[results_h['CELL'] == cell]
+				if tmp1.empty is not True:
+					seq = tmp1['JUNCTION'].tolist()[0]
+					seq = Seq(seq)
+					aaseq = seq.translate()
+					IGHs.append(aaseq)
+				else:
+					IGHs.append('NaN')
+
+				tmp2 = results_l[results_l['CELL'] == cell]
+				if tmp2.empty is not True:
+					seq = tmp2['JUNCTION'].tolist()[0]
+					seq = Seq(seq)
+					aaseq = seq.translate()
+					IGLs.append(aaseq)
+				else:
+					IGLs.append('NaN')
+
+				tmp3 = results_k[results_k['CELL'] == cell]
+				if tmp3.empty is not True:
+					seq = tmp3['JUNCTION'].tolist()[0]
+					seq = Seq(seq)
+					aaseq = seq.translate()
+					IGKs.append(aaseq)
+				else:
+					IGKs.append('NaN')
+
+				if not tmp1.empty and not tmp2.empty:
+					paired_l += 1
+				if not tmp1.empty and not tmp3.empty:
+					paired_k += 1
+
+			clonetypes_table = pd.DataFrame()
+
+			clonetypes_table['IGH_chain'] = IGHs
+			clonetypes_table['IGL_chain'] = IGLs
+			clonetypes_table['IGK_chain'] = IGKs
+			clonetypes_table['Frequency'] = ''
+
+			clonetypes = clonetypes_table.groupby(['IGH_chain', 'IGL_chain', 'IGK_chain']).agg({'Frequency': 'count'})
+
+			Proportion = []
+			sum = clonetypes['Frequency'].sum()
+			for f in list(clonetypes['Frequency']):
+				p = f/sum
+				p = round(p, 4)
+				p = str(p*100) + '%'
+				Proportion.append(p)
+			clonetypes['Proportion'] = Proportion
+			clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
+			clonetypes = clonetypes.reset_index()
+
+			clonetypes['clonetypeId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
+			clonetypes = clonetypes.reindex(columns=list(['clonetypeId', 'IGH_chain', 'IGL_chain', 'IGK_chain', 'Frequency', 'Proportion']))
+			clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
+
+
+			vdj_sum_summary.append({
+					'item': 'Estimated Number of Cells',
+					'count': productive_cells_num,
+					'total_count': all_cells
+			})
+
+			vdj_sum_summary.append({
+					'item': 'Cells with IGH',
+					'count': results_h_count,
+					'total_count': all_cells
+			})	
+
+			vdj_sum_summary.append({
+					'item': 'Cells with IGK',
+					'count': results_k_count,
+					'total_count': all_cells
+			})
+
+			vdj_sum_summary.append({
+					'item': 'Cells with IGL',
+					'count': results_l_count,
+					'total_count': all_cells
+			})			
+
+			vdj_sum_summary.append({
+					'item': 'Cells with paired IGH and IGK',
+					'count': paired_k,
+					'total_count': all_cells
+			})
+
+			vdj_sum_summary.append({
+					'item': 'Cells with paired IGH and IGL',
+					'count': paired_l,
+					'total_count': all_cells
+			})
+
+			with open(f'{ass_dir}/tmp.txt', 'r') as f:
+				medians=[]
+				for line in f:
+					line = line.strip('\n').split(':')
+					medians.append(int(line[1]))
+
+				vdj_sum_summary.append({
+					'item': 'Median UMIs per cell',
+					'count': medians[0],
+					'total_count': np.nan
+				})
+
+				vdj_sum_summary.append({
+					'item': 'Median IGH UMIs per cell',
+					'count': medians[1],
+					'total_count': np.nan
+				})
+
+				vdj_sum_summary.append({
+					'item': 'Median IGK UMIs per cell',
+					'count': medians[2],
+					'total_count': np.nan
+				})
+
+				vdj_sum_summary.append({
+					'item': 'Median IGL UMIs per cell',
+					'count': medians[3],
+					'total_count': np.nan
+				})
+
+		df = pd.DataFrame(vdj_sum_summary, 
+			columns=['item', 'count', 'total_count'])
+
+		df['count'] = df['count'].apply(int)
+		
+		df['percent'] = df['count']/(df.total_count.astype('float')) * 100
+
+		df['percent'] = df['percent'].apply(
+			lambda x: round(x, 2)
+		)
+		df['count'] = df['count'].apply(utils.format_number)
+
+		df['percent_str'] = df.apply(
+			lambda row: percent_str_func(row), axis=1
+		)	
+
+		gen_stat(df, stat_file)
+
+	# clonetype table
+
+		title = 'Clonetypes'
+		table_dict = self.get_table(title, 'clonetypes_table', clonetypes)
+
+		self.add_data_item(table_dict=table_dict)
+
+		self.clean_up()
+
+		os.remove(f'{ass_dir}/tmp.txt')
+
+
+@utils.add_log
+def vdj_sum(args):
+	step_name = 'vdj_sum'
+	vdj_sum_obj = Vdj_sum(args, step_name)
+	vdj_sum_obj.run()
 
 
 def get_opts_vdj_sum(parser, sub_program):
