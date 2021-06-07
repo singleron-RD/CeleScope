@@ -34,7 +34,7 @@ task analysis {
 
     output {
         File out_data = ".data.json"
-        File out_h5ad = "06.analysis/~{sample_name}.h5"
+        File out_h5ad = "06.analysis/~{sample_name}.h5ad"
         File out_report = "~{sample_name}_report.html"
     }
 }

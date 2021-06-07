@@ -31,7 +31,7 @@ tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")
 rds.out = paste0(outdir,'/',sample,'.rds')
-h5.out = stringr::str_glue('{outdir}/{sample}.h5')
+h5.out = stringr::str_glue('{outdir}/{sample}.h5ad')
 if (file.exists(h5.out)) {
   #Delete file if it exists
   file.remove(h5.out)
