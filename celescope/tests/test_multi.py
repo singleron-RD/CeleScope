@@ -5,7 +5,6 @@ Integration tests
 import os
 import shutil
 import subprocess
-import sys
 from concurrent import futures
 
 import celescope.tools.utils as utils
