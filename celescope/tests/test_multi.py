@@ -6,16 +6,17 @@ import os
 import shutil
 import subprocess
 import sys
-import unittest
 from concurrent import futures
 
+import celescope.tools.utils as utils
+
 ASSAYS = [
-    'rna',
+    'fusion',
     'vdj',
     'tag',
     'capture_virus',
     #'snp',
-    'fusion',
+    'rna',
 ]
 TEST_DIR = "/SGRNJ03/randd/user/zhouyiqi/multi_tests/"
 
@@ -38,27 +39,25 @@ def run_single(assay):
     print("*" * 20 + "success " + assay + "*" * 20)
     return f"{assay} success."
 
-class Tests(unittest.TestCase):
+@utils.add_log
+def test_mutiple(assays):
+    """
+    Run some tests
+    >>> pytest -s celescope/tests/test_multi.py --assays tag,fusion
+    """
 
-    def setUp(self):
-        self.thread = len(ASSAYS)
-        if len(sys.argv) > 2:
-            print(sys.argv)
-            self.assays = sys.argv[2:]
-        else:
-            self.assays = ASSAYS
-        # self.thread = 1
+    if not assays:
+        assays = ASSAYS
+    else:
+        assays = assays.split(',')
+    print("assays to run: ", assays)
+    thread = len(assays)
+    executor = futures.ProcessPoolExecutor(max_workers=thread)
+    results = executor.map(run_single, assays)
+    res_list = []
+    for result in results:
+        res_list.append(result)
+    for result in res_list:
+        print(result)
+    assert not any((string.find("failed") != -1 for string in res_list))
 
-    def test_multi(self):
-        executor = futures.ProcessPoolExecutor(max_workers=self.thread)
-        results = executor.map(run_single, self.assays)
-        res_list = []
-        for result in results:
-            res_list.append(result)
-        for result in res_list:
-            print(result)
-        assert not any((string.find("failed") != -1 for string in res_list))
-
-
-if __name__ == '__main__':
-    unittest.main()
