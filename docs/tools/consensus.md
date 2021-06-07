@@ -1,26 +1,19 @@
-# consensus
 
-## Features
-- Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI).
 
-## Input
-- R2 Fastq.
+## Arguments
+`--threshold` valid base threshold.
 
-## Output
-- Consensus fastq.
+`--not_consensus` input fastq is not consensus.
 
-## Parameters
+`--outdir` Output diretory.
 
-`--fq` Required. R2 reads from step cutadapt.
+`--assay` Assay name.
 
-`--threshold` Default `0.5`. Valid base threshold.
+`--sample` Sample name.
 
-`--not_consensus` Skip the consensus step.
+`--thread` Thread to use.
 
-## Metrics
+`--debug` If this argument is used, celescope may output addtional file for debugging.
 
-- UMI Counts: Total UMIs number after consensus.
+`--fq` None
 
-- Mean UMI Length: Mean UMI length after consensus.
-
-- Ambiguous Base Counts: Total ambiguous bases number.
