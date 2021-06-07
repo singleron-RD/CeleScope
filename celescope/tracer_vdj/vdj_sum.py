@@ -106,77 +106,94 @@ def vdj_sum(args):
 
 	vdj_sum_summary = []
 	
-	count_umi = f'{fastq_dir}/../umi_count.tsv'
+	count_umi_file = f'{fastq_dir}/../count.txt'
+
+	count_umi = pd.read_csv(count_umi_file, sep='\t', index_col=0)
+	
+	all_cells = count_umi.shape[0]
 
 	if type == 'TCR':
 
-		step.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi))
+		productive_cells = set(filtered['cell_name'].tolist())
 
-		count_a = filtered[filtered['locus'] == 'A'].shape[0]
-		count_b = filtered[filtered['locus'] == 'B'].shape[0]
-		paired_cell = pd.DataFrame(filtered['cell_name'].value_counts())
-		productive_cells = paired_cell.shape[0]
-		unpaired_cell = paired_cell[paired_cell['cell_name'] == 1]
-		paired_cell = paired_cell[paired_cell['cell_name'] == 2]
-		paired_cell = list(paired_cell.index)
+		count_umi['mark'] = count_umi['cell_name'].apply(lambda x: "CB" if (x in productive_cells) else "UB")
 
-		aaseqs = []
-		for cell in paired_cell:
-			temp = filtered[filtered['cell_name'] == cell]
-			temp_loci = list(temp['locus'])
-			temp_aaseq = list(temp['CDR3aa'])
-			string = 'TR{}:C{}F;TR{}:C{}F'.format(temp_loci[0], temp_aaseq[0], temp_loci[1], temp_aaseq[1])
-			aaseqs.append(string)
+		count_umi.to_csv(count_umi_file, sep='\t')
 
-		for cell in list(unpaired_cell.index):
-			temp = filtered[filtered['cell_name'] == cell]
-			temp_loci = list(temp['locus'])
-			temp_aaseq = list(temp['CDR3aa'])
-			string = 'TR{}:C{}F'.format(temp_loci[0], temp_aaseq[0])
-			aaseqs.append(string)
+		step.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi_file))
 
-		per_count_data = pd.DataFrame()
-		per_count_data['cdr3s_aa'] = aaseqs
-		clonetypes = pd.DataFrame(per_count_data['cdr3s_aa'].value_counts())
-		clonetypes.columns = ["Frequency"]
-		Percent = []
+		productive_cells_num = len(productive_cells)
+
+		TRA_chain = filtered[filtered['locus'] == 'A']
+		TRA_chain_num = TRA_chain.shape[0]
+		TRB_chain = filtered[filtered['locus'] == 'B']
+		TRB_chain_num = TRB_chain.shape[0]
+
+		TRAs, TRBs = [], []
+		paired_cell = 0
+		for cell in productive_cells:
+			tmp1 = TRA_chain[TRA_chain['cell_name'] == cell]
+			if tmp1.empty is not True:
+				chainA = tmp1['CDR3aa'].tolist()[0]
+				TRAs.append(chainA)
+			else:
+				TRAs.append('NaN')
+			
+			tmp2 = TRB_chain[TRB_chain['cell_name'] == cell]
+			if tmp2.empty is not True:
+				chainB = tmp2['CDR3aa'].tolist()[0]
+				TRBs.append(chainB)
+			else:
+				TRBs.append('NaN')
+			
+			if not tmp1.empty and not tmp2.empty:
+				paired_cell += 1
+
+		clonetypes_table = pd.DataFrame()
+		clonetypes_table['TRA_chain'] = TRAs
+		clonetypes_table['TRB_chain'] = TRBs
+		clonetypes_table['Frequency'] = ''
+
+		clonetypes = clonetypes_table.groupby(['TRA_chain', 'TRB_chain']).agg({'Frequency': 'count'})
+
 		sum = clonetypes['Frequency'].sum()
+		proportions = []
 		for f in list(clonetypes['Frequency']):
 			p = f/sum
-			Percent.append(p)
-		clonetypes['Percent'] = Percent
+			p = round(p, 4)
+			p = str(p * 100) + '%'
+			proportions.append(p)
+		clonetypes['Proportion'] = proportions
+		clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
 		clonetypes = clonetypes.reset_index()
-		clonetypes.rename(columns={'index': 'cdr3s_aa'}, inplace=True)
-		clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
+
+		clonetypes['clonetypeId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
+		clonetypes = clonetypes.reindex(columns=list(['clonetypeId', 'TRA_chain', 'TRB_chain', 'Frequency', 'Proportion']))
+
+		clonetypes.to_csv(f'{outdir}/clonetypes.txt', sep='\t')
 
 		vdj_sum_summary.append({
 			'item': 'Estimated Number of Cells',
-			'count': matched_bcs,
-			'total_count': matched_bcs,
-		})
-
-		vdj_sum_summary.append({
-			'item': 'Productive cells',
-			'count': productive_cells,
-			'total_count': matched_bcs
+			'count': productive_cells_num,
+			'total_count': all_cells,
 		})
 
 		vdj_sum_summary.append({
 			'item': 'Cells with TRA',
-			'count': count_a,
-			'total_count': matched_bcs,
+			'count': TRA_chain_num,
+			'total_count': all_cells,
 		})
 
 		vdj_sum_summary.append({
 			'item': 'Cells with TRB',
-			'count': count_b,
-			'total_count': matched_bcs,
+			'count': TRB_chain_num,
+			'total_count': all_cells,
 		})
 
 		vdj_sum_summary.append({
 			'item': 'Cells with paired TRA and TRB',
-			'count': len(paired_cell),
-			'total_count': matched_bcs,
+			'count': paired_cell,
+			'total_count': all_cells,
 		})
 
 		with open(f'{ass_dir}/tmp.txt', 'r') as f:
@@ -206,7 +223,15 @@ def vdj_sum(args):
 
 	elif type == 'BCR':
 
-		step.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi))
+		productive_cells = set(filtered['CELL'].tolist())
+
+		productive_cells_num = len(productive_cells)
+
+		count_umi['mark'] = count_umi['cell_name'].apply(lambda x: "CB" if (x in productive_cells) else "UB")
+
+		count_umi.to_csv(count_umi_file, sep='\t')		
+
+		step.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi_file))
 
 		filtered_h = filtered[filtered['LOCUS'] == 'H']
 		filtered_k = filtered[filtered['LOCUS'] == 'K']
@@ -215,101 +240,102 @@ def vdj_sum(args):
 		filtered_k_count = filtered_k.shape[0]
 		filtered_l_count = filtered_l.shape[0]
 
-		paired_cell = pd.DataFrame(filtered['CELL'].value_counts())
-		productive_cells = paired_cell.shape[0]	
+		IGHs, IGKs, IGLs = [], [], []
 
-		paired_cell = pd.DataFrame(filtered['CELL'].value_counts())
-		productive_cells = paired_cell.shape[0]
-		unpaired_cell = paired_cell[paired_cell['CELL'] == 1]
-		paired_cell = paired_cell[paired_cell['CELL'] == 2]
-		paired_k = 0
-		paired_l = 0
+		paired_k, paired_l = 0, 0
 
-		clones = pd.DataFrame()
-		cells = list(paired_cell.index)
-		aaseqs = []
-
-		for cell in cells:
-			if 'K' in list(filtered[filtered['CELL'] == cell]['LOCUS']):
-				paired_k += 1
-			elif 'L' in list(filtered[filtered['CELL'] == cell]['LOCUS']):
-				paired_l += 1
-			tep = filtered[filtered['CELL'] == cell]
-			tep_loci = list(tep['LOCUS'])
-			cdr3 = list(tep['JUNCTION'])
-			aaseq = []
-			for seq in cdr3:
+		for cell in productive_cells:
+			tmp1 = filtered_h[filtered_h['CELL'] == cell]
+			if tmp1.empty is not True:
+				seq = tmp1['JUNCTION'].tolist()[0]
 				seq = Seq(seq)
-				seq = seq.translate()
-				aaseq.append(seq)
-			string = 'IG{}:{};IG{}:{}'.format(tep_loci[0], aaseq[0], tep_loci[1], aaseq[1])
-			aaseqs.append(string)
+				aaseq = seq.translate()
+				IGHs.append(aaseq)
+			else:
+				IGHs.append('NaN')
 
-		for cell in list(unpaired_cell.index):
-			cells.append(cell)
-			locus = list(filtered[filtered['CELL'] == cell]['LOCUS'])
-			cdr3 = list(filtered[filtered['CELL'] == cell]['JUNCTION'])
-			seq = Seq(cdr3[0])
-			seq = seq.translate()
-			string = 'IG{}:{}'.format(locus[0], seq)
-			aaseqs.append(string)
+			tmp2 = filtered_l[filtered_l['CELL'] == cell]
+			if tmp2.empty is not True:
+				seq = tmp2['JUNCTION'].tolist()[0]
+				seq = Seq(seq)
+				aaseq = seq.translate()
+				IGLs.append(aaseq)
+			else:
+				IGLs.append('NaN')
 
-		clones['CELLS'] = cells
+			tmp3 = filtered_k[filtered_k['CELL'] == cell]
+			if tmp3.empty is not True:
+				seq = tmp3['JUNCTION'].tolist()[0]
+				seq = Seq(seq)
+				aaseq = seq.translate()
+				IGKs.append(aaseq)
+			else:
+				IGKs.append('NaN')
 
-		clones["cdr3s_aa"] = aaseqs
-		clonetypes = pd.DataFrame(clones['cdr3s_aa'].value_counts())
-		clonetypes.columns = ["Frequency"]
-		Percent = []
+			if not tmp1.empty and not tmp2.empty:
+				paired_l += 1
+			if not tmp1.empty and not tmp3.empty:
+				paired_k += 1
+
+		clonetypes_table = pd.DataFrame()
+
+		clonetypes_table['IGH_chain'] = IGHs
+		clonetypes_table['IGL_chain'] = IGLs
+		clonetypes_table['IGK_chain'] = IGKs
+		clonetypes_table['Frequency'] = ''
+
+		clonetypes = clonetypes_table.groupby(['IGH_chain', 'IGL_chain', 'IGK_chain']).agg({'Frequency': 'count'})
+
+		Proportion = []
 		sum = clonetypes['Frequency'].sum()
 		for f in list(clonetypes['Frequency']):
 			p = f/sum
-			Percent.append(p)
-		clonetypes['Percent'] = Percent
+			p = round(p, 4)
+			p = str(p*100) + '%'
+			Proportion.append(p)
+		clonetypes['Proportion'] = Proportion
+		clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
 		clonetypes = clonetypes.reset_index()
-		clonetypes.rename(columns={'index': 'cdr3s_aa'}, inplace=True)
+
+		clonetypes['clonetypeId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
+		clonetypes = clonetypes.reindex(columns=list(['clonetypeId', 'IGH_chain', 'IGL_chain', 'IGK_chain', 'Frequency', 'Proportion']))
 		clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
 
 
 		vdj_sum_summary.append({
-				'item': 'Matched cells',
-				'count': matched_bcs,
-				'total_count': matched_bcs
-		})
-
-		vdj_sum_summary.append({
-				'item': 'Productive cells',
-				'count': productive_cells,
-				'total_count': matched_bcs
+				'item': 'Estimated Number of Cells',
+				'count': productive_cells_num,
+				'total_count': all_cells
 		})
 
 		vdj_sum_summary.append({
 				'item': 'Cells with IGH',
 				'count': filtered_h_count,
-				'total_count': matched_bcs
+				'total_count': all_cells
 		})	
 
 		vdj_sum_summary.append({
 				'item': 'Cells with IGK',
 				'count': filtered_k_count,
-				'total_count': matched_bcs
+				'total_count': all_cells
 		})
 
 		vdj_sum_summary.append({
 				'item': 'Cells with IGL',
 				'count': filtered_l_count,
-				'total_count': matched_bcs
+				'total_count': all_cells
 		})			
 
 		vdj_sum_summary.append({
 				'item': 'Cells with IGH and IGK',
 				'count': paired_k,
-				'total_count': matched_bcs
+				'total_count': all_cells
 		})
 
 		vdj_sum_summary.append({
 				'item': 'Cells with IGH and IGL',
 				'count': paired_l,
-				'total_count': matched_bcs
+				'total_count': all_cells
 		})
 
 		with open(f'{ass_dir}/tmp.txt', 'r') as f:
@@ -377,7 +403,6 @@ def vdj_sum(args):
 
 # clonetype table
 
-	clonetypes['Percent'] = clonetypes['Percent'].apply(lambda x: str(round(x*100, 2)) + '%')
 	title = 'Clonetypes'
 	table_dict = step.get_table(title, 'clonetypes_table', clonetypes)
 

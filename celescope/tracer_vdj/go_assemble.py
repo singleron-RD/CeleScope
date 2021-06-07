@@ -162,6 +162,14 @@ def go_assemble_summary(outdir, type):
         TRB_UMIs_count = sum(TRB_UMIs)
         medianB = int(np.median(TRB_UMIs))
 
+        totals = TRA_UMIs_count + TRB_UMIs_count
+
+        go_assemble_summary.append({
+            'item': f'All UMIs mapped to TRA or TRB',
+            'count': totals,
+            'total_count': all_UMIs, 
+        })
+
         go_assemble_summary.append({
             'item': f'UMIs mapped to TRA',
             'count': TRA_UMIs_count,
@@ -194,6 +202,14 @@ def go_assemble_summary(outdir, type):
         medianK = np.median(IGK_UMIs)
         IGL = sum(IGL_UMIs)
         medianL = np.median(IGL_UMIs)
+
+        totals = IGH + IGK + IGL
+
+        go_assemble_summary.append({
+            'item': f'All UMIs mapped to IGH, IGL or IGK',
+            'count': totals,
+            'total_count': all_UMIs,            
+        })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to IGH',
