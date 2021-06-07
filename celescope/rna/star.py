@@ -14,7 +14,7 @@ class Star_rna(Step, StarMixin):
     - Align R2 reads to the reference genome with STAR.
     - Collect Metrics with Picard.
 
-    ## Output
+    Output
     - `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
 
     - `{sample}_SJ.out.tab` SJ.out.tab contains high confidence collapsed splice junctions in tab-delimited format.
