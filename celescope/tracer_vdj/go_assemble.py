@@ -19,6 +19,16 @@ BRACER_CONDA = 'bracer'
 BRACER_CONF = '/SGRNJ03/randd/zhouxin/software/bracer/bracer.conf'
 
 
+def get_umi_count(fq):
+    umis = []
+    with pysam.FastxFile(fq) as fh:
+        for entry in fh:
+            attr = entry.name.split('_')
+            barcode = attr[0]
+            umi = attr[1]
+            umis.append(umi)
+    res = len(set(umis))
+    return res
 # 开始组装
 
 
@@ -86,37 +96,55 @@ def tracer(fq, outdir, species):
     os.system(cmd)
 
 
-@utils.add_log
-def run_tracer(outdir, fastq_dir, species, thread):
+class Go_assemble(Step):
+    """
+    Features
 
-    fqs = [join(fastq_dir, f) for f in listdir(fastq_dir) if isfile(join(fastq_dir, f))]
-    outdirs = [outdir] * len(fqs)
-    species = [species] * len(fqs)
-    if not os.path.exists(f'{outdir}/tracer'):
-        os.makedirs(f'{outdir}/tracer')
+    - Assemble TCR/BCR full length by tracer.
+    - Summary mapping rate.
 
-    all_res = []
-    with ProcessPoolExecutor(thread) as pool:
-        for res in pool.map(tracer, fqs, outdirs, species):
-            all_res.append(res)
+    Output
 
-    tracer_summarise(outdir)
+    - `04.go_assemble/tracer` or `04.go_assemble/bracer` Tracer output directory.
+    - `04.go_assemble/stat.txt` Recording mapping rate.
+    """
+    def __init__(self, args, step_name):
+        Step.__init__(self, args, step_name)
+        self.species = args.species
+        self.type = args.type
+        self.thread = int(args.thread)
+        self.fastq_dir = args.fastq_dir
 
 
-@utils.add_log
-def run_bracer(outdir, fastq_dir, species, thread):
-    fqs = [join(fastq_dir, f) for f in listdir(fastq_dir) if isfile(join(fastq_dir, f))]
-    outdirs = [outdir] * len(fqs)
-    species = [species] * len(fqs)
-    if not os.path.exists(f'{outdir}/bracer'):
-        os.makedirs(f'{outdir}/bracer')
+    def run_tracer(self):
 
-    all_res = []
-    with ProcessPoolExecutor(thread) as pool:
-        for res in pool.map(bracer, fqs, outdirs, species):
-            all_res.append(res)
+        fqs = [join(self.fastq_dir, f) for f in listdir(self.fastq_dir) if isfile(join(self.fastq_dir, f))]
+        outdirs = [self.outdir] * len(fqs)
+        species = [self.species] * len(fqs)
+        if not os.path.exists(f'{self.outdir}/tracer'):
+            os.makedirs(f'{self.outdir}/tracer')
 
-    bracer_summarise(outdir)
+        all_res = []
+        with ProcessPoolExecutor(self.thread) as pool:
+            for res in pool.map(tracer, fqs, outdirs, species):
+                all_res.append(res)
+
+        tracer_summarise(self.outdir)
+
+
+    def run_bracer(self):
+        fqs = [join(self.fastq_dir, f) for f in listdir(self.fastq_dir) if isfile(join(self.fastq_dir, f))]
+        outdirs = [self.outdir] * len(fqs)
+        species = [self.species] * len(fqs)
+        if not os.path.exists(f'{self.outdir}/bracer'):
+            os.makedirs(f'{self.outdir}/bracer')
+
+        all_res = []
+        with ProcessPoolExecutor(self.thread) as pool:
+            for res in pool.map(bracer, fqs, outdirs, species):
+                all_res.append(res)
+
+        bracer_summarise(self.outdir)
 
 
 ################def get_reads_count(fq):
@@ -126,137 +154,124 @@ def run_bracer(outdir, fastq_dir, species, thread):
 #            count += 1
 #    return count
 
+    def go_assemble_summary(self):
 
-def get_umi_count(fq):
-    umis = []
-    with pysam.FastxFile(fq) as fh:
-        for entry in fh:
-            attr = entry.name.split('_')
-            barcode = attr[0]
-            umi = attr[1]
-            umis.append(umi)
-    res = len(set(umis))
-    return res
+        count_file = f'{self.outdir}/../03.split_fastq/{self.sample}_count.txt'
+        UMIs = pd.read_csv(count_file, sep='\t')
 
+        all_UMIs = UMIs['UMIs_count'].tolist()
+        medians = int(np.median(all_UMIs))
+        all_UMIs = sum(all_UMIs)
+        
+        stat_file = self.outdir + '/stat.txt'
 
-def go_assemble_summary(outdir, type):
+        go_assemble_summary = []
 
-    total_fq = f'{outdir}/../03.split_fastq/reads_count.tsv'
-    UMIs = pd.read_csv(total_fq, sep='\t')
+        if type == 'TCR':
+            TRAs = glob.glob(f'{self.outdir}/tracer/*/aligned_reads/*_TCR_A.fastq')
+            TRBs = glob.glob(f'{self.outdir}/tracer/*/aligned_reads/*_TCR_B.fastq')
+            TRA_UMIs = [get_umi_count(fq) for fq in TRAs]
+            TRB_UMIs = [get_umi_count(fq) for fq in TRBs]
+            TRA_UMIs_count = sum(TRA_UMIs)
+            medianA = int(np.median(TRA_UMIs))
+            TRB_UMIs_count = sum(TRB_UMIs)
+            medianB = int(np.median(TRB_UMIs))
 
-    all_UMIs = UMIs['UMIs_count'].tolist()
-    medians = int(np.median(all_UMIs))
-    all_UMIs = sum(all_UMIs)
-    
-    stat_file = outdir + '/../04.go_assemble/stat.txt'
+            totals = TRA_UMIs_count + TRB_UMIs_count
 
-    go_assemble_summary = []
+            go_assemble_summary.append({
+                'item': f'All UMIs mapped to TRA or TRB',
+                'count': totals,
+                'total_count': all_UMIs, 
+            })
 
-    if type == 'TCR':
-        TRAs = glob.glob(f'{outdir}/tracer/*/aligned_reads/*_TCR_A.fastq')
-        TRBs = glob.glob(f'{outdir}/tracer/*/aligned_reads/*_TCR_B.fastq')
-        TRA_UMIs = [get_umi_count(fq) for fq in TRAs]
-        TRB_UMIs = [get_umi_count(fq) for fq in TRBs]
-        TRA_UMIs_count = sum(TRA_UMIs)
-        medianA = int(np.median(TRA_UMIs))
-        TRB_UMIs_count = sum(TRB_UMIs)
-        medianB = int(np.median(TRB_UMIs))
+            go_assemble_summary.append({
+                'item': f'UMIs mapped to TRA',
+                'count': TRA_UMIs_count,
+                'total_count': all_UMIs,
+            })
 
-        totals = TRA_UMIs_count + TRB_UMIs_count
+            go_assemble_summary.append({
+                'item': f'UMIs mapped to TRB',
+                'count': TRB_UMIs_count,
+                'total_count': all_UMIs,
+            })
 
-        go_assemble_summary.append({
-            'item': f'All UMIs mapped to TRA or TRB',
-            'count': totals,
-            'total_count': all_UMIs, 
-        })
+            with open(f'{self.outdir}/tmp.txt', 'w') as f:
+                f.write(f'Madian UMIs per cell:{medians}\n')
+                f.write(f'Median TRA UMIs per cell:{medianA}\n')
+                f.write(f'Median TRB UMIs per cell:{medianB}\n')
 
-        go_assemble_summary.append({
-            'item': f'UMIs mapped to TRA',
-            'count': TRA_UMIs_count,
-            'total_count': all_UMIs,
-        })
+        elif type == 'BCR':
+            IGHs = glob.glob(f'{self.outdir}/bracer/*/aligned_reads/*_BCR_H.fastq')
+            IGKs = glob.glob(f'{self.outdir}/bracer/*/aligned_reads/*_BCR_K.fastq')
+            IGLs = glob.glob(f'{self.outdir}/bracer/*/aligned_reads/*_BCR_L.fastq')
 
-        go_assemble_summary.append({
-            'item': f'UMIs mapped to TRB',
-            'count': TRB_UMIs_count,
-            'total_count': all_UMIs,
-        })
+            IGH_UMIs = [get_umi_count(fq) for fq in IGHs]
+            IGK_UMIs = [get_umi_count(fq) for fq in IGKs]
+            IGL_UMIs = [get_umi_count(fq) for fq in IGLs]
 
-        with open(f'{outdir}/tmp.txt', 'w') as f:
-            f.write(f'Madian UMIs per cell:{medians}\n')
-            f.write(f'Median TRA UMIs per cell:{medianA}\n')
-            f.write(f'Median TRB UMIs per cell:{medianB}\n')
+            IGH = sum(IGH_UMIs)
+            medianH = np.median(IGH_UMIs)
+            IGK = sum(IGK_UMIs)
+            medianK = np.median(IGK_UMIs)
+            IGL = sum(IGL_UMIs)
+            medianL = np.median(IGL_UMIs)
 
-    elif type == 'BCR':
-        IGHs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_H.fastq')
-        IGKs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_K.fastq')
-        IGLs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_L.fastq')
+            totals = IGH + IGK + IGL
 
-        IGH_UMIs = [get_umi_count(fq) for fq in IGHs]
-        IGK_UMIs = [get_umi_count(fq) for fq in IGKs]
-        IGL_UMIs = [get_umi_count(fq) for fq in IGLs]
+            go_assemble_summary.append({
+                'item': f'All UMIs mapped to IGH, IGL or IGK',
+                'count': totals,
+                'total_count': all_UMIs,            
+            })
 
-        IGH = sum(IGH_UMIs)
-        medianH = np.median(IGH_UMIs)
-        IGK = sum(IGK_UMIs)
-        medianK = np.median(IGK_UMIs)
-        IGL = sum(IGL_UMIs)
-        medianL = np.median(IGL_UMIs)
+            go_assemble_summary.append({
+                'item': f'UMIs mapped to IGH',
+                'count': IGH,
+                'total_count': all_UMIs,
+            })
 
-        totals = IGH + IGK + IGL
+            go_assemble_summary.append({
+                'item': f'UMIs mapped to IGK',
+                'count': IGK,
+                'total_count': all_UMIs,
+            })
 
-        go_assemble_summary.append({
-            'item': f'All UMIs mapped to IGH, IGL or IGK',
-            'count': totals,
-            'total_count': all_UMIs,            
-        })
+            go_assemble_summary.append({
+                'item': f'UMIs mapped to IGL',
+                'count': IGL,
+                'total_count': all_UMIs,
+            })
 
-        go_assemble_summary.append({
-            'item': f'UMIs mapped to IGH',
-            'count': IGH,
-            'total_count': all_UMIs,
-        })
+            with open(f'{self.outdir}/tmp.txt', 'w') as f:
+                f.write(f'Median UMIs per cell:{medians}\n')
+                f.write(f'Median IGH UMIs per Cell:{medianH}\n')
+                f.write(f'Median IGK UMIs per Cell:{medianK}\n') 
+                f.write(f'Median IGL UMIs per Cell:{medianL}\n')
+                
+        df = pd.DataFrame(go_assemble_summary, columns=['item', 'count', 'total_count'])
 
-        go_assemble_summary.append({
-            'item': f'UMIs mapped to IGK',
-            'count': IGK,
-            'total_count': all_UMIs,
-        })
+        utils.gen_stat(df, stat_file)
 
-        go_assemble_summary.append({
-            'item': f'UMIs mapped to IGL',
-            'count': IGL,
-            'total_count': all_UMIs,
-        })
-
-        with open(f'{outdir}/tmp.txt', 'w') as f:
-            f.write(f'Median UMIs per cell:{medians}\n')
-            f.write(f'Median IGH UMIs per Cell:{medianH}\n')
-            f.write(f'Median IGK UMIs per Cell:{medianK}\n') 
-            f.write(f'Median IGL UMIs per Cell:{medianL}\n')
-            
-    df = pd.DataFrame(go_assemble_summary, columns=['item', 'count', 'total_count'])
-
-    utils.gen_stat(df, stat_file)
+        self.clean_up()
 
 
+    @utils.add_log
+    def run(self):
+        if self.type == 'TCR':
+            self.run_tracer()
+        elif self.type == 'BCR':
+            self.run_bracer()
+        self.go_assemble_summary()
+
+
+@utils.add_log
 def go_assemble(args):
     step_name = 'go_assemble'
-    step = Step(args, step_name)
-    thread = int(args.thread)
-    fastq_dir = args.fastq_dir
-    outdir = args.outdir
-    species = args.species
+    go_assemble_obj = Go_assemble(args, step_name)
+    go_assemble_obj.run()
     
-    type = args.type
-    if type == 'TCR':
-        run_tracer(outdir, fastq_dir, species, thread)
-    elif type == 'BCR':
-        run_bracer(outdir, fastq_dir, species, thread)
-
-    go_assemble_summary(outdir, type)
-
-    step.clean_up()
 
 def get_opts_go_assemble(parser, sub_program):
     if sub_program:
