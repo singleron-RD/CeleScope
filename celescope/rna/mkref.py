@@ -1,8 +1,10 @@
-import subprocess
 import configparser
+import subprocess
 
 import celescope.tools.utils as utils
-from celescope.tools.mkref import Mkref, parse_genomeDir, get_opts_mkref as opts
+from celescope.tools.mkref import Mkref
+from celescope.tools.mkref import get_opts_mkref as opts
+from celescope.tools.mkref import parse_genomeDir
 
 
 def parse_genomeDir_rna(genomeDir):

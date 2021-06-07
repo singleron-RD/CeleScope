@@ -1,6 +1,8 @@
-import unittest
 import os
-from celescope.hla.mapping_hla import split_bam, hla_typing, summary, read_index
+import unittest
+
+from celescope.hla.mapping_hla import (hla_typing, read_index, split_bam,
+                                       summary)
 from celescope.tools.utils import read_barcode_file
 
 

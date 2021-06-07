@@ -2,13 +2,12 @@
 Integration tests
 """
 
-import unittest
 import os
-import subprocess
 import shutil
+import subprocess
 import sys
+import unittest
 from concurrent import futures
-
 
 ASSAYS = [
     'rna',

@@ -1,13 +1,13 @@
+import json
 import os
 import re
-import json
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
+import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
-import celescope.tools.utils as utils
 
 
 def report_prepare(df, outdir):

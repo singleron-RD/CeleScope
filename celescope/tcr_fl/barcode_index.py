@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class Barcode_index():
     def __init__(self, barcodes):
         self.barcodes = barcodes

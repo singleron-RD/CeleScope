@@ -1,7 +1,9 @@
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+
 
 def threshold_otsu(hist):
     """Return threshold value based on Otsu's method.

@@ -1,10 +1,10 @@
-import subprocess
 import re
-
+import subprocess
 
 import celescope.tools.utils as utils
-from celescope.tools.step import s_common
 from celescope.tools.mkref import parse_genomeDir
+from celescope.tools.step import s_common
+
 
 class StarMixin():
     """

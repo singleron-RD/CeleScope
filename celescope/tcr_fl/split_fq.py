@@ -1,9 +1,11 @@
 import os
 from collections import defaultdict
-import pysam
+
 import pandas as pd
-from celescope.tools.utils import add_log, genDict, read_barcode_file
+import pysam
+
 from celescope.tcr_fl.barcode_index import Barcode_index
+from celescope.tools.utils import add_log, genDict, read_barcode_file
 
 
 @add_log

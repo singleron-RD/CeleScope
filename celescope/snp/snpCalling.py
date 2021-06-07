@@ -1,7 +1,8 @@
 import os
 
-import celescope.tools.utils as utils
 from mutract.utils import Mutract
+
+import celescope.tools.utils as utils
 from celescope.tools.step import s_common
 
 

@@ -2,10 +2,10 @@ import subprocess
 
 import pandas as pd
 
-from celescope.tools.step import Step
-from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
+from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
+from celescope.tools.step import Step
 
 
 class Star_rna(Step, StarMixin):

@@ -1,13 +1,13 @@
 import os
 import re
 import subprocess
+from itertools import islice
+
 import pandas as pd
 import pysam
 
-from itertools import islice
-from celescope.tools.utils import add_log, s_common
 from celescope.tools.step import Step
-
+from celescope.tools.utils import add_log, s_common
 
 ADAPT = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
 

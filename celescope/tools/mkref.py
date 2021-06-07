@@ -1,5 +1,5 @@
-import configparser
 import abc
+import configparser
 
 from celescope.tools.__init__ import GENOME_CONFIG
 

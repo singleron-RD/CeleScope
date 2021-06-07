@@ -1,11 +1,11 @@
 """barcode step."""
 
+import glob
 import os
 import re
 import subprocess
 import sys
-import glob
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
 from itertools import combinations, product
 
 import pysam
@@ -14,7 +14,6 @@ from xopen import xopen
 import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
 from celescope.tools.step import Step, s_common
-
 
 MIN_T = 10
 

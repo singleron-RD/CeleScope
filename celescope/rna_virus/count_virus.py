@@ -1,8 +1,10 @@
-import pandas as pd
-import pysam
 import logging
 import os
 from collections import defaultdict
+
+import pandas as pd
+import pysam
+
 from celescope.tools.utils import add_log, s_common
 
 

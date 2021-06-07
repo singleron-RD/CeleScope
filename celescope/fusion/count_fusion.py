@@ -1,12 +1,12 @@
 import os
 
-import pysam
 import pandas as pd
+import pysam
 
 import celescope.tools.utils as utils
-from celescope.tools.step import Step, s_common
 from celescope.__init__ import ROOT_PATH
 from celescope.fusion.mkref import parse_genomeDir_fusion
+from celescope.tools.step import Step, s_common
 
 
 def is_fusion(pos, read_start, read_length, flanking_base):

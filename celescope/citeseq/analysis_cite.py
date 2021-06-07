@@ -1,4 +1,5 @@
 import os
+
 from celescope.tools.utils import parse_match_dir
 
 CITESEQ_DIR = os.path.dirname(__file__)

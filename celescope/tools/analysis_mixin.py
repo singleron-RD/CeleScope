@@ -3,9 +3,9 @@ import subprocess
 import pandas as pd
 
 import celescope.tools.utils as utils
-from celescope.tools.step import Step
-from celescope.rna.mkref import parse_genomeDir_rna
 from celescope.__init__ import ROOT_PATH
+from celescope.rna.mkref import parse_genomeDir_rna
+from celescope.tools.step import Step
 
 
 class AnalysisMixin():

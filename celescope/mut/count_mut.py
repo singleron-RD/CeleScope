@@ -1,8 +1,10 @@
-from celescope.tools.utils import add_log, parse_match_dir
-import pysam
 import os
-import pandas as pd
+
 import editdistance
+import pandas as pd
+import pysam
+
+from celescope.tools.utils import add_log, parse_match_dir
 
 parentDir = os.path.dirname(__file__)
 

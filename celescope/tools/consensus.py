@@ -1,12 +1,13 @@
-import pysam
-import numpy as np
 import subprocess
-from xopen import xopen
 from collections import defaultdict
 from itertools import groupby
 
-from celescope.tools.step import Step, s_common
+import numpy as np
+import pysam
+from xopen import xopen
+
 import celescope.tools.utils as utils
+from celescope.tools.step import Step, s_common
 
 
 @utils.add_log

@@ -7,9 +7,9 @@ import subprocess
 import pandas as pd
 import pysam
 
+import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
-import celescope.tools.utils as utils
 
 
 @utils.add_log

@@ -1,9 +1,11 @@
+import glob
+import os
+
+import numpy as np
+import pandas as pd
+
 from celescope.tools.report import reporter
 from celescope.tools.utils import add_log, format_stat, read_barcode_file
-import os
-import pandas as pd
-import numpy as np
-import glob
 
 
 class Count_cite():

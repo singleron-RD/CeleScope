@@ -1,8 +1,11 @@
-import unittest
-import pandas as pd
-import numpy as np
 import os
+import unittest
+
+import numpy as np
+import pandas as pd
+
 from .otsu import array2hist, makePlot, threshold_otsu
+
 
 class test_capture(unittest.TestCase):
     def setUp(self):

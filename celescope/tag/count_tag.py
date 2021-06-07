@@ -5,6 +5,7 @@ assign cell identity based on SNR and UMI_min
 import subprocess
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np

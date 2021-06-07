@@ -1,9 +1,8 @@
 import pandas as pd
 
-from celescope.tools.utils import add_log, get_id_name_dict, s_common
 from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step
-
+from celescope.tools.utils import add_log, get_id_name_dict, s_common
 
 
 @add_log

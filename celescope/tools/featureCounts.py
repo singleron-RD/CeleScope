@@ -4,10 +4,12 @@
 import os
 import re
 import subprocess
+
 import pysam
-from celescope.tools.utils import add_log, format_number, get_id_name_dict
-from celescope.tools.step import Step, s_common
+
 from celescope.tools.mkref import parse_genomeDir
+from celescope.tools.step import Step, s_common
+from celescope.tools.utils import add_log, format_number, get_id_name_dict
 
 
 def format_stat(log):

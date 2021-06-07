@@ -1,13 +1,13 @@
-import os
-import numbers
-import json
-import io
 import abc
 import collections
+import io
+import json
+import numbers
+import os
 from collections import namedtuple
 
 import pandas as pd
-from jinja2 import Environment, select_autoescape, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from celescope.tools.utils import add_log
 

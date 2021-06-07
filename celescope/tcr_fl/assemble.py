@@ -1,8 +1,8 @@
 import os
+import subprocess
+from concurrent.futures import ProcessPoolExecutor
 from os import listdir
 from os.path import isfile, join
-from concurrent.futures import ProcessPoolExecutor
-import subprocess
 
 from celescope.tools.step import Step, s_common
 from celescope.tools.utils import add_log

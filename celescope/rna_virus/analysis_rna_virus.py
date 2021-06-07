@@ -1,13 +1,15 @@
 #!/bin/env python
 # coding=utf8
 
-import os
-import json
-import pandas as pd
 import glob
+import json
+import os
+
+import pandas as pd
+
+import celescope.tools
 from celescope.tools.report import reporter
 from celescope.tools.utils import add_log, s_common
-import celescope.tools
 
 toolsdir = os.path.dirname(celescope.tools.__file__)
 

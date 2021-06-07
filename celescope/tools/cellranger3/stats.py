@@ -3,9 +3,11 @@
 # Copyright (c) 2015 10X Genomics, Inc. All rights reserved.
 #
 
+import sys
+
 import numpy as np
 import scipy.stats as sp_stats
-import sys
+
 # import cellranger.constants as cr_constants
 # import tenkit.constants as tk_constants
 # import tenkit.seq as tk_seq

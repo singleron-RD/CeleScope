@@ -4,11 +4,10 @@ import numpy as np
 import pandas as pd
 
 import celescope.tools
+from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
+from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step, s_common
 from celescope.tools.utils import add_log
-from celescope.tools.analysis_mixin import AnalysisMixin
-from celescope.capture_virus.otsu import threshold_otsu, array2hist, makePlot
-
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 

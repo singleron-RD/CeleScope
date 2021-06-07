@@ -1,6 +1,6 @@
 
-import pysam
 import numpy as np
+import pysam
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common

@@ -3,22 +3,23 @@ count step
 """
 
 import os
-import sys
 import random
+import subprocess
+import sys
 from collections import defaultdict
 from itertools import groupby
-import subprocess
 
 import numpy as np
 import pandas as pd
+import pysam
 from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
-import pysam
 
 import celescope.tools.utils as utils
-from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
-from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
+from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
+                                      MATRIX_FILE_NAME)
 from celescope.tools.cellranger3 import get_plot_elements
+from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 
 TOOLS_DIR = os.path.dirname(__file__)

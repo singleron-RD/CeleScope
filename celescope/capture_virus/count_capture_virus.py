@@ -1,6 +1,8 @@
+import os
+
 import pandas as pd
 import pysam
-import os
+
 from celescope.tools.utils import add_log, genDict, read_barcode_file, s_common
 
 

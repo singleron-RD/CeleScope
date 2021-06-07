@@ -1,8 +1,10 @@
 import unittest
 from collections import namedtuple
-from celescope.tools.step import Step
-from .consensus import dumb_consensus, get_read_length
+
 from celescope.tools.count import Count
+from celescope.tools.step import Step
+
+from .consensus import dumb_consensus, get_read_length
 
 
 class Tests(unittest.TestCase):

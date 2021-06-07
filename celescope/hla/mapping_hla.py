@@ -1,9 +1,11 @@
 import os
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
-import celescope
-import pysam
+
 import pandas as pd
+import pysam
+
+import celescope
 from celescope.tools.utils import add_log, read_barcode_file
 
 

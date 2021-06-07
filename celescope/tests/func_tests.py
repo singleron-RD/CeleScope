@@ -1,7 +1,9 @@
-import unittest
 import os
+import unittest
 from collections import namedtuple
+
 from celescope.tools.step import Step
+
 
 class Tests(unittest.TestCase):
 

@@ -1,23 +1,22 @@
+import argparse
+import glob
+import gzip
+import importlib
+import itertools
+import json
 import logging
 import os
-import glob
-import sys
 import re
-import subprocess
-import importlib
 import resource
+import subprocess
+import sys
 import time
-import argparse
-import gzip
-import itertools
+from collections import Counter, defaultdict
 from datetime import timedelta
-from collections import defaultdict
 from functools import wraps
-from collections import Counter
-import json
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pysam
 import xopen
 

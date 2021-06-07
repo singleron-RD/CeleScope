@@ -1,9 +1,10 @@
+import configparser
 import os
 import subprocess
-import configparser
 
 import celescope.tools.utils as utils
-from celescope.tools.mkref import Mkref, get_opts_mkref as opts
+from celescope.tools.mkref import Mkref
+from celescope.tools.mkref import get_opts_mkref as opts
 
 
 class Mkref_snp(Mkref):

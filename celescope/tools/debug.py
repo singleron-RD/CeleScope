@@ -1,6 +1,6 @@
-import os
-import glob 
 import argparse
+import glob
+import os
 
 
 class Debug():

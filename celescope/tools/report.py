@@ -1,9 +1,9 @@
-import os
-import json
-import pandas as pd
 import io
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+import json
+import os
 
+import pandas as pd
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 env = Environment(
     loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),

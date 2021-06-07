@@ -1,14 +1,16 @@
 import os
-import scipy.io
-import pandas as pd
+import random
 from collections import namedtuple
+
 import numpy as np
 import numpy.ma as ma
-import celescope.tools.cellranger3.stats as cr_stats ## modified stats.py
-import celescope.tools.cellranger3.sgt as cr_sgt ## modified sgt.py
-import random
-from celescope.tools.__init__ import MATRIX_FILE_NAME, FEATURE_FILE_NAME, BARCODE_FILE_NAME
+import pandas as pd
+import scipy.io
 
+import celescope.tools.cellranger3.sgt as cr_sgt  # # modified sgt.py
+import celescope.tools.cellranger3.stats as cr_stats  # # modified stats.py
+from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
+                                      MATRIX_FILE_NAME)
 
 # Set random seed
 random.seed(0)

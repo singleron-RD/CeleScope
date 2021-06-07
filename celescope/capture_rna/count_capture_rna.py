@@ -1,9 +1,9 @@
 
-from itertools import groupby
 from collections import defaultdict
+from itertools import groupby
 
-import pysam
 import pandas as pd
+import pysam
 
 import celescope.tools.utils as utils
 from celescope.tools.count import Count, get_opts_count

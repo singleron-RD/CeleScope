@@ -1,12 +1,12 @@
 import collections
-import numpy as np
 import math
+
+import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 import plotly.offline as pltoff
 
 from celescope.tools.utils import add_log
-
 
 BarcodeRankPlotSegment = collections.namedtuple('BarcodeRankPlotSegment', ['start', 'end', 'cell_density', 'legend'])
 

@@ -1,12 +1,11 @@
-import os
-import glob
 import argparse
+import glob
 import itertools
+import os
 from collections import defaultdict
 
 import celescope
 from celescope.tools.utils import find_assay_init, find_step_module
-
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
@@ -84,10 +83,10 @@ class Multi():
                 line = line.strip()
                 if not line or line.startswith('#'):
                     continue
-                tmp = line.split()
-                library_id, library_path, sample_name = tmp[:3]
-                if len(tmp) == 4:
-                    col4 = tmp[3]
+                line_split = line.split()
+                library_id, library_path, sample_name = line_split[:3]
+                if len(line_split) == 4:
+                    col4 = line_split[3]
                 else:
                     col4 = default_val
                 fq1, fq2 = get_fq(library_id, library_path)
