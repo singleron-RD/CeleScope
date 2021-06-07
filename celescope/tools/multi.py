@@ -6,6 +6,7 @@ from collections import defaultdict
 
 import celescope
 from celescope.tools.utils import find_assay_init, find_step_module
+from celescope.celescope import ArgFormatter
 
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
@@ -47,7 +48,7 @@ class Multi():
     def common_args(self):
         readme = f'{self.__ASSAY__} multi-samples'
         parser = argparse.ArgumentParser(readme, 
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+            formatter_class=ArgFormatter,
             conflict_handler='resolve')
         parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
         parser.add_argument(
