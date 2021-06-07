@@ -19,9 +19,7 @@ class Cutadapt(Step):
 	- p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
     Output
-
     - `cutadapt.log` Cutadapt output log file.
-
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
     """
 

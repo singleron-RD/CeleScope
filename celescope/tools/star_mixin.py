@@ -117,13 +117,33 @@ class StarMixin():
 
 
 def get_opts_star_mixin(parser, sub_program):
-    parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
-    parser.add_argument('--out_unmapped', help='out_unmapped', action='store_true')
-    parser.add_argument('--genomeDir', help='genome directory')
-    parser.add_argument('--STAR_param', help='STAR parameters', default="")
-    parser.add_argument('--outFilterMultimapNmax', help='STAR outFilterMultimapNmax', default=1)
-    parser.add_argument('--starMem', help='starMem', default=30)
+    parser.add_argument(
+        '--genomeDir', 
+        help='Required. Genome directory.'
+    )
+    parser.add_argument(
+        '--outFilterMatchNmin', 
+        help="""Default `0`. Alignment will be output only if the number of matched bases 
+is higher than or equal to this value.""", 
+        default=0
+    )
+    parser.add_argument(
+        '--out_unmapped', 
+        help='Output unmapped reads', 
+        action='store_true'
+    )
+    parser.add_argument('--STAR_param', help='Other STAR parameters', default="")
+    parser.add_argument(
+        '--outFilterMultimapNmax', 
+        help='Default `1`. How many places are allowed to match a read at most.', 
+        default=1
+    )
+    parser.add_argument(
+        '--starMem', 
+        help='Default `30`. Maximum memory that STAR can use.', 
+        default=30
+    )
     if sub_program:
-        parser.add_argument('--fq', required=True)
-        parser.add_argument("--consensus_fq", action='store_true', help="input fastq is umi consensus")
+        parser.add_argument('--fq', help="Required. R2 fastq file.", required=True)
+        parser.add_argument("--consensus_fq", action='store_true', help="Input fastq has been consensused")
         parser = s_common(parser)

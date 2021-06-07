@@ -1,21 +1,22 @@
 
 
 ## Arguments
-`--outFilterMatchNmin` STAR outFilterMatchNmin.
+`--genomeDir` Required. Genome directory.
 
-`--out_unmapped` out_unmapped.
+`--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
+is higher than or equal to this value.
 
-`--genomeDir` genome directory.
+`--out_unmapped` Output unmapped reads.
 
-`--STAR_param` STAR parameters.
+`--STAR_param` Other STAR parameters.
 
-`--outFilterMultimapNmax` STAR outFilterMultimapNmax.
+`--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
-`--starMem` starMem.
+`--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--fq` None
+`--fq` Required. R2 fastq file.
 
-`--consensus_fq` input fastq is umi consensus.
+`--consensus_fq` Input fastq has been consensused.
 
 `--outdir` Output diretory.
 
