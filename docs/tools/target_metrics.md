@@ -1,10 +1,6 @@
 
 
 ## Arguments
-`--gtf_type` Specify feature type in GTF annotation.
-
-`--genomeDir` None
-
 `--outdir` Output diretory.
 
 `--assay` Assay name.
@@ -15,5 +11,9 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--input` None
+`--bam` featureCounts bam.
+
+`--match_dir` match_dir.
+
+`--gene_list` gene_list.
 

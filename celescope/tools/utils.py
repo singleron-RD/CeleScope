@@ -794,3 +794,20 @@ def find_step_module(assay, step):
             step_module = importlib.import_module(f"{module_path}.{step}")
 
     return step_module
+
+def find_step_module_with_folder(assay, step):
+    init_module = find_assay_init(assay)
+    folder = ""
+    try:
+        step_module = importlib.import_module(f"celescope.{assay}.{step}")
+        folder = assay
+    except ModuleNotFoundError:
+        try:
+            step_module = importlib.import_module(f"celescope.tools.{step}")
+            folder = 'tools'
+        except ModuleNotFoundError:
+            module_path = init_module.IMPORT_DICT[step]
+            step_module = importlib.import_module(f"{module_path}.{step}")
+            folder = module_path.split('.')[1]
+
+    return step_module, folder
