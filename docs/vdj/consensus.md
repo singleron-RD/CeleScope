@@ -1,11 +1,9 @@
 
 
 ## Arguments
-`--fq_pattern` read2 fastq pattern.
+`--threshold` valid base threshold.
 
-`--barcode_fasta` barcode fasta.
-
-`--linker_fasta` linker fasta.
+`--not_consensus` input fastq is not consensus.
 
 `--outdir` Output diretory.
 
@@ -17,5 +15,5 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` clean read2.
+`--fq` None
 

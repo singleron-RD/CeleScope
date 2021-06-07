@@ -1,11 +1,7 @@
 
 
 ## Arguments
-`--fq_pattern` read2 fastq pattern.
-
-`--barcode_fasta` barcode fasta.
-
-`--linker_fasta` linker fasta.
+`--umi_threshold` method to find virus UMI threshold.
 
 `--outdir` Output diretory.
 
@@ -17,5 +13,7 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` clean read2.
+`--match_dir` match_dir.
+
+`--virus_file` virus UMI count file.
 

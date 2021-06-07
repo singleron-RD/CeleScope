@@ -29,11 +29,6 @@ def get_seq_list(seq, pattern_dict, abbr):
 
 @utils.add_log
 def parse_pattern(pattern):
-    # 解析接头结构，返回接头结构字典
-    # key: 字母表示的接头, value: 碱基区间列表
-    # eg.: C8L10C8L10C8U8T30
-    # defaultdict(<type 'list'>:
-    # {'C': [[0, 8], [18, 26], [36, 44]], 'U': [[44, 52]], 'L': [[8, 18], [26, 36]], 'T': [[52, 82]]})
     pattern_dict = defaultdict(list)
     p = re.compile(r'([CLUNT])(\d+)')
     tmp = p.findall(pattern)
@@ -258,9 +253,22 @@ class Chemistry():
 
 
 class Barcode(Step):
+    """
+    Features
 
-    '''barcode step class
-    '''   
+    - Demultiplex barcodes.
+    - Filter invalid R1 reads, which includes:
+        - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+        - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+        - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+        - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+    Output
+
+    - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+    the read name is `{barcode}_{UMI}_{read ID}`.
+    """
+
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
@@ -284,20 +292,29 @@ class Barcode(Step):
         self.no_barcode_num = 0
         self.barcode_qual_Counter = Counter()
         self.umi_qual_Counter = Counter()
-        if args.gzip:
-            suffix = ".gz"
-        else:
-            suffix = ""
-        self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
-        self.nopolyT = args.nopolyT
-        self.noLinker = args.noLinker
         self.pattern = args.pattern
         self.linker = args.linker
         self.whitelist = args.whitelist
         self.lowNum = args.lowNum
         self.lowQual = args.lowQual
         self.allowNoPolyT = args.allowNoPolyT
-        self.allowNoLinker = args.allowNoLinker   
+        self.allowNoLinker = args.allowNoLinker
+        self.nopolyT = args.nopolyT # true == output nopolyT reads
+        self.noLinker = args.noLinker
+
+        # out file
+        if args.gzip:
+            suffix = ".gz"
+        else:
+            suffix = ""
+        self.out_file_dict['out_fq2'] = f'{self.outdir}/{self.sample}_2.fq{suffix}'
+        if self.nopolyT:
+            self.out_file_dict['nopolyT_1'] = f'{self.outdir}/noPolyT_1.fq'
+            self.out_file_dict['nopolyT_2'] = f'{self.outdir}/noPolyT_2.fq'
+        if self.noLinker:
+            self.out_file_dict['noLinker_1'] = f'{self.outdir}/noLinker_1.fq'
+            self.out_file_dict['noLinker_2'] = f'{self.outdir}/noLinker_2.fq'
+
 
     @utils.add_log
     def run(self):
@@ -316,15 +333,15 @@ class Barcode(Step):
                 write valid R2 read to file
         """
 
-        fh3 = xopen(self.out_fq2, 'w')
+        fh3 = xopen(self.out_file_dict['out_fq2'], 'w')
 
         if self.nopolyT:
-            fh1_without_polyT = xopen(self.outdir + '/noPolyT_1.fq', 'w')
-            fh2_without_polyT = xopen(self.outdir + '/noPolyT_2.fq', 'w')
+            fh1_without_polyT = xopen(self.out_file_dict['nopolyT_1'], 'w')
+            fh2_without_polyT = xopen(self.out_file_dict['nopolyT_2'], 'w')
 
         if self.noLinker:
-            fh1_without_linker = xopen(self.outdir + '/noLinker_1.fq', 'w')
-            fh2_without_linker = xopen(self.outdir + '/noLinker_2.fq', 'w')
+            fh1_without_linker = xopen(self.out_file_dict['noLinker_1'], 'w')
+            fh2_without_linker = xopen(self.out_file_dict['noLinker_2'], 'w')
 
         for i in range(self.fq_number):
 
@@ -487,13 +504,6 @@ class Barcode(Step):
         self.clean_up()
 
 
-    @utils.add_log
-    def fastqc(self):
-        cmd = ['fastqc', '-t', str(self.thread), '-o', self.outdir, self.out_fq2]
-        Barcode.fastqc.logger.info('%s' % (' '.join(cmd)))
-        subprocess.check_call(cmd)
-
-
 @utils.add_log
 def barcode(args):
     step_name = "barcode"
@@ -502,25 +512,74 @@ def barcode(args):
 
 
 def get_opts_barcode(parser, sub_program=True):
-    parser.add_argument('--pattern', help='')
-    parser.add_argument('--whitelist', help='')
-    parser.add_argument('--linker', help='')
-    parser.add_argument('--lowQual', type=int,
-                        help='max phred of base as lowQual, default=0', default=0)
     parser.add_argument(
-        '--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
-    parser.add_argument('--nopolyT', action='store_true',
-                        help='output nopolyT fq')
-    parser.add_argument('--noLinker', action='store_true',
-                        help='output noLinker fq')
-    parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
-    parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
-    parser.add_argument('--gzip', help="output gzipped fastq", action='store_true')
+        '--chemistry', 
+        help="""Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
+- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
+- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
+- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
+same time.""",
+        choices=list(__PATTERN_DICT__.keys()), 
+        default='auto'
+    )
     parser.add_argument(
-        '--chemistry', choices=list(__PATTERN_DICT__.keys()), help='chemistry version', default='auto')
+        '--pattern',
+        help="""The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
+        of bases.  
+- `C`: cell barcode  
+- `L`: linker(common sequences)  
+- `U`: UMI    
+- `T`: poly T""",
+    )
+    parser.add_argument(
+        '--whitelist',
+        help='Cell barcode whitelist file path, one cell barcode per line.'
+    )
+    parser.add_argument(
+        '--linker', 
+        help='Linker whitelist file path, one linker per line.'
+    )
+    parser.add_argument(
+        '--lowQual', 
+        help='Default 0. Bases in cell barcode and UMI whose phred value are lower than \
+lowQual will be regarded as low-quality bases.',
+        type=int, 
+        default=0
+    )
+    parser.add_argument(
+        '--lowNum',
+        help='The maximum allowed lowQual bases in cell barcode and UMI.',
+        type=int,
+        default=2
+    )
+    parser.add_argument(
+        '--nopolyT',
+        help='Outputs R1 reads without polyT.',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--noLinker', 
+        help='Outputs R1 reads without correct linker.',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--allowNoPolyT', 
+        help="Allow valid reads without polyT.", 
+        action='store_true'
+    )
+    parser.add_argument(
+        '--allowNoLinker', 
+        help="Allow valid reads without correct linker.", 
+        action='store_true'
+    )
+    parser.add_argument(
+        '--gzip', 
+        help="Output gzipped fastq files.", 
+        action='store_true'
+    )
     if sub_program:
-        parser.add_argument('--fq1', help='read1 fq file', required=True)
-        parser.add_argument('--fq2', help='read2 fq file', required=True)
+        parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
+        parser.add_argument('--fq2', help='R2 fastq file. Multiple files are separated by comma.', required=True)
         parser = s_common(parser)
 
     return parser

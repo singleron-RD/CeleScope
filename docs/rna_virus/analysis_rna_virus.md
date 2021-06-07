@@ -13,9 +13,5 @@
 
 `--matrix_file` matrix file.
 
-`--genomeDir` genomeDir.
-
-`--save_rds` write rds to disk.
-
-`--type_marker_tsv` cell type marker tsv.
+`--virus_file` virus UMI count file.
 

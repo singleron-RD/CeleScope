@@ -1,11 +1,7 @@
 
 
 ## Arguments
-`--fq_pattern` read2 fastq pattern.
-
-`--barcode_fasta` barcode fasta.
-
-`--linker_fasta` linker fasta.
+`--annovar_config` annovar soft config file.
 
 `--outdir` Output diretory.
 
@@ -17,5 +13,11 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` clean read2.
+`--match_dir` match_dir.
+
+`--vcf` vcf file.
+
+`--CID_file` CID_file.
+
+`--variant_count_file` variant count file.
 

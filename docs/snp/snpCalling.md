@@ -1,12 +1,6 @@
 
 
 ## Arguments
-`--fq_pattern` read2 fastq pattern.
-
-`--barcode_fasta` barcode fasta.
-
-`--linker_fasta` linker fasta.
-
 `--outdir` Output diretory.
 
 `--assay` Assay name.
@@ -17,5 +11,11 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` clean read2.
+`--bam` featureCounts bam.
+
+`--match_dir` match scRNA-Seq dir.
+
+`--genomeDir` genomeDir.
+
+`--gene_list` gene_list.
 

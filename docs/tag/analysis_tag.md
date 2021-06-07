@@ -1,12 +1,6 @@
 
 
 ## Arguments
-`--fq_pattern` read2 fastq pattern.
-
-`--barcode_fasta` barcode fasta.
-
-`--linker_fasta` linker fasta.
-
 `--outdir` Output diretory.
 
 `--assay` Assay name.
@@ -17,5 +11,7 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` clean read2.
+`--tsne_tag_file` tsne tag file.
+
+`--match_dir` matched scRNA-Seq CeleScope directory path.
 

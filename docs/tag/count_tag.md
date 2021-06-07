@@ -1,39 +1,27 @@
-# count_tag
-
-## Features
-- Assign tag to each cell barcode and summarize.
-
-## Input
-- Read count file from mapping_tag
-- matched rna directory
-
-## Output
-
-- `{sample}_umi_tag.tsv` 
-
-    `first column` cell barcode  
-    `last column`  assigned tag  
-    `columns between first and last` UMI count for each tag 
-
-- `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
-
-- `{sample}_cluster_count.tsv` cell barcode number assigned to *undeterminded*, *multiplet* and *each tag*
 
 
-## Parameters
+## Arguments
+`--UMI_min` cells have tag_UMI>=UMI_min are considered as valid cell.
 
-`--UMI_min` Default='auto'. Minimum UMI threshold. Cell barcodes with valid UMI < UMI_min are classified as *undeterminded*.
+`--dim` tag dimension.
 
-`--SNR_min` Default='auto'. Minimum signal-to-noise ratio. Cell barcodes with UMI >=UMI_min and SNR < SNR_min are classified as *multiplet*.
+`--SNR_min` minimum signal to noise ratio.
 
-`--dim` Default=1. Tag dimentions. Usually we use 1-dimentional tag.
+`--combine_cluster` conbine cluster tsv file.
 
-`--coefficient` Default=0.1. If `SNR_min` is 'auto', minimum signal-to-noise ratio is calulated as `SNR_min = max(median(SNRs) * coefficient, 2)`. Smaller `coefficient` will cause less *multiplet* in the tag assignment.
+`--coefficient` SNR coefficient.
 
-## Metrics
+`--outdir` Output diretory.
 
-- Mapped Reads in Cells : Mapped reads with scRNA-Seq cell barcode
+`--assay` Assay name.
 
-- Median UMI per Cell : Median UMI per scRNA-Seq cell barcode
+`--sample` Sample name.
 
-- Mean UMI per Cell : Mean UMI per scRNA-Seq cell barcode
+`--thread` Thread to use.
+
+`--debug` If this argument is used, celescope may output addtional file for debugging.
+
+`--read_count_file` tag read count file.
+
+`--match_dir` matched scRNA-Seq CeleScope directory path.
+

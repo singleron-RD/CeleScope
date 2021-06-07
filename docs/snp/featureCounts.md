@@ -1,11 +1,9 @@
 
 
 ## Arguments
-`--fq_pattern` read2 fastq pattern.
+`--gtf_type` Specify feature type in GTF annotation.
 
-`--barcode_fasta` barcode fasta.
-
-`--linker_fasta` linker fasta.
+`--genomeDir` None
 
 `--outdir` Output diretory.
 
@@ -17,5 +15,5 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fq` clean read2.
+`--input` None
 
