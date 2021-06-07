@@ -1,17 +1,17 @@
 
 
 ## Arguments
-`--genomeDir` genome directory path
+`--genomeDir` genome directory path.
 
-`--thread` threads to use
+`--thread` threads to use.
 
-`--genome_name` genome name
+`--genome_name` genome name.
 
-`--dry_run` only write config file
+`--dry_run` only write config file.
 
-`--fasta` fasta file
+`--fasta` fasta file.
 
-`--gtf` gtf file
+`--gtf` gtf file.
 
-`--mt_gene_list` mitochondria gene list file
+`--mt_gene_list` mitochondria gene list file.
 

@@ -1,7 +1,7 @@
 
 
 ## Arguments
-`--gtf_type` Specify feature type in GTF annotation
+`--gtf_type` Specify feature type in GTF annotation.
 
 `--genomeDir` None
 

@@ -1,21 +1,21 @@
 
 
 ## Arguments
-`--outFilterMatchNmin` STAR outFilterMatchNmin
+`--outFilterMatchNmin` STAR outFilterMatchNmin.
 
-`--out_unmapped` out_unmapped
+`--out_unmapped` out_unmapped.
 
-`--genomeDir` genome directory
+`--genomeDir` genome directory.
 
-`--STAR_param` STAR parameters
+`--STAR_param` STAR parameters.
 
-`--outFilterMultimapNmax` STAR outFilterMultimapNmax
+`--outFilterMultimapNmax` STAR outFilterMultimapNmax.
 
-`--starMem` starMem
+`--starMem` starMem.
 
 `--fq` None
 
-`--consensus_fq` input fastq is umi consensus
+`--consensus_fq` input fastq is umi consensus.
 
 `--outdir` Output diretory.
 

@@ -1,9 +1,9 @@
 
 
 ## Arguments
-`--threshold` valid base threshold
+`--threshold` valid base threshold.
 
-`--not_consensus` input fastq is not consensus
+`--not_consensus` input fastq is not consensus.
 
 `--outdir` Output diretory.
 

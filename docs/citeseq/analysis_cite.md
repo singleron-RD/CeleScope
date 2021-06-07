@@ -1,13 +1,13 @@
 
 
 ## Arguments
-`--outdir` output dir
+`--outdir` output dir.
 
-`--sample` sample name
+`--sample` sample name.
 
-`--match_dir` match_dir
+`--match_dir` match_dir.
 
-`--citeseq_mtx` citeseq matrix .gz file
+`--citeseq_mtx` citeseq matrix .gz file.
 
-`--assay` assay
+`--assay` assay.
 

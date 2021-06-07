@@ -1,11 +1,11 @@
 
 
 ## Arguments
-`--type` TCR or BCR
+`--type` TCR or BCR.
 
-`--species` human or mouse
+`--species` human or mouse.
 
-`--not_consensus` input fastq is not consensus
+`--not_consensus` input fastq is not consensus.
 
 `--outdir` Output diretory.
 

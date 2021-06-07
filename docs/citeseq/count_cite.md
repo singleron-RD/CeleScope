@@ -1,13 +1,13 @@
 
 
 ## Arguments
-`--match_dir` matched scRNA-Seq CeleScope directory path
+`--match_dir` matched scRNA-Seq CeleScope directory path.
 
-`--outdir` output dir
+`--outdir` output dir.
 
-`--sample` sample name
+`--sample` sample name.
 
-`--assay` assay
+`--assay` assay.
 
-`--read_count_file` tag read count file
+`--read_count_file` tag read count file.
 

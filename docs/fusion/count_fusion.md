@@ -13,9 +13,9 @@
 
 `--bam` None
 
-`--match_dir` match scRNA-Seq dir
+`--match_dir` match scRNA-Seq dir.
 
-`--fusion_genomeDir` fusion genome directory
+`--fusion_genomeDir` fusion genome directory.
 
 `--flanking_base` None
 

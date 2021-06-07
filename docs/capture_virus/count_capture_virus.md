@@ -1,19 +1,19 @@
 
 
 ## Arguments
-`--min_query_length` minimum query length
+`--min_query_length` minimum query length.
 
-`--outdir` output dir
+`--outdir` output dir.
 
-`--assay` assay
+`--assay` assay.
 
-`--sample` sample name
+`--sample` sample name.
 
 `--thread` None
 
-`--debug` debug
+`--debug` debug.
 
-`--match_dir` matched rna_virus directory
+`--match_dir` matched rna_virus directory.
 
 `--virus_bam` None
 

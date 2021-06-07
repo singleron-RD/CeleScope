@@ -15,13 +15,13 @@
 
 `--bam` None
 
-`--force_cell_num` force cell number
+`--force_cell_num` force cell number.
 
-`--genomeDir` genome directory
+`--genomeDir` genome directory.
 
-`--gtf` gtf file path
+`--gtf` gtf file path.
 
-`--expected_cell_num` expected cell number
+`--expected_cell_num` expected cell number.
 
-`--cell_calling_method` cell calling methods
+`--cell_calling_method` cell calling methods.
 

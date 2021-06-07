@@ -1,21 +1,21 @@
 
 
 ## Arguments
-`--outdir` output dir
+`--outdir` output dir.
 
-`--assay` assay
+`--assay` assay.
 
-`--sample` sample name
+`--sample` sample name.
 
 `--thread` None
 
-`--debug` debug
+`--debug` debug.
 
-`--matrix_file` matrix file
+`--matrix_file` matrix file.
 
-`--genomeDir` genomeDir
+`--genomeDir` genomeDir.
 
-`--save_rds` write rds to disk
+`--save_rds` write rds to disk.
 
-`--type_marker_tsv` cell type marker tsv
+`--type_marker_tsv` cell type marker tsv.
 

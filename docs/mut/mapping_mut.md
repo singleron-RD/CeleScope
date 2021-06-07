@@ -1,17 +1,17 @@
 
 
 ## Arguments
-`--outdir` output dir
+`--outdir` output dir.
 
-`--sample` sample name
+`--sample` sample name.
 
 `--fq` None
 
-`--assay` assay
+`--assay` assay.
 
-`--indel_genomeDir` insertion or deletion STAR indexed genome directory
+`--indel_genomeDir` insertion or deletion STAR indexed genome directory.
 
-`--thread` STAR thread
+`--thread` STAR thread.
 
-`--outFilterMatchNmin` STAR outFilterMatchNmin
+`--outFilterMatchNmin` STAR outFilterMatchNmin.
 
