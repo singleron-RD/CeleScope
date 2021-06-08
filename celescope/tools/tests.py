@@ -3,7 +3,7 @@ from collections import namedtuple
 from celescope.tools.step import Step
 from .consensus import dumb_consensus, get_read_length
 from celescope.tools.count import Count
-from celescope.tools.generate_docs import generate_single_step_doc, generate_all_docs
+
 
 
 class Tests(unittest.TestCase):
