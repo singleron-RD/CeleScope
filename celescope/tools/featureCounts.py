@@ -150,7 +150,7 @@ def get_opts_featureCounts(parser, sub_program):
     )
     parser.add_argument('--genomeDir', help='Required. Genome directory.')
     if sub_program:
-        parser = s_common(parser)
         parser.add_argument('--input', help='Required. BAM file path.', required=True)
+        parser = s_common(parser)
     return parser
 
