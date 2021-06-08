@@ -17,15 +17,14 @@ ASSAYS = [
     #'snp',
     'rna',
 ]
-TEST_DIR = "/SGRNJ03/randd/user/zhouyiqi/multi_tests/"
 
 
-def run_single(assay):
+def run_single(assay, test_dir):
     """
     Returns:
         string indicates complete status
     """
-    os.chdir(TEST_DIR + assay)
+    os.chdir(os.path.join(test_dir, assay))
     print("*" * 20 + "running " + assay + "*" * 20)
     subprocess.check_call('sh run_shell.sh', shell=True)
     subprocess.check_call('sh sjm.sh', shell=True)
@@ -39,12 +38,12 @@ def run_single(assay):
     return f"{assay} success."
 
 @utils.add_log
-def test_mutiple(assays):
+def test_mutiple(assays, test_dir):
     """
     Run all
-    >>> pytest -s celescope/tests/test_multi.py
+    >>> pytest -s celescope/tests/test_multi.py --test_dir {some_dir}
     Run some tests
-    >>> pytest -s celescope/tests/test_multi.py --assays tag,fusion
+    >>> pytest -s celescope/tests/test_multi.py --test_dir {some_dir} --assays tag,fusion
     """
 
     if not assays:
@@ -54,7 +53,7 @@ def test_mutiple(assays):
     print("assays to run: ", assays)
     thread = len(assays)
     executor = futures.ProcessPoolExecutor(max_workers=thread)
-    results = executor.map(run_single, assays)
+    results = executor.map(run_single, assays, [test_dir] * len(assays))
     res_list = []
     for result in results:
         res_list.append(result)
