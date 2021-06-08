@@ -66,9 +66,11 @@ def get_opts_cutadapt(parser, sub_program):
 ```
 
 ## Docs
-There is a python script at the root of this repo `generate_docs.py` to generate documents for each released step. It will collect:
-- Docstring of the step class. The Docstring should have sections named `Feature` and `Output`.
+There is a python script at the root of this repo `generate_docs.py` to generate documents for each released step. The generated docs are in the `docs` folder. It will collect:
+- Docstring of the step class. The Docstring should have sections named `Features` and `Output`.
 - Help infomation in `get_opts_{module_name}`
+  
+Released assays will be added to `manual.md`.
 
 ## Tests
 If you add new steps, you need to create a small data for integration tests. There is a test example in `celescope/tests/test_multi.py`. To run this example:

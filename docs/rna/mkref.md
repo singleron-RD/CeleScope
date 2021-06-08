@@ -1,7 +1,7 @@
 ## Features
 - Create a genome reference directory.
 
-## ## Output
+## Output
 
 - STAR genome index files
 
