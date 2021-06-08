@@ -2,9 +2,8 @@ import configparser
 import subprocess
 
 import celescope.tools.utils as utils
-from celescope.tools.mkref import Mkref
+from celescope.tools.mkref import Mkref, parse_genomeDir
 from celescope.tools.mkref import get_opts_mkref as opts
-from celescope.tools.mkref import parse_genomeDir
 
 
 def parse_genomeDir_rna(genomeDir):
@@ -12,6 +11,27 @@ def parse_genomeDir_rna(genomeDir):
     
 
 class Mkref_rna(Mkref):
+    """
+    Features
+    - Create a genome reference directory.
+
+    ## Output
+
+    - STAR genome index files
+
+    - Genome refFlat file
+
+    - Genome config file
+    ```
+    $ cat celescope_genome.config
+    [genome]
+    genome_name = Homo_sapiens_ensembl_99
+    genome_type = rna
+    fasta = Homo_sapiens.GRCh38.dna.primary_assembly.fa
+    gtf = Homo_sapiens.GRCh38.99.gtf
+    refflat = Homo_sapiens_ensembl_99.refFlat
+    ```
+    """
     def __init__(self, genome_type, args):
         Mkref.__init__(self, genome_type, args)
         self.fasta = args.fasta
@@ -76,6 +96,11 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", help="fasta file", required=True)
-        parser.add_argument("--gtf", help="gtf file", required=True)
-        parser.add_argument("--mt_gene_list", help="mitochondria gene list file", default="None")
+        parser.add_argument("--fasta", help="Required. Genome fasta file.", required=True)
+        parser.add_argument("--gtf", help="Required. Genome gtf file.", required=True)
+        parser.add_argument(
+            "--mt_gene_list", 
+            help="""Mitochondria gene list file. It is a plain text file with one gene per line. 
+If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""", 
+            default="None"
+        )

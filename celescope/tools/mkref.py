@@ -41,7 +41,7 @@ class Mkref():
 
 def get_opts_mkref(parser, sub_program):
     if sub_program:
-        parser.add_argument("--genomeDir", help="genome directory path", default='./')
-        parser.add_argument("--thread", help="threads to use", default=6)
-        parser.add_argument("--genome_name", help="genome name", required=True)
-        parser.add_argument("--dry_run", help="only write config file", action='store_true')
+        parser.add_argument("--genomeDir", help="Default='./'. Output directory.", default='./')
+        parser.add_argument("--thread", help="Default=6. Threads to use.", default=6)
+        parser.add_argument("--genome_name", help="Required, genome name. ", required=True)
+        parser.add_argument("--dry_run", help="Only write config file and exist.", action='store_true')

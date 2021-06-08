@@ -39,7 +39,7 @@ CeleScope >=1.2.0 does not output this file.
 
 
 ## Arguments
-`--genomeDir` Required. Genome directory
+`--genomeDir` Required. Genome directory.
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
