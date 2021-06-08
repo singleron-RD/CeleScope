@@ -48,14 +48,11 @@ def get_umi_count(fq):
     return res
 
 
+@utils.add_log
 def assemble_summary(outdir, sample, type):
 
     count_file = f'{outdir}/../03.split_fastq/{sample}_count.txt'
     UMIs = pd.read_csv(count_file, sep='\t')
-
-    all_ = UMIs['UMI'].tolist()
-    medians = int(np.median(all_))
-    all_UMIs = sum(all_)
     
     stat_file = outdir + '/stat.txt'
 
@@ -71,28 +68,31 @@ def assemble_summary(outdir, sample, type):
         TRB_UMIs_count = sum(TRB_UMIs)
         medianB = int(np.median(TRB_UMIs))
 
+        all_umi_count = TRA_UMIs + TRB_UMIs
+        medianAll = int(np.median(all_umi_count))
+
         totals = TRA_UMIs_count + TRB_UMIs_count
 
         go_assemble_summary.append({
             'item': f'All UMIs mapped to TRA and TRB',
             'count': totals,
-            'total_count': all_UMIs, 
+            'total_count': np.nan, 
         })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to TRA',
             'count': TRA_UMIs_count,
-            'total_count': all_UMIs,
+            'total_count': totals,
         })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to TRB',
             'count': TRB_UMIs_count,
-            'total_count': all_UMIs,
+            'total_count': totals,
         })
 
         with open(f'{outdir}/tmp.txt', 'w') as f:
-            f.write(f'Madian UMIs per cell:{medians}\n')
+            f.write(f'Madian UMIs per cell:{medianAll}\n')
             f.write(f'Median TRA UMIs per cell:{medianA}\n')
             f.write(f'Median TRB UMIs per cell:{medianB}\n')
 
@@ -105,41 +105,44 @@ def assemble_summary(outdir, sample, type):
         IGK_UMIs = [get_umi_count(fq) for fq in IGKs]
         IGL_UMIs = [get_umi_count(fq) for fq in IGLs]
 
+        all_umi_count = IGH_UMIs + IGL_UMIs + IGK_UMIs
+        medianAll = int(np.median(all_umi_count))
+
         IGH = sum(IGH_UMIs)
-        medianH = np.median(IGH_UMIs)
+        medianH = int(np.median(IGH_UMIs))
         IGK = sum(IGK_UMIs)
-        medianK = np.median(IGK_UMIs)
+        medianK = int(np.median(IGK_UMIs))
         IGL = sum(IGL_UMIs)
-        medianL = np.median(IGL_UMIs)
+        medianL = int(np.median(IGL_UMIs))
 
         totals = IGH + IGK + IGL
 
         go_assemble_summary.append({
             'item': f'All UMIs mapped to IGH, IGL and IGK',
             'count': totals,
-            'total_count': all_UMIs,            
+            'total_count': np.nan,            
         })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to IGH',
             'count': IGH,
-            'total_count': all_UMIs,
+            'total_count': totals,
         })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to IGK',
             'count': IGK,
-            'total_count': all_UMIs,
+            'total_count': totals,
         })
 
         go_assemble_summary.append({
             'item': f'UMIs mapped to IGL',
             'count': IGL,
-            'total_count': all_UMIs,
+            'total_count': totals,
         })
 
         with open(f'{outdir}/tmp.txt', 'w') as f:
-            f.write(f'Median UMIs per cell:{medians}\n')
+            f.write(f'Median UMIs per cell:{medianAll}\n')
             f.write(f'Median IGH UMIs per Cell:{medianH}\n')
             f.write(f'Median IGK UMIs per Cell:{medianK}\n') 
             f.write(f'Median IGL UMIs per Cell:{medianL}\n')

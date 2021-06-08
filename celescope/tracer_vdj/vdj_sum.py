@@ -19,18 +19,19 @@ from celescope.tracer_vdj.go_assemble import percent_str_func, gen_stat
 def tpm_count(ass_dir):
 	rec = pd.read_csv(f'{ass_dir}/tracer/filtered_TCRAB_summary/recombinants.txt', sep='\t')  # ass_dir outdir/sample/04.go_assemble
 	productive = rec[rec['productive'] == True]
-	productive['TPM'] = ''
 	indx = list(productive.index)
+	tpms = []
 	for i in indx:
-		cell_name = productive.at[i, 'cell_name']
-		rec_id = productive.at[i, 'recombinant_id']
+		cell_name = productive.loc[i, 'cell_name']
+		rec_id = productive.loc[i, 'recombinant_id']
 		with open(f'{ass_dir}/tracer/{cell_name}/expression_quantification/abundance.tsv') as tsvf:
 			for line in tsvf:
 				if rec_id in line:
 					line = line.rstrip()
 					line = line.split('\t')
 					tpm = float(line[4])
-					productive.loc[i, 'TPM'] = tpm
+					tpms.append(tpm)
+	productive.insert(loc=productive.shape[1], column='TPM', value=tpms)
 	
 	return productive
 
@@ -171,8 +172,9 @@ class Vdj_sum(Step):
 			proportions = []
 			for f in list(clonetypes['Frequency']):
 				p = f/sum
-				p = round(p, 4)
-				p = str(p * 100) + '%'
+				p = p * 100
+				p = round(p, 2)
+				p = str(p) + '%'
 				proportions.append(p)
 			clonetypes['Proportion'] = proportions
 			clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
@@ -192,19 +194,19 @@ class Vdj_sum(Step):
 			vdj_sum_summary.append({
 				'item': 'Cells with TRA',
 				'count': TRA_chain_num,
-				'total_count': all_cells,
+				'total_count': productive_cells_num,
 			})
 
 			vdj_sum_summary.append({
 				'item': 'Cells with TRB',
 				'count': TRB_chain_num,
-				'total_count': all_cells,
+				'total_count': productive_cells_num,
 			})
 
 			vdj_sum_summary.append({
 				'item': 'Cells with paired TRA and TRB',
 				'count': paired_cell,
-				'total_count': all_cells,
+				'total_count': productive_cells_num,
 			})
 
 			with open(f'{ass_dir}/tmp.txt', 'r') as f:
@@ -301,8 +303,9 @@ class Vdj_sum(Step):
 			sum = clonetypes['Frequency'].sum()
 			for f in list(clonetypes['Frequency']):
 				p = f/sum
-				p = round(p, 4)
-				p = str(p*100) + '%'
+				p = p * 100
+				p = round(p, 2)
+				p = str(p) + '%'
 				Proportion.append(p)
 			clonetypes['Proportion'] = Proportion
 			clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
@@ -322,25 +325,25 @@ class Vdj_sum(Step):
 			vdj_sum_summary.append({
 					'item': 'Cells with IGH',
 					'count': results_h_count,
-					'total_count': all_cells
+					'total_count': productive_cells_num
 			})	
 
 			vdj_sum_summary.append({
 					'item': 'Cells with IGK',
 					'count': results_k_count,
-					'total_count': all_cells
+					'total_count': productive_cells_num
 			})
 
 			vdj_sum_summary.append({
 					'item': 'Cells with IGL',
 					'count': results_l_count,
-					'total_count': all_cells
+					'total_count': productive_cells_num
 			})			
 
 			vdj_sum_summary.append({
 					'item': 'Cells with paired IGH and IGK',
 					'count': paired_k,
-					'total_count': all_cells
+					'total_count': productive_cells_num
 			})
 
 			vdj_sum_summary.append({
@@ -422,7 +425,6 @@ def get_opts_vdj_sum(parser, sub_program):
 		parser.add_argument('--ass_dir', help='assemble dir', required=True)
 		parser.add_argument('--fastq_dir', help='dir contains fastq', required=True)
 	parser.add_argument('--type', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
-	parser.add_argument('--UMI_min', help='int, min UMI per cell, if not set, will be counted by UMI rank 20', default='auto')
 
 
 
