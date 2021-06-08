@@ -4,6 +4,7 @@ Create pull requests to `dev` branch
 ## Lint code
 Before pull requests, you should lint your code with the following command:
 ```
+pip install pylint
 # lint
 # W1618 (no-absolute-import)
 # E1101 (no-member)
@@ -78,6 +79,8 @@ If you add new steps, you need to create a small data for integration tests. The
 1. Copy `/SGRNJ03/randd/user/zhouyiqi/multi_tests/test_folder` to {test_dir}
 2. Run `pytest`
 ```
+Install pytest
+>>> pip install pytest
 Run all
 >>> pytest -s celescope/tests/test_multi.py --test_dir {test_dir}
 Run some tests
