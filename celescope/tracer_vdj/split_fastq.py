@@ -1,8 +1,6 @@
 import pysam
 from collections import defaultdict
 import os
-import argparse
-import datetime
 import pandas as pd
 from Bio.Seq import Seq
 import glob
@@ -10,7 +8,7 @@ from celescope.tools import utils
 from celescope.tools.Step import Step, s_common
 
 
-def get_barcodes(match_dir, type):
+def get_barcodes(match_dir, Seqtype):
     """
     get reversed barcodes
     VDJ barcodes and RNA barcodes are complementary and reversed
@@ -21,9 +19,9 @@ def get_barcodes(match_dir, type):
     cluster_data = pd.read_csv(clusterFile, sep='\t')
 
     # filter barcodes
-    if type == 'TCR':
+    if Seqtype == 'TCR':
         clusters = cluster_data[cluster_data['cell_type'] == 'T cells']['cluster'].tolist()
-    elif type == 'BCR':
+    elif Seqtype == 'BCR':
         clusters = cluster_data[cluster_data['cell_type'] == 'B cells']['cluster'].tolist()
 
     tsne = glob.glob(f'{match_dir}/06.analysis/*_tsne_coord.tsv')
@@ -66,7 +64,7 @@ class Split_fastq(Step):
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
-        self.type = args.type
+        self.Seqtype = args.Seqtype
         self.fq = args.fq
         self.match_dir = args.match_dir
         self.fq_outdir = f'{self.outdir}/fastq'
@@ -90,7 +88,7 @@ class Split_fastq(Step):
         if not os.path.exists(self.fq_outdir):
             os.makedirs(self.fq_outdir)
 
-        barcodes = get_barcodes(self.match_dir, self.type)
+        barcodes = get_barcodes(self.match_dir, self.Seqtype)
         
         barcode_reads_dict = defaultdict(list)  # reads from VDJ data for each barcode
         reads_count_dict = {} # reads count for each barcode
@@ -161,7 +159,7 @@ def get_opts_split_fastq(parser, sub_program=True):
         parser = s_common(parser)
         parser.add_argument('--fq', required=True)
         parser.add_argument('--match_dir', help='matched rna_dir')
-    parser.add_argument('--type', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    parser.add_argument('--Seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
 
     
 

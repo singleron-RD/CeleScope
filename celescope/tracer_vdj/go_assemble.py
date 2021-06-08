@@ -1,11 +1,10 @@
-import argparse
+import re
+import pandas as pd
 import os
 from os import listdir
 from os.path import isfile, join
 from concurrent.futures import ProcessPoolExecutor
 from celescope.tools import utils
-from celescope.tools.utils import *
-import datetime
 import glob
 import pysam
 import numpy as np
@@ -19,7 +18,6 @@ BRACER_CONDA = 'bracer'
 BRACER_CONF = '/SGRNJ03/randd/zhouxin/software/bracer/bracer.conf'
 
 
-
 def gen_stat(summary, stat_file):
     stat = summary
     stat["new_count"] = stat["count"].astype(str) + stat["percent_str"]
@@ -28,12 +26,11 @@ def gen_stat(summary, stat_file):
 
 
 def percent_str_func(row):
-	need_percent = bool(
-		re.search("Cells with", row["item"], flags=re.IGNORECASE))
-	if need_percent:
-		return "(" + str(row["percent"]) + "%)"
-	else:
-		return ""
+    need_percent = bool(re.search("Cells with", row["item"], flags=re.IGNORECASE))
+    if need_percent:
+        return "(" + str(row["percent"]) + "%)"
+    else:
+        return ""
 
 
 def get_umi_count(fq):
@@ -41,7 +38,6 @@ def get_umi_count(fq):
     with pysam.FastxFile(fq) as fh:
         for entry in fh:
             attr = entry.name.split('_')
-            barcode = attr[0]
             umi = attr[1]
             umis.append(umi)
     res = len(set(umis))
@@ -49,16 +45,14 @@ def get_umi_count(fq):
 
 
 @utils.add_log
-def assemble_summary(outdir, sample, type):
-
-    count_file = f'{outdir}/../03.split_fastq/{sample}_count.txt'
-    UMIs = pd.read_csv(count_file, sep='\t')
+def assemble_summary(outdir, sample, Seqtype):
+    # UMIs = pd.read_csv(count_file, sep='\t')
     
     stat_file = outdir + '/stat.txt'
 
     go_assemble_summary = []
 
-    if type == 'TCR':
+    if Seqtype == 'TCR':
         TRAs = glob.glob(f'{outdir}/tracer/*/aligned_reads/*_TCR_A.fastq')
         TRBs = glob.glob(f'{outdir}/tracer/*/aligned_reads/*_TCR_B.fastq')
         TRA_UMIs = [get_umi_count(fq) for fq in TRAs]
@@ -74,19 +68,19 @@ def assemble_summary(outdir, sample, type):
         totals = TRA_UMIs_count + TRB_UMIs_count
 
         go_assemble_summary.append({
-            'item': f'All UMIs mapped to TRA and TRB',
+            'item': 'All UMIs mapped to TRA and TRB',
             'count': totals,
             'total_count': np.nan, 
         })
 
         go_assemble_summary.append({
-            'item': f'UMIs mapped to TRA',
+            'item': 'UMIs mapped to TRA',
             'count': TRA_UMIs_count,
             'total_count': totals,
         })
 
         go_assemble_summary.append({
-            'item': f'UMIs mapped to TRB',
+            'item': 'UMIs mapped to TRB',
             'count': TRB_UMIs_count,
             'total_count': totals,
         })
@@ -96,7 +90,7 @@ def assemble_summary(outdir, sample, type):
             f.write(f'Median TRA UMIs per cell:{medianA}\n')
             f.write(f'Median TRB UMIs per cell:{medianB}\n')
 
-    elif type == 'BCR':
+    elif Seqtype == 'BCR':
         IGHs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_H.fastq')
         IGKs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_K.fastq')
         IGLs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_L.fastq')
@@ -118,25 +112,25 @@ def assemble_summary(outdir, sample, type):
         totals = IGH + IGK + IGL
 
         go_assemble_summary.append({
-            'item': f'All UMIs mapped to IGH, IGL and IGK',
+            'item': 'All UMIs mapped to IGH, IGL and IGK',
             'count': totals,
             'total_count': np.nan,            
         })
 
         go_assemble_summary.append({
-            'item': f'UMIs mapped to IGH',
+            'item': 'UMIs mapped to IGH',
             'count': IGH,
             'total_count': totals,
         })
 
         go_assemble_summary.append({
-            'item': f'UMIs mapped to IGK',
+            'item': 'UMIs mapped to IGK',
             'count': IGK,
             'total_count': totals,
         })
 
         go_assemble_summary.append({
-            'item': f'UMIs mapped to IGL',
+            'item': 'UMIs mapped to IGL',
             'count': IGL,
             'total_count': totals,
         })
@@ -231,7 +225,7 @@ class Go_assemble(Step):
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
         self.species = args.species
-        self.type = args.type
+        self.Seqtype = args.Seqtype
         self.thread = int(args.thread)
         self.fastq_dir = args.fastq_dir
 
@@ -251,7 +245,7 @@ class Go_assemble(Step):
 
         tracer_summarise(self.outdir)
 
-        assemble_summary(self.outdir, self.sample, self.type)
+        assemble_summary(self.outdir, self.sample, self.Seqtype)
 
 
     def run_bracer(self):
@@ -268,13 +262,13 @@ class Go_assemble(Step):
 
         bracer_summarise(self.outdir)
 
-        assemble_summary(self.outdir, self.sample, self.type)
+        assemble_summary(self.outdir, self.sample, self.Seqtype)
 
     @utils.add_log
     def run(self):
-        if self.type == 'TCR':
+        if self.Seqtype == 'TCR':
             self.run_tracer()
-        elif self.type == 'BCR':
+        elif self.Seqtype == 'BCR':
             self.run_bracer()
 
         self.clean_up()
@@ -291,6 +285,6 @@ def get_opts_go_assemble(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fastq_dir', required=True)
-    parser.add_argument('--type', help='select TCR or BCR', choices=["TCR", "BCR"], required=True)
+    parser.add_argument('--Seqtype', help='select TCR or BCR', choices=["TCR", "BCR"], required=True)
     parser.add_argument('--species', help='species', choices=["Mmus", "Hsap"], required=True)
 

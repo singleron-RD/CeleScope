@@ -1,23 +1,16 @@
-import pysam
-from collections import defaultdict
 import os
-import argparse
-import datetime
 import pandas as pd
 from Bio.Seq import Seq
-import glob
-import re
 import numpy as np
 from celescope.tools import utils
 from celescope.tools.Step import Step, s_common
-import glob
 from celescope.tools.cellranger3 import get_plot_elements
-import json
 from celescope.tracer_vdj.go_assemble import percent_str_func, gen_stat
 
 
 def tpm_count(ass_dir):
-	rec = pd.read_csv(f'{ass_dir}/tracer/filtered_TCRAB_summary/recombinants.txt', sep='\t')  # ass_dir outdir/sample/04.go_assemble
+	rec = pd.read_csv(f'{ass_dir}/tracer/filtered_TCRAB_summary/recombinants.txt', sep='\t')  
+	# ass_dir outdir/sample/04.go_assemble
 	productive = rec[rec['productive'] == True]
 	indx = list(productive.index)
 	tpms = []
@@ -32,16 +25,16 @@ def tpm_count(ass_dir):
 					tpm = float(line[4])
 					tpms.append(tpm)
 	productive.insert(loc=productive.shape[1], column='TPM', value=tpms)
-	
+
 	return productive
 
 
-def filtering(type, ass_dir, outdir):
+def filtering(Seqtype, ass_dir, outdir):
 
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 
-	if type == 'TCR':
+	if Seqtype == 'TCR':
 		data = tpm_count(ass_dir)
 		cell_name = set(list(data['cell_name']))
 		filtered = pd.DataFrame()
@@ -60,7 +53,7 @@ def filtering(type, ass_dir, outdir):
 
 		filtered.to_csv(f'{outdir}/filtered.txt', sep='\t')
 
-	elif type == 'BCR':
+	elif Seqtype == 'BCR':
 
 		data = pd.read_csv(f'{ass_dir}/bracer/filtered_BCR_summary/changeodb.tab', sep='\t')
 		data = data[data['FUNCTIONAL'] == True]
@@ -100,7 +93,7 @@ class Vdj_sum(Step):
 	"""
 	def __init__(self, args, step_name):
 		Step.__init__(self, args, step_name)
-		self.type = args.type
+		self.Seqtype = args.Seqtype
 		self.fastq_dir = args.fastq_dir
 		self.ass_dir = args.ass_dir
 
@@ -110,9 +103,9 @@ class Vdj_sum(Step):
 		ass_dir = self.ass_dir
 		outdir = self.outdir
 		fastq_dir = self.fastq_dir
-		type = self.type
+		Seqtype = self.Seqtype
 
-		results = filtering(type, ass_dir, outdir)
+		results = filtering(Seqtype, ass_dir, outdir)
 
 		stat_file = outdir + '/stat.txt'
 
@@ -124,7 +117,7 @@ class Vdj_sum(Step):
 		
 		all_cells = count_umi.shape[0]
 
-		if type == 'TCR':
+		if Seqtype == 'TCR':
 
 			productive_cells = set(results['cell_name'].tolist())
 
@@ -168,10 +161,10 @@ class Vdj_sum(Step):
 
 			clonetypes = clonetypes_table.groupby(['TRA_chain', 'TRB_chain']).agg({'Frequency': 'count'})
 
-			sum = clonetypes['Frequency'].sum()
+			sum_c = clonetypes['Frequency'].sum()
 			proportions = []
 			for f in list(clonetypes['Frequency']):
-				p = f/sum
+				p = f/sum_c
 				p = p * 100
 				p = round(p, 2)
 				p = str(p) + '%'
@@ -234,7 +227,7 @@ class Vdj_sum(Step):
 				})
 
 
-		elif type == 'BCR':
+		elif Seqtype == 'BCR':
 
 			productive_cells = set(results['CELL'].tolist())
 
@@ -300,9 +293,9 @@ class Vdj_sum(Step):
 			clonetypes = clonetypes_table.groupby(['IGH_chain', 'IGL_chain', 'IGK_chain']).agg({'Frequency': 'count'})
 
 			Proportion = []
-			sum = clonetypes['Frequency'].sum()
+			sum_c = clonetypes['Frequency'].sum()
 			for f in list(clonetypes['Frequency']):
-				p = f/sum
+				p = f/sum_c
 				p = p * 100
 				p = round(p, 2)
 				p = str(p) + '%'
@@ -424,7 +417,7 @@ def get_opts_vdj_sum(parser, sub_program):
 		parser = s_common(parser)
 		parser.add_argument('--ass_dir', help='assemble dir', required=True)
 		parser.add_argument('--fastq_dir', help='dir contains fastq', required=True)
-	parser.add_argument('--type', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+	parser.add_argument('--Seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
 
 
 
