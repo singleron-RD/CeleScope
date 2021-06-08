@@ -25,7 +25,12 @@ When you add a new step, you need to
   - Create a parser function with the name `get_opts_{module_name}`. `celescope` command line interface uses this function. The `sub_program` argument in this function hides all the arguments that you do not want to show in the `multi_{assay}` interface.
 
 For example, in `celescope.tools.cutadapt`:
+
 ```
+from celescope.tools.step import Step, s_common
+import celescope.tools.utils as utils
+
+
 class Cutadapt(Step):
     """
     Features
@@ -42,14 +47,17 @@ class Cutadapt(Step):
         Step.__init__(self, args, step_name)
         {some init code}
 
+    @utils.add_log
     def run(self):
         {some code to run}
 
 
+@utils.add_log
 def cutadapt(args):
     step_name = "cutadapt"
     cutadapt_obj = Cutadapt(args, step_name)
     cutadapt_obj.run()
+
 
 def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--adapter_fasta', help='Addtional adapter fasta file.')

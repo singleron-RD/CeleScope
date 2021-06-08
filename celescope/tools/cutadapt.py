@@ -109,7 +109,8 @@ class Cutadapt(Step):
         self.format_and_write_stat(cutadapt_log)
         self.clean_up()
 
-        
+
+@utils.add_log  
 def cutadapt(args):
 
     step_name = "cutadapt"
