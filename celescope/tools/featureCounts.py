@@ -40,14 +40,14 @@ class FeatureCounts(Step):
 
         # out files
         input_basename = os.path.basename(self.args.input)
-        self.out_file_dict['featureCounts_bam'] = f'{self.outdir}/{input_basename}.featureCounts.bam'
-        self.out_file_dict['name_sorted_bam'] = f'{self.out_prefix}_name_sorted.bam'
-        self.out_file_dict['featureCount_log_file'] = f'{self.out_prefix}.summary'
+        self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
+        self.name_sorted_bam = f'{self.out_prefix}_name_sorted.bam'
+        self.featureCount_log_file = f'{self.out_prefix}.summary'
 
     def format_stat(self):
         tmp_arr = []
-        fh = open(self.out_file_dict['featureCount_log_file'], 'r')
-        with open(self.out_file_dict['stat'], 'w') as stat_fh:
+        fh = open(self.featureCount_log_file, 'r')
+        with open(self.stat_file, 'w') as stat_fh:
             p1 = re.compile(r'Assigned.*?(\d+)', flags=re.S)
             p2 = re.compile(r'Unassigned_NoFeatures.*?(\d+)', flags=re.S)
             p3 = re.compile(r'Unassigned_Ambiguity.*?(\d+)', flags=re.S)
@@ -96,8 +96,8 @@ class FeatureCounts(Step):
         cmd = (
             'samtools sort -n '
             f'-@ {self.thread} '
-            f'-o {self.out_file_dict["name_sorted_bam"]} '
-            f'{self.out_file_dict["featureCounts_bam"]} '
+            f'-o {self.name_sorted_bam} '
+            f'{self.featureCounts_bam} '
         )
         FeatureCounts.name_sort_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
@@ -105,7 +105,7 @@ class FeatureCounts(Step):
 
     def run(self):
         self.run_featureCounts()
-        add_tag(self.out_file_dict['featureCounts_bam'], self.gtf)
+        add_tag(self.featureCounts_bam, self.gtf)
         self.name_sort_bam()
         self.format_stat()
         self.clean_up()

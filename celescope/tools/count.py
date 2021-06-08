@@ -399,7 +399,7 @@ class Count(Step):
             'Median Genes per Cell']
         for item in need_format:
             summary[item] = utils.format_number(summary[item])
-        summary.to_csv(self.out_file_dict['stat'], header=False, sep=':')
+        summary.to_csv(self.stat_file, header=False, sep=':')
 
     @staticmethod
     def sub_sample(fraction, df_cell, cell_read_index):

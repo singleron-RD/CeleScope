@@ -63,8 +63,7 @@ class Step:
         )
 
         # out file
-        self.out_file_dict = {}
-        self.out_file_dict['stat'] = f'{self.outdir}/stat.txt'
+        self.stat_file = f'{self.outdir}/stat.txt'
 
     def add_metric(self, name, value=None, total=None, fraction=None):
         '''add metric to metric_list
@@ -93,7 +92,7 @@ class Step:
         self.metric_list = metric_list
 
     def metric_list_to_stat(self):
-        with open(self.out_file_dict['stat'], 'w') as stat_handle:
+        with open(self.stat_file, 'w') as stat_handle:
             for metric in self.metric_list:
                 line = f'{metric.name}: '
                 value = metric.value
@@ -130,7 +129,7 @@ class Step:
             f.write(html)
 
     def stat_to_data(self):
-        df = pd.read_table(self.out_file_dict['stat'], header=None, sep=':', dtype=str)
+        df = pd.read_table(self.stat_file, header=None, sep=':', dtype=str)
         self.content_dict['data'][self.step_name + '_summary'] = df.values.tolist()
 
     def stat_to_metric(self):
@@ -141,7 +140,7 @@ class Step:
         3. fraction%
         '''
 
-        df = pd.read_table(self.out_file_dict['stat'], header=None, sep=':', dtype=str)
+        df = pd.read_table(self.stat_file, header=None, sep=':', dtype=str)
         dic = dict(zip(df.iloc[:, 0], df.iloc[:, 1].str.strip()))
         metrics = dict()
         for metric_name, string in dic.items():
@@ -213,7 +212,7 @@ class Step:
         if self.metric_list:
             self.get_fraction()
             self.metric_list_to_stat()
-        if os.path.exists(self.out_file_dict['stat']):
+        if os.path.exists(self.stat_file):
             self.stat_to_metric()
             self.stat_to_data()
         self.dump_content(slot="data")

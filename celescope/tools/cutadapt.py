@@ -80,7 +80,7 @@ class Cutadapt(Step):
         p_df.iloc[3, 0] = 'Base Pairs Processed'
         p_df.iloc[4, 0] = 'Base Pairs Quality-Trimmed'
         p_df.iloc[5, 0] = 'Base Pairs Written'
-        p_df.to_csv(self.out_file_dict['stat'], sep=':', index=False, header=None)
+        p_df.to_csv(self.stat_file, sep=':', index=False, header=None)
 
     @utils.add_log
     def run(self):

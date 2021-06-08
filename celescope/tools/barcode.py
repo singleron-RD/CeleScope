@@ -307,13 +307,13 @@ class Barcode(Step):
             suffix = ".gz"
         else:
             suffix = ""
-        self.out_file_dict['out_fq2'] = f'{self.outdir}/{self.sample}_2.fq{suffix}'
+        self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
         if self.nopolyT:
-            self.out_file_dict['nopolyT_1'] = f'{self.outdir}/noPolyT_1.fq'
-            self.out_file_dict['nopolyT_2'] = f'{self.outdir}/noPolyT_2.fq'
+            self.nopolyT_1 = f'{self.outdir}/noPolyT_1.fq'
+            self.nopolyT_2 = f'{self.outdir}/noPolyT_2.fq'
         if self.noLinker:
-            self.out_file_dict['noLinker_1'] = f'{self.outdir}/noLinker_1.fq'
-            self.out_file_dict['noLinker_2'] = f'{self.outdir}/noLinker_2.fq'
+            self.noLinker_1 = f'{self.outdir}/noLinker_1.fq'
+            self.noLinker_2 = f'{self.outdir}/noLinker_2.fq'
 
 
     @utils.add_log
@@ -333,15 +333,15 @@ class Barcode(Step):
                 write valid R2 read to file
         """
 
-        fh3 = xopen(self.out_file_dict['out_fq2'], 'w')
+        fh3 = xopen(self.out_fq2, 'w')
 
         if self.nopolyT:
-            fh1_without_polyT = xopen(self.out_file_dict['nopolyT_1'], 'w')
-            fh2_without_polyT = xopen(self.out_file_dict['nopolyT_2'], 'w')
+            fh1_without_polyT = xopen(self.nopolyT_1, 'w')
+            fh2_without_polyT = xopen(self.nopolyT_2, 'w')
 
         if self.noLinker:
-            fh1_without_linker = xopen(self.out_file_dict['noLinker_1'], 'w')
-            fh2_without_linker = xopen(self.out_file_dict['noLinker_2'], 'w')
+            fh1_without_linker = xopen(self.noLinker_1, 'w')
+            fh2_without_linker = xopen(self.noLinker_2, 'w')
 
         for i in range(self.fq_number):
 
