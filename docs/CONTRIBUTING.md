@@ -67,7 +67,7 @@ def get_opts_cutadapt(parser, sub_program):
 
 ## Docs
 There is a python script at the root of this repo `generate_docs.py` to generate documents for each released step. It will collect:
-- Docstring of the step class
+- Docstring of the step class. The Docstring should have sections named `Feature` and `Output`.
 - Help infomation in `get_opts_{module_name}`
 
 ## Tests
