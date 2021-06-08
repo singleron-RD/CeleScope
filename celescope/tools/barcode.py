@@ -493,14 +493,13 @@ class Barcode(Step):
             Q30 of Barcodes: %.2f%%
             Q30 of UMIs: %.2f%%
         '''
-        with open(self.outdir + '/stat.txt', 'w') as fh:
+        with open(self.stat_file, 'w') as fh:
             stat_info = stat_info % (utils.format_number(self.total_num), utils.format_number(self.clean_num),
                                     cal_percent(self.clean_num), BarcodesQ30,
                                     UMIsQ30)
             stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
             fh.write(stat_info)
         
-        # self.fastqc()
         self.clean_up()
 
 
