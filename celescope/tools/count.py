@@ -30,7 +30,45 @@ np.random.seed(0)
 class Count(Step):
     """
     Features
-    - count
+    - Cell-calling: Distinguish cell barcodes from background barcodes. 
+
+    - Generate expression matrix.
+
+    Output
+    - `{sample}_all_matrix` The expression matrix of all detected barcodes. 
+        Can be read in by calling the `Seurat::Read10X` function.
+
+    - `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. 
+    Can be read in by calling the `Seurat::Read10X` function.
+
+    - `{sample}_matrix.tsv.gz` The expression matrix of the barcode that is identified to be the cell, separated by tabs. 
+    CeleScope >=1.2.0 does not output this file.
+
+    - `{sample}_count_detail.txt.gz` 4 columns: 
+        - barcode  
+        - gene ID  
+        - UMI count  
+        - read_count  
+
+    - `{sample}_counts.txt` 6 columns:
+        - Barcode: barcode sequence
+        - readcount: read count of each barcode
+        - UMI2: UMI count (with reads per UMI >= 2) for each barcode
+        - UMI: UMI count for each barcode
+        - geneID: gene count for each barcode
+        - mark: cell barcode or backgound barcode.
+
+            `CB` cell  
+            `UB` background  
+
+    - `{sample}_downsample.txt` 3 columns：
+        - percent: percentage of sampled reads
+        - median_geneNum: median gene number per cell
+        - saturation: sequencing saturation
+
+    - `barcode_filter_magnitude.pdf` Barcode-UMI plot.
+
+
     """
     def __init__(self, args, step):
         Step.__init__(self, args, step)
@@ -436,12 +474,19 @@ def count(args):
 
 
 def get_opts_count(parser, sub_program):
+    parser.add_argument('--genomeDir', help='Required. Genome directory.')
+    parser.add_argument('--expected_cell_num', help='Default `3000`. Expected cell number.', default=3000)
+    parser.add_argument(
+        '--cell_calling_method', 
+        help='Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.',
+        choices=['auto', 'cellranger3', 'inflection', ], 
+        default='auto',
+    )
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--bam', required=True)
-        parser.add_argument('--force_cell_num', help='force cell number', default=None)
-    parser.add_argument('--genomeDir', help='genome directory')
-    parser.add_argument('--gtf', help='gtf file path')
-    parser.add_argument('--expected_cell_num', help='expected cell number', default=3000)
-    parser.add_argument('--cell_calling_method', help='cell calling methods',
-                        choices=['auto', 'cellranger3', 'inflection', ], default='auto')
+        parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
+        parser.add_argument(
+            '--force_cell_num', 
+            help='Default `None`. Force the cell number to be this value ± 10%.', 
+            default=None
+        )

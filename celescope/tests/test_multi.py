@@ -41,6 +41,8 @@ def run_single(assay):
 @utils.add_log
 def test_mutiple(assays):
     """
+    Run all
+    >>> pytest -s celescope/tests/test_multi.py
     Run some tests
     >>> pytest -s celescope/tests/test_multi.py --assays tag,fusion
     """

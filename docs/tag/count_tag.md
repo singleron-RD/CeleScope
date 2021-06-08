@@ -1,15 +1,15 @@
 
 
 ## Arguments
-`--UMI_min` cells have tag_UMI>=UMI_min are considered as valid cell.
+`--UMI_min` cells have tag_UMI>=UMI_min are considered as valid cell
 
-`--dim` tag dimension.
+`--dim` tag dimension
 
-`--SNR_min` minimum signal to noise ratio.
+`--SNR_min` minimum signal to noise ratio
 
-`--combine_cluster` conbine cluster tsv file.
+`--combine_cluster` conbine cluster tsv file
 
-`--coefficient` SNR coefficient.
+`--coefficient` SNR coefficient
 
 `--outdir` Output diretory.
 
@@ -21,7 +21,7 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--read_count_file` tag read count file.
+`--read_count_file` tag read count file
 
-`--match_dir` matched scRNA-Seq CeleScope directory path.
+`--match_dir` matched scRNA-Seq CeleScope directory path
 

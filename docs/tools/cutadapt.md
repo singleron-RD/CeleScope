@@ -30,7 +30,7 @@ at least {overlap} bases match between adapter and read.
 
 `--fq` Required. R2 reads from step Barcode.
 
-`--gzip` Output gzipped fastq.
+`--gzip` Output gzipped fastq
 
 `--outdir` Output diretory.
 

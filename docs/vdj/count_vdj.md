@@ -17,7 +17,7 @@
 
 `--type` None
 
-`--UMI_min` minimum UMI number to filter.
+`--UMI_min` minimum UMI number to filter
 
-`--iUMI` minimum number of UMI of identical receptor type and CDR3.
+`--iUMI` minimum number of UMI of identical receptor type and CDR3
 
