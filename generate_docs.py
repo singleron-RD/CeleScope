@@ -44,8 +44,6 @@ def get_argument_docs(func_opts):
             help_msg = parser._option_string_actions[argument].help
             if help_msg:
                 help_msg = help_msg.strip()
-                if not help_msg.endswith('.'):
-                    help_msg += '.'
             argument_docs += (f'`{argument}` {help_msg}\n\n')
     argument_docs = "## Arguments\n" + argument_docs
     return argument_docs
