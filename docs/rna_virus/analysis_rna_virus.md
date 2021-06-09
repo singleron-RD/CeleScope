@@ -1,17 +1,17 @@
 
 
 ## Arguments
-`--outdir` output dir.
+`--outdir` output dir
 
-`--assay` assay.
+`--assay` assay
 
-`--sample` sample name.
+`--sample` sample name
 
 `--thread` None
 
-`--debug` debug.
+`--debug` debug
 
-`--matrix_file` matrix file.
+`--matrix_file` matrix file
 
-`--virus_file` virus UMI count file.
+`--virus_file` virus UMI count file
 

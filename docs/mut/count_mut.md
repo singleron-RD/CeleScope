@@ -1,17 +1,17 @@
 
 
 ## Arguments
-`--outdir` output dir.
+`--outdir` output dir
 
-`--sample` sample name.
+`--sample` sample name
 
 `--bam` None
 
-`--assay` assay.
+`--assay` assay
 
-`--mut_file` mutation file.
+`--mut_file` mutation file
 
-`--match_dir` match scRNA-Seq dir.
+`--match_dir` match scRNA-Seq dir
 
 `--shift_base` None
 

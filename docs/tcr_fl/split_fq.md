@@ -1,15 +1,15 @@
 
 
 ## Arguments
-`--outdir` output dir.
+`--outdir` output dir
 
-`--sample` sample name.
+`--sample` sample name
 
 `--fq` None
 
-`--assay` assay.
+`--assay` assay
 
-`--match_dir` match scRNA-Seq dir.
+`--match_dir` match scRNA-Seq dir
 
-`--nCell` select top N cell.
+`--nCell` select top N cell
 

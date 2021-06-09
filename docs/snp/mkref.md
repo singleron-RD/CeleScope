@@ -1,13 +1,13 @@
 
 
 ## Arguments
-`--genomeDir` genome directory path.
+`--genomeDir` Default='./'. Output directory.
 
-`--thread` threads to use.
+`--thread` Default=6. Threads to use.
 
-`--genome_name` genome name.
+`--genome_name` Required, genome name.
 
-`--dry_run` only write config file.
+`--dry_run` Only write config file and exist.
 
-`--fasta` fasta file.
+`--fasta` fasta file
 

@@ -11,9 +11,9 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--bam` featureCounts bam.
+`--bam` featureCounts bam
 
-`--match_dir` match_dir.
+`--match_dir` match_dir
 
-`--gene_list` gene_list.
+`--gene_list` gene_list
 

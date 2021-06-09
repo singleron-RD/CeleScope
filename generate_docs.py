@@ -87,10 +87,14 @@ def generate_all_docs():
     for assay in ASSAY_DICT:
         init_module = utils.find_assay_init(assay)
         __STEPS__ = init_module.__STEPS__
+        generate_all_docs.logger.info(f"Writing {assay}")
         if assay in RELEASED_ASSAYS:
             manual_handle.write(f'## {ASSAY_DICT[assay]}\n')
-            for step in __STEPS__:
-                md_path = generate_single_step_doc(assay, step)
+        for step in __STEPS__:
+            generate_all_docs.logger.info(f"Writing doc {assay}.{step}")
+            md_path = generate_single_step_doc(assay, step)
+            if assay in RELEASED_ASSAYS:
+                generate_all_docs.logger.info(f"Writing manual {assay}.{step}")
                 write_step_in_manual(md_path, step, manual_handle)
     manual_handle.close()
 
