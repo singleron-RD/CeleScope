@@ -25,7 +25,7 @@ resolution = 0.6
 res_str = paste0('res.', resolution)
 
 # read matrix
-matrix_id = Seurat::Read10X(matrix_file, gene.column=1)
+# matrix_id = Seurat::Read10X(matrix_file, gene.column=1)
 matrix_name = Seurat::Read10X(matrix_file, gene.column=2)
 
 # out files
@@ -33,28 +33,6 @@ tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")
 rds.out = paste0(outdir,'/',sample,'.rds')
-h5.out = stringr::str_glue('{outdir}/{sample}.h5ad')
-if (file.exists(h5.out)) {
-  #Delete file if it exists
-  file.remove(h5.out)
-}
-
-# generate h5ad file
-df.barcode =  data.frame(colnames(matrix_name))
-colnames(df.barcode) = "_index"
-gene_name = rownames(matrix_name)
-gene_id = rownames(matrix_id)
-df.gene = data.frame(gene_name, gene_id)
-colnames(df.gene) = c("_index","gene_ids")
-mtx = as.matrix(matrix_name)
-
-path <- path.expand(h5.out)
-h5createFile(path)
-h5f <- H5Fopen(path)
-h5writeDataset(mtx, h5f, "X")
-h5writeDataset(df.barcode, h5f, "obs")
-h5writeDataset(df.gene, h5f, "var")
-H5Fclose(h5f)
 
 # create seurat obj
 rds = CreateSeuratObject(matrix_name, pro=sample)
