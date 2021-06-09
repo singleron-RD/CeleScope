@@ -26,14 +26,6 @@ class Consensus(Step):
         self.consensus_fq = f'{self.out_prefix}_consensus.fq'
 
     @utils.add_log
-    def wrap_consensus(self):
-        sort_fastq(fq, fq_tmp_file, outdir)
-        n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
-            fq=fq_tmp_file, outfile=outfile, threshold=threshold)
-        return outfile, n, total_ambiguous_base_n, length_list
-
-
-    @utils.add_log
     def run(self):
         if self.args.not_consensus:
             Consensus.run.logger.warning("Will not perform UMI consensus!")
