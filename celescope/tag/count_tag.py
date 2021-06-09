@@ -17,19 +17,35 @@ from celescope.__init__ import ROOT_PATH
 
 
 def get_opts_count_tag(parser, sub_program):
-    parser.add_argument("--UMI_min",
-        help="cells have tag_UMI>=UMI_min are considered as valid cell", default="auto")
-    parser.add_argument("--dim", help="tag dimension", default=1)
-    parser.add_argument("--SNR_min",
-        help="minimum signal to noise ratio", default="auto")
+    parser.add_argument(
+        "--UMI_min",
+        help="Default='auto'. Minimum UMI threshold. Cell barcodes with valid UMI < UMI_min are classified as *undeterminded*.", 
+        default="auto"
+    )
+    parser.add_argument(
+        "--dim", 
+        help="Default=1. Tag dimentions. Usually we use 1-dimentional tag.", 
+        default=1
+    )
+    parser.add_argument(
+        "--SNR_min",
+        help="""Default='auto'. Minimum signal-to-noise ratio. 
+Cell barcodes with UMI >=UMI_min and SNR < SNR_min are classified as *multiplet*. """, 
+        default="auto"
+    )
     parser.add_argument("--combine_cluster",
-        help="conbine cluster tsv file", default=None)
-    parser.add_argument("--coefficient", help="SNR coefficient", default=0.1)
+        help="Conbine cluster tsv file.", default=None)
+    parser.add_argument(
+        "--coefficient", 
+        help="""Default=0.1. If `SNR_min` is 'auto', minimum signal-to-noise ratio is calulated as 
+`SNR_min = max(median(SNRs) * coefficient, 2)`. 
+Smaller `coefficient` will cause less *multiplet* in the tag assignment.""", 
+        default=0.1
+    )
     if sub_program:
+        parser.add_argument("--read_count_file", help="Tag read count file.", required=True)
+        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory.", required=True)
         s_common(parser)
-        parser.add_argument("--read_count_file", help="tag read count file", required=True)
-        parser.add_argument("--match_dir", help="matched scRNA-Seq CeleScope directory path", required=True)
-
 
 def count_tag(args):
 
@@ -40,7 +56,21 @@ def count_tag(args):
 
 class Count_tag(Step):
     """
-    count_tag class
+    Features
+    - Assign tag to each cell barcode and summarize.
+
+    Output
+
+    - `{sample}_umi_tag.tsv` 
+
+        `first column` cell barcode  
+        `last column`  assigned tag  
+        `columns between first and last` UMI count for each tag 
+
+    - `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
+
+    - `{sample}_cluster_count.tsv` cell barcode number assigned to *undeterminded*, *multiplet* and *each tag*
+
     """
 
     def __init__(self, args, step_name):

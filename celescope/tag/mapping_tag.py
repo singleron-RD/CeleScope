@@ -11,12 +11,42 @@ from celescope.tools.step import Step, s_common
 
 
 def get_opts_mapping_tag(parser, sub_program):
-    parser.add_argument("--fq_pattern", help="read2 fastq pattern", required=True)
-    parser.add_argument("--barcode_fasta", help="barcode fasta", required=True)
-    parser.add_argument("--linker_fasta", help="linker fasta")
+    parser.add_argument(
+        "--fq_pattern", 
+        help="""Required. R2 read pattern. The number after the letter represents the number of bases.         
+`L` linker(common sequences)  
+`C` tag barcode  
+""", 
+        required=True
+    )
+    parser.add_argument(
+        "--barcode_fasta", 
+        help="""Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
+sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
+It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
+If no such tag exists, the read is classified as invalid.
+```
+>tag_0
+GGGCGTCTGTGACCGCGTGATACTGCATTGTAGACCGCCCAACTC
+>tag_1
+TTCCTCCAGAGGAGACCGAGCCGGTCAATTCAGGAGAACGTCCGG
+>tag_2
+AGGGCTAGGCGTGTCATTTGGCGAGGTCCTGAGGTCATGGAGCCA
+>tag_3
+CACTGGTCATCGACACTGGGAACCTGAGGTGAGTTCGCGCGCAAG
+```  
+""", 
+        required=True,
+    )
+    parser.add_argument(
+        "--linker_fasta", 
+        help="""Optional. If provided, it will check the mismatches between linker sequence in R2 reads 
+with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1, the read is classified as invalid.
+""",
+    )
     if sub_program:
         s_common(parser)
-        parser.add_argument("--fq", help="clean read2", required=True)
+        parser.add_argument("--fq", help="R2 read fastq.", required=True)
 
 
 @utils.add_log
@@ -27,6 +57,19 @@ def mapping_tag(args):
 
 
 class Mapping_tag(Step):
+    """
+    Features
+    - Align R2 reads to the tag barcode fasta.
+
+    Output
+
+    - `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
+
+        `barcode` cell barcode  
+        `tag_name`  tag name in barcode_fasta  
+        `UMI`   UMI sequence  
+        `read_count` read count per UMI  
+    """
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
