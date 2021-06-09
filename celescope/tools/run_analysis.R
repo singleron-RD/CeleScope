@@ -4,6 +4,8 @@ library(argparser)
 library(hdf5r)
 library(rhdf5)
 
+# CONSTANTS
+DIMS = 20
 
 argv <- arg_parser('')
 argv <- add_argument(argv,"--matrix_file", help="cell 10X matrix dir")
@@ -92,11 +94,12 @@ rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = nfeatures
 use.genes <- rds@assays$RNA@var.features
 rds <- ScaleData(rds, vars.to.regress = c("nCount_RNA", "percent.mito"), features = use.genes)
 rds <- RunPCA(object = rds, features = use.genes, do.print = FALSE)
-rds <- FindNeighbors(rds, dims = 1:20, force.recalc = TRUE, reduction = "pca")
+rds <- FindNeighbors(rds, dims = 1:DIMS, force.recalc = TRUE, reduction = "pca")
 rds <- FindClusters(rds, resolution = resolution)
 
 # tsne and umap
-rds <- RunTSNE(rds, dims = 1:20, do.fast = TRUE, check_duplicates = FALSE)
+rds <- RunTSNE(rds, dims = 1:DIMS, do.fast = TRUE, check_duplicates = FALSE)
+rds = RunUMAP(rds, dims=1:DIMS)
 
 
 tryCatch({
