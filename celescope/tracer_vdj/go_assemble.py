@@ -45,7 +45,7 @@ def get_umi_count(fq):
 
 
 @utils.add_log
-def assemble_summary(outdir, sample, Seqtype):
+def assemble_summary(outdir, Seqtype):
     # UMIs = pd.read_csv(count_file, sep='\t')
     
     stat_file = outdir + '/stat.txt'
@@ -245,7 +245,7 @@ class Go_assemble(Step):
 
         tracer_summarise(self.outdir)
 
-        assemble_summary(self.outdir, self.sample, self.Seqtype)
+        assemble_summary(self.outdir, self.Seqtype)
 
 
     def run_bracer(self):
@@ -262,7 +262,7 @@ class Go_assemble(Step):
 
         bracer_summarise(self.outdir)
 
-        assemble_summary(self.outdir, self.sample, self.Seqtype)
+        assemble_summary(self.outdir, self.Seqtype)
 
     @utils.add_log
     def run(self):
