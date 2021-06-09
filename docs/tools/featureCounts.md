@@ -24,6 +24,8 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
 
 `--genomeDir` Required. Genome directory.
 
+`--input` Required. BAM file path.
+
 `--outdir` Output diretory.
 
 `--assay` Assay name.
@@ -33,6 +35,4 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
 `--thread` Thread to use.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
-
-`--input` Required. BAM file path.
 
