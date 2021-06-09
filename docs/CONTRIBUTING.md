@@ -84,7 +84,15 @@ Released assays will be added to `manual.md`.
 ## Tests
 If you add new steps, you need to create a small data for integration tests. There is a test example in `celescope/tests/test_multi.py`. To run this example:
 
-1. Copy `/SGRNJ03/randd/user/zhouyiqi/multi_tests/test_folder` to {test_dir}
+
+1. Get test data
+```
+# If you have access to Singleron Nanjing HPC
+copy -r /SGRNJ03/randd/user/zhouyiqi/multi_tests/test_folder {test_dir}
+# Or clone from repo
+git clone https://github.com/singleron-RD/celescope_tests.git
+```
+
 2. Run `pytest`
 ```
 Install pytest
