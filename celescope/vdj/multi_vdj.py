@@ -22,13 +22,13 @@ class Multi_vdj(Multi):
         # count_vdj
         step = 'count_vdj'
         cmd_line = self.get_cmd_line(step, sample)
-        UMI_count_filter1_file = (
-            f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_UMI_count_filtered1.tsv'
+        UMI_count_filter_file = (
+            f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_UMI_count_filtered.tsv'
         )
         cmd = (
             f'{cmd_line} '
             f'--match_dir {self.col4_dict[sample]} '
-            f'--UMI_count_filter1_file {UMI_count_filter1_file} '
+            f'--UMI_count_filter_file {UMI_count_filter_file} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 

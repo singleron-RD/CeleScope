@@ -9,6 +9,8 @@
 
 ### Changed
 
+- `{sample}_UMI_count_filtered1.tsv` in mapping_vdj changed to `{sample}_UMI_count_filtered.tsv` (remove `1` after filtered)
+
 ### Fixed
 
 - Remove h5 file generation in R to avoid memory issues.
