@@ -12,9 +12,12 @@ ASSAY_DICT = {
     'mut': 'Single Cell Insertion and Deletion',
     'hla': 'Single Cell HLA',
     'capture_rna': 'Single Cell Capture RNA',
-    'snp': 'Single Cell Variant',
+    'snp': 'Single-cell variant',
     'tag': 'Single-cell tag',
     'citeseq': 'Single Cell CITE-Seq',
     'tcr_fl': 'Single Cell full length TCR',
 }
+
 ROOT_PATH = os.path.dirname(__file__)
+
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', ]

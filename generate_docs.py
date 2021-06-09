@@ -1,13 +1,12 @@
 import argparse
 import inspect
 import os
+from collections import defaultdict
 
 import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
-from celescope.__init__ import ASSAY_DICT
+from celescope.__init__ import ASSAY_DICT, RELEASED_ASSAYS
 
-
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag']
 PRE_PROCESSING_STEPS = ('sample', 'barcode', 'cutadapt')
 DOCS_ROOT = 'docs'
 MANUAL_MD = f'{DOCS_ROOT}/manual.md'
@@ -81,22 +80,33 @@ def write_step_in_manual(md_path, step, manual_handle):
 
 @utils.add_log
 def generate_all_docs():
-    manual_handle = open(MANUAL_MD, 'w')
-    with open(MANUAL_TEMPLATE, 'r') as manual_template:
-        manual_handle.write(manual_template.read())
+    md_path_dict = defaultdict(dict)
     for assay in ASSAY_DICT:
         init_module = utils.find_assay_init(assay)
         __STEPS__ = init_module.__STEPS__
-        generate_all_docs.logger.info(f"Writing {assay}")
-        if assay in RELEASED_ASSAYS:
-            manual_handle.write(f'## {ASSAY_DICT[assay]}\n')
+        generate_all_docs.logger.info(f"Writing docs {assay} ")
         for step in __STEPS__:
             generate_all_docs.logger.info(f"Writing doc {assay}.{step}")
             md_path = generate_single_step_doc(assay, step)
-            if assay in RELEASED_ASSAYS:
-                generate_all_docs.logger.info(f"Writing manual {assay}.{step}")
+            md_path_dict[assay][step] = md_path
+    return md_path_dict
+
+@utils.add_log
+def write_manual(md_path_dict):
+    with open(MANUAL_MD, 'w') as manual_handle:
+        with open(MANUAL_TEMPLATE, 'r') as manual_template:
+            manual_handle.write(manual_template.read())
+        for assay in RELEASED_ASSAYS:
+            init_module = utils.find_assay_init(assay)
+            steps = init_module.__STEPS__
+            manual_handle.write(f'## {ASSAY_DICT[assay]}\n')
+            for step in steps:
+                write_manual.logger.info(f"Writing manual {assay}.{step}")
+                md_path = md_path_dict[assay][step]
                 write_step_in_manual(md_path, step, manual_handle)
-    manual_handle.close()
+
+
 
 if __name__ == "__main__":
-    generate_all_docs()
+    md_path_dict = generate_all_docs()
+    write_manual(md_path_dict)
