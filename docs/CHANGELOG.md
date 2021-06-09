@@ -1,7 +1,6 @@
 # Change Log
 
-## [Unreleased] - 2021-05-28
-
+## [Unreleased] - 2021-06-09
 ### Added
 
 - Add wdl workflow.
@@ -12,7 +11,10 @@
 
 ### Fixed
 
+- Remove h5 file generation in R to avoid memory issues.
+
 ### Removed
+
 
 ## [1.3.0] - 2021-05-28
  
