@@ -10,6 +10,59 @@ import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
 
 
+class Consensus(Step):
+    """
+    Features
+    - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI).
+
+    Output
+    - `{sample}_consensus.fq` Consensus fastq.
+    """
+    def __init__(self, args, step_name):
+        Step.__init__(self, args, step_name)
+
+        # out files
+        self.fq_tmp_file = f'{self.out_prefix}_sorted.fq.tmp'
+        self.consensus_fq = f'{self.out_prefix}_consensus.fq'
+
+    @utils.add_log
+    def wrap_consensus(self):
+        sort_fastq(fq, fq_tmp_file, outdir)
+        n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
+            fq=fq_tmp_file, outfile=outfile, threshold=threshold)
+        return outfile, n, total_ambiguous_base_n, length_list
+
+
+    @utils.add_log
+    def run(self):
+        if self.args.not_consensus:
+            Consensus.run.logger.warning("Will not perform UMI consensus!")
+            return
+
+        sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
+        n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
+            fq=self.fq_tmp_file, 
+            outfile=self.consensus_fq, 
+            threshold=self.args.threshold
+        )
+
+        self.add_metric(
+            name="UMI Counts",
+            value=n,
+        )
+        self.add_metric(
+            name="Mean UMI Length",
+            value=np.mean(length_list),
+        )
+        self.add_metric(
+            name="Ambiguous Base Counts",
+            value=total_ambiguous_base_n,
+            total=sum(length_list),
+        )
+        self.clean_up()
+
+
+
 @utils.add_log
 def sort_fastq(fq, fq_tmp_file, outdir):
     tmp_dir = f'{outdir}/tmp'
@@ -54,16 +107,6 @@ def sorted_dumb_consensus(fq, outfile, threshold):
     
     out_h.close()
     return n_umi, total_ambiguous_base_n, length_list
-
-
-@utils.add_log
-def wrap_consensus(fq, outdir, sample, threshold):
-    fq_tmp_file = f'{outdir}/{sample}_sorted.fq.tmp'
-    sort_fastq(fq, fq_tmp_file, outdir)
-    outfile = f'{outdir}/{sample}_consensus.fq'
-    n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
-        fq=fq_tmp_file, outfile=outfile, threshold=threshold)
-    return outfile, n, total_ambiguous_base_n, length_list
 
 
 def dumb_consensus(read_list, threshold=0.5, ambiguous='N', default_qual='F'):
@@ -143,46 +186,12 @@ def get_read_length(read_list, threshold=0.5):
 def consensus(args):
 
     step_name = "consensus"
-    step = Step(args, step_name)
-
-    if args.not_consensus:
-        consensus.logger.warning("not_consensus!")
-        return
-    sample = args.sample
-    outdir = args.outdir
-    fq = args.fq
-    threshold = float(args.threshold)
-
-    _outfile, n, total_ambiguous_base_n, length_list = wrap_consensus(fq, outdir, sample, threshold)
-
-    # metrics
-    metrics = {}
-    metrics["UMI Counts"] = n
-    metrics["Mean UMI Length"] = np.mean(length_list)
-    metrics["Ambiguous Base Counts"] = total_ambiguous_base_n    
-    utils.format_metrics(metrics)
-
-    ratios = {}
-    ratios["Ambiguous Base Counts Ratio"] = total_ambiguous_base_n / sum(length_list)
-    utils.format_ratios(ratios)
-
-    # stat file
-    stat_file = f'{outdir}/stat.txt'
-    with open(stat_file, 'w') as stat_h:
-        stat_str = (
-            f'UMI Counts: {metrics["UMI Counts"]}\n'
-            f'Mean UMI Length: {metrics["Mean UMI Length"]}\n'
-            f'Ambiguous Base Counts: {metrics["Ambiguous Base Counts"]}({ratios["Ambiguous Base Counts Ratio"]}%)\n'
-        )
-        stat_h.write(stat_str)
-
-    step.clean_up()
-
-
+    consensus_obj = Consensus(args, step_name)
+    consensus_obj.run()
 
 def get_opts_consensus(parser, sub_program):
-    parser.add_argument("--threshold", help='valid base threshold', default=0.5)
-    parser.add_argument("--not_consensus", help="input fastq is not consensus", action='store_true')
+    parser.add_argument("--threshold", help='Default 0.5. Valid base threshold. ', type=float, default=0.5)
+    parser.add_argument("--not_consensus", help="Skip the consensus step. ", action='store_true')
     if sub_program:
+        parser.add_argument("--fq", help="Required. Fastq file.", required=True)
         s_common(parser)
-        parser.add_argument("--fq", required=True)
