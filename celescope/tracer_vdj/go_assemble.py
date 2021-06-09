@@ -45,101 +45,87 @@ def get_umi_count(fq):
 
 
 @utils.add_log
-def assemble_summary(outdir, Seqtype):
-    # UMIs = pd.read_csv(count_file, sep='\t')
+def assemble_summary(outdir, Seqtype, sample, species):
     
     stat_file = outdir + '/stat.txt'
 
     go_assemble_summary = []
 
+    clean_fq = f'{outdir}/../02.cutadapt/{sample}__clean_2.fq'
+
+    count_file = f'{outdir}/../03.split_fastq/{sample}_count.txt'
+
+    count_df = pd.read_csv(count_file, sep='\t')
+
+    total_count = count_df['readcount'].sum()
+
     if Seqtype == 'TCR':
-        TRAs = glob.glob(f'{outdir}/tracer/*/aligned_reads/*_TCR_A.fastq')
-        TRBs = glob.glob(f'{outdir}/tracer/*/aligned_reads/*_TCR_B.fastq')
-        TRA_UMIs = [get_umi_count(fq) for fq in TRAs]
-        TRB_UMIs = [get_umi_count(fq) for fq in TRBs]
-        TRA_UMIs_count = sum(TRA_UMIs)
-        medianA = int(np.median(TRA_UMIs))
-        TRB_UMIs_count = sum(TRB_UMIs)
-        medianB = int(np.median(TRB_UMIs))
+        loci = ['A', 'B']
 
-        all_umi_count = TRA_UMIs + TRB_UMIs
-        medianAll = int(np.median(all_umi_count))
+        total_mapped = 0
 
-        totals = TRA_UMIs_count + TRB_UMIs_count
+        for locus in loci:
+            cmd = (
+                f'source activate {BRACER_CONDA}; '
+                f'bowtie2 -p 5 -k 1 --np 0 --rdg 1,1 --rfg 1,1 '
+                f'-x /SGRNJ03/randd/zhouxin/software/tracer/resources/{species}/combinatorial_recombinomes/TCR_{locus} '
+                f'-U {clean_fq} '
+                f'-S {outdir}/TR{locus}.sam > {outdir}/log 2>&1'
+            )
+            os.system(cmd)
+            with open(f'{outdir}/log') as fh:
+                for line in fh:
+                    if 'aligned exactly 1 time' in line:
+                        res = re.findall("\d+", line)
+                        item = f'Reads mapped to TR{locus}'
+                        count = int(res[0])
+                        total_mapped += count
+                        go_assemble_summary.append({
+                            'item': item,
+                            'count': count,
+                            'total_count': total_count,
+                        })
 
-        go_assemble_summary.append({
-            'item': 'All UMIs mapped to TRA and TRB',
-            'count': totals,
-            'total_count': np.nan, 
+            os.system(f'rm {outdir}/TR{locus}.sam')
+
+        go_assemble_summary.insert(0, {
+            'item': 'All reads Mapped to TRA and TRB',
+            'count': total_mapped,
+            'total_count': total_count
         })
-
-        go_assemble_summary.append({
-            'item': 'UMIs mapped to TRA',
-            'count': TRA_UMIs_count,
-            'total_count': totals,
-        })
-
-        go_assemble_summary.append({
-            'item': 'UMIs mapped to TRB',
-            'count': TRB_UMIs_count,
-            'total_count': totals,
-        })
-
-        with open(f'{outdir}/tmp.txt', 'w') as f:
-            f.write(f'Madian UMIs per cell:{medianAll}\n')
-            f.write(f'Median TRA UMIs per cell:{medianA}\n')
-            f.write(f'Median TRB UMIs per cell:{medianB}\n')
 
     elif Seqtype == 'BCR':
-        IGHs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_H.fastq')
-        IGKs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_K.fastq')
-        IGLs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_L.fastq')
+        loci = ['H', 'L', 'K']
 
-        IGH_UMIs = [get_umi_count(fq) for fq in IGHs]
-        IGK_UMIs = [get_umi_count(fq) for fq in IGKs]
-        IGL_UMIs = [get_umi_count(fq) for fq in IGLs]
+        total_mapped = 0
 
-        all_umi_count = IGH_UMIs + IGL_UMIs + IGK_UMIs
-        medianAll = int(np.median(all_umi_count))
-
-        IGH = sum(IGH_UMIs)
-        medianH = int(np.median(IGH_UMIs))
-        IGK = sum(IGK_UMIs)
-        medianK = int(np.median(IGK_UMIs))
-        IGL = sum(IGL_UMIs)
-        medianL = int(np.median(IGL_UMIs))
-
-        totals = IGH + IGK + IGL
-
-        go_assemble_summary.append({
-            'item': 'All UMIs mapped to IGH, IGL and IGK',
-            'count': totals,
-            'total_count': np.nan,            
+        for locus in loci:
+            cmd = (
+                f'source activate {BRACER_CONDA}; '
+                f'bowtie2 -p 5 -k 1 --np 0 --rdg 1,1 --rfg 1,1 '
+                f'-x /SGRNJ03/randd/zhouxin/software/bracer/resources/{species}/combinatorial_recombinomes/BCR_{locus} '
+                f'-U {clean_fq} '
+                f'-S {outdir}/BR{locus}.sam > {outdir}/log 2>&1'
+            )
+            os.system(cmd)
+            with open(f'{outdir}/log') as fh:
+                for line in fh:
+                    if 'aligned exactly 1 time' in line:
+                        res = re.findall("\d+", line)
+                        item = f'Reads mapped to BR{locus}'
+                        count = int(res[0])
+                        total_mapped += count
+                        go_assemble_summary.append({
+                            'item': item,
+                            'count': count,
+                            'total_count': total_count,
+                        })
+            os.system(f'rm {outdir}/BR{locus}.sam')
+        go_assemble_summary.insert(0, {
+            'item': 'All reads Mapped to IGH, IGL and IGK',
+            'count': total_mapped,
+            'total_count': total_count
         })
-
-        go_assemble_summary.append({
-            'item': 'UMIs mapped to IGH',
-            'count': IGH,
-            'total_count': totals,
-        })
-
-        go_assemble_summary.append({
-            'item': 'UMIs mapped to IGK',
-            'count': IGK,
-            'total_count': totals,
-        })
-
-        go_assemble_summary.append({
-            'item': 'UMIs mapped to IGL',
-            'count': IGL,
-            'total_count': totals,
-        })
-
-        with open(f'{outdir}/tmp.txt', 'w') as f:
-            f.write(f'Median UMIs per cell:{medianAll}\n')
-            f.write(f'Median IGH UMIs per Cell:{medianH}\n')
-            f.write(f'Median IGK UMIs per Cell:{medianK}\n') 
-            f.write(f'Median IGL UMIs per Cell:{medianL}\n')
             
     df = pd.DataFrame(go_assemble_summary, columns=['item', 'count', 'total_count'])
 
