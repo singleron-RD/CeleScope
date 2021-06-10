@@ -7,7 +7,7 @@
 
 `--genome_name` Required, genome name.
 
-`--dry_run` Only write config file and exist.
+`--dry_run` Only write config file and exit.
 
 `--fasta` virus fasta file
 

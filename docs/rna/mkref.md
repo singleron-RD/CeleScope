@@ -26,7 +26,7 @@ refflat = Homo_sapiens_ensembl_99.refFlat
 
 `--genome_name` Required, genome name.
 
-`--dry_run` Only write config file and exist.
+`--dry_run` Only write config file and exit.
 
 `--fasta` Required. Genome fasta file.
 
