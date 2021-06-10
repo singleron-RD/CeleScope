@@ -51,7 +51,7 @@ def zip_wdl():
 @add_log
 def test_wdl():
     cmd = (
-        "cd /SGRNJ03/randd/user/zhouyiqi/temp/wdl "
+        "cd /SGRNJ03/randd/user/zhouyiqi/temp/wdl; "
         "sh /SGRNJ/Database/script/pipe/develop/dev_CeleScope/wdl/rna/local/run.sh "
     )
     print(cmd)

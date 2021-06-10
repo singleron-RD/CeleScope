@@ -44,7 +44,7 @@ class Consensus(Step):
         )
         self.add_metric(
             name="Mean UMI Length",
-            value=np.mean(length_list),
+            value=round(np.mean(length_list), 2),
         )
         self.add_metric(
             name="Ambiguous Base Counts",

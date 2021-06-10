@@ -22,7 +22,7 @@ class Mapping_vdj(Step):
 
     - `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.
 
-    - `{sample}_UMI_count_filtered1.tsv` For each (barcode, chain) combination, only the record with the 
+    - `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
     most VJ_pair UMI reads is kept.
 
     - `{sample}_align.txt` Result report.
@@ -157,7 +157,7 @@ class Mapping_vdj(Step):
                 total=align_read_with_correct_CDR3,
             )
 
-            UMI_after_Contamination_Filtering = df_UMI_count.filter1.UMI.sum()
+            UMI_after_Contamination_Filtering = df_UMI_count.filter.UMI.sum()
             self.add_metric(
                 name="UMI after Contamination Filtering",
                 value=UMI_after_Contamination_Filtering,

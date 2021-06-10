@@ -92,7 +92,6 @@ workflow celescope_rna {
 
     output {
         File bam = featureCounts.out_bam
-        File h5ad = analysis.out_h5ad
         File report = analysis.out_report
     }
 

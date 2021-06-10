@@ -6,7 +6,7 @@
 
 - `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.
 
-- `{sample}_UMI_count_filtered1.tsv` For each (barcode, chain) combination, only the record with the 
+- `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
 most VJ_pair UMI reads is kept.
 
 - `{sample}_align.txt` Result report.

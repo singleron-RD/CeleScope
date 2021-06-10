@@ -1,6 +1,12 @@
 # Change Log
 
-## [Unreleased] - 2021-06-09
+## [unreleased] - 2021-06-09
+### Added
+### Changed
+### Fixed
+### Removed
+
+## [1.3.1] - 2021-06-09
 ### Added
 
 - Add wdl workflow.
@@ -11,11 +17,9 @@
 
 - `{sample}_UMI_count_filtered1.tsv` in mapping_vdj changed to `{sample}_UMI_count_filtered.tsv` (remove `1` after filtered)
 
-### Fixed
+### Fixed and Removed
 
 - Remove h5 file generation in R to avoid memory issues.
-
-### Removed
 
 
 ## [1.3.0] - 2021-05-28
