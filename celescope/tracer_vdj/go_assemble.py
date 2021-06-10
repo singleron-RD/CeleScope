@@ -5,9 +5,6 @@ from os import listdir
 from os.path import isfile, join
 from concurrent.futures import ProcessPoolExecutor
 from celescope.tools import utils
-import glob
-import pysam
-import numpy as np
 from celescope.tools.Step import Step, s_common
 
 
@@ -18,32 +15,6 @@ BRACER_CONDA = 'bracer'
 BRACER_CONF = '/SGRNJ03/randd/zhouxin/software/bracer/bracer.conf'
 
 
-def gen_stat(summary, stat_file):
-    stat = summary
-    stat["new_count"] = stat["count"].astype(str) + stat["percent_str"]
-    stat = stat.loc[:, ["item", "new_count"]]
-    stat.to_csv(stat_file, sep=":", header=None, index=False)
-
-
-def percent_str_func(row):
-    need_percent = bool(re.search("Cells with", row["item"], flags=re.IGNORECASE))
-    if need_percent:
-        return "(" + str(row["percent"]) + "%)"
-    else:
-        return ""
-
-
-def get_umi_count(fq):
-    umis = []
-    with pysam.FastxFile(fq) as fh:
-        for entry in fh:
-            attr = entry.name.split('_')
-            umi = attr[1]
-            umis.append(umi)
-    res = len(set(umis))
-    return res
-
-
 @utils.add_log
 def assemble_summary(outdir, Seqtype, sample, species):
     
@@ -51,7 +22,7 @@ def assemble_summary(outdir, Seqtype, sample, species):
 
     go_assemble_summary = []
 
-    clean_fq = f'{outdir}/../02.cutadapt/{sample}__clean_2.fq'
+    clean_fq = f'{outdir}/../02.cutadapt/{sample}_clean_2.fq'
 
     count_file = f'{outdir}/../03.split_fastq/{sample}_count.txt'
 
@@ -76,7 +47,7 @@ def assemble_summary(outdir, Seqtype, sample, species):
             with open(f'{outdir}/log') as fh:
                 for line in fh:
                     if 'aligned exactly 1 time' in line:
-                        res = re.findall("\d+", line)
+                        res = re.findall(r"\d+", line)
                         item = f'Reads mapped to TR{locus}'
                         count = int(res[0])
                         total_mapped += count
@@ -93,6 +64,8 @@ def assemble_summary(outdir, Seqtype, sample, species):
             'count': total_mapped,
             'total_count': total_count
         })
+
+        os.system(f'rm {outdir}/log')
 
     elif Seqtype == 'BCR':
         loci = ['H', 'L', 'K']
@@ -111,7 +84,7 @@ def assemble_summary(outdir, Seqtype, sample, species):
             with open(f'{outdir}/log') as fh:
                 for line in fh:
                     if 'aligned exactly 1 time' in line:
-                        res = re.findall("\d+", line)
+                        res = re.findall(r"\d+", line)
                         item = f'Reads mapped to BR{locus}'
                         count = int(res[0])
                         total_mapped += count
@@ -126,7 +99,8 @@ def assemble_summary(outdir, Seqtype, sample, species):
             'count': total_mapped,
             'total_count': total_count
         })
-            
+        os.system(f'rm {outdir}/log')
+
     df = pd.DataFrame(go_assemble_summary, columns=['item', 'count', 'total_count'])
 
     utils.gen_stat(df, stat_file)
@@ -231,7 +205,7 @@ class Go_assemble(Step):
 
         tracer_summarise(self.outdir)
 
-        assemble_summary(self.outdir, self.Seqtype)
+        assemble_summary(self.outdir, self.Seqtype, self.sample, self.species)
 
 
     def run_bracer(self):
@@ -248,7 +222,7 @@ class Go_assemble(Step):
 
         bracer_summarise(self.outdir)
 
-        assemble_summary(self.outdir, self.Seqtype)
+        assemble_summary(self.outdir, self.Seqtype, self.sample, self.species)
 
     @utils.add_log
     def run(self):

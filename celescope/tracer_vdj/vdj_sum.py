@@ -5,6 +5,19 @@ import numpy as np
 from celescope.tools import utils
 from celescope.tools.Step import Step, s_common
 from celescope.tools.cellranger3 import get_plot_elements
+import glob
+import pysam
+
+
+def get_umi_count(fq):
+    umis = []
+    with pysam.FastxFile(fq) as fh:
+        for entry in fh:
+            attr = entry.name.split('_')
+            umi = attr[1]
+            umis.append(umi)
+    res = len(set(umis))
+    return res
 
 
 def tpm_count(ass_dir):
@@ -113,6 +126,8 @@ class Vdj_sum(Step):
 
         count_umi = pd.read_csv(count_umi_file, sep='\t', index_col=0)
 
+        median_all = int(count_umi['UMI'].median())
+
         if Seqtype == 'TCR':
 
             productive_cells = set(results['cell_name'].tolist())
@@ -198,29 +213,31 @@ class Vdj_sum(Step):
                 'total_count': productive_cells_num,
             })
 
-            with open(f'{ass_dir}/tmp.txt', 'r') as f:
-                medians = []
-                for line in f:
-                    line = line.rstrip('\n').split(':')
-                    medians.append(int(line[1]))
+            TRAs = glob.glob(f'{ass_dir}/tracer/*/aligned_reads/*_TCR_A.fastq')
+            TRBs = glob.glob(f'{ass_dir}/tracer/*/aligned_reads/*_TCR_B.fastq')
+            TRA_UMIs = [get_umi_count(fq) for fq in TRAs]
+            TRB_UMIs = [get_umi_count(fq) for fq in TRBs]
 
-                vdj_sum_summary.append({
-                    'item': 'Median UMIs per cell',
-                    'count': medians[0],
-                    'total_count': np.nan
-                })
+            medianA = int(np.median(TRA_UMIs))
+            medianB = int(np.median(TRB_UMIs))         
 
-                vdj_sum_summary.append({
-                    'item': 'Median TRA UMIs per cell',
-                    'count': medians[1],
-                    'total_count': np.nan    
-                })
+            vdj_sum_summary.append({
+                'item': 'Median UMIs per cell',
+                'count': median_all,
+                'total_count': np.nan
+            })
 
-                vdj_sum_summary.append({
-                    'item': 'Median TRB UMIs per cell',
-                    'count': medians[2],
-                    'total_count': np.nan
-                })
+            vdj_sum_summary.append({
+                'item': 'Median TRA UMIs per cell',
+                'count': medianA,
+                'total_count': np.nan    
+            })
+
+            vdj_sum_summary.append({
+                'item': 'Median TRB UMIs per cell',
+                'count': medianB,
+                'total_count': np.nan
+            })
 
 
         elif Seqtype == 'BCR':
@@ -341,35 +358,41 @@ class Vdj_sum(Step):
                     'total_count': productive_cells_num
             })
 
-            with open(f'{ass_dir}/tmp.txt', 'r') as f:
-                medians=[]
-                for line in f:
-                    line = line.strip('\n').split(':')
-                    medians.append(int(line[1]))
+            IGHs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_H.fastq')
+            IGKs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_K.fastq')
+            IGLs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_L.fastq')
 
-                vdj_sum_summary.append({
-                    'item': 'Median UMIs per cell',
-                    'count': medians[0],
-                    'total_count': np.nan
-                })
+            IGH_UMIs = [get_umi_count(fq) for fq in IGHs]
+            IGK_UMIs = [get_umi_count(fq) for fq in IGKs]
+            IGL_UMIs = [get_umi_count(fq) for fq in IGLs]
 
-                vdj_sum_summary.append({
-                    'item': 'Median IGH UMIs per cell',
-                    'count': medians[1],
-                    'total_count': np.nan
-                })
+            medianH = int(np.median(IGH_UMIs))
+            medianL = int(np.median(IGL_UMIs))
+            medianK = int(np.median(IGK_UMIs))
 
-                vdj_sum_summary.append({
-                    'item': 'Median IGK UMIs per cell',
-                    'count': medians[2],
-                    'total_count': np.nan
-                })
+            vdj_sum_summary.append({
+                'item': 'Median UMIs per cell',
+                'count': median_all,
+                'total_count': np.nan
+            })
 
-                vdj_sum_summary.append({
-                    'item': 'Median IGL UMIs per cell',
-                    'count': medians[3],
-                    'total_count': np.nan
-                })
+            vdj_sum_summary.append({
+                'item': 'Median IGH UMIs per cell',
+                'count': medianH,
+                'total_count': np.nan
+            })
+
+            vdj_sum_summary.append({
+                'item': 'Median IGL UMIs per cell',
+                'count': medianL,
+                'total_count': np.nan
+            })
+
+            vdj_sum_summary.append({
+                'item': 'Median IGK UMIs per cell',
+                'count': medianK,
+                'total_count': np.nan
+            })
 
         df = pd.DataFrame(vdj_sum_summary, 
             columns=['item', 'count', 'total_count'])
@@ -384,9 +407,6 @@ class Vdj_sum(Step):
         self.add_data_item(table_dict=table_dict)
 
         self.clean_up()
-
-        os.remove(f'{ass_dir}/tmp.txt')
-
 
 @utils.add_log
 def vdj_sum(args):

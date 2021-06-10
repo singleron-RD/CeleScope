@@ -140,7 +140,7 @@ class Split_fastq(Step):
             i += 1
             
         df_f['cell_name'].fillna(0, inplace=True)
-        
+        df_f.fillna(0, inplace=True) 
         df_f = df_f.astype(int)
         df_f.to_csv(self.count_file, sep='\t')
 
