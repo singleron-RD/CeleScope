@@ -20,10 +20,10 @@ setuptools.setup(
     version=__VERSION__,
     author="zhouyiqi",
     author_email="zhouyiqi@singleronbio.com",
-    description="GEXSCOPE Single cell analysis",
+    description="Single Cell Analysis Pipelines",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/zhouyiqi91/CeleScope",
+    url="https://github.com/singleron-RD/CeleScope",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
