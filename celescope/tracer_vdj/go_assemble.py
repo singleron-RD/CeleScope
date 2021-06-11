@@ -227,9 +227,13 @@ class Go_assemble(Step):
     @utils.add_log
     def run(self):
         if self.Seqtype == 'TCR':
-            self.run_tracer()
+            tracer_dir = f'{self.outdir}/tracer/filtered_TCRAB_summary/recombinants.txt'
+            if not os.path.exists(tracer_dir):
+                self.run_tracer()
         elif self.Seqtype == 'BCR':
-            self.run_bracer()
+            bracer_dir = f'{self.outdir}/bracer/filtered_BCR_summary/changeodb.tab'
+            if not os.path.exists(bracer_dir):
+                self.run_bracer()
 
         self.clean_up()
 

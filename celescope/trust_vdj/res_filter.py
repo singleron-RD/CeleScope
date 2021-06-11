@@ -63,7 +63,7 @@ class Res_filter(Step):
 
     @utils.add_log
     def run(self):
-        barcode_report = f'{self.outdir}/../02.truse_assemble/TRUST4/{self.sample}_barcode_report.tsv'
+        barcode_report = f'{self.outdir}/../02.trust_assemble/TRUST4/{self.sample}_barcode_report.tsv'
         res = beauty_res(self.outdir, barcode_report)
         filtered = res[(res['TRB_fl']!='0')&(res['TRA_fl']!='0')]
         fre = [''] * filtered.shape[0]

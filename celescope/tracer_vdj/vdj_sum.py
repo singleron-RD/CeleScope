@@ -1,4 +1,5 @@
 import os
+from re import I
 import pandas as pd
 from Bio.Seq import Seq
 import numpy as np
@@ -9,17 +10,16 @@ import glob
 import pysam
 
 
-def get_umi_count(fq):
-    umis = []
+def get_read_count(fq):
+    count = 0
     with pysam.FastxFile(fq) as fh:
         for entry in fh:
-            attr = entry.name.split('_')
-            umi = attr[1]
-            umis.append(umi)
-    res = len(set(umis))
-    return res
+            count += 1
+
+    return count
 
 
+@utils.add_log
 def tpm_count(ass_dir):
     rec = pd.read_csv(f'{ass_dir}/tracer/filtered_TCRAB_summary/recombinants.txt', sep='\t')  
     # ass_dir outdir/sample/04.go_assemble
@@ -41,54 +41,79 @@ def tpm_count(ass_dir):
     return productive
 
 
+@utils.add_log
 def filtering(Seqtype, ass_dir, outdir):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     if Seqtype == 'TCR':
         data = tpm_count(ass_dir)
-        cell_name = set(list(data['cell_name']))
+        cell_name = list(set(list(data['cell_name']))).sort()
         filtered = pd.DataFrame()
-        for name in cell_name:
-            count_data = data[data['cell_name'] == name]
-            tra = count_data[count_data['locus'] == 'A']
-            trb = count_data[count_data['locus'] == 'B']
-            if tra.empty is not True:
-                tra = tra.sort_values(by='TPM', ascending=False)
-                tra = tra.head(1)
-                filtered = filtered.append(tra, ignore_index=True)
-            if trb.empty is not True:
-                trb = trb.sort_values(by='TPM', ascending=False)
-                trb = trb.head(1)
-                filtered = filtered.append(trb, ignore_index=True)
+        df = pd.DataFrame(cell_name, columns=['cell_name'])
+        loci = ['A', 'B']
+        for locus in loci:
+            tmp = data[data['locus']==locus]
+            tmp = tmp.sort_values(by='TPM', ascending=False)
+            tmp = tmp.drop_duplicates('cell_name', 'first')
+            filtered = filtered.append(tmp, ignore_index=True)
 
+            tmp = tmp.rename(columns={'CDR3aa': f'TR{locus}_CDR3aa'})
+            clones = tmp[['cell_name', f'TR{locus}_CDR3aa']]
+            df = pd.merge(df, clones, on='cell_name', how='outer')
+
+        df = df.fillna('None')
+
+        clonetypes = df.groupby(['TRA_CDR3aa', 'TRB_CDR3aa']).agg({'cell_name': 'count'})
+        clonetypes = clonetypes.sort_values(by='cell_name', ascending=False)
+        clonetypes = clonetypes.rename(columns={'cell_name': 'Frequency'})
+
+        clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
         filtered.to_csv(f'{outdir}/filtered.txt', sep='\t')
 
     elif Seqtype == 'BCR':
 
         data = pd.read_csv(f'{ass_dir}/bracer/filtered_BCR_summary/changeodb.tab', sep='\t')
-        data = data[data['FUNCTIONAL'] == True]
-        cell_name = set(list(data['CELL']))
+        data = data[(data['FUNCTIONAL'] == True) & (data['IN_FRAME'] == True)]
+        cell_name = list(set(data['CELL'].tolist())).sort()
         filtered = pd.DataFrame()
-        for name in cell_name:
-            count_cell = data[data['CELL'] == name]
-            count_h = pd.DataFrame(count_cell[count_cell['LOCUS'] == 'H'])
-            count_k = pd.DataFrame(count_cell[count_cell['LOCUS'] == 'K'])
-            count_l = pd.DataFrame(count_cell[count_cell['LOCUS'] == 'L'])
-            count_k_l = count_k.append(count_l)
-            if count_h.empty is not True:
-                count_h = count_h.sort_values(by='TPM', ascending=False)
-                count_h = count_h.head(1)
-                filtered = filtered.append(count_h, ignore_index=True)
-            if count_k_l.empty is not True:
-                count_k_l = count_k_l.sort_values(by='TPM', ascending=False)
-                count_k_l = count_k_l.head(1)
-                filtered = filtered.append(count_k_l, ignore_index=True)
 
+        tmp = data[data['LOCUS'] == 'H']
+        tmp = tmp.sort_values(by='TPM', ascending=False)
+        tmp = tmp.drop_duplicates('CELL', 'first')
+        filtered = filtered.append(tmp, ignore_index=True)
+
+        tmp2 = data[data['LOCUS'] != 'H']
+        tmp2 = tmp2.sort_values(by='TPM', ascending=False)
+        tmp2 = tmp2.drop_duplicates('CELL', 'first')
+        filtered = filtered.append(tmp2, ignore_index=True)
+
+        df = pd.DataFrame(cell_name, columns=['CELL'])
+
+        loci = ['H', 'L', 'K']
+        for locus in loci:
+            tmp = filtered[filtered['LOCUS'] == locus][['CELL', 'JUNCTION']]
+            tmp.columns = ['CELL', f'JUNCTION_{locus}']
+            ntseqs = tmp[f'JUNCTION_{locus}'].tolist()
+            tmplist = []
+            for nt in ntseqs:
+                nt = Seq(nt)
+                nt = nt.reverse_complement()
+                tmplist.append(str(nt))
+            tmp.insert(tmp.shape[1], f'IG{locus}_CDR3aa', tmplist)
+
+            df = pd.merge(df, tmp, on='CELL', how='outer')
+
+        df = df.fillna('None')
+            
+        clonetypes = df.groupby(['IGH_CDR3aa', 'IGL_CDR3aa', 'IGK_CDR3aa']).agg({'CELL': 'count'})
+        clonetypes = clonetypes.sort_values(by='CELL', ascending=False)
+        clonetypes = clonetypes.rename(columns={'CELL': 'Frequency'})
+
+        clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
+        filtered = filtered.rename(columns={'CELL': 'cell_name'})
         filtered.to_csv(f'{outdir}/filtered.txt', sep='\t')
 
-    return filtered
-    
 
 class Vdj_sum(Step):
     """
@@ -116,62 +141,32 @@ class Vdj_sum(Step):
         fastq_dir = self.fastq_dir
         Seqtype = self.Seqtype
 
-        results = filtering(Seqtype, ass_dir, outdir)
+        filtering(Seqtype, ass_dir, outdir)
+
+        filter_data = pd.read_csv(f'{outdir}/filtered.txt', sep='\t')
 
         stat_file = outdir + '/stat.txt'
 
         vdj_sum_summary = []
         
         count_umi_file = f'{fastq_dir}/../{self.sample}_count.txt'
-
         count_umi = pd.read_csv(count_umi_file, sep='\t', index_col=0)
-
         median_all = int(count_umi['UMI'].median())
 
+        clonetypes = pd.read_csv(f'{outdir}/clonetypes.tsv', sep='\t')
+
+        productive_cells = set(filter_data['cell_name'].tolist())
+        productive_cells_num = len(productive_cells)
+
         if Seqtype == 'TCR':
-
-            productive_cells = set(results['cell_name'].tolist())
-
+            # barcode umi plot
             count_umi['mark'] = count_umi['cell_name'].apply(lambda x: "CB" if (x in productive_cells) else "UB")
 
             count_umi.to_csv(count_umi_file, sep='\t')
 
             self.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi_file))
 
-            productive_cells_num = len(productive_cells)
-
-            TRA_chain = results[results['locus'] == 'A']
-            TRA_chain_num = TRA_chain.shape[0]
-            TRB_chain = results[results['locus'] == 'B']
-            TRB_chain_num = TRB_chain.shape[0]
-
-            TRAs, TRBs = [], []
-            paired_cell = 0
-            for cell in productive_cells:
-                tmp1 = TRA_chain[TRA_chain['cell_name'] == cell]
-                if tmp1.empty is not True:
-                    chainA = tmp1['CDR3aa'].tolist()[0]
-                    TRAs.append(chainA)
-                else:
-                    TRAs.append('NaN')
-                
-                tmp2 = TRB_chain[TRB_chain['cell_name'] == cell]
-                if tmp2.empty is not True:
-                    chainB = tmp2['CDR3aa'].tolist()[0]
-                    TRBs.append(chainB)
-                else:
-                    TRBs.append('NaN')
-                
-                if not tmp1.empty and not tmp2.empty:
-                    paired_cell += 1
-
-            clonetypes_table = pd.DataFrame()
-            clonetypes_table['TRA_chain'] = TRAs
-            clonetypes_table['TRB_chain'] = TRBs
-            clonetypes_table['Frequency'] = ''
-
-            clonetypes = clonetypes_table.groupby(['TRA_chain', 'TRB_chain']).agg({'Frequency': 'count'})
-
+            # clonetype table
             sum_c = clonetypes['Frequency'].sum()
             proportions = []
             for f in list(clonetypes['Frequency']):
@@ -184,10 +179,13 @@ class Vdj_sum(Step):
             clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
             clonetypes = clonetypes.reset_index()
 
-            clonetypes['clonetypeId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
-            clonetypes = clonetypes.reindex(columns=list(['clonetypeId', 'TRA_chain', 'TRB_chain', 'Frequency', 'Proportion']))
+            clonetypes['CloneId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
+            clonetypes['TRA_CDR3aa'] = clonetypes.TRA_CDR3aa.apply(lambda x: 'C'+str(x)+'F' if x != 'None' else 'None')
+            clonetypes['TRB_CDR3aa'] = clonetypes.TRB_CDR3aa.apply(lambda x: 'C'+str(x)+'F' if x != 'None' else 'None')
 
-            clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
+            clonetypes = clonetypes.reindex(columns=list(['CloneId', 'TRA_CDR3aa', 'TRB_CDR3aa', 'Frequency', 'Proportion']))
+
+            clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t', index=None)
 
             vdj_sum_summary.append({
                 'item': 'Estimated Number of Cells',
@@ -195,17 +193,18 @@ class Vdj_sum(Step):
                 'total_count': np.nan,
             })
 
-            vdj_sum_summary.append({
-                'item': 'Cells with TRA',
-                'count': TRA_chain_num,
-                'total_count': productive_cells_num,
-            })
+            loci = ['A', 'B']
 
-            vdj_sum_summary.append({
-                'item': 'Cells with TRB',
-                'count': TRB_chain_num,
-                'total_count': productive_cells_num,
-            })
+            for locus in loci:
+                tmp = int(clonetypes[clonetypes[f'TR{locus}_CDR3aa'] != 'None']['Frequency'].sum())
+
+                vdj_sum_summary.append({
+                    'item': f'Cells with TR{locus}',
+                    'count': tmp,
+                    'total_count': productive_cells_num,
+                })
+
+            paired_cell = int(clonetypes[(clonetypes['TRA_CDR3aa'] != 'None') & (clonetypes['TRB_CDR3aa'] != 'None')]['Frequency'].sum())
 
             vdj_sum_summary.append({
                 'item': 'Cells with paired TRA and TRB',
@@ -213,97 +212,47 @@ class Vdj_sum(Step):
                 'total_count': productive_cells_num,
             })
 
-            TRAs = glob.glob(f'{ass_dir}/tracer/*/aligned_reads/*_TCR_A.fastq')
-            TRBs = glob.glob(f'{ass_dir}/tracer/*/aligned_reads/*_TCR_B.fastq')
-            TRA_UMIs = [get_umi_count(fq) for fq in TRAs]
-            TRB_UMIs = [get_umi_count(fq) for fq in TRBs]
-
-            medianA = int(np.median(TRA_UMIs))
-            medianB = int(np.median(TRB_UMIs))         
-
             vdj_sum_summary.append({
-                'item': 'Median UMIs per cell',
+                'item': 'Median read count per cell',
                 'count': median_all,
                 'total_count': np.nan
-            })
+            })            
 
-            vdj_sum_summary.append({
-                'item': 'Median TRA UMIs per cell',
-                'count': medianA,
-                'total_count': np.nan    
-            })
-
-            vdj_sum_summary.append({
-                'item': 'Median TRB UMIs per cell',
-                'count': medianB,
-                'total_count': np.nan
-            })
+            for locus in loci:
+                tmp = glob.glob(f'{ass_dir}/tracer/*/aligned_reads/*_TCR_{locus}.fastq')
+                if len(tmp) != 0:
+                    read_count = [get_read_count(fq) for fq in tmp]
+                    read_count.sort()
+                    for i in range(len(read_count)):
+                        if read_count[i] != 0:
+                            idx = i
+                            break
+                    read_count = read_count[idx:]
+                    median_tmp = int(np.median(read_count))
+                    vdj_sum_summary.append({
+                        'item': f'Median TR{locus} read count per cell',
+                        'count': median_tmp,
+                        'total_count': np.nan
+                    })
+                else:
+                    vdj_sum_summary.append({
+                    'item': f'Median TR{locus} read count per cell',
+                    'count': 0,
+                    'total_count': np.nan
+                    })
 
 
         elif Seqtype == 'BCR':
 
-            productive_cells = set(results['CELL'].tolist())
-
-            productive_cells_num = len(productive_cells)
-
+            # barcode umi plot
             count_umi['mark'] = count_umi['cell_name'].apply(lambda x: "CB" if (x in productive_cells) else "UB")
 
             count_umi.to_csv(count_umi_file, sep='\t')        
 
             self.add_data_item(chart=get_plot_elements.plot_barcode_rank(count_umi_file))
 
-            results_h = results[results['LOCUS'] == 'H']
-            results_k = results[results['LOCUS'] == 'K']
-            results_l = results[results['LOCUS'] == 'L']
-            results_h_count = results_h.shape[0]
-            results_k_count = results_k.shape[0]
-            results_l_count = results_l.shape[0]
 
-            IGHs, IGKs, IGLs = [], [], []
-
-            paired_k, paired_l = 0, 0
-
-            for cell in productive_cells:
-                tmp1 = results_h[results_h['CELL'] == cell]
-                if tmp1.empty is not True:
-                    seq = tmp1['JUNCTION'].tolist()[0]
-                    seq = Seq(seq)
-                    aaseq = seq.translate()
-                    IGHs.append(aaseq)
-                else:
-                    IGHs.append('NaN')
-
-                tmp2 = results_l[results_l['CELL'] == cell]
-                if tmp2.empty is not True:
-                    seq = tmp2['JUNCTION'].tolist()[0]
-                    seq = Seq(seq)
-                    aaseq = seq.translate()
-                    IGLs.append(aaseq)
-                else:
-                    IGLs.append('NaN')
-
-                tmp3 = results_k[results_k['CELL'] == cell]
-                if tmp3.empty is not True:
-                    seq = tmp3['JUNCTION'].tolist()[0]
-                    seq = Seq(seq)
-                    aaseq = seq.translate()
-                    IGKs.append(aaseq)
-                else:
-                    IGKs.append('NaN')
-
-                if not tmp1.empty and not tmp2.empty:
-                    paired_l += 1
-                if not tmp1.empty and not tmp3.empty:
-                    paired_k += 1
-
-            clonetypes_table = pd.DataFrame()
-
-            clonetypes_table['IGH_chain'] = IGHs
-            clonetypes_table['IGL_chain'] = IGLs
-            clonetypes_table['IGK_chain'] = IGKs
-            clonetypes_table['Frequency'] = ''
-
-            clonetypes = clonetypes_table.groupby(['IGH_chain', 'IGL_chain', 'IGK_chain']).agg({'Frequency': 'count'})
+            # clone type table
 
             Proportion = []
             sum_c = clonetypes['Frequency'].sum()
@@ -317,9 +266,10 @@ class Vdj_sum(Step):
             clonetypes = clonetypes.sort_values(by='Frequency', ascending=False)
             clonetypes = clonetypes.reset_index()
 
-            clonetypes['clonetypeId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
-            clonetypes = clonetypes.reindex(columns=list(['clonetypeId', 'IGH_chain', 'IGL_chain', 'IGK_chain', 'Frequency', 'Proportion']))
-            clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t')
+            clonetypes['CloneId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
+            clonetypes = clonetypes.reindex(columns=list(['CloneId', 'IGH_CDR3aa', 'IGL_CDR3aa', 'IGK_CDR3aa', 'Frequency', 'Proportion']))
+
+            clonetypes.to_csv(f'{outdir}/clonetypes.tsv', sep='\t', index=None)
 
 
             vdj_sum_summary.append({
@@ -328,78 +278,68 @@ class Vdj_sum(Step):
                     'total_count': np.nan
             })
 
-            vdj_sum_summary.append({
-                    'item': 'Cells with IGH',
-                    'count': results_h_count,
-                    'total_count': productive_cells_num
-            })    
+            loci = ['H', 'L', 'K']
 
-            vdj_sum_summary.append({
-                    'item': 'Cells with IGK',
-                    'count': results_k_count,
-                    'total_count': productive_cells_num
-            })
+            for locus in loci:
+                tmp = int(clonetypes[clonetypes[f'IG{locus}_CDR3aa']!='None']['Frequency'].sum())
 
-            vdj_sum_summary.append({
-                    'item': 'Cells with IGL',
-                    'count': results_l_count,
-                    'total_count': productive_cells_num
-            })            
+                vdj_sum_summary.append({
+                        'item': f'Cells with IG{locus}',
+                        'count': tmp,
+                        'total_count': productive_cells_num
+                })
 
-            vdj_sum_summary.append({
-                    'item': 'Cells with paired IGH and IGK',
-                    'count': paired_k,
-                    'total_count': productive_cells_num
-            })
+            paired_H_L = int(clonetypes[(clonetypes['IGH_CDR3aa']!='None') & (clonetypes['IGL_CDR3aa']!='None')]['Frequency'].sum())
 
             vdj_sum_summary.append({
                     'item': 'Cells with paired IGH and IGL',
-                    'count': paired_l,
+                    'count': paired_H_L,
                     'total_count': productive_cells_num
             })
 
-            IGHs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_H.fastq')
-            IGKs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_K.fastq')
-            IGLs = glob.glob(f'{outdir}/bracer/*/aligned_reads/*_BCR_L.fastq')
-
-            IGH_UMIs = [get_umi_count(fq) for fq in IGHs]
-            IGK_UMIs = [get_umi_count(fq) for fq in IGKs]
-            IGL_UMIs = [get_umi_count(fq) for fq in IGLs]
-
-            medianH = int(np.median(IGH_UMIs))
-            medianL = int(np.median(IGL_UMIs))
-            medianK = int(np.median(IGK_UMIs))
+            paired_H_K = int(clonetypes[(clonetypes['IGH_CDR3aa']!='None') & (clonetypes['IGK_CDR3aa']!='None')]['Frequency'].sum())
 
             vdj_sum_summary.append({
-                'item': 'Median UMIs per cell',
+                    'item': 'Cells with paired IGH and IGK',
+                    'count': paired_H_K,
+                    'total_count': productive_cells_num
+            })
+
+            vdj_sum_summary.append({
+                'item': 'Median read count per cell',
                 'count': median_all,
                 'total_count': np.nan
             })
 
-            vdj_sum_summary.append({
-                'item': 'Median IGH UMIs per cell',
-                'count': medianH,
-                'total_count': np.nan
-            })
-
-            vdj_sum_summary.append({
-                'item': 'Median IGL UMIs per cell',
-                'count': medianL,
-                'total_count': np.nan
-            })
-
-            vdj_sum_summary.append({
-                'item': 'Median IGK UMIs per cell',
-                'count': medianK,
-                'total_count': np.nan
-            })
+            for locus in loci:
+                tmp = glob.glob(f'{ass_dir}/bracer/*/aligned_reads/*_BCR_{locus}.fastq')
+                if len(tmp) != 0:
+                    read_count = [get_read_count(fq) for fq in tmp]    
+                    read_count.sort()
+                    for i in range(len(read_count)):
+                        if read_count[i] != 0:
+                            idx = i
+                            break
+                    read_count = read_count[idx:]
+                    median_tmp = int(np.median(read_count))
+                    vdj_sum_summary.append({
+                    'item': f'Median IG{locus} read count per cell',
+                    'count': median_tmp,
+                    'total_count': np.nan
+                    })
+                else:
+                    vdj_sum_summary.append({
+                    'item': f'Median IG{locus} read count per cell',
+                    'count': 0,
+                    'total_count': np.nan
+                    })
 
         df = pd.DataFrame(vdj_sum_summary, 
             columns=['item', 'count', 'total_count'])
 
         utils.gen_stat(df, stat_file)
 
-    # clonetype table
+        # clonetype table
 
         title = 'Clonetypes'
         table_dict = self.get_table(title, 'clonetypes_table', clonetypes)
