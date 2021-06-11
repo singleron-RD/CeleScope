@@ -44,9 +44,9 @@ class Star_rna(Step, StarMixin):
         # parse
         self.refflat = f"{self.genomeDir}/{self.genome['refflat']}"
 
-        self.ribo_log = f'{self.outdir}/{self.sample}_ribo_log.txt'
-        self.ribo_run_log = f'{self.outdir}/{self.sample}_ribo_run.log'
-        self.picard_region_log = f'{self.outdir}/{self.sample}_region.log'
+        self.ribo_log = f'{self.out_prefix}_ribo_log.txt'
+        self.ribo_run_log = f'{self.out_prefix}_ribo_run.log'
+        self.picard_region_log = f'{self.out_prefix}_region.log'
         self.plot = None
         self.stats = pd.Series()
 
@@ -113,9 +113,8 @@ class Star_rna(Step, StarMixin):
 
     @utils.add_log
     def ribo(self):
+        # TODO remove bbduk.sh and use picard ribo bases
         human_ribo_fa = f'{ROOT_PATH}/data/rRNA/human_ribo.fasta'
-        self.ribo_log = f'{self.outdir}/{self.sample}_ribo_log.txt'
-        self.ribo_run_log = f'{self.outdir}/{self.sample}_ribo_run.log'
         cmd = (
             f'bbduk.sh '
             f'in1={self.fq} '
