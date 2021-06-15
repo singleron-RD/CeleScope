@@ -10,12 +10,17 @@ import glob
 import pysam
 
 
-def get_read_count(fq):
-    count = 0
+
+def get_umi_count(fq):
+    umis = []
     with pysam.FastxFile(fq) as fh:
         for entry in fh:
-            count += 1
-
+            name = entry.name
+            name = name.split('_')
+            umi = name[1]
+            umis.append(umi)
+    count = len(set(umis))
+             
     return count
 
 
@@ -48,7 +53,7 @@ def filtering(Seqtype, ass_dir, outdir):
 
     if Seqtype == 'TCR':
         data = tpm_count(ass_dir)
-        cell_name = list(set(list(data['cell_name']))).sort()
+        cell_name = sorted(list(set(list(data['cell_name']))))
         filtered = pd.DataFrame()
         df = pd.DataFrame(cell_name, columns=['cell_name'])
         loci = ['A', 'B']
@@ -75,7 +80,7 @@ def filtering(Seqtype, ass_dir, outdir):
 
         data = pd.read_csv(f'{ass_dir}/bracer/filtered_BCR_summary/changeodb.tab', sep='\t')
         data = data[(data['FUNCTIONAL'] == True) & (data['IN_FRAME'] == True)]
-        cell_name = list(set(data['CELL'].tolist())).sort()
+        cell_name = sorted(list(set(data['CELL'].tolist())))
         filtered = pd.DataFrame()
 
         tmp = data[data['LOCUS'] == 'H']
@@ -213,7 +218,7 @@ class Vdj_sum(Step):
             })
 
             vdj_sum_summary.append({
-                'item': 'Median read count per cell',
+                'item': 'Median UMIs per cell',
                 'count': median_all,
                 'total_count': np.nan
             })            
@@ -221,7 +226,7 @@ class Vdj_sum(Step):
             for locus in loci:
                 tmp = glob.glob(f'{ass_dir}/tracer/*/aligned_reads/*_TCR_{locus}.fastq')
                 if len(tmp) != 0:
-                    read_count = [get_read_count(fq) for fq in tmp]
+                    read_count = [get_umi_count(fq) for fq in tmp]
                     read_count.sort()
                     for i in range(len(read_count)):
                         if read_count[i] != 0:
@@ -230,13 +235,13 @@ class Vdj_sum(Step):
                     read_count = read_count[idx:]
                     median_tmp = int(np.median(read_count))
                     vdj_sum_summary.append({
-                        'item': f'Median TR{locus} read count per cell',
+                        'item': f'Median TR{locus} UMIs per cell',
                         'count': median_tmp,
                         'total_count': np.nan
                     })
                 else:
                     vdj_sum_summary.append({
-                    'item': f'Median TR{locus} read count per cell',
+                    'item': f'Median TR{locus} UMIs per cell',
                     'count': 0,
                     'total_count': np.nan
                     })
@@ -306,7 +311,7 @@ class Vdj_sum(Step):
             })
 
             vdj_sum_summary.append({
-                'item': 'Median read count per cell',
+                'item': 'Median UMIs per cell',
                 'count': median_all,
                 'total_count': np.nan
             })
@@ -314,7 +319,7 @@ class Vdj_sum(Step):
             for locus in loci:
                 tmp = glob.glob(f'{ass_dir}/bracer/*/aligned_reads/*_BCR_{locus}.fastq')
                 if len(tmp) != 0:
-                    read_count = [get_read_count(fq) for fq in tmp]    
+                    read_count = [get_umi_count(fq) for fq in tmp]    
                     read_count.sort()
                     for i in range(len(read_count)):
                         if read_count[i] != 0:
@@ -323,13 +328,13 @@ class Vdj_sum(Step):
                     read_count = read_count[idx:]
                     median_tmp = int(np.median(read_count))
                     vdj_sum_summary.append({
-                    'item': f'Median IG{locus} read count per cell',
+                    'item': f'Median IG{locus} UMIs per cell',
                     'count': median_tmp,
                     'total_count': np.nan
                     })
                 else:
                     vdj_sum_summary.append({
-                    'item': f'Median IG{locus} read count per cell',
+                    'item': f'Median IG{locus} UMIs per cell',
                     'count': 0,
                     'total_count': np.nan
                     })
