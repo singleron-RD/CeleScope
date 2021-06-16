@@ -44,7 +44,7 @@ class Multi_snp(Multi):
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
-        vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_merged.vcf'
+        vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}.vcf'
         CID_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_CID.tsv'
         variant_count_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_variant_count.tsv'
         cmd_line = self.get_cmd_line(step, sample)
