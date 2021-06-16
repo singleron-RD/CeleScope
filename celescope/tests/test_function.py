@@ -10,6 +10,7 @@ class Tests(unittest.TestCase):
     def setUp(self):
         pass    
     
+    @unittest.skip("tested")
     def test_stat_to_metric(self):
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/multi_tests/rna')
         args_dict = {
@@ -26,3 +27,5 @@ class Tests(unittest.TestCase):
         obj.stat_to_metric()
         print(obj.content_dict['metric'])
 
+    def test_test(self):
+        assert 0 == 0

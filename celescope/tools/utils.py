@@ -97,27 +97,6 @@ def arg_str(arg, arg_name):
     return ''
 
 
-def read_barcode_file(match_dir, return_file=False):
-    '''
-    multi version compatible
-    '''
-    match_barcode_file1 = glob.glob(
-        f"{match_dir}/*count*/*_cellbarcode.tsv")
-    match_barcode_file2 = glob.glob(
-        f"{match_dir}/*count*/*matrix_10X/*_cellbarcode.tsv")
-    match_barcode_file3 = glob.glob(
-        f"{match_dir}/*count*/*matrix_10X/*barcodes.tsv")
-    match_barcode_file = (
-        match_barcode_file1 +
-        match_barcode_file2 +
-        match_barcode_file3)[0]
-    match_barcode, cell_total = read_one_col(match_barcode_file)
-    match_barcode = set(match_barcode)
-    if return_file:
-        return match_barcode, (cell_total, match_barcode_file)
-    return match_barcode, cell_total
-
-
 def format_stat(count, total_count):
     percent = round(count / total_count * 100, 2)
     string = f'{format_number(count)}({percent}%)'
@@ -694,6 +673,26 @@ def parse_annovar(annovar_file):
                 'COSMIC': cosmic,
             }, ignore_index=True)
     return df
+
+
+def read_barcode_file(match_dir, return_file=False):
+    '''
+    multi version compatible
+    '''
+    match_barcode_file1 = glob.glob(
+        f"{match_dir}/*count*/*_cellbarcode.tsv")
+    match_barcode_file2 = glob.glob(
+        f"{match_dir}/*count*/*matrix_10X/*_cellbarcode.tsv")
+    match_barcode_file3 = glob.glob(
+        f"{match_dir}/*count*/*matrix_10X/*barcodes.tsv")
+    match_barcode_file = (
+        match_barcode_file1 +
+        match_barcode_file2 +
+        match_barcode_file3)[0]
+    match_barcode, cell_total = read_one_col(match_barcode_file)
+    if return_file:
+        return match_barcode, (cell_total, match_barcode_file)
+    return match_barcode, cell_total
 
 
 def parse_match_dir(match_dir):

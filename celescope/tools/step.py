@@ -12,6 +12,8 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from celescope.tools.utils import add_log
 
 
+Metric = namedtuple("Metric", "name value total fraction")
+
 def s_common(parser):
     """subparser common arguments
     """
@@ -33,7 +35,7 @@ class Step:
         self.outdir = args.outdir
         self.sample = args.sample
         self.assay = args.assay
-        self.thread = args.thread
+        self.thread = int(args.thread)
         self.debug = args.debug
         # set 
         self.out_prefix = f'{self.outdir}/{self.sample}'
@@ -43,7 +45,6 @@ class Step:
             os.system('mkdir -p %s' % self.outdir)
 
         self.metric_list = []
-        self.Metric = namedtuple("Metric", "name value total fraction")
         self.path_dict = {
             "metric": f'{self.outdir}/../.metrics.json',
             "data": f'{self.outdir}/../.data.json'
@@ -68,7 +69,7 @@ class Step:
     def add_metric(self, name, value=None, total=None, fraction=None):
         '''add metric to metric_list
         '''
-        self.metric_list.append(self.Metric(
+        self.metric_list.append(Metric(
             name=name, value=value, total=total, fraction=fraction
         ))
 
@@ -83,7 +84,7 @@ class Step:
                 fraction = metric.value / metric.total
             if fraction:
                 fraction = round(fraction, 4)
-            metric_list.append(self.Metric(
+            metric_list.append(Metric(
                 name=metric.name,
                 value=metric.value,
                 total=metric.total,

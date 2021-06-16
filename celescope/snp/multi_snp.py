@@ -31,8 +31,8 @@ class Multi_snp(Multi):
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
 
-    def snpCalling(self, sample):
-        step = 'snpCalling'
+    def variant_calling(self, sample):
+        step = 'variant_calling'
         cmd_line = self.get_cmd_line(step, sample)
         bam = f'{self.outdir_dic[sample]["target_metrics"]}/{sample}_filtered.bam'
         cmd = (
@@ -44,9 +44,9 @@ class Multi_snp(Multi):
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
-        vcf = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_merged.vcf'
-        CID_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_CID.tsv'
-        variant_count_file = f'{self.outdir_dic[sample]["snpCalling"]}/{sample}_variant_count.tsv'
+        vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_merged.vcf'
+        CID_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_CID.tsv'
+        variant_count_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_variant_count.tsv'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

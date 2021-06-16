@@ -4,6 +4,7 @@ import pysam
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
+from celescope.__init__ import HELP_DICT
 
 
 class Target_metrics(Step):
@@ -86,9 +87,9 @@ def target_metrics(args):
 
 
 def get_opts_target_metrics(parser, sub_program):
+    parser.add_argument("--gene_list", help=HELP_DICT['gene_list'], required=True)
     if sub_program:
-        parser = s_common(parser)
         parser.add_argument("--bam", help='featureCounts bam', required=True)
         parser.add_argument('--match_dir', help='match_dir', required=True)
-    parser.add_argument("--gene_list", help='gene_list', required=True)
+        parser = s_common(parser)
 
