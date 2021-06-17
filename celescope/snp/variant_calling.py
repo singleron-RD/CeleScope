@@ -45,7 +45,7 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
 class Variant_calling(Step):
     """
     Features
-    - Perform variant calling
+    - Perform variant calling.
 
     Output
 
@@ -413,7 +413,7 @@ def variant_calling(args):
 
 def get_opts_variant_calling(parser, sub_program):
 
-    parser.add_argument("--genomeDir", help='Genome directory', required=True)
+    parser.add_argument("--genomeDir", help=HELP_DICT['genomeDir'], required=True)
     parser.add_argument(
         "--vcf", 
         help="""VCF file. If vcf file is not provided, celescope will perform variant calling at single cell level 
