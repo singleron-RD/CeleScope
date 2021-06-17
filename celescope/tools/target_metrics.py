@@ -24,7 +24,7 @@ class Target_metrics(Step):
         Step.__init__(self, args, step_name)
 
         # set
-        self.match_barcode = set(utils.parse_match_dir(args.match_dir)["match_barcode"])
+        self.match_barcode, _num = utils.read_barcode_file(args.match_dir)
         self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
         self.count_dict = utils.genDict(dim=3, valType=int)
 
@@ -35,6 +35,7 @@ class Target_metrics(Step):
 
         # out file
         self.out_bam_file = f'{self.out_prefix}_filtered.bam'
+        self.out_bam_file_sorted = f'{self.out_prefix}_filtered_sorted.bam'
 
     @utils.add_log
     def read_bam_write_filtered(self):
@@ -45,8 +46,12 @@ class Target_metrics(Step):
                         gene_name = record.get_tag('GN')
                     except KeyError:
                         continue
-                    barcode = record.get_tag('CB')
-                    UMI = record.get_tag('UB')
+                    # compatible with 10X bam
+                    try:
+                        barcode = record.get_tag('CB')
+                        UMI = record.get_tag('UB')
+                    except KeyError:
+                        continue
                     if barcode in self.match_barcode and gene_name in self.gene_list:
                         writer.write(record)
                     self.count_dict[barcode][gene_name][UMI] += 1
@@ -95,6 +100,12 @@ class Target_metrics(Step):
     def run(self):
         self.read_bam_write_filtered()
         self.parse_count_dict_add_metrics()
+        utils.sort_bam(
+            self.out_bam_file,
+            self.out_bam_file_sorted,
+            threads=self.thread,
+        )
+        utils.index_bam(self.out_bam_file_sorted)
         self.clean_up()
 
 

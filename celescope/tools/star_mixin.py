@@ -64,20 +64,15 @@ class StarMixin():
 
     @utils.add_log
     def sort_bam(self):
-        cmd = (
-            f'samtools sort {self.unsort_STAR_bam} '
-            f'-o {self.STAR_bam} '
-            f'--threads {self.thread} '
+        utils.sort_bam(
+            self.unsort_STAR_bam,
+            self.STAR_bam,
+            threads=self.thread,
         )
-        StarMixin.sort_bam.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
     def index_bam(self):
-        cmd = f"samtools index {self.STAR_bam}"
-        StarMixin.index_bam.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
-    
+        utils.index_bam(self.STAR_bam)    
 
     def get_star_metrics(self):
         """

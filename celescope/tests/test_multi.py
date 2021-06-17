@@ -3,7 +3,6 @@ Integration tests
 """
 
 import os
-import shutil
 import subprocess
 from concurrent import futures
 
@@ -14,7 +13,7 @@ ASSAYS = [
     'vdj',
     'tag',
     'capture_virus',
-    #'snp',
+    'snp',
     'rna',
 ]
 
@@ -28,8 +27,6 @@ def run_single(assay, test_dir):
     print("*" * 20 + "running " + assay + "*" * 20)
     subprocess.check_call('sh run_shell.sh', shell=True)
     subprocess.check_call('sh sjm.sh', shell=True)
-    if os.path.exists("test1"):
-        shutil.rmtree("test1")
     try:
         subprocess.check_call('sh ./shell/test1.sh', shell=True)
     except subprocess.CalledProcessError:

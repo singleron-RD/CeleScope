@@ -34,7 +34,7 @@ class Multi_snp(Multi):
     def variant_calling(self, sample):
         step = 'variant_calling'
         cmd_line = self.get_cmd_line(step, sample)
-        bam = f'{self.outdir_dic[sample]["target_metrics"]}/{sample}_filtered.bam'
+        bam = f'{self.outdir_dic[sample]["target_metrics"]}/{sample}_filtered_sorted.bam'
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '

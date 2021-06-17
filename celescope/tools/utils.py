@@ -809,3 +809,17 @@ def find_step_module_with_folder(assay, step):
             folder = module_path.split('.')[1]
 
     return step_module, folder
+
+
+def sort_bam(input_bam, output_bam, threads=1):
+    cmd = (
+        f'samtools sort {input_bam} '
+        f'-o {output_bam} '
+        f'--threads {threads} '
+    )
+    subprocess.check_call(cmd, shell=True)
+
+
+def index_bam(input_bam):
+    cmd = f"samtools index {input_bam}"
+    subprocess.check_call(cmd, shell=True)
