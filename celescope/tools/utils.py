@@ -173,11 +173,11 @@ def link_data(outdir, fq_dict):
             fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
 
 
-def generic_open(file_name, mode='rt'):
+def generic_open(file_name, *args, **kwargs):
     if file_name.endswith('.gz'):
-        file_obj = gzip.open(file_name, mode)
+        file_obj = gzip.open(file_name, *args, **kwargs)
     else:
-        file_obj = open(file_name, mode)
+        file_obj = open(file_name, *args, **kwargs)
     return file_obj
 
 @add_log
