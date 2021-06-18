@@ -14,7 +14,7 @@ def create_conda():
     source activate {ENV_NAME}
     conda install --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
 
-    pip install -i https://pypi.mirrors.ustc.edu.cn/simple/ celescope
+    pip install --no-cache-dir -i https://pypi.mirrors.ustc.edu.cn/simple/ celescope
     python setup.py install
     ln -s /SGRNJ/Database/script/soft/gatk-4.1.8.1/gatk {CONDA_ROOT}/{ENV_NAME}/bin/gatk
     """
