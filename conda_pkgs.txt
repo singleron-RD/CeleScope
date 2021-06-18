@@ -11,3 +11,4 @@ r-tidyverse
 mixcr=3.0.3
 bioconductor-dropletutils
 bcftools==1.9
+seqkt
