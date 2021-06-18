@@ -1,55 +1,76 @@
 import pandas as pd
 from celescope.tools.Step import Step, s_common
 from celescope.tools import utils
+from collections import defaultdict
 
 
 @utils.add_log
-def beauty_res(outdir, barcode_report):
-    res = pd.read_csv(barcode_report, sep='\t')
-    rows = res.shape[0]
-    loci = ['A', 'B']
+def beauty_report(barcode_report):
+    df = pd.read_csv(barcode_report, sep='\t')
+    rows = df.shape[0]
     chains = ['chain2', 'chain1']
-    for l in range(len(loci)):
-        chain = chains[l]
-        locus = loci[l]
+    dic = defaultdict(list)
 
-        Vgenes, Dgenes, Jgenes, Cgenes, cdr3nts, cdr3aas, readcounts, fuls = [], [], [], [], [], [], [], []
+    for l in range(len(chains)):
+        chain = chains[l]
+
+        items = {'V': 0, 'D': 1, 'J': 2, 'C': 3, 'CDR3nt': 4, 'CDR3aa': 5, 'readcount': 6, 'full_length_assembly': -1}        
 
         for i in range(rows):
-            attr = res.loc[i, chain]
-            attrs = attr.split(',')
-            if len(attrs) == 10:
-                V, D, J, C, cdr3nt, cdr3aa, readcount, fl = attrs[0], attrs[1], attrs[2], attrs[3], attrs[4], attrs[5], attrs[6], attrs[-1]
-                Vgenes.append(V)
-                Dgenes.append(D)
-                Jgenes.append(J)
-                Cgenes.append(C)
-                cdr3nts.append(cdr3nt)
-                cdr3aas.append(cdr3aa)
-                readcounts.append(readcount)
-                fuls.append(fl)
-            elif len(attrs) != 10:
-                Vgenes.append('NAN')
-                Dgenes.append('NAN')
-                Jgenes.append('NAN')
-                Cgenes.append('NAN')
-                cdr3nts.append('NAN')
-                cdr3aas.append('NAN')
-                readcounts.append('NAN')
-                fuls.append('NAN')
-            
-        res[f'TR{locus}_V'] = Vgenes
-        res[f'TR{locus}_D'] = Dgenes
-        res[f'TR{locus}_J'] = Jgenes
-        res[f'TR{locus}_C'] = Cgenes
-        res[f'TR{locus}_cdr3nt'] = cdr3nts
-        res[f'TR{locus}_cdr3aa'] = cdr3aas
-        res[f'TR{locus}_readcount'] = readcounts
-        res[f'TR{locus}_fl'] = fuls
+            cb = df.loc[i, '#barcode']
+            dic['barcode'].append(cb)
+            for item in items:
+                attr = df.loc[i, chain]
+                attrs = attr.split(',')
 
-    res.to_csv(f'{outdir}/new_barcode_report.tsv', sep='\t')
+                if len(attrs) == 10:
+                    dic[f'{item}'].append(attrs[items[item]])
+
+                elif len(attrs) != 10:
+                    dic[f'{item}'].append('None')
+
+    res = pd.DataFrame(dic, columns=list(dic.keys()))
 
     return res
+
+
+def get_clone_table(df, Seqtype):
+    res = pd.DataFrame()
+    group_type = []
+    if Seqtype == 'TCR':
+        chains = ['TRA', 'TRB']
+    if Seqtype == 'BCR':
+        chains = ['IGH', 'IGL', 'IGK']
+        for chain in chains:
+            tmp = df[df['V'].str.contains(chain, na=False)]
+            tmp = tmp.set_index('barcode')
+            tmp = tmp.rename(columns=lambda x: f'{chain}_'+x)
+
+            res = pd.concat([res, tmp], axis=1, join='outer', sort=False).fillna('None')
+            group_type.append(f'{chain}_CDR3aa')
+
+    
+    Frequent = [''] * res.shape[0]
+    res.insert(res.shape[1], 'Frequent', Frequent)
+    clonetypes = res.groupby(group_type).agg({'Frequent': 'count'})
+    clonetypes = clonetypes.sort_values(by='Frequent', ascending=False)
+
+    sum_c = clonetypes['Frequent'].sum()
+    proportions = []
+    for f in list(clonetypes['Frequent']):
+        p = f/sum_c
+        p = p * 100
+        p = round(p, 2)
+        p = str(p) + '%'
+        proportions.append(p)
+    clonetypes['Proportion'] = proportions
+    clonetypes = clonetypes.sort_values(by='Frequent', ascending=False)
+    clonetypes = clonetypes.reset_index()
+    
+    clonetypes['CloneId'] = [i for i in range(1, (clonetypes.shape[0]+1))]
+    clonetypes = clonetypes.reindex(columns=list(['CloneId', 'TRA_CDR3aa', 'TRB_CDR3aa', 'Frequent', 'Proportion']))   
+
+    return clonetypes
 
 
 class Res_filter(Step):
@@ -59,19 +80,25 @@ class Res_filter(Step):
 
         self.outdir = args.outdir
         self.sample = args.sample
+        self.Seqtype = args.Seqtype
 
 
     @utils.add_log
     def run(self):
         barcode_report = f'{self.outdir}/../02.trust_assemble/TRUST4/{self.sample}_barcode_report.tsv'
-        res = beauty_res(self.outdir, barcode_report)
-        fre = [''] * res.shape[0]
-        res.insert(res.shape[1], 'Frequent', fre)
+        df = beauty_report(barcode_report)
+        df.to_csv(f'{self.outdir}/{self.sample}_barcode_report.tsv', sep='\t')
 
-        clones = res.groupby(['TRA_cdr3aa', 'TRB_cdr3aa']).agg({'Frequent': 'count'})
-        clones = clones.sort_values(by='Frequent', ascending=False)
+        clones = get_clone_table(df, self.Seqtype)
 
         clones.to_csv(f'{self.outdir}/clonetype.tsv', sep='\t')
+
+        title = 'Clonetypes'
+        table_dict = self.get_table(title, 'clonetypes_table', clones)
+
+        self.add_data_item(table_dict=table_dict)
+
+        self.clean_up()
 
 
 @utils.add_log
@@ -82,5 +109,6 @@ def res_filter(args):
 
 
 def get_opts_res_filter(parser, sub_program):
-	if sub_program:
-		parser = s_common(parser)
+    parser.add_argument('--Seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    if sub_program:
+        parser = s_common(parser)
