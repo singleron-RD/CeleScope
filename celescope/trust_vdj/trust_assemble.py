@@ -67,12 +67,12 @@ class Trust_assemble(Step):
         match_barcodes(self.outdir, self.match_dir, self.Seqtype, self.fq1)
 
         cmd1 = (
-            f'seqtk subseq {self.fq1} {self.outdir}/seqlist.txt > {self.outdir}/{self.sample}_R1.fq'
+            f'seqtk subseq {self.fq1} {self.outdir}/seqlist.txt > {self.outdir}/{self.sample}_matched_R1.fq'
         )
         os.system(cmd1)
 
         cmd2 = (
-            f'seqtk subseq {self.fq2} {self.outdir}/seqlist.txt > {self.outdir}/{self.sample}_R2.fq'
+            f'seqtk subseq {self.fq2} {self.outdir}/seqlist.txt > {self.outdir}/{self.sample}_matched_R2.fq'
         )
         os.system(cmd2)
 
@@ -92,14 +92,15 @@ class Trust_assemble(Step):
             ref = '/SGRNJ03/randd/zhouxin/software/TRUST4/human_IMGT+C.fa'
         cmd = (
             f'{TRUST} -t {self.thread} '
-            f'-u {self.outdir}/{self.sample}_R2.fq '
-            f'--barcode {self.outdir}/{self.sample}_R1.fq '
+            f'-u {self.outdir}/{self.sample}_matched_R2.fq '
+            f'--barcode {self.outdir}/{self.sample}_matched_R1.fq '
             f'--barcodeRange 0 23 + '
             f'-f {index_file} '
             f'--ref {ref} '
             f'-o {self.sample} --od {self.outdir}/TRUST4' 
         )
 
+        Trust_assemble.run.logger.info(cmd)
         os.system(cmd)
 
         os.remove(f'{self.outdir}/seqlist.txt')

@@ -8,9 +8,9 @@ def beauty_res(outdir, barcode_report):
     res = pd.read_csv(barcode_report, sep='\t')
     rows = res.shape[0]
     loci = ['A', 'B']
-    chians = ['chain2', 'chain1']
+    chains = ['chain2', 'chain1']
     for l in range(len(loci)):
-        chain = chians[l]
+        chain = chains[l]
         locus = loci[l]
 
         Vgenes, Dgenes, Jgenes, Cgenes, cdr3nts, cdr3aas, readcounts, fuls = [], [], [], [], [], [], [], []
@@ -65,11 +65,10 @@ class Res_filter(Step):
     def run(self):
         barcode_report = f'{self.outdir}/../02.trust_assemble/TRUST4/{self.sample}_barcode_report.tsv'
         res = beauty_res(self.outdir, barcode_report)
-        filtered = res[(res['TRB_fl']!='0')&(res['TRA_fl']!='0')]
-        fre = [''] * filtered.shape[0]
-        filtered.insert(filtered.shape[1], 'Frequent', fre)
+        fre = [''] * res.shape[0]
+        res.insert(res.shape[1], 'Frequent', fre)
 
-        clones = filtered.groupby(['TRA_cdr3aa', 'TRB_cdr3aa']).agg({'Frequent': 'count'})
+        clones = res.groupby(['TRA_cdr3aa', 'TRB_cdr3aa']).agg({'Frequent': 'count'})
         clones = clones.sort_values(by='Frequent', ascending=False)
 
         clones.to_csv(f'{self.outdir}/clonetype.tsv', sep='\t')
