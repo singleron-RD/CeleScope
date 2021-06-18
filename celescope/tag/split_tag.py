@@ -41,7 +41,7 @@ class Split_tag(Step):
                 barcode = attr[0]
                 for tag in self.tag_barcode_dict:
                     if barcode in self.tag_barcode_dict[tag]:
-                        self.fastq_files_handle[tag].write(str(read))
+                        self.fastq_files_handle[tag].write(str(read) + '\n')
 
                 if read_num % 1000000 == 0:
                     self.write_fastq_files.logger.info(f'{read_num} done')
