@@ -500,42 +500,6 @@ def format_ratios(ratios: dict):
         ratios[key] = round(ratios[key] * 100, 2)
 
 
-@add_log
-def glob_genomeDir(genomeDir, fa=False):
-    refFlat = glob.glob(genomeDir + "/*.refFlat")
-    if (len(refFlat) > 1):
-        sys.exit("ERROR: Multiple refFlat file in " + genomeDir)
-    elif (len(refFlat) == 0):
-        sys.exit("ERROR: refFlat file not found in " + genomeDir)
-    else:
-        refFlat = refFlat[0]
-        glob_genomeDir.logger.info("refFlat file found: " + refFlat)
-
-    gtf = glob.glob(genomeDir + "/*.gtf")
-    if (len(gtf) == 0):
-        sys.exit("ERROR: gtf file not found in " + genomeDir)
-    elif (len(gtf) > 1):
-        gtf = glob.glob(genomeDir + "/*.chr.gtf")
-        if (len(gtf) == 0):
-            sys.exit("ERROR: No chr gtf file in "+ genomeDir)
-        if (len(gtf) > 1):
-            sys.exit("ERROR: Multiple gtf file in " + genomeDir)
-        else:
-            gtf = gtf[0]
-            glob_genomeDir.logger.info("chr gtf file found: " + gtf)
-    else:
-        gtf = gtf[0]
-        glob_genomeDir.logger.info("gtf file found: " + gtf)
-    
-    if fa:
-        fasta = glob.glob(genomeDir + "/*.fa") + glob.glob(genomeDir + "/*.fasta")
-        if len(fasta) > 1:
-            sys.exit("ERROR: Multiple fasta file in " + genomeDir)
-        fasta = fasta[0]
-        return refFlat, gtf, fasta
-    return refFlat, gtf, None
-
-
 def get_slope(x, y, window=200, step=10):
     assert len(x) == len(y)
     start = 0

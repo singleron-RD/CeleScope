@@ -21,6 +21,7 @@ from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
 from celescope.tools.cellranger3 import get_plot_elements
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
+from celescope.rna.mkref import parse_genomeDir_rna
 
 TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)
@@ -76,10 +77,9 @@ class Count(Step):
         self.cell_calling_method = args.cell_calling_method
         self.expected_cell_num = int(args.expected_cell_num)
         self.bam = args.bam
-        if args.genomeDir and args.genomeDir != "None":
-            _refFlat, self.gtf_file, _ = utils.glob_genomeDir(args.genomeDir)
-        else:
-            self.gtf_file = args.gtf
+
+        # set
+        self.gtf_file = parse_genomeDir_rna(args.genomeDir)['gtf']
         self.id_name = utils.get_id_name_dict(self.gtf_file)
 
         # output files
