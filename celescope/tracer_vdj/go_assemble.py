@@ -94,6 +94,7 @@ def assemble_summary(outdir, Seqtype, sample, species):
                             'total_count': total_count,
                         })
             os.system(f'rm {outdir}/BR{locus}.sam')
+            
         go_assemble_summary.insert(0, {
             'item': 'All reads Mapped to IGH, IGL and IGK',
             'count': total_mapped,

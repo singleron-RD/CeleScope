@@ -103,7 +103,7 @@ def filtering(Seqtype, ass_dir, outdir):
             tmplist = []
             for nt in ntseqs:
                 nt = Seq(nt)
-                nt = nt.reverse_complement()
+                nt = nt.translate()
                 tmplist.append(str(nt))
             tmp.insert(tmp.shape[1], f'IG{locus}_CDR3aa', tmplist)
 
