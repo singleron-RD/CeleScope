@@ -117,8 +117,11 @@ class Variant_calling(Step):
         samfile = pysam.AlignmentFile(self.splitN_bam, "rb")
         header = samfile.header
         for read in samfile:
-            attr = read.query_name.split('_')
-            barcode = attr[0]
+            try:
+                barcode = read.get_tag('CB')
+                UMI = read.get_tag('UB')
+            except KeyError:
+                continue
             if barcode in self.barcodes:
                 CID = self.barcodes.index(barcode) + 1
                 read.set_tag(tag='CL', value=f'CELL{CID}', value_type='Z')
@@ -308,7 +311,6 @@ class Variant_calling(Step):
         VID_vcf.close()
 
     @staticmethod
-    @utils.add_log
     def cell_UMI(CID, outdir, final_vcf_file):
         df_vcf = parse_vcf(final_vcf_file)
         df_UMI = pd.DataFrame(columns=['VID', 'CID', 'ref_count', 'alt_count'])
