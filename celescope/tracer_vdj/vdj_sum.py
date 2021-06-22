@@ -216,12 +216,7 @@ class Vdj_sum(Step):
                 'count': paired_cell,
                 'total_count': productive_cells_num,
             })
-
-            vdj_sum_summary.append({
-                'item': 'Median UMIs per cell',
-                'count': median_all,
-                'total_count': np.nan
-            })            
+          
 
             for locus in loci:
                 tmp = glob.glob(f'{ass_dir}/tracer/*/aligned_reads/*_TCR_{locus}.fastq')
@@ -310,11 +305,6 @@ class Vdj_sum(Step):
                     'total_count': productive_cells_num
             })
 
-            vdj_sum_summary.append({
-                'item': 'Median UMIs per cell',
-                'count': median_all,
-                'total_count': np.nan
-            })
 
             for locus in loci:
                 tmp = glob.glob(f'{ass_dir}/bracer/*/aligned_reads/*_BCR_{locus}.fastq')
