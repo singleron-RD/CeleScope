@@ -30,77 +30,48 @@ def assemble_summary(outdir, Seqtype, sample, species):
 
     total_count = count_df['readcount'].sum()
 
+    total_mapped = 0
+
     if Seqtype == 'TCR':
         loci = ['A', 'B']
-
-        total_mapped = 0
-
-        for locus in loci:
-            cmd = (
-                f'source activate {BRACER_CONDA}; '
-                f'bowtie2 -p 5 -k 1 --np 0 --rdg 1,1 --rfg 1,1 '
-                f'-x /SGRNJ03/randd/zhouxin/software/tracer/resources/{species}/combinatorial_recombinomes/TCR_{locus} '
-                f'-U {clean_fq} '
-                f'-S {outdir}/TR{locus}.sam > {outdir}/log 2>&1'
-            )
-            os.system(cmd)
-            with open(f'{outdir}/log') as fh:
-                for line in fh:
-                    if 'aligned exactly 1 time' in line:
-                        res = re.findall(r"\d+", line)
-                        item = f'Reads mapped to TR{locus}'
-                        count = int(res[0])
-                        total_mapped += count
-                        go_assemble_summary.append({
-                            'item': item,
-                            'count': count,
-                            'total_count': total_count,
-                        })
-
-            os.system(f'rm {outdir}/TR{locus}.sam')
-
-        go_assemble_summary.insert(0, {
-            'item': 'All reads Mapped to TRA and TRB',
-            'count': total_mapped,
-            'total_count': total_count
-        })
-
-        os.system(f'rm {outdir}/log')
+        stat_string = 'All reads Mapped to TRA and TRB' 
 
     elif Seqtype == 'BCR':
         loci = ['H', 'L', 'K']
+        stat_string = 'All reads Mapped to IGH, IGL and IGK'
 
-        total_mapped = 0
+    for locus in loci:
+        cmd = (
+            f'source activate {BRACER_CONDA}; '
+            f'bowtie2 -p 5 -k 1 --np 0 --rdg 1,1 --rfg 1,1 '
+            f'-x /SGRNJ03/randd/zhouxin/software/tracer/resources/{species}/combinatorial_recombinomes/TCR_{locus} '
+            f'-U {clean_fq} '
+            f'-S {outdir}/TR{locus}.sam > {outdir}/log 2>&1'
+        )
+        os.system(cmd)
+        with open(f'{outdir}/log') as fh:
+            for line in fh:
+                if 'aligned exactly 1 time' in line:
+                    res = re.findall(r"\d+", line)
+                    item = f'Reads mapped to TR{locus}'
+                    count = int(res[0])
+                    total_mapped += count
+                    go_assemble_summary.append({
+                        'item': item,
+                        'count': count,
+                        'total_count': total_count,
+                    })
 
-        for locus in loci:
-            cmd = (
-                f'source activate {BRACER_CONDA}; '
-                f'bowtie2 -p 5 -k 1 --np 0 --rdg 1,1 --rfg 1,1 '
-                f'-x /SGRNJ03/randd/zhouxin/software/bracer/resources/{species}/combinatorial_recombinomes/BCR_{locus} '
-                f'-U {clean_fq} '
-                f'-S {outdir}/BR{locus}.sam > {outdir}/log 2>&1'
-            )
-            os.system(cmd)
-            with open(f'{outdir}/log') as fh:
-                for line in fh:
-                    if 'aligned exactly 1 time' in line:
-                        res = re.findall(r"\d+", line)
-                        item = f'Reads mapped to BR{locus}'
-                        count = int(res[0])
-                        total_mapped += count
-                        go_assemble_summary.append({
-                            'item': item,
-                            'count': count,
-                            'total_count': total_count,
-                        })
-            os.system(f'rm {outdir}/BR{locus}.sam')
-            
-        go_assemble_summary.insert(0, {
-            'item': 'All reads Mapped to IGH, IGL and IGK',
-            'count': total_mapped,
-            'total_count': total_count
-        })
-        os.system(f'rm {outdir}/log')
+        os.system(f'rm {outdir}/TR{locus}.sam')
+
+    go_assemble_summary.insert(0, {
+        'item': stat_string,
+        'count': total_mapped,
+        'total_count': total_count
+    })
+
+    os.system(f'rm {outdir}/log')
+
 
     df = pd.DataFrame(go_assemble_summary, columns=['item', 'count', 'total_count'])
 
