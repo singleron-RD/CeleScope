@@ -338,7 +338,7 @@ class Count(Step):
             os.mkdir(matrix_dir)
 
         df_UMI = df.groupby(['geneID', 'Barcode']).agg({'UMI': 'count'})
-        mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.labels[0], df_UMI.index.labels[1])))
+        mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.codes[0], df_UMI.index.codes[1])))
         gene_id = df_UMI.index.levels[0].to_series()
         # add gene symbol
         gene_name = gene_id.apply(lambda x: self.id_name[x])
