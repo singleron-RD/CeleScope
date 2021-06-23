@@ -238,7 +238,11 @@ class Chemistry():
             Chemistry.get_chemistry.logger.info(linker_4_dict)
             if valid_linker_type == 0:
                 print(linker_wrong_dict)
-                raise Exception('auto chemistry detection failed!')
+                raise Exception(
+                    'Auto chemistry detection failed! '
+                    'If the sample is from Singleron, ask the technical staff you are connecting with for the chemistry used. '
+                    'You need to use `--chemistry scopeV1` for scopeV1, and `--chemistry auto` should be fine for scopeV2.* '
+                )
             elif valid_linker_type == 1:
                 chemistry = 'scopeV2.1.1'
             elif valid_linker_type < 4:
