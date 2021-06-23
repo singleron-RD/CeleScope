@@ -42,6 +42,12 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
     return df
 
 
+def read_CID(CID_file):
+    df_index = pd.read_csv(CID_file, sep='\t', index_col=0, dtype=object)
+    df_valid = df_index[df_index['valid'] == 'True']
+    return df_index, df_valid
+
+
 class Variant_calling(Step):
     """
     Features
@@ -231,9 +237,7 @@ class Variant_calling(Step):
                 all_res.append(res)
 
     def read_CID(self):
-        df_index = pd.read_csv(self.CID_file, sep='\t', index_col=0, dtype=object)
-        df_valid = df_index[df_index['valid'] == 'True']
-        return df_index, df_valid
+        return read_CID(self.CID_file)
 
 
     @utils.add_log

@@ -4,11 +4,11 @@ import subprocess
 
 import pandas as pd
 import pysam
-from mutract.utils import read_CID
 
 import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step, s_common
+from celescope.snp.variant_calling import read_CID
 
 
 class Analysis_variant(Step, AnalysisMixin):
