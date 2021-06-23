@@ -413,6 +413,7 @@ def get_fq(library_id, library_path):
     return fq1, fq2
 
 
+@add_log
 def parse_map_col4(mapfile, default_val):
     fq_dict = defaultdict(list)
     col4_dict = defaultdict(list)

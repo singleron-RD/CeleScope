@@ -5,7 +5,7 @@ import os
 from collections import defaultdict
 
 import celescope
-from celescope.tools.utils import find_assay_init, find_step_module
+import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
@@ -15,7 +15,7 @@ class Multi():
 
     def __init__(self, assay):
         self.__ASSAY__ = assay
-        init_module = find_assay_init(assay)
+        init_module = utils.find_assay_init(assay)
         self.__STEPS__ = init_module.__STEPS__
         self.__CONDA__ = os.path.basename(os.environ['CONDA_DEFAULT_ENV'])
         self.__APP__ = 'celescope'
@@ -71,11 +71,12 @@ class Multi():
 
     def step_args(self):
         for step in self.__STEPS__:
-            step_module = find_step_module(self.__ASSAY__, step)
+            step_module = utils.find_step_module(self.__ASSAY__, step)
             func_opts = getattr(step_module, f"get_opts_{step}")
             func_opts(self.parser, sub_program=False)
 
     @staticmethod
+    @utils.add_log
     def parse_map_col4(mapfile, default_val):
         fq_dict = defaultdict(list)
         col4_dict = {}
@@ -86,7 +87,7 @@ class Multi():
                     continue
                 line_split = line.split()
                 library_id, library_path, sample_name = line_split[:3]
-                if len(line_split) == 4:
+                if len(line_split) >= 4:
                     col4 = line_split[3]
                 else:
                     col4 = default_val
@@ -165,7 +166,7 @@ job_end
         self.last_step = step
 
     def parse_step_args(self, step):
-        step_module = find_step_module(self.__ASSAY__, step)
+        step_module = utils.find_step_module(self.__ASSAY__, step)
         func_opts = getattr(step_module, f"get_opts_{step}")
         step_parser = argparse.ArgumentParser(step_module)
         func_opts(step_parser, sub_program=False)
