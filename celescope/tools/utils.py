@@ -437,6 +437,7 @@ def get_fq(library_id, library_path):
 def parse_map_col4(mapfile, default_val):
     fq_dict = defaultdict(list)
     col4_dict = defaultdict(list)
+    col5_dict = defaultdict(list)
     with open(mapfile) as fh:
         for line in fh:
             line = line.strip()
@@ -448,7 +449,7 @@ def parse_map_col4(mapfile, default_val):
             library_id = tmp[0]
             library_path = tmp[1]
             sample_name = tmp[2]
-            if len(tmp) == 4:
+            if len(tmp) >= 4:
                 col4 = tmp[3]
             else:
                 col4 = default_val
@@ -461,6 +462,8 @@ def parse_map_col4(mapfile, default_val):
                 fq_dict[sample_name] = [[fq1], [fq2]]
             if col4 and col4 != default_val:
                 col4_dict[sample_name] = col4
+            if len(tmp) == 5:
+                col5_dict[sample_name] = tmp[4]
 
     for sample_name in fq_dict:
         fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
@@ -468,7 +471,7 @@ def parse_map_col4(mapfile, default_val):
 
     if not fq_dict:
         raise Exception('empty mapfile!')
-    return fq_dict, col4_dict
+    return fq_dict, col4_dict, col5_dict
 
 
 def generate_sjm(cmd, name, conda, m=1, x=1):
