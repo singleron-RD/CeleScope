@@ -427,7 +427,7 @@ def parse_map_col4(mapfile, default_val):
             library_id = tmp[0]
             library_path = tmp[1]
             sample_name = tmp[2]
-            if len(tmp) == 4:
+            if len(tmp) >= 4:
                 col4 = tmp[3]
             else:
                 col4 = default_val

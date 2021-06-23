@@ -8,3 +8,4 @@ editdistance>=0.5.3
 sklearn==0.0
 plotly==4.14.3
 plotnine==0.8.0
+cython
