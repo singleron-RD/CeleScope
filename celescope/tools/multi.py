@@ -130,7 +130,8 @@ class Multi():
 
         # mk log dir
         self.logdir = self.args.outdir + '/log'
-        os.system('mkdir -p %s' % (self.logdir))
+        if self.args.mod == 'sjm':
+            os.system('mkdir -p %s' % (self.logdir))
 
         # script init
         self.sjm_cmd = 'log_dir %s\n' % (self.logdir)

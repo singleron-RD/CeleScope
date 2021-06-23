@@ -30,15 +30,20 @@ def add_log(func):
     '''
     logging start and done.
     '''
-    logging.basicConfig(
-        level=logging.INFO,
-        stream=sys.stdout,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logFormatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     module = func.__module__
     name = func.__name__
     logger_name = f'{module}.{name}'
     logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+
+    fileHandler = logging.FileHandler("./celescope_log.txt")
+    fileHandler.setFormatter(logFormatter)
+    logger.addHandler(fileHandler)
+    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler.setFormatter(logFormatter)
+    logger.addHandler(consoleHandler)
 
     @wraps(func)
     def wrapper(*args, **kwargs):
