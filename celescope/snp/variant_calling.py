@@ -125,7 +125,6 @@ class Variant_calling(Step):
         for read in samfile:
             try:
                 barcode = read.get_tag('CB')
-                UMI = read.get_tag('UB')
             except KeyError:
                 continue
             if barcode in self.barcodes:
