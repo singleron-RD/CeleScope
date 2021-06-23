@@ -96,11 +96,20 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", help="Required. Genome fasta file.", required=True)
-        parser.add_argument("--gtf", help="Required. Genome gtf file.", required=True)
+        parser.add_argument(
+            "--fasta", 
+            help="Required. Genome fasta file. Must be relative file path to genomeDir.", 
+            required=True
+        )
+        parser.add_argument(
+            "--gtf", 
+            help="Required. Genome gtf file. Must be relative file path to genomeDir.", 
+            required=True
+        )
         parser.add_argument(
             "--mt_gene_list", 
-            help="""Mitochondria gene list file. It is a plain text file with one gene per line. 
+            help="""Mitochondria gene list file. Must be relative file path to genomeDir.
+It is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""", 
             default="None"
         )

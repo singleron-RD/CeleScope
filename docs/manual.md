@@ -35,3 +35,4 @@ Currently, CeleScope includes the follwing pipelines:
 - [mapping_tag](tag/mapping_tag.md)
 - [count_tag](tag/count_tag.md)
 - [analysis_tag](tag/analysis_tag.md)
+- [split_tag](tag/split_tag.md)

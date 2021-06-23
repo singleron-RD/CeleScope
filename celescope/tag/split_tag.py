@@ -13,6 +13,13 @@ from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
 
 class Split_tag(Step):
+    """
+    Features
+    - Split scRNA-Seq fastq according to tag assignment.
+
+    Output
+    - `fastq/{tag}_{1,2}.fq` Fastq files of each tag.
+    """
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
@@ -85,12 +92,12 @@ def split_tag(args):
 def get_opts_split_tag(parser, sub_program):
     parser.add_argument(
         "--split_fastq", 
-        help="Split scRNA-Seq fastq file(01.barcode/{sample}_2.fq).",
+        help="If used, will split scRNA-Seq fastq file according to tag assignment.",
         action='store_true',
     )
     if sub_program:
-        parser.add_argument("--umi_tag_file", help="UMI tag file", required=True)
+        parser.add_argument("--umi_tag_file", help="UMI tag file.", required=True)
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'], required=True)
-        parser.add_argument("--R1_read", help='R1 read path')
+        parser.add_argument("--R1_read", help='R1 read path.')
         s_common(parser)
 
