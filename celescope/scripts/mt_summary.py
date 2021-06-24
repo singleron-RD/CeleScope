@@ -26,19 +26,22 @@ def parse_mapfile(mapfile):
 
 
 class Mt_summary():
-    def __init__(self, sample, outdir, genomeDir):
+    def __init__(self, sample, outdir, genomeDir, root_dir):
         self.sample = sample
         self.outdir = outdir
 
         # set
+        match_dir = f'{root_dir}/{sample}'
         self.mt_gene_list_file = parse_genomeDir_rna(genomeDir)['mt_gene_list']
-        self.featureCounts_bam = None
+        _barcodes, self.ncell = utils.read_barcode_file(match_dir)
+        self.bam = None
         try:
-            self.featureCounts_bam = glob.glob(f'{sample}/*featureCounts/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam')[0]
+            self.bam = glob.glob(
+                f'{match_dir}/03*/{sample}*sortedByCoord.out.bam')[0]
         except IndexError:
-            print("featureCounts bam does not exist! Skip coverage summary.")
+            print("STAR bam does not exist! Skip coverage summary.")
 
-        self.matrix_dir = glob.glob(f'{sample}/*count/{sample}_matrix_10X')[0]
+        self.matrix_dir = glob.glob(f'{match_dir}/*count/{sample}_matrix_10X')[0]
 
         # out
         if not os.path.exists(outdir):
@@ -51,8 +54,7 @@ class Mt_summary():
     @utils.add_log
     def samtools(self):
         cmd = (
-            f'samtools index {self.featureCounts_bam};'
-            f'samtools view -b {self.featureCounts_bam} MT -o {self.mt_bam};'
+            f'samtools view -b {self.bam} MT -o {self.mt_bam};'
             f'samtools depth -a {self.mt_bam} > {self.mt_depth}'
         )
         self.samtools.logger.info(cmd)
@@ -75,14 +77,15 @@ class Mt_summary():
         self.samtools()
         df = pd.read_csv(self.mt_depth, sep='\t', header=None)
         df.columns = ["MT", "position", "read_count"]
-        plot = ggplot(df, aes(x="position",y="read_count")) + geom_line()
+        df["mean_read_count_per_cell"] = df["read_count"].apply(lambda x: x / self.ncell)
+        plot = ggplot(df, aes(x="position", y="mean_read_count_per_cell")) + geom_line()
         plot.save(self.coverage_plot)
 
     @utils.add_log
     def run(self):
-        if self.featureCounts_bam:
-            self.umi_summary()
-        self.coverage_summary()
+        self.umi_summary()
+        if self.bam:
+            self.coverage_summary()
 
 
 def main():
@@ -90,6 +93,7 @@ def main():
     parser.add_argument("--mapfile", help="mapfile with VIDs as 5th column", required=True)
     parser.add_argument("--genomeDir", help=HELP_DICT["genomeDir"], 
         default='/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92')
+    parser.add_argument("--root_dir", help='input root_dir', default='./')
     parser.add_argument("--outdir", help="output dir", default='mt_summary')
     args = parser.parse_args()
 
@@ -99,6 +103,7 @@ def main():
             sample=sample,
             outdir=args.outdir,
             genomeDir=args.genomeDir,
+            root_dir=args.root_dir,
         )
         runner.run()
 

@@ -15,7 +15,7 @@ sample = argv$sample
 mt_gene_list_file = argv$mt_gene_list_file
 
 # out
-df.out = str_glue("{outdir}/{sample}_MT_UMI.tsv")
+df.out = str_glue("{outdir}/{sample}_mt_UMI.tsv")
 
 mtx = Read10X(matrix_dir)
 mt_gene_list = read.table(mt_gene_list_file)[,1]
@@ -25,4 +25,4 @@ gene_intersect = intersect(gene_valid, mt_gene_list)
 cells = dim(mtx)[2]
 mean_UMI = sort(round(rowSums(mtx[gene_intersect,]) / cells,3), decreasing = T)
 df = as.data.frame(mean_UMI)
-write.table(df, df.out, sep='\t', col.names=NA)
+write.table(df, df.out, sep='\t', col.names=NA, quote = F)
