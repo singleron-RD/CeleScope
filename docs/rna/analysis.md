@@ -39,13 +39,13 @@ LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
 
 `--matrix_file` Required. Matrix_10X directory from step count.
 
-`--outdir` output dir
+`--outdir` Output diretory.
 
-`--assay` assay
+`--assay` Assay name.
 
-`--sample` sample name
+`--sample` Sample name.
 
-`--thread` None
+`--thread` Thread to use.
 
-`--debug` debug
+`--debug` If this argument is used, celescope may output addtional file for debugging.
 

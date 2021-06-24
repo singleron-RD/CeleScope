@@ -1,14 +1,14 @@
 import pandas as pd
 
 from celescope.tools.analysis_mixin import AnalysisMixin
-from celescope.tools.step import Step
-from celescope.tools.utils import add_log, get_id_name_dict, s_common
+from celescope.tools.step import Step, s_common
+import celescope.tools.utils as utils
 
 
-@add_log
+@utils.add_log
 def generate_matrix(gtf_file, matrix_file):
 
-    id_name = get_id_name_dict(gtf_file)
+    id_name = utils.get_id_name_dict(gtf_file)
     matrix = pd.read_csv(matrix_file, sep="\t")
 
     gene_name_col = matrix.geneID.apply(lambda x: id_name[x])
@@ -65,7 +65,7 @@ class Analysis_rna(Step, AnalysisMixin):
         self.clean_up()
 
 
-@add_log
+@utils.add_log
 def analysis(args):
 
     step_name = "analysis"
