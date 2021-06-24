@@ -13,6 +13,11 @@ __STEPS__ = [
 
 __ASSAY__ = 'dynaseq'
 
+IMPORT_DICT = {
+    'star': 'celescope.rna',
+    'analysis': 'celescope.rna',
+}
+
 # m: memory 
 # x: thread
 RESOURCE = {
