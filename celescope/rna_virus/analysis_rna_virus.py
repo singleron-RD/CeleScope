@@ -124,4 +124,3 @@ def get_opts_analysis_rna_virus(parser, sub_program):
             '--virus_file',
             help='virus UMI count file',
             required=True)
-        

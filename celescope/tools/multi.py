@@ -23,7 +23,7 @@ class Multi():
         self.last_step = ''
         self.args = None
         self.steps_not_run = ['mkref']
-        
+
         # remove
         for step in self.steps_not_run:
             if step in self.__STEPS__:
@@ -46,9 +46,9 @@ class Multi():
 
     def common_args(self):
         readme = f'{self.__ASSAY__} multi-samples'
-        parser = argparse.ArgumentParser(readme, 
-            formatter_class=ArgFormatter,
-            conflict_handler='resolve')
+        parser = argparse.ArgumentParser(readme,
+                                         formatter_class=ArgFormatter,
+                                         conflict_handler='resolve')
         parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
         parser.add_argument(
             '--mapfile',
@@ -100,7 +100,6 @@ class Multi():
                     fq_dict[sample_name] = [[fq1], [fq2]]
                     col4_dict[sample_name] = col4
 
-
         for sample_name in fq_dict:
             fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
             fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
@@ -147,7 +146,7 @@ class Multi():
                 step_outdir = f"{self.args.outdir}/{sample}/{index:02d}.{step}"
                 self.outdir_dic[sample].update({step: step_outdir})
                 index += 1
-    
+
     def generate_cmd(self, cmd, step, sample, m=1, x=1):
         if sample:
             sample = "_" + sample
@@ -199,7 +198,7 @@ job_end
                 if args_dict[arg]:
                     matches = [' ', '-']
                     arg_string = str(args_dict[arg])
-                    if any(char in arg_string for char in matches): # need quote
+                    if any(char in arg_string for char in matches):  # need quote
                         cmd_line += f'--{arg} "{arg_string}" '
                     else:
                         cmd_line += f'--{arg} {arg_string} '
@@ -215,7 +214,7 @@ job_end
             f'--fq1 {arr[0]} '
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)
-    
+
     def barcode(self, sample):
         step = "barcode"
         arr = self.fq_dict[sample]
@@ -304,7 +303,7 @@ job_end
                     ) from attr_not_exist
                 method_to_call(sample)
 
-    def merge_report(self):    
+    def merge_report(self):
         step = "merge_report"
         steps_str = ",".join(self.__STEPS__)
         samples = ','.join(self.fq_dict.keys())

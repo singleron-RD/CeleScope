@@ -14,6 +14,7 @@ from celescope.tools.utils import add_log
 
 Metric = namedtuple("Metric", "name value total fraction")
 
+
 def s_common(parser):
     """subparser common arguments
     """
@@ -21,7 +22,8 @@ def s_common(parser):
     parser.add_argument('--assay', help='Assay name.', required=True)
     parser.add_argument('--sample', help='Sample name.', required=True)
     parser.add_argument('--thread', help='Thread to use.', default=4)
-    parser.add_argument('--debug', help='If this argument is used, celescope may output addtional file for debugging.', action='store_true')
+    parser.add_argument(
+        '--debug', help='If this argument is used, celescope may output addtional file for debugging.', action='store_true')
     return parser
 
 
@@ -29,6 +31,7 @@ class Step:
     """
     Step class
     """
+
     def __init__(self, args, step_name):
         self.step_name = step_name
         self.args = args
@@ -37,7 +40,7 @@ class Step:
         self.assay = args.assay
         self.thread = int(args.thread)
         self.debug = args.debug
-        # set 
+        # set
         self.out_prefix = f'{self.outdir}/{self.sample}'
 
         # important! make outdir before path_dict because path_dict use relative path.
@@ -113,7 +116,6 @@ class Step:
                     line += f'{fraction}%'
                 stat_handle.write(line + '\n')
 
-
     def dump_content(self, slot):
         '''dump content to json file
         '''
@@ -146,7 +148,7 @@ class Step:
         metrics = dict()
         for metric_name, string in dic.items():
             bool_fraction = False
-            bool_value = False 
+            bool_value = False
             if '%' in string:
                 bool_fraction = True
                 if "(" in string:
@@ -154,17 +156,17 @@ class Step:
             chars = [',', '%', ')']
             for character in chars:
                 string = string.replace(character, '')
-            
+
             if bool_fraction:
-                if bool_value: # case 2
+                if bool_value:  # case 2
                     value, fraction = string.split('(')
                     fraction = round(float(fraction) / 100, 4)
                     metrics[metric_name] = int(value)
                     metrics[metric_name + ' Fraction'] = fraction
-                else: # case 3
+                else:  # case 3
                     fraction = round(float(string) / 100, 4)
                     metrics[metric_name] = fraction
-            else: # case 1
+            else:  # case 1
                 value = string
                 if '.' in string:
                     try:
@@ -223,5 +225,3 @@ class Step:
     @abc.abstractmethod
     def run(self):
         return
-
-

@@ -19,9 +19,10 @@ def analysis_capture_virus(args):
     runner = Analysis_capture_virus(args, step_name)
     runner.run()
 
+
 def get_opts_analysis_capture_virus(parser, sub_program):
-    parser.add_argument("--umi_threshold", help='method to find virus UMI threshold', 
-        choices=['otsu', 'none'], default='otsu')
+    parser.add_argument("--umi_threshold", help='method to find virus UMI threshold',
+                        choices=['otsu', 'none'], default='otsu')
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help='match_dir', required=True)
@@ -58,7 +59,6 @@ class Analysis_capture_virus(Step, AnalysisMixin):
         self.add_data_item(table_dict=table_dict)
         self.clean_up()
 
-
     def get_virus_tsne(self, virus_df):
         virus_tsne_df = pd.merge(self.tsne_df, virus_df, on="barcode", how="left")
         virus_tsne_df.to_csv(self.virus_tsne_file, sep='\t')
@@ -84,4 +84,3 @@ class Analysis_capture_virus(Step, AnalysisMixin):
         )
         df_thresh = df_virus[df_virus["UMI"] >= threshold]
         df_thresh.to_csv(self.otsu_virus_file, sep='\t')
-

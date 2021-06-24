@@ -35,11 +35,12 @@ class Analysis_rna(Step, AnalysisMixin):
 
     - `{sample}/06.analsis/{sample}_auto_assign/` This result will only be obtained when `--type_marker_tsv` 
     parameter is provided. The result contains 3 files:
-	- `{sample}_auto_cluster_type.tsv` The cell type of each cluster; if cell_type is "NA", 
+        - `{sample}_auto_cluster_type.tsv` The cell type of each cluster; if cell_type is "NA", 
     it means that the given marker is not enough to identify the cluster.
-	- `{sample}_png/{cluster}_pctdiff.png` Percentage of marker gene expression in this cluster - percentage in all other clusters.
-	- `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
+        - `{sample}_png/{cluster}_pctdiff.png` Percentage of marker gene expression in this cluster - percentage in all other clusters.
+        - `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
     """
+
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
         AnalysisMixin.__init__(self, args)
@@ -77,7 +78,7 @@ def get_opts_analysis(parser, sub_program):
     parser.add_argument('--genomeDir', help='Required. Genome directory.', required=True)
     parser.add_argument('--save_rds', action='store_true', help='Write rds to disk.')
     parser.add_argument(
-        '--type_marker_tsv', 
+        '--type_marker_tsv',
         help="""A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
 ```
 cell_type	marker
@@ -94,11 +95,8 @@ LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
     )
     if sub_program:
         parser.add_argument(
-            '--matrix_file', 
-            help='Required. Matrix_10X directory from step count.', 
+            '--matrix_file',
+            help='Required. Matrix_10X directory from step count.',
             required=True,
         )
         parser = s_common(parser)
-
-
-

@@ -16,6 +16,7 @@ from celescope.tools.step import Step, s_common
 
 MIN_T = 10
 
+
 def seq_ranges(seq, pattern_dict):
     # get subseq with intervals in arr and concatenate
     return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
@@ -222,7 +223,7 @@ class Chemistry():
                 else:
                     linker_wrong_dict[linker] += 1
 
-        percent_T4 =  T4_n / self.nRead 
+        percent_T4 = T4_n / self.nRead
         percent_L57C = L57C_n / self.nRead
         Chemistry.get_chemistry.logger.info(f'percent T4: {percent_T4}')
         Chemistry.get_chemistry.logger.info(f'percent L57C: {percent_L57C}')
@@ -302,7 +303,7 @@ class Barcode(Step):
         self.lowQual = args.lowQual
         self.allowNoPolyT = args.allowNoPolyT
         self.allowNoLinker = args.allowNoLinker
-        self.nopolyT = args.nopolyT # true == output nopolyT reads
+        self.nopolyT = args.nopolyT  # true == output nopolyT reads
         self.noLinker = args.noLinker
 
         # out file
@@ -317,7 +318,6 @@ class Barcode(Step):
         if self.noLinker:
             self.noLinker_1 = f'{self.outdir}/noLinker_1.fq'
             self.noLinker_2 = f'{self.outdir}/noLinker_2.fq'
-
 
     @utils.add_log
     def run(self):
@@ -417,7 +417,7 @@ class Barcode(Step):
                                 '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                         continue
 
-                # lowQual filter                
+                # lowQual filter
                 C_U_quals_ascii = seq_ranges(
                     qual1, pattern_dict['C'] + pattern_dict['U'])
                 # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
@@ -440,7 +440,7 @@ class Barcode(Step):
                         continue
                     elif bool_corrected:
                         self.linker_corrected_num += 1
-                
+
                 # barcode filter
                 seq_list = get_seq_list(seq1, pattern_dict, 'C')
                 if bool_whitelist:
@@ -498,11 +498,11 @@ class Barcode(Step):
         '''
         with open(self.stat_file, 'w') as fh:
             stat_info = stat_info % (utils.format_number(self.total_num), utils.format_number(self.clean_num),
-                                    cal_percent(self.clean_num), BarcodesQ30,
-                                    UMIsQ30)
+                                     cal_percent(self.clean_num), BarcodesQ30,
+                                     UMIsQ30)
             stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
             fh.write(stat_info)
-        
+
         self.clean_up()
 
 
@@ -515,13 +515,13 @@ def barcode(args):
 
 def get_opts_barcode(parser, sub_program=True):
     parser.add_argument(
-        '--chemistry', 
+        '--chemistry',
         help="""Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
 - `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
 - `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
 - `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
 same time.""",
-        choices=list(__PATTERN_DICT__.keys()), 
+        choices=list(__PATTERN_DICT__.keys()),
         default='auto'
     )
     parser.add_argument(
@@ -538,14 +538,14 @@ same time.""",
         help='Cell barcode whitelist file path, one cell barcode per line.'
     )
     parser.add_argument(
-        '--linker', 
+        '--linker',
         help='Linker whitelist file path, one linker per line.'
     )
     parser.add_argument(
-        '--lowQual', 
+        '--lowQual',
         help='Default 0. Bases in cell barcode and UMI whose phred value are lower than \
 lowQual will be regarded as low-quality bases.',
-        type=int, 
+        type=int,
         default=0
     )
     parser.add_argument(
@@ -560,23 +560,23 @@ lowQual will be regarded as low-quality bases.',
         action='store_true',
     )
     parser.add_argument(
-        '--noLinker', 
+        '--noLinker',
         help='Outputs R1 reads without correct linker.',
         action='store_true',
     )
     parser.add_argument(
-        '--allowNoPolyT', 
-        help="Allow valid reads without polyT.", 
+        '--allowNoPolyT',
+        help="Allow valid reads without polyT.",
         action='store_true'
     )
     parser.add_argument(
-        '--allowNoLinker', 
-        help="Allow valid reads without correct linker.", 
+        '--allowNoLinker',
+        help="Allow valid reads without correct linker.",
         action='store_true'
     )
     parser.add_argument(
-        '--gzip', 
-        help="Output gzipped fastq files.", 
+        '--gzip',
+        help="Output gzipped fastq files.",
         action='store_true'
     )
     if sub_program:

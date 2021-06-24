@@ -34,6 +34,7 @@ def run_single(assay, test_dir):
     print("*" * 20 + "success " + assay + "*" * 20)
     return f"{assay} success."
 
+
 @utils.add_log
 def test_mutiple(assays, test_dir):
     """
@@ -57,4 +58,3 @@ def test_mutiple(assays, test_dir):
     for result in res_list:
         print(result)
     assert not any((string.find("failed") != -1 for string in res_list))
-

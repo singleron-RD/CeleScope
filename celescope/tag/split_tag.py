@@ -12,6 +12,7 @@ import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
 
+
 class Split_tag(Step):
     """
     Features
@@ -20,6 +21,7 @@ class Split_tag(Step):
     Output
     - `fastq/{tag}_{1,2}.fq` Fastq files of each tag.
     """
+
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
@@ -44,7 +46,6 @@ class Split_tag(Step):
                 self.r1_fastq_files_handle[tag] = open(r1_fastq_file_name, 'w')
 
             self.tag_read_index_dict = defaultdict(set)
-
 
     @utils.add_log
     def write_r2_fastq_files(self):
@@ -73,10 +74,9 @@ class Split_tag(Step):
                 for tag in self.tag_read_index_dict:
                     if read_index in self.tag_read_index_dict[tag]:
                         self.r1_fastq_files_handle[tag].write(str(read) + '\n')
-        
+
         for tag in self.r1_fastq_files_handle:
             self.r1_fastq_files_handle[tag].close()
-
 
     @utils.add_log
     def run(self):
@@ -84,14 +84,16 @@ class Split_tag(Step):
             self.write_r2_fastq_files()
             self.write_r1_fastq_files()
 
+
 def split_tag(args):
     step_name = "split_tag"
     runner = Split_tag(args, step_name)
     runner.run()
 
+
 def get_opts_split_tag(parser, sub_program):
     parser.add_argument(
-        "--split_fastq", 
+        "--split_fastq",
         help="If used, will split scRNA-Seq fastq file according to tag assignment.",
         action='store_true',
     )
@@ -100,4 +102,3 @@ def get_opts_split_tag(parser, sub_program):
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'], required=True)
         parser.add_argument("--R1_read", help='R1 read path.')
         s_common(parser)
-

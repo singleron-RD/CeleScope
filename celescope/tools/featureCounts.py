@@ -82,7 +82,7 @@ class FeatureCounts(Step):
             'featureCounts '
             '-s 1 '
             f'-a {self.gtf} '
-            f'-o {self.out_prefix} ' # not bam
+            f'-o {self.out_prefix} '  # not bam
             '-R BAM '
             f'-T {self.thread} '
             f'-t {self.args.gtf_type} '
@@ -90,7 +90,7 @@ class FeatureCounts(Step):
         )
         FeatureCounts.run_featureCounts.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
-    
+
     @add_log
     def name_sort_bam(self):
         cmd = (
@@ -101,7 +101,6 @@ class FeatureCounts(Step):
         )
         FeatureCounts.name_sort_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
-
 
     def run(self):
         self.run_featureCounts()
@@ -153,4 +152,3 @@ def get_opts_featureCounts(parser, sub_program):
         parser.add_argument('--input', help='Required. BAM file path.', required=True)
         parser = s_common(parser)
     return parser
-

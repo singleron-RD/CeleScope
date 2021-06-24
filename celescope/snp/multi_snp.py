@@ -12,7 +12,7 @@ class Multi_snp(Multi):
         else:
             fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'
             cmd_line += ' --consensus_fq '
-   
+
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '
@@ -29,7 +29,6 @@ class Multi_snp(Multi):
             f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
-
 
     def variant_calling(self, sample):
         step = 'variant_calling'
@@ -62,6 +61,6 @@ def main():
     multi = Multi_snp(__ASSAY__)
     multi.run()
 
+
 if __name__ == '__main__':
     main()
-

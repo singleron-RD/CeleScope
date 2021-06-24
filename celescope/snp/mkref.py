@@ -66,4 +66,3 @@ def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
         parser.add_argument("--fasta", help="fasta file", required=True)
-

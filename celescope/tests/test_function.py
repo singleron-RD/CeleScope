@@ -8,8 +8,8 @@ from celescope.tools.step import Step
 class Tests(unittest.TestCase):
 
     def setUp(self):
-        pass    
-    
+        pass
+
     @unittest.skip("tested")
     def test_stat_to_metric(self):
         os.chdir('/SGRNJ01/RD_dir/pipeline_test/zhouyiqi/multi_tests/rna')

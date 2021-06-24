@@ -25,7 +25,6 @@ class Multi_tag(Multi):
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
-
     def analysis_tag(self, sample):
         step = 'analysis_tag'
         tsne_tag_file = f'{self.outdir_dic[sample]["count_tag"]}/{sample}_tsne_tag.tsv'
@@ -49,10 +48,10 @@ class Multi_tag(Multi):
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
 
-
 def main():
     multi = Multi_tag(__ASSAY__)
     multi.run()
+
 
 if __name__ == '__main__':
     main()

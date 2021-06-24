@@ -67,7 +67,7 @@ class Star_rna(Step, StarMixin):
                     data = picard_log.readline().strip().split('\t')
                     region_dict = dict(zip(header, data))
                     break
-        
+
         total = float(region_dict['PF_ALIGNED_BASES'])
         exonic_regions = int(region_dict['UTR_BASES']) + \
             int(region_dict['CODING_BASES'])
@@ -75,8 +75,8 @@ class Star_rna(Step, StarMixin):
         intergenic_regions = int(region_dict['INTERGENIC_BASES'])
 
         self.add_metric(
-            name='Base Pairs Mapped to Exonic Regions', 
-            value=exonic_regions, 
+            name='Base Pairs Mapped to Exonic Regions',
+            value=exonic_regions,
             total=total,
         )
         self.add_metric(
@@ -86,7 +86,7 @@ class Star_rna(Step, StarMixin):
         )
         self.add_metric(
             name='Base Pairs Mapped to Intergenic Regions',
-            value=intergenic_regions, 
+            value=intergenic_regions,
             total=total,
         )
 
@@ -107,9 +107,8 @@ class Star_rna(Step, StarMixin):
                 )
 
         region_plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
-                'region_values': [exonic_regions, intronic_regions, intergenic_regions]}   
+                       'region_values': [exonic_regions, intronic_regions, intergenic_regions]}
         self.add_content_item("data", STAR_plot=region_plot)
-
 
     @utils.add_log
     def ribo(self):

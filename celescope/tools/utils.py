@@ -48,7 +48,7 @@ def add_log(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if args and hasattr(args[0], 'debug') and args[0].debug:
-            logger.setLevel(10) # debug
+            logger.setLevel(10)  # debug
 
         logger.info('start...')
         start = time.time()
@@ -63,10 +63,10 @@ def add_log(func):
 
 
 def using(point=""):
-    usage=resource.getrusage(resource.RUSAGE_SELF)
+    usage = resource.getrusage(resource.RUSAGE_SELF)
     return '''%s: usertime=%s systime=%s mem=%s mb
-        '''%(point,usage[0],usage[1],
-                usage[2]/1024.0)
+        ''' % (point, usage[0], usage[1],
+               usage[2]/1024.0)
 
 
 def add_mem(func):
@@ -185,6 +185,7 @@ def generic_open(file_name, *args, **kwargs):
         file_obj = open(file_name, *args, **kwargs)
     return file_obj
 
+
 @add_log
 def get_id_name_dict(gtf_file):
     """
@@ -213,23 +214,23 @@ def get_id_name_dict(gtf_file):
                 gene_id = gene_id_pattern.findall(attributes)[-1]
                 gene_names = gene_name_pattern.findall(attributes)
                 if not gene_names:
-                    gene_name = gene_id 
+                    gene_name = gene_id
                 else:
                     gene_name = gene_names[-1]
                 c[gene_name] += 1
                 if c[gene_name] > 1:
                     if gene_id in id_name:
                         assert id_name[gene_id] == gene_name, (
-                                'one gene_id with multiple gene_name '
-                                f'gene_id: {gene_id}, '
-                                f'gene_name this line: {gene_name}'
-                                f'gene_name previous line: {id_name[gene_id]}'
-                            )
+                            'one gene_id with multiple gene_name '
+                            f'gene_id: {gene_id}, '
+                            f'gene_name this line: {gene_name}'
+                            f'gene_name previous line: {id_name[gene_id]}'
+                        )
                         get_id_name_dict.logger.warning(
-                                'duplicated (gene_id, gene_name)'
-                                f'gene_id: {gene_id}, '
-                                f'gene_name {gene_name}'
-                            )
+                            'duplicated (gene_id, gene_name)'
+                            f'gene_id: {gene_id}, '
+                            f'gene_name {gene_name}'
+                        )
                         c[gene_name] -= 1
                     else:
                         gene_name = f'{gene_name}_{c[gene_name]}'
@@ -239,8 +240,8 @@ def get_id_name_dict(gtf_file):
 
 @add_log
 def process_read(
-    read2_file, pattern_dict, barcode_dict, linker_dict,
-    barcode_length, linker_length):
+        read2_file, pattern_dict, barcode_dict, linker_dict,
+        barcode_length, linker_length):
 
     # if valid, return (True)
     metrics = defaultdict(int)
@@ -270,8 +271,8 @@ def process_read(
                 if miss_length > 2:
                     metrics['Reads Unmapped too Short'] += 1
                     continue
-                seq_barcode = seq_barcode + "A" * miss_length                    
-        
+                seq_barcode = seq_barcode + "A" * miss_length
+
         # check linker
         if linker_length != 0:
             valid_linker = False
@@ -281,7 +282,7 @@ def process_read(
                     break
         else:
             valid_linker = True
-            
+
         if not valid_linker:
             metrics['Reads Unmapped Invalid Linker'] += 1
             continue
@@ -371,7 +372,7 @@ def gen_stat(df, stat_file):
         value = f'{format_number(count)}({round(percent * 100, 2)}%)'
         return value
 
-    df.loc[:,'value'] = df.loc[:,'count']
+    df.loc[:, 'value'] = df.loc[:, 'count']
     df.loc[~df['total_count'].isna(), 'value'] = df.loc[~df['total_count'].isna(), :].apply(
         add_percent, axis=1
     )
@@ -387,9 +388,9 @@ def get_read(library_id, library_path, read='1'):
     fq_list = ['fq', 'fastq']
     suffix_list = ["", ".gz"]
     read_pattern_list = [
-        f'{library_path}/*{library_id}*{read}.{fq_str}{suffix}' 
-        for read in read1_list 
-        for fq_str in fq_list 
+        f'{library_path}/*{library_id}*{read}.{fq_str}{suffix}'
+        for read in read1_list
+        for fq_str in fq_list
         for suffix in suffix_list
     ]
     fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
@@ -469,8 +470,8 @@ job_end
 
 
 def merge_report(
-    fq_dict, steps, last_step, sjm_cmd,
-    sjm_order, logdir, conda, outdir, rm_files):    
+        fq_dict, steps, last_step, sjm_cmd,
+        sjm_order, logdir, conda, outdir, rm_files):
     step = "merge_report"
     steps_str = ",".join(steps)
     samples = ','.join(fq_dict.keys())
@@ -577,7 +578,7 @@ def report_prepare(outdir, **kwargs):
         json.dump(data, fh)
 
 
-def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID','CID')):
+def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
     vcf = pysam.VariantFile(vcf_file)
     df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
     rec_dict = {}
@@ -587,7 +588,7 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID','CID')):
             rec_dict[col.capitalize()] = getattr(rec, col)
             if col == 'alleles':
                 rec_dict['Alleles'] = '-'.join(rec_dict['Alleles'])
-                
+
         for info in infos:
             rec_dict[info] = rec.info[info]
 
@@ -597,12 +598,12 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID','CID')):
         rec_dict['GT'] = '/'.join(rec_dict['GT'])
         '''
 
-        df = df.append(pd.Series(rec_dict),ignore_index=True)
+        df = df.append(pd.Series(rec_dict), ignore_index=True)
     return df
 
 
 def parse_annovar(annovar_file):
-    df = pd.DataFrame(columns=['Gene','mRNA', 'Protein', 'COSMIC'])
+    df = pd.DataFrame(columns=['Gene', 'mRNA', 'Protein', 'COSMIC'])
     with open(annovar_file, 'rt') as f:
         index = 0
         for line in f:
@@ -632,7 +633,7 @@ def parse_annovar(annovar_file):
                     if change_attr.startswith('p.'):
                         protein = change_attr.strip('p.')
                 if not (mRNA, protein) in change_list:
-                    change_list.append((mRNA, protein)) 
+                    change_list.append((mRNA, protein))
             combine = [','.join(item) for item in list(zip(*change_list))]
             mRNA = combine[0]
             protein = combine[1]
@@ -762,6 +763,7 @@ def find_step_module(assay, step):
             step_module = importlib.import_module(f"{module_path}.{step}")
 
     return step_module
+
 
 def find_step_module_with_folder(assay, step):
     init_module = find_assay_init(assay)

@@ -26,4 +26,3 @@ def get_opts_star_fusion(parser, sub_program):
     # will cause `conflicting option string: --genomeDir`
     # parser.add_argument('--genomeDir', help=argparse.SUPPRESS)
     parser.add_argument('--fusion_genomeDir', help='fusion gene STAR index genome directory', required=True)
-

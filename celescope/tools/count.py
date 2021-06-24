@@ -71,6 +71,7 @@ class Count(Step):
 
 
     """
+
     def __init__(self, args, step):
         Step.__init__(self, args, step)
         self.force_cell_num = args.force_cell_num
@@ -186,7 +187,7 @@ class Count(Step):
         with open(self.count_detail_file, 'wt') as fh1:
             fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
 
-            def keyfunc(x): 
+            def keyfunc(x):
                 return x.query_name.split('_', 1)[0]
             for _, g in groupby(samfile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
@@ -477,16 +478,16 @@ def get_opts_count(parser, sub_program):
     parser.add_argument('--genomeDir', help='Required. Genome directory.')
     parser.add_argument('--expected_cell_num', help='Default `3000`. Expected cell number.', default=3000)
     parser.add_argument(
-        '--cell_calling_method', 
+        '--cell_calling_method',
         help='Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.',
-        choices=['auto', 'cellranger3', 'inflection', ], 
+        choices=['auto', 'cellranger3', 'inflection', ],
         default='auto',
     )
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
         parser.add_argument(
-            '--force_cell_num', 
-            help='Default `None`. Force the cell number to be this value ± 10%.', 
+            '--force_cell_num',
+            help='Default `None`. Force the cell number to be this value ± 10%.',
             default=None
         )

@@ -57,7 +57,7 @@ class Target_metrics(Step):
                     self.count_dict[barcode][gene_name][UMI] += 1
 
     @utils.add_log
-    def parse_count_dict_add_metrics(self):        
+    def parse_count_dict_add_metrics(self):
         total_UMIs = 0
         enriched_UMIs = 0
         enriched_UMIs_in_cells = 0
@@ -80,7 +80,7 @@ class Target_metrics(Step):
         self.add_metric(
             name="Total UMIs",
             value=total_UMIs,
-        )    
+        )
 
         self.add_metric(
             name="Enriched UMIs",
@@ -122,4 +122,3 @@ def get_opts_target_metrics(parser, sub_program):
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
         parser = s_common(parser)
-

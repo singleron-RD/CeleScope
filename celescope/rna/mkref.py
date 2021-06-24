@@ -7,8 +7,8 @@ from celescope.tools.mkref import get_opts_mkref as opts
 
 
 def parse_genomeDir_rna(genomeDir):
-    return parse_genomeDir(genomeDir, entrys = ('fasta', 'gtf', 'mt_gene_list'))    
-    
+    return parse_genomeDir(genomeDir, entrys=('fasta', 'gtf', 'mt_gene_list'))
+
 
 class Mkref_rna(Mkref):
     """
@@ -32,13 +32,14 @@ class Mkref_rna(Mkref):
     refflat = Homo_sapiens_ensembl_99.refFlat
     ```
     """
+
     def __init__(self, genome_type, args):
         Mkref.__init__(self, genome_type, args)
         self.fasta = args.fasta
         self.gtf = args.gtf
         self.mt_gene_list = args.mt_gene_list
 
-        # out file 
+        # out file
         self.refflat = f'{self.genome_name}.refFlat'
 
     @utils.add_log
@@ -79,13 +80,14 @@ class Mkref_rna(Mkref):
         )
         Mkref_rna.build_refflat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
-    
+
     @utils.add_log
     def run(self):
         if not self.dry_run:
             self.build_refflat()
             self.build_star_index()
         self.write_config()
+
 
 def mkref(args):
     genome_type = 'rna'
@@ -97,19 +99,19 @@ def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
         parser.add_argument(
-            "--fasta", 
-            help="Required. Genome fasta file. Must be relative file path to genomeDir.", 
+            "--fasta",
+            help="Required. Genome fasta file. Must be relative file path to genomeDir.",
             required=True
         )
         parser.add_argument(
-            "--gtf", 
-            help="Required. Genome gtf file. Must be relative file path to genomeDir.", 
+            "--gtf",
+            help="Required. Genome gtf file. Must be relative file path to genomeDir.",
             required=True
         )
         parser.add_argument(
-            "--mt_gene_list", 
+            "--mt_gene_list",
             help="""Mitochondria gene list file. Must be relative file path to genomeDir.
 It is a plain text file with one gene per line. 
-If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""", 
+If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
             default="None"
         )

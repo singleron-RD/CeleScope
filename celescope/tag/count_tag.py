@@ -2,50 +2,50 @@
 assign cell identity based on SNR and UMI_min
 """
 
+from celescope.__init__ import ROOT_PATH
+from celescope.tools.step import Step, s_common
+import celescope.tools.utils as utils
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 import subprocess
 
 import matplotlib
 
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-
-import celescope.tools.utils as utils
-from celescope.tools.step import Step, s_common
-from celescope.__init__ import ROOT_PATH
 
 
 def get_opts_count_tag(parser, sub_program):
     parser.add_argument(
         "--UMI_min",
-        help="Default='auto'. Minimum UMI threshold. Cell barcodes with valid UMI < UMI_min are classified as *undeterminded*.", 
+        help="Default='auto'. Minimum UMI threshold. Cell barcodes with valid UMI < UMI_min are classified as *undeterminded*.",
         default="auto"
     )
     parser.add_argument(
-        "--dim", 
-        help="Default=1. Tag dimentions. Usually we use 1-dimentional tag.", 
+        "--dim",
+        help="Default=1. Tag dimentions. Usually we use 1-dimentional tag.",
         default=1
     )
     parser.add_argument(
         "--SNR_min",
         help="""Default='auto'. Minimum signal-to-noise ratio. 
-Cell barcodes with UMI >=UMI_min and SNR < SNR_min are classified as *multiplet*. """, 
+Cell barcodes with UMI >=UMI_min and SNR < SNR_min are classified as *multiplet*. """,
         default="auto"
     )
     parser.add_argument("--combine_cluster",
-        help="Conbine cluster tsv file.", default=None)
+                        help="Conbine cluster tsv file.", default=None)
     parser.add_argument(
-        "--coefficient", 
+        "--coefficient",
         help="""Default=0.1. If `SNR_min` is 'auto', minimum signal-to-noise ratio is calulated as 
 `SNR_min = max(median(SNRs) * coefficient, 2)`. 
-Smaller `coefficient` will cause less *multiplet* in the tag assignment.""", 
+Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
         default=0.1
     )
     if sub_program:
         parser.add_argument("--read_count_file", help="Tag read count file.", required=True)
         parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory.", required=True)
         s_common(parser)
+
 
 def count_tag(args):
 
@@ -85,11 +85,11 @@ class Count_tag(Step):
 
         # read
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)
-        
+
         match_dict = utils.parse_match_dir(self.match_dir)
-        self.match_barcode = match_dict['match_barcode'] 
+        self.match_barcode = match_dict['match_barcode']
         self.cell_total = match_dict['cell_total']
-        self.tsne_file =  match_dict['tsne_coord']
+        self.tsne_file = match_dict['tsne_coord']
         self.matrix_dir = match_dict['matrix_dir']
 
         # init
@@ -162,7 +162,6 @@ class Count_tag(Step):
         signal_tags = sorted(row.sort_values(ascending=False).index[0:dim])
         signal_tags_str = "_".join(signal_tags)
         return signal_tags_str
-
 
     def write_and_plot(self, df, column_name, count_file, plot_file):
         df_count = df.groupby(["tag", column_name]).size().unstack()
@@ -278,7 +277,7 @@ class Count_tag(Step):
                 plot_file=self.combine_cluster_plot
             )
 
-        sr_tag_count = df_UMI_cell["tag"].value_counts() # series(index:tag name, value:tag count)
+        sr_tag_count = df_UMI_cell["tag"].value_counts()  # series(index:tag name, value:tag count)
         for tag_name in ("Undetermined", "Multiplet"):
             self.add_metric(
                 name=tag_name + ' Cells',
@@ -311,4 +310,3 @@ class Count_tag(Step):
         )
         Count_tag.seurat_hashtag.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
-

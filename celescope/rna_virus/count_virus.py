@@ -76,4 +76,3 @@ def get_opts_count_virus(parser, sub_program):
         s_common(parser)
         parser.add_argument('--virus_bam', required=True)
         parser.add_argument('--barcode_file', required=True)
-
