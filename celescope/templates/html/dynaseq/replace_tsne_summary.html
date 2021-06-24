@@ -1,0 +1,54 @@
+<h3>RNA Turn-over rate in clusters</h3>
+
+{{ replace_tsne|safe }}
+
+
+<script>
+    $(document).ready(function () {
+        var table = $('#replacement_table_cluster').DataTable({
+            dom: 'Bfrtip',
+            buttons: ['excel']
+        });
+        table.columns(0).order('asc').draw();
+    });
+
+    $(document).ready(function () {
+            var table = $('#replacement_table_cluster').DataTable();
+            var indexOfMyCol = 0 ;
+            var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+    $("#replacement_table_cluster thead th").each( function ( i ) {
+        if (i==indexOfMyCol){
+
+          var select = $('<select><option value=""></option></select>')
+            .appendTo( $(this).empty() )
+            .on( 'change', function () {
+                var pattern = ""
+                if ($(this).val()!="") {
+                    pattern= pattern="^"+$(this).val() +"$"
+                }
+                table.column( i )
+                .search(input=pattern, regex=true, smart=false)
+                .draw();
+            } );
+ 
+        table.column( i).data().unique().sort(collator.compare).each( function ( d, j ) {
+            select.append( '<option value="'+d+'">'+d+'</option>' )
+        } );
+    }
+    } );
+    });
+</script>
+
+        <h3>High Turn-over Genes in Cluster</h3>
+        <div style=" margin-left: 3%; margin-right:3%;">
+
+	{{ replace_tsne_table|safe }}
+
+
+
+        </div>
+
+      <div class="clear" ></div>
+    </div>
+  </div>
+
