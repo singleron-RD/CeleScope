@@ -98,9 +98,9 @@ git clone https://github.com/singleron-RD/celescope_tests.git
 Install pytest
 >>> pip install pytest
 Run all
->>> pytest -s celescope/tests/test_multi.py --test_dir {test_dir}
+>>> pytest -s ./tests/test_multi.py --test_dir {test_dir}
 Run some tests
->>> pytest -s celescope/tests/test_multi.py --test_dir {test_dir} --assays rna,tag
+>>> pytest -s ./tests/test_multi.py --test_dir {test_dir} --assays rna,tag
 ```
 
 Then you need to create your own test based on this example.
