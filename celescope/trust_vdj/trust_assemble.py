@@ -47,6 +47,21 @@ def match_barcodes(outdir, match_dir, Seqtype, fq1):
         seqlist.write(str(name) + '\n')
 
 
+def clean_fq(fq1, fq2, outdir, sample, species):
+
+    prefix = f'{outdir}/{sample}_clean'
+
+    cmd = (
+        f'/SGRNJ03/randd/zhouxin/software/TRUST4/fastq-extractor '
+        f'-t 10 -f /SGRNJ03/randd/zhouxin/software/TRUST4/index/{species}/{species}_ref.fa '
+        f'-o {prefix} --barcodeStart 0 --barcodeEnd 23 '
+        f'-u {fq2} '
+        f'--barcode {fq1}'
+    )
+
+    os.system(cmd)
+
+
 def mapping_summary(outdir, Seqtype, fq, species):
     
     stat_file = outdir + '/stat.txt'
@@ -93,15 +108,32 @@ def mapping_summary(outdir, Seqtype, fq, species):
                         'count': count,
                         'total_count': total_count,
                     })
+       # os.system(f'rm {outdir}/{locus}.sam')   
 
-        os.system(f'rm {outdir}/{locus}.sam')
+    # total mapping
+    cmd = (
+            f'source activate bracer; '
+            f'bowtie2 -p 5 -k 1 --np 0 --rdg 1,1 --rfg 1,1 '
+            f'-x /SGRNJ03/randd/zhouxin/software/TRUST4/index/{species}/{Seqtype} '
+            f'-U {fq} '
+            f'-S {outdir}/{Seqtype}.sam > {outdir}/log 2>&1'        
+    )
+    os.system(cmd)
+    with open(f'{outdir}/log') as fh: 
+        for line in fh:
+            if 'reads; of these:' in line:
+                attr = re.findall(r'\d+', line)
+                total_count = int(attr[0])
+            if 'aligned exactly 1 time' in line:
+                res = re.findall(r"\d+", line)
+                count = int(res[0])
+                trust_assemble_summary.insert(0, {
+                    'item': stat_string,
+                    'count': count,
+                    'total_count': total_count,
+                })
 
-    trust_assemble_summary.insert(0, {
-        'item': stat_string,
-        'count': total_mapped,
-        'total_count': total_count
-    })
-
+    os.system(f'rm {outdir}/*.sam')
     os.system(f'rm {outdir}/log')
 
     df = pd.DataFrame(trust_assemble_summary, columns=['item', 'count', 'total_count'])
@@ -147,7 +179,8 @@ class Trust_assemble(Step):
     @utils.add_log
     def run(self):
 
-        self.getFqfile()
+        if not os.path.exists(f'{self.outdir}/{self.sample}_matched_R2.fq'):
+            self.getFqfile()
 
         species = self.species
 
@@ -175,7 +208,12 @@ class Trust_assemble(Step):
 
             #fq = f'{self.outdir}/TRUST4/{self.sample}_toassemble.fq'
 
-        mapping_summary(self.outdir, self.Seqtype, self.fq2, species)
+        # report
+        clean_fq(self.fq1, self.fq2, self.outdir, self.sample, species)
+
+        fq = f'{self.outdir}/{self.sample}_clean.fq'
+
+        mapping_summary(self.outdir, self.Seqtype, fq, species)
 
         os.remove(f'{self.outdir}/seqlist.txt')
 

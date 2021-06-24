@@ -4,10 +4,24 @@ from celescope.tools import utils
 from collections import defaultdict
 from celescope.tools.cellranger3 import get_plot_elements
 import numpy as np
+import pysam
+
+
+def get_len(fa):
+    with pysam.FastaFile(fa) as fh:
+        res = {}
+        names = fh.references
+        lengths = fh.lengths
+        res['contig_id'] = names
+        res['length'] = lengths
+        
+        df = pd.DataFrame(res, columns=list(res.keys()))
+        return df
 
 
 @utils.add_log
-def beauty_report(barcode_report):
+def beauty_report(barcode_report, fa):
+    df_len = get_len(fa)
     df = pd.read_csv(barcode_report, sep='\t')
     rows = df.shape[0]
     chains = ['chain2', 'chain1']
@@ -16,7 +30,7 @@ def beauty_report(barcode_report):
     for l in range(len(chains)):
         chain = chains[l]
 
-        items = {'V': 0, 'D': 1, 'J': 2, 'C': 3, 'CDR3nt': 4, 'CDR3aa': 5, 'readcount': 6, 'full_length_assembly': -1}        
+        items = {'V': 0, 'D': 1, 'J': 2, 'C': 3, 'CDR3nt': 4, 'CDR3aa': 5, 'readcount': 6, 'contig_id': -3, 'full_length_assembly': -1}        
 
         for i in range(rows):
             cb = df.loc[i, '#barcode']
@@ -33,9 +47,11 @@ def beauty_report(barcode_report):
 
     res = pd.DataFrame(dic, columns=list(dic.keys()))
 
-    return res
+    df_res = pd.merge(res, df_len, on='contig_id', how='inner')
 
+    return df_res
 
+@utils.add_log
 def get_clone_table(df, Seqtype):
     res_filter_summary = []
 
@@ -46,7 +62,7 @@ def get_clone_table(df, Seqtype):
         paired_groups = ['TRA_TRB']
     if Seqtype == 'BCR':
         chains = ['IGH', 'IGL', 'IGK']
-        paired_groups = ['IGH_IHL', 'IGH_IGK']
+        paired_groups = ['IGH_IGL', 'IGH_IGK']
     for chain in chains:
         tmp = df[df['V'].str.contains(chain, na=False)]
         tmp = tmp.set_index('barcode')
@@ -126,11 +142,12 @@ class Res_filter(Step):
     @utils.add_log
     def run(self):
         barcode_report = f'{self.outdir}/../02.trust_assemble/TRUST4/{self.sample}_barcode_report.tsv'
-        df = beauty_report(barcode_report)
+        fa = f'{self.outdir}/../02.trust_assemble/TRUST4/{self.sample}_annot.fa'
+        df = beauty_report(barcode_report, fa)
 
         if self.full_length:
             df = df[df['full_length_assembly']=='1']
-        df.to_csv(f'{self.outdir}/{self.sample}_barcode_report.tsv', sep='\t')
+        df.to_csv(f'{self.outdir}/{self.sample}_barcode_report.tsv', sep='\t', index=False)
 
         clones, res_filter_summary = get_clone_table(df, self.Seqtype)
 
