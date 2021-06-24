@@ -138,8 +138,7 @@ class Replacement(Step):
                     chr_pos = ii[1]+'_'+ii[5]
                     outdict[chr_pos] = 1
         elif bgfile.endswith('.vcf'):
-            from pysam import VariantFile
-            bcf_in = VariantFile(bgfile)
+            bcf_in = pysam.VariantFile(bgfile)
             for rec in bcf_in.fetch():
                 try:
                     chrom, pos = rec.chrom, rec.pos
