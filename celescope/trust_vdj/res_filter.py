@@ -63,13 +63,13 @@ def get_clone_table(df, Seqtype):
     if Seqtype == 'BCR':
         chains = ['IGH', 'IGL', 'IGK']
         paired_groups = ['IGH_IGL', 'IGH_IGK']
-    for chain in chains:
-        tmp = df[df['V'].str.contains(chain, na=False)]
+    for c in chains:
+        tmp = df[df['V'].str.contains(c, na=False)]
         tmp = tmp.set_index('barcode')
-        tmp = tmp.rename(columns=lambda x: f'{chain}_'+x)
+        tmp = tmp.rename(columns=lambda x: f'{c}_'+x)
 
         res = pd.concat([res, tmp], axis=1, join='outer', sort=False).fillna('None')
-        group_type.append(f'{chain}_CDR3aa')
+        group_type.append(f'{c}_CDR3aa')
     
     Frequent = [''] * res.shape[0]
     res.insert(res.shape[1], 'Frequent', Frequent)

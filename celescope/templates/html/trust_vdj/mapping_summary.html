@@ -13,7 +13,7 @@
         <p><b>reads Mapped to TRB</b>: reads confidently mapped to TRB chain.</p>
     </div>
       <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
-        {% for item in trust_assemble_summary %}
+        {% for item in mapping_summary %}
           {% if loop.index <= (loop.length+1)/2 %}
           <tr>
             {% for i in item %} 
@@ -25,7 +25,7 @@
       </table>
 
       <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
-        {% for item in trust_assemble_summary %}
+        {% for item in mapping_summary %}
           {% if loop.index > (loop.length+1)/2 %}
           <tr>
             {% for i in item %} 

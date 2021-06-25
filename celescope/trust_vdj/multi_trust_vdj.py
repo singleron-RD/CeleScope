@@ -15,8 +15,8 @@ class Multi_trust_vdj(Multi):
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
 
-    def trust_assemble(self, sample):
-        step = 'trust_assemble'
+    def assemble(self, sample):
+        step = 'assemble'
         cmd_line = self.get_cmd_line(step, sample)
         fq1 = f'{self.outdir_dic[sample]["convert"]}/{sample}_1.fq{self.fq_suffix}'
         fq2 = f'{self.outdir_dic[sample]["convert"]}/{sample}_2.fq{self.fq_suffix}' 
@@ -27,6 +27,15 @@ class Multi_trust_vdj(Multi):
             f'--match_dir {self.col4_dict[sample]}'
         )
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
+
+
+    def mapping(self, sample):
+        step = 'mapping'
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line}'
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=5)
 
 
     def res_filter(self, sample):

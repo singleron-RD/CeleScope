@@ -1,12 +1,7 @@
 """barcode step."""
 
-import os
 import re
-import subprocess
-import sys
-import glob
-from collections import defaultdict, Counter
-from itertools import combinations, product
+from collections import Counter
 
 import pandas as pd
 import pysam
