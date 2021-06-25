@@ -137,12 +137,15 @@ class Res_filter(Step):
         self.sample = args.sample
         self.Seqtype = args.Seqtype
         self.full_length = args.full_length
+        self.report = args.report
+        self.fa = args.fa
+        self.count_file = args.count_file
 
 
     @utils.add_log
     def run(self):
-        barcode_report = f'{self.outdir}/../02.trust_assemble/TRUST4/{self.sample}_barcode_report.tsv'
-        fa = f'{self.outdir}/../02.trust_assemble/TRUST4/{self.sample}_annot.fa'
+        barcode_report = self.report
+        fa = self.fa
         df = beauty_report(barcode_report, fa)
 
         if self.full_length:
@@ -152,7 +155,7 @@ class Res_filter(Step):
         clones, res_filter_summary = get_clone_table(df, self.Seqtype)
 
         # plot barcode umi
-        count_file = f'{self.outdir}/../02.trust_assemble/count.txt'
+        count_file = self.count_file
         df_umi = pd.read_csv(count_file, sep='\t', index_col=False)
         cells = set(df['barcode'].tolist())
         df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if (x in cells) else 'UB')
@@ -213,3 +216,6 @@ def get_opts_res_filter(parser, sub_program):
     parser.add_argument('--full_length', help='only output full length assembly', action='store_true')
     if sub_program:
         parser = s_common(parser)
+        parser.add_argument('--report', help='assemble report', required=True)
+        parser.add_argument('--fa', help='assembled fasta file', required=True)
+        parser.add_argument('--count_file', help='UMI count file', required=True)

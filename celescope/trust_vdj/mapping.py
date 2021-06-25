@@ -11,19 +11,20 @@ class Mapping(Step):
         Step.__init__(self, args, step_name)
 
         self.outdir = args.outdir
-        self.match_dir = args.match_dir
         self.Seqtype = args.Seqtype
         self.sample = args.sample
         self.species = args.species
+        self.fq = args.fq
+
 
     @utils.add_log
     def align(self):
         species = self.species
         outdir = self.outdir
         Seqtype = self.Seqtype
+        fq = self.fq
         
         stat_file = self.outdir + '/stat.txt'
-        fq = f'{outdir}/../02.assemble/TRUST4/{self.sample}_toassemble.fq'
 
         mapping_summary = []
 
@@ -115,6 +116,7 @@ def mapping(args):
 def get_opts_mapping(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
+        parser.add_argument('--fq', help='to assemble fastq', required=True)
 
     parser.add_argument('--Seqtype', help='select TCR or BCR', choices=["TCR", "BCR"], required=True)
     parser.add_argument('--species', help='species', choices=["Mmus", "Hsap"], required=True)
