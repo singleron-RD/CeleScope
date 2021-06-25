@@ -25,5 +25,5 @@ celescope snp mkref \
 
 `--dry_run` Only write config file and exit.
 
-`--fasta` fasta file
+`--fasta` Required. Genome fasta file. Use relative path to `genomeDir`.
 

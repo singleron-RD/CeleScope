@@ -105,7 +105,7 @@ is higher than or equal to this value.
 
 `--gtf_type` Specify feature type in GTF annotation
 
-`--gene_list` Gene list file, one gene symbol per line. Only results of these genes are reported.
+`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
 
 `--genomeDir` Genome directory after running `mkref`.
 

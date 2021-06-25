@@ -5,6 +5,7 @@ import subprocess
 import celescope.tools.utils as utils
 from celescope.tools.mkref import Mkref
 from celescope.tools.mkref import get_opts_mkref as opts
+from celescope.__init__ import HELP_DICT
 
 
 class Mkref_snp(Mkref):
@@ -78,4 +79,4 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", help="fasta file", required=True)
+        parser.add_argument("--fasta", help=HELP_DICT['fasta'], required=True)

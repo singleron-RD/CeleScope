@@ -25,8 +25,9 @@ RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq']
 
 HELP_DICT = {
     'match_dir': 'Match celescope scRNA-Seq directory.',
-    'gene_list': 'Gene list file, one gene symbol per line. Only results of these genes are reported.',
+    'gene_list': 'Required. Gene list file, one gene symbol per line. Only results of these genes are reported.',
     'genomeDir': 'Genome directory after running `mkref`.',
     'thread': 'Thread to use.',
     'debug': 'If this argument is used, celescope may output addtional file for debugging.',
+    'fasta': 'Required. Genome fasta file. Use relative path to `genomeDir`.',
 }
