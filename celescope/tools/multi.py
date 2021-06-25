@@ -7,6 +7,7 @@ from collections import defaultdict
 import celescope
 import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
+from celescope.__init__ import HELP_DICT
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
@@ -21,7 +22,6 @@ class Multi():
         self.__APP__ = 'celescope'
         self.col4_default = None
         self.last_step = ''
-        self.args = None
         self.steps_not_run = ['mkref']
 
         # remove
@@ -42,7 +42,20 @@ class Multi():
         elif self.args.steps_run:
             self.steps_run = self.args.steps_run.strip().split(',')
 
-        self.prepare()
+        # init
+        self.fq_dict = {}
+        self.col4_dict = {}
+        self.col5_dict = {}
+        self.logdir = self.args.outdir + '/log'
+
+        # script init
+        self.sjm_cmd = f'log_dir {self.logdir}\n'
+        self.sjm_order = ''
+        self.shell_dict = defaultdict(str)
+
+        # outdir dict
+        self.outdir_dic = {}
+
 
     def common_args(self):
         readme = f'{self.__ASSAY__} multi-samples'
@@ -57,15 +70,15 @@ class Multi():
                 1st col: LibName;
                 2nd col: DataDir;
                 3rd col: SampleName;
-                4th col: Cell number or match_dir, optional;
+                4th col: optional;
             ''',
             required=True)
         parser.add_argument('--rm_files', action='store_true', help='remove redundant fq.gz and bam after running')
-        parser.add_argument('--steps_run', help='steps to run', default='all')
+        parser.add_argument('--steps_run', help='Steps to run. Multiple Steps are separated by comma.', default='all')
         # sub_program parser do not have
-        parser.add_argument('--outdir', help='output dir', default="./")
-        parser.add_argument('--debug', help='debug or not', action='store_true')
-        parser.add_argument('--thread', help='thread', default=4)
+        parser.add_argument('--outdir', help='Output directory.', default="./")
+        parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
+        parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
         self.parser = parser
         return parser
 
@@ -122,26 +135,15 @@ class Multi():
 
     def prepare(self):
         """
-        parse_mapfile, link data, make log dir, init script variables, init outdir_dic
+        parse_mapfile, make log dir, init script variables, init outdir_dic
         """
         # parse_mapfile
         self.fq_dict, self.col4_dict, self.col5_dict = self.parse_map_col4(self.args.mapfile, self.col4_default)
 
-        # link
-        self.link_data()
-
         # mk log dir
-        self.logdir = self.args.outdir + '/log'
         if self.args.mod == 'sjm':
             os.system('mkdir -p %s' % (self.logdir))
 
-        # script init
-        self.sjm_cmd = 'log_dir %s\n' % (self.logdir)
-        self.sjm_order = ''
-        self.shell_dict = defaultdict(str)
-
-        # outdir dict
-        self.outdir_dic = {}
         for sample in self.fq_dict:
             self.outdir_dic[sample] = {}
             index = 0
@@ -190,7 +192,7 @@ job_end
             f'--thread {self.args.thread} '
         )
         cmd_line = step_prefix
-        if self.args.debug or self.__CONDA__ == "celescope_RD":
+        if self.args.debug:
             cmd_line += " --debug "
         for arg in args_dict:
             if args_dict[arg] is False:
@@ -335,6 +337,7 @@ job_end
                     f.write(self.shell_dict[sample])
 
     def run(self):
+        self.prepare()
         self.run_steps()
         self.end()
 

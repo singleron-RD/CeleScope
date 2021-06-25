@@ -10,6 +10,7 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from celescope.tools.utils import add_log
+from celescope.__init__ import HELP_DICT
 
 
 Metric = namedtuple("Metric", "name value total fraction")
@@ -21,9 +22,8 @@ def s_common(parser):
     parser.add_argument('--outdir', help='Output diretory.', required=True)
     parser.add_argument('--assay', help='Assay name.', required=True)
     parser.add_argument('--sample', help='Sample name.', required=True)
-    parser.add_argument('--thread', help='Thread to use.', default=4)
-    parser.add_argument(
-        '--debug', help='If this argument is used, celescope may output addtional file for debugging.', action='store_true')
+    parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
+    parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
     return parser
 
 

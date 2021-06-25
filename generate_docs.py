@@ -36,7 +36,7 @@ def generate_single_step_doc(assay, step):
 
 def get_argument_docs(func_opts):
     argument_docs = ""
-    parser = argparse.ArgumentParser(description='CeleScope',formatter_class=ArgFormatter)
+    parser = argparse.ArgumentParser(description='CeleScope', formatter_class=ArgFormatter)
     func_opts(parser, sub_program=True)
     for argument in parser._option_string_actions:
         if not argument in ['-h', '--help']:
@@ -49,7 +49,7 @@ def get_argument_docs(func_opts):
 
 
 def get_class_docs(step_module):
-    titles = ("Features", "Output")
+    titles = ("Features", "Output", "Usage")
     class_docs = ""
     for child in inspect.getmembers(step_module, inspect.isclass):
         """Filter out class not defined in step_module"""

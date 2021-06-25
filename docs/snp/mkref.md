@@ -1,3 +1,11 @@
+## Features
+- Create dictionary file and fasta index for gatk SplitNCigarReads.
+(https://gatk.broadinstitute.org/hc/en-us/articles/360035531652-FASTA-Reference-genome-format) 
+Need to run `celescope rna mkref` first
+
+## Output
+- fasta index
+- gatk dictionary file
 
 
 ## Arguments
