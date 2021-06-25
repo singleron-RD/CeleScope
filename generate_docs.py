@@ -36,7 +36,14 @@ def get_class_docs(step_module):
         if class_obj.__module__ != step_module.__name__:
             continue
         doc = inspect.getdoc(class_obj)
-        if doc and "Features" in doc:
+        
+        write_bool = False
+        if doc:
+            for title in titles:
+                if title in doc:
+                    write_bool = True
+
+        if write_bool:
             for line in doc.split('\n'):
                 for title in titles:
                     if line.find(title) != -1:
