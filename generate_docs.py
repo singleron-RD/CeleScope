@@ -11,11 +11,12 @@ from celescope.__init__ import ASSAY_DICT, RELEASED_ASSAYS
 PRE_PROCESSING_STEPS = ('sample', 'barcode', 'cutadapt')
 DOCS_DIR = 'docs/'
 TEMPLATE_DIR = 'docs_template/'
-MANUAL_MD = f'{DOCS_DIR}/manual.md'
+MANUAL = f'{DOCS_DIR}/manual.md'
 MANUAL_TEMPLATE = f'{DOCS_DIR}/manual_template.md'
 
 
 def get_argument_docs_from_parser(parser):
+    argument_docs = ""
     for argument in parser._option_string_actions:
         if not argument in ['-h', '--help']:
             help_msg = parser._option_string_actions[argument].help
@@ -52,20 +53,20 @@ class Docs():
         self.assay = assay
 
         init_module = utils.find_assay_init(assay)
-        self.steps = init_module.__STEPS__
+        self.steps = init_module.__STEPS__.copy()
         self.steps.append(f'multi_{assay}')
-        folder = f'{DOCS_DIR}/{assay}/'
 
         self.out_md_dict = {}
         self.relative_md_path = {}
-        for step in self.steps:
-            self.out_md_dict[step] = f'{folder}/{step}.md'
-            self.relative_md_path[step] = f'{assay}/{step}.md'
+        self.release_bool = self.assay in RELEASED_ASSAYS
 
-        if not os.path.exists(folder):
-            os.system(f'mkdir -p {folder}')    
+        assay_dir = f'docs/{assay}'
+        if not os.path.exists(assay_dir):
+            os.system(f'mkdir -p {assay_dir}')    
 
+    @utils.add_log
     def get_argument_docs(self, step, step_module):
+        self.get_argument_docs.logger.info(step)
         if step.startswith("multi"):
             multi_class = getattr(step_module, f'Multi_{self.assay}')
             multi_obj = multi_class(self.assay)
@@ -75,11 +76,18 @@ class Docs():
             func_opts = getattr(step_module, f"get_opts_{step}")
             func_opts(parser, sub_program=True)
             argument_docs = get_argument_docs_from_parser(parser)
-        return argument_docs   
+        return argument_docs
 
 
     def write_step_doc(self, step):
+        """
+        folder: docs/folder/*.md
+        """
         step_module = utils.find_step_module(self.assay, step)
+        folder = step_module.__name__.split('.')[1]
+        self.out_md_dict[step] = f'docs/{folder}/{step}.md'
+        self.relative_md_path[step] = f'{folder}/{step}.md'
+
         class_docs = get_class_docs(step_module)
         argument_docs = self.get_argument_docs(step, step_module)
 
@@ -87,12 +95,24 @@ class Docs():
             out_file.write(class_docs)
             out_file.write(argument_docs)
 
-def write_step_in_manual(md_path, step, manual_handle):
-    """
-    - [mkref](rna/mkref.md)
-    """
-    if not step in PRE_PROCESSING_STEPS:
-        manual_handle.write(f'- [{step}]({md_path})\n')
+    def run(self):
+        if self.release_bool:
+            with open(MANUAL, 'a') as writer:
+                writer.write(f'## {ASSAY_DICT[self.assay]}\n')            
+
+        for step in self.steps:
+            self.write_step_doc(step)
+            if self.release_bool:
+                self.write_step_in_manual(step)
+
+
+    def write_step_in_manual(self, step):
+        """
+        - [mkref](rna/mkref.md)
+        """
+        if not step in PRE_PROCESSING_STEPS:
+            with open(MANUAL, 'a') as writer:
+                writer.write(f'- [{step}]({self.relative_md_path[step]})\n')
     
 
 """
@@ -129,8 +149,23 @@ def write_manual(md_path_dict):
                 write_step_in_manual(md_path, step, manual_handle)
 
 
+def main():
+    cmd = (
+        f"rm -r {DOCS_DIR};"
+        f"cp -r {TEMPLATE_DIR} {DOCS_DIR}"
+    )
+    os.system(cmd)
+
+    with open(MANUAL, 'w') as manual_handle:
+        with open(MANUAL_TEMPLATE, 'r') as manual_template:
+            manual_handle.write(manual_template.read())
+
+    for assay in ASSAY_DICT:
+        docs_obj = Docs(assay)
+        docs_obj.run()
+
+
+
 
 if __name__ == "__main__":
-    cmd = f"cp -r {TEMPLATE_DIR} {DOCS_DIR}"
-    os.system(cmd)
-    
+    main()

@@ -3,6 +3,27 @@ from celescope.tools.multi import Multi
 
 
 class Multi_snp(Multi):
+    """
+    Usage
+    ```
+    multi_snp\
+        --mapfile ./test1.mapfile\
+        --genomeDir {genomeDir after running celescope snp mkref}\
+        --thread 10\
+        --mod shell\
+        --gene_list gene_list.tsv\
+        --annovar_config annovar.config\
+    ```
+    annovar_config file
+    ```
+    [ANNOVAR]
+    dir = /Public/Software/annovar/
+    db = /SGRNJ/Database/script/database/annovar/humandb
+    buildver = hg38
+    protocol = refGene,cosmic70
+    operation = g,f
+    ```
+    """
 
     def star(self, sample):
         step = 'star'
