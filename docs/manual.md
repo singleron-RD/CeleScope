@@ -39,3 +39,13 @@ Currently, CeleScope includes the follwing pipelines:
 - [analysis_tag](tag/analysis_tag.md)
 - [split_tag](tag/split_tag.md)
 - [multi_tag](tag/multi_tag.md)
+## Single Cell Dynaseq
+- [star](rna/star.md)
+- [featureCounts](tools/featureCounts.md)
+- [count](tools/count.md)
+- [analysis](rna/analysis.md)
+- [conversion](dynaseq/conversion.md)
+- [subsitution](dynaseq/subsitution.md)
+- [replacement](dynaseq/replacement.md)
+- [replace_tsne](dynaseq/replace_tsne.md)
+- [multi_dynaseq](dynaseq/multi_dynaseq.md)
