@@ -419,80 +419,6 @@ def get_fq(library_id, library_path):
     return fq1, fq2
 
 
-@add_log
-def parse_map_col4(mapfile, default_val):
-    fq_dict = defaultdict(list)
-    col4_dict = defaultdict(list)
-    col5_dict = defaultdict(list)
-    with open(mapfile) as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('#'):
-                continue
-            tmp = line.split()
-            library_id = tmp[0]
-            library_path = tmp[1]
-            sample_name = tmp[2]
-            if len(tmp) >= 4:
-                col4 = tmp[3]
-            else:
-                col4 = default_val
-            fq1, fq2 = get_fq(library_id, library_path)
-
-            if sample_name in fq_dict:
-                fq_dict[sample_name][0].append(fq1)
-                fq_dict[sample_name][1].append(fq2)
-            else:
-                fq_dict[sample_name] = [[fq1], [fq2]]
-            if col4 and col4 != default_val:
-                col4_dict[sample_name] = col4
-            if len(tmp) == 5:
-                col5_dict[sample_name] = tmp[4]
-
-    for sample_name in fq_dict:
-        fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
-        fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
-
-    if not fq_dict:
-        raise Exception('empty mapfile!')
-    return fq_dict, col4_dict, col5_dict
-
-
-def generate_sjm(cmd, name, conda, m=1, x=1):
-    res_cmd = f'''
-job_begin
-    name {name}
-    sched_options -w n -cwd -V -l vf={m}g,p={x}
-    cmd source activate {conda}; {cmd}
-job_end
-'''
-
-    return res_cmd
-
-
-def merge_report(
-        fq_dict, steps, last_step, sjm_cmd,
-        sjm_order, logdir, conda, outdir, rm_files):
-    step = "merge_report"
-    steps_str = ",".join(steps)
-    samples = ','.join(fq_dict.keys())
-    app = tools_dir + '/merge_table.py'
-    cmd = (
-        f'python {app} --samples {samples} '
-        f'--steps {steps_str} --outdir {outdir}'
-    )
-    if rm_files:
-        cmd += ' --rm_files'
-    sjm_cmd += generate_sjm(cmd, 'merge_report', conda)
-    for sample in fq_dict:
-        sjm_order += f'order {step} after {last_step}_{sample}\n'
-    with open(logdir + '/sjm.job', 'w') as fh:
-        fh.write(sjm_cmd + '\n')
-        fh.write(sjm_order)
-
-
 def format_number(number: int) -> str:
     return format(number, ",")
 
@@ -531,38 +457,6 @@ def genDict(dim=3, valType=int):
         return defaultdict(valType)
     else:
         return defaultdict(lambda: genDict(dim - 1, valType=valType))
-
-
-def cluster_tsne_list(tsne_df):
-    """
-    tSNE_1	tSNE_2	cluster Gene_Counts
-    return data list
-    """
-    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
-    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-    res = []
-    for cluster in sorted(tsne_df.cluster.unique()):
-        sub_df = tsne_df[tsne_df.cluster == cluster]
-        name = "cluster {cluster}({percent}%)".format(
-            cluster=cluster, percent=percent_df[cluster])
-        tSNE_1 = list(sub_df.tSNE_1)
-        tSNE_2 = list(sub_df.tSNE_2)
-        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
-    return res
-
-
-def marker_table(marker_df):
-    """
-    return html code
-    """
-    marker_df = marker_df.loc[:, ["cluster", "gene",
-                                  "avg_log2FC", "pct.1", "pct.2", "p_val_adj"]]
-    marker_gene_table = marker_df.to_html(
-        escape=False,
-        index=False,
-        table_id="marker_gene_table",
-        justify="center")
-    return marker_gene_table
 
 
 def report_prepare(outdir, **kwargs):

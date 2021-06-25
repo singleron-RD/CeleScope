@@ -21,8 +21,8 @@ class Mkref_snp(Mkref):
     Usage
     ```
     # run celescope rna mkref first
-    celescope snp mkref \
-     --genome_name Homo_sapiens_ensembl_99 \
+    celescope snp mkref \\
+     --genome_name Homo_sapiens_ensembl_99 \\
      --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa
     ```
     """

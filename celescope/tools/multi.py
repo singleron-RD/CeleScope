@@ -20,8 +20,6 @@ class Multi():
         self.__STEPS__ = init_module.__STEPS__
         self.__CONDA__ = os.path.basename(os.environ['CONDA_DEFAULT_ENV'])
         self.__APP__ = 'celescope'
-        self.col4_default = None
-        self.last_step = ''
         self.steps_not_run = ['mkref']
 
         # remove
@@ -29,31 +27,26 @@ class Multi():
             if step in self.__STEPS__:
                 self.__STEPS__.remove(step)
 
-        # parse_args
+        # add args
+        self.parser = None
         self.common_args()
         self.step_args()
-        self.args = self.parser.parse_args()
-        if self.args.gzip:
-            self.fq_suffix = ".gz"
-        else:
-            self.fq_suffix = ""
-        if self.args.steps_run == 'all':
-            self.steps_run = self.__STEPS__
-        elif self.args.steps_run:
-            self.steps_run = self.args.steps_run.strip().split(',')
 
-        # init
+        # set
+        self.args = None
+        self.col4_default = None
+        self.last_step = ''
+        self.fq_suffix = ""
+        self.steps_run = self.__STEPS__
         self.fq_dict = {}
         self.col4_dict = {}
         self.col5_dict = {}
-        self.logdir = self.args.outdir + '/log'
+        self.logdir = None
 
-        # script init
-        self.sjm_cmd = f'log_dir {self.logdir}\n'
+        self.sjm_cmd = ''
         self.sjm_order = ''
         self.shell_dict = defaultdict(str)
 
-        # outdir dict
         self.outdir_dic = {}
 
 
@@ -90,7 +83,7 @@ class Multi():
 
     @staticmethod
     @utils.add_log
-    def parse_map_col4(mapfile, default_val):
+    def parse_mapfile(mapfile, default_val):
         fq_dict = defaultdict(list)
         col4_dict = {}
         col5_dict = {}
@@ -137,8 +130,18 @@ class Multi():
         """
         parse_mapfile, make log dir, init script variables, init outdir_dic
         """
+        self.args = self.parser.parse_args()
+
+        if self.args.gzip:
+            self.fq_suffix = ".gz"
+        if self.args.steps_run != 'all':
+            self.steps_run = self.args.steps_run.strip().split(',')
+
+        self.logdir = self.args.outdir + '/log'
+        self.sjm_cmd = f'log_dir {self.logdir}\n'
+
         # parse_mapfile
-        self.fq_dict, self.col4_dict, self.col5_dict = self.parse_map_col4(self.args.mapfile, self.col4_default)
+        self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(self.args.mapfile, self.col4_default)
 
         # mk log dir
         if self.args.mod == 'sjm':
