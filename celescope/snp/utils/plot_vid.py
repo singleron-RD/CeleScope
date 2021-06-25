@@ -24,7 +24,7 @@ def parse_mapfile(mapfile):
     def read_row(row):
         sample = row[SAMPLE_COL_INDEX]
         match_dir = row[MATCH_DIR_COL_INDEX]
-        vid_list = [int(vid) for vid in row[VID_COL_INDEX].strip().split(',')]
+        vid_list = [int(vid) for vid in str(row[VID_COL_INDEX]).strip().split(',')]
         sample_vid_dict[sample] = vid_list
         sample_match_dir_dict[sample] = match_dir
 
