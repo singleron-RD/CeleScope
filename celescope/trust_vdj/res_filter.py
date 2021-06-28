@@ -235,3 +235,10 @@ def get_opts_res_filter(parser, sub_program):
         parser.add_argument('--report', help='assemble report', required=True)
         parser.add_argument('--fa', help='assembled fasta file', required=True)
         parser.add_argument('--count_file', help='UMI count file', required=True)
+
+
+
+
+
+
+    

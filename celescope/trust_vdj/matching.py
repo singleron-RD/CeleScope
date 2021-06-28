@@ -91,10 +91,14 @@ class Matching(Step):
 
         df_tmp = pd.merge(df_umi_filtered, barcodes, on='barcode', how='inner')
 
+        #output rna barcodes
         matched_barcodes = df_tmp.barcode.tolist()
         with open(f'{self.outdir}/{self.sample}_matched_barcodes.txt', 'w') as fh:
             for barcode in matched_barcodes:
-                fh.write(str(barcode)+ '\n')
+                cb = Seq(barcode)
+                cb = cb.reverse_complement()
+                cb = str(cb)
+                fh.write(cb+ '\n')
         string = f'Get {len(matched_barcodes)} matched barcodes'
 
         Matching.cut_off.logger.info(string)
