@@ -119,6 +119,10 @@
       {% if cutadapt_summary is defined %}
       {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
+
+      {% if star_fusion_summary is defined %}
+      {% include "html/fusion/star_fusion_summary.html"%}
+      {% endif %}
     
       {% if cluster_tsne is defined %}
       {% include "html/fusion/analysis_fusion_summary.html"%}

@@ -1,15 +1,12 @@
-from celescope.tools.report import reporter
-from celescope.tools.utils import *
-import matplotlib.pyplot as plt
-import os
-import pandas as pd
-import logging
-import numpy as np
-import argparse
 import glob
-from collections import defaultdict
-import matplotlib as mpl
-mpl.use('Agg')
+import os
+
+import numpy as np
+import pandas as pd
+
+from celescope.tools.report import reporter
+from celescope.tools.utils import add_log, format_stat, read_barcode_file
+
 
 class Count_cite():
 
@@ -20,7 +17,7 @@ class Count_cite():
         assay,
         read_count_file,
         match_dir,
-        ):
+    ):
         self.sample = sample
         self.outdir = outdir
         self.assay = assay
@@ -29,19 +26,18 @@ class Count_cite():
         self.match_barcode, self.cell_total = read_barcode_file(match_dir)
         self.df_read_count = pd.read_csv(read_count_file, sep="\t", index_col=0)
         self.tsne_file = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
-        
+
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % outdir)
 
         # out
         self.mtx = f'{outdir}/{sample}_citeseq.mtx.gz'
+        self.stats = None
+        self.stat_file = f'{self.outdir}/stat.txt'
 
     @add_log
     def run(self):
         stats = pd.Series()
-        outdir = self.outdir
-        sample = self.sample
-        UMI_tag_file = f'{outdir}/{sample}_umi_tag.tsv'
         mapped_read = self.df_read_count['read_count'].sum()
 
         # in cell
@@ -90,12 +86,11 @@ class Count_cite():
 
     def report(self):
 
-        self.stat_file = f'{self.outdir}/stat.txt'
         self.stats.to_csv(self.stat_file, sep=':', header=False)
         t = reporter(
-        name='count_cite', 
-        assay=self.assay, 
-        sample=self.sample,
-        stat_file=self.stat_file, 
-        outdir=self.outdir + '/..')
+            name='count_cite',
+            assay=self.assay,
+            sample=self.sample,
+            stat_file=self.stat_file,
+            outdir=self.outdir + '/..')
         t.get_report()

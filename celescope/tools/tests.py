@@ -1,12 +1,16 @@
 import unittest
-import os
-import pandas as pd
 from collections import namedtuple
-from celescope.tools.Step import Step
-from .consensus import *
+
+from celescope.tools.consensus import dumb_consensus, get_read_length
+from celescope.tools.count import Count
+from celescope.tools.step import Step
 
 
 class Tests(unittest.TestCase):
+    """
+    Run this test under a temp folder as it will generate some files.
+    """
+
     def setUp(self):
         pass
 
@@ -30,14 +34,30 @@ class Tests(unittest.TestCase):
         step.clean_up()
 
     def test_get_read_length(self):
-        read_list = [['AAAA','FFFF'],['TTT','FFF'],['CCC','FFF'],['GGGGGGG','FFFFFFF']]
+        read_list = [['AAAA', 'FFFF'], ['TTT', 'FFF'], ['CCC', 'FFF'], ['GGGGGGG', 'FFFFFFF']]
         assert get_read_length(read_list, 0.5) == 4
 
     def test_dumb_consensus(self):
-        read_list = [('AAAA','FFFF'),('TTT','FF;'),('CCC','FFF'),('GGGGGGG','FFFFFFF')]
-        consensus_seq, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(read_list, 0.5)
+        read_list = [('AAAA', 'FFFF'), ('TTT', 'FF;'), ('CCC', 'FFF'), ('GGGGGGG', 'FFFFFFF')]
+        consensus_seq, consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(read_list, 0.5)
         print(consensus_qual)
         assert consensus_seq == 'NNNA'
+
+    def test_correct_umi(self):
+        dic = {
+            "apple1": 2,
+            "apple2": 30,
+            "bears1": 5,
+            "bears2": 10,
+            "bears3": 100,
+            "ccccc1": 20,
+            "ccccc2": 199,
+        }
+        n_corrected_umi, n_corrected_read = Count.correct_umi(dic)
+        sorted_dic = sorted(dic.items(), key=lambda x: x[1])
+        assert sorted_dic == [('ccccc1', 20), ('apple2', 32), ('bears3', 115), ('ccccc2', 199)]
+        assert n_corrected_umi == 3
+        assert n_corrected_read == 2 + 5 + 10
 
 
 if __name__ == '__main__':

@@ -1,24 +1,21 @@
 """barcode step."""
 
+import glob
 import os
 import re
-import subprocess
 import sys
-import glob
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
 from itertools import combinations, product
 
-import pandas as pd
 import pysam
 from xopen import xopen
 
 import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from celescope.tools.Chemistry import Chemistry
-from celescope.tools.Step import Step, s_common
-
+from celescope.tools.step import Step, s_common
 
 MIN_T = 10
+
 
 def seq_ranges(seq, pattern_dict):
     # get subseq with intervals in arr and concatenate
@@ -32,11 +29,6 @@ def get_seq_list(seq, pattern_dict, abbr):
 
 @utils.add_log
 def parse_pattern(pattern):
-    # 解析接头结构，返回接头结构字典
-    # key: 字母表示的接头, value: 碱基区间列表
-    # eg.: C8L10C8L10C8U8T30
-    # defaultdict(<type 'list'>:
-    # {'C': [[0, 8], [18, 26], [36, 44]], 'U': [[44, 52]], 'L': [[8, 18], [26, 36]], 'T': [[52, 82]]})
     pattern_dict = defaultdict(list)
     p = re.compile(r'([CLUNT])(\d+)')
     tmp = p.findall(pattern)
@@ -178,10 +170,109 @@ def check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list):
     return bool_valid, bool_corrected, corrected_seq
 
 
-class Barcode(Step):
+class Chemistry():
+    """
+    Auto detect chemistry from read 1
+    """
 
-    '''barcode step class
-    '''   
+    def __init__(self, fq1):
+        self.fq1 = fq1
+        self.fq1_list = fq1.split(',')
+        self.nRead = 10000
+
+    @utils.add_log
+    def check_chemistry(self):
+        chemistry_list = []
+        for fastq1 in self.fq1_list:
+            print(fastq1)
+            chemistry = self.get_chemistry(fastq1)
+            chemistry_list.append(chemistry)
+        if len(set(chemistry_list)) != 1:
+            Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
+        return chemistry_list
+
+    @utils.add_log
+    def get_chemistry(self, fq1):
+        '''
+        'scopeV2.0.1': 'C8L16C8L16C8L1U8T18'
+        'scopeV2.1.1': 'C8L16C8L16C8L1U12T18'
+        'scopeV2.2.1': 'C8L16C8L16C8L1U12T18' with 4 types of linkers
+        '''
+        # init
+        linker_4_file, _whitelist = get_scope_bc('scopeV2.2.1')
+        linker_4_list, _num = utils.read_one_col(linker_4_file)
+        linker_4_dict = defaultdict(int)
+        linker_wrong_dict = defaultdict(int)
+        pattern_dict = parse_pattern('C8L16C8L16C8L1U12T18')
+        T4_n = 0
+        L57C_n = 0
+
+        with pysam.FastxFile(fq1) as fh:
+            for _ in range(self.nRead):
+                entry = fh.__next__()
+                seq = entry.sequence
+                L57C = seq[56]
+                if L57C == 'C':
+                    L57C_n += 1
+                T4 = seq[65:69]
+                if T4 == 'TTTT':
+                    T4_n += 1
+                linker = seq_ranges(seq, pattern_dict=pattern_dict['L'])
+                if linker in linker_4_list:
+                    linker_4_dict[linker] += 1
+                else:
+                    linker_wrong_dict[linker] += 1
+
+        percent_T4 = T4_n / self.nRead
+        percent_L57C = L57C_n / self.nRead
+        Chemistry.get_chemistry.logger.info(f'percent T4: {percent_T4}')
+        Chemistry.get_chemistry.logger.info(f'percent L57C: {percent_L57C}')
+        if percent_T4 > 0.5:
+            chemistry = 'scopeV2.0.1'
+        else:
+            # V2.1.1 or V2.2.1 or failed
+            valid_linker_type = 0
+            for linker in linker_4_dict:
+                linker_4_dict[linker] = linker_4_dict[linker] / self.nRead
+                if linker_4_dict[linker] > 0.05:
+                    valid_linker_type += 1
+            Chemistry.get_chemistry.logger.info(linker_4_dict)
+            if valid_linker_type == 0:
+                print(linker_wrong_dict)
+                raise Exception(
+                    'Auto chemistry detection failed! '
+                    'If the sample is from Singleron, ask the technical staff you are connecting with for the chemistry used. '
+                    'You need to use `--chemistry scopeV1` for scopeV1, and `--chemistry auto` should be fine for scopeV2.* '
+                )
+            elif valid_linker_type == 1:
+                chemistry = 'scopeV2.1.1'
+            elif valid_linker_type < 4:
+                chemistry = 'scopeV2.2.1'
+                Chemistry.get_chemistry.logger.warning(
+                    f'chemistry scopeV2.2.1 only has {valid_linker_type} linker types!')
+            else:
+                chemistry = 'scopeV2.2.1'
+        Chemistry.get_chemistry.logger.info(f'chemistry: {chemistry}')
+        return chemistry
+
+
+class Barcode(Step):
+    """
+    Features
+
+    - Demultiplex barcodes.
+    - Filter invalid R1 reads, which includes:
+        - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+        - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+        - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+        - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+    Output
+
+    - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+    the read name is `{barcode}_{UMI}_{read ID}`.
+    """
+
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
@@ -205,40 +296,55 @@ class Barcode(Step):
         self.no_barcode_num = 0
         self.barcode_qual_Counter = Counter()
         self.umi_qual_Counter = Counter()
-        if args.gzip:
-            suffix = ".gz"
-        else:
-            suffix = ""
-        self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
-        self.nopolyT = args.nopolyT
-        self.noLinker = args.noLinker
-        self.bool_probe = False
-        if args.probe_file and args.probe_file != 'None':
-            self.bool_probe = True
-            self.probe_count_dic = utils.genDict(dim=3)
-            self.valid_count_dic = utils.genDict(dim=2)
-            self.probe_dic = utils.read_fasta(args.probe_file)
-            self.reads_without_probe = 0
         self.pattern = args.pattern
         self.linker = args.linker
         self.whitelist = args.whitelist
         self.lowNum = args.lowNum
         self.lowQual = args.lowQual
         self.allowNoPolyT = args.allowNoPolyT
-        self.allowNoLinker = args.allowNoLinker   
+        self.allowNoLinker = args.allowNoLinker
+        self.nopolyT = args.nopolyT  # true == output nopolyT reads
+        self.noLinker = args.noLinker
+
+        # out file
+        if args.gzip:
+            suffix = ".gz"
+        else:
+            suffix = ""
+        self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
+        if self.nopolyT:
+            self.nopolyT_1 = f'{self.outdir}/noPolyT_1.fq'
+            self.nopolyT_2 = f'{self.outdir}/noPolyT_2.fq'
+        if self.noLinker:
+            self.noLinker_1 = f'{self.outdir}/noLinker_1.fq'
+            self.noLinker_2 = f'{self.outdir}/noLinker_2.fq'
 
     @utils.add_log
     def run(self):
+        """
+        Extract barcode and UMI from R1. Filter reads with 
+            - invalid polyT
+            - low quality in barcode and UMI
+            - invalid inlinker
+            - invalid barcode
+
+        for every sample
+            get chemistry
+            get linker_mismatch_dict and barcode_mismatch_dict
+            for every read in read1
+                filter
+                write valid R2 read to file
+        """
 
         fh3 = xopen(self.out_fq2, 'w')
 
         if self.nopolyT:
-            fh1_without_polyT = xopen(self.outdir + '/noPolyT_1.fq', 'w')
-            fh2_without_polyT = xopen(self.outdir + '/noPolyT_2.fq', 'w')
+            fh1_without_polyT = xopen(self.nopolyT_1, 'w')
+            fh2_without_polyT = xopen(self.nopolyT_2, 'w')
 
         if self.noLinker:
-            fh1_without_linker = xopen(self.outdir + '/noLinker_1.fq', 'w')
-            fh2_without_linker = xopen(self.outdir + '/noLinker_2.fq', 'w')
+            fh1_without_linker = xopen(self.noLinker_1, 'w')
+            fh2_without_linker = xopen(self.noLinker_2, 'w')
 
         for i in range(self.fq_number):
 
@@ -311,7 +417,7 @@ class Barcode(Step):
                                 '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                         continue
 
-                # lowQual filter                
+                # lowQual filter
                 C_U_quals_ascii = seq_ranges(
                     qual1, pattern_dict['C'] + pattern_dict['U'])
                 # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
@@ -334,7 +440,7 @@ class Barcode(Step):
                         continue
                     elif bool_corrected:
                         self.linker_corrected_num += 1
-                
+
                 # barcode filter
                 seq_list = get_seq_list(seq1, pattern_dict, 'C')
                 if bool_whitelist:
@@ -353,26 +459,6 @@ class Barcode(Step):
                 umi = seq_ranges(seq1, pattern_dict['U'])
 
                 self.clean_num += 1
-
-                if self.bool_probe:
-                    # valid count
-                    read_name_probe = 'None'
-                    self.valid_count_dic[cb][umi] += 1
-
-                    # output probe UMi and read count
-                    find_probe = False
-                    for probe_name in self.probe_dic:
-                        probe_seq = self.probe_dic[probe_name]
-                        probe_seq = probe_seq.upper()
-                        if seq1.find(probe_seq) != -1:
-                            self.probe_count_dic[probe_name][cb][umi] += 1
-                            read_name_probe = probe_name
-                            find_probe = True
-                            break
-
-                    if not find_probe:
-                        self.reads_without_probe += 1
-
                 self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                 self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
@@ -398,40 +484,6 @@ class Barcode(Step):
             raise Exception(
                 'no valid reads found! please check the --chemistry parameter.')
 
-        if self.bool_probe:
-            # total probe summary
-            total_umi = 0
-            total_valid_read = 0
-            for cb in self.valid_count_dic:
-                total_umi += len(self.valid_count_dic[cb])
-                total_valid_read += sum(self.valid_count_dic[cb].values())
-
-            # probe summary
-            count_list = []
-            for probe_name in self.probe_dic:
-                UMI_count = 0
-                read_count = 0
-                if probe_name in self.probe_count_dic:
-                    for cb in self.probe_count_dic[probe_name]:
-                        UMI_count += len(self.probe_count_dic[probe_name][cb])
-                        read_count += sum(self.probe_count_dic[probe_name][cb].values())
-                count_list.append(
-                    {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
-
-            df_count = pd.DataFrame(count_list, columns=[
-                                    "probe_name", "read_count", "UMI_count"])
-
-            def format_percent(x):
-                x = str(round(x*100, 2))+"%"
-                return x
-            df_count["read_fraction"] = (
-                df_count["read_count"]/total_valid_read).apply(format_percent)
-            df_count["UMI_fraction"] = (
-                df_count["UMI_count"]/total_umi).apply(format_percent)
-            df_count.sort_values(by="UMI_count", inplace=True, ascending=False)
-            df_count_file = self.outdir + '/' + self.sample + '_probe_count.tsv'
-            df_count.to_csv(df_count_file, sep="\t", index=False)
-
         # stat
         BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
             30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
@@ -445,22 +497,14 @@ class Barcode(Step):
             Q30 of Barcodes: %.2f%%
             Q30 of UMIs: %.2f%%
         '''
-        with open(self.outdir + '/stat.txt', 'w') as fh:
+        with open(self.stat_file, 'w') as fh:
             stat_info = stat_info % (utils.format_number(self.total_num), utils.format_number(self.clean_num),
-                                    cal_percent(self.clean_num), BarcodesQ30,
-                                    UMIsQ30)
+                                     cal_percent(self.clean_num), BarcodesQ30,
+                                     UMIsQ30)
             stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
             fh.write(stat_info)
-        
-        # self.fastqc()
+
         self.clean_up()
-
-
-    @utils.add_log
-    def fastqc(self):
-        cmd = ['fastqc', '-t', str(self.thread), '-o', self.outdir, self.out_fq2]
-        Barcode.fastqc.logger.info('%s' % (' '.join(cmd)))
-        subprocess.check_call(cmd)
 
 
 @utils.add_log
@@ -471,26 +515,74 @@ def barcode(args):
 
 
 def get_opts_barcode(parser, sub_program=True):
-    parser.add_argument('--pattern', help='')
-    parser.add_argument('--whitelist', help='')
-    parser.add_argument('--linker', help='')
-    parser.add_argument('--lowQual', type=int,
-                        help='max phred of base as lowQual, default=0', default=0)
     parser.add_argument(
-        '--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
-    parser.add_argument('--nopolyT', action='store_true',
-                        help='output nopolyT fq')
-    parser.add_argument('--noLinker', action='store_true',
-                        help='output noLinker fq')
-    parser.add_argument('--probe_file', help="probe fasta file")
-    parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
-    parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
-    parser.add_argument('--gzip', help="output gzipped fastq", action='store_true')
+        '--chemistry',
+        help="""Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
+- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
+- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
+- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
+same time.""",
+        choices=list(__PATTERN_DICT__.keys()),
+        default='auto'
+    )
     parser.add_argument(
-        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+        '--pattern',
+        help="""The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
+        of bases.  
+- `C`: cell barcode  
+- `L`: linker(common sequences)  
+- `U`: UMI    
+- `T`: poly T""",
+    )
+    parser.add_argument(
+        '--whitelist',
+        help='Cell barcode whitelist file path, one cell barcode per line.'
+    )
+    parser.add_argument(
+        '--linker',
+        help='Linker whitelist file path, one linker per line.'
+    )
+    parser.add_argument(
+        '--lowQual',
+        help='Default 0. Bases in cell barcode and UMI whose phred value are lower than \
+lowQual will be regarded as low-quality bases.',
+        type=int,
+        default=0
+    )
+    parser.add_argument(
+        '--lowNum',
+        help='The maximum allowed lowQual bases in cell barcode and UMI.',
+        type=int,
+        default=2
+    )
+    parser.add_argument(
+        '--nopolyT',
+        help='Outputs R1 reads without polyT.',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--noLinker',
+        help='Outputs R1 reads without correct linker.',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--allowNoPolyT',
+        help="Allow valid reads without polyT.",
+        action='store_true'
+    )
+    parser.add_argument(
+        '--allowNoLinker',
+        help="Allow valid reads without correct linker.",
+        action='store_true'
+    )
+    parser.add_argument(
+        '--gzip',
+        help="Output gzipped fastq files.",
+        action='store_true'
+    )
     if sub_program:
-        parser.add_argument('--fq1', help='read1 fq file', required=True)
-        parser.add_argument('--fq2', help='read2 fq file', required=True)
+        parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
+        parser.add_argument('--fq2', help='R2 fastq file. Multiple files are separated by comma.', required=True)
         parser = s_common(parser)
 
     return parser

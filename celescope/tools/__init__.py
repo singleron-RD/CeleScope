@@ -14,3 +14,6 @@ __PATTERN_DICT__ = {'scopeV2.0.0': 'C8L16C8L16C8U8T18',
 MATRIX_FILE_NAME = 'matrix.mtx'
 FEATURE_FILE_NAME = 'genes.tsv'
 BARCODE_FILE_NAME = 'barcodes.tsv'
+
+# mkref
+GENOME_CONFIG = 'celescope_genome.config'

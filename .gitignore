@@ -1,3 +1,7 @@
+# test output
+celescope_log.txt
+test_output/
+
 # vscode
 .vscode/
 
@@ -151,5 +155,4 @@ cython_debug/
 
 # .DS_store
 .DS_store
-
 
