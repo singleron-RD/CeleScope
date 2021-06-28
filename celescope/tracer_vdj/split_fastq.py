@@ -146,12 +146,15 @@ class Split_fastq(Step):
 
         self.clean_up()
 
+    def run(self):
+        self.get_fqs()
+
 
 @utils.add_log
 def split_fastq(args):
     step_name = 'split_fastq'
     split_fastq_obj = Split_fastq(args, step_name)
-    split_fastq_obj.get_fqs()
+    split_fastq_obj.run()
 
 
 def get_opts_split_fastq(parser, sub_program=True):

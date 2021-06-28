@@ -1,5 +1,4 @@
 import os
-from re import I
 import pandas as pd
 from Bio.Seq import Seq
 import numpy as np
@@ -156,7 +155,6 @@ class Vdj_sum(Step):
         
         count_umi_file = f'{fastq_dir}/../{self.sample}_count.txt'
         count_umi = pd.read_csv(count_umi_file, sep='\t', index_col=0)
-        median_all = int(count_umi['UMI'].median())
 
         clonetypes = pd.read_csv(f'{outdir}/clonetypes.tsv', sep='\t')
 
