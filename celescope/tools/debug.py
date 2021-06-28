@@ -1,7 +1,6 @@
-import os
-import glob 
 import argparse
-import logging
+import glob
+import os
 
 
 class Debug():
@@ -9,9 +8,14 @@ class Debug():
         self.outdir = 'debug'
         if not os.path.exists(self.outdir):
             os.mkdir(self.outdir)
+        self.opts()
+        self.all_reads = glob.glob(f'{self.dir}/02.cutadapt/*clean_2.fq.gz')[0]
+        # out files
+        self.sub_reads = f'{self.outdir}/sub.fq.gz'
+        self.unmapped = f'{self.outdir}/sub_Unmapped.out.mate1'
 
     def opts(self):
-        readme = f'debug'
+        readme = 'debug'
         parser = argparse.ArgumentParser(readme)
         parser.add_argument('--dir', required=True)
         parser.add_argument('--n_sub', default=1000000)
@@ -23,8 +27,6 @@ class Debug():
         self.thread = 2
 
     def run_subsample(self):
-        self.all_reads = glob.glob(f'{self.dir}/02.cutadapt/*clean_2.fq.gz')[0]
-        self.sub_reads = f'{self.outdir}/sub.fq.gz'
         cmd = (
             f'less {self.all_reads} '
             f'|head -n {self.n_sub * 4} | gzip -c > {self.sub_reads} '
@@ -34,7 +36,7 @@ class Debug():
 
     def run_STAR(self):
         cmd = (
-            f'STAR --runThreadN {self.thread} \\\n'
+            f'star --runThreadN {self.thread} \\\n'
             f'--genomeDir {self.genomeDir} \\\n'
             f'--readFilesIn {self.sub_reads} \\\n'
             f'--readFilesCommand zcat --outFilterMultimapNmax 1 \\\n'
@@ -44,7 +46,6 @@ class Debug():
         )
         with open('STAR.sh', 'wt') as f:
             f.write(cmd)
-        self.unmapped = f'{self.outdir}/sub_Unmapped.out.mate1'
 
     def fastqc(self):
         cmd = (
@@ -53,9 +54,7 @@ class Debug():
         with open('fastqc.sh', 'wt') as f:
             f.write(cmd)
 
-
     def run(self):
-        self.opts()
         self.run_subsample()
         self.run_STAR()
         self.fastqc()
@@ -64,5 +63,3 @@ class Debug():
 if __name__ == '__main__':
     de = Debug()
     de.run()
-
-    

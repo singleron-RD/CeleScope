@@ -1,9 +1,9 @@
 from celescope.capture_rna.__init__ import __ASSAY__
-from celescope.tools.Multi import Multi
+from celescope.tools.multi import Multi
 
 
 class Multi_capture_rna(Multi):
-    
+
     def count_capture_rna(self, sample):
         step = 'count_capture_rna'
         cmd_line = self.get_cmd_line(step, sample)
@@ -14,7 +14,7 @@ class Multi_capture_rna(Multi):
             f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
-    
+
     def analysis(self, sample):
         step = 'analysis'
         cmd_line = self.get_cmd_line(step, sample)
@@ -30,9 +30,6 @@ def main():
     multi = Multi_capture_rna(__ASSAY__)
     multi.run()
 
+
 if __name__ == '__main__':
     main()
-
-
-
-

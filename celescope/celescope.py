@@ -1,15 +1,17 @@
 import argparse
-import importlib
 
 import celescope.tools.utils as utils
 from celescope.__init__ import __VERSION__, ASSAY_DICT
 
 
+class ArgFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
+    pass
+
+
 def main():
     """celescope cli
     """
-    parser = argparse.ArgumentParser(description='CeleScope', 
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description='CeleScope', formatter_class=ArgFormatter)
     parser.add_argument('-v', '--version', action='version', version=__VERSION__)
     subparsers = parser.add_subparsers()
 
@@ -28,7 +30,7 @@ def main():
             step_module = utils.find_step_module(assay, step)
             func = getattr(step_module, step)
             func_opts = getattr(step_module, f"get_opts_{step}")
-            parser_step = subparser_2ed.add_parser(step, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+            parser_step = subparser_2ed.add_parser(step, formatter_class=ArgFormatter)
             func_opts(parser_step, sub_program=True)
             parser_step.set_defaults(func=func)
 

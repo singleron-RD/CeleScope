@@ -1,10 +1,11 @@
 import os
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
-import pysam
+
 import pandas as pd
-from celescope.tools.utils import *
-from celescope.tcr_fl.Barcode_index import Barcode_index
+import pysam
+
+from celescope.tcr_fl.barcode_index import Barcode_index
+from celescope.tools.utils import add_log, genDict, read_barcode_file
 
 
 @add_log
@@ -23,7 +24,7 @@ def get_nCell_barcodes(fq, nCell):
     for barcode in count_dict:
         barcode_dict[barcode] = len(count_dict[barcode])
     barcodes = pd.DataFrame.from_dict(barcode_dict, orient='index').sort_values(
-        0, ascending=False).iloc[0:nCell,].index
+        0, ascending=False).iloc[0:nCell, ].index
     return barcodes
 
 
@@ -37,17 +38,15 @@ def split_run(fq, fq_outdir, barcodes=None, nCell=None):
     if nCell and nCell != 'None':
         barcodes = get_nCell_barcodes(fq, nCell)
     bi = Barcode_index(barcodes)
-    file_dict = {}
     entry_dict = defaultdict(list)
     with pysam.FastxFile(fq) as fh:
         for entry in fh:
             attr = entry.name.split('_')
             barcode = attr[0]
-            umi = attr[1]
             if barcode in barcodes:
                 cell_index = bi.index_dict[barcode]
                 entry_dict[cell_index].append(entry)
-                
+
     # write to file
     for cell_index in entry_dict:
         with open(f'{fq_outdir}/{cell_index}.fq', 'w') as f:
@@ -70,9 +69,10 @@ def split_fq(args):
     fq_outdir = f'{args.outdir}/fastq'
     if nCell and nCell != 'None':
         nCell = int(nCell)
-    bi = split_run(args.fq, fq_outdir, barcodes, nCell) 
+    bi = split_run(args.fq, fq_outdir, barcodes, nCell)
     index_file = f'{outdir}/{sample}_index.tsv'
     bi.df_index.to_csv(index_file, sep='\t')
+
 
 def get_opts_split_fq(parser, sub_program):
     if sub_program:

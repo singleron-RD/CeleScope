@@ -117,13 +117,13 @@ for (cluster in clusters){
 exp[exp$type=="negative",]$avg_log2FC = -(exp[exp$type=="negative",]$avg_log2FC)
 exp[exp$type=="negative",]$pct.diff = -(exp[exp$type=="negative",]$pct.diff)
 a <- group_by(exp,cluster,cell_type)
-as <- summarize(a,avg_pct.diff=mean(pct.diff),avg_logfc=mean(avg_log2FC),max_p_val_adj=max(p_val_adj))
+as <- summarize(a,avg_pct.diff=mean(pct.diff),avg_log2FC=mean(avg_log2FC),max_p_val_adj=max(p_val_adj))
 as1 <- group_by(ungroup(as),cluster)
 as1 <- mutate(as1,pct_rank = rank(avg_pct.diff),
-              logfc_rank= rank(avg_logfc),total_rank=pct_rank+logfc_rank)
+              logfc_rank= rank(avg_log2FC),total_rank=pct_rank+logfc_rank)
 as2 <- as1 %>% ungroup %>% group_by(cluster) %>% 
   filter(total_rank==max(total_rank)) %>% arrange(as.numeric(cluster))
-as3 <- select(as2,cluster,cell_type,avg_pct.diff,avg_logfc,max_p_val_adj)
-as3[(as3$avg_pct.diff < 0 | as3$avg_logfc < 0),]$cell_type = 'NA'
+as3 <- select(as2,cluster,cell_type,avg_pct.diff,avg_log2FC,max_p_val_adj)
+as3[(as3$avg_pct.diff < 0 | as3$avg_log2FC < 0),]$cell_type = 'NA'
 res.out = stringr::str_glue('{auto_dir}/{sample}_auto_cluster_type.tsv')
 write_tsv(as3, res.out)

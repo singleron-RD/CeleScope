@@ -1,15 +1,12 @@
 import collections
-import numpy as np
 import math
+
+import numpy as np
 import pandas as pd
-import plotly as py
 import plotly.graph_objs as go
-import plotly.express as px
-from plotly import tools
 import plotly.offline as pltoff
 
 from celescope.tools.utils import add_log
-
 
 BarcodeRankPlotSegment = collections.namedtuple('BarcodeRankPlotSegment', ['start', 'end', 'cell_density', 'legend'])
 
@@ -19,7 +16,7 @@ CHARTS_PLOTLY_MODEBAR_TRANSFORM_BUTTONS = [
     'zoomIn2d',
     'zoomOut2d',
     'autoScale2d',
-    #'resetScale2d'  can't totally disable interaction, it seems-- keep reset option
+    # 'resetScale2d'  can't totally disable interaction, it seems-- keep reset option
 ]
 
 CHARTS_PLOTLY_EXPORT_BUTTONS = [
@@ -41,11 +38,11 @@ CHARTS_PLOTLY_MOVABLE_CONFIG = {
 BC_RANK_PLOT_LINE_WIDTH = 3
 # Gradient scheme used in the barcode rank plot
 BC_PLOT_COLORS = ['#dddddd', '#d1d8dc', '#c6d3dc', '#bacfdb', '#aecada', '#a3c5d9', '#97c0d9', '#8cbbd8', '#80b7d7',
-                      '#74b2d7', '#6aadd6', '#66abd4', '#62a8d2', '#5ea5d1', '#59a2cf', '#559fce', '#519ccc', '#4d99ca',
-                      '#4997c9', '#4594c7', '#4191c5', '#3d8dc4', '#3a8ac2', '#3787c0', '#3383be', '#3080bd', '#2c7cbb',
-                      '#2979b9', '#2676b7', '#2272b6', '#1f6eb3', '#1d6ab0', '#1a65ac', '#1861a9', '#155ca6', '#1358a2',
-                      '#10539f', '#0e4f9b', '#0b4a98', '#094695', '#09438f', '#0a4189', '#0c3f83', '#0d3d7c', '#0e3b76',
-                      '#103970', '#11366a', '#123463', '#14325d', '#153057']
+                  '#74b2d7', '#6aadd6', '#66abd4', '#62a8d2', '#5ea5d1', '#59a2cf', '#559fce', '#519ccc', '#4d99ca',
+                  '#4997c9', '#4594c7', '#4191c5', '#3d8dc4', '#3a8ac2', '#3787c0', '#3383be', '#3080bd', '#2c7cbb',
+                  '#2979b9', '#2676b7', '#2272b6', '#1f6eb3', '#1d6ab0', '#1a65ac', '#1861a9', '#155ca6', '#1358a2',
+                  '#10539f', '#0e4f9b', '#0b4a98', '#094695', '#09438f', '#0a4189', '#0c3f83', '#0d3d7c', '#0e3b76',
+                  '#103970', '#11366a', '#123463', '#14325d', '#153057']
 
 CHARTS = [
     {
@@ -53,7 +50,7 @@ CHARTS = [
             'title': 'Barcode Rank',
             'width': 470,
             'height': 313,
-            'margin': { 'l': 60, 'r': 0, 't': 30, 'b': 40 },
+            'margin': {'l': 60, 'r': 0, 't': 30, 'b': 40},
             'hovermode': 'closest',
             'xaxis': {
                 'title': 'Barcodes',
@@ -193,7 +190,7 @@ def _plot_barcode_rank(chart, counts, num_cells):
     """ Generate a generic barcode rank plot """
     rows = convert_numpy_array_to_line_chart(counts, int)
 
-    for i, row in enumerate(rows):
+    for _i, row in enumerate(rows):
         index, count = row[0], row[1]
         if index < num_cells:
             series_list = [chart['data'][0]]
@@ -291,7 +288,7 @@ def get_plot_data(plot_segments, counts):
 
 
 def plot_barcode_rank(count_file_path):
-    sorted_counts, plot_segments, cell_nums = counter_barcode_rank_plot_data(count_file_path)
+    sorted_counts, plot_segments, _cell_nums = counter_barcode_rank_plot_data(count_file_path)
     plot_data = get_plot_data(plot_segments, sorted_counts)
 
     plotly_data = [go.Scatter(x=dat['x'], y=dat['y'], name=dat['name'], mode=dat['mode'], showlegend=dat['showlegend'],

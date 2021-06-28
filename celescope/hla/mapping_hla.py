@@ -1,10 +1,12 @@
 import os
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
-import celescope
-import pysam
+
 import pandas as pd
-from celescope.tools.utils import *
+import pysam
+
+import celescope
+from celescope.tools.utils import add_log, read_barcode_file
 
 
 @add_log
@@ -146,15 +148,15 @@ def hla_typing(index_file, outdir, thread):
 
 @add_log
 def summary(index_file, outdir, sample):
-    
+
     n = 0
     df_valid = read_index(index_file)
-    
+
     for index in df_valid.index:
         try:
             sub_df = pd.read_csv(
                 f'{outdir}/cells/cell{index}/cell{index}_result.tsv', sep='\t', index_col=0)
-        except Exception:
+        except FileNotFoundError:
             continue
         n += 1
         sub_df['barcode'] = df_valid.loc[index, :]['barcode']
@@ -163,7 +165,7 @@ def summary(index_file, outdir, sample):
             all_df = sub_df
         else:
             all_df = all_df.append(sub_df, ignore_index=True)
-    all_df['Reads'] = all_df['Reads'].apply(lambda x: int(x))
+    all_df['Reads'] = all_df['Reads'].apply(int)
     all_df = all_df[all_df['Reads'] != 0]
     all_df = all_df.drop('Objective', axis=1)
     out_file = f'{outdir}/{sample}_typing.tsv'

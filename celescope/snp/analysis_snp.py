@@ -1,14 +1,14 @@
 
-import subprocess
 import configparser
+import subprocess
 
 import pandas as pd
 import pysam
 
 import celescope.tools.utils as utils
-from mutract.utils import read_CID
-from celescope.tools.analysisMixin import AnalysisMixin
-from celescope.tools.Step import Step, s_common
+from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools.step import Step, s_common
+from celescope.snp.variant_calling import read_CID
 
 
 class Analysis_variant(Step, AnalysisMixin):
@@ -22,7 +22,7 @@ class Analysis_variant(Step, AnalysisMixin):
         self.annovar_config = args.annovar_config
         self.match_dir = args.match_dir
         self.vcf_GT = None
-        
+
     def get_df_count_tsne(self):
         '''
         output: f'{self.outdir}/{self.sample}_count_tsne.tsv'
@@ -30,8 +30,8 @@ class Analysis_variant(Step, AnalysisMixin):
         df_vc = pd.read_csv(self.variant_count_file, sep='\t')
         df_vc = df_vc[df_vc["alt_count"] > 0]
         df_vc_cell = df_vc.groupby('CID').agg({
-            'alt_count':'count',
-            'VID':list,
+            'alt_count': 'count',
+            'VID': list,
         })
 
         df_CID, _df_valid = read_CID(self.CID_file)
@@ -39,7 +39,7 @@ class Analysis_variant(Step, AnalysisMixin):
         tsne_df_CID = pd.merge(self.tsne_df, df_CID, on='barcode', how='left')
 
         df_vc_barcode = pd.merge(df_vc_cell, df_CID, on='CID')
-        df_vc_barcode_tsne = pd.merge(df_vc_barcode, tsne_df_CID, on=['barcode','CID'], how='right')
+        df_vc_barcode_tsne = pd.merge(df_vc_barcode, tsne_df_CID, on=['barcode', 'CID'], how='right')
         df_vc_barcode_tsne['value'] = df_vc_barcode_tsne['alt_count']
         df_vc_barcode_tsne['value'] = df_vc_barcode_tsne['value'].fillna(0)
         df_vc_barcode_tsne['value'].astype('int32')
@@ -61,7 +61,7 @@ class Analysis_variant(Step, AnalysisMixin):
         text = list(df_count_tsne.apply(return_text, axis=1))
         value = list(df_count_tsne.value)
         title = 't-SNE plot Colored by Cell Variant Counts'
-        count_tsne = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "text": text, 'value':value, 'title':title}
+        count_tsne = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "text": text, 'value': value, 'title': title}
         return count_tsne
 
     def add_GT(self):
@@ -73,30 +73,27 @@ class Analysis_variant(Step, AnalysisMixin):
         out_vcf = pysam.VariantFile(out_vcf_file, 'w', header=vcf.header)
         for rec in vcf:
             for sample in rec.samples:
-                rec.samples[sample]["GT"] = (1,1)
+                rec.samples[sample]["GT"] = (1, 1)
                 out_vcf.write(rec)
         vcf.close()
         out_vcf.close()
         self.vcf_GT = out_vcf_file
 
-
     def get_df_table(self):
-        
-        df_vcf = utils.parse_vcf(self.vcf_GT, infos=['VID','CID'])
+
+        df_vcf = utils.parse_vcf(self.vcf_GT, infos=['VID', 'CID'])
         df_annovar = self.annovar()
         df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
-        df_vcf["nCell"] = df_vcf["CID"].apply(func=lambda row:1 if isinstance(row,str) else len(row))
+        df_vcf["nCell"] = df_vcf["CID"].apply(func=lambda row: 1 if isinstance(row, str) else len(row))
 
         out_df_vcf = f'{self.outdir}/{self.sample}_variant_table.tsv'
         df_vcf.to_csv(out_df_vcf, sep='\t', index=False)
 
-        cols = ['VID','Chrom','Pos','Alleles','Gene','nCell','mRNA','Protein','COSMIC']
+        cols = ['VID', 'Chrom', 'Pos', 'Alleles', 'Gene', 'nCell', 'mRNA', 'Protein', 'COSMIC']
         df_vcf = df_vcf[cols]
         return df_vcf
 
-
     def run(self):
-        self.read_match_dir()
         self.add_GT()
         cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
         df_count_tsne = self.get_df_count_tsne()
@@ -157,6 +154,7 @@ def analysis_snp(args):
     step = 'analysis_snp'
     step_snp = Analysis_variant(args, step)
     step_snp.run()
+
 
 def get_opts_analysis_snp(parser, sub_program):
     parser.add_argument('--annovar_config', help='annovar soft config file', required=True)

@@ -1,6 +1,6 @@
-import argparse
 import os
-from celescope.tools.utils import *
+
+from celescope.tools.utils import parse_match_dir
 
 CITESEQ_DIR = os.path.dirname(__file__)
 
@@ -18,7 +18,7 @@ def analysis_cite(args):
 
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % args.outdir)
-        
+
     rds = parse_match_dir(args.match_dir)['rds']
     app = CITESEQ_DIR + "/analysis_cite.R"
     cmd = (
@@ -29,4 +29,3 @@ def analysis_cite(args):
         f'--sample {args.sample} '
     )
     os.system(cmd)
-    

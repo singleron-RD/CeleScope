@@ -1,13 +1,9 @@
-import os
-import sys
-import json
-import argparse
-import pandas as pd
 import io
-import logging
-from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader, Undefined
-from celescope.tools.utils import *
+import json
+import os
 
+import pandas as pd
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 env = Environment(
     loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
@@ -36,7 +32,6 @@ class reporter:
 
     def get_report(self):
 
-
         json_file = self.outdir + '/.data.json'
         if not os.path.exists(json_file):
             data = {}
@@ -62,7 +57,7 @@ class reporter:
 
         if isinstance(self.df, pd.DataFrame):
             df = self.df.fillna(value="")
-            data[self.name + '_table'] = df.values.tolist()        
+            data[self.name + '_table'] = df.values.tolist()
 
         if self.table_header:
             data[self.name + '_table_header'] = self.table_header
@@ -78,4 +73,3 @@ class reporter:
 
         with open(json_file, 'w') as fh:
             json.dump(data, fh, indent=4)
-

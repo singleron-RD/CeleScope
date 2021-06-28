@@ -1,13 +1,11 @@
-import numpy as np
-import pandas as pd
-from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
-import pysam
 import logging
 import os
 from collections import defaultdict
-from celescope.tools.utils import *
-from celescope.tools.report import reporter
+
+import pandas as pd
+import pysam
+
+from celescope.tools.utils import add_log, s_common
 
 
 def genDict(dim=3):
@@ -78,4 +76,3 @@ def get_opts_count_virus(parser, sub_program):
         s_common(parser)
         parser.add_argument('--virus_bam', required=True)
         parser.add_argument('--barcode_file', required=True)
-

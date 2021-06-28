@@ -1,11 +1,10 @@
-from celescope.tools.report import reporter
-from celescope.tools.utils import *
-import pysam
 import os
-import pandas as pd
-import argparse
-import glob
+
 import editdistance
+import pandas as pd
+import pysam
+
+from celescope.tools.utils import add_log, parse_match_dir
 
 parentDir = os.path.dirname(__file__)
 
@@ -16,14 +15,14 @@ def read_mut(mut_file):
 
     def convert_row(row):
         gene = row["gene"]
-        type = row["type"]
+        mut_type = row["type"]
         seq = row["seq"]
         ref_position = row["ref_position"]
         if gene not in mut_dic:
             mut_dic[gene] = {}
-        mut_dic[gene][type] = {}
-        mut_dic[gene][type]["pos"] = ref_position
-        mut_dic[gene][type]["seq"] = seq
+        mut_dic[gene][mut_type] = {}
+        mut_dic[gene][mut_type]["pos"] = ref_position
+        mut_dic[gene][mut_type]["seq"] = seq
     df.apply(func=convert_row, axis=1)
     return mut_dic
 
@@ -51,7 +50,6 @@ def count_mut(args):
     mut_dic = read_mut(mut_file)
     out_prefix = outdir + "/" + sample
 
-
     # tsne
     match_dict = parse_match_dir(match_dir)
     df_tsne = pd.read_csv(match_dict['tsne_coord'], sep="\t", index_col=0)
@@ -65,8 +63,8 @@ def count_mut(args):
 
     # process bam
     samfile = pysam.AlignmentFile(bam, "rb")
-    header = samfile.header
-    new_bam = pysam.AlignmentFile(out_prefix+"_mut.bam", "wb", header=header)
+    # header = samfile.header
+    # new_bam = pysam.AlignmentFile(out_prefix+"_mut.bam", "wb", header=header)
     rows = []
     for read in samfile:
         tag = read.reference_name
@@ -105,9 +103,9 @@ def count_mut(args):
         gene = str(row["gene"])
         ref_pos = int(row["ref_pos"])
         mut_type = str(row["type"])
-        seq_length = int(row["seq_length"])
+        int(row["seq_length"])
         seq = str(row["seq"])
-        if gene not in mut_dic.keys():
+        if gene not in mut_dic:
             return False
         if mut_type not in mut_dic[gene].keys():
             return False
@@ -143,7 +141,7 @@ def count_mut(args):
             out_insertion_barcode_count_file, sep="\t")
 
         df_tsne_mut = pd.merge(df_tsne, df_insertion_barcode_count,
-                            right_index=True, left_index=True, how="left")
+                               right_index=True, left_index=True, how="left")
         df_tsne_mut.fillna(0, inplace=True)
         df_tsne_mut.to_csv(out_tsne_file, sep="\t")
 
