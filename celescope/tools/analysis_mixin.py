@@ -34,7 +34,7 @@ class AnalysisMixin():
             f'--mt_gene_list {mt_gene_list} '
             f'--save_rds {save_rds}'
         )
-        AnalysisMixin.seurat.logger.info(cmd)
+        self.seurat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
@@ -48,7 +48,7 @@ class AnalysisMixin():
             f'--outdir {self.outdir} '
             f'--sample {self.sample} '
         )
-        AnalysisMixin.auto_assign.logger.info(cmd)
+        self.auto_assign.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     @staticmethod

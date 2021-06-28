@@ -30,7 +30,7 @@ class Multi_rna_virus(Multi):
     def analysis_rna_virus(self, sample):
         step = 'analysis_rna_virus'
         virus_file = f'{self.outdir_dic[sample]["count_virus"]}/{sample}_virus_UMI_count.tsv'
-        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix.tsv.gz'
+        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix_10X'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
