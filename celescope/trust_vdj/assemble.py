@@ -33,6 +33,7 @@ class Assemble(Step):
         self.sample = args.sample
         self.species = args.species
         self.speed_up = args.speed_up
+        self.rerun = args.rerun
 
 
     @utils.add_log
@@ -62,6 +63,9 @@ class Assemble(Step):
         if not os.path.exists(f'{self.outdir}/{self.sample}_barcode_report.tsv'):
             os.system(cmd)
 
+        if self.rerun:
+            os.system(cmd)
+
             #fq = f'{self.outdir}/TRUST4/{self.sample}_toassemble.fq'
 
 
@@ -79,6 +83,7 @@ def get_opts_assemble(parser, sub_program):
         parser.add_argument('--fq2', help='R2 reads from match step', required=True)
 
     parser.add_argument('--species', help='species', choices=["Mmus", "Hsap"], required=True)
+    parser.add_argument('--rerun', help='Re-run the assemble step', action='store_true')
     parser.add_argument('--speed_up', help='speed assemble for TCR/BCR seq data', action='store_true')       
 
 
