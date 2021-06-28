@@ -28,6 +28,19 @@ def count_fq(fq):
 
 
 class Matching(Step):
+    """
+    Features
+
+    - Cut off V(D)J data by UMI count. Default value is 1/10 of the 30th barcode's UMIs ranked by UMI count.
+    - Match V(D)J barcodes after cut off with RNA cell barcodes.
+
+    Output
+
+    - `02.matching/count.txt`. Record the UMI count of each barcode in raw V(D)J data.
+    - `02.matching/{sample}_matched_barcodes.txt`. Contain the matched barcode.
+    - `02.matching/{sample}_matched_R1.fq`, `02.match/{sample}_matched_R2.fq. Barcode and UMI are contained in the R1 reads.
+
+    """
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
@@ -87,7 +100,7 @@ class Matching(Step):
 
         Matching.cut_off.logger.info(string)
 
-        df_all = pd.merge(df_tmp, df, on='barcode', how='outer')
+        df_all = pd.merge(df_tmp, df, on='barcode', how='inner')
         seq_list = df_all['seq_name'].tolist()
 
         with open(f'{self.outdir}/seqlist.txt', 'w') as fh:

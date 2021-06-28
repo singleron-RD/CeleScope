@@ -16,8 +16,21 @@ from celescope.tools.Step import Step, s_common
 
 class Convert(Step):
 
-    '''convert step class
+    '''
+    Features
+
+    - Demultiplex barcodes.
+    - Filter invalid R1 reads, which includes:
+        - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+        - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+        - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+        - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+    Output
+
+    - `01.convert/{sample}_2.fq(.gz)`, `01.convert/{sample}_2.fq(.gz)`. Barcode and UMI are contained in the R1 reads.
     '''   
+
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 

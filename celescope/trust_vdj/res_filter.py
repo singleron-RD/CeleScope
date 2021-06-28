@@ -129,6 +129,15 @@ def get_clone_table(df, Seqtype):
 
 
 class Res_filter(Step):
+    """
+    Features
+
+    - Calculate clonetypes.
+
+    Output
+    - `05.res_filter/clonetypes.tsv` Record each clonetype and its frequent.
+    - `05.res_filter/{sample}_barcode_report.tsv` Record detailed chain information of each barcode.
+    """
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)

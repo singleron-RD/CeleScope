@@ -45,7 +45,7 @@ class Multi_trust_vdj(Multi):
     def mapping(self, sample):
         step = 'mapping'
         cmd_line = self.get_cmd_line(step, sample)
-        fq = f'{self.outdir_dic[sample]["assemble"]}/TRUST4/{sample}_toassemble.fq'
+        fq = f'{self.outdir_dic[sample]["assemble"]}//{sample}_toassemble.fq'
         cmd = (
             f'{cmd_line} '
             f'--fq {fq}'
@@ -56,8 +56,8 @@ class Multi_trust_vdj(Multi):
     def res_filter(self, sample):
         step = 'res_filter'
         cmd_line = self.get_cmd_line(step, sample)
-        report = f'{self.outdir_dic[sample]["assemble"]}/TRUST4/{sample}_barcode_report.tsv'
-        fa = f'{self.outdir_dic[sample]["assemble"]}/TRUST4/{sample}_annot.fa'
+        report = f'{self.outdir_dic[sample]["assemble"]}//{sample}_barcode_report.tsv'
+        fa = f'{self.outdir_dic[sample]["assemble"]}//{sample}_annot.fa'
         count_file = f'{self.outdir_dic[sample]["matching"]}/count.txt'
         cmd = (
             f'{cmd_line} '

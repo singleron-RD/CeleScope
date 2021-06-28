@@ -7,6 +7,12 @@ import re
 
 
 class Mapping(Step):
+    """
+    Features
+
+    - Calculate mapping rate of reads mapped to any V(D)J genes.
+    
+    """
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
