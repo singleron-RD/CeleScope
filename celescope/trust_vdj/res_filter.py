@@ -196,7 +196,7 @@ class Res_filter(Step):
                 'total_count': np.nan
             })
 
-        match_file = open(f'{self.outdir}/{self.sample}_matched_barcodes.txt', 'r')
+        match_file = open(f'{self.outdir}/../02.matching/{self.sample}_matched_barcodes.txt', 'r')
         matched_cells = match_file.readlines()
         res_filter_summary.insert(0, {'item': 'Number of matched cells', 
                                     'count': len(matched_cells),
