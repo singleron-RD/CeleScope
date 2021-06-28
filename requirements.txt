@@ -9,4 +9,5 @@ sklearn==0.0
 plotly==4.14.3
 plotnine==0.8.0
 matplotlib==3.3.0
+biopython==1.75
 cython
