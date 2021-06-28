@@ -1,5 +1,5 @@
 from celescope.trust_vdj.__init__ import __ASSAY__
-from celescope.tools.Multi import Multi
+from celescope.tools.multi import Multi
 
 
 class Multi_trust_vdj(Multi):

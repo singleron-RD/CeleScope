@@ -66,7 +66,7 @@ def get_clone_table(df, Seqtype):
     for c in chains:
         tmp = df[df['V'].str.contains(c, na=False)]
         tmp = tmp.set_index('barcode')
-        tmp = tmp.rename(columns=lambda x: f'{c}_'+x)
+        tmp = tmp.rename(columns=lambda x: f'{c}_{x}')
 
         res = pd.concat([res, tmp], axis=1, join='outer', sort=False).fillna('None')
         group_type.append(f'{c}_CDR3aa')

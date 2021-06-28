@@ -1,5 +1,5 @@
 from celescope.tracer_vdj.__init__ import __ASSAY__
-from celescope.tools.Multi import Multi
+from celescope.tools.multi import Multi
 
 
 class Multi_tracer_vdj(Multi):

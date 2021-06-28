@@ -9,7 +9,6 @@ from xopen import xopen
 
 import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from celescope.tools.Chemistry import Chemistry
 from celescope.tools.barcode import *
 from celescope.tools.step import Step, s_common
 
@@ -207,7 +206,6 @@ class Convert(Step):
 
                 if self.bool_probe:
                     # valid count
-                    read_name_probe = 'None'
                     self.valid_count_dic[cb][umi] += 1
 
                     # output probe UMi and read count
@@ -217,7 +215,6 @@ class Convert(Step):
                         probe_seq = probe_seq.upper()
                         if seq1.find(probe_seq) != -1:
                             self.probe_count_dic[probe_name][cb][umi] += 1
-                            read_name_probe = probe_name
                             find_probe = True
                             break
 
