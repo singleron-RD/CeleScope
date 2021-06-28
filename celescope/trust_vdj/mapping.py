@@ -1,5 +1,4 @@
 import pandas as pd
-import glob
 from celescope.tools.Step import Step, s_common
 from celescope.tools import utils
 import os

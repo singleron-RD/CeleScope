@@ -5,7 +5,6 @@ import pysam
 import pandas as pd
 from collections import defaultdict
 import glob
-import re
 from Bio.Seq import Seq
 
 

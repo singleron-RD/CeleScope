@@ -1,7 +1,6 @@
 import os
 from celescope.tools import utils
 from celescope.tools.Step import Step, s_common
-import pandas as pd
 
 
 TRUST = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
