@@ -196,6 +196,13 @@ class Res_filter(Step):
                 'total_count': np.nan
             })
 
+        match_file = open(f'{self.outdir}/{self.sample}_matched_barcodes.txt', 'r')
+        matched_cells = match_file.readlines()
+        res_filter_summary.insert(0, {'item': 'Number of matched cells', 
+                                    'count': len(matched_cells),
+                                    'total_count': np.nan
+                                })
+
         clones.to_csv(f'{self.outdir}/clonetype.tsv', sep='\t')
 
         title = 'Clonetypes'
