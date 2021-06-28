@@ -1,6 +1,6 @@
 import os
 from celescope.tools import utils
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 import pysam
 import pandas as pd
 from collections import defaultdict

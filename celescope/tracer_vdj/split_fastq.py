@@ -5,7 +5,7 @@ import pandas as pd
 from Bio.Seq import Seq
 import glob
 from celescope.tools import utils
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 
 
 def get_barcodes(match_dir, Seqtype):

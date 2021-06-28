@@ -1,5 +1,5 @@
 import pandas as pd
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from collections import defaultdict
 from celescope.tools.cellranger3 import get_plot_elements

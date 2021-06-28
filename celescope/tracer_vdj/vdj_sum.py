@@ -4,7 +4,7 @@ import pandas as pd
 from Bio.Seq import Seq
 import numpy as np
 from celescope.tools import utils
-from celescope.tools.Step import Step, s_common
+from celescope.tools.step import Step, s_common
 from celescope.tools.cellranger3 import get_plot_elements
 import glob
 import pysam
