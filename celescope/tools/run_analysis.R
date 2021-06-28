@@ -4,50 +4,51 @@ library(argparser)
 library(hdf5r)
 library(rhdf5)
 
+# CONSTANTS
+DIMS = 20
 
 argv <- arg_parser('')
 argv <- add_argument(argv,"--matrix_file", help="cell 10X matrix dir")
 argv <- add_argument(argv,"--outdir", help="outdir")
 argv <- add_argument(argv,"--sample", help="sample")
+argv <- add_argument(argv,"--mt_gene_list", help="write rds to disk")
 argv <- add_argument(argv,"--save_rds", help="write rds to disk")
 argv <- parse_args(argv)
 
 #args
 matrix_file = argv$matrix_file
+mt_gene_list = argv$mt_gene_list
 outdir = argv$outdir
 sample = argv$sample
 save_rds = argv$save_rds
 resolution = 0.6
 res_str = paste0('res.', resolution)
 
-matrix = Seurat::Read10X(matrix_file, gene.column=2)
+# read matrix
+# matrix_id = Seurat::Read10X(matrix_file, gene.column=1)
+matrix_name = Seurat::Read10X(matrix_file, gene.column=2)
+
+# out files
 tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
 mito.out = paste(outdir,"stat.txt",sep="/")
 rds.out = paste0(outdir,'/',sample,'.rds')
 
-# read 10X
-rds = CreateSeuratObject(matrix, pro=sample)
-
-# generate h5ad file
-x = GetAssayData(rds,slot="count")
-mtx = as.matrix(x)
-barcode = colnames(rds)
-geneid = rownames(rds)
-h5.out = stringr::str_glue('{outdir}/{sample}.h5')
-if (file.exists(h5.out) == FALSE){
-  path <- path.expand(h5.out)
-  h5createFile(path)
-  h5f <- H5Fopen(path)
-  h5writeDataset(mtx,h5f,"X")
-  h5writeDataset(barcode,h5f,"obs")
-  h5writeDataset(geneid,h5f,"var")
-  H5Fclose(h5f)
-}
+# create seurat obj
+rds = CreateSeuratObject(matrix_name, pro=sample)
 
 # mito
-mito.genes <- grep(pattern = "^MT-", x = rownames(x = rds@assays$RNA@data), value = TRUE, ignore.case=TRUE)
-percent.mito <- Matrix::colSums(rds@assays$RNA@counts[mito.genes,])/Matrix::colSums(rds@assays$RNA@counts)
+all_genes = rownames(rds@assays$RNA@data)
+if (mt_gene_list != "None"){
+  mito.genes = read.table(mt_gene_list, )[,1]
+  mito.genes = intersect(mito.genes, all_genes)
+} else {
+  mito.genes <- grep(pattern = "^MT-", x = all_genes, value = TRUE, ignore.case=TRUE)
+}
+print("mito genes exp > 0")
+print(mito.genes)
+
+percent.mito <- Matrix::colSums(rds@assays$RNA@counts[mito.genes,,drop=FALSE])/Matrix::colSums(rds@assays$RNA@counts)
 rds <- AddMetaData(object = rds, metadata = percent.mito, col.name = "percent.mito")
 meta = rds@meta.data
 total_cell = dim(meta)[1]
@@ -64,17 +65,19 @@ write_delim(mito_df, mito.out, col_names=F, delim=":")
 
 
 rds <- NormalizeData(rds, normalization.method = "LogNormalize",scale.factor = 10000)
-rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = 2000, mean.cutoff = c(0.1, 8), dispersion.cutoff = c(1, Inf),
+nfeatures = 20000
+rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = nfeatures, mean.cutoff = c(0.1, 8), dispersion.cutoff = c(1, Inf),
                             mean.function = ExpMean, dispersion.function = LogVMR)
 
 use.genes <- rds@assays$RNA@var.features
 rds <- ScaleData(rds, vars.to.regress = c("nCount_RNA", "percent.mito"), features = use.genes)
 rds <- RunPCA(object = rds, features = use.genes, do.print = FALSE)
-rds <- FindNeighbors(rds, dims = 1:20, force.recalc = TRUE, reduction = "pca")
+rds <- FindNeighbors(rds, dims = 1:DIMS, force.recalc = TRUE, reduction = "pca")
 rds <- FindClusters(rds, resolution = resolution)
 
 # tsne and umap
-rds <- RunTSNE(rds, dims = 1:20, do.fast = TRUE, check_duplicates = FALSE)
+rds <- RunTSNE(rds, dims = 1:DIMS, do.fast = TRUE, check_duplicates = FALSE)
+rds = RunUMAP(rds, dims=1:DIMS)
 
 
 tryCatch({
