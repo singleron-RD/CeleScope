@@ -1,0 +1,43 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+  <h2>Cell    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+  <div class="box">
+    <div class="description" style="display: none;">
+      <p>If type is BCR:</p>
+      <p><b>Estimated Number of Cells</b> : Number of cells which contain full length IGH, IGK or IGL.</p>
+      <p><b>Cells with IGH</b>: Cells with full length IGH.</p>
+      <p><b>Cells with IGK</b>: Cells with full length IGK.</p>
+      <p><b>Cells with IGL</b>: Cells with full length IGL.</p>
+      <p><b>Cells with paired IGH and IGK</b>: Cells with paired IGH and IGK.</p>
+      <p><b>Cells with paired IGH and IGL</b>: Cells with paired IGH and IGL.</p>
+      <p><b>Median read count per cell</b>: Median total read count per cell.</p>
+      <p><b>Median IGH read count per cell</b>: Median read count mapped to IGH.</p>
+      <p><b>Median IGK read count per cell</b>: Median read count mapped to IGK.</p>
+      <p><b>Median IGL read count per cell</b>: Median read count mapped to IGL.</p>
+      <p>If type is TCR:</p>
+      <p><b>Estimated Number of Cells</b>: Number of cells which contain full length TRA or TRB.</p>
+      <p><b>Cells with TRA</b>: Cells with full length TRA.</p>
+      <p><b>Cells with TRB</b>: Cells with full length TRB.</p>
+      <p><b>Cells with paired TRA and TRB</b>: Cells with paired TRA and TRB.</p>
+      <p><b>Median read count per cell</b>: Median read count mapped to TRA and TRB.</p>      
+      <p><b>Median TRA read count per cell</b>: Median read count mapped to TRA.</p>
+      <p><b>Median TRB read count per cell</b>: Median read count mapped to TRB.</p>          
+  </div>
+    <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+      {% for item in vdj_sum_summary %}
+        <tr>
+          {% for i in item %} 
+          <td>{{ i|e }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>
+
+    <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+      {{ chart|safe }}
+    </div>
+
+    <hr />
+    
+    <div class="clear" ></div>
+  </div>
+</div>
