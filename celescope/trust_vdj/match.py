@@ -1,3 +1,4 @@
+from logging import raiseExceptions
 import os
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
@@ -13,15 +14,15 @@ def count_fq(fq):
     dic = defaultdict(list)
     with pysam.FastxFile(fq) as fq:
         for entry in fq:
-            attr = entry.sequence
-            cb = attr[:24]
-            umi = attr[24:]
+            attr = entry.name.split('_')
+            cb = attr[0]
+            umi = attr[1]
             name = entry.name
             dic['barcode'].append(cb)
             dic['UMI'].append(umi)
             dic['seq_name'].append(name)
 
-    count_df = pd.DataFrame(dic, columns=list(dic.keys()))
+        count_df = pd.DataFrame(dic, columns=list(dic.keys()))
 
     return count_df
 
@@ -103,33 +104,27 @@ class Matching(Step):
 
         Matching.cut_off.logger.info(string)
 
-        df_all = pd.merge(df_tmp, df, on='barcode', how='inner')
-        seq_list = df_all['seq_name'].tolist()
-
-        with open(f'{self.outdir}/seqlist.txt', 'w') as fh:
-            for name in seq_list:
-                fh.write(str(name)+'\n')
+        return matched_barcodes
 
     
     @utils.add_log
     def getFqfile(self):
 
-        cmd1 = (
-            f'seqtk subseq {self.fq1} {self.outdir}/seqlist.txt > {self.outdir}/{self.sample}_matched_R1.fq'
-        )
-        os.system(cmd1)
-
-        cmd2 = (
-            f'seqtk subseq {self.fq2} {self.outdir}/seqlist.txt > {self.outdir}/{self.sample}_matched_R2.fq'
-        )
-        os.system(cmd2)
-
-        os.system(f'rm {self.outdir}/seqlist.txt')
+        bcs = self.cut_off()
+        matched_fq = open(f'{self.outdir}/{self.sample}.bam', 'w')
+        if len(bcs) > 0:
+            with pysam.AlignmentFile(self.bamfile) as bam:
+                for read in bam:
+                    attrs = read.reference_name.split('_')
+                    cb = attrs[0]
+                    if cb in bcs:
+                        matched_fq.write(str(read)+'\n')
+        else:
+            raise Exception('No matched barcodes!')
 
 
     @utils.add_log
     def run(self):
-        self.cut_off()
         self.getFqfile()
 
 

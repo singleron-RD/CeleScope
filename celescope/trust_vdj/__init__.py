@@ -1,8 +1,8 @@
 __STEPS__ = [
     'sample',
-    'convert',
-    'matching',
-    'assemble',
+    'barcode',
+    'cutadapt',
     'mapping',
-    'res_filter']
+    'count',
+    ]
 __ASSAY__ = 'trust_vdj'

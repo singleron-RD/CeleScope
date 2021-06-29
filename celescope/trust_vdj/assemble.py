@@ -2,8 +2,7 @@ import os
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 
-
-TRUST = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
+REF = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
 
 
 class Assemble(Step):
@@ -40,14 +39,14 @@ class Assemble(Step):
 
         species = self.species
 
-        index_file = f'{TRUST}/index/{species}/{species}_ref.fa'
-        ref = f'{TRUST}/index/{species}/{species}_IMGT+C.fa'
+        index_file = f'{REF}/index/{species}/{species}_ref.fa'
+        ref = f'{REF}/index/{species}/{species}_IMGT+C.fa'
 
         string1 = ''
         if self.speed_up:
             string1 = '--repseq '
         cmd = (
-            f'{TRUST}/run-trust4 -t {self.thread} '
+            f'{REF}/run-trust4 -t {self.thread} '
             f'-u {self.fq2} '
             f'--barcode {self.fq1} '
             f'--barcodeRange 0 23 + '
