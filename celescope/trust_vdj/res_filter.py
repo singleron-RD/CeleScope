@@ -5,7 +5,6 @@ from collections import defaultdict
 from celescope.tools.cellranger3 import get_plot_elements
 import numpy as np
 import pysam
-import functools
 
 
 def get_len(fa):
@@ -71,14 +70,14 @@ def get_clone_table(df, Seqtype):
         chains = ['IGH', 'IGL', 'IGK']
         paired_groups = ['IGH_IGL', 'IGH_IGK']
     for c in chains:
-        chain = c
-        tmp = df[df['V'].str.contains(chain, na=False)]
+        tmp = df[df['V'].str.contains(c, na=False)]
         tmp = tmp.set_index('barcode')
-        new_name = functools.partial(change_name, chain)
-        tmp = tmp.rename(columns=lambda x: new_name(x))
+        column_names = tmp.columns.tolist()
+        new_names = [change_name(c, i) for i in column_names]
+        tmp.columns = new_names
 
         res = pd.concat([res, tmp], axis=1, join='outer', sort=False).fillna('None')
-        group_type.append(f'{chain}_CDR3aa')
+        group_type.append(f'{c}_CDR3aa')
     
     Frequent = [''] * res.shape[0]
     res.insert(res.shape[1], 'Frequent', Frequent)
