@@ -50,7 +50,7 @@ class Mapping(Step):
 
         for locus in loci:
             cmd = (
-                f'source activate bracer; '
+                f'source activate full_len_VDJ; '
                 f'bowtie2 -p 5 -k 1 --np 0 --rdg 1,1 --rfg 1,1 '
                 f'-x /SGRNJ03/randd/zhouxin/software/TRUST4/index/{species}/{locus} '
                 f'-U {fq} '
