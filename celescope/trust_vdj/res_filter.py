@@ -5,6 +5,7 @@ from collections import defaultdict
 from celescope.tools.cellranger3 import get_plot_elements
 import numpy as np
 import pysam
+import functools
 
 
 def get_len(fa):
@@ -51,6 +52,12 @@ def beauty_report(barcode_report, fa):
 
     return df_res
 
+
+def change_name(prefix, name):
+    res = f'{prefix}_{name}'
+    return res
+
+
 @utils.add_log
 def get_clone_table(df, Seqtype):
     res_filter_summary = []
@@ -64,12 +71,14 @@ def get_clone_table(df, Seqtype):
         chains = ['IGH', 'IGL', 'IGK']
         paired_groups = ['IGH_IGL', 'IGH_IGK']
     for c in chains:
-        tmp = df[df['V'].str.contains(c, na=False)]
+        chain = c
+        tmp = df[df['V'].str.contains(chain, na=False)]
         tmp = tmp.set_index('barcode')
-        tmp = tmp.rename(columns=lambda x: f'{c}_{x}')
+        new_name = functools.partial(change_name, chain)
+        tmp = tmp.rename(columns=lambda x: new_name(x))
 
         res = pd.concat([res, tmp], axis=1, join='outer', sort=False).fillna('None')
-        group_type.append(f'{c}_CDR3aa')
+        group_type.append(f'{chain}_CDR3aa')
     
     Frequent = [''] * res.shape[0]
     res.insert(res.shape[1], 'Frequent', Frequent)
@@ -183,8 +192,6 @@ class Res_filter(Step):
             barcodes = tmp['barcode'].tolist()
             if len(barcodes) != 0:
                 df_bc = pd.DataFrame(barcodes, columns=['barcode'])
-            else:
-                continue
 
             tmp_df = pd.merge(df_umi, df_bc, on='barcode', how='inner')
 

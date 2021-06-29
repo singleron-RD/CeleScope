@@ -9,8 +9,10 @@ from xopen import xopen
 
 import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from celescope.tools.barcode import *
+from celescope.tools.barcode import seq_ranges, get_seq_list, parse_pattern, get_scope_bc, ord2chr, low_qual, check_seq, get_all_mismatch, check_seq_mismatch, Chemistry
 from celescope.tools.step import Step, s_common
+
+MIN_T = 10
 
 
 class Convert(Step):
@@ -331,7 +333,11 @@ def get_opts_convert(parser, sub_program=True):
     parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
     parser.add_argument('--gzip', help="output gzipped fastq", action='store_true')
     parser.add_argument(
-        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+        '--chemistry', choices=list(__PATTERN_DICT__.keys()), help="""Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
+- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
+- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
+- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
+same time.""", default='auto')
     if sub_program:
         parser.add_argument('--fq1', help='read1 fq file', required=True)
         parser.add_argument('--fq2', help='read2 fq file', required=True)
