@@ -463,7 +463,6 @@ class Barcode(Step):
                 self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
                 fh3.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-
             Barcode.run.logger.info(self.fq1_list[i] + ' finished.')
         fh3.close()
 
