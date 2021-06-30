@@ -5,8 +5,11 @@ import celescope.tools.utils as utils
 from celescope.tools.mkref import parse_genomeDir
 from celescope.tools.step import s_common, Step
 import pysam
+import pandas as pd
 
-GENOME = '/SGRNJ03/randd/zhouxin/software/TRUST4/star_index/'
+
+MAPPING_INDEX = '/SGRNJ03/randd/zhouxin/software/TRUST4/index'
+
 
 class Mapping(Step):
     """
@@ -39,7 +42,7 @@ class Mapping(Step):
 
     @utils.add_log
     def STAR(self):
-        genome = f'{GENOME}/{self.species}'
+        genome = f'{MAPPING_INDEX}/{self.species}'
         cmd = [
             'STAR',
             '--runThreadN', str(self.thread),
@@ -47,7 +50,7 @@ class Mapping(Step):
             '--readFilesIn', self.fq,
             '--outFilterMultimapNmax', str(self.multi_max),
             '--outFileNamePrefix', self.outPrefix,
-            '--outSAMtype', 'BAM', 'SortedByCoordinate',  # controls sort by Coordinate or not
+            '--outSAMtype', 'BAM', 'Unsorted',  # controls sort by Coordinate or not
             '--outFilterMatchNmin', str(self.outFilterMatchNmin)
         ]
         if self.out_unmapped:
@@ -59,12 +62,14 @@ class Mapping(Step):
             cmd += (" " + self.STAR_param)
         Mapping.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
+    
 
     def run_star(self):
         self.STAR()
-        self.get_star_metrics()
         self.sort_bam()
         self.index_bam()
+        self.get_star_metrics()
+
 
     @utils.add_log
     def sort_bam(self):
@@ -79,11 +84,13 @@ class Mapping(Step):
         utils.index_bam(self.STAR_bam)
             
 
+    @utils.add_log
     def get_star_metrics(self):
         """
         step metrics
         """
 
+        mapping_summary = []
         with open(self.STAR_map_log, 'r') as map_log:
             # number amd percent
             unique_reads_list = []
@@ -98,25 +105,6 @@ class Mapping(Step):
                 if 'Number of input reads' in line:
                     all_reads_list = re.findall(r"\d+", line)
                     all_reads = int(all_reads_list[0])
-        unique_reads = int(unique_reads_list[0])
-        unique_reads_fraction = float(unique_reads_list[1].strip('%')) / 100
-        multi_reads = int(multi_reads_list[0])
-        multi_reads_fraction = float(multi_reads_list[1].strip('%')) / 100
-
-        self.add_metric(
-            name='Genome',
-            value=self.species,
-        )
-        self.add_metric(
-            name=f'Uniquely Mapped {self.stat_prefix}',
-            value=unique_reads,
-            fraction=unique_reads_fraction,
-        )
-        self.add_metric(
-            name=f'Multi-Mapped {self.stat_prefix}',
-            value=multi_reads,
-            fraction=multi_reads_fraction,
-        )
 
         with pysam.AlignmentFile(self.STAR_bam) as bam:
             dic = defaultdict(list)
@@ -134,22 +122,28 @@ class Mapping(Step):
                         dic[l].append(read)
 
             total_count = len(dic[prefix])
-            total_fraction = float(total_count / all_reads)
 
-            self.add_metric(
-                name = 'Reads mapped to any TCR V(D)J genes',
-                value = total_count,
-                fraction = total_fraction,
+            mapping_summary.append({
+                'item': f'Reads mapped to any {self.Seqtype} V(D)J genes',
+                'count': total_count,
+                'total_count': all_reads,
+                }
             )
             for l in loci:
                 tmp_count = len(dic[l])
-                tmp_fraction = float(tmp_count / all_reads)
                 tmp_name = f'Reads mapped to {l}'
-                self.add_metric(
-                    name = tmp_name,
-                    value = tmp_count,
-                    fraction = tmp_fraction,
-                )
+                mapping_summary.append({
+                    'item': tmp_name,
+                    'count': tmp_count,
+                    'total_count': all_reads
+                })
+
+            sum_df = pd.DataFrame(mapping_summary, columns=['item', 'count', 'total_count'])
+
+            stat_file = self.outdir + '/stat.txt'
+            utils.gen_stat(sum_df, stat_file)
+
+            self.clean_up
 
 
 def mapping(args):

@@ -1,8 +1,9 @@
 import os
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
+import subprocess
 
-REF = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
+REF = '/SGRNJ03/randd/zhouxin/software/TRUST4/index'
 
 
 class Assemble(Step):
@@ -31,7 +32,6 @@ class Assemble(Step):
         self.sample = args.sample
         self.species = args.species
         self.speed_up = args.speed_up
-        self.rerun = args.rerun
 
 
     @utils.add_log
@@ -39,32 +39,27 @@ class Assemble(Step):
 
         species = self.species
 
-        index_file = f'{REF}/index/{species}/{species}_ref.fa'
-        ref = f'{REF}/index/{species}/{species}_IMGT+C.fa'
+        index_file = f'{REF}/{species}/{species}_ref.fa'
+        ref = f'{REF}/{species}/{species}_IMGT+C.fa'
 
         string1 = ''
         if self.speed_up:
             string1 = '--repseq '
         cmd = (
-            f'{REF}/run-trust4 -t {self.thread} '
+            f'source activate zhouxinT; '
+            f'run-trust4 -t {self.thread} '
             f'-u {self.fq2} '
             f'--barcode {self.fq1} '
             f'--barcodeRange 0 23 + '
             f'-f {index_file} '
             f'--ref {ref} '
             f'{string1}'
-            f'-o {self.sample} --od {self.outdir}' 
+            f'-o {self.sample} --od {self.outdir} '
+            f'--noExtraction '
         )
 
         Assemble.run.logger.info(cmd)
-
-        if not os.path.exists(f'{self.outdir}/{self.sample}_barcode_report.tsv'):
-            os.system(cmd)
-
-        if self.rerun:
-            os.system(cmd)
-
-            #fq = f'{self.outdir}/TRUST4/{self.sample}_toassemble.fq'
+        subprocess.check_call(cmd, shell=True)
 
 
 @utils.add_log
@@ -81,7 +76,6 @@ def get_opts_assemble(parser, sub_program):
         parser.add_argument('--fq2', help='R2 reads from match step', required=True)
 
     parser.add_argument('--species', help='species', choices=["Mmus", "Hsap"], required=True)
-    parser.add_argument('--rerun', help='Re-run the assemble step', action='store_true')
     parser.add_argument('--speed_up', help='speed assemble for TCR/BCR seq data', action='store_true')       
 
 
