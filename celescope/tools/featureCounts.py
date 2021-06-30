@@ -112,6 +112,12 @@ class FeatureCounts(Step):
 
 @add_log
 def add_tag(bam, gtf):
+    """
+    - CB cell barcode
+    - UB UMI
+    - GN gene name
+    - GX gene id
+    """
     id_name = get_id_name_dict(gtf)
     samfile = pysam.AlignmentFile(bam, "rb")
     header = samfile.header
