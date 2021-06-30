@@ -1,6 +1,4 @@
 import os
-import subprocess
-
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 
@@ -62,10 +60,10 @@ class Assemble(Step):
         Assemble.run.logger.info(cmd)
 
         if not os.path.exists(f'{self.outdir}/{self.sample}_barcode_report.tsv'):
-            subprocess.check_call(cmd, shell=True)
+            os.system(cmd)
 
         if self.rerun:
-            subprocess.check_call(cmd, shell=True)
+            os.system(cmd)
 
             #fq = f'{self.outdir}/TRUST4/{self.sample}_toassemble.fq'
 
