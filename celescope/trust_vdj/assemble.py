@@ -55,7 +55,6 @@ class Assemble(Step):
             f'--ref {ref} '
             f'{string1}'
             f'-o {self.sample} --od {self.outdir} '
-            f'--noExtraction '
         )
 
         Assemble.run.logger.info(cmd)

@@ -2,7 +2,6 @@ import re
 import subprocess
 from collections import defaultdict
 import celescope.tools.utils as utils
-from celescope.tools.mkref import parse_genomeDir
 from celescope.tools.step import s_common, Step
 import pysam
 import pandas as pd
@@ -39,6 +38,7 @@ class Mapping(Step):
         self.STAR_map_log = f'{self.outPrefix}Log.final.out'
         self.unsort_STAR_bam = f'{self.outPrefix}Aligned.out.bam'
         self.STAR_bam = f'{self.outPrefix}Aligned.sortedByCoord.out.bam'
+        self.name_sorted_bam = f'{self.outPrefix}name_sorted.bam'
 
     @utils.add_log
     def STAR(self):
@@ -68,6 +68,7 @@ class Mapping(Step):
         self.STAR()
         self.sort_bam()
         self.index_bam()
+        self.name_sort_bam()
         self.get_star_metrics()
 
 
@@ -82,6 +83,17 @@ class Mapping(Step):
     @utils.add_log
     def index_bam(self):
         utils.index_bam(self.STAR_bam)
+
+    @utils.add_log
+    def name_sort_bam(self):
+        cmd = (
+            'samtools sort -n '
+            f'-@ {self.thread} '
+            f'-o {self.name_sorted_bam} '
+            f'{self.STAR_bam} '
+        )
+        Mapping.name_sort_bam.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
             
 
     @utils.add_log
@@ -89,39 +101,55 @@ class Mapping(Step):
         """
         step metrics
         """
+        if self.Seqtype == 'TCR':
+            chains = ['TRA', 'TRB']
+        elif self.Seqtype == 'BCR':
+            chains = ['IGH', 'IGL', 'IGK']
 
         mapping_summary = []
         with open(self.STAR_map_log, 'r') as map_log:
             # number amd percent
-            unique_reads_list = []
-            multi_reads_list = []
             for line in map_log:
                 if line.strip() == '':
                     continue
-                if re.search(r'Uniquely mapped reads', line):
-                    unique_reads_list.append(line.strip().split()[-1])
-                if re.search(r'of reads mapped to too many loci', line):
-                    multi_reads_list.append(line.strip().split()[-1])
+                if 'Uniquely mapped reads number' in line:
+                    unique_reads_list = re.findall(r"\d+", line)
+                    unique_reads = int(unique_reads_list[0])
+                if 'Number of reads mapped to multiple loci' in line:
+                    multi_reads_list = re.findall(r"\d+", line)
+                    multi_reads = int(multi_reads_list[0])
+                if 'Number of reads mapped to too many loci' in line:
+                    many_reads_list = re.findall(r"\d+", line)
+                    many_reads = int(many_reads_list[0])
                 if 'Number of input reads' in line:
                     all_reads_list = re.findall(r"\d+", line)
                     all_reads = int(all_reads_list[0])
 
-        with pysam.AlignmentFile(self.STAR_bam) as bam:
-            dic = defaultdict(list)
-            if self.Seqtype == 'TCR':
-                loci = ['TRA', 'TRB']
-                prefix = 'TR'
-            elif self.Seqtype == 'BCR':
-                prefix = 'IG'
-                loci = ['IGH', 'IGL', 'IGK']
-            for read in bam:
-                if prefix in read.reference_name:
-                    dic[prefix].append(read)
-                for l in loci:
-                    if l in read.reference_name:
-                        dic[l].append(read)
+        total_count = unique_reads+multi_reads+many_reads
 
-            total_count = len(dic[prefix])
+
+        with pysam.AlignmentFile(self.name_sorted_bam) as bamfile:
+            read_ref_dict = defaultdict(lambda: defaultdict(int))
+            count_dic = defaultdict(int)
+            for read in bamfile:
+                name = read.query_name
+                ref = read.reference_name
+                for c in chains:
+                    if ref.startswith(c):
+                        read_ref_dict[name][c]+=1
+
+            totals_ = 0
+            for c in chains:
+                totals_+=read_ref_dict[name][c]
+
+            for c in chains:
+                for name in read_ref_dict:
+                    count = read_ref_dict[name][c]
+                    if (count / totals_)*100 >= 80:
+                        count_dic[c]+=1
+                    else:
+                        continue
+
 
             mapping_summary.append({
                 'item': f'Reads mapped to any {self.Seqtype} V(D)J genes',
@@ -129,9 +157,9 @@ class Mapping(Step):
                 'total_count': all_reads,
                 }
             )
-            for l in loci:
-                tmp_count = len(dic[l])
-                tmp_name = f'Reads mapped to {l}'
+            for c in chains:
+                tmp_count = count_dic[c]
+                tmp_name = f'Reads mapped to {c}'
                 mapping_summary.append({
                     'item': tmp_name,
                     'count': tmp_count,

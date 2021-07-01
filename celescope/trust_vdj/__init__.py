@@ -1,6 +1,7 @@
 __STEPS__ = [
     'sample',
-    'convert',
+    'barcode',
+    'cutadapt',
     'mapping',
     'count',
     'assemble'

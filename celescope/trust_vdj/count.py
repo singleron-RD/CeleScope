@@ -4,7 +4,6 @@ from collections import defaultdict
 import subprocess
 import pandas as pd
 from celescope.tools import utils
-import os
 
 
 class Count(Step):
@@ -15,7 +14,6 @@ class Count(Step):
         self.sample = args.sample
         self.bam_file = args.bam_file
         self.cells = args.cells
-        self.fq1 = args.fq1
 
     @utils.add_log
     def count_bam(self):
@@ -65,24 +63,27 @@ class Count(Step):
         bam = pysam.AlignmentFile(self.bam_file, "rb")
 
 
-        fq1_list = open(f'{self.outdir}/{self.sample}_seqlist.txt', 'w')
+        new_fq1 = open(f'{self.outdir}/{self.sample}_mapped_R1.fq', 'w')
         new_fq2 = open(f'{self.outdir}/{self.sample}_mapped_R2.fq', 'w')
+        r1 = set()
+        r2 = set()
         for read in bam:
             attr = read.query_name.split('_')
             barcode = attr[0]
+            umi = attr[1]
+            quality = 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
             if barcode in barcodes:
-                r2 = f'@{read.query_name}\n{read.query_sequence}\n+\n{read.qual}\n'
-                new_fq2.write(r2)
-                fq1_list.write(read.query_name + '\n')
+                r1.add(f'@{read.query_name}\n{barcode}{umi}\n+\n{quality}\n')
+                r2.add(f'@{read.query_name}\n{read.query_sequence}\n+\n{read.qual}\n')
+
+        for i in r1:
+            new_fq1.write(i)
+        for j in r2:
+            new_fq2.write(j)
+
         new_fq2.close()
-        fq1_list.close()
+        new_fq1.close()
 
-        cmd = (
-            f'seqtk subseq {self.fq1} {self.outdir}/{self.sample}_seqlist.txt > {self.outdir}/{self.sample}_mapped_R1.fq'
-        )
-        subprocess.check_call(cmd, shell=True)
-
-        os.remove(f'{self.outdir}/{self.sample}_seqlist.txt')
 
         with open(f'{self.outdir}/{self.sample}.toassemble_bc.txt', 'w') as fh:
             for barcode in barcodes:
@@ -105,7 +106,6 @@ def get_opts_count(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--bam_file', help='BAM file form STAR step', required=True)
-        parser.add_argument('--fq1', help='R1 fastq file', required=True)
     parser.add_argument('--cells', help='expected cell number', default=3000)
 
 
