@@ -110,6 +110,7 @@ class Replace_tsne(Step):
             cluster[c] = {}
         fn = open(infile,"r")
         fnh = fn.readline().strip().split()
+        fnh.insert(0,'')
         for i in fn:
             ii = i.strip().split()
             for j in range(1,len(ii)):
