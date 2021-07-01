@@ -176,7 +176,7 @@ class Replacement(Step):
 
         tmph = infile.readline().strip().split()
         fill_na = ['0'] * len(tmph)
-        tmph.insert( 0, 'geneID')
+        tmph.insert( 0, '')
         outnew.write('\t'.join(tmph)+'\n')
         outold.write('\t'.join(tmph)+'\n')
         con_mat.write('\t'.join(tmph)+'\n')
@@ -232,6 +232,7 @@ class Replacement(Step):
         mats = {}
         with open(inmat) as f:
             hh = f.readline().strip().split()
+            hh.insert(0,'')
             outmat.write('\t'.join(hh)+'\n')
             for h in hh[1:]:
                 cells[h] = [[],[]]
