@@ -63,26 +63,27 @@ class Count(Step):
         bam = pysam.AlignmentFile(self.bam_file, "rb")
         new_fq1 = open(f'{self.outdir}/{self.sample}_mapped_R1.fq', 'w')
         new_fq2 = open(f'{self.outdir}/{self.sample}_mapped_R2.fq', 'w')
-        r1 = set()
-        r2 = set()
+        R1 = set()
+        R2 = set()
         for read in bam:
             attr = read.query_name.split('_')
             barcode = attr[0]
             umi = attr[1]
             quality = 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
             if barcode in barcodes:
-                r1.add(f'@{read.query_name}\n{barcode}{umi}\n+\n{quality}\n')
-                r2.add(f'@{read.query_name}\n{read.query_sequence}\n+\n{read.qual}\n')
+                R1.add(f'@{read.query_name}\n{barcode}{umi}\n+\n{quality}\n')
+                R2.add(f'@{read.query_name}\n{read.query_sequence}\n+\n{read.qual}\n')
             else:
                 continue
-        for i in r1:
-            new_fq1.write(i)
-        for j in r2:
-            new_fq2.write(j)
+        R1 = sorted(list(R1))
+        R2 = sorted(list(R2))
+        for r1 in R1:
+            new_fq1.write(r1)
+        for r2 in R2:
+            new_fq2.write(r2)
 
         new_fq2.close()
         new_fq1.close()
-
 
         with open(f'{self.outdir}/{self.sample}.toassemble_bc.txt', 'w') as fh:
             for barcode in barcodes:
