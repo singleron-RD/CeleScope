@@ -2,18 +2,18 @@
 	<h2>Cell    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
 	<div class="box">
 	  <div class="description" style="display: none;">
-		<p>If type is BCR:</p>
-		<p><b>Estimated Number of Cells</b> : Number of cells which contain IGH, IGL or IGK.</p>
-		<p><b>Cells with IGH</b>: Cells with IGH.</p>
-		<p><b>Cells with IGL</b>: Cells with IGL.</p>
-		<p><b>Cells with IGK</b>: Cells with IGK.</p>
-		<p><b>Cells with paired IGH and IGL</b>: Cells with paired IGH and IGL.</p>
-		<p><b>Cells with paired IGH and IGK</b>: Cells with paired IGH and IGK.</p>
-		<p>If type is TCR:</p>
-		<p><b>Estimated Number of Cells</b>: Number of cells which contain TRA or TRB.</p>
-		<p><b>Cells with TRA</b>: Cells with TRA.</p>
-		<p><b>Cells with TRB</b>: Cells with TRB.</p>
-		<p><b>Cells with paired TRA and TRB</b>: Cells with paired TRA and TRB.</p>    
+		<p>For TCR:</p>
+		<p><b>Estimated number of cells</b>: Number of cells which contain TRA or TRB.</p>
+		<p><b>Number of cells with TRA</b>: Cells with TRA chain.</p>
+		<p><b>Number of cells with TRB</b>: Cells with TRB chain.</p>
+		<p><b>Number of cells with paired TRA and TRB</b>: Cells with paired TRA and TRB chains.</p>    
+		<p>For BCR:</p>
+		<p><b>Estimated number of cells</b> : Number of cells which contain IGH, IGL or IGK.</p>
+		<p><b>Number of cells with IGH</b>: Cells with IGH chain.</p>
+		<p><b>Number of cells with IGL</b>: Cells with IGL chain.</p>
+		<p><b>Number of cells with IGK</b>: Cells with IGK chain.</p>
+		<p><b>Number of cells with paired IGH and IGL</b>: Cells with paired IGH and IGL chains.</p>
+		<p><b>Number of cells with paired IGH and IGK</b>: Cells with paired IGH and IGK chains.</p>
 	</div>
 	  <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
 		{% for item in res_format_summary %}
