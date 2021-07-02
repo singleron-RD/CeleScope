@@ -193,6 +193,7 @@ class Res_format(Step):
         #plot
 
         df_umi = pd.read_csv(self.count_file, sep='\t')
+        df_umi = df_umi.sort_values(by='UMI', ascending=False)
         df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in barcodes else 'UB')
         df_umi.to_csv(self.count_file, sep='\t', index=False)
         self.add_data_item(chart=get_plot_elements.plot_barcode_rank(self.count_file))
