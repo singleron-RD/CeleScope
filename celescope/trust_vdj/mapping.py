@@ -171,7 +171,7 @@ class Mapping(Step):
             stat_file = self.outdir + '/stat.txt'
             utils.gen_stat(sum_df, stat_file)
 
-            self.clean_up
+            self.clean_up()
 
 
 def mapping(args):

@@ -38,6 +38,21 @@ class Multi_trust_vdj(Multi):
         )
         self.process_cmd(cmd, step, sample, m=30, x=self.args.thread)
 
+    def res_format(self, sample):
+        step = 'res_format'
+        cmd_line = self.get_cmd_line(step, sample)
+        report = f'{self.outdir_dic[sample]["assemble"]}/{sample}_barcode_report.tsv'
+        fa = f'{self.outdir_dic[sample]["assemble"]}/{sample}_annot.fa'
+        count_file = f'{self.outdir_dic[sample]["count"]}/count.txt'
+        cdr3out = f'{self.outdir_dic[sample]["assemble"]}/{sample}_cdr3.out'
+        cmd = (
+            f'{cmd_line} '
+            f'--report {report} '
+            f'--fa {fa} '
+            f'--count_file {count_file} '
+            f'--cdr3out {cdr3out} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)
 
 
 def main():

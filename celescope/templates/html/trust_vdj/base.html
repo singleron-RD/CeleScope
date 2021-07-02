@@ -129,16 +129,20 @@
       {% include "html/common/sample_summary.html"%}
       {% endif %}
 
-      {% if convert_summary is defined %}
-      {% include "html/trust_vdj/convert_summary.html"%}
+      {% if barcode_summary is defined %}
+      {% include "html/common/barcode_summary.html"%}
+      {% endif %}
+
+      {% if cutadapt_summary is defined %}
+      {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
 
       {% if mapping_summary is defined %}
       {% include "html/trust_vdj/mapping_summary.html"%}
       {% endif %}
 
-      {% if res_filter_summary is defined %}
-      {% include "html/trust_vdj/res_filter_summary.html"%}
+      {% if res_format_summary is defined %}
+      {% include "html/trust_vdj/res_format_summary.html"%}
       {% endif %}
       
       {% if table_dict is defined %}

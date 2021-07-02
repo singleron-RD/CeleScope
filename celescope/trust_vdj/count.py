@@ -61,8 +61,6 @@ class Count(Step):
     def filter_bam(self):
         barcodes = self.cut_off()
         bam = pysam.AlignmentFile(self.bam_file, "rb")
-
-
         new_fq1 = open(f'{self.outdir}/{self.sample}_mapped_R1.fq', 'w')
         new_fq2 = open(f'{self.outdir}/{self.sample}_mapped_R2.fq', 'w')
         r1 = set()
@@ -75,7 +73,8 @@ class Count(Step):
             if barcode in barcodes:
                 r1.add(f'@{read.query_name}\n{barcode}{umi}\n+\n{quality}\n')
                 r2.add(f'@{read.query_name}\n{read.query_sequence}\n+\n{read.qual}\n')
-
+            else:
+                continue
         for i in r1:
             new_fq1.write(i)
         for j in r2:
