@@ -64,7 +64,7 @@ class Mapping(Step):
         subprocess.check_call(cmd, shell=True)
     
 
-    def run_star(self):
+    def run(self):
         self.STAR()
         self.sort_bam()
         self.index_bam()
@@ -177,7 +177,7 @@ class Mapping(Step):
 def mapping(args):
     step_name = 'mapping'
     mapping_obj = Mapping(args, step_name)
-    mapping_obj.run_star()
+    mapping_obj.run()
 
 def get_opts_mapping(parser, sub_program):
     parser.add_argument(

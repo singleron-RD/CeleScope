@@ -1,4 +1,3 @@
-import os
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 import subprocess
