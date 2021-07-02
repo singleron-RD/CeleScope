@@ -158,7 +158,7 @@ class Res_format(Step):
         data = data[['barcode', 'chain']]
         barcodes = set(data['barcode'].tolist())
         total_count = len(barcodes)
-
+        res_format_summary.append({'item': 'Estimated number of cells', 'count': total_count, 'total_count': np.nan})
         res = pd.DataFrame()
         for c in self.chain:
             tmp = data[data['chain']==c]
