@@ -45,12 +45,14 @@ class Multi_trust_vdj(Multi):
         fa = f'{self.outdir_dic[sample]["assemble"]}/{sample}_annot.fa'
         count_file = f'{self.outdir_dic[sample]["count"]}/count.txt'
         cdr3out = f'{self.outdir_dic[sample]["assemble"]}/{sample}_cdr3.out'
+        assign_file = f'{self.outdir_dic[sample]["assemble"]}/{sample}_assign.out'
         cmd = (
             f'{cmd_line} '
             f'--report {report} '
             f'--fa {fa} '
             f'--count_file {count_file} '
             f'--cdr3out {cdr3out} '
+            f'--assign_file {assign_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 

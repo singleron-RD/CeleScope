@@ -6,15 +6,9 @@ import numpy as np
 import pysam
 import subprocess
 import os
+from collections import defaultdict
 
-
-def trans_rep(report, outprefix):
-    cmd = (
-        f'perl /SGRNJ03/randd/zhouxin/software/TRUST4/trust-barcoderep-to-10X.pl '
-        f'{report} '
-        f'{outprefix}'
-    )
-    subprocess.check_call(cmd, shell=True)
+DIR = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
 
 
 class Res_format(Step):
@@ -24,8 +18,8 @@ class Res_format(Step):
     - Calculate clonetypes.
 
     Output
-    - `05.res_format/clonetypes.tsv` Record each clonetype and its frequent.
-    - `05.res_format/{sample}_barcode_report.tsv` Record detailed chain information of each barcode.
+    - `06.res_format/clonetypes.tsv` Record each clonetype and its frequent.
+    - `06.res_format/all_{type}.csv` Containing detailed information for each barcode.
     """
 
     def __init__(self, args, step_name):
@@ -39,6 +33,7 @@ class Res_format(Step):
         self.fa = args.fa
         self.count_file = args.count_file
         self.cdr3out = args.cdr3out
+        self.assign_file = args.assign_file
 
         if self.Seqtype == 'TCR':
             self.string = 't'
@@ -56,44 +51,59 @@ class Res_format(Step):
 
     @utils.add_log
     def get_all_rep(self):
-        trans_rep(self.report, self.all_out_rep_prefix)
+        cmd = (
+           f'perl {DIR}/trust-barcoderep-to-10X.pl '
+           f'{self.report} '
+           f'{self.all_out_rep_prefix} '
+        )
+        subprocess.check_call(cmd, shell=True)
+        Res_format.get_all_rep.logger.info(cmd)
 
 
     @utils.add_log
     def get_filter_rep(self):
         out_rep = f'{self.outdir}/{self.sample}_filter_report.tsv'
         cmd = (
-            f'perl /SGRNJ03/randd/zhouxin/software/TRUST4/trust-barcoderep.pl '
+            f'perl {DIR}/trust-barcoderep.pl '
             f'{self.cdr3out} '
             f'-a {self.fa} '
             f'--noImputation > '
-            f'{out_rep}'
+            f'{out_rep}; '
+            f'perl {DIR}/trust-barcoderep-to-10X.pl '
+            f'{out_rep} '
+            f'{self.filter_out_rep_prefix} '
         )
         subprocess.check_call(cmd, shell=True)
-        trans_rep(out_rep, self.filter_out_rep_prefix)
+        Res_format.get_filter_rep.logger.info(cmd)
+
         os.remove(out_rep)
 
 
     @utils.add_log
     def get_len(self):
-        with pysam.FastaFile(self.fa) as fh:
-            res = {}
-            names = fh.references
-            lengths = fh.lengths
-            res['contig_id'] = names
-            res['length'] = lengths
-            
-            df = pd.DataFrame(res, columns=list(res.keys()))
-            
-            data = pd.read_csv(self.filter_rep, sep=',')
-            data = data.drop('length', 1)
-            df_len = pd.merge(df, data, on='contig_id', how='inner')
-            df_len.to_csv(self.filter_rep, sep=',', index=False)
-            
-            all_res = pd.read_csv(self.all_rep, sep=',')
-            all_res = all_res.drop('length', 1)
-            df_all_len = pd.merge(df, all_res, on='contig_id', how='inner')
-            df_all_len.to_csv(self.all_rep, sep=',', index=False)
+        fh = pysam.FastxFile(self.fa)
+        res = defaultdict(list)
+        for entry in fh:
+            name = entry.name
+            length = len(entry.sequence)
+            res['contig_id'].append(name)
+            res['length'].append(length)
+        
+        df = pd.DataFrame(res, columns=list(res.keys()))
+        df = df.set_index(['contig_id'])
+        
+        filter_res = pd.read_csv(self.filter_rep, sep=',')
+        filter_res['length'] = filter_res['contig_id'].apply(lambda x: df.loc[x, 'length'])
+        filter_res[['reads', 'umis']] = filter_res[['reads', 'umis']].astype(int)
+
+        filter_res.to_csv(self.filter_rep, sep=',', index=False)
+        
+        all_res = pd.read_csv(self.all_rep, sep=',')
+        all_res['length'] = all_res['contig_id'].apply(lambda x: df.loc[x, 'length'])
+        all_res[['reads', 'umis']] = all_res[['reads', 'umis']].astype(int)
+
+        all_res.to_csv(self.all_rep, sep=',', index=False)
+        fh.close()
             
 
     @utils.add_log
@@ -155,11 +165,14 @@ class Res_format(Step):
     def gen_stat_file(self):
         res_format_summary = []
         data = pd.read_csv(self.filter_rep, sep=',')
-        data = data[['barcode', 'chain']]
+        data = data[['barcode', 'chain', 'contig_id']]
         barcodes = set(data['barcode'].tolist())
         total_count = len(barcodes)
         res_format_summary.append({'item': 'Estimated number of cells', 'count': total_count, 'total_count': np.nan})
         res = pd.DataFrame()
+        
+        assign_reads = pd.read_csv(self.assign_file, sep='\t', header=None)
+        assign_reads = assign_reads.rename(columns={0: 'read_id', 1: 'contig_id'})
         for c in self.chain:
             tmp = data[data['chain']==c]
             item = f'Number of cells with {c}'
@@ -170,7 +183,7 @@ class Res_format(Step):
             tmp = tmp.rename(columns={'chain': f'{c}_chain'})
 
             res = pd.concat([res, tmp], axis=1, join='outer', sort=False).fillna('None')
-
+            
         for pg in self.paired_groups:
             attrs = pg.split('_')
             chain1 = attrs[0]
@@ -182,6 +195,28 @@ class Res_format(Step):
                 'item': item,
                 'count': count,
                 'total_count': total_count
+            })
+        
+        for c in self.chain:
+            dic = defaultdict(set)
+            tmp = data[data['chain']==c]
+            contig_ids = tmp['contig_id'].tolist()
+            for i in contig_ids:
+                tm = assign_reads[assign_reads['contig_id']==i]
+                barcode_ = i.split('_')[0]
+                for read_id in tm['read_id'].tolist():
+                    attrs = read_id.split('_')
+                    cb = attrs[0]
+                    umi = attrs[1]
+                    if cb == barcode_:
+                        dic[barcode_].add(umi)
+            umi_count = [len(dic[i]) for i in list(dic.keys())]
+            mid = int(np.median(umi_count))
+            item = f'Median {c} UMIs per cell'
+            res_format_summary.append({
+                'item': item,
+                'count': mid,
+                'total_count': np.nan
             })
 
         stat_file = self.outdir + '/stat.txt'
@@ -227,6 +262,7 @@ def get_opts_res_format(parser, sub_program):
         parser.add_argument('--fa', help='assembled fasta file', required=True)
         parser.add_argument('--count_file', help='UMI count file', required=True)
         parser.add_argument('--cdr3out', help='cdr3 out file', required=True)
+        parser.add_argument('--assign_file', help='read_id assigned to contig_id', required=True)
 
 
 

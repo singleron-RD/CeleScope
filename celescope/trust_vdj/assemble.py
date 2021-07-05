@@ -14,13 +14,13 @@ class Assemble(Step):
 
     Output
 
-    - `03.assemble/{sample}_toassemble.fq` Reads to assemble.
-    - `03.assemble/{sample}_toassemble_bc.fa` Barcodes to assemble.
-    - `03.assemble/{sample}_cdr3.out` All assembled CDR3 output.
-    - `03.assemble/{sample}_barcode_report.tsv` Record chain information in each barcode.
-    - `03.assemble/{sample}_annot.fa` Assembled annotated contig sequences.
-    - `03.assemble/{sample}_assembled_reads.fa` Assembled raw reads.
-    - `03.assemble/{sample}_report.tsv` Record assembled CDR3 types and count.
+    - `05.assemble/{sample}_toassemble.fq` Reads to assemble.
+    - `05.assemble/{sample}_toassemble_bc.fa` Barcodes to assemble.
+    - `05.assemble/{sample}_cdr3.out` All assembled CDR3 output.
+    - `05.assemble/{sample}_barcode_report.tsv` Record chain information in each barcode.
+    - `05.assemble/{sample}_annot.fa` Assembled annotated contig sequences.
+    - `05.assemble/{sample}_assembled_reads.fa` Assembled raw reads.
+    - `05.assemble/{sample}_report.tsv` Record assembled CDR3 types and count.
     """
 
     def __init__(self, args, step_name):
@@ -56,7 +56,7 @@ class Assemble(Step):
             f'-f {index_file} '
             f'--ref {ref} '
             f'{string1}'
-            f'-o {self.sample} --od {self.outdir} '
+            f'-o {self.sample} --od {self.outdir} --outputReadAssignment '
         )
 
         Assemble.run.logger.info(cmd)

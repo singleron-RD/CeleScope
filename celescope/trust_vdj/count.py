@@ -7,6 +7,18 @@ from celescope.tools import utils
 
 
 class Count(Step):
+    """
+    Features
+    
+    - Count umi.
+    - Generate fastq file for assemble.
+    
+    Output
+    - `count.txt` Umi types count file, sorted by umi numbers.
+    - `{sample}_mapped_R1.fq` R1 reads contained barcode and umi.
+    - `{sample}_mapped_R2.fq` R2 reads contained sequence.
+    - `{sample}.toassemble_bc.txt` Containing barcodes that mapping to any V(D)J genes.
+    """
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
