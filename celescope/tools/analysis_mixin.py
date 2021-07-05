@@ -90,8 +90,8 @@ class AnalysisMixin():
         if "avg_logFC" in self.marker_df.columns:  # seurat 2.3.4
             avg_logfc_col = "avg_logFC"
         marker_df = self.marker_df.loc[:,
-            ["cluster", "gene", "avg_log2FC", "pct.1", "pct.2", "p_val_adj"]
-        ]
+                                       ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
+                                       ]
         marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
 
         return marker_df
