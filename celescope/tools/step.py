@@ -10,6 +10,10 @@ import pandas as pd
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from celescope.tools.utils import add_log
+from celescope.__init__ import HELP_DICT
+
+
+Metric = namedtuple("Metric", "name value total fraction")
 
 
 def s_common(parser):
@@ -18,8 +22,8 @@ def s_common(parser):
     parser.add_argument('--outdir', help='Output diretory.', required=True)
     parser.add_argument('--assay', help='Assay name.', required=True)
     parser.add_argument('--sample', help='Sample name.', required=True)
-    parser.add_argument('--thread', help='Thread to use.', default=4)
-    parser.add_argument('--debug', help='If this argument is used, celescope may output addtional file for debugging.', action='store_true')
+    parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
+    parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
     return parser
 
 
@@ -27,15 +31,16 @@ class Step:
     """
     Step class
     """
+
     def __init__(self, args, step_name):
         self.step_name = step_name
         self.args = args
         self.outdir = args.outdir
         self.sample = args.sample
         self.assay = args.assay
-        self.thread = args.thread
+        self.thread = int(args.thread)
         self.debug = args.debug
-        # set 
+        # set
         self.out_prefix = f'{self.outdir}/{self.sample}'
 
         # important! make outdir before path_dict because path_dict use relative path.
@@ -43,7 +48,6 @@ class Step:
             os.system('mkdir -p %s' % self.outdir)
 
         self.metric_list = []
-        self.Metric = namedtuple("Metric", "name value total fraction")
         self.path_dict = {
             "metric": f'{self.outdir}/../.metrics.json',
             "data": f'{self.outdir}/../.data.json'
@@ -68,7 +72,7 @@ class Step:
     def add_metric(self, name, value=None, total=None, fraction=None):
         '''add metric to metric_list
         '''
-        self.metric_list.append(self.Metric(
+        self.metric_list.append(Metric(
             name=name, value=value, total=total, fraction=fraction
         ))
 
@@ -83,7 +87,7 @@ class Step:
                 fraction = metric.value / metric.total
             if fraction:
                 fraction = round(fraction, 4)
-            metric_list.append(self.Metric(
+            metric_list.append(Metric(
                 name=metric.name,
                 value=metric.value,
                 total=metric.total,
@@ -111,7 +115,6 @@ class Step:
                 elif fraction_bool:
                     line += f'{fraction}%'
                 stat_handle.write(line + '\n')
-
 
     def dump_content(self, slot):
         '''dump content to json file
@@ -145,7 +148,7 @@ class Step:
         metrics = dict()
         for metric_name, string in dic.items():
             bool_fraction = False
-            bool_value = False 
+            bool_value = False
             if '%' in string:
                 bool_fraction = True
                 if "(" in string:
@@ -153,17 +156,17 @@ class Step:
             chars = [',', '%', ')']
             for character in chars:
                 string = string.replace(character, '')
-            
+
             if bool_fraction:
-                if bool_value: # case 2
+                if bool_value:  # case 2
                     value, fraction = string.split('(')
                     fraction = round(float(fraction) / 100, 4)
                     metrics[metric_name] = int(value)
                     metrics[metric_name + ' Fraction'] = fraction
-                else: # case 3
+                else:  # case 3
                     fraction = round(float(string) / 100, 4)
                     metrics[metric_name] = fraction
-            else: # case 1
+            else:  # case 1
                 value = string
                 if '.' in string:
                     try:
@@ -222,5 +225,3 @@ class Step:
     @abc.abstractmethod
     def run(self):
         return
-
-

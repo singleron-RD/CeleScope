@@ -46,7 +46,6 @@ def sum_virus(validated_barcodes, virus_bam,
 @add_log
 def count_capture_virus(args):
 
-
     # 检查和创建输出目录
     if not os.path.exists(args.outdir):
         os.system('mkdir -p %s' % (args.outdir))
@@ -71,4 +70,3 @@ def get_opts_count_capture_virus(parser, sub_program):
         s_common(parser)
         parser.add_argument('--match_dir', help='matched rna_virus directory', required=True)
         parser.add_argument('--virus_bam', required=True)
-

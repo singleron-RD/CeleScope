@@ -23,7 +23,7 @@ def _averaging_transform(r, nr):
     dr = np.concatenate((
         0.5 * (d[1:] + d[0:-1]),
         np.array((d[-1],), dtype=float),
-        ))
+    ))
     return nr.astype(float)/dr
 
 
@@ -52,9 +52,10 @@ def simple_good_turing(xr, xnr):
     slope, _intercept, _, _, _ = sp_stats.linregress(np.log(xr), np.log(xnrz))
 
     if slope > -1:
-        raise SimpleGoodTuringError("The log-log slope is > -1 (%d); the SGT estimator is not applicable to these data." % slope)
+        raise SimpleGoodTuringError(
+            "The log-log slope is > -1 (%d); the SGT estimator is not applicable to these data." % slope)
 
-    xrst = _rstest(xr,slope)
+    xrst = _rstest(xr, slope)
     xrstrel = xrst/xr
 
     # Get traditional Good-Turing estimate
@@ -72,7 +73,7 @@ def simple_good_turing(xr, xnr):
     useturing = True
     for r in range(len(xr)):
         if not useturing:
-            xrstcmbrel[r]  = xrstrel[r]
+            xrstcmbrel[r] = xrstrel[r]
         else:
             if np.abs(xrstrel[r]-xrstarel[r]) * (1+r)/tursd[r] > 1.65:
                 xrstcmbrel[r] = xrstarel[r]

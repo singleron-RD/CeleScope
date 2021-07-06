@@ -115,9 +115,8 @@ class CountFusion(Step):
             os.system(cmd)
             count_fusion.logger.info("plot done.")
 
-
     def run(self):
-        self.count_fusion()        
+        self.count_fusion()
         self.clean_up()
 
 

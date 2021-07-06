@@ -56,7 +56,7 @@ def estimate_profile_sgt(matrix, barcode_indices, nz_feat):
       profile (np.array(float)): Estimated probabilities of length len(nz_feat).
     """
     # Initial profile estimate
-    prof_mat = matrix[:,barcode_indices]
+    prof_mat = matrix[:, barcode_indices]
 
     profile = np.ravel(prof_mat[nz_feat, :].sum(axis=1))
     zero_feat = np.flatnonzero(profile == 0)
@@ -105,13 +105,13 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
     TBD
     """
     NonAmbientBarcodeResult = namedtuple('NonAmbientBarcodeResult',
-                                     ['eval_bcs',      # Candidate barcode indices (n)
-                                      'log_likelihood',# Ambient log likelihoods (n)
-                                      'pvalues',       # pvalues (n)
-                                      'pvalues_adj',   # B-H adjusted pvalues (n)
-                                      'is_nonambient', # Boolean nonambient calls (n)
-                                      ])
-    
+                                         ['eval_bcs',      # Candidate barcode indices (n)
+                                          'log_likelihood',  # Ambient log likelihoods (n)
+                                          'pvalues',       # pvalues (n)
+                                          'pvalues_adj',   # B-H adjusted pvalues (n)
+                                          'is_nonambient',  # Boolean nonambient calls (n)
+                                          ])
+
     # Estimate an ambient RNA profile
     umis_per_bc = np.squeeze(np.asarray(raw_mat.sum(axis=0)))
     # get the index of sorted umis_per_bc (ascending, bc_order[0] is the index of the smallest element in umis_per_bc)
@@ -130,47 +130,48 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
 
     if len(use_bcs) > 0:
         try:
-            ## Get used "Gene" features (eval_features)
-            ## and the smoothed prob profile per "Gene" (ambient_profile_p)
+            # Get used "Gene" features (eval_features)
+            # and the smoothed prob profile per "Gene" (ambient_profile_p)
             eval_features, ambient_profile_p = est_background_profile_sgt(raw_mat.tocsc(), use_bcs)
         except cr_sgt.SimpleGoodTuringError as e:
             print(str(e))
     else:
         eval_features = np.zeros(0, dtype=int)
         ambient_profile_p = np.zeros(0)
-    
-    ### Choose candidate cell barcodes
-    ### Regular ordmag filter
-    gg_filtered_indices, gg_filtered_metrics, _msg = cr_stats.filter_cellular_barcodes_ordmag(umis_per_bc, recovered_cells=recovered_cells)
+
+    # Choose candidate cell barcodes
+    # Regular ordmag filter
+    gg_filtered_indices, gg_filtered_metrics, _msg = cr_stats.filter_cellular_barcodes_ordmag(
+        umis_per_bc, recovered_cells=recovered_cells)
 
     print('Cell-called barcodes metrics:')
     print('\n'.join(list(map(lambda x: '{}: {}'.format(*x), list(gg_filtered_metrics.items())))))
     print('==============================')
-    
+
     orig_cell_bc_set = set(gg_filtered_indices)
     orig_cells = np.flatnonzero(np.fromiter((bc in orig_cell_bc_set for bc in range(raw_mat.shape[1])), dtype=bool))
 
-    ## No good incoming cell calls
+    # No good incoming cell calls
     if orig_cells.sum() == 0:
         print('Error: No original cells are selected!')
         return None, None, None
 
-    ## Look at non-cell barcodes above a minimum UMI count
+    # Look at non-cell barcodes above a minimum UMI count
     eval_bcs = np.ma.array(np.arange(raw_mat.shape[1]))
     eval_bcs[orig_cells] = ma.masked
 
     median_initial_umis = np.median(umis_per_bc[orig_cells])
-    
+
     min_umis = int(max(min_umis_nonambient, round(np.ceil(median_initial_umis * min_umi_frac_of_median))))
-    
+
     print('Median UMIs of initial cell calls: {}'.format(median_initial_umis))
     print('Min UMIs: {}'.format(min_umis))
 
     eval_bcs[umis_per_bc < min_umis] = ma.masked
     n_unmasked_bcs = len(eval_bcs) - eval_bcs.mask.sum()
 
-    ## Take the top N_CANDIDATE_BARCODES by UMI count, of barcodes that pass the above criteria
-    ## For evaluation of non-ambient bcs using background info estimated from SGT
+    # Take the top N_CANDIDATE_BARCODES by UMI count, of barcodes that pass the above criteria
+    # For evaluation of non-ambient bcs using background info estimated from SGT
     eval_bcs = np.argsort(ma.masked_array(umis_per_bc, mask=eval_bcs.mask))[:n_unmasked_bcs][-N_CANDIDATE_BARCODES:]
 
     if len(eval_bcs) == 0:
@@ -193,7 +194,7 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
         obs_loglk = cr_stats.eval_multinomial_loglikelihoods(eval_mat, ambient_profile_p)
 
         # Simulate log likelihoods
-        distinct_ns, sim_loglk = cr_stats.simulate_multinomial_loglikelihoods(ambient_profile_p, umis_per_bc[eval_bcs], 
+        distinct_ns, sim_loglk = cr_stats.simulate_multinomial_loglikelihoods(ambient_profile_p, umis_per_bc[eval_bcs],
                                                                               num_sims=10000, verbose=True)
 
         # Compute p-values
@@ -205,10 +206,10 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
 
         print('Number of non-ambient barcodes from SGT:', len(eval_bcs[is_nonambient]))
 
-        ## Runxi's filtering
+        # Runxi's filtering
         print('Identify {} cell-associated barcodes'.format(len(orig_cells)+len(eval_bcs[is_nonambient])))
 
-        ## of barcodes overlapped w/ the cellranger results
+        # of barcodes overlapped w/ the cellranger results
         filtered_bc_indices = np.concatenate((orig_cells, eval_bcs[is_nonambient]), axis=None)
 
         return filtered_bc_indices, gg_filtered_metrics, NonAmbientBarcodeResult(
@@ -223,10 +224,10 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
 def cell_calling_3(all_matrix_10X_dir, expected_cell_num):
 
     raw_mat_path = os.path.join(all_matrix_10X_dir, MATRIX_FILE_NAME)
-    raw_mat = scipy.io.mmread(raw_mat_path) # scipy.sparse.coo.coo_matrix
+    raw_mat = scipy.io.mmread(raw_mat_path)  # scipy.sparse.coo.coo_matrix
 
     raw_features_path = os.path.join(all_matrix_10X_dir, FEATURE_FILE_NAME)
-    raw_features_df = pd.read_csv(raw_features_path, sep='\t', error_bad_lines=False, names=['id','name','type'])
+    raw_features_df = pd.read_csv(raw_features_path, sep='\t', error_bad_lines=False, names=['id', 'name', 'type'])
     raw_features_df['id'].tolist()
     raw_features_df['name'].tolist()
     raw_features_df['type'].tolist()
@@ -235,10 +236,10 @@ def cell_calling_3(all_matrix_10X_dir, expected_cell_num):
     raw_barcodes_df = pd.read_csv(raw_barcodes_path, sep='\t', error_bad_lines=False, names=['barcode'])
     raw_barcodes = np.array(raw_barcodes_df['barcode'].tolist())
 
-    ### Run cell calling
+    # Run cell calling
     filtered_bc_indices, round_1_filtered_metrics, _non_ambient_barcode_result = find_nonambient_barcodes(
-        raw_mat=raw_mat,recovered_cells=expected_cell_num)
-    
+        raw_mat=raw_mat, recovered_cells=expected_cell_num)
+
     cell_bc = raw_barcodes[filtered_bc_indices]
     initial_cell_num = round_1_filtered_metrics['filtered_bcs']
     return cell_bc, initial_cell_num

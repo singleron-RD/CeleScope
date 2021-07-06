@@ -21,6 +21,7 @@ from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
 from celescope.tools.cellranger3 import get_plot_elements
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
+from celescope.rna.mkref import parse_genomeDir_rna
 
 TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)
@@ -70,16 +71,16 @@ class Count(Step):
 
 
     """
+
     def __init__(self, args, step):
         Step.__init__(self, args, step)
         self.force_cell_num = args.force_cell_num
         self.cell_calling_method = args.cell_calling_method
         self.expected_cell_num = int(args.expected_cell_num)
         self.bam = args.bam
-        if args.genomeDir and args.genomeDir != "None":
-            _refFlat, self.gtf_file, _ = utils.glob_genomeDir(args.genomeDir)
-        else:
-            self.gtf_file = args.gtf
+
+        # set
+        self.gtf_file = parse_genomeDir_rna(args.genomeDir)['gtf']
         self.id_name = utils.get_id_name_dict(self.gtf_file)
 
         # output files
@@ -186,7 +187,7 @@ class Count(Step):
         with open(self.count_detail_file, 'wt') as fh1:
             fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
 
-            def keyfunc(x): 
+            def keyfunc(x):
                 return x.query_name.split('_', 1)[0]
             for _, g in groupby(samfile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
@@ -338,7 +339,7 @@ class Count(Step):
             os.mkdir(matrix_dir)
 
         df_UMI = df.groupby(['geneID', 'Barcode']).agg({'UMI': 'count'})
-        mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.labels[0], df_UMI.index.labels[1])))
+        mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.codes[0], df_UMI.index.codes[1])))
         gene_id = df_UMI.index.levels[0].to_series()
         # add gene symbol
         gene_name = gene_id.apply(lambda x: self.id_name[x])
@@ -347,7 +348,7 @@ class Count(Step):
 
         barcodes = df_UMI.index.levels[1].to_series()
         genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME}', index=False, sep='\t', header=False)
-        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t')
+        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t', header=False)
         mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME}', mtx)
 
     @utils.add_log
@@ -477,16 +478,16 @@ def get_opts_count(parser, sub_program):
     parser.add_argument('--genomeDir', help='Required. Genome directory.')
     parser.add_argument('--expected_cell_num', help='Default `3000`. Expected cell number.', default=3000)
     parser.add_argument(
-        '--cell_calling_method', 
+        '--cell_calling_method',
         help='Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.',
-        choices=['auto', 'cellranger3', 'inflection', ], 
+        choices=['auto', 'cellranger3', 'inflection', ],
         default='auto',
     )
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
         parser.add_argument(
-            '--force_cell_num', 
-            help='Default `None`. Force the cell number to be this value ± 10%.', 
+            '--force_cell_num',
+            help='Default `None`. Force the cell number to be this value ± 10%.',
             default=None
         )

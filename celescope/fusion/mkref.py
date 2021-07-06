@@ -8,8 +8,8 @@ from celescope.tools.mkref import parse_genomeDir
 
 
 def parse_genomeDir_fusion(genomeDir):
-    return parse_genomeDir(genomeDir, entrys = ('fasta','fusion_pos'))    
-    
+    return parse_genomeDir(genomeDir, entrys=('fasta', 'fusion_pos'))
+
 
 class Mkref_fusion(Mkref):
     def __init__(self, genome_type, args):
@@ -43,7 +43,7 @@ class Mkref_fusion(Mkref):
         genome['genomeSAindexNbases'] = self.genomeSAindexNbases
         with open(self.config_file, 'w') as config_handle:
             config.write(config_handle)
-    
+
     def run(self):
         if not self.dry_run:
             self.build_star_index()
@@ -59,9 +59,9 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", help="fusion fasta file",required=True)
+        parser.add_argument("--fasta", help="fusion fasta file", required=True)
         parser.add_argument(
-            "--fusion_pos", 
+            "--fusion_pos",
             help="""
 fusion position file. A two column tab-delimited text file with header.
 "pos" is the end postion of the first gene(1-based).
@@ -71,6 +71,6 @@ PML_3\t183
 PML_4\t254  
 PML_5\t326  
 PML_6\t204   
-""",    
-        required=True,)
+""",
+            required=True,)
         parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=4)

@@ -12,15 +12,15 @@ from celescope.tools.step import Step, s_common
 
 def get_opts_mapping_tag(parser, sub_program):
     parser.add_argument(
-        "--fq_pattern", 
+        "--fq_pattern",
         help="""Required. R2 read pattern. The number after the letter represents the number of bases.         
 `L` linker(common sequences)  
 `C` tag barcode  
-""", 
+""",
         required=True
     )
     parser.add_argument(
-        "--barcode_fasta", 
+        "--barcode_fasta",
         help="""Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
 It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
@@ -35,11 +35,11 @@ AGGGCTAGGCGTGTCATTTGGCGAGGTCCTGAGGTCATGGAGCCA
 >tag_3
 CACTGGTCATCGACACTGGGAACCTGAGGTGAGTTCGCGCGCAAG
 ```  
-""", 
+""",
         required=True,
     )
     parser.add_argument(
-        "--linker_fasta", 
+        "--linker_fasta",
         help="""Optional. If provided, it will check the mismatches between linker sequence in R2 reads 
 with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1, the read is classified as invalid.
 """,
@@ -134,8 +134,8 @@ class Mapping_tag(Step):
                         if miss_length > 2:
                             reads_unmapped_too_short += 1
                             continue
-                        seq_barcode = seq_barcode + "A" * miss_length                    
-                
+                        seq_barcode = seq_barcode + "A" * miss_length
+
                 # check linker
                 if self.linker_length != 0:
                     valid_linker = False
@@ -145,7 +145,7 @@ class Mapping_tag(Step):
                             break
                 else:
                     valid_linker = True
-                    
+
                 if not valid_linker:
                     reads_unmapped_invalid_iinker += 1
                     continue

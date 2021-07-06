@@ -30,20 +30,25 @@ def add_log(func):
     '''
     logging start and done.
     '''
-    logging.basicConfig(
-        level=logging.INFO,
-        stream=sys.stdout,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logFormatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
     module = func.__module__
     name = func.__name__
     logger_name = f'{module}.{name}'
     logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.INFO)
+
+    fileHandler = logging.FileHandler("./celescope_log.txt")
+    fileHandler.setFormatter(logFormatter)
+    logger.addHandler(fileHandler)
+    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler.setFormatter(logFormatter)
+    logger.addHandler(consoleHandler)
 
     @wraps(func)
     def wrapper(*args, **kwargs):
         if args and hasattr(args[0], 'debug') and args[0].debug:
-            logger.setLevel(10) # debug
+            logger.setLevel(10)  # debug
 
         logger.info('start...')
         start = time.time()
@@ -58,10 +63,10 @@ def add_log(func):
 
 
 def using(point=""):
-    usage=resource.getrusage(resource.RUSAGE_SELF)
+    usage = resource.getrusage(resource.RUSAGE_SELF)
     return '''%s: usertime=%s systime=%s mem=%s mb
-        '''%(point,usage[0],usage[1],
-                usage[2]/1024.0)
+        ''' % (point, usage[0], usage[1],
+               usage[2]/1024.0)
 
 
 def add_mem(func):
@@ -95,27 +100,6 @@ def arg_str(arg, arg_name):
     if arg:
         return '--' + arg_name
     return ''
-
-
-def read_barcode_file(match_dir, return_file=False):
-    '''
-    multi version compatible
-    '''
-    match_barcode_file1 = glob.glob(
-        f"{match_dir}/*count*/*_cellbarcode.tsv")
-    match_barcode_file2 = glob.glob(
-        f"{match_dir}/*count*/*matrix_10X/*_cellbarcode.tsv")
-    match_barcode_file3 = glob.glob(
-        f"{match_dir}/*count*/*matrix_10X/*barcodes.tsv")
-    match_barcode_file = (
-        match_barcode_file1 +
-        match_barcode_file2 +
-        match_barcode_file3)[0]
-    match_barcode, cell_total = read_one_col(match_barcode_file)
-    match_barcode = set(match_barcode)
-    if return_file:
-        return match_barcode, (cell_total, match_barcode_file)
-    return match_barcode, cell_total
 
 
 def format_stat(count, total_count):
@@ -194,12 +178,13 @@ def link_data(outdir, fq_dict):
             fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
 
 
-def generic_open(file_name, mode='rt'):
+def generic_open(file_name, *args, **kwargs):
     if file_name.endswith('.gz'):
-        file_obj = gzip.open(file_name, mode)
+        file_obj = gzip.open(file_name, *args, **kwargs)
     else:
-        file_obj = open(file_name, mode)
+        file_obj = open(file_name, *args, **kwargs)
     return file_obj
+
 
 @add_log
 def get_id_name_dict(gtf_file):
@@ -229,23 +214,23 @@ def get_id_name_dict(gtf_file):
                 gene_id = gene_id_pattern.findall(attributes)[-1]
                 gene_names = gene_name_pattern.findall(attributes)
                 if not gene_names:
-                    gene_name = gene_id 
+                    gene_name = gene_id
                 else:
                     gene_name = gene_names[-1]
                 c[gene_name] += 1
                 if c[gene_name] > 1:
                     if gene_id in id_name:
                         assert id_name[gene_id] == gene_name, (
-                                'one gene_id with multiple gene_name '
-                                f'gene_id: {gene_id}, '
-                                f'gene_name this line: {gene_name}'
-                                f'gene_name previous line: {id_name[gene_id]}'
-                            )
+                            'one gene_id with multiple gene_name '
+                            f'gene_id: {gene_id}, '
+                            f'gene_name this line: {gene_name}'
+                            f'gene_name previous line: {id_name[gene_id]}'
+                        )
                         get_id_name_dict.logger.warning(
-                                'duplicated (gene_id, gene_name)'
-                                f'gene_id: {gene_id}, '
-                                f'gene_name {gene_name}'
-                            )
+                            'duplicated (gene_id, gene_name)'
+                            f'gene_id: {gene_id}, '
+                            f'gene_name {gene_name}'
+                        )
                         c[gene_name] -= 1
                     else:
                         gene_name = f'{gene_name}_{c[gene_name]}'
@@ -255,8 +240,8 @@ def get_id_name_dict(gtf_file):
 
 @add_log
 def process_read(
-    read2_file, pattern_dict, barcode_dict, linker_dict,
-    barcode_length, linker_length):
+        read2_file, pattern_dict, barcode_dict, linker_dict,
+        barcode_length, linker_length):
 
     # if valid, return (True)
     metrics = defaultdict(int)
@@ -286,8 +271,8 @@ def process_read(
                 if miss_length > 2:
                     metrics['Reads Unmapped too Short'] += 1
                     continue
-                seq_barcode = seq_barcode + "A" * miss_length                    
-        
+                seq_barcode = seq_barcode + "A" * miss_length
+
         # check linker
         if linker_length != 0:
             valid_linker = False
@@ -297,7 +282,7 @@ def process_read(
                     break
         else:
             valid_linker = True
-            
+
         if not valid_linker:
             metrics['Reads Unmapped Invalid Linker'] += 1
             continue
@@ -387,7 +372,7 @@ def gen_stat(df, stat_file):
         value = f'{format_number(count)}({round(percent * 100, 2)}%)'
         return value
 
-    df.loc[:,'value'] = df.loc[:,'count']
+    df.loc[:, 'value'] = df.loc[:, 'count']
     df.loc[~df['total_count'].isna(), 'value'] = df.loc[~df['total_count'].isna(), :].apply(
         add_percent, axis=1
     )
@@ -403,9 +388,9 @@ def get_read(library_id, library_path, read='1'):
     fq_list = ['fq', 'fastq']
     suffix_list = ["", ".gz"]
     read_pattern_list = [
-        f'{library_path}/*{library_id}*{read}.{fq_str}{suffix}' 
-        for read in read1_list 
-        for fq_str in fq_list 
+        f'{library_path}/*{library_id}*{read}.{fq_str}{suffix}'
+        for read in read1_list
+        for fq_str in fq_list
         for suffix in suffix_list
     ]
     fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
@@ -434,79 +419,6 @@ def get_fq(library_id, library_path):
     return fq1, fq2
 
 
-def parse_map_col4(mapfile, default_val):
-    fq_dict = defaultdict(list)
-    col4_dict = defaultdict(list)
-    col5_dict = defaultdict(list)
-    with open(mapfile) as fh:
-        for line in fh:
-            line = line.strip()
-            if not line:
-                continue
-            if line.startswith('#'):
-                continue
-            tmp = line.split()
-            library_id = tmp[0]
-            library_path = tmp[1]
-            sample_name = tmp[2]
-            if len(tmp) >= 4:
-                col4 = tmp[3]
-            else:
-                col4 = default_val
-            fq1, fq2 = get_fq(library_id, library_path)
-
-            if sample_name in fq_dict:
-                fq_dict[sample_name][0].append(fq1)
-                fq_dict[sample_name][1].append(fq2)
-            else:
-                fq_dict[sample_name] = [[fq1], [fq2]]
-            if col4 and col4 != default_val:
-                col4_dict[sample_name] = col4
-            if len(tmp) == 5:
-                col5_dict[sample_name] = tmp[4]
-
-    for sample_name in fq_dict:
-        fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
-        fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
-
-    if not fq_dict:
-        raise Exception('empty mapfile!')
-    return fq_dict, col4_dict, col5_dict
-
-
-def generate_sjm(cmd, name, conda, m=1, x=1):
-    res_cmd = f'''
-job_begin
-    name {name}
-    sched_options -w n -cwd -V -l vf={m}g,p={x}
-    cmd source activate {conda}; {cmd}
-job_end
-'''
-
-    return res_cmd
-
-
-def merge_report(
-    fq_dict, steps, last_step, sjm_cmd,
-    sjm_order, logdir, conda, outdir, rm_files):    
-    step = "merge_report"
-    steps_str = ",".join(steps)
-    samples = ','.join(fq_dict.keys())
-    app = tools_dir + '/merge_table.py'
-    cmd = (
-        f'python {app} --samples {samples} '
-        f'--steps {steps_str} --outdir {outdir}'
-    )
-    if rm_files:
-        cmd += ' --rm_files'
-    sjm_cmd += generate_sjm(cmd, 'merge_report', conda)
-    for sample in fq_dict:
-        sjm_order += f'order {step} after {last_step}_{sample}\n'
-    with open(logdir + '/sjm.job', 'w') as fh:
-        fh.write(sjm_cmd + '\n')
-        fh.write(sjm_order)
-
-
 def format_number(number: int) -> str:
     return format(number, ",")
 
@@ -522,42 +434,6 @@ def format_metrics(metrics: dict):
 def format_ratios(ratios: dict):
     for key in ratios:
         ratios[key] = round(ratios[key] * 100, 2)
-
-
-@add_log
-def glob_genomeDir(genomeDir, fa=False):
-    refFlat = glob.glob(genomeDir + "/*.refFlat")
-    if (len(refFlat) > 1):
-        sys.exit("ERROR: Multiple refFlat file in " + genomeDir)
-    elif (len(refFlat) == 0):
-        sys.exit("ERROR: refFlat file not found in " + genomeDir)
-    else:
-        refFlat = refFlat[0]
-        glob_genomeDir.logger.info("refFlat file found: " + refFlat)
-
-    gtf = glob.glob(genomeDir + "/*.gtf")
-    if (len(gtf) == 0):
-        sys.exit("ERROR: gtf file not found in " + genomeDir)
-    elif (len(gtf) > 1):
-        gtf = glob.glob(genomeDir + "/*.chr.gtf")
-        if (len(gtf) == 0):
-            sys.exit("ERROR: No chr gtf file in "+ genomeDir)
-        if (len(gtf) > 1):
-            sys.exit("ERROR: Multiple gtf file in " + genomeDir)
-        else:
-            gtf = gtf[0]
-            glob_genomeDir.logger.info("chr gtf file found: " + gtf)
-    else:
-        gtf = gtf[0]
-        glob_genomeDir.logger.info("gtf file found: " + gtf)
-    
-    if fa:
-        fasta = glob.glob(genomeDir + "/*.fa") + glob.glob(genomeDir + "/*.fasta")
-        if len(fasta) > 1:
-            sys.exit("ERROR: Multiple fasta file in " + genomeDir)
-        fasta = fasta[0]
-        return refFlat, gtf, fasta
-    return refFlat, gtf, None
 
 
 def get_slope(x, y, window=200, step=10):
@@ -583,38 +459,6 @@ def genDict(dim=3, valType=int):
         return defaultdict(lambda: genDict(dim - 1, valType=valType))
 
 
-def cluster_tsne_list(tsne_df):
-    """
-    tSNE_1	tSNE_2	cluster Gene_Counts
-    return data list
-    """
-    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
-    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-    res = []
-    for cluster in sorted(tsne_df.cluster.unique()):
-        sub_df = tsne_df[tsne_df.cluster == cluster]
-        name = "cluster {cluster}({percent}%)".format(
-            cluster=cluster, percent=percent_df[cluster])
-        tSNE_1 = list(sub_df.tSNE_1)
-        tSNE_2 = list(sub_df.tSNE_2)
-        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
-    return res
-
-
-def marker_table(marker_df):
-    """
-    return html code
-    """
-    marker_df = marker_df.loc[:, ["cluster", "gene",
-                                  "avg_log2FC", "pct.1", "pct.2", "p_val_adj"]]
-    marker_gene_table = marker_df.to_html(
-        escape=False,
-        index=False,
-        table_id="marker_gene_table",
-        justify="center")
-    return marker_gene_table
-
-
 def report_prepare(outdir, **kwargs):
     json_file = outdir + '/../.data.json'
     if not os.path.exists(json_file):
@@ -631,7 +475,7 @@ def report_prepare(outdir, **kwargs):
         json.dump(data, fh)
 
 
-def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID','CID')):
+def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
     vcf = pysam.VariantFile(vcf_file)
     df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
     rec_dict = {}
@@ -641,7 +485,7 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID','CID')):
             rec_dict[col.capitalize()] = getattr(rec, col)
             if col == 'alleles':
                 rec_dict['Alleles'] = '-'.join(rec_dict['Alleles'])
-                
+
         for info in infos:
             rec_dict[info] = rec.info[info]
 
@@ -651,12 +495,12 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID','CID')):
         rec_dict['GT'] = '/'.join(rec_dict['GT'])
         '''
 
-        df = df.append(pd.Series(rec_dict),ignore_index=True)
+        df = df.append(pd.Series(rec_dict), ignore_index=True)
     return df
 
 
 def parse_annovar(annovar_file):
-    df = pd.DataFrame(columns=['Gene','mRNA', 'Protein', 'COSMIC'])
+    df = pd.DataFrame(columns=['Gene', 'mRNA', 'Protein', 'COSMIC'])
     with open(annovar_file, 'rt') as f:
         index = 0
         for line in f:
@@ -686,7 +530,7 @@ def parse_annovar(annovar_file):
                     if change_attr.startswith('p.'):
                         protein = change_attr.strip('p.')
                 if not (mRNA, protein) in change_list:
-                    change_list.append((mRNA, protein)) 
+                    change_list.append((mRNA, protein))
             combine = [','.join(item) for item in list(zip(*change_list))]
             mRNA = combine[0]
             protein = combine[1]
@@ -697,6 +541,26 @@ def parse_annovar(annovar_file):
                 'COSMIC': cosmic,
             }, ignore_index=True)
     return df
+
+
+def read_barcode_file(match_dir, return_file=False):
+    '''
+    multi version compatible
+    '''
+    match_barcode_file1 = glob.glob(
+        f"{match_dir}/*count*/*_cellbarcode.tsv")
+    match_barcode_file2 = glob.glob(
+        f"{match_dir}/*count*/*matrix_10X/*_cellbarcode.tsv")
+    match_barcode_file3 = glob.glob(
+        f"{match_dir}/*count*/*matrix_10X/*barcodes.tsv")
+    match_barcode_file = (
+        match_barcode_file1 +
+        match_barcode_file2 +
+        match_barcode_file3)[0]
+    match_barcode, cell_total = read_one_col(match_barcode_file)
+    if return_file:
+        return match_barcode, (cell_total, match_barcode_file)
+    return match_barcode, cell_total
 
 
 def parse_match_dir(match_dir):
@@ -797,6 +661,7 @@ def find_step_module(assay, step):
 
     return step_module
 
+
 def find_step_module_with_folder(assay, step):
     init_module = find_assay_init(assay)
     folder = ""
@@ -813,3 +678,17 @@ def find_step_module_with_folder(assay, step):
             folder = module_path.split('.')[1]
 
     return step_module, folder
+
+
+def sort_bam(input_bam, output_bam, threads=1):
+    cmd = (
+        f'samtools sort {input_bam} '
+        f'-o {output_bam} '
+        f'--threads {threads} '
+    )
+    subprocess.check_call(cmd, shell=True)
+
+
+def index_bam(input_bam):
+    cmd = f"samtools index {input_bam}"
+    subprocess.check_call(cmd, shell=True)

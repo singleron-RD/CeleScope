@@ -5,13 +5,27 @@ import subprocess
 import celescope.tools.utils as utils
 from celescope.tools.mkref import Mkref
 from celescope.tools.mkref import get_opts_mkref as opts
+from celescope.__init__ import HELP_DICT
 
 
 class Mkref_snp(Mkref):
     """
-    https://gatk.broadinstitute.org/hc/en-us/articles/360035531652-FASTA-Reference-genome-format
-    Create dictionary file and fasta index for gatk SplitNCigarReads.
-    Need to build on top of a rna genome.
+    Features
+    - Create dictionary file and fasta index for gatk SplitNCigarReads.
+    (https://gatk.broadinstitute.org/hc/en-us/articles/360035531652-FASTA-Reference-genome-format) 
+    Need to run `celescope rna mkref` first
+
+    Output
+    - fasta index
+    - gatk dictionary file
+
+    Usage
+    ```
+    # run celescope rna mkref first
+    celescope snp mkref \\
+     --genome_name Homo_sapiens_ensembl_99 \\
+     --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa
+    ```
     """
 
     def __init__(self, genome_type, args):
@@ -65,5 +79,4 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", help="fasta file", required=True)
-
+        parser.add_argument("--fasta", help=HELP_DICT['fasta'], required=True)

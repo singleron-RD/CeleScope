@@ -17,7 +17,7 @@ class Count_cite():
         assay,
         read_count_file,
         match_dir,
-        ):
+    ):
         self.sample = sample
         self.outdir = outdir
         self.assay = assay
@@ -26,7 +26,7 @@ class Count_cite():
         self.match_barcode, self.cell_total = read_barcode_file(match_dir)
         self.df_read_count = pd.read_csv(read_count_file, sep="\t", index_col=0)
         self.tsne_file = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
-        
+
         if not os.path.exists(outdir):
             os.system('mkdir -p %s' % outdir)
 
@@ -88,9 +88,9 @@ class Count_cite():
 
         self.stats.to_csv(self.stat_file, sep=':', header=False)
         t = reporter(
-        name='count_cite', 
-        assay=self.assay, 
-        sample=self.sample,
-        stat_file=self.stat_file, 
-        outdir=self.outdir + '/..')
+            name='count_cite',
+            assay=self.assay,
+            sample=self.sample,
+            stat_file=self.stat_file,
+            outdir=self.outdir + '/..')
         t.get_report()

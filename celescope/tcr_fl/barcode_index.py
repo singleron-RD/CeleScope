@@ -25,6 +25,3 @@ class Barcode_index():
         write index-barcode to file
         """
         self.df_index.to_csv(file_name, sep='\t')
-        
-    
-    

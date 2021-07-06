@@ -54,7 +54,6 @@ class Debug():
         with open('fastqc.sh', 'wt') as f:
             f.write(cmd)
 
-
     def run(self):
         self.run_subsample()
         self.run_STAR()
@@ -64,5 +63,3 @@ class Debug():
 if __name__ == '__main__':
     de = Debug()
     de.run()
-
-    

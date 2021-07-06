@@ -15,8 +15,8 @@ class Cutadapt(Step):
     """
     Features
     - Trim adapters in R2 reads with cutadapt. Default adapters includes:
-	- polyT=A{18}, 18 A bases. 
-	- p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+        - polyT=A{18}, 18 A bases. 
+        - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
     Output
     - `cutadapt.log` Cutadapt output log file.
@@ -37,7 +37,6 @@ class Cutadapt(Step):
             suffix = ""
         self.out_fq2 = f'{self.outdir}/{self.sample}_clean_2.fq{suffix}'
         self.cutadapt_log_file = f'{self.outdir}/cutadapt.log'
-
 
     @staticmethod
     def read_adapter_fasta(adapter_fasta):
@@ -100,7 +99,7 @@ class Cutadapt(Step):
         Cutadapt.run.logger.info(cmd)
         # need encoding argument to return str
         results = subprocess.run(
-            cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, 
+            cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
             encoding='utf-8', check=True, shell=True
         )
         cutadapt_log = results.stdout
@@ -110,7 +109,7 @@ class Cutadapt(Step):
         self.clean_up()
 
 
-@utils.add_log  
+@utils.add_log
 def cutadapt(args):
 
     step_name = "cutadapt"
@@ -122,7 +121,7 @@ def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--adapter_fasta', help='Addtional adapter fasta file.')
     parser.add_argument(
         '--minimum_length',
-        help='Default `20`. Discard processed reads that are shorter than LENGTH.', 
+        help='Default `20`. Discard processed reads that are shorter than LENGTH.',
         default=20
     )
     parser.add_argument(
@@ -132,7 +131,7 @@ Some Illumina instruments use a two-color chemistry to encode the four bases.
 This includes the NextSeq and the NovaSeq. 
 In those instruments, a ‘dark cycle’ (with no detected color) encodes a G. 
 However, dark cycles also occur when sequencing “falls off” the end of the fragment.
-The read then contains a run of high-quality, but incorrect “G” calls at its 3’ end.""", 
+The read then contains a run of high-quality, but incorrect “G” calls at its 3’ end.""",
         default=20,
     )
     parser.add_argument(
@@ -141,12 +140,12 @@ The read then contains a run of high-quality, but incorrect “G” calls at its
 short matches can occur by chance, leading to erroneously trimmed bases. 
 For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. 
 To reduce the number of falsely trimmed bases, the alignment algorithm requires that 
-at least {overlap} bases match between adapter and read. """, 
+at least {overlap} bases match between adapter and read. """,
         default=10
     )
     parser.add_argument(
-        '--insert', 
-        help="Default `150`. Read2 insert length.", 
+        '--insert',
+        help="Default `150`. Read2 insert length.",
         default=150
     )
     if sub_program:
@@ -154,5 +153,3 @@ at least {overlap} bases match between adapter and read. """,
         parser.add_argument('--gzip', help="Output gzipped fastq", action='store_true')
         parser = s_common(parser)
     return parser
-
-

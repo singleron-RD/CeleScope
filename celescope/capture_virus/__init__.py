@@ -1,5 +1,5 @@
-__STEPS__ = [  
-    'mkref',  
+__STEPS__ = [
+    'mkref',
     'sample',
     'barcode',
     'cutadapt',

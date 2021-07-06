@@ -10,7 +10,7 @@ from celescope.tools.count import Count, get_opts_count
 
 
 class Count_capture_rna(Count):
-    
+
     def bam2table(self):
         """
         read probe file
@@ -56,7 +56,7 @@ class Count_capture_rna(Count):
                 read_count = 0
                 for barcode in probe_gene_count_dict[probe][geneName]:
                     for umi in probe_gene_count_dict[probe][geneName][barcode]:
-                        umi_count += len( probe_gene_count_dict[probe][geneName][barcode])
+                        umi_count += len(probe_gene_count_dict[probe][geneName][barcode])
                         read_count += probe_gene_count_dict[probe][geneName][barcode][umi]
                 row_list.append({
                     'probe': probe,
@@ -67,12 +67,11 @@ class Count_capture_rna(Count):
                 })
 
         df_probe = pd.DataFrame(row_list,
-            columns=['probe', 'gene', 'barcode_count', 'read_count', 'UMI_count'])
+                                columns=['probe', 'gene', 'barcode_count', 'read_count', 'UMI_count'])
         df_probe = df_probe.groupby(['probe']).apply(
             lambda x: x.sort_values('UMI_count', ascending=False)
         )
         return df_probe
-
 
     def run(self):
         df_probe = self.bam2table()
@@ -109,7 +108,6 @@ class Count_capture_rna(Count):
 
         self.add_content_item('metric', downsample_summary=res_dict)
         self.clean_up()
-
 
 
 @utils.add_log

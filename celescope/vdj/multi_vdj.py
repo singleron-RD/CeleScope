@@ -17,7 +17,6 @@ class Multi_vdj(Multi):
         )
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
 
-
     def count_vdj(self, sample):
         # count_vdj
         step = 'count_vdj'
@@ -33,11 +32,10 @@ class Multi_vdj(Multi):
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
 
-
 def main():
     multi = Multi_vdj(__ASSAY__)
     multi.run()
 
+
 if __name__ == '__main__':
     main()
-

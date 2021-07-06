@@ -133,17 +133,17 @@
             }
             Plotly.newPlot('virus_tsne', data, layout, config);
         </script>       
-      </div>
-
-      <hr />
-
-        <h3>Top Marker Genes by Cluster</h3>
-        <div style=" margin-left: 3%; margin-right:3%;">
-            {{marker_gene_table | safe}}
-        </div>
-        
-
-
-      <div class="clear" ></div>
     </div>
-  </div>
+
+    <hr />
+
+    {% if table_dict is defined %}
+    <h3>{{table_dict['title']}}</h3>
+    <div style=" margin-left: 3%; margin-right:3%;">
+        {{table_dict['table'] | safe}}
+    </div>
+    {% endif %}
+
+    <div class="clear" ></div>
+    </div>
+</div>

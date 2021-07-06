@@ -1,127 +1,63 @@
-#!/bin/env python
-# coding=utf8
-
-import glob
-import json
-import os
-
 import pandas as pd
 
-import celescope.tools
-from celescope.tools.report import reporter
-from celescope.tools.utils import add_log, s_common
-
-toolsdir = os.path.dirname(celescope.tools.__file__)
-
-
-def report_prepare(outdir, tsne_df, marker_df, virus_df):
-    json_file = outdir + '/../.data.json'
-    if not os.path.exists(json_file):
-        data = {}
-    else:
-        fh = open(json_file)
-        data = json.load(fh)
-        fh.close()
-
-    data["cluster_tsne"] = cluster_tsne_list(tsne_df)
-    data["virus_tsne"] = virus_tsne_list(tsne_df, virus_df)
-    data["marker_gene_table"] = marker_table(marker_df)
-
-    with open(json_file, 'w') as fh:
-        json.dump(data, fh)
+import celescope.tools.utils as utils
+from celescope.tools.step import Step
+from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.rna.analysis import get_opts_analysis
 
 
-def cluster_tsne_list(tsne_df):
-    """
-    tSNE_1	tSNE_2	cluster Gene_Counts
-    return data list
-    """
-    sum_df = tsne_df.groupby(["cluster"]).agg("count").iloc[:, 0]
-    percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-    res = []
-    for cluster in sorted(tsne_df.cluster.unique()):
-        sub_df = tsne_df[tsne_df.cluster == cluster]
-        name = "cluster {cluster}({percent}%)".format(
-            cluster=cluster, percent=percent_df[cluster])
-        tSNE_1 = list(sub_df.tSNE_1)
-        tSNE_2 = list(sub_df.tSNE_2)
-        res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
-    return res
+class Analysis_rna_virus(Step, AnalysisMixin):
+    def __init__(self, args, step_name):
+        Step.__init__(self, args, step_name)
+        AnalysisMixin.__init__(self, args)
+
+        # set
+        self.virus_df = pd.read_csv(args.virus_file, sep="\t")
+
+        self.auto_assign_bool = False
+        if args.type_marker_tsv and args.type_marker_tsv != 'None':
+            self.auto_assign_bool = True
+            self.save_rds = True
+    
+    
+    def run(self):
+        self.seurat(self.args.matrix_file, self.args.save_rds, self.args.genomeDir)
+        if self.auto_assign_bool:
+            self.auto_assign(self.type_marker_tsv)
+        self.run_analysis()
+        virus_tsne = self.virus_tsne_list()
+        self.add_data_item(cluster_tsne=self.cluster_tsne)
+        self.add_data_item(virus_tsne=virus_tsne)
+        self.add_data_item(table_dict=self.table_dict)
+
+        self.clean_up()
 
 
-def virus_tsne_list(tsne_df, virus_df):
-    """
-    return data dic
-    """
-    tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-    df = pd.merge(tsne_df, virus_df, on="barcode", how="left")
-    df["UMI"] = df["UMI"].fillna(0)
-    tSNE_1 = list(df.tSNE_1)
-    tSNE_2 = list(df.tSNE_2)
-    virus_UMI = list(df.UMI)
-    res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "virus_UMI": virus_UMI}
-    return res
+    def virus_tsne_list(self):
+        """
+        return data dic
+        """
+        df = pd.merge(self.tsne_df, self.virus_df, on="barcode", how="left")
+        df["UMI"] = df["UMI"].fillna(0)
+        tSNE_1 = list(df.tSNE_1)
+        tSNE_2 = list(df.tSNE_2)
+        virus_UMI = list(df.UMI)
+        res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "virus_UMI": virus_UMI}
+        return res
 
 
-def marker_table(marker_df):
-    """
-    return html code
-    """
-    marker_df = marker_df.loc[:, ["cluster", "gene",
-                                  "avg_log2FC", "pct.1", "pct.2", "p_val_adj"]]
-    marker_gene_table = marker_df.to_html(
-        escape=False,
-        index=False,
-        table_id="marker_gene_table",
-        justify="center")
-    return marker_gene_table
-
-
-@add_log
-def seurat(sample, outdir, matrix_file):
-    app = toolsdir + "/run_analysis.R"
-    cmd = f"Rscript {app} --sample {sample} --outdir {outdir} --matrix_file {matrix_file}"
-    os.system(cmd)
-
-
-@add_log
+@utils.add_log
 def analysis_rna_virus(args):
 
-    # check dir
-    outdir = args.outdir
-    sample = args.sample
-    matrix_file = args.matrix_file
-    virus_file = args.virus_file
-
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % (outdir))
-
-    # run_R
-    seurat(sample, outdir, matrix_file)
-
-    # report
-    tsne_df_file = glob.glob("{outdir}/*tsne_coord.tsv".format(outdir=outdir))[0]
-    marker_df_file = glob.glob("{outdir}/*markers.tsv".format(outdir=outdir))[0]
-    tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-    marker_df = pd.read_csv(marker_df_file, sep="\t")
-    virus_df = pd.read_csv(virus_file, sep="\t")
-
-    report_prepare(outdir, tsne_df, marker_df, virus_df)
-
-    t = reporter(
-        name='analysis_rna_virus',
-        assay=args.assay,
-        sample=args.sample,
-        outdir=args.outdir + '/..')
-    t.get_report()
+    step_name = "analysis_rna_virus"
+    runner = Analysis_rna_virus(args, step_name)
+    runner.run()
 
 
 def get_opts_analysis_rna_virus(parser, sub_program):
+    get_opts_analysis(parser, sub_program)
     if sub_program:
-        s_common(parser)
-        parser.add_argument('--matrix_file', help='matrix file', required=True)
         parser.add_argument(
             '--virus_file',
             help='virus UMI count file',
             required=True)
-        
