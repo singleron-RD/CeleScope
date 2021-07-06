@@ -168,11 +168,11 @@ def replace_tsne(args):
 
 def get_opts_replace_tsne(parser, sub_program):
     if sub_program:
-        parser.add_argument('--tsne', help='tsne file', required=True)
-        parser.add_argument('--mat', help='matrix rep file', required=True)
-        parser.add_argument('--rep', help='cell rep file', required=True)
+        parser.add_argument('--tsne', help='tsne file from analysis step', required=True)
+        parser.add_argument('--mat', help='matrix replacement file, from replacement step', required=True)
+        parser.add_argument('--rep', help='cell replacement file, from replacement step', required=True)
         parser.add_argument('--mincell', type=int, default=5, help='turn-over in at least cells, default 5')
-        parser.add_argument('--topgene', type=int, default=10, help='top N genes,default 10')
+        parser.add_argument('--topgene', type=int, default=10, help='show top N genes,default 10')
         parser = s_common(parser) 
     return parser
 

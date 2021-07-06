@@ -258,9 +258,9 @@ def conversion(args):
     conversion_obj.run()
 
 def get_opts_conversion(parser, sub_program):
-    parser.add_argument('--strand', help='gene strand file', required=True)
+    parser.add_argument('--strand', help='gene strand file, the format is "geneID,+/-"', required=True)
     if sub_program:
-        parser.add_argument("--bam", help='featureCount bam', required=True)
+        parser.add_argument("--bam", help='featureCount bam(sortedByCoord), must have "MD" tag, set in star step', required=True)
         parser.add_argument("--cell", help='barcode cell list', required=True)
         parser = s_common(parser)    
     return parser
