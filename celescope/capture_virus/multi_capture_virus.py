@@ -29,7 +29,7 @@ class Multi_capture_virus(Multi):
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
-    def analysis_capture_virus(self, sample):        
+    def analysis_capture_virus(self, sample):
         step = 'analysis_capture_virus'
         cmd_line = self.get_cmd_line(step, sample)
         virus_file = f'{self.outdir_dic[sample]["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
@@ -48,6 +48,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-

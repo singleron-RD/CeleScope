@@ -2,9 +2,14 @@
 
 ## [unreleased] - 2021-06-09
 ### Added
+
 ### Changed
+
 ### Fixed
+- `celescope.tools.count` will report an error when there are multiple gtf or refFlat file under `genomeDir`.
+
 ### Removed
+- `celescope.tools.utils.glob_genomeDir`
 
 ## [1.3.1] - 2021-06-09
 ### Added

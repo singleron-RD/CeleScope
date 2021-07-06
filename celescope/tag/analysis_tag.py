@@ -10,6 +10,7 @@ class Analysis_tag(Step, AnalysisMixin):
     Features
     - Combine scRNA-Seq clustering infromation with tag assignment.
     """
+
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
         AnalysisMixin.__init__(self, args)
@@ -30,6 +31,7 @@ def get_opts_analysis_tag(parser, sub_program):
         parser.add_argument('--tsne_tag_file', help='`{sample}_tsne_tag.tsv` from count_tag. ', required=True)
         parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory. ", required=True)
         parser = s_common(parser)
+
 
 @utils.add_log
 def analysis_tag(args):

@@ -24,7 +24,7 @@ def get_nCell_barcodes(fq, nCell):
     for barcode in count_dict:
         barcode_dict[barcode] = len(count_dict[barcode])
     barcodes = pd.DataFrame.from_dict(barcode_dict, orient='index').sort_values(
-        0, ascending=False).iloc[0:nCell,].index
+        0, ascending=False).iloc[0:nCell, ].index
     return barcodes
 
 
@@ -46,7 +46,7 @@ def split_run(fq, fq_outdir, barcodes=None, nCell=None):
             if barcode in barcodes:
                 cell_index = bi.index_dict[barcode]
                 entry_dict[cell_index].append(entry)
-                
+
     # write to file
     for cell_index in entry_dict:
         with open(f'{fq_outdir}/{cell_index}.fq', 'w') as f:
@@ -69,9 +69,10 @@ def split_fq(args):
     fq_outdir = f'{args.outdir}/fastq'
     if nCell and nCell != 'None':
         nCell = int(nCell)
-    bi = split_run(args.fq, fq_outdir, barcodes, nCell) 
+    bi = split_run(args.fq, fq_outdir, barcodes, nCell)
     index_file = f'{outdir}/{sample}_index.tsv'
     bi.df_index.to_csv(index_file, sep='\t')
+
 
 def get_opts_split_fq(parser, sub_program):
     if sub_program:

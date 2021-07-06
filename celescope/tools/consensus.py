@@ -18,6 +18,7 @@ class Consensus(Step):
     Output
     - `{sample}_consensus.fq` Consensus fastq.
     """
+
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
@@ -33,8 +34,8 @@ class Consensus(Step):
 
         sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
         n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
-            fq=self.fq_tmp_file, 
-            outfile=self.consensus_fq, 
+            fq=self.fq_tmp_file,
+            outfile=self.consensus_fq,
             threshold=self.args.threshold
         )
 
@@ -52,7 +53,6 @@ class Consensus(Step):
             total=sum(length_list),
         )
         self.clean_up()
-
 
 
 @utils.add_log
@@ -96,7 +96,7 @@ def sorted_dumb_consensus(fq, outfile, threshold):
                 sorted_dumb_consensus.logger.info(f'{n_umi} UMI done.')
             total_ambiguous_base_n += ambiguous_base_n
             length_list.append(con_len)
-    
+
     out_h.close()
     return n_umi, total_ambiguous_base_n, length_list
 
@@ -159,7 +159,7 @@ def get_read_length(read_list, threshold=0.5):
     length = max length with read fraction >= threshold
     elements of read_list: [entry.sequence,entry.quality]
     '''
-    
+
     n_read = len(read_list)
     length_dict = defaultdict(int)
     for read in read_list:
@@ -169,10 +169,11 @@ def get_read_length(read_list, threshold=0.5):
         length_dict[length] = length_dict[length] / n_read
 
     fraction = 0
-    for length in sorted(length_dict.keys(),reverse=True):
+    for length in sorted(length_dict.keys(), reverse=True):
         fraction += length_dict[length]
         if fraction >= threshold:
             return length
+
 
 @utils.add_log
 def consensus(args):
@@ -180,6 +181,7 @@ def consensus(args):
     step_name = "consensus"
     consensus_obj = Consensus(args, step_name)
     consensus_obj.run()
+
 
 def get_opts_consensus(parser, sub_program):
     parser.add_argument("--threshold", help='Default 0.5. Valid base threshold. ', type=float, default=0.5)

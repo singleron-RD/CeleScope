@@ -29,6 +29,7 @@ def tracer(fq, outdir):
     )
     subprocess.check_call(cmd, shell=True)
 
+
 class Assemble_TCR(Step):
     def __init__(self, args, step):
         Step.__init__(self, args, step)

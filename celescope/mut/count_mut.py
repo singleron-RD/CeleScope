@@ -50,7 +50,6 @@ def count_mut(args):
     mut_dic = read_mut(mut_file)
     out_prefix = outdir + "/" + sample
 
-
     # tsne
     match_dict = parse_match_dir(match_dir)
     df_tsne = pd.read_csv(match_dict['tsne_coord'], sep="\t", index_col=0)
@@ -142,7 +141,7 @@ def count_mut(args):
             out_insertion_barcode_count_file, sep="\t")
 
         df_tsne_mut = pd.merge(df_tsne, df_insertion_barcode_count,
-                            right_index=True, left_index=True, how="left")
+                               right_index=True, left_index=True, how="left")
         df_tsne_mut.fillna(0, inplace=True)
         df_tsne_mut.to_csv(out_tsne_file, sep="\t")
 

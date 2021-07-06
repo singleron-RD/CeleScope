@@ -30,7 +30,7 @@ class testHLA(unittest.TestCase):
     def test_read_index(self):
         read_index(self.index_file)
 
-    #@unittest.skip('pass')
+    # @unittest.skip('pass')
     def test_summary(self):
         summary(self.index_file, self.mapping_outdir, self.sample)
 

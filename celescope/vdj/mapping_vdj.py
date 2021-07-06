@@ -63,7 +63,7 @@ class Mapping_vdj(Step):
             'mixcr exportAlignments '
             f'{self.read2_vdjca} {self.alignments} '
             '-readIds --force-overwrite -vGene -dGene -jGene -cGene '
-            '-nFeature CDR3 -aaFeature CDR3 '            
+            '-nFeature CDR3 -aaFeature CDR3 '
         )
 
         Mapping_vdj.run_mixcr.logger.info(cmd)
@@ -71,7 +71,7 @@ class Mapping_vdj(Step):
 
     @utils.add_log
     def mixcr_summary(self, total_read, df_align):
-        
+
         align_read = df_align.shape[0]
         self.add_metric(
             name=f"{self.read_type} Mapped to Any VDJ Gene",
@@ -198,26 +198,25 @@ class Mapping_vdj(Step):
 
 @utils.add_log
 def mapping_vdj(args):
-    # TODO 
+    # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
     step_name = f"{args.type}_mapping_vdj"
     mapping_vdj_obj = Mapping_vdj(args, step_name)
     mapping_vdj_obj.run()
 
 
-
 def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument(
-        '--species', 
-        choices=['hs', 'mmu'], 
-        help='Default `hs`. `hs`(human) or `mmu`(mouse). ', 
+        '--species',
+        choices=['hs', 'mmu'],
+        help='Default `hs`. `hs`(human) or `mmu`(mouse). ',
         default='hs'
     )
     parser.add_argument("--not_consensus", action='store_true', help="Input fastq is not consensused.")
     if sub_program:
         parser.add_argument(
-            "--fq", 
+            "--fq",
             help="Required. Input fastq file.",
             required=True,
         )

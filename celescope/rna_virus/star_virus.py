@@ -7,13 +7,13 @@ class StarVirus(Step, StarMixin):
     """
     star virus class
     """
-    def __init__(self, args, step_name):
-        # add genomeDir 
-        args.genomeDir = args.virus_genomeDir
-        
-        Step.__init__(self, args, step_name)        
-        StarMixin.__init__(self, args, add_prefix='virus')
 
+    def __init__(self, args, step_name):
+        # add genomeDir
+        args.genomeDir = args.virus_genomeDir
+
+        Step.__init__(self, args, step_name)
+        StarMixin.__init__(self, args, add_prefix='virus')
 
     def run(self):
         self.run_star()
@@ -30,4 +30,3 @@ def star_virus(args):
 def get_opts_star_virus(parser, sub_program):
     get_opts_star_mixin(parser, sub_program)
     parser.add_argument('--virus_genomeDir', help='virus genome dir', required=True)
-

@@ -8,8 +8,8 @@ from celescope.tools.mkref import parse_genomeDir
 
 
 def parse_genomeDir_virus(genomeDir):
-    return parse_genomeDir(genomeDir, entrys = ('fasta',))    
-    
+    return parse_genomeDir(genomeDir, entrys=('fasta',))
+
 
 class Mkref_virus(Mkref):
     def __init__(self, genome_type, args):
@@ -41,7 +41,7 @@ class Mkref_virus(Mkref):
         genome['genomeSAindexNbases'] = self.genomeSAindexNbases
         with open(self.config_file, 'w') as config_handle:
             config.write(config_handle)
-    
+
     def run(self):
         if not self.dry_run:
             self.build_star_index()
@@ -57,5 +57,5 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", help="virus fasta file",required=True)
+        parser.add_argument("--fasta", help="virus fasta file", required=True)
         parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=4)

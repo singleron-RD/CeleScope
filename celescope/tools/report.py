@@ -32,7 +32,6 @@ class reporter:
 
     def get_report(self):
 
-
         json_file = self.outdir + '/.data.json'
         if not os.path.exists(json_file):
             data = {}
@@ -58,7 +57,7 @@ class reporter:
 
         if isinstance(self.df, pd.DataFrame):
             df = self.df.fillna(value="")
-            data[self.name + '_table'] = df.values.tolist()        
+            data[self.name + '_table'] = df.values.tolist()
 
         if self.table_header:
             data[self.name + '_table_header'] = self.table_header
@@ -74,4 +73,3 @@ class reporter:
 
         with open(json_file, 'w') as fh:
             json.dump(data, fh, indent=4)
-

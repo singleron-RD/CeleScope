@@ -12,14 +12,14 @@ class AnalysisMixin():
     """
     mixin class for analysis
     child class must inherite Step class
-    """    
+    """
 
     def __init__(self, args):
         if hasattr(args, "match_dir") and args.match_dir:
             self.match_dir = args.match_dir
             self.read_match_dir()
         else:
-            self.match_dir = args.outdir + "/../" # use self
+            self.match_dir = args.outdir + "/../"  # use self
 
     @utils.add_log
     def seurat(self, matrix_file, save_rds, genomeDir):
@@ -34,9 +34,8 @@ class AnalysisMixin():
             f'--mt_gene_list {mt_gene_list} '
             f'--save_rds {save_rds}'
         )
-        AnalysisMixin.seurat.logger.info(cmd)
+        self.seurat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
-
 
     @utils.add_log
     def auto_assign(self, type_marker_tsv):
@@ -49,7 +48,7 @@ class AnalysisMixin():
             f'--outdir {self.outdir} '
             f'--sample {self.sample} '
         )
-        AnalysisMixin.auto_assign.logger.info(cmd)
+        self.auto_assign.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     @staticmethod
@@ -87,12 +86,12 @@ class AnalysisMixin():
         return html code
         """
 
-        avg_logfc_col = "avg_log2FC" # seurat 4
-        if "avg_logFC" in self.marker_df.columns: # seurat 2.3.4
+        avg_logfc_col = "avg_log2FC"  # seurat 4
+        if "avg_logFC" in self.marker_df.columns:  # seurat 2.3.4
             avg_logfc_col = "avg_logFC"
         marker_df = self.marker_df.loc[:,
-            ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
-        ]
+                                       ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
+                                       ]
         marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
 
         return marker_df

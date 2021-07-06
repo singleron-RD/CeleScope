@@ -7,10 +7,11 @@ from celescope.__init__ import __VERSION__, ASSAY_DICT
 class ArgFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
     pass
 
+
 def main():
     """celescope cli
     """
-    parser = argparse.ArgumentParser(description='CeleScope',formatter_class=ArgFormatter)
+    parser = argparse.ArgumentParser(description='CeleScope', formatter_class=ArgFormatter)
     parser.add_argument('-v', '--version', action='version', version=__VERSION__)
     subparsers = parser.add_subparsers()
 

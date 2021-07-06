@@ -43,7 +43,8 @@ class Count_vdj(Step):
         if (not args.match_dir) or (args.match_dir == "None"):
             self.match_bool = False
         if self.match_bool:
-            self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(args.match_dir)
+            self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
+                args.match_dir)
 
         # out files
         self.cell_confident_file = f"{self.out_prefix}_cell_confident.tsv"
@@ -59,7 +60,8 @@ class Count_vdj(Step):
         df_UMI_sum = df_UMI_count_filter.groupby(
             ['barcode'], as_index=False).agg({"UMI": "sum"})
         if (self.args.UMI_min == "auto"):
-            df_UMI_sum_sorted = df_UMI_sum.sort_values(["UMI"], ascending=False)
+            df_UMI_sum_sorted = df_UMI_sum.sort_values(
+                ["UMI"], ascending=False)
             rank_UMI = df_UMI_sum_sorted.iloc[CELL_CALLING_RANK, :]["UMI"]
             UMI_min = int(rank_UMI / 10)
         else:
@@ -71,7 +73,7 @@ class Count_vdj(Step):
         df = df_UMI_sum.sort_values('UMI', ascending=False)
         self.add_data_item(CB_num=df[df['mark'] == 'CB'].shape[0])
         self.add_data_item(Cells=list(df.loc[df['mark'] == 'CB', 'UMI']))
-        self.add_data_item(UB_num= df[df['mark'] == 'UB'].shape[0])
+        self.add_data_item(UB_num=df[df['mark'] == 'UB'].shape[0])
         self.add_data_item(Background=list(df.loc[df['mark'] == 'UB', 'UMI']))
 
         cell_barcodes = set(df_UMI_cell.barcode)
@@ -81,7 +83,8 @@ class Count_vdj(Step):
             value=total_cell_number,
         )
 
-        df_cell = df_UMI_count_filter[df_UMI_count_filter.barcode.isin(cell_barcodes)]
+        df_cell = df_UMI_count_filter[df_UMI_count_filter.barcode.isin(
+            cell_barcodes)]
         return df_cell, cell_barcodes
 
     @utils.add_log
@@ -97,7 +100,7 @@ class Count_vdj(Step):
             ["barcode", "chain"], as_index=False).head(1)
         return df_confident
 
-    def get_df_valid_count(self,df_confident):
+    def get_df_valid_count(self, df_confident):
         df_valid_count = df_confident.set_index(["barcode", "chain"])
         df_valid_count = df_valid_count.unstack()
         df_valid_count.columns = ['_'.join(col) for col in df_valid_count]
@@ -105,14 +108,13 @@ class Count_vdj(Step):
         df_valid_count.fillna(inplace=True, value="NA")
         return df_valid_count
 
-    
     def get_clonetypes_and_write(self, df_valid_count, cell_barcodes):
         """
         Returns
         - df_clonetypes
         - df_match_clonetypes
         """
-        
+
         total_cell_number = len(cell_barcodes)
         df_clonetypes = df_valid_count.copy()
         df_match_clonetypes = None
@@ -121,7 +123,8 @@ class Count_vdj(Step):
             "barcode": "count"})
         # put na last
         df_clonetypes.replace('NA', np.nan, inplace=True)
-        df_clonetypes.sort_values(["barcode"] + self.cols, ascending=False, na_position='last', inplace=True)
+        df_clonetypes.sort_values(
+            ["barcode"] + self.cols, ascending=False, na_position='last', inplace=True)
         df_clonetypes.replace(np.nan, 'NA', inplace=True)
 
         total_CDR3_barcode_number = sum(df_clonetypes.barcode)
@@ -138,7 +141,8 @@ class Count_vdj(Step):
         # order
         order = ["clonetype_ID"] + self.cols + ["barcode", "percent"]
         df_clonetypes = df_clonetypes[order]
-        df_clonetypes.rename(columns={"barcode": "barcode_count"}, inplace=True)
+        df_clonetypes.rename(
+            columns={"barcode": "barcode_count"}, inplace=True)
         # out clonetypes
         df_clonetypes.to_csv(self.clonetypes_file, sep="\t", index=False)
 
@@ -194,11 +198,11 @@ class Count_vdj(Step):
                     total=total_cell_number
                 )
 
-
         # BCR
         elif self.args.type == "BCR":
 
-            UMI_col_dic = {"IGH": "UMI_IGH", "IGL": "UMI_IGL", "IGK": "UMI_IGK"}
+            UMI_col_dic = {"IGH": "UMI_IGH",
+                           "IGL": "UMI_IGL", "IGK": "UMI_IGK"}
             for chain in UMI_col_dic:
                 UMI_col_name = UMI_col_dic[chain]
                 if UMI_col_name in df_valid_count.columns:
@@ -271,24 +275,26 @@ class Count_vdj(Step):
             df_match_clonetypes["percent"] = df_match_clonetypes["percent"].apply(
                 lambda x: round(x, 2)
             )
-            df_match_clonetypes.rename(columns={"barcode": "barcode_count"}, inplace=True)
+            df_match_clonetypes.rename(
+                columns={"barcode": "barcode_count"}, inplace=True)
             df_match_clonetypes = df_match_clonetypes.merge(
                 df_clonetypes, on=self.cols, how='left', suffixes=('', '_y'))
             # order and drop duplicated cols
             order = ["clonetype_ID"] + self.cols + ["barcode_count", "percent"]
             df_match_clonetypes = df_match_clonetypes[order]
-            df_match_clonetypes.sort_values(["barcode_count", "clonetype_ID"], ascending=[False,True], inplace=True)
+            df_match_clonetypes.sort_values(["barcode_count", "clonetype_ID"], ascending=[
+                                            False, True], inplace=True)
             df_match_clonetypes.to_csv(
                 self.match_clonetypes_file, sep="\t", index=False)
         return df_clonetypes, df_match_clonetypes
 
-
     def write_cell_confident_count(self, df_valid_count, df_clonetypes, df_confident):
         df_mergeID = pd.merge(df_valid_count,
-                            df_clonetypes, how="left", on=self.cols)
+                              df_clonetypes, how="left", on=self.cols)
         df_mergeID.sort_values(["clonetype_ID", "barcode"], inplace=True)
         # output df_valid_count
-        df_mergeID.to_csv(self.cell_confident_count_file, sep="\t", index=False)
+        df_mergeID.to_csv(self.cell_confident_count_file,
+                          sep="\t", index=False)
         df_mergeID = df_mergeID[["barcode", "clonetype_ID"]]
         df_cell_confident_with_ID = pd.merge(
             df_confident, df_mergeID, how="left", on="barcode")
@@ -298,9 +304,8 @@ class Count_vdj(Step):
         df_cell_confident_with_ID.to_csv(
             self.cell_confident_file, sep="\t", index=False)
 
-
     def write_clonetypes_table_to_data(self, df_clonetypes, df_match_clonetypes):
-                # cloneytpes table
+        # cloneytpes table
         def format_table(df_clonetypes):
             df_table = df_clonetypes.copy()
             df_table["percent"] = df_table["percent"].apply(
@@ -310,7 +315,8 @@ class Count_vdj(Step):
             for chain in self.chains:
                 for seq in seqs:
                     cols.append("_".join([seq, chain]))
-            df_table_cols = ["clonetype_ID"] + cols + ["barcode_count", "percent"]
+            df_table_cols = ["clonetype_ID"] + \
+                cols + ["barcode_count", "percent"]
             df_table = df_table[df_table_cols]
             table_header = ["Clonetype_ID"] + cols + ["Frequency", "Percent"]
             return df_table, table_header
@@ -325,18 +331,21 @@ class Count_vdj(Step):
         self.add_data_item(table_dict=table_dict)
 
     def run(self):
-        df_UMI_count_filter = pd.read_csv(self.args.UMI_count_filter_file, sep='\t')
+        df_UMI_count_filter = pd.read_csv(
+            self.args.UMI_count_filter_file, sep='\t')
         df_cell, cell_barcodes = self.cell_calling(df_UMI_count_filter)
         df_confident = self.get_df_confident(df_cell)
         df_valid_count = self.get_df_valid_count(df_confident)
-        df_clonetypes, df_match_clonetypes = self.get_clonetypes_and_write(df_valid_count, cell_barcodes)
-        self.write_cell_confident_count(df_valid_count, df_clonetypes, df_confident)
+        df_clonetypes, df_match_clonetypes = self.get_clonetypes_and_write(
+            df_valid_count, cell_barcodes)
+        self.write_cell_confident_count(
+            df_valid_count, df_clonetypes, df_confident)
         self.write_clonetypes_table_to_data(df_clonetypes, df_match_clonetypes)
         self.clean_up()
 
 
 def count_vdj(args):
-    # TODO 
+    # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
     step_name = f"{args.type}_count_vdj"
     count_vdj_obj = Count_vdj(args, step_name)
@@ -344,25 +353,26 @@ def count_vdj(args):
 
 
 def get_opts_count_vdj(parser, sub_program):
-    parser.add_argument("--type", help="Required. `TCR` or `BCR`. ", required=True)
+    parser.add_argument(
+        "--type", help="Required. `TCR` or `BCR`. ", required=True)
     parser.add_argument(
         '--UMI_min',
-        help='Default `auto`. Minimum UMI number to filter. The barcode with UMI>=UMI_min is considered to be cell.', 
+        help='Default `auto`. Minimum UMI number to filter. The barcode with UMI>=UMI_min is considered to be cell.',
         default="auto"
     )
     parser.add_argument(
-        '--iUMI', 
+        '--iUMI',
         help="""Default `1`. Minimum number of UMI of identical receptor type and CDR3. 
-For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""", 
+For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""",
         type=int,
         default=1
     )
     if sub_program:
-        parser.add_argument("--UMI_count_filter_file", help="Required. File from step mapping_vdj.", required=True)
+        parser.add_argument("--UMI_count_filter_file",
+                            help="Required. File from step mapping_vdj.", required=True)
         parser.add_argument(
-            "--match_dir", 
+            "--match_dir",
             help="Match celescope scRNA-Seq directory. ",
             default=None
         )
         parser = s_common(parser)
-

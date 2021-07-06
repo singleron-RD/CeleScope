@@ -29,7 +29,7 @@ class Mkref():
 
         # out file
         self.config_file = f'{self.genomeDir}/{GENOME_CONFIG}'
-    
+
     @abc.abstractmethod
     def run(self):
         return

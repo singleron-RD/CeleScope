@@ -186,13 +186,13 @@ def filter_cellular_barcodes_ordmag(bc_counts, recovered_cells):
         that likely represents a cell
     """
     if recovered_cells is None:
-        ### Modified parameter, didn't use the default value
+        # Modified parameter, didn't use the default value
         recovered_cells = 3000
 #         recovered_cells = cr_constants.DEFAULT_RECOVERED_CELLS_PER_GEM_GROUP # 3000
 
-    ## Initialize filter result metrics
+    # Initialize filter result metrics
     metrics = init_barcode_filter_result()
-    ## determine max # of cellular barcodes to consider
+    # determine max # of cellular barcodes to consider
     max_filtered_bcs = determine_max_filtered_bcs(recovered_cells)
     metrics['max_filtered_bcs'] = max_filtered_bcs
 
@@ -202,15 +202,15 @@ def filter_cellular_barcodes_ordmag(bc_counts, recovered_cells):
         return [], metrics, msg
 
 #     baseline_bc_idx = int(round(float(recovered_cells) * (1 - cr_constants.ORDMAG_RECOVERED_CELLS_QUANTILE))) # Quantile=0.99
-    baseline_bc_idx = int(round(float(recovered_cells) * (1 - 0.99))) # Quantile=0.99
+    baseline_bc_idx = int(round(float(recovered_cells) * (1 - 0.99)))  # Quantile=0.99
     baseline_bc_idx = min(baseline_bc_idx, len(nonzero_bc_counts) - 1)
     assert baseline_bc_idx < max_filtered_bcs
 
     # Bootstrap sampling; run algo with many random samples of the data
     top_n_boot = np.array([
         find_within_ordmag(np.random.choice(nonzero_bc_counts, len(nonzero_bc_counts)), baseline_bc_idx)
-        for i in range(100) # 100
-#         for i in range(cr_constants.ORDMAG_NUM_BOOTSTRAP_SAMPLES) # 100
+        for i in range(100)  # 100
+        #         for i in range(cr_constants.ORDMAG_NUM_BOOTSTRAP_SAMPLES) # 100
     ])
 
     metrics.update(summarize_bootstrapped_top_n(top_n_boot))
@@ -224,9 +224,9 @@ def filter_cellular_barcodes_ordmag(bc_counts, recovered_cells):
 def filter_cellular_barcodes_fixed_cutoff(bc_counts, cutoff):
     nonzero_bcs = len(bc_counts[bc_counts > 0])
     top_n = min(cutoff, nonzero_bcs)
-    ## np.argsort(bc_counts) => the indices that would sort an array
-    ## np.argsort(bc_counts)[0] => idx of the smallest element in array
-    ## np.argsort(bc_counts)[-1] => idx of the largest element in array
+    # np.argsort(bc_counts) => the indices that would sort an array
+    # np.argsort(bc_counts)[0] => idx of the smallest element in array
+    # np.argsort(bc_counts)[-1] => idx of the largest element in array
     top_bc_idx = np.sort(np.argsort(bc_counts)[::-1][:top_n])
     metrics = {
         'filtered_bcs': top_n,
@@ -354,7 +354,7 @@ def eval_multinomial_loglikelihoods(matrix, profile_p, max_mem_gb=0.1):
 
     for chunk_start in range(0, num_bcs, bcs_per_chunk):
         chunk = slice(chunk_start, chunk_start+bcs_per_chunk)
-        matrix_chunk = matrix[:,chunk].transpose().toarray()
+        matrix_chunk = matrix[:, chunk].transpose().toarray()
         n = matrix_chunk.sum(1)
         loglk[chunk] = sp_stats.multinomial.logpmf(matrix_chunk, n, p=profile_p)
     return loglk
@@ -415,7 +415,8 @@ def simulate_multinomial_loglikelihoods(profile_p, umis_per_bc,
                     k += 1
                     if k >= n_sample_feature_block:
                         # Amortize this operation
-                        sampled_features = np.random.choice(len(profile_p), size=n_sample_feature_block, p=profile_p, replace=True)
+                        sampled_features = np.random.choice(
+                            len(profile_p), size=n_sample_feature_block, p=profile_p, replace=True)
                         k = 0
                     curr_counts[j] += 1
                     curr_loglk += log_profile_p[j] + np.log(float(n)/curr_counts[j])
@@ -450,6 +451,6 @@ def compute_ambient_pvalues(umis_per_bc, obs_loglk, sim_n, sim_loglk):
     pvalues = np.zeros(num_barcodes)
 
     for i in range(num_barcodes):
-        num_lower_loglk = np.sum(sim_loglk[sim_n_idx[i],:] < obs_loglk[i])
+        num_lower_loglk = np.sum(sim_loglk[sim_n_idx[i], :] < obs_loglk[i])
         pvalues[i] = float(1 + num_lower_loglk) / (1 + num_sims)
     return pvalues

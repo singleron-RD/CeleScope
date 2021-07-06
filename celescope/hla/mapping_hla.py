@@ -148,10 +148,10 @@ def hla_typing(index_file, outdir, thread):
 
 @add_log
 def summary(index_file, outdir, sample):
-    
+
     n = 0
     df_valid = read_index(index_file)
-    
+
     for index in df_valid.index:
         try:
             sub_df = pd.read_csv(

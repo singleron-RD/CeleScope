@@ -16,7 +16,7 @@ CHARTS_PLOTLY_MODEBAR_TRANSFORM_BUTTONS = [
     'zoomIn2d',
     'zoomOut2d',
     'autoScale2d',
-    #'resetScale2d'  can't totally disable interaction, it seems-- keep reset option
+    # 'resetScale2d'  can't totally disable interaction, it seems-- keep reset option
 ]
 
 CHARTS_PLOTLY_EXPORT_BUTTONS = [
@@ -38,11 +38,11 @@ CHARTS_PLOTLY_MOVABLE_CONFIG = {
 BC_RANK_PLOT_LINE_WIDTH = 3
 # Gradient scheme used in the barcode rank plot
 BC_PLOT_COLORS = ['#dddddd', '#d1d8dc', '#c6d3dc', '#bacfdb', '#aecada', '#a3c5d9', '#97c0d9', '#8cbbd8', '#80b7d7',
-                      '#74b2d7', '#6aadd6', '#66abd4', '#62a8d2', '#5ea5d1', '#59a2cf', '#559fce', '#519ccc', '#4d99ca',
-                      '#4997c9', '#4594c7', '#4191c5', '#3d8dc4', '#3a8ac2', '#3787c0', '#3383be', '#3080bd', '#2c7cbb',
-                      '#2979b9', '#2676b7', '#2272b6', '#1f6eb3', '#1d6ab0', '#1a65ac', '#1861a9', '#155ca6', '#1358a2',
-                      '#10539f', '#0e4f9b', '#0b4a98', '#094695', '#09438f', '#0a4189', '#0c3f83', '#0d3d7c', '#0e3b76',
-                      '#103970', '#11366a', '#123463', '#14325d', '#153057']
+                  '#74b2d7', '#6aadd6', '#66abd4', '#62a8d2', '#5ea5d1', '#59a2cf', '#559fce', '#519ccc', '#4d99ca',
+                  '#4997c9', '#4594c7', '#4191c5', '#3d8dc4', '#3a8ac2', '#3787c0', '#3383be', '#3080bd', '#2c7cbb',
+                  '#2979b9', '#2676b7', '#2272b6', '#1f6eb3', '#1d6ab0', '#1a65ac', '#1861a9', '#155ca6', '#1358a2',
+                  '#10539f', '#0e4f9b', '#0b4a98', '#094695', '#09438f', '#0a4189', '#0c3f83', '#0d3d7c', '#0e3b76',
+                  '#103970', '#11366a', '#123463', '#14325d', '#153057']
 
 CHARTS = [
     {
@@ -50,7 +50,7 @@ CHARTS = [
             'title': 'Barcode Rank',
             'width': 470,
             'height': 313,
-            'margin': { 'l': 60, 'r': 0, 't': 30, 'b': 40 },
+            'margin': {'l': 60, 'r': 0, 't': 30, 'b': 40},
             'hovermode': 'closest',
             'xaxis': {
                 'title': 'Barcodes',

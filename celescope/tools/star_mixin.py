@@ -10,6 +10,7 @@ class StarMixin():
     """
     Mixin class for STAR
     """
+
     def __init__(self, args, add_prefix=None):
         self.fq = args.fq
         self.genomeDir = args.genomeDir
@@ -33,7 +34,7 @@ class StarMixin():
         self.STAR_map_log = f'{self.outPrefix}Log.final.out'
         self.unsort_STAR_bam = f'{self.outPrefix}Aligned.out.bam'
         self.STAR_bam = f'{self.outPrefix}Aligned.sortedByCoord.out.bam'
-    
+
     @utils.add_log
     def STAR(self):
         cmd = [
@@ -43,7 +44,7 @@ class StarMixin():
             '--readFilesIn', self.fq,
             '--outFilterMultimapNmax', str(self.multi_max),
             '--outFileNamePrefix', self.outPrefix,
-            '--outSAMtype', 'BAM', 'Unsorted', # controls sort by Coordinate or not
+            '--outSAMtype', 'BAM', 'Unsorted',  # controls sort by Coordinate or not
             '--outFilterMatchNmin', str(self.outFilterMatchNmin)
         ]
         if self.out_unmapped:
@@ -64,20 +65,15 @@ class StarMixin():
 
     @utils.add_log
     def sort_bam(self):
-        cmd = (
-            f'samtools sort {self.unsort_STAR_bam} '
-            f'-o {self.STAR_bam} '
-            f'--threads {self.thread} '
+        utils.sort_bam(
+            self.unsort_STAR_bam,
+            self.STAR_bam,
+            threads=self.thread,
         )
-        StarMixin.sort_bam.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
     def index_bam(self):
-        cmd = f"samtools index {self.STAR_bam}"
-        StarMixin.index_bam.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
-    
+        utils.index_bam(self.STAR_bam)
 
     def get_star_metrics(self):
         """
@@ -118,29 +114,29 @@ class StarMixin():
 
 def get_opts_star_mixin(parser, sub_program):
     parser.add_argument(
-        '--genomeDir', 
+        '--genomeDir',
         help='Required. Genome directory.'
     )
     parser.add_argument(
-        '--outFilterMatchNmin', 
+        '--outFilterMatchNmin',
         help="""Default `0`. Alignment will be output only if the number of matched bases 
-is higher than or equal to this value.""", 
+is higher than or equal to this value.""",
         default=0
     )
     parser.add_argument(
-        '--out_unmapped', 
-        help='Output unmapped reads', 
+        '--out_unmapped',
+        help='Output unmapped reads',
         action='store_true'
     )
     parser.add_argument('--STAR_param', help='Other STAR parameters', default="")
     parser.add_argument(
-        '--outFilterMultimapNmax', 
-        help='Default `1`. How many places are allowed to match a read at most.', 
+        '--outFilterMultimapNmax',
+        help='Default `1`. How many places are allowed to match a read at most.',
         default=1
     )
     parser.add_argument(
-        '--starMem', 
-        help='Default `30`. Maximum memory that STAR can use.', 
+        '--starMem',
+        help='Default `30`. Maximum memory that STAR can use.',
         default=30
     )
     if sub_program:
