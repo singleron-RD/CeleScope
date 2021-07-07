@@ -4,7 +4,7 @@ from collections import defaultdict
 import subprocess
 import pandas as pd
 from celescope.tools import utils
-
+from itertools import groupby
 
 class Count(Step):
     """
@@ -26,6 +26,13 @@ class Count(Step):
         self.sample = args.sample
         self.bam_file = args.bam_file
         self.cells = args.cells
+        
+        self.match_bool = True
+        if (not args.match_dir) or (args.match_dir == "None"):
+            self.match_bool = False
+        if self.match_bool:
+            self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
+                args.match_dir)
 
     @utils.add_log
     def count_bam(self):
@@ -33,24 +40,39 @@ class Count(Step):
         header = rawbam.header
         new_bam = pysam.AlignmentFile(
             self.bam_file + ".temp", "wb", header=header)
-        dic = defaultdict(set)
-        for read in rawbam:
-            attr = read.query_name.split('_')
-            barcode = attr[0]
-            umi = attr[1]
-            read.set_tag(tag='CB', value=barcode, value_type='Z')
-            read.set_tag(tag='UB', value=umi, value_type='Z')
-            dic[barcode].add(umi)
-            new_bam.write(read)
+        # write fq and bam
+        dic = defaultdict(lambda: defaultdict(int))
+
+        def keyfunc(x):
+            return x.query_name
+        for k,g in groupby(rawbam, keyfunc):
+            name= k
+            attrs = name.split('_')
+            cb = attrs[0]
+            umi = attrs[1]
+            dic[cb][umi] += 1
+            for read in list(g):
+                read.set_tag(tag='CB', value=cb, value_type='Z')
+                read.set_tag(tag='UB', value=umi, value_type='Z')
+                new_bam.write(read)
         new_bam.close()
         cmd = f'mv {self.bam_file}.temp {self.bam_file}'
         subprocess.check_call(cmd, shell=True)
+           
+        # write UMI count        
+        df_umi = open(f'{self.outdir}/{self.sample}_count.txt', 'w')
+        df_umi.write(f'barcode\tUMI\tcount\n') 
 
-        df = pd.DataFrame()
-        df['barcode'] = list(dic.keys())
-        df['UMI'] = [len(dic[i]) for i in list(dic.keys())]
+        for cb in dic:
+            for umi in dic[cb]:
+                df_umi.write(f'{cb}\t{umi}\t{dic[cb][umi]}\n')
+        df_umi.close()
+                
+        df = pd.read_csv(f'{self.outdir}/{self.sample}_count.txt', sep='\t')
+        df = df.groupby(['barcode'], as_index=False).agg({'UMI': 'count'})
         df = df.sort_values(by='UMI', ascending=False)
-        df.to_csv(f'{self.outdir}/count.txt', sep='\t', index=False)
+        df.to_csv(f'{self.outdir}/{self.sample}_count.txt', sep='\t', index=False)
+        
         return df
 
     @utils.add_log
@@ -70,42 +92,47 @@ class Count(Step):
 
 
     @utils.add_log
-    def filter_bam(self):
-        barcodes = self.cut_off()
+    def bam_to_fq(self):
+        vdj_barcodes = self.cut_off()
+        if self.match_bool:
+            barcodes = list(set(vdj_barcodes).intersection(set(self.match_cell_barcodes)))
+        
         bam = pysam.AlignmentFile(self.bam_file, "rb")
+        
+        qualities = 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
         new_fq1 = open(f'{self.outdir}/{self.sample}_mapped_R1.fq', 'w')
         new_fq2 = open(f'{self.outdir}/{self.sample}_mapped_R2.fq', 'w')
-        R1 = set()
-        R2 = set()
-        for read in bam:
-            attr = read.query_name.split('_')
-            barcode = attr[0]
-            umi = attr[1]
-            quality = 'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF'
-            if barcode in barcodes:
-                R1.add(f'@{read.query_name}\n{barcode}{umi}\n+\n{quality}\n')
-                R2.add(f'@{read.query_name}\n{read.query_sequence}\n+\n{read.qual}\n')
+        def keyfunc(x):
+            return x.query_name, x.query_sequence, x.qual
+        count_read = 0
+        for k,g in groupby(bam, keyfunc):
+            name, seq, qual = k
+            attrs = name.split('_')
+            cb = attrs[0]
+            umi = attrs[1]
+            if cb in barcodes:
+
+                new_fq1.write(f'@{name}\n{cb}{umi}\n+\n{qualities}\n')
+                new_fq2.write(f'@{name}\n{seq}\n+\n{qual}\n')
+                count_read += 1
             else:
                 continue
-        R1 = sorted(list(R1))
-        R2 = sorted(list(R2))
-        for r1 in R1:
-            new_fq1.write(r1)
-        for r2 in R2:
-            new_fq2.write(r2)
+             
+            if count_read % 100000 == 0:
+                Count.bam_to_fq.logger.info(f'processed {count_read} reads')
 
-        new_fq2.close()
+        Count.bam_to_fq.logger.info(f'total processed {count_read} reads, done')
+        
         new_fq1.close()
-
         with open(f'{self.outdir}/{self.sample}.toassemble_bc.txt', 'w') as fh:
             for barcode in barcodes:
                 fh.write(str(barcode) + '\n')
 
-        Count.filter_bam.logger.info(f'get {len(barcodes)} cells for assemble')
+        Count.bam_to_fq.logger.info(f'get {len(barcodes)} cells for assemble')
 
     @utils.add_log
     def run(self):
-        self.filter_bam()
+        self.bam_to_fq()
 
 @utils.add_log
 def count(args):
@@ -118,6 +145,7 @@ def get_opts_count(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--bam_file', help='BAM file form STAR step', required=True)
+        parser.add_argument('--match_dir', help='Match celescope scRNA-Seq directory.', default=None)
     parser.add_argument('--cells', help='expected cell number', default=3000)
 
 

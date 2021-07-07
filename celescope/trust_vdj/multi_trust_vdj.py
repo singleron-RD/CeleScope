@@ -22,6 +22,7 @@ class Multi_trust_vdj(Multi):
         cmd = (
             f'{cmd_line} '
             f'--bam_file {bam_file} '
+            f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=2)
 

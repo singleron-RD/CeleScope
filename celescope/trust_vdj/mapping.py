@@ -22,6 +22,8 @@ class Mapping(Step):
         self.debug = args.debug
         self.outFilterMatchNmin = int(args.outFilterMatchNmin)
         self.multi_max = int(args.outFilterMultimapNmax)
+        self.outFilterScoreMinOverLread = args.outFilterScoreMinOverLread
+        self.outFilterMatchNminOverLread = args.outFilterMatchNminOverLread
         self.STAR_param = args.STAR_param
         self.consensus_fq = args.consensus_fq
         self.Seqtype = args.Seqtype
@@ -51,7 +53,9 @@ class Mapping(Step):
             '--outFilterMultimapNmax', str(self.multi_max),
             '--outFileNamePrefix', self.outPrefix,
             '--outSAMtype', 'BAM', 'Unsorted',  # controls sort by Coordinate or not
-            '--outFilterMatchNmin', str(self.outFilterMatchNmin)
+            '--outFilterMatchNmin', str(self.outFilterMatchNmin), 
+            '--outFilterScoreMinOverLread', str(self.outFilterScoreMinOverLread), 
+            '--outFilterMatchNminOverLread', str(self.outFilterMatchNminOverLread)
         ]
         if self.out_unmapped:
             cmd += ['--outReadsUnmapped', 'Fastx']
@@ -90,7 +94,8 @@ class Mapping(Step):
             'samtools sort -n '
             f'-@ {self.thread} '
             f'-o {self.name_sorted_bam} '
-            f'{self.STAR_bam} '
+            f'{self.STAR_bam}; '
+            f'samtools index {self.name_sorted_bam}'
         )
         Mapping.name_sort_bam.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
@@ -202,6 +207,10 @@ is higher than or equal to this value.""",
         help='Default `1`. How many places are allowed to match a read at most.',
         default=1
     )
+    parser.add_argument('--outFilterScoreMinOverLread', 
+                        help='real: same as outFilterScoreMin, but  normalized to read length', default=0)
+    parser.add_argument('--outFilterMatchNminOverLread', 
+                        help='real: sam as outFilterMatchNmin, but normalized to the read length', default=0)
     parser.add_argument(
         '--starMem',
         help='Default `30`. Maximum memory that STAR can use.',
