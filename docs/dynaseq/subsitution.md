@@ -6,7 +6,7 @@
 
 
 ## Arguments
-`--bam` bam file
+`--bam` bam file from conversion step
 
 `--outdir` Output diretory.
 

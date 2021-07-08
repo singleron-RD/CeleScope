@@ -14,9 +14,9 @@
 ## Arguments
 `--bg_cov` background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format
 
-`--bam` bam file
+`--bam` bam file from conversion step
 
-`--bg` background snp file
+`--bg` background snp file, csv or vcf format
 
 `--cell_keep` filter cell
 
