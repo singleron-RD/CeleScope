@@ -132,10 +132,10 @@ class Assemble(Step):
                 umi = attrs[1]
                 if cb in barcodes:
                     new_fq.write(f'{entry}\n')
-                    new_cb.write(f'>{name}\n{cb}\n')
-                    new_umi.write(f'>{name}\n{umi}\n')
+                    new_cb.write(f'>{read_id}\n{cb}\n')
+                    new_umi.write(f'>{read_id}\n{umi}\n')
                     read_count += 1
-                    if read_count % 100000 == 0:
+                    if read_count % 1000000 == 0:
                         Assemble.cutoff.logger.info(f'processed {read_count} reads')
             
             new_fq.close()
