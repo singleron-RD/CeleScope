@@ -3,6 +3,9 @@
 ## [unreleased] - 2021-06-09
 ### Added
 
+- Add `dynascope` assay.
+- Add `celescope tag split_tag`. 
+
 ### Changed
 
 ### Fixed

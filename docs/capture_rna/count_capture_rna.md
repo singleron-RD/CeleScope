@@ -57,5 +57,5 @@ CeleScope >=1.2.0 does not output this file.
 
 `--bam` Required. BAM file from featureCounts.
 
-`--force_cell_num` Default `None`. Force the cell number to be this value ± 10%.
+`--force_cell_num` Default `None`. Force the cell number within (value * 0.9, value * 1.1).
 

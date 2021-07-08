@@ -10,7 +10,6 @@ PRE_PROCESSING_STEPS = ('sample', 'barcode', 'cutadapt')
 DOCS_DIR = f'{ROOT_PATH}/../docs/'
 TEMPLATE_DIR = 'docs_template/'
 MANUAL = f'{DOCS_DIR}/manual.md'
-MANUAL_TEMPLATE = f'{DOCS_DIR}/manual_template.md'
 
 
 def get_argument_docs_from_parser(parser):
@@ -126,10 +125,6 @@ def main():
         f"cp -r {TEMPLATE_DIR} {DOCS_DIR}"
     )
     os.system(cmd)
-
-    with open(MANUAL, 'w') as manual_handle:
-        with open(MANUAL_TEMPLATE, 'r') as manual_template:
-            manual_handle.write(manual_template.read())
 
     for assay in ASSAY_DICT:
         docs_obj = Docs(assay)
