@@ -689,3 +689,8 @@ def sort_bam(input_bam, output_bam, threads=1):
 def index_bam(input_bam):
     cmd = f"samtools index {input_bam}"
     subprocess.check_call(cmd, shell=True)
+
+
+def check_mkdir(dir_name):
+    if not os.path.exists(dir_name):
+        os.system(f"mkdir -p {dir_name}")
