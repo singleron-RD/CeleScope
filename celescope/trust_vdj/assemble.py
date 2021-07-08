@@ -97,34 +97,38 @@ class Assemble(Step):
         
     @utils.add_log
     def cutoff(self):
-        with pysam.FastxFile(f'{self.outdir}/{self.sample}_raw.fq', 'r') as fa_file:
-            dic = defaultdict(set)
-            for entry in fa_file:
+        dic = defaultdict(set)
+        with pysam.FastxFile(f'{self.outdir}/{self.sample}_raw.fq', 'r') as fa:
+            for entry in fa:
                 name = entry.name
                 attrs = name.split('_')
                 cb = attrs[0]
                 umi = attrs[1]
                 dic[cb].add(umi)
                 
-            df = pd.DataFrame()
-            df['barcode'] = list(dic.keys())
-            df['UMI'] = [len(dic[i]) for i in list(dic.keys())]
-            df_sort = df.sort_values(by='UMI', ascending=False)
-            df_sort.to_csv(self.count_file, sep='\t', index=False)
-            
-            UMI_num = int(self.cells)
-            rank = UMI_num / 100
-            rank_UMI = df_sort.loc[rank, 'UMI']
-            UMI_min = int(rank_UMI / 10)
+        df = pd.DataFrame()
+        df['barcode'] = list(dic.keys())
+        df['UMI'] = [len(dic[i]) for i in list(dic.keys())]
+        df_sort = df.sort_values(by='UMI', ascending=False)
+        #df_sort = df_sort.reset_index(drop=True)
+        df_sort.to_csv(self.count_file, sep='\t', index=False)
+        
+        UMI_num = int(self.cells)
+        rank = int(UMI_num / 100)
+        rank_UMI = df_sort.iloc[rank, :]['UMI']
+        UMI_min = int(rank_UMI / 10)
 
-            df_umi_filtered = df_sort[df_sort.UMI >= UMI_min]
-            barcodes = df_umi_filtered.barcode.tolist()
-            
+        df_umi_filtered = df_sort[df_sort['UMI'] >= UMI_min]
+        barcodes = df_umi_filtered['barcode'].tolist()
+        Assemble.cutoff.logger.info(f'get {len(barcodes)} to assemble')
+        
+        new_fq = open(f'{self.outdir}/{self.sample}_toassemble.fq', 'w')
+        new_cb = open(f'{self.outdir}/{self.sample}_toassemble_bc.fa', 'w')
+        new_umi = open(f'{self.outdir}/{self.sample}_toassemble_umi.fa', 'w')
+        read_count = 0
+        barcode_count = set()
         with pysam.FastxFile(f'{self.outdir}/{self.sample}_raw.fq', 'r') as fa_file:
-            new_fq = open(f'{self.outdir}/{self.sample}_toassemble.fq', 'w')
-            new_cb = open(f'{self.outdir}/{self.sample}_toassemble_bc.fa', 'w')
-            new_umi = open(f'{self.outdir}/{self.sample}_toassemble_umi.fa', 'w')
-            read_count = 0
+
             for entry in fa_file:
                 read_id = entry.name
                 attrs = read_id.split('_')
@@ -135,8 +139,10 @@ class Assemble(Step):
                     new_cb.write(f'>{read_id}\n{cb}\n')
                     new_umi.write(f'>{read_id}\n{umi}\n')
                     read_count += 1
+                    barcode_count.add(cb)
                     if read_count % 1000000 == 0:
                         Assemble.cutoff.logger.info(f'processed {read_count} reads')
+            Assemble.cutoff.logger.info(f'confirmed {len(barcode_count)} cells to assemble')
             
             new_fq.close()
             new_cb.close()
@@ -260,7 +266,7 @@ class Assemble(Step):
     @utils.add_log
     def get_clonetypes(self):
         data = pd.read_csv(f'{self.filter_rep}', sep=',')
-        data = data[['barcode', 'chain', 'cdr3', 'cdr3_nt']]
+        data = data[data['productive']==True]
         with open(f'{self.final_out}/clonetypes.csv', 'w') as fh:
             fh.write('barcode,cdr3s_aa,cdr3s_nt\n')
             barcodes = set(data['barcode'].tolist())
