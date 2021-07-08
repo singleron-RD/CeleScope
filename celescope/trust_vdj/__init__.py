@@ -2,9 +2,8 @@ __STEPS__ = [
     'sample',
     'barcode',
     'cutadapt',
-    'mapping',
-    'count',
+    'convert',
     'assemble',
-    'res_format'
+    'res_sum'
     ]
 __ASSAY__ = 'trust_vdj'
