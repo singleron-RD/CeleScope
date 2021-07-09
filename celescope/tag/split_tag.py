@@ -11,6 +11,7 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
+from celescope.tools.cellranger3.wrapper import Cell_calling, read_raw_matrix
 
 
 class Split_tag(Step):
@@ -19,13 +20,17 @@ class Split_tag(Step):
     - Split scRNA-Seq fastq according to tag assignment.
 
     Output
-    - `fastq/{tag}_{1,2}.fq` Fastq files of each tag.
+    - `matrix/` Matrix files of each tag.(Optional)
+    - `fastq/` Fastq files of each tag.(Optional)
     """
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
         # set
+        self.matrix_outdir = f'{args.outdir}/matrix/'
+        matrix_10X_dir = glob.glob(f'{args.match_dir}/05.count/*_matrix_10X*')[0]
+        self.raw_mat, self.raw_features_path, self.raw_barcodes = read_raw_matrix(matrix_10X_dir)
 
         df_umi_tag = pd.read_csv(args.umi_tag_file, sep='\t', index_col=0)
         df_umi_tag = df_umi_tag.rename_axis('barcode').reset_index()
@@ -79,7 +84,21 @@ class Split_tag(Step):
             self.r1_fastq_files_handle[tag].close()
 
     @utils.add_log
+    def split_matrix(self):
+        for tag in self.tag_barcode_dict:
+            outdir = f'{self.matrix_outdir}/{tag}_matrix_10X/'
+            runner = Cell_calling(outdir, self.raw_mat, self.raw_features_path, self.raw_barcodes)
+            tag_barcodes = list(self.tag_barcode_dict[tag])
+            raw_barcodes = list(runner.raw_barcodes)
+            tag_barcodes_indices = [raw_barcodes.index(barcode) for barcode in tag_barcodes]
+            tag_barcodes_indices.sort()
+            runner.write_slice_matrix(tag_barcodes_indices)
+
+
+    @utils.add_log
     def run(self):
+        if self.args.split_matrix:
+            self.split_matrix()
         if self.args.split_fastq:
             self.write_r2_fastq_files()
             self.write_r1_fastq_files()
@@ -95,6 +114,11 @@ def get_opts_split_tag(parser, sub_program):
     parser.add_argument(
         "--split_fastq",
         help="If used, will split scRNA-Seq fastq file according to tag assignment.",
+        action='store_true',
+    )
+    parser.add_argument(
+        "--split_matrix",
+        help="If used, will split scRNA-Seq matrix file according to tag assignment.",
         action='store_true',
     )
     if sub_program:
