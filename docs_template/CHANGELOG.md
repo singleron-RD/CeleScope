@@ -7,7 +7,8 @@
 - Add `celescope tag split_tag`. 
 
 ### Changed
-- Change fastq file pattern of mapfile: Remove * before library_id
+- Change fastq file pattern of mapfile: Remove * before library_id.
+- `celescope.tools.count_capture_virus`: Change `min_support_read` from 1 to 2.
 
 ### Fixed
 - `celescope.tools.count` will report an error when there are multiple gtf or refFlat file under `genomeDir`.
