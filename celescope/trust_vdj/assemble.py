@@ -120,7 +120,7 @@ class Assemble(Step):
 
         df_umi_filtered = df_sort[df_sort['UMI'] >= UMI_min]
         barcodes = df_umi_filtered['barcode'].tolist()
-        Assemble.cutoff.logger.info(f'get {len(barcodes)} to assemble')
+        Assemble.cutoff.logger.info(f'get {len(barcodes)} cells to assemble')
         
         new_fq = open(f'{self.outdir}/{self.sample}_toassemble.fq', 'w')
         new_cb = open(f'{self.outdir}/{self.sample}_toassemble_bc.fa', 'w')
