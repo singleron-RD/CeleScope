@@ -9,7 +9,6 @@ import os
 import re
 import resource
 import subprocess
-import sys
 import time
 from collections import Counter, defaultdict
 from datetime import timedelta
