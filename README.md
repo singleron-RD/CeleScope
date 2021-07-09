@@ -24,7 +24,7 @@ git clone https://github.com/singleron-RD/CeleScope.git
 cd CeleScope
 conda create -n celescope
 conda activate celescope
-conda install --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
+conda install -y --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
 ```
 
 3. Install celescope

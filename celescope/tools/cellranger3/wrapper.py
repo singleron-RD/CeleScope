@@ -36,7 +36,7 @@ def read_raw_matrix(all_matrix_10X_dir):
 @utils.add_log
 def cell_calling(raw_mat, expected_cell_num):
 
-    filtered_bc_indices, round_1_filtered_metrics, _non_ambient_barcode_result = find_nonambient_barcodes(
+    filtered_bc_indices, _round_1_filtered_metrics, _non_ambient_barcode_result = find_nonambient_barcodes(
         raw_mat=raw_mat, recovered_cells=expected_cell_num)
 
     return filtered_bc_indices

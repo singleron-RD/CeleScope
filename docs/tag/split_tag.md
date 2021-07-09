@@ -2,11 +2,14 @@
 - Split scRNA-Seq fastq according to tag assignment.
 
 ## Output
-- `fastq/{tag}_{1,2}.fq` Fastq files of each tag.
+- `matrix/` Matrix files of each tag.(Optional)
+- `fastq/` Fastq files of each tag.(Optional)
 
 
 ## Arguments
 `--split_fastq` If used, will split scRNA-Seq fastq file according to tag assignment.
+
+`--split_matrix` If used, will split scRNA-Seq matrix file according to tag assignment.
 
 `--umi_tag_file` UMI tag file.
 

@@ -12,7 +12,7 @@ def create_conda():
     set -eo pipefail
     conda create -n {ENV_NAME}
     source activate {ENV_NAME}
-    conda install --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
+    conda install -y --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
 
     pip install -i https://pypi.mirrors.ustc.edu.cn/simple/ -r requirements.txt
     python setup.py install
@@ -35,7 +35,7 @@ def lint_code():
         # W0105 (String statement has no effect)
         # W0511 TODO!
         # E1130 bad operand type for unary ~: _isnan (invalid-unary-operand-type)
-    pylint --disable=all --enable=E,W --disable=W1618,E1101,W1633,W1619,W0105,W0511,E1130 ../celescope
+    pylint --disable=all --enable=E,W --disable=W1618,E1101,W1633,W1619,W0105,W0511,E1130 celescope
     """
     print(cmd)
     subprocess.check_call(cmd, shell=True)
@@ -68,7 +68,15 @@ def multi_test():
     subprocess.check_call(cmd, shell=True)
 
 
+def generate_docs():
+    cmd = (
+        "python scripts/generate_docs.py"
+    )
+    print(cmd)
+    subprocess.check_call(cmd, shell=True)
+
 if __name__ == '__main__':
+    generate_docs()
     lint_code()
     zip_wdl()
     create_conda()
