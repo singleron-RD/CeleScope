@@ -45,6 +45,7 @@ class Count_vdj(Step):
         if self.match_bool:
             self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
                 args.match_dir)
+            self.match_cell_barcodes = set(self.match_cell_barcodes)
 
         # out files
         self.cell_confident_file = f"{self.out_prefix}_cell_confident.tsv"
