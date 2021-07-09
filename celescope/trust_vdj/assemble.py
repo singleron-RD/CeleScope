@@ -267,7 +267,6 @@ class Assemble(Step):
     @utils.add_log
     def get_clonetypes(self):
         data = pd.read_csv(f'{self.filter_rep}', sep=',')
-        data = data[data['productive']==True]
         with open(f'{self.final_out}/clonetypes.csv', 'w') as fh:
             fh.write('barcode,cdr3s_aa,cdr3s_nt\n')
             barcodes = set(data['barcode'].tolist())
