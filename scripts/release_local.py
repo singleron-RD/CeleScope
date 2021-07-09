@@ -97,11 +97,9 @@ def modify_changelog():
 
 if __name__ == '__main__':
     modify_changelog()
-    """
     generate_docs()
     lint_code()
     zip_wdl()
     create_conda()
     multi_test()
     test_wdl()
-    """

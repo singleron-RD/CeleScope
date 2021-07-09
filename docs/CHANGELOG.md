@@ -1,13 +1,21 @@
-# Change Log
+## [unreleased] - 2021-07-09
+ ### Added
 
-## [unreleased] - 2021-06-09
+ ### Changed
+
+ ### Fixed
+
+ ### Removed
+
+## [1.3.2] - 2021-07-09
 ### Added
 
 - Add `dynascope` assay.
 - Add `celescope tag split_tag`. 
 
 ### Changed
-- Change fastq file pattern of mapfile: Remove * before library_id
+- Change fastq file pattern of mapfile: Remove * before library_id.
+- `celescope.tools.count_capture_virus`: Change `min_support_read` from 1 to 2.
 
 ### Fixed
 - `celescope.tools.count` will report an error when there are multiple gtf or refFlat file under `genomeDir`.

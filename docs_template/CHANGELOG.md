@@ -1,6 +1,13 @@
-# Change Log
+## [unreleased] - 2021-07-09
+ ### Added
 
-## [unreleased] - 2021-06-09
+ ### Changed
+
+ ### Fixed
+
+ ### Removed
+
+## [1.3.2] - 2021-07-09
 ### Added
 
 - Add `dynascope` assay.
