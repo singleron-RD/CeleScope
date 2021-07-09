@@ -98,6 +98,7 @@ class Assemble(Step):
     @utils.add_log
     def cutoff(self):
         dic = defaultdict(set)
+        read_dic = defaultdict(list)
         with pysam.FastxFile(f'{self.outdir}/{self.sample}_raw.fq', 'r') as fa:
             for entry in fa:
                 name = entry.name
@@ -105,6 +106,7 @@ class Assemble(Step):
                 cb = attrs[0]
                 umi = attrs[1]
                 dic[cb].add(umi)
+                read_dic[cb].append(entry)
                 
         df = pd.DataFrame()
         df['barcode'] = list(dic.keys())
@@ -127,26 +129,25 @@ class Assemble(Step):
         new_umi = open(f'{self.outdir}/{self.sample}_toassemble_umi.fa', 'w')
         read_count = 0
         barcode_count = set()
-        with pysam.FastxFile(f'{self.outdir}/{self.sample}_raw.fq', 'r') as fa_file:
-
-            for entry in fa_file:
+        for barcode in barcodes:
+            read_list = read_dic[barcode]
+            for entry in read_list:
                 read_id = entry.name
                 attrs = read_id.split('_')
                 cb = attrs[0]
                 umi = attrs[1]
-                if cb in barcodes:
-                    new_fq.write(f'{entry}\n')
-                    new_cb.write(f'>{read_id}\n{cb}\n')
-                    new_umi.write(f'>{read_id}\n{umi}\n')
-                    read_count += 1
-                    barcode_count.add(cb)
-                    if read_count % 1000000 == 0:
-                        Assemble.cutoff.logger.info(f'processed {read_count} reads')
-            Assemble.cutoff.logger.info(f'confirmed {len(barcode_count)} cells to assemble')
+                new_fq.write(f'{str(entry)}\n')
+                new_cb.write(f'>{read_id}\n{cb}\n')
+                new_umi.write(f'>{read_id}\n{umi}\n')
+                read_count += 1
+                barcode_count.add(cb)
+                if read_count % 1000000 == 0:
+                    Assemble.cutoff.logger.info(f'processed {read_count} reads')
+        Assemble.cutoff.logger.info(f'confirmed {len(barcode_count)} cells to assemble')
             
-            new_fq.close()
-            new_cb.close()
-            new_umi.close()
+        new_fq.close()
+        new_cb.close()
+        new_umi.close()
             
         subprocess.check_call(f'rm {self.outdir}/{self.sample}_raw.fq', shell=True)
         subprocess.check_call(f'rm {self.outdir}/{self.sample}_raw_bc.fa', shell=True)
