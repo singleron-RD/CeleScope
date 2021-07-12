@@ -54,8 +54,7 @@ class Count_capture_virus(Step):
         if df_valid.shape[0] == 0:
             self.sum_virus.logger.warning("No cell virus UMI found!")
 
-        df_umi = df_valid.groupby(["barcode", "tag"]).agg({"UMI": "count"})
-        df_umi.to_csv(self.out_umi_count_file, sep="\t")
+        df_valid.to_csv(self.out_umi_count_file, sep="\t")
 
     def run(self):
         self.sum_virus()
