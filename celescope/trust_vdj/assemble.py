@@ -81,6 +81,7 @@ class Assemble(Step):
         self.assemble_summary = []
         self.cells_num = 0
         self.contig_df = pd.DataFrame()
+        self.mapping_reads = 0
         
         
     @utils.add_log
@@ -107,6 +108,7 @@ class Assemble(Step):
                 umi = attrs[1]
                 dic[cb].add(umi)
                 read_dic[cb].append(entry)
+                self.mapping_reads+=1
                 
         df = pd.DataFrame()
         df['barcode'] = list(dic.keys())
@@ -372,7 +374,7 @@ class Assemble(Step):
         assign_df = pd.merge(self.contig_df, assign_reads, on='contig_id', how='outer')
         self.assemble_summary.append({
             'item': 'Reads Mapped to Any V(D)J Gene',
-            'count': assign_df.shape[0],
+            'count': self.mapping_reads,
             'total_count': count
         })
         for c in self.chain:
@@ -412,7 +414,8 @@ class Assemble(Step):
     def run(self):
         self.mapping()
         self.cutoff()
-        self.run_assemble()
+        if not os.path.exists(f'{self.outdir}/outs/clonetypes.csv'):
+            self.run_assemble()
         self.get_all_rep()
         self.get_filter_rep()
         self.get_len()
