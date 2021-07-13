@@ -68,7 +68,7 @@ class Assemble(Step):
         self.filter_out_rep_prefix  = f'{self.final_out}/filter'
         self.all_tmp_rep = f'{self.all_out_rep_prefix}_{self.string}.csv'
         self.filter_tmp_rep = f'{self.filter_out_rep_prefix}_{self.string}.csv'
-        self.all_rep = f'{self.all_out_rep_prefix}ed_contig_annotations.csv'
+        self.all_rep = f'{self.all_out_rep_prefix}_contig_annotations.csv'
         self.filter_rep = f'{self.filter_out_rep_prefix}ed_contig_annotations.csv'
         
         # inde
@@ -80,8 +80,16 @@ class Assemble(Step):
         # summary
         self.assemble_summary = []
         self.cells_num = 0
-        self.contig_df = pd.DataFrame()
         self.mapping_reads = 0
+        
+        
+        # match_dir
+        self.match_bool = True
+        if (not args.match_dir) or (args.match_dir == "None"):
+            self.match_bool = False
+        if self.match_bool:
+            self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
+                args.match_dir)
         
         
     @utils.add_log
@@ -123,7 +131,12 @@ class Assemble(Step):
         UMI_min = int(rank_UMI / 10)
 
         df_umi_filtered = df_sort[df_sort['UMI'] >= UMI_min]
-        barcodes = df_umi_filtered['barcode'].tolist()
+        filtered_barcodes = df_umi_filtered['barcode'].tolist()
+        
+        if self.match_bool:
+            barcodes = set(filtered_barcodes).intersection(set(self.match_cell_barcodes))
+        else:
+            barcodes = filtered_barcodes
         Assemble.cutoff.logger.info(f'get {len(barcodes)} cells to assemble')
         
         new_fq = open(f'{self.outdir}/{self.sample}_toassemble.fq', 'w')
@@ -150,10 +163,6 @@ class Assemble(Step):
         new_fq.close()
         new_cb.close()
         new_umi.close()
-            
-        subprocess.check_call(f'rm {self.outdir}/{self.sample}_raw.fq', shell=True)
-        subprocess.check_call(f'rm {self.outdir}/{self.sample}_raw_bc.fa', shell=True)
-        subprocess.check_call(f'rm {self.outdir}/{self.sample}_raw_umi.fa', shell=True)
             
               
     @utils.add_log
@@ -189,86 +198,44 @@ class Assemble(Step):
         subprocess.check_call(cmd, shell=True)
         Assemble.get_all_rep.logger.info(cmd)
         os.system(f'mv {self.all_tmp_rep} {self.all_rep}')
-        os.system(f'rm {self.final_out}/all_*.csv')
-        
-    @utils.add_log
-    def get_filter_rep(self):
-        out_rep = f'{self.outdir}/{self.sample}_filter_report.tsv'
-        cmd = (
-            f'perl {SOFTWARE}/trust-barcoderep.pl '
-            f'{self.cdr3out} '
-            f'-a {self.fa} '
-            f'--noImputation > '
-            f'{out_rep}; '
-            f'perl {SOFTWARE}/trust-barcoderep-to-10X.pl '
-            f'{out_rep} '
-            f'{self.filter_out_rep_prefix} '
-        )
-        subprocess.check_call(cmd, shell=True)
-        Assemble.get_filter_rep.logger.info(cmd)
-        os.system(f'mv {self.filter_tmp_rep} {self.filter_rep}')
-        os.system(f'rm {self.final_out}/filter_*.csv')
 
-        os.remove(out_rep)
-        
+
     @utils.add_log
     def get_len(self):
-        with pysam.FastxFile(self.fa, 'r') as fh:
-            res = defaultdict(list)
-            for entry in fh:
-                name = entry.name
-                comment = entry.comment
-                attrs = comment.split(' ')
-                V_gene = attrs[2]
-                D_gene = attrs[3]
-                J_gene = attrs[4]
-                if V_gene != '*':
-                    chain = V_gene[:3]
-                elif J_gene != '*':
-                    chain = J_gene[:3]
-                elif D_gene != '*':
-                    chain = D_gene[:3]
-                else:
-                    chain = 'None'
-                length = len(entry.sequence)
-                res['contig_id'].append(name)
-                res['length'].append(length)
-                res['chain'].append(chain)
+        all_rep = pd.read_csv(self.all_rep, sep=',')
+        with pysam.FastaFile(self.fa) as fh:
+            all_rep['length'] = all_rep['contig_id'].apply(lambda x: len(fh.fetch(x)))
             
-            df = pd.DataFrame(res, columns=list(res.keys()))
-            self.contig_df = df
-            df = df.set_index(['contig_id'])
-            
-            filter_res = pd.read_csv(self.filter_rep, sep=',')
-            filter_res['length'] = filter_res['contig_id'].apply(lambda x: df.loc[x, 'length'])
-            filter_res[['reads', 'umis']] = filter_res[['reads', 'umis']].astype(int)
+            all_rep[['reads', 'umis']] = all_rep[['reads', 'umis']].astype(int)
 
-            filter_res.to_csv(self.filter_rep, sep=',', index=False)
+            all_rep.to_csv(self.all_rep, sep=',', index=False)
             
-            all_res = pd.read_csv(self.all_rep, sep=',')
-            all_res['length'] = all_res['contig_id'].apply(lambda x: df.loc[x, 'length'])
-            all_res[['reads', 'umis']] = all_res[['reads', 'umis']].astype(int)
-
-            all_res.to_csv(self.all_rep, sep=',', index=False)
-            
-            cell_barcodes = filter_res['barcode'].tolist()
-            cells_num = len(set(cell_barcodes))
-            self.cells_num = cells_num
-            self.assemble_summary.append({
-                'item': 'Estimated Number of Cells',
-                'count': cells_num,
-                'total_count': np.nan
-            })
-            
-            df_umi = pd.read_csv(self.count_file, sep='\t')
-            df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cell_barcodes else 'UB')
-            df_umi.to_csv(self.count_file, sep='\t', index=False)
-            self.add_data_item(chart=get_plot_elements.plot_barcode_rank(self.count_file))
+                 
+    @utils.add_log
+    def get_filter_rep(self):
+        all_rep = pd.read_csv(self.all_rep, sep=',')
+        filtered_rep = all_rep[(all_rep['productive']==True) & (all_rep['full_length']==True)]
+        filtered_rep.to_csv(self.filter_rep, sep=',', index=False)
         
+        # get stat
+        cell_barcodes = filtered_rep['barcode'].tolist()
+        cells_num = len(set(cell_barcodes))
+        self.cells_num = cells_num
+        self.assemble_summary.append({
+            'item': 'Estimated Number of Cells',
+            'count': cells_num,
+            'total_count': np.nan
+        })
+        
+        df_umi = pd.read_csv(self.count_file, sep='\t')
+        df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cell_barcodes else 'UB')
+        df_umi.to_csv(self.count_file, sep='\t', index=False)
+        self.add_data_item(chart=get_plot_elements.plot_barcode_rank(self.count_file))
+           
         
     @utils.add_log
     def get_clonetypes(self):
-        data = pd.read_csv(f'{self.filter_rep}', sep=',')
+        data = pd.read_csv(self.filter_rep, sep=',')
         with open(f'{self.final_out}/clonetypes.csv', 'w') as fh:
             fh.write('barcode,cdr3s_aa,cdr3s_nt\n')
             barcodes = set(data['barcode'].tolist())
@@ -287,8 +254,6 @@ class Assemble(Step):
                 nts = ';'.join(nt)
                 string = f'{cb},{aas},{nts}'
                 fh.write(string+'\n')
-                
-            fh.close()
 
         df = pd.read_csv(f'{self.final_out}/clonetypes.csv', sep=',')
         df = df.groupby(['cdr3s_aa', 'cdr3s_nt'], as_index=False).agg({'barcode': 'count'})
@@ -306,10 +271,17 @@ class Assemble(Step):
         df = pd.read_csv(f'{self.final_out}/clonetypes.csv', sep=',')
         df_table = pd.DataFrame()
         def function_x(x):
-            return x.split(';')
+            l = x.split(';')
+            if len(l)==1:
+                if l[0].startswith('TRA'):
+                    return l[0], 'None'
+                elif l[0].startswith('TRB'):
+                    return 'None', l[0]
+            elif len(l)==2:
+                return l[0], l[1]
         df_table['Clonotype ID'] = df['clonotype_id'].apply(lambda x: x.strip('clonetype'))
         df_table['Chain1'] = df['cdr3s_aa'].apply(lambda x: f'{function_x(x)[0]}')
-        df_table['Chain2'] = df['cdr3s_aa'].apply(lambda x: f'{function_x(x)[1]}' if (len(function_x(x))==2) else 'None')
+        df_table['Chain2'] = df['cdr3s_aa'].apply(lambda x: f'{function_x(x)[1]}')
         df_table['Frequency'] = df['frequency']
         df_table['Proportion'] = df['proportion'].apply(lambda x: f'{round(x*100, 2)}%')
         title = 'Clonetypes'
@@ -326,19 +298,6 @@ class Assemble(Step):
             f'> {self.final_out}/full_len_contig.fa '
         )
         subprocess.check_call(cmd, shell=True)
-        
-        df = pd.read_csv(f'{self.filter_rep}', sep=',')
-        df_pro = df[df['productive']==True]
-        contig_ids = df_pro['contig_id'].tolist()
-        
-        with pysam.FastxFile(f'{self.final_out}/full_len_contig.fa', 'r') as full_len_fa:
-            pro_full_len_fa = open(f'{self.final_out}/productive_full_len_contig.fa', 'w')
-            for entry in full_len_fa:
-                name = entry.name
-                if name in contig_ids:
-                    pro_full_len_fa.write(str(entry) + '\n')
-                    
-            pro_full_len_fa.close()
             
     @utils.add_log
     def get_stat_file(self):
@@ -371,31 +330,29 @@ class Assemble(Step):
         data = data[['barcode', 'chain', 'contig_id']]
         assign_reads = pd.read_csv(self.assign_file, sep='\t', header=None)
         assign_reads = assign_reads.rename(columns={0: 'read_id', 1: 'contig_id'})
-        assign_df = pd.merge(self.contig_df, assign_reads, on='contig_id', how='outer')
+        assign_df = pd.merge(data, assign_reads, on='contig_id', how='left').fillna('None')
         self.assemble_summary.append({
             'item': 'Reads Mapped to Any V(D)J Gene',
             'count': self.mapping_reads,
             'total_count': count
         })
         for c in self.chain:
-            df_c = assign_df[assign_df['chain']==c]
-            self.assemble_summary.append({
-                'item': f'Reads Mapped to {c}', 
-                'count': df_c.shape[0], 
-                'total_count': count
-            })
+            # self.assemble_summary.append({
+            #     'item': f'Reads Mapped to {c}', 
+            #     'count': df_c.shape[0], 
+            #     'total_count': count
+            # })
             dic = defaultdict(set)
-            tmp = data[data['chain']==c]
-            contig_ids = tmp['contig_id'].tolist()
+            tmp = assign_df[assign_df['chain']==c]
+            contig_ids = data[data['chain']==c]['contig_id'].tolist()
             for i in contig_ids:
-                tm = assign_reads[assign_reads['contig_id']==i]
-                barcode_ = i.split('_')[0]
-                for read_id in tm['read_id'].tolist():
+                cell_bc = i.split("_")[0]
+                tmp_ = tmp[tmp['contig_id']==i]
+                for read_id in tmp_['read_id'].tolist():
                     attrs = read_id.split('_')
-                    cb = attrs[0]
-                    umi = attrs[1]
-                    if cb == barcode_:
-                        dic[barcode_].add(umi)
+                    if len(attrs)>1:
+                        umi = attrs[1]
+                        dic[cell_bc].add(umi)
             umi_count = [len(dic[i]) for i in list(dic.keys())]
             mid = int(np.median(umi_count))
             item = f'Median {c} UMIs per cell'
@@ -412,13 +369,17 @@ class Assemble(Step):
         utils.gen_stat(sum_df, stat_file)
         
     def run(self):
+        #if not os.path.exists(f'{self.outdir}/{self.sample}_raw.fq'):
         self.mapping()
+            
         self.cutoff()
+
         if not os.path.exists(f'{self.outdir}/outs/clonetypes.csv'):
             self.run_assemble()
+
         self.get_all_rep()
-        self.get_filter_rep()
         self.get_len()
+        self.get_filter_rep()
         self.get_clonetypes()
         self.gen_table()
         self.get_full_len_assembly()
@@ -437,6 +398,7 @@ def get_opts_assemble(parser, sub_program):
         parser.add_argument('--fq1', help='R1 reads from match step', required=True)
         parser.add_argument('--fq2', help='R2 reads from match step', required=True)
         parser.add_argument('--cb_stat', help='barcode stat file', required=True)
+        parser.add_argument('--match_dir', help='scRNA-seq results directory', default=None)
     parser.add_argument('--cells', help='expected cells num', default=3000)
     parser.add_argument('--species', help='species', choices=["Mmus", "Hsap"], required=True)
     parser.add_argument('--speed_up', help='speed assemble for TCR/BCR seq data', action='store_true')

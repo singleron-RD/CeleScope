@@ -20,26 +20,27 @@ class Multi_trust_vdj(Multi):
         cmd_line = self.get_cmd_line(step, sample)
         fq1 = f'{self.outdir_dic[sample]["convert"]}/{sample}_clean_1.fq'
         fq2 = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
-        cb_stat = f'{self.outdir_dic[sample]["barcode"]}/stat.txt' 
+        cb_stat = f'{self.outdir_dic[sample]["barcode"]}/stat.txt'
+        match_dir = f'{self.col4_dict[sample]}'
         cmd = (
             f'{cmd_line} '
             f'--fq1 {fq1} '
             f'--fq2 {fq2} '
             f'--cb_stat {cb_stat} '
+            f'--match_dir {match_dir} '
         )
         self.process_cmd(cmd, step, sample, m=30, x=self.args.thread)
         
     def res_sum(self, sample):
         step = 'res_sum'
         cmd_line = self.get_cmd_line(step, sample)
-        filter_rep = f'{self.outdir_dic[sample]["assemble"]}/outs/filtered_contig_annotations.csv'
+        all_rep = f'{self.outdir_dic[sample]["assemble"]}/outs/all_contig_annotations.csv'
         fa = f'{self.outdir_dic[sample]["assemble"]}/{sample}_annot.fa'
-        match_dir = f'{self.col4_dict[sample]}'
+
         cmd = (
             f'{cmd_line} '
             f'--fa {fa} '
-            f'--filter_rep {filter_rep} '
-            f'--match_dir {match_dir} '
+            f'--all_rep {all_rep} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
