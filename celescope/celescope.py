@@ -33,7 +33,6 @@ def main():
             parser_step = subparser_2ed.add_parser(step, formatter_class=ArgFormatter)
             func_opts(parser_step, sub_program=True)
             parser_step.set_defaults(func=func)
-
     args = parser.parse_args()
     args.func(args)
 

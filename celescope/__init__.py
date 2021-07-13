@@ -16,20 +16,5 @@ ASSAY_DICT = {
     'tag': 'Single-cell tag',
     'citeseq': 'Single Cell CITE-Seq',
     'tcr_fl': 'Single Cell full length TCR',
-    'tracer_vdj': 'Single Cell Full Length V(D)J Assemble',
-    'trust_vdj': 'Single Cell Full Length V(D)J Assemble',
-    'dynaseq': 'Single-cell dynaseq'
-}
-
-ROOT_PATH = os.path.dirname(__file__)
-
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq']
-
-HELP_DICT = {
-    'match_dir': 'Match celescope scRNA-Seq directory.',
-    'gene_list': 'Required. Gene list file, one gene symbol per line. Only results of these genes are reported.',
-    'genomeDir': 'Genome directory after running `mkref`.',
-    'thread': 'Thread to use.',
-    'debug': 'If this argument is used, celescope may output addtional file for debugging.',
-    'fasta': 'Required. Genome fasta file. Use relative path to `genomeDir`.',
+    'vdj10X': 'vdj 10X',
 }
