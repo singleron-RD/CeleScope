@@ -18,3 +18,17 @@ ASSAY_DICT = {
     'tcr_fl': 'Single Cell full length TCR',
     'vdj10X': 'vdj 10X',
 }
+
+ROOT_PATH = os.path.dirname(__file__)
+
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq']
+
+HELP_DICT = {
+    'match_dir': 'Match celescope scRNA-Seq directory.',
+    'gene_list': 'Required. Gene list file, one gene symbol per line. Only results of these genes are reported.',
+    'genomeDir': 'Genome directory after running `mkref`.',
+    'thread': 'Thread to use.',
+    'debug': 'If this argument is used, celescope may output addtional file for debugging.',
+    'fasta': 'Required. Genome fasta file. Use relative path to `genomeDir`.',
+    'outdir': 'Output directory.'
+}
