@@ -1,5 +1,5 @@
-import os
 import glob
+import os
 
 __STEPS__ = ['sample', 'barcode', 'convert', 'assemble', 'match']
 __ASSAY__ = 'vdj10X'

@@ -1,10 +1,10 @@
-from celescope.tools.step import Step, s_common
-from celescope.tools import utils
-import pysam
-from xopen import xopen
 from collections import defaultdict
-import pandas as pd
 
+import pandas as pd
+import pysam
+from celescope.tools import utils
+from celescope.tools.step import Step, s_common
+from xopen import xopen
 
 BARCODES_10X_FILE = "/SGRNJ/Database/script/soft/cellranger/cellranger-3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes/737K-august-2016.txt"
 UMI_10X_LEN = 10

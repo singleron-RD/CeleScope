@@ -1,8 +1,8 @@
-from celescope.tools.step import Step, s_common
-from celescope.tools import utils
+import numpy as np
 import pandas as pd
 from Bio.Seq import Seq
-import numpy as np
+from celescope.tools import utils
+from celescope.tools.step import Step, s_common
 
 
 class Match(Step):

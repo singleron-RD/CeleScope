@@ -1,11 +1,12 @@
-import subprocess
-from celescope.tools import utils
 import os
-from celescope.vdj10X.__init__ import ref_dict, soft_dict
-from celescope.tools.step import Step, s_common
-import pandas as pd
-from celescope.tools.cellranger3 import get_plot_elements
+import subprocess
+
 import numpy as np
+import pandas as pd
+from celescope.tools import utils
+from celescope.tools.cellranger3 import get_plot_elements
+from celescope.tools.step import Step, s_common
+from celescope.vdj10X.__init__ import ref_dict, soft_dict
 
 pd.set_option('max_colwidth',200)
 
