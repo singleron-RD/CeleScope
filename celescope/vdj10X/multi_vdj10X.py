@@ -19,29 +19,15 @@ class Multi_vdj10X(Multi):
         step = 'assemble'
         cmd_line = self.get_cmd_line(step, sample)
         fqs_dir = f'{self.outdir_dic[sample]["convert"]}'
-        barcode_dic = f'{fqs_dir}/barcode_cor.txt'
-        count_file = f'{fqs_dir}/count.txt'
+        barcode_dic = f'{fqs_dir}/barcode_correspond.txt'
+        match_dir = f'{self.col4_dict[sample]}'
         cmd = (
             f'{cmd_line} '
             f'--fqs_dir {fqs_dir} '
-            f'--count_file {count_file} '
+            f'--match_dir {match_dir} '
             f'--barcode_dic {barcode_dic} '
         )
         self.process_cmd(cmd, step, sample, m=self.args.mem, x=self.args.thread)
-        
-    def match(self, sample):
-        step = 'match'
-        cmd_line = self.get_cmd_line(step, sample)
-        match_dir = f'{self.col4_dict[sample]}'
-        contig_df = f'{self.outdir_dic[sample]["assemble"]}/contigs.csv'
-        cmd = (
-            f'{cmd_line} '
-            f'--match_dir {match_dir} '
-            f'--contig_df {contig_df} ' 
-        )
-        self.process_cmd(cmd, step, sample, m=5, x=1)
-
-
 
 def main():
     multi = Multi_vdj10X(__ASSAY__)
