@@ -1,8 +1,15 @@
+# test output
+celescope_log.txt
+test_output/
+
 # vscode
 .vscode/
 
 # test data
 test_data/
+
+# tests
+celescope/tests/test_legacy.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -146,4 +153,6 @@ cython_debug/
 #temp
 /temp/
 
+# .DS_store
+.DS_store
 

@@ -1,5 +1,9 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
+import numpy as np
+
+matplotlib.use('Agg')
+
 
 def threshold_otsu(hist):
     """Return threshold value based on Otsu's method.
@@ -40,8 +44,8 @@ def threshold_otsu(hist):
 
 
 def array2hist(array, binWidth=0.2):
-    counts,bins = np.histogram(array, bins=np.arange(0,max(array)+binWidth,binWidth))
-    return counts,bins
+    counts, bins = np.histogram(array, bins=np.arange(0, max(array)+binWidth, binWidth))
+    return counts, bins
 
 
 def makePlot(hist, thresh, fname):
@@ -50,4 +54,3 @@ def makePlot(hist, thresh, fname):
     plt.axvline(thresh, color='r')
     plt.savefig(fname)
     plt.close()
-

@@ -1,25 +1,13 @@
 
-from celescope.mut.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.Multi import Multi
+from celescope.mut.__init__ import __ASSAY__
+from celescope.tools.multi import Multi
 
 
 class Multi_mut(Multi):
-    
-    def custome_args(self):
-        self.STAR_args()
-        self.parser.add_argument("--mut_file", help="mutation file", required=True)
-        self.parser.add_argument("--shift_base", default=2)
-        self.parser.add_argument('--indel_genomeDir', help='insertion or deletion STAR indexed genome directory', required=True)
-
-    def read_custome_args(self):
-        self.read_STAR_args()
-        self.mut_file = self.args.mut_file
-        self.shift_base = self.args.shift_base
-        self.indel_genomeDir = self.args.indel_genomeDir    
 
     def mapping_mut(self, sample):
         step = 'mapping_mut'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -55,6 +43,6 @@ def main():
     multi = Multi_mut(__ASSAY__)
     multi.run()
 
+
 if __name__ == '__main__':
     main()
-

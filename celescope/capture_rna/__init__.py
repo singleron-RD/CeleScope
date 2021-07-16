@@ -1,9 +1,15 @@
+__ASSAY__ = 'capture_rna'
+
 __STEPS__ = [
     'sample',
     'barcode',
     'cutadapt',
-    'STAR',
+    'star',
     "featureCounts",
     "count_capture_rna",
     'analysis']
-__ASSAY__ = 'capture_rna'
+
+IMPORT_DICT = {
+    'star': 'celescope.rna',
+    'analysis': 'celescope.rna',
+}

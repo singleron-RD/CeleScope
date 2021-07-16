@@ -1,92 +1,34 @@
+"""barcode step."""
+
+import glob
 import os
 import re
-import io
-import gzip
-import subprocess
 import sys
-import glob
-import pandas as pd
-from collections import defaultdict, Counter
-from itertools import combinations, permutations, islice
+from collections import Counter, defaultdict
+from itertools import combinations, product
+
+import pysam
 from xopen import xopen
-from celescope.tools.utils import *
-from celescope.tools.report import reporter
+
+import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from .Chemistry import Chemistry
+from celescope.tools.step import Step, s_common
+
+MIN_T = 10
 
 
-barcode_corrected_num = 0
-
-# 定义输出格式
-stat_info = '''
-    Raw Reads: %s
-    Valid Reads: %s(%s)
-    Q30 of Barcodes: %.2f%%
-    Q30 of UMIs: %.2f%%
-'''
+def seq_ranges(seq, pattern_dict):
+    # get subseq with intervals in arr and concatenate
+    return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
 
 
-# 生成错配字典
-def generate_mis_seq(seq, n=1, bases='ACGTN'):
-    # 以随机bases中的碱基替换seq中的n个位置，产生的错配字典
-    # 返回字典，错配序列为key，
-    # (正确序列，错配碱基数目，错配碱基位置，原始碱基，新碱基)组成的元组
-    # 作为字典的值
-
-    length = len(seq)
-    assert length >= n, "err number should not be larger than sequence length!"
-    res = {}
-    seq_arr = list(seq)
-    pos_group = list(combinations(range(0, length), n))
-    bases_group = list(permutations(bases, n))
-
-    for g in pos_group:
-        for b in bases_group:
-            seq_tmp = seq_arr[:]
-            mis_num = n
-            raw_tmp = []
-            for i in range(n):
-                raw_base = seq_tmp[g[i]]
-                new_base = b[i]
-
-                if raw_base == new_base:
-                    mis_num -= 1
-
-                raw_tmp.append(raw_base)
-                seq_tmp[g[i]] = new_base
-
-            if mis_num != 0:
-                res[''.join(seq_tmp)] = (seq, mis_num, ','.join(
-                    [str(i) for i in g]), ','.join(raw_tmp), ','.join(b))
-    return(res)
+def get_seq_list(seq, pattern_dict, abbr):
+    # get subseq list
+    return (seq[item[0]: item[1]] for item in pattern_dict[abbr])
 
 
-@add_log
-def generate_seq_dict(seqlist, n=1):
-    seq_dict = {}
-    with open(seqlist, 'r') as fh:
-        for seq in fh:
-            seq = seq.strip()
-            if seq == '':
-                continue
-            seq_dict[seq] = (seq, 0, -1, 'X', 'X')
-            for k, v in generate_mis_seq(seq, n).items():
-                # duplicate key
-                if k in seq_dict:
-                    generate_seq_dict.logger.warning('barcode %s, %s\n%s, %s' %
-                                                     (v, k, seq_dict[k], k))
-                else:
-                    seq_dict[k] = v
-    return seq_dict
-
-
-@add_log
+@utils.add_log
 def parse_pattern(pattern):
-    # 解析接头结构，返回接头结构字典
-    # key: 字母表示的接头, value: 碱基区间列表
-    # eg.: C8L10C8L10C8U8T30
-    # defaultdict(<type 'list'>:
-    # {'C': [[0, 8], [18, 26], [36, 44]], 'U': [[44, 52]], 'L': [[8, 18], [26, 36]], 'T': [[52, 82]]})
     pattern_dict = defaultdict(list)
     p = re.compile(r'([CLUNT])(\d+)')
     tmp = p.findall(pattern)
@@ -113,6 +55,7 @@ def get_scope_bc(chemistry):
 
 def read_fastq(f):
     """
+    Deprecated!
     Return tuples: (name, sequence, qualities).
     qualities is a string and it contains the unmodified, encoded qualities.
     """
@@ -148,33 +91,6 @@ def low_qual(quals, minQ, num):
     return True if len([q for q in quals if qual_int(q) < minQ]) > num else False
 
 
-def no_polyT(seq, strictT=0, minT=10):
-    # strictT requires the first nth position to be T
-    if seq[:strictT] != 'T' * strictT or seq.count('T') < minT:
-        return True
-    else:
-        return False
-
-
-def no_barcode(seq_arr, mis_dict, err_tolerance=1):
-    global barcode_corrected_num
-    tmp = [mis_dict[seq][0:2] if seq in mis_dict else (
-        'X', 100) for seq in seq_arr]
-    err = sum([t[1] for t in tmp])
-    if err > err_tolerance:
-        return True
-    else:
-        if err > 0:
-            barcode_corrected_num += 1
-            return ''.join([t[0] for t in tmp])
-        else:
-            return "correct"
-
-
-def no_linker(seq, linker_dict):
-    return False if seq in linker_dict else True
-
-
 def check_seq(seq_file, pattern_dict, seq_abbr):
     length = 0
     for item in pattern_dict[seq_abbr]:
@@ -191,336 +107,482 @@ def check_seq(seq_file, pattern_dict, seq_abbr):
                     f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
 
 
-@add_log
-def merge_fastq(fq1, fq2, sample, outdir):
+def get_mismatch(seq, n_mismatch=1, bases='ACGTN'):
     '''
-    merge fastq if len(fq1) > 1
+    choose locations where there's going to be a mismatch using combinations
+    and then construct all satisfying lists using product
+
+    Return:
+    all mismatch <= n_mismatch dict. Key: mismatch_seq, value: orig_seq
     '''
-    fq1_list = fq1.split(",")
-    fq2_list = fq2.split(",")
-    if len(fq1_list) == 0:
-        raise Exception('empty fastq file path!')
-    elif len(fq1_list) == 1:
-        fq1_file, fq2_file = fq1, fq2
-    else:
-        fastq_dir = f'{outdir}/../merge_fastq'
-        if not os.path.exists(fastq_dir):
-            os.system('mkdir -p %s' % fastq_dir)
-        fq1_file = f"{fastq_dir}/{sample}_1.fq.gz"
-        fq2_file = f"{fastq_dir}/{sample}_2.fq.gz"
-        fq1_files = " ".join(fq1_list)
-        fq2_files = " ".join(fq2_list)
-        fq1_cmd = f"cat {fq1_files} > {fq1_file}"
-        fq2_cmd = f"cat {fq2_files} > {fq2_file}"
-        merge_fastq.logger.info(fq1_cmd)
-        os.system(fq1_cmd)
-        merge_fastq.logger.info(fq2_cmd)
-        os.system(fq2_cmd)
-    return fq1_file, fq2_file
- 
+    seq_set = set()
+    mismatch_dict = {}
+    seq_len = len(seq)
+    if n_mismatch > seq_len:
+        n_mismatch = seq_len
+    for locs in combinations(range(seq_len), n_mismatch):
+        seq_locs = [[base] for base in seq]
+        for loc in locs:
+            seq_locs[loc] = list(bases)
+        for poss in product(*seq_locs):
+            seq_set.add(''.join(poss))
+    for mismatch_seq in seq_set:
+        mismatch_dict[mismatch_seq] = seq
+    return mismatch_dict
 
-@add_log
-def barcode(args):
-    # init
-    outdir = args.outdir
-    sample = args.sample
-    fq1 = args.fq1
-    fq2 = args.fq2
-    fq1_list = fq1.split(",")
-    fq2_list = fq2.split(",")
-    fq_number = len(fq1_list)
 
-    # check dir
-    if not os.path.exists(args.outdir):
-        os.system('mkdir -p %s' % args.outdir)
+@utils.add_log
+def get_all_mismatch(seq_list, n_mismatch=1):
+    '''
+    Return:
+    all mismatch <= n_mismatch dict. Key: mismatch_seq, value: orig_seq from seq_file
+    '''
+    mismatch_dict = {}
+    correct_set = set()
 
-    # get chemistry
-    if args.chemistry == 'auto':
-            ch = Chemistry(fq1)
-            chemistry_list = ch.check_chemistry()
-    else:
-        chemistry_list = [args.chemistry] * fq_number
+    for seq in seq_list:
+        seq = seq.strip()
+        if seq == '':
+            continue
+        correct_set.add(seq)
+        mismatch_dict.update(get_mismatch(seq, n_mismatch=n_mismatch))
 
-    barcode_qual_Counter = Counter()
-    umi_qual_Counter = Counter()
-    C_U_base_Counter = Counter()
+    return correct_set, mismatch_dict
 
-    # prepare
-    if not args.not_gzip:
-        suffix = ".gz"
-    else:
-        suffix = ""
-    out_fq2 = f'{args.outdir}/{args.sample}_2.fq{suffix}'
-    fh3 = xopen(out_fq2, 'w')
 
-    (total_num, clean_num, no_polyT_num, lowQual_num,
-        no_linker_num, no_barcode_num) = (0, 0, 0, 0, 0, 0)
-    Barcode_dict = defaultdict(int)
-
-    if args.nopolyT:
-        fh1_without_polyT = xopen(outdir + '/noPolyT_1.fq', 'w')
-        fh2_without_polyT = xopen(outdir + '/noPolyT_2.fq', 'w')
-
-    if args.noLinker:
-        fh1_without_linker = xopen(outdir + '/noLinker_1.fq', 'w')
-        fh2_without_linker = xopen(outdir + '/noLinker_2.fq', 'w')
-
-    bool_probe = False
-    if args.probe_file and args.probe_file != 'None':
-        bool_probe = True
-        count_dic = genDict(dim=3)
-        valid_count_dic = genDict(dim=2)
-        probe_dic = read_fasta(args.probe_file)
-        reads_without_probe = 0
-
-    # process
-    if fq_number != len(fq2_list):
-        raise Exception('fastq1 and fastq2 do not have same file number!')
-    for i in range(fq_number):
-
-        chemistry = chemistry_list[i]
-        lowNum = int(args.lowNum)
-        print(args.lowQual)
-        lowQual = int(args.lowQual)
-        if chemistry == 'scopeV1':
-            lowNum = min(0, lowNum)
-            lowQual = max(10, lowQual)
-            barcode.logger.info(f'scopeV1: lowNum={lowNum}, lowQual={lowQual} ')
-        # get linker and whitelist
-        bc_pattern = __PATTERN_DICT__[chemistry]
-        if (bc_pattern):
-            (linker, whitelist) = get_scope_bc(chemistry)
-        else:
-            bc_pattern = args.pattern
-            linker = args.linker
-            whitelist = args.whitelist
-        if not bc_pattern:
-            raise Exception("invalid bc_pattern!")
-
-        # parse pattern to dict, C8L10C8L10C8U8
-        # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
-        # [[44, 52]], 'L': [[8, 18], [26, 36]]})
-        pattern_dict = parse_pattern(bc_pattern)
-
-        bool_T = True if 'T' in pattern_dict else False
-        bool_L = True if 'L' in pattern_dict else False
-        bool_whitelist = (whitelist is not None) and whitelist != "None"
-        C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
-        # generate list with mismatch 1, substitute one base in raw sequence with A,T,C,G
-        if bool_whitelist:
-            barcode_dict = generate_seq_dict(whitelist, n=1)
-        if bool_L:
-            linker_dict = generate_seq_dict(linker, n=2)
-            # check linker
-            check_seq(linker, pattern_dict, "L")
-
-        fh1 = xopen(fq1_list[i])
-        fh2 = xopen(fq2_list[i])
-        g1 = read_fastq(fh1)
-        g2 = read_fastq(fh2)
-
-        while True:
-            try:
-                (header1, seq1, qual1) = next(g1)
-                (header2, seq2, qual2) = next(g2)
-            except BaseException:
-                break
-            if total_num > 0 and total_num % 1000000 == 0:
-                barcode.logger.info(
-                    f'processed reads: {format_number(total_num)}.'
-                    f'valid reads: {format_number(clean_num)}.'
-                )
-
-            total_num += 1
-
-            # polyT filter
-            if bool_T and (not args.allowNoPolyT):
-                polyT = seq_ranges(seq1, pattern_dict['T'])
-                if no_polyT(polyT):
-                    no_polyT_num += 1
-                    if args.nopolyT:
-                        fh1_without_polyT.write(
-                            '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                        fh2_without_polyT.write(
-                            '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
-                    continue
-
-            # lowQual filter
-            C_U_quals_ascii = seq_ranges(
-                qual1, pattern_dict['C'] + pattern_dict['U'])
-            # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
-            if low_qual(C_U_quals_ascii, lowQual, lowNum):
-                lowQual_num += 1
-                continue
-
-            # linker filter
-            barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
-            raw_cb = ''.join(barcode_arr)
-            if bool_L and (not args.allowNoLinker):
-                linker = seq_ranges(seq1, pattern_dict['L'])
-                if (no_linker(linker, linker_dict)):
-                    no_linker_num += 1
-
-                    if args.noLinker:
-                        fh1_without_linker.write(
-                            '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                        fh2_without_linker.write(
-                            '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
-                    continue
-
-            # barcode filter
-            # barcode_arr = [seq_ranges(seq1, [i]) for i in pattern_dict['C']]
-            # raw_cb = ''.join(barcode_arr)
-            res = "correct"
-            if bool_whitelist:
-                res = no_barcode(barcode_arr, barcode_dict)
-            if res is True:
-                no_barcode_num += 1
-                continue
-            elif res == "correct":
-                cb = raw_cb
+def check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list):
+    '''
+    Return bool_valid, bool_corrected
+    '''
+    bool_valid = True
+    bool_corrected = False
+    corrected_seq = ''
+    for index, seq in enumerate(seq_list):
+        if seq not in correct_set_list[index]:
+            if seq not in mismatch_dict_list[index]:
+                bool_valid = False
+                return bool_valid, bool_corrected, corrected_seq
             else:
-                cb = res
+                bool_corrected = True
+                corrected_seq += mismatch_dict_list[index][seq]
+        else:
+            corrected_seq += seq
+    return bool_valid, bool_corrected, corrected_seq
 
-            umi = seq_ranges(seq1, pattern_dict['U'])
-            Barcode_dict[cb] += 1
-            clean_num += 1
-            read_name_probe = 'None'
 
-            if bool_probe:
-                # valid count
-                valid_count_dic[cb][umi] += 1
+class Chemistry():
+    """
+    Auto detect chemistry from read 1
+    """
 
-                # output probe UMi and read count
-                find_probe = False
-                for probe_name in probe_dic:
-                    probe_seq = probe_dic[probe_name]
-                    probe_seq = probe_seq.upper()
-                    if seq1.find(probe_seq) != -1:
-                        count_dic[probe_name][cb][umi] += 1
-                        read_name_probe = probe_name
-                        find_probe = True
-                        break
+    def __init__(self, fq1):
+        self.fq1 = fq1
+        self.fq1_list = fq1.split(',')
+        self.nRead = 10000
 
-                if not find_probe:
-                    reads_without_probe += 1
+    @utils.add_log
+    def check_chemistry(self):
+        chemistry_list = []
+        for fastq1 in self.fq1_list:
+            print(fastq1)
+            chemistry = self.get_chemistry(fastq1)
+            chemistry_list.append(chemistry)
+        if len(set(chemistry_list)) != 1:
+            Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
+        return chemistry_list
 
-            barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
-            umi_qual_Counter.update(C_U_quals_ascii[C_len:])
-            C_U_base_Counter.update(raw_cb + umi)
+    @utils.add_log
+    def get_chemistry(self, fq1):
+        '''
+        'scopeV2.0.1': 'C8L16C8L16C8L1U8T18'
+        'scopeV2.1.1': 'C8L16C8L16C8L1U12T18'
+        'scopeV2.2.1': 'C8L16C8L16C8L1U12T18' with 4 types of linkers
+        '''
+        # init
+        linker_4_file, _whitelist = get_scope_bc('scopeV2.2.1')
+        linker_4_list, _num = utils.read_one_col(linker_4_file)
+        linker_4_dict = defaultdict(int)
+        linker_wrong_dict = defaultdict(int)
+        pattern_dict = parse_pattern('C8L16C8L16C8L1U12T18')
+        T4_n = 0
+        L57C_n = 0
 
-            # new readID: @barcode_umi_old readID
-            fh3.write(f'@{cb}_{umi}_{read_name_probe}_{total_num}\n{seq2}\n+\n{qual2}\n')
-        barcode.logger.info(fq1_list[i] + ' finished.')
+        with pysam.FastxFile(fq1) as fh:
+            for _ in range(self.nRead):
+                entry = fh.__next__()
+                seq = entry.sequence
+                L57C = seq[56]
+                if L57C == 'C':
+                    L57C_n += 1
+                T4 = seq[65:69]
+                if T4 == 'TTTT':
+                    T4_n += 1
+                linker = seq_ranges(seq, pattern_dict=pattern_dict['L'])
+                if linker in linker_4_list:
+                    linker_4_dict[linker] += 1
+                else:
+                    linker_wrong_dict[linker] += 1
 
-    fh3.close()
+        percent_T4 = T4_n / self.nRead
+        percent_L57C = L57C_n / self.nRead
+        Chemistry.get_chemistry.logger.info(f'percent T4: {percent_T4}')
+        Chemistry.get_chemistry.logger.info(f'percent L57C: {percent_L57C}')
+        if percent_T4 > 0.5:
+            chemistry = 'scopeV2.0.1'
+        else:
+            # V2.1.1 or V2.2.1 or failed
+            valid_linker_type = 0
+            for linker in linker_4_dict:
+                linker_4_dict[linker] = linker_4_dict[linker] / self.nRead
+                if linker_4_dict[linker] > 0.05:
+                    valid_linker_type += 1
+            Chemistry.get_chemistry.logger.info(linker_4_dict)
+            if valid_linker_type == 0:
+                print(linker_wrong_dict)
+                raise Exception(
+                    'Auto chemistry detection failed! '
+                    'If the sample is from Singleron, ask the technical staff you are connecting with for the chemistry used. '
+                    'You need to use `--chemistry scopeV1` for scopeV1, and `--chemistry auto` should be fine for scopeV2.* '
+                )
+            elif valid_linker_type == 1:
+                chemistry = 'scopeV2.1.1'
+            elif valid_linker_type < 4:
+                chemistry = 'scopeV2.2.1'
+                Chemistry.get_chemistry.logger.warning(
+                    f'chemistry scopeV2.2.1 only has {valid_linker_type} linker types!')
+            else:
+                chemistry = 'scopeV2.2.1'
+        Chemistry.get_chemistry.logger.info(f'chemistry: {chemistry}')
+        return chemistry
 
-    # logging
-    if total_num % 1000000 != 0:
-        barcode.logger.info(
-            f'processed reads: {format_number(total_num)}. '
-            f'valid reads: {format_number(clean_num)}. '
+
+class Barcode(Step):
+    """
+    Features
+
+    - Demultiplex barcodes.
+    - Filter invalid R1 reads, which includes:
+        - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+        - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+        - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+        - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+    Output
+
+    - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+    the read name is `{barcode}_{UMI}_{read ID}`.
+    """
+
+    def __init__(self, args, step_name):
+        Step.__init__(self, args, step_name)
+
+        self.fq1_list = args.fq1.split(",")
+        self.fq2_list = args.fq2.split(",")
+        self.fq_number = len(self.fq1_list)
+        if self.fq_number != len(self.fq2_list):
+            raise Exception('fastq1 and fastq2 do not have same file number!')
+        if args.chemistry == 'auto':
+            ch = Chemistry(args.fq1)
+            self.chemistry_list = ch.check_chemistry()
+        else:
+            self.chemistry_list = [args.chemistry] * self.fq_number
+        self.barcode_corrected_num = 0
+        self.linker_corrected_num = 0
+        self.total_num = 0
+        self.clean_num = 0
+        self.no_polyT_num = 0
+        self.lowQual_num = 0
+        self.no_linker_num = 0
+        self.no_barcode_num = 0
+        self.barcode_qual_Counter = Counter()
+        self.umi_qual_Counter = Counter()
+        self.pattern = args.pattern
+        self.linker = args.linker
+        self.whitelist = args.whitelist
+        self.lowNum = args.lowNum
+        self.lowQual = args.lowQual
+        self.allowNoPolyT = args.allowNoPolyT
+        self.allowNoLinker = args.allowNoLinker
+        self.nopolyT = args.nopolyT  # true == output nopolyT reads
+        self.noLinker = args.noLinker
+
+        # out file
+        if args.gzip:
+            suffix = ".gz"
+        else:
+            suffix = ""
+        self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
+        if self.nopolyT:
+            self.nopolyT_1 = f'{self.outdir}/noPolyT_1.fq'
+            self.nopolyT_2 = f'{self.outdir}/noPolyT_2.fq'
+        if self.noLinker:
+            self.noLinker_1 = f'{self.outdir}/noLinker_1.fq'
+            self.noLinker_2 = f'{self.outdir}/noLinker_2.fq'
+
+    @utils.add_log
+    def run(self):
+        """
+        Extract barcode and UMI from R1. Filter reads with 
+            - invalid polyT
+            - low quality in barcode and UMI
+            - invalid inlinker
+            - invalid barcode
+
+        for every sample
+            get chemistry
+            get linker_mismatch_dict and barcode_mismatch_dict
+            for every read in read1
+                filter
+                write valid R2 read to file
+        """
+
+        fh3 = xopen(self.out_fq2, 'w')
+
+        if self.nopolyT:
+            fh1_without_polyT = xopen(self.nopolyT_1, 'w')
+            fh2_without_polyT = xopen(self.nopolyT_2, 'w')
+
+        if self.noLinker:
+            fh1_without_linker = xopen(self.noLinker_1, 'w')
+            fh2_without_linker = xopen(self.noLinker_2, 'w')
+
+        for i in range(self.fq_number):
+
+            chemistry = self.chemistry_list[i]
+            lowNum = int(self.lowNum)
+            Barcode.run.logger.info(f'lowQual score: {self.lowQual}')
+            lowQual = int(self.lowQual)
+            if chemistry == 'scopeV1':
+                lowNum = min(0, lowNum)
+                lowQual = max(10, lowQual)
+                Barcode.run.logger.info(f'scopeV1: lowNum={lowNum}, lowQual={lowQual} ')
+            # get linker and whitelist
+            bc_pattern = __PATTERN_DICT__[chemistry]
+            if (bc_pattern):
+                (linker, whitelist) = get_scope_bc(chemistry)
+            else:
+                bc_pattern = self.pattern
+                linker = self.linker
+                whitelist = self.whitelist
+            if not bc_pattern:
+                raise Exception("invalid bc_pattern!")
+
+            # parse pattern to dict, C8L10C8L10C8U8
+            # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
+            # [[44, 52]], 'L': [[8, 18], [26, 36]]})
+            pattern_dict = parse_pattern(bc_pattern)
+
+            bool_T = True if 'T' in pattern_dict else False
+            bool_L = True if 'L' in pattern_dict else False
+            bool_whitelist = (whitelist is not None) and whitelist != "None"
+            C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
+
+            if bool_whitelist:
+                seq_list, _ = utils.read_one_col(whitelist)
+                barcode_correct_set, barcode_mismatch_dict = get_all_mismatch(seq_list, n_mismatch=1)
+                barcode_correct_set_list = [barcode_correct_set] * 3
+                barcode_mismatch_dict_list = [barcode_mismatch_dict] * 3
+            if bool_L:
+                seq_list, _ = utils.read_one_col(linker)
+                check_seq(linker, pattern_dict, "L")
+                linker_correct_set_list = []
+                linker_mismatch_dict_list = []
+                start = 0
+                for item in pattern_dict['L']:
+                    end = start + item[1] - item[0]
+                    linker_seq_list = [seq[start:end] for seq in seq_list]
+                    linker_correct_set, linker_mismatch_dict = get_all_mismatch(linker_seq_list, n_mismatch=2)
+                    linker_correct_set_list.append(linker_correct_set)
+                    linker_mismatch_dict_list.append(linker_mismatch_dict)
+                    start = end
+
+            fq1 = pysam.FastxFile(self.fq1_list[i], persist=False)
+            fq2 = pysam.FastxFile(self.fq2_list[i], persist=False)
+
+            for entry1 in fq1:
+                entry2 = next(fq2)
+                header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
+                header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
+                self.total_num += 1
+
+                # polyT filter
+                if bool_T and (not self.allowNoPolyT):
+                    polyT = seq_ranges(seq1, pattern_dict['T'])
+                    if polyT.count('T') < MIN_T:
+                        self.no_polyT_num += 1
+                        if self.nopolyT:
+                            fh1_without_polyT.write(
+                                '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                            fh2_without_polyT.write(
+                                '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+                        continue
+
+                # lowQual filter
+                C_U_quals_ascii = seq_ranges(
+                    qual1, pattern_dict['C'] + pattern_dict['U'])
+                # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
+                if lowQual > 0 and low_qual(C_U_quals_ascii, lowQual, lowNum):
+                    self.lowQual_num += 1
+                    continue
+
+                # linker filter
+                if bool_L and (not self.allowNoLinker):
+                    seq_list = get_seq_list(seq1, pattern_dict, 'L')
+                    bool_valid, bool_corrected, _ = check_seq_mismatch(
+                        seq_list, linker_correct_set_list, linker_mismatch_dict_list)
+                    if not bool_valid:
+                        self.no_linker_num += 1
+                        if self.noLinker:
+                            fh1_without_linker.write(
+                                '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                            fh2_without_linker.write(
+                                '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+                        continue
+                    elif bool_corrected:
+                        self.linker_corrected_num += 1
+
+                # barcode filter
+                seq_list = get_seq_list(seq1, pattern_dict, 'C')
+                if bool_whitelist:
+                    bool_valid, bool_corrected, corrected_seq = check_seq_mismatch(
+                        seq_list, barcode_correct_set_list, barcode_mismatch_dict_list)
+
+                    if not bool_valid:
+                        self.no_barcode_num += 1
+                        continue
+                    elif bool_corrected:
+                        self.barcode_corrected_num += 1
+                    cb = corrected_seq
+                else:
+                    cb = "".join(seq_list)
+
+                umi = seq_ranges(seq1, pattern_dict['U'])
+
+                self.clean_num += 1
+                self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
+                self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
+
+                fh3.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+
+            Barcode.run.logger.info(self.fq1_list[i] + ' finished.')
+        fh3.close()
+
+        # logging
+        Barcode.run.logger.info(
+            f'processed reads: {utils.format_number(self.total_num)}. '
+            f'valid reads: {utils.format_number(self.clean_num)}. '
         )
 
-    barcode.logger.info(f'no polyT reads number : {no_polyT_num}')
-    barcode.logger.info(f'low qual reads number: {lowQual_num}')
-    barcode.logger.info(f'no_linker: {no_linker_num}')
-    barcode.logger.info(f'no_barcode: {no_barcode_num}')
+        Barcode.run.logger.info(f'no polyT reads number : {self.no_polyT_num}')
+        Barcode.run.logger.info(f'low qual reads number: {self.lowQual_num}')
+        Barcode.run.logger.info(f'no_linker: {self.no_linker_num}')
+        Barcode.run.logger.info(f'no_barcode: {self.no_barcode_num}')
+        Barcode.run.logger.info(f'corrected linker: {self.linker_corrected_num}')
+        Barcode.run.logger.info(f'corrected barcode: {self.barcode_corrected_num}')
 
-    if clean_num == 0:
-        raise Exception(
-            'no valid reads found! please check the --chemistry parameter.')
+        if self.clean_num == 0:
+            raise Exception(
+                'no valid reads found! please check the --chemistry parameter.')
 
-    if bool_probe:
-        # total probe summary
-        total_umi = 0
-        total_valid_read = 0
-        for cb in valid_count_dic:
-            total_umi += len(valid_count_dic[cb])
-            total_valid_read += sum(valid_count_dic[cb].values())
-        barcode.logger.info("total umi:"+str(total_umi))
-        barcode.logger.info("total valid read:"+str(total_valid_read))
-        barcode.logger.info("reads without probe:"+str(reads_without_probe))
+        # stat
+        BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
+            30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
+        UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= ord2chr(
+            30)]) / float(sum(self.umi_qual_Counter.values())) * 100
 
-        # probe summary
-        count_list = []
-        for probe_name in probe_dic:
-            UMI_count = 0
-            read_count = 0
-            if probe_name in count_dic:
-                for cb in count_dic[probe_name]:
-                    UMI_count += len(count_dic[probe_name][cb])
-                    read_count += sum(count_dic[probe_name][cb].values())
-            count_list.append(
-                {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
+        def cal_percent(x): return "{:.2%}".format((x + 0.0) / self.total_num)
+        stat_info = '''
+            Raw Reads: %s
+            Valid Reads: %s(%s)
+            Q30 of Barcodes: %.2f%%
+            Q30 of UMIs: %.2f%%
+        '''
+        with open(self.stat_file, 'w') as fh:
+            stat_info = stat_info % (utils.format_number(self.total_num), utils.format_number(self.clean_num),
+                                     cal_percent(self.clean_num), BarcodesQ30,
+                                     UMIsQ30)
+            stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
+            fh.write(stat_info)
 
-        df_count = pd.DataFrame(count_list, columns=[
-                                "probe_name", "read_count", "UMI_count"])
+        self.clean_up()
 
-        def format_percent(x):
-            x = str(round(x*100, 2))+"%"
-            return x
-        df_count["read_fraction"] = (
-            df_count["read_count"]/total_valid_read).apply(format_percent)
-        df_count["UMI_fraction"] = (
-            df_count["UMI_count"]/total_umi).apply(format_percent)
-        df_count.sort_values(by="UMI_count", inplace=True, ascending=False)
-        df_count_file = args.outdir + '/' + args.sample + '_probe_count.tsv'
-        df_count.to_csv(df_count_file, sep="\t", index=False)
 
-    # stat
-    BarcodesQ30 = sum([barcode_qual_Counter[k] for k in barcode_qual_Counter if k >= ord2chr(
-        30)]) / float(sum(barcode_qual_Counter.values())) * 100
-    UMIsQ30 = sum([umi_qual_Counter[k] for k in umi_qual_Counter if k >= ord2chr(
-        30)]) / float(sum(umi_qual_Counter.values())) * 100
-
-    global stat_info
-    def cal_percent(x): return "{:.2%}".format((x + 0.0) / total_num)
-    with open(args.outdir + '/stat.txt', 'w') as fh:
-        """
-        Raw Reads: %s
-        Valid Reads: %s(%s)
-        Q30 of Barcodes: %.2f%%
-        Q30 of UMIs: %.2f%%
-        """
-        stat_info = stat_info % (format_number(total_num), format_number(clean_num),
-                                 cal_percent(clean_num), BarcodesQ30,
-                                 UMIsQ30)
-        stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
-        fh.write(stat_info)
-
-    barcode.logger.info('fastqc ...!')
-    cmd = ['fastqc', '-t', str(args.thread), '-o', args.outdir, out_fq2]
-    barcode.logger.info('%s' % (' '.join(cmd)))
-    subprocess.check_call(cmd)
-    barcode.logger.info('fastqc done!')
-
-    t = reporter(name='barcode', assay=args.assay, sample=args.sample,
-                 stat_file=args.outdir + '/stat.txt', outdir=args.outdir + '/..')
-    t.get_report()
+@utils.add_log
+def barcode(args):
+    step_name = "barcode"
+    barcode_obj = Barcode(args, step_name)
+    barcode_obj.run()
 
 
 def get_opts_barcode(parser, sub_program=True):
-    parser.add_argument('--pattern', help='')
-    parser.add_argument('--whitelist', help='')
-    parser.add_argument('--linker', help='')
-    parser.add_argument('--lowQual', type=int,
-                        help='max phred of base as lowQual, default=0', default=0)
     parser.add_argument(
-        '--lowNum', type=int, help='max number with lowQual allowed, default=2', default=2)
-    parser.add_argument('--nopolyT', action='store_true',
-                        help='output nopolyT fq')
-    parser.add_argument('--noLinker', action='store_true',
-                        help='output noLinker fq')
-    parser.add_argument('--probe_file', help="probe fasta file")
-    parser.add_argument('--allowNoPolyT', help="allow reads without polyT", action='store_true')
-    parser.add_argument('--allowNoLinker', help="allow reads without correct linker", action='store_true')
-    parser.add_argument('--not_gzip', help="output fastq without gzip", action='store_true')
+        '--chemistry',
+        help="""Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
+- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
+- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
+- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
+same time.""",
+        choices=list(__PATTERN_DICT__.keys()),
+        default='auto'
+    )
     parser.add_argument(
-        '--chemistry', choices=__PATTERN_DICT__.keys(), help='chemistry version', default='auto')
+        '--pattern',
+        help="""The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
+        of bases.  
+- `C`: cell barcode  
+- `L`: linker(common sequences)  
+- `U`: UMI    
+- `T`: poly T""",
+    )
+    parser.add_argument(
+        '--whitelist',
+        help='Cell barcode whitelist file path, one cell barcode per line.'
+    )
+    parser.add_argument(
+        '--linker',
+        help='Linker whitelist file path, one linker per line.'
+    )
+    parser.add_argument(
+        '--lowQual',
+        help='Default 0. Bases in cell barcode and UMI whose phred value are lower than \
+lowQual will be regarded as low-quality bases.',
+        type=int,
+        default=0
+    )
+    parser.add_argument(
+        '--lowNum',
+        help='The maximum allowed lowQual bases in cell barcode and UMI.',
+        type=int,
+        default=2
+    )
+    parser.add_argument(
+        '--nopolyT',
+        help='Outputs R1 reads without polyT.',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--noLinker',
+        help='Outputs R1 reads without correct linker.',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--allowNoPolyT',
+        help="Allow valid reads without polyT.",
+        action='store_true'
+    )
+    parser.add_argument(
+        '--allowNoLinker',
+        help="Allow valid reads without correct linker.",
+        action='store_true'
+    )
+    parser.add_argument(
+        '--gzip',
+        help="Output gzipped fastq files.",
+        action='store_true'
+    )
     if sub_program:
-        parser.add_argument('--fq1', help='read1 fq file', required=True)
-        parser.add_argument('--fq2', help='read2 fq file', required=True)
+        parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
+        parser.add_argument('--fq2', help='R2 fastq file. Multiple files are separated by comma.', required=True)
         parser = s_common(parser)
 
     return parser

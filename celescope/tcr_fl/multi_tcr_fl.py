@@ -1,19 +1,12 @@
-from celescope.tcr_fl.__init__ import __STEPS__, __ASSAY__
-from celescope.tools.Multi import Multi
+from celescope.tcr_fl.__init__ import __ASSAY__
+from celescope.tools.multi import Multi
 
 
 class Multi_tcr_fl(Multi):
-    def custome_args(self):
-        self.parser.add_argument('--thread', help='thread', default=4)
-        self.parser.add_argument("--nCell", help="select top N cell")
-
-    def read_custome_args(self):
-        self.thread = self.args.thread
-        self.nCell = self.args.nCell
 
     def split_fq(self, sample):
         step = 'split_fq'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq.gz'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
             f'{self.__APP__} '
             f'{self.__ASSAY__} '
@@ -47,6 +40,6 @@ def main():
     multi = Multi_tcr_fl(__ASSAY__)
     multi.run()
 
+
 if __name__ == '__main__':
     main()
-

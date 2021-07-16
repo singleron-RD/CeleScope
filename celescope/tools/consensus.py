@@ -1,26 +1,71 @@
-import pysam
-import gzip
-import numpy as np
 import subprocess
-import os
-from xopen import xopen
 from collections import defaultdict
 from itertools import groupby
-from celescope.tools.utils import *
-from celescope.tools.report import reporter
+
+import numpy as np
+import pysam
+from xopen import xopen
+
+import celescope.tools.utils as utils
+from celescope.tools.step import Step, s_common
 
 
-@add_log
+class Consensus(Step):
+    """
+    Features
+    - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI).
+
+    Output
+    - `{sample}_consensus.fq` Consensus fastq.
+    """
+
+    def __init__(self, args, step_name):
+        Step.__init__(self, args, step_name)
+
+        # out files
+        self.fq_tmp_file = f'{self.out_prefix}_sorted.fq.tmp'
+        self.consensus_fq = f'{self.out_prefix}_consensus.fq'
+
+    @utils.add_log
+    def run(self):
+        if self.args.not_consensus:
+            Consensus.run.logger.warning("Will not perform UMI consensus!")
+            return
+
+        sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
+        n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
+            fq=self.fq_tmp_file,
+            outfile=self.consensus_fq,
+            threshold=self.args.threshold
+        )
+
+        self.add_metric(
+            name="UMI Counts",
+            value=n,
+        )
+        self.add_metric(
+            name="Mean UMI Length",
+            value=round(np.mean(length_list), 2),
+        )
+        self.add_metric(
+            name="Ambiguous Base Counts",
+            value=total_ambiguous_base_n,
+            total=sum(length_list),
+        )
+        self.clean_up()
+
+
+@utils.add_log
 def sort_fastq(fq, fq_tmp_file, outdir):
     tmp_dir = f'{outdir}/tmp'
     cmd = (
         f'mkdir {tmp_dir};'
-        f'zcat {fq} | paste - - - - | sort -T {tmp_dir} -k1,1 -t " " | tr "\t" "\n" > {fq_tmp_file};'
+        f'less {fq} | paste - - - - | sort -T {tmp_dir} -k1,1 -t " " | tr "\t" "\n" > {fq_tmp_file};'
     )
     subprocess.check_call(cmd, shell=True)
 
 
-@add_log
+@utils.add_log
 def sorted_dumb_consensus(fq, outfile, threshold):
     '''
     consensus read in name-sorted fastq
@@ -46,24 +91,14 @@ def sorted_dumb_consensus(fq, outfile, threshold):
             n_umi += 1
             prefix = "_".join([barcode, umi])
             read_name = f'{prefix}_{n_umi}'
-            out_h.write(fastq_line(read_name, consensus_seq, consensus_qual))
+            out_h.write(utils.fastq_line(read_name, consensus_seq, consensus_qual))
             if n_umi % 10000 == 0:
                 sorted_dumb_consensus.logger.info(f'{n_umi} UMI done.')
             total_ambiguous_base_n += ambiguous_base_n
             length_list.append(con_len)
-    
+
     out_h.close()
     return n_umi, total_ambiguous_base_n, length_list
-
-
-@add_log
-def wrap_consensus(fq, outdir, sample, threshold):
-    fq_tmp_file = f'{outdir}/{sample}_sorted.fq.tmp'
-    sort_fastq(fq, fq_tmp_file, outdir)
-    outfile = f'{outdir}/{sample}_consensus.fq'
-    n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
-        fq=fq_tmp_file, outfile=outfile, threshold=threshold)
-    return outfile, n, total_ambiguous_base_n, length_list
 
 
 def dumb_consensus(read_list, threshold=0.5, ambiguous='N', default_qual='F'):
@@ -124,7 +159,7 @@ def get_read_length(read_list, threshold=0.5):
     length = max length with read fraction >= threshold
     elements of read_list: [entry.sequence,entry.quality]
     '''
-    
+
     n_read = len(read_list)
     length_dict = defaultdict(int)
     for read in read_list:
@@ -134,52 +169,23 @@ def get_read_length(read_list, threshold=0.5):
         length_dict[length] = length_dict[length] / n_read
 
     fraction = 0
-    for length in sorted(length_dict.keys(),reverse=True):
+    for length in sorted(length_dict.keys(), reverse=True):
         fraction += length_dict[length]
         if fraction >= threshold:
             return length
 
 
+@utils.add_log
 def consensus(args):
-    sample = args.sample
-    outdir = args.outdir
-    assay = args.assay
-    fq = args.fq
-    threshold = float(args.threshold)
 
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % outdir)
-
-    outfile, n, total_ambiguous_base_n, length_list = wrap_consensus(fq, outdir, sample, threshold)
-
-    # metrics
-    metrics = {}
-    metrics["UMI Counts"] = n
-    metrics["Mean UMI Length"] = np.mean(length_list)
-    metrics["Ambiguous Base Counts"] = total_ambiguous_base_n    
-    format_metrics(metrics)
-
-    ratios = {}
-    ratios["Ambiguous Base Counts Ratio"] = total_ambiguous_base_n / sum(length_list)
-    format_ratios(ratios)
-
-    # stat file
-    stat_file = f'{outdir}/stat.txt'
-    with open(stat_file, 'w') as stat_h:
-        stat_str = (
-            f'UMI Counts: {metrics["UMI Counts"]}\n'
-            f'Mean UMI Length: {metrics["Mean UMI Length"]}\n'
-            f'Ambiguous Base Counts: {metrics["Ambiguous Base Counts"]}({ratios["Ambiguous Base Counts Ratio"]}%)\n'
-        )
-        stat_h.write(stat_str)
-
-    t = reporter(name='consensus', assay=args.assay, sample=args.sample,
-                 stat_file=stat_file, outdir=args.outdir + '/..')
-    t.get_report()
+    step_name = "consensus"
+    consensus_obj = Consensus(args, step_name)
+    consensus_obj.run()
 
 
 def get_opts_consensus(parser, sub_program):
-    parser.add_argument("--threshold", help='valid base threshold', default=0.5)
+    parser.add_argument("--threshold", help='Default 0.5. Valid base threshold. ', type=float, default=0.5)
+    parser.add_argument("--not_consensus", help="Skip the consensus step. ", action='store_true')
     if sub_program:
+        parser.add_argument("--fq", help="Required. Fastq file.", required=True)
         s_common(parser)
-        parser.add_argument("--fq", required=True)

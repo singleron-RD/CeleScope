@@ -6,7 +6,7 @@
         <title>report</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> 
         <script> {% include "./js/jquery.min.js" %} </script>
-        <script> {% include "./js/plotly-latest.min.js" %} </script>
+        <script> {% include "./js/plotly-1.58.4.min.js" %} </script>
         
 
         
@@ -107,7 +107,7 @@
   </header>
 
   <div class="container">
-      <h1 align="center">GEXSCOPE Report </h1>
+      <h1 align="center">CeleScope Report</h1>
 
       {% if sample_summary is defined %}
       {% include "html/common/sample_summary.html"%}
@@ -121,8 +121,8 @@
       {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
 
-      {% if STAR_summary is defined %}
-      {% include "html/rna/STAR_summary.html"%}
+      {% if star_summary is defined %}
+      {% include "html/rna/star_summary.html"%}
       {% endif %}
 
       {% if featureCounts_summary is defined%}

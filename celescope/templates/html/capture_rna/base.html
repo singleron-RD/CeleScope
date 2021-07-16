@@ -106,7 +106,7 @@
   </header>
 
   <div class="container">
-      <h1 align="center">GEXSCOPE Report </h1>
+      <h1 align="center">CeleScope Report</h1>
 
       {% if sample_summary is defined %}
       {% include "html/common/sample_summary.html"%}
@@ -120,8 +120,8 @@
       {% include "html/common/cutadapt_summary.html"%}
       {% endif %}
 
-      {% if STAR_summary is defined %}
-      {% include "html/rna/STAR_summary.html"%}
+      {% if star_summary is defined %}
+      {% include "html/rna/star_summary.html"%}
       {% endif %}
 
       {% if featureCounts_summary is defined%}

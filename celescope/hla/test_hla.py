@@ -1,8 +1,9 @@
-import unittest
 import os
-import pandas as pd
-from celescope.hla.mapping_hla import split_bam, hla_typing, summary, read_index
-from celescope.tools.utils import *
+import unittest
+
+from celescope.hla.mapping_hla import (hla_typing, read_index, split_bam,
+                                       summary)
+from celescope.tools.utils import read_barcode_file
 
 
 class testHLA(unittest.TestCase):
@@ -29,7 +30,7 @@ class testHLA(unittest.TestCase):
     def test_read_index(self):
         read_index(self.index_file)
 
-    #@unittest.skip('pass')
+    # @unittest.skip('pass')
     def test_summary(self):
         summary(self.index_file, self.mapping_outdir, self.sample)
 

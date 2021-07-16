@@ -1,19 +1,15 @@
 #!/bin/env python
 # coding=utf8
 
-import os
-import sys
-import json
-import logging
-import re
-import numpy as np
-import pandas as pd
 import glob
-from scipy.io import mmwrite
-from scipy.sparse import csr_matrix
-from celescope.tools.report import reporter
-from celescope.tools.utils import *
+import json
+import os
+
+import pandas as pd
+
 import celescope.tools
+from celescope.tools.report import reporter
+from celescope.tools.utils import add_log, s_common
 
 toolsdir = os.path.dirname(celescope.tools.__file__)
 
@@ -72,7 +68,7 @@ def marker_table(marker_df):
     return html code
     """
     marker_df = marker_df.loc[:, ["cluster", "gene",
-                                  "avg_logFC", "pct.1", "pct.2", "p_val_adj"]]
+                                  "avg_log2FC", "pct.1", "pct.2", "p_val_adj"]]
     marker_gene_table = marker_df.to_html(
         escape=False,
         index=False,
@@ -128,4 +124,3 @@ def get_opts_analysis_rna_virus(parser, sub_program):
             '--virus_file',
             help='virus UMI count file',
             required=True)
-        

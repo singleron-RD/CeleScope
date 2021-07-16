@@ -1,14 +1,12 @@
-#!/bin/env python
-# coding=utf8
-
-from collections import defaultdict
-import os
-import json
 import argparse
-from celescope.tools.utils import *
+import json
+import os
+from collections import defaultdict
+
+import celescope.tools.utils as utils
 
 
-@add_log
+@utils.add_log
 def merge_report():
     parser = argparse.ArgumentParser('merge report')
     parser.add_argument('--outdir', help='outdir', required=True)
@@ -16,7 +14,7 @@ def merge_report():
         '--samples', help='samples, seperated by comma', required=True)
     parser.add_argument('--steps', help='steps', required=True)
     parser.add_argument('--rm_files', action='store_true',
-                        help='remove all fq.gz and bam after running')
+                        help='remove all fq and bam after running')
     args = vars(parser.parse_args())
 
     outdir = args['outdir']
@@ -31,7 +29,15 @@ def merge_report():
         data_dic = json.load(open(data_json))
         for summary in summarys:
             if summary not in data_dic.keys():
-                continue
+                # TCR and BCR data_dict has prefix
+                bool_in = False
+                for key in data_dic.keys():
+                    if key.find(summary) != -1:
+                        summary = key
+                        bool_in = True
+                if not bool_in:
+                    continue
+
             # add title
             if sample == samples[0]:
                 result_dict[summary].append(
@@ -42,9 +48,7 @@ def merge_report():
             )
 
     with open('./merge.xls', 'w') as fh:
-        for summary in summarys:
-            if summary not in data_dic.keys():
-                continue
+        for summary in result_dict.keys():
             fh.write('##' + summary + '\n')
             for k in result_dict[summary]:
                 fh.write(k + '\n')
@@ -54,7 +58,7 @@ def merge_report():
         rm_files()
 
 
-@add_log
+@utils.add_log
 def rm_files():
     cmd = '''
         find . -iname '*.fq*' -delete;

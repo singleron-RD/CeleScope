@@ -52,7 +52,7 @@
     <div class="box">
         <div class="description" style="display: none;">
             <p><b>Top Marker Genes by Cluster</b> : differential expression analysis based on the non-parameteric Wilcoxon rank sum test.</p>
-            <p> avg_logFC : log fold-change of the average expression between the cluster and the rest of the sample.</p>
+            <p> avg_log2FC : log fold-change of the average expression between the cluster and the rest of the sample.</p>
             <p> pct.1 : The percentage of cells where the gene is detected in the cluster.</p>
             <p> pct.2 : The percentage of cells where the gene is detected in the rest of the sample.</p>
             <p> p_val_adj : Adjusted p-value, based on bonferroni correction using all genes in the dataset.</p>
@@ -151,15 +151,16 @@
             }
             Plotly.newPlot('gene_tsne', data, layout, config);
         </script>       
-      </div>
+    </div>
 
-      <hr />
-
+    <hr />
+    {% if table_dict is defined %}
         <h3>{{table_dict['title']}}</h3>
         <div style=" margin-left: 3%; margin-right:3%;">
             {{table_dict['table'] | safe}}
         </div>
-        
+    {% endif %}
+    
 
 
       <div class="clear" ></div>

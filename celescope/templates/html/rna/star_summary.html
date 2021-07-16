@@ -1,0 +1,63 @@
+    <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+      <h2>Mapping    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+      <div class="box">
+        <div class="description" style="display: none;">
+          <p><b>Uniquely Mapped Reads</b> : reads that mapped uniquely to the genome.</p>
+          <p><b>Multi-Mapped Reads</b> : reads that mapped to multiple locations in the genome.</p>
+          <p><b>Base Pairs Mapped to Exonic Regions</b> : bases in primary alignments that align to a coding base or a UTR base for some gene.</p>
+          <p><b>Base Pairs Mapped to Intronic Regions</b> : bases in primary alignments that align to an intronic base for some gene, and not a coding or UTR base.</p>
+          <p><b>Base Pairs Mapped to Intergenic Regions</b> : bases in primary alignments that do not align to any gene.</p>
+        </div>
+        <table style="float: left; margin-left: 0%; margin-top: 0%; margin-right:3%; width: 47%">
+          {% for item in star_summary %}
+            <tr>
+              {% for i in item %} 
+              <td>{{ i|e }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </table>
+        <div id="myDivPie" style="float: left; margin-left: 3%; margin-right:0%; margin-top: 2%;width: 47%">
+          <script>
+            var data = [{
+              values: {{ STAR_plot.region_values|safe }},
+              labels: {{ STAR_plot.region_labels|safe }},
+              type: 'pie',
+              textposition: 'none',
+            }];
+            var layout = {
+                autosize:true,
+                height: 300,
+                width: 400,
+                margin: {
+                    l: 50,
+                    r: 35,
+                    b: 10,
+                    t: 10,
+                },
+                
+                showlegend: true,
+                legend: {
+                    orientation: 'v',
+                }
+
+            };
+            
+            var config = { 
+                "displayModeBar": true, 
+                "staticPlot": false, 
+                "showAxisDragHandles": false, 
+                "modeBarButtons": [["toImage", "resetScale2d"]], 
+                "scrollZoom": false,
+                "displaylogo": false, 
+            }
+
+            Plotly.newPlot('myDivPie', data, layout, config);
+          </script>
+        </div>
+
+        <div class="clear" ></div>
+
+      </div>
+    </div>
+

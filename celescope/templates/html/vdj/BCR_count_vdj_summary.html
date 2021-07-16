@@ -4,9 +4,9 @@
       <div class="description" style="display: none;">
         <p><b>Estimated Number of cells</b> : number of barcodes considered as cell-associated.</p>
         <p><b>Median UMIs per Cell</b> : median number of UMI mapped to each chain per cell.</p>
-        <p><b>Cell with Heavy and Light Chain</b> : cells with as least {{ BCR_count_vdj_parameters.iUMI }} UMI mapped to each chain.</p>
+        <p><b>Cell with Heavy and Light Chain</b> : cells with as least {{ iUMI }} UMI mapped to each chain.</p>
         <p><b>Cell with Barcode Match </b> : cells with barcode matched with scRNA-seq library.</p>
-        <p><b>Cell with barcode Match, Heavy and Light chain</b> : cell with matched barcode and with as least {{ BCR_count_vdj_parameters.iUMI }} UMI mapped to each chain.</p>
+        <p><b>Cell with barcode Match, Heavy and Light chain</b> : cell with matched barcode and with as least {{ iUMI }} UMI mapped to each chain.</p>
     </div>
       <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
         {% for item in BCR_count_vdj_summary %}
