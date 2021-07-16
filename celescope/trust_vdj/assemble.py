@@ -374,7 +374,7 @@ class Assemble(Step):
             
         self.cutoff()
 
-        if not os.path.exists(f'{self.outdir}/outs/clonetypes.csv'):
+        if not os.path.exists(f'{self.outdir}/{self.sample}_annot.fa'):
             self.run_assemble()
 
         self.get_all_rep()
