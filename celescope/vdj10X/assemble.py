@@ -16,7 +16,7 @@ pd.set_option('max_colwidth',200)
 def reversed_compl(seq):
     return str(Seq(seq).reverse_complement())
 
-def get_vj_annot(df):
+def get_vj_annot(df, chains, pairs):
     fl_pro_pair_df = pd.DataFrame(df[(df['full_length']==True)&(df['productive']==True)].drop_duplicates(['barcode', 'chain']).barcode.value_counts())
     fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']==2]
     l = []
@@ -26,46 +26,78 @@ def get_vj_annot(df):
         'count': fl_pro_pair_df.shape[0],
         'total_count': cell_nums
     })
-    l.append({
-        'item': 'Cells With TRA Contig',
-        'count': len(set(df[df['chain']=='TRA'].barcode.tolist())),
-        'total_count': cell_nums
-    })
-    l.append({
-        'item': 'Cells With TRB Contig',
-        'count': len(set(df[df['chain']=='TRB'].barcode.tolist())),
-        'total_count': cell_nums
-    })
-    l.append({
-        'item': 'Cells With CDR3-annotated TRA Contig',
-        'count': len(set(df[(df['cdr3']!='None')&(df['chain']=='TRA')].barcode.tolist())),
-        'total_count': cell_nums
-    })
-    l.append({
-        'item': 'Cells With CDR3-annotated TRB Contig',
-        'count': len(set(df[(df['cdr3']!='None')&(df['chain']=='TRB')].barcode.tolist())),
-        'total_count': cell_nums
-    })
-    l.append({
-        'item': 'Cells With V-J Spanning TRA Contig',
-        'count': len(set(df[(df['full_length']==True)&(df['chain']=='TRA')].barcode.tolist())),
-        'total_count': cell_nums
-    })
-    l.append({
-        'item': 'Cells With V-J Spanning TRB Contig',
-        'count': len(set(df[(df['full_length']==True)&(df['chain']=='TRB')].barcode.tolist())),
-        'total_count': cell_nums
-    })
-    l.append({
-        'item': 'Cells With Productive TRA Contig',
-        'count': len(set(df[(df['productive']==True)&(df['chain']=='TRA')].barcode.tolist())),
-        'total_count': cell_nums
-    })
-    l.append({
-        'item': 'Cells With Productive TRB Contig',
-        'count': len(set(df[(df['productive']==True)&(df['chain']=='TRB')].barcode.tolist())),
-        'total_count': cell_nums
-    })
+    for p in pairs:
+        chain1 = p.split('_')[0]
+        chain2 = p.split('_')[1]
+        cbs1 = set(df[(df['productive']==True)&(df['chain']==chain1)].barcode.tolist())
+        cbs2 = set(df[(df['productive']==True)&(df['chain']==chain2)].barcode.tolist())
+        paired_cbs = len(cbs1.intersection(cbs2))
+        l.append({
+            'item': f'Cells With Productive V-J Spanning ({chain1}, {chain2}) Pair',
+            'count': paired_cbs,
+            'total_count': cell_nums
+        })
+    for c in chains:
+        l.append({
+            'item': f'Cells With {c} Contig',
+            'count': len(set(df[df['chain']==c].barcode.tolist())),
+            'total_count': cell_nums
+        })
+        l.append({
+            'item': f'Cells With CDR3-annotated {c} Contig',
+            'count': len(set(df[(df['chain']==c)&(df['cdr3']!='None')].barcode.tolist())),
+            'total_count': cell_nums
+        })
+        l.append({
+            'item': f'Cells With V-J Spanning {c} Contig',
+            'count': len(set(df[(df['full_length']==True)&(df['chain']==c)].barcode.tolist())),
+            'total_count': cell_nums
+        })
+        l.append({
+            'item': f'Cells With Productive {c} Contig',
+            'count': len(set(df[(df['productive']==True)&(df['chain']==c)].barcode.tolist())),
+            'total_count': cell_nums
+        })
+    # l.append({
+    #     'item': 'Cells With TRA Contig',
+    #     'count': len(set(df[df['chain']=='TRA'].barcode.tolist())),
+    #     'total_count': cell_nums
+    # })
+    # l.append({
+    #     'item': 'Cells With TRB Contig',
+    #     'count': len(set(df[df['chain']=='TRB'].barcode.tolist())),
+    #     'total_count': cell_nums
+    # })
+    # l.append({
+    #     'item': 'Cells With CDR3-annotated TRA Contig',
+    #     'count': len(set(df[(df['cdr3']!='None')&(df['chain']=='TRA')].barcode.tolist())),
+    #     'total_count': cell_nums
+    # })
+    # l.append({
+    #     'item': 'Cells With CDR3-annotated TRB Contig',
+    #     'count': len(set(df[(df['cdr3']!='None')&(df['chain']=='TRB')].barcode.tolist())),
+    #     'total_count': cell_nums
+    # })
+    # l.append({
+    #     'item': 'Cells With V-J Spanning TRA Contig',
+    #     'count': len(set(df[(df['full_length']==True)&(df['chain']=='TRA')].barcode.tolist())),
+    #     'total_count': cell_nums
+    # })
+    # l.append({
+    #     'item': 'Cells With V-J Spanning TRB Contig',
+    #     'count': len(set(df[(df['full_length']==True)&(df['chain']=='TRB')].barcode.tolist())),
+    #     'total_count': cell_nums
+    # })
+    # l.append({
+    #     'item': 'Cells With Productive TRA Contig',
+    #     'count': len(set(df[(df['productive']==True)&(df['chain']=='TRA')].barcode.tolist())),
+    #     'total_count': cell_nums
+    # })
+    # l.append({
+    #     'item': 'Cells With Productive TRB Contig',
+    #     'count': len(set(df[(df['productive']==True)&(df['chain']=='TRB')].barcode.tolist())),
+    #     'total_count': cell_nums
+    # })
     return l
      
 class Assemble(Step):
@@ -80,6 +112,15 @@ class Assemble(Step):
         self.thread = args.thread
         self.fqs_dir = args.fqs_dir
         self.match_dir = args.match_dir
+        self.seqtype = args.seqtype
+        
+        # chain parameters
+        if self.seqtype == 'TCR':
+            self.chains = ['TRA', 'TRB']
+            self.pair = ['TRA_TRB']
+        elif self.seqtype == 'BCR':
+            self.chains = ['IGH', 'IGL', 'IGK']
+            self.pair = ['IGH_IGL', 'IGH_IGK']
         
         # input
         self.barcode_dic = args.barcode_dic
@@ -187,33 +228,45 @@ class Assemble(Step):
             'count': int(read_count * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/100)), 
             'total_count': read_count
         })
-        common_summary.append({
-            'item': 'Reads Mapped to TRA',
-            'count': int(read_count * (float(sum_dict[0]['Reads Mapped to TRA'].strip('%'))/100)),
-            'total_count': read_count,
-        })
-        common_summary.append({
-            'item': 'Reads Mapped to TRB',
-            'count': int(read_count * (float(sum_dict[0]['Reads Mapped to TRB'].strip('%'))/100)),
-            'total_count': read_count
-        })
+        for c in self.chains:
+            common_summary.append({
+                'item': f'Reads Mapped to {c}', 
+                'count': int(read_count * (float(sum_dict[0][f'Reads Mapped to {c}'].strip('%'))/100)), 
+                'total_count': read_count
+            })
+        # common_summary.append({
+        #     'item': 'Reads Mapped to TRA',
+        #     'count': int(read_count * (float(sum_dict[0]['Reads Mapped to TRA'].strip('%'))/100)),
+        #     'total_count': read_count,
+        # })
+        # common_summary.append({
+        #     'item': 'Reads Mapped to TRB',
+        #     'count': int(read_count * (float(sum_dict[0]['Reads Mapped to TRB'].strip('%'))/100)),
+        #     'total_count': read_count
+        # })
         common_summary.append({
             'item': 'Fraction Reads in Cells',
             'count': int(read_count * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/100)),
             'total_count': read_count
         })
-        common_summary.append({
-            'item': 'Median used TRA UMIs per Cell',
-            'count': int(filter_contig[filter_contig['chain']=='TRA']['umis'].median()), 
-            'total_count': np.nan
-        })
-        common_summary.append({
-            'item': 'Median used TRB UMIs per Cell',
-            'count': int(filter_contig[filter_contig['chain']=='TRB']['umis'].median()), 
-            'total_count': np.nan
-        })
+        for c in self.chains:
+            common_summary.append({
+                'item': f'Median used {c} UMIs per Cell',
+                'count': int(filter_contig[filter_contig['chain']==c]['umis'].median()),
+                'total_count': np.nan
+            })
+        # common_summary.append({
+        #     'item': 'Median used TRA UMIs per Cell',
+        #     'count': int(filter_contig[filter_contig['chain']=='TRA']['umis'].median()), 
+        #     'total_count': np.nan
+        # })
+        # common_summary.append({
+        #     'item': 'Median used TRB UMIs per Cell',
+        #     'count': int(filter_contig[filter_contig['chain']=='TRB']['umis'].median()), 
+        #     'total_count': np.nan
+        # })
         # get all results stat_file
-        all_summary = get_vj_annot(filter_contig)   
+        all_summary = get_vj_annot(filter_contig, self.chains, self.pair)   
 
         # count umi and plot
         all_bam = pysam.AlignmentFile(self.all_bam)
@@ -238,7 +291,7 @@ class Assemble(Step):
         df_sgr = pd.DataFrame(self.match_cell_barcodes, columns=['barcode'])
         df_match = pd.merge(df_sgr, filter_contig, on='barcode', how='inner')
         # get match summary
-        match_summary = get_vj_annot(df_match)
+        match_summary = get_vj_annot(df_match, self.chains, self.pair)
         match_summary.insert(0, {
             'item': 'Cells match with scRNA-seq analysis',
             'count': len(set(df_match['barcode'].tolist())),
@@ -277,7 +330,7 @@ class Assemble(Step):
         self.clean_up()
             
 def assemble(args):
-    step_name = 'assemble'
+    step_name = f'{args.seqtype}_assemble'
     assemble_obj = Assemble(args, step_name)
     assemble_obj.run()
 
@@ -287,6 +340,7 @@ def get_opts_assemble(parser, sub_program):
     parser.add_argument('--soft', help='cellranger version', choices=['3.0.2', '3.1.0', '4.0.0', '6.0.0'], 
         default='4.0.0')
     parser.add_argument('--mem', help='memory (G)', default=10)
+    parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
     if sub_program:
         s_common(parser)
         parser.add_argument('--fqs_dir', help='fastq dir', required=True)

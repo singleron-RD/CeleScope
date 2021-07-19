@@ -6,13 +6,12 @@
 		<p><b>Reads Mapped to Any V(D)J Gene:</b> Reads mapped to any TCR or BCR genes.</p>
 		<p><b>Reads Mapped to TRA:</b> Reads mapped to TRA chain. For BCR, this should be one of [IGH, IGL, IGK].</p>
 		<p><b>Reads Mapped to TRB:</b> Reads mapped to TRB chain. For BCR, this should be one of [IGH, IGL, IGK].</p>	
-		<p><b>Mean Read Pairs per Cell:</b> Average number of read pairs distributed to each cell.</p>
-		<p><b>Mean Used Read Pairs per Cell:</b> Average number of read pairs used to assemble for each cell.</p>
+		<p><b>Fraction Reads in Cells:</b> Number of reads with cell-associated barcodes divided by the number of reads with valid barcodes.</p>
 		<p><b>Median TRA UMIs per Cell:</b> Median number of UMIs assigned to a TRA contig per cell. For B cells, only the max of [IGK, IGL] are counted.</p>
 		<p><b>Median TRB UMIs per Cell:</b> Median number of UMIs assigned to a TRB contig per cell. For B cells, only the max of [IGK, IGL] are counted.</p>
 	</div>
 	  <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
-		{% for item in assemble_summary[:7] %}
+		{% for item in TCR_assemble_summary[:7] %}
 		  <tr>
 			{% for i in item %}
 			<td>{{ i|e }}</td>
@@ -34,16 +33,19 @@
   <div class="box">
 	<div class="description" style="display: none;">
 	  <p><b>Cells With Productive V-J Spanning Pair:</b> Fraction of cell-associated barcodes with at least one productive contig for each chain of the receptor pair. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region.</p>
-	  <p><b>Cells With TRA Contig:</b> Fraction of cell-associated barcodes with at least one TRA contig annotated as a full or partial V(D)J gene.</p>        
+	  <p><b>Cells With Productive V-J Spanning (TRA, TRB) Pair:</b> Fraction of cell-associated barcodes with at least one productive contig for each chain of the receptor pair. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region.</p>
+	  <p><b>Cells With TRA Contig:</b> Fraction of cell-associated barcodes with at least one TRA contig annotated as a full or partial V(D)J gene.</p>
+	  <p><b>Cells With CDR3-annotated TRA Contig:</b> Fraction of cell-associated barcodes with at least one TRA contig where a CDR3 was detected.</p>        
 	  <p><b>Cells With V-J spanning TRA Contig:</b> Fraction of cell-associated barcodes with at least one contig spanning the 5' end of the V region to the 3' end of the J region for TRA.</p>
 	  <p><b>Cells With productive TRA Contig</b>: Fraction of cell-associated barcodes with productive TRA chain. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region.</p>
 	  <p><b>Cells With TRB Contig:</b> Fraction of cell-associated barcodes with at least one TRB contig annotated as a full or partial V(D)J gene.</p>
+	  <p><b>Cells With CDR3-annotated TRB Contig:</b> Fraction of cell-associated barcodes with at least one TRB contig where a CDR3 was detected.</p>  
 	  <p><b>Cells With V-J spanning TRB Contig:</b> Fraction of cell-associated barcodes with at least one contig spanning the 5' end of the V region to the 3' end of the J region for TRB.</p>
 	  <p><b>Cells With productive TRB Contig:</b> Fraction of cell-associated barcodes with productive TRB chain. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region.</p>
 
   </div>
 	<table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
-	  {% for item in assemble_summary[7:16] %}
+	  {% for item in TCR_assemble_summary[7:17] %}
 		{% if loop.index <= (loop.length+1)/2 %}
 	  <tr>
 		  {% for i in item %}
@@ -55,7 +57,7 @@
 	</table>
 
 	<table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
-	  {% for item in assemble_summary[7:16] %}
+	  {% for item in TCR_assemble_summary[7:17] %}
 		{% if loop.index > (loop.length+1)/2 %}
 		<tr>
 		  {% for i in item %}
@@ -75,16 +77,19 @@
 	  <div class="description" style="display: none;">
         <p><b>Cells match with scRNA-seq analysis:</b> Barcodes of cells and barcodes of scRNA-seq cells are reversed complementary.</p>
 		<p><b>Cells With Productive V-J Spanning Pair:</b> Fraction of cell-associated barcodes with at least one productive contig for each chain of the receptor pair. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region.</p>
-		<p><b>Cells With TRA Contig:</b> Fraction of cell-associated barcodes with at least one TRA contig annotated as a full or partial V(D)J gene.</p>        
+		<p><b>Cells With Productive V-J Spanning (TRA, TRB) Pair:</b> Fraction of cell-associated barcodes with at least one productive contig for each chain of the receptor pair. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region.</p>
+		<p><b>Cells With TRA Contig:</b> Fraction of cell-associated barcodes with at least one TRA contig annotated as a full or partial V(D)J gene.</p> 
+		<p><b>Cells With CDR3-annotated TRA Contig:</b> Fraction of cell-associated barcodes with at least one TRA contig where a CDR3 was detected.</p>       
 		<p><b>Cells With V-J spanning TRA Contig:</b> Fraction of cell-associated barcodes with at least one contig spanning the 5' end of the V region to the 3' end of the J region for TRA.</p>
 		<p><b>Cells With productive TRA Contig</b>: Fraction of cell-associated barcodes with productive TRA chain. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region.</p>
 		<p><b>Cells With TRB Contig:</b> Fraction of cell-associated barcodes with at least one TRB contig annotated as a full or partial V(D)J gene.</p>
+		<p><b>Cells With CDR3-annotated TRB Contig:</b> Fraction of cell-associated barcodes with at least one TRB contig where a CDR3 was detected.</p>
 		<p><b>Cells With V-J spanning TRB Contig:</b> Fraction of cell-associated barcodes with at least one contig spanning the 5' end of the V region to the 3' end of the J region for TRB.</p>
 		<p><b>Cells With productive TRB Contig:</b> Fraction of cell-associated barcodes with productive TRB chain. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region.</p>
   
 	</div>
 	  <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
-		{% for item in assemble_summary[16:] %}
+		{% for item in TCR_assemble_summary[17:] %}
 		  {% if loop.index <= (loop.length+1)/2 %}
 		<tr>
 			{% for i in item %}
@@ -96,7 +101,7 @@
 	  </table>
   
 	  <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
-		{% for item in assemble_summary[16:] %}
+		{% for item in TCR_assemble_summary[17:] %}
 		  {% if loop.index > (loop.length+1)/2 %}
 		  <tr>
 			{% for i in item %}

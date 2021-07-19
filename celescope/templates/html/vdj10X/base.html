@@ -133,9 +133,13 @@
       {% include "html/common/barcode_summary.html"%}
       {% endif %}
 
-      {% if assemble_summary is defined %}
-      {% include "html/vdj10X/assemble_summary.html"%}
-      {% endif %}   
+      {% if TCR_assemble_summary is defined %}
+      {% include "html/vdj10X/TCR_assemble_summary.html"%}
+      {% endif %}
+
+      {% if BCR_assemble_summary is defined %}
+      {% include "html/vdj10X/BCR_assemble_summary.html"%}
+      {% endif %}
 
       {% if table_dict is defined %}
       {% include "html/vdj10X/clonotypes_table.html"%}
