@@ -161,6 +161,7 @@ class Assemble(Step):
         ## filtered_contig_annotations.csv
         filter_contig = pd.read_csv(f'{self.filter_contig}', sep=',', index_col=None)
         filter_contig['barcode'] = filter_contig['barcode'].apply(lambda x: reversed_compl(barcode_dict[x.split('-')[0]]))
+        filter_contig['contig_id'] = filter_contig['contig_id'].apply(lambda x: reversed_compl(barcode_dict[x.split('-')[0]])+'_'+x.split('_')[1]+'_'+x.split('_')[2])
         filter_contig.to_csv(f'{self.all_outs}/filtered_contig_annotations.csv', sep=',', index=False)
         ## filtered_contig.fasta
         in_fa = pysam.FastxFile(self.filter_fa)
@@ -245,6 +246,7 @@ class Assemble(Step):
         })
         
         # gen match results
+        # df_match['contig_id'] = df_match['contig_id'].apply(lambda x: reversed_compl(barcode_dict[x.split('-')[0]]))
         df_match.to_csv(f'{self.match_outs}/match_contigs.csv', sep=',', index=False)
         
         fa = pysam.FastxFile(self.filter_fa)
