@@ -290,6 +290,7 @@ class Assemble(Step):
         # match
         df_sgr = pd.DataFrame(self.match_cell_barcodes, columns=['barcode'])
         df_match = pd.merge(df_sgr, filter_contig, on='barcode', how='inner')
+        
         # get match summary
         match_summary = get_vj_annot(df_match, self.chains, self.pair)
         match_summary.insert(0, {
@@ -301,6 +302,31 @@ class Assemble(Step):
         # gen match results
         # df_match['contig_id'] = df_match['contig_id'].apply(lambda x: reversed_compl(barcode_dict[x.split('-')[0]]))
         df_match.to_csv(f'{self.match_outs}/match_contigs.csv', sep=',', index=False)
+        
+        # get match clonotypes
+        df_match = df_match[df_match['productive']==True]
+        df_match['chain_cdr3aa'] = df_match[['chain', 'cdr3']].apply(':'.join, axis=1)
+        match_cbs = set(df_match['barcode'].tolist())
+        match_clonotypes = open(f'{self.match_outs}/match_clonotypes.csv', 'w')
+        match_clonotypes.write('barcode\tcdr3s_aa\n')
+        for cb in match_cbs:
+            temp = df_match[df_match['barcode']==cb]
+            temp = temp.sort_values(by='chain', ascending=True)
+            chain_list = temp['chain_cdr3aa'].tolist()
+            chain_str = ';'.join(chain_list)
+            # print(chain_str)
+            match_clonotypes.write(f'{cb}\t{chain_str}\n')
+        match_clonotypes.close()
+            
+        df_match_clonetypes = pd.read_csv(f'{self.match_outs}/match_clonotypes.csv', sep='\t', index_col=None)
+        df_match_clonetypes = df_match_clonetypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
+        df_match_clonetypes = df_match_clonetypes.rename(columns={'barcode': 'frequency'})
+        sum_f = df_match_clonetypes['frequency'].sum()
+        df_match_clonetypes['proportion'] = df_match_clonetypes['frequency'].apply(lambda x: x/sum_f)
+        df_match_clonetypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_match_clonetypes.shape[0]+1)]
+        df_match_clonetypes = df_match_clonetypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
+        df_match_clonetypes = df_match_clonetypes.sort_values(by='frequency', ascending=False)
+        df_match_clonetypes.to_csv(f'{self.match_outs}/match_clonotypes.csv', sep=',', index=False)
         
         fa = pysam.FastxFile(self.filter_fa)
         match_fa = open(self.match_fa, 'w')
