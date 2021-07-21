@@ -35,18 +35,19 @@ def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq1, seq2, qual2,
         umi_10X = umi
 
     seq2_insert = 90
+    seq2_cut = 60
     seq1_insert = 14
-    if method == 'read2':
-        seq1_add = rev_compl(seq2[seq2_insert:])
-        new_seq2 = seq2[0:seq2_insert]  
-    elif method == 'read1':
-        seq1_add = seq1[SEQ_LEN-seq1_insert+1:]
-        new_seq2 = seq2
-    new_seq1 = barcode_10X + umi_10X + TSO + seq1_add
-    new_qual1 = 'J' * len(new_seq1)
-    new_qual2 = qual2[0:len(new_seq2)]
 
-    return new_seq1, new_qual1, new_seq2, new_qual2
+    new_seq2_1 = seq2[0:seq2_insert]
+    new_seq2_2 = seq2[seq2_cut:] 
+
+    new_seq1 = barcode_10X + umi_10X + TSO
+    new_qual1 = 'J' * len(new_seq1)
+    new_qual2_1 = qual2[0:len(new_seq2_1)]
+    new_qual2_2 = qual2[seq2_cut:]
+
+
+    return new_seq1, new_qual1, new_seq2_1, new_qual2_1, new_seq2_2, new_qual2_2
 
 def fastq_line(name, seq, qual):
     return f'@{name}\n{seq}\n+\n{qual}\n'
@@ -89,10 +90,12 @@ class Convert(Step):
             seq = entry.sequence
             qual = entry.quality
             seq1 = ''
-            new_seq1, new_qual1, new_seq2, new_qual2 = convert_seq(barcode, umi, barcode_dict, barcodes_10X, seq1, seq, qual, method=self.method)
+            new_seq1, new_qual1, new_seq2_1, new_qual2_1, new_seq2_2, new_qual2_2 = convert_seq(barcode, umi, barcode_dict, barcodes_10X, seq1, seq, qual, method=self.method)
             
-            out_fq1.write(fastq_line(name, new_seq1, new_qual1))
-            out_fq2.write(fastq_line(name, new_seq2, new_qual2))
+            out_fq1.write(fastq_line(f'{name}_1', new_seq1, new_qual1))
+            out_fq2.write(fastq_line(f'{name}_1', new_seq2_1, new_qual2_1))
+            out_fq1.write(fastq_line(f'{name}_2', new_seq1, new_qual1))
+            out_fq2.write(fastq_line(f'{name}_2', new_seq2_2, new_qual2_2))
             
         out_fq1.close()
         out_fq2.close()
