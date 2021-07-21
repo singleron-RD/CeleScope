@@ -1,6 +1,12 @@
 ## [unreleased] - 2021-07-09
  ### Added
 
+ - Add `min_consensus_read` argument to `celescope.tools.consensus`. If 
+    1. the percentage of the most common residue type > threshold;
+    2. most common residue reads >= min_consensus_read;
+    
+then we will add that residue type, otherwise an ambiguous character will be added.
+
  ### Changed
 
  ### Fixed
