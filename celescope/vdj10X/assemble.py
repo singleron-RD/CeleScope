@@ -339,6 +339,7 @@ class Assemble(Step):
                 new_name = new_cb + '_' + attrs[1] + '_' + attrs[2]
                 seq = entry.sequence
                 match_fa.write(f'>{new_name}\n{seq}\n')
+        match_fa.close()
         
         #get assemble_summary
         assemble_summary = common_summary + all_summary + match_summary
