@@ -1,6 +1,7 @@
 import pysam
-from celescope.tools.step import Step, s_common
 from celescope.tools import utils
+from celescope.tools.step import Step, s_common
+
 
 class Convert(Step):
     def __init__(self, args, step_name):

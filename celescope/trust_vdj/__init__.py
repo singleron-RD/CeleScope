@@ -4,6 +4,5 @@ __STEPS__ = [
     'cutadapt',
     'convert',
     'assemble',
-    'res_sum'
-    ]
+    'res_sum']
 __ASSAY__ = 'trust_vdj'

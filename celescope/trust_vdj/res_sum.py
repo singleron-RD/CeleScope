@@ -1,11 +1,12 @@
-import pandas as pd
-from celescope.tools.step import Step, s_common
-from celescope.tools import utils
-import numpy as np
-import pysam
 import os
 from collections import defaultdict
+
+import numpy as np
+import pandas as pd
+import pysam
 from Bio.Seq import Seq
+from celescope.tools import utils
+from celescope.tools.step import Step, s_common
 
 DIR = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
 
