@@ -81,6 +81,10 @@ def BC_PLOT_CMAP(density):
     assert density <= 1.
     levels = len(BC_PLOT_COLORS)
     ind = min(levels - 1, int(math.floor(levels * density)))
+
+    if density!=0:
+        if ind in range(0, 3):
+            ind = ind+4
     return BC_PLOT_COLORS[ind]
 
 

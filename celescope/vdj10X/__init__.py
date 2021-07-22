@@ -1,7 +1,7 @@
 import glob
 import os
 
-__STEPS__ = ['sample', 'barcode', 'convert', 'assemble', 'match']
+__STEPS__ = ['sample', 'barcode', 'convert', 'assemble']
 __ASSAY__ = 'vdj10X'
 
 soft_version = ['3.0.2', '3.1.0', '4.0.0', '6.0.0']

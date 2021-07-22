@@ -133,25 +133,13 @@
       {% include "html/common/barcode_summary.html"%}
       {% endif %}
 
-      {% if assemble_summary is defined %}
-      {% include "html/vdj10X/assemble_summary.html"%}
+      {% if TCR_assemble_summary is defined %}
+      {% include "html/vdj10X/TCR_assemble_summary.html"%}
       {% endif %}
 
-      {% if match_summary is defined %}
-      {% include "html/vdj10X/match_summary.html"%}
+      {% if BCR_assemble_summary is defined %}
+      {% include "html/vdj10X/BCR_assemble_summary.html"%}
       {% endif %}
-
-      {% if BCR_mapping_vdj_summary is defined %}
-      {% include "html/vdj/BCR_mapping_vdj_summary.html"%}
-      {% endif %}
-
-      {% if TCR_count_vdj_summary is defined %}
-      {% include "html/vdj/TCR_count_vdj_summary.html"%}
-      {% endif %}      
-
-      {% if BCR_count_vdj_summary is defined %}
-      {% include "html/vdj/BCR_count_vdj_summary.html"%}
-      {% endif %}   
 
       {% if table_dict is defined %}
       {% include "html/vdj10X/clonotypes_table.html"%}
