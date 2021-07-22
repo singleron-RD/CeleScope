@@ -17,7 +17,7 @@ def rev_compl(seq):
     base_dict = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'}
     return "".join(base_dict[base] for base in reversed(seq))
 
-def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq1, seq2, qual2,  method='read2'):
+def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq1, seq2, qual2):
     '''
     barcode_dict - key:SGR barcode; value:10X barcode
     '''
@@ -58,7 +58,6 @@ class Convert(Step):
 
         # common parameter
         self.outdir = args.outdir
-        self.method = args.method
         
         # input
         self.fq2 = args.fq2
@@ -90,7 +89,7 @@ class Convert(Step):
             seq = entry.sequence
             qual = entry.quality
             seq1 = ''
-            new_seq1, new_qual1, new_seq2_1, new_qual2_1, new_seq2_2, new_qual2_2 = convert_seq(barcode, umi, barcode_dict, barcodes_10X, seq1, seq, qual, method=self.method)
+            new_seq1, new_qual1, new_seq2_1, new_qual2_1, new_seq2_2, new_qual2_2 = convert_seq(barcode, umi, barcode_dict, barcodes_10X, seq1, seq, qual)
             
             out_fq1.write(fastq_line(f'{name}_1', new_seq1, new_qual1))
             out_fq2.write(fastq_line(f'{name}_1', new_seq2_1, new_qual2_1))
@@ -121,4 +120,3 @@ def get_opts_convert(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fq2', help='R2 read file', required=True)
-    parser.add_argument('--method', help='convert method, read1 14bp or read2 60bp', choices=['read1', 'read2'], default='read2')
