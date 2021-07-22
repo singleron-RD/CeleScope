@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 import pandas as pd
 import pysam
 from celescope.tools import utils
@@ -17,7 +15,7 @@ def rev_compl(seq):
     base_dict = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A', 'N': 'N'}
     return "".join(base_dict[base] for base in reversed(seq))
 
-def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq1, seq2, qual2):
+def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq2, qual2):
     '''
     barcode_dict - key:SGR barcode; value:10X barcode
     '''
@@ -36,7 +34,6 @@ def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq1, seq2, qual2)
 
     seq2_insert = 90
     seq2_cut = 60
-    seq1_insert = 14
 
     new_seq2_1 = seq2[0:seq2_insert]
     new_seq2_2 = seq2[seq2_cut:] 
