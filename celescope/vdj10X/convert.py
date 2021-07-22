@@ -85,8 +85,7 @@ class Convert(Step):
             umi = attrs[1]
             seq = entry.sequence
             qual = entry.quality
-            seq1 = ''
-            new_seq1, new_qual1, new_seq2_1, new_qual2_1, new_seq2_2, new_qual2_2 = convert_seq(barcode, umi, barcode_dict, barcodes_10X, seq1, seq, qual)
+            new_seq1, new_qual1, new_seq2_1, new_qual2_1, new_seq2_2, new_qual2_2 = convert_seq(barcode, umi, barcode_dict, barcodes_10X, seq, qual)
             
             out_fq1.write(fastq_line(f'{name}_1', new_seq1, new_qual1))
             out_fq2.write(fastq_line(f'{name}_1', new_seq2_1, new_qual2_1))
