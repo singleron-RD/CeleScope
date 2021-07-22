@@ -43,8 +43,8 @@ def convert_seq(sgr_barcode, umi, barcode_dict, barcodes_10X, seq2, qual2):
     new_qual2_1 = qual2[0:len(new_seq2_1)]
     new_qual2_2 = qual2[seq2_cut:]
 
-
     return new_seq1, new_qual1, new_seq2_1, new_qual2_1, new_seq2_2, new_qual2_2
+
 
 def fastq_line(name, seq, qual):
     return f'@{name}\n{seq}\n+\n{qual}\n'

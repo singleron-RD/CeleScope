@@ -44,8 +44,6 @@ BC_PLOT_COLORS = ['#dddddd', '#d1d8dc', '#c6d3dc', '#bacfdb', '#aecada', '#a3c5d
                   '#10539f', '#0e4f9b', '#0b4a98', '#094695', '#09438f', '#0a4189', '#0c3f83', '#0d3d7c', '#0e3b76',
                   '#103970', '#11366a', '#123463', '#14325d', '#153057']
 
-# 
-
 CHARTS = [
     {
         'layout': {
@@ -83,6 +81,7 @@ def BC_PLOT_CMAP(density):
     assert density <= 1.
     levels = len(BC_PLOT_COLORS)
     ind = min(levels - 1, int(math.floor(levels * density)))
+
     if density!=0:
         if ind in range(0, 3):
             ind = ind+4
