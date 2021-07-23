@@ -11,6 +11,8 @@ then we will add that residue type, otherwise an ambiguous character will be add
 
  ### Fixed
 
+ - Fix an error when there is no `Undetermined` cells in `celescope tag count_tag`
+
  ### Removed
 
 ## [1.3.2] - 2021-07-09

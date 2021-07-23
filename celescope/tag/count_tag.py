@@ -279,12 +279,13 @@ class Count_tag(Step):
 
         sr_tag_count = df_UMI_cell["tag"].value_counts()  # series(index:tag name, value:tag count)
         for tag_name in ("Undetermined", "Multiplet"):
-            self.add_metric(
-                name=tag_name + ' Cells',
-                value=sr_tag_count[tag_name],
-                total=self.cell_total,
-            )
-            sr_tag_count.drop(tag_name, inplace=True)
+            if tag_name in sr_tag_count:
+                self.add_metric(
+                    name=tag_name + ' Cells',
+                    value=sr_tag_count[tag_name],
+                    total=self.cell_total,
+                )
+                sr_tag_count.drop(tag_name, inplace=True)
         for tag_name in sorted(sr_tag_count.index):
             self.add_metric(
                 name=tag_name + ' Cells',
