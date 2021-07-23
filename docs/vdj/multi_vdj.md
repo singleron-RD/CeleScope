@@ -71,6 +71,8 @@ at least {overlap} bases match between adapter and read.
 
 `--threshold` Default 0.5. Valid base threshold.
 
+`--min_consensus_read` Minimum number of reads to support a base.
+
 `--species` Default `hs`. `hs`(human) or `mmu`(mouse).
 
 `--not_consensus` Input fastq is not consensused.

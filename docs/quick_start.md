@@ -23,7 +23,7 @@ Run `multi_{assay} -h` for help.
  	```
 `--mapfile` Required. Mapfile path.
 
-`--genomeDir` Required. Required. Genome directory.
+`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
 `--thread` The recommended setting is 8, and the maximum should not exceed 20.
 

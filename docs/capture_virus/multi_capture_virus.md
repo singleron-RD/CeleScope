@@ -73,6 +73,8 @@ at least {overlap} bases match between adapter and read.
 
 `--not_consensus` Skip the consensus step.
 
+`--min_consensus_read` Minimum number of reads to support a base.
+
 `--genomeDir` Required. Genome directory.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 

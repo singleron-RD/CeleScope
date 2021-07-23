@@ -10,6 +10,8 @@
 
 `--not_consensus` Skip the consensus step.
 
+`--min_consensus_read` Minimum number of reads to support a base.
+
 `--fq` Required. Fastq file.
 
 `--outdir` Output diretory.
