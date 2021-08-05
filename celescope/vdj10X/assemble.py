@@ -251,11 +251,20 @@ class Assemble(Step):
             'total_count': read_count
         })
         for c in self.chains:
-            common_summary.append({
-                'item': f'Median used {c} UMIs per Cell',
-                'count': int(filter_contig[filter_contig['chain']==c]['umis'].median()),
-                'total_count': np.nan
-            })
+            mid = filter_contig[filter_contig['chain']==c]['umis'].median()
+            if mid == mid:
+                common_summary.append({
+                    'item': f'Median used {c} UMIs per Cell',
+                    'count': int(mid),
+                    'total_count': np.nan
+                })
+            else:
+                common_summary.append({
+                    'item': f'Median used {c} UMIs per Cell',
+                    'count': 0,
+                    'total_count': np.nan
+                })
+                
         # common_summary.append({
         #     'item': 'Median used TRA UMIs per Cell',
         #     'count': int(filter_contig[filter_contig['chain']=='TRA']['umis'].median()), 
