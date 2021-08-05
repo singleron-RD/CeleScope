@@ -7,6 +7,8 @@
     
 then we will add that residue type, otherwise an ambiguous character will be added.
 
+- Use otsu method to calculate `min_support_read` for `capture_virus`
+
  ### Changed
 
  ### Fixed
