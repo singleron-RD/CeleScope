@@ -1,3 +1,13 @@
+## Features
+- Generate multi-sample scripts.
+
+## Usage
+```
+multi_fusion\
+--mapfile ./fusion.mapfile\
+--fusion_genomeDir {fusion_genomeDir}\  
+--mod shell
+```
 
 
 ## Arguments
@@ -82,9 +92,9 @@ is higher than or equal to this value.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--fusion_genomeDir` fusion genome directory
+`--fusion_genomeDir` Fusion genome directory.
 
-`--flanking_base` None
+`--flanking_base` Number of bases flanking the fusion position.
 
-`--UMI_min` None
+`--UMI_min` Minimum number of fusion UMI to consider a cell as a cell with fusion event.
 

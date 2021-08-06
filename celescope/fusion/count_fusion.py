@@ -4,9 +4,10 @@ import pandas as pd
 import pysam
 
 import celescope.tools.utils as utils
-from celescope.__init__ import ROOT_PATH
+from celescope.__init__ import ROOT_PATH, HELP_DICT
 from celescope.fusion.mkref import parse_genomeDir_fusion
 from celescope.tools.step import Step, s_common
+
 
 
 def is_fusion(pos, read_start, read_length, flanking_base):
@@ -130,8 +131,14 @@ def count_fusion(args):
 def get_opts_count_fusion(parser, sub_program):
     if sub_program:
         s_common(parser)
-        parser.add_argument("--bam", required=True)
-        parser.add_argument("--match_dir", help="match scRNA-Seq dir", required=True)
-    parser.add_argument('--fusion_genomeDir', help='fusion genome directory', required=True)
-    parser.add_argument("--flanking_base", default=5)
-    parser.add_argument("--UMI_min", default=1)
+        parser.add_argument("--bam", help='STAR bam file.', required=True)
+        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'], required=True)
+    parser.add_argument('--fusion_genomeDir', help='Fusion genome directory.', required=True)
+    parser.add_argument(
+        "--flanking_base", 
+        help="Number of bases flanking the fusion position.",
+        default=5)
+    parser.add_argument(
+        "--UMI_min",
+        help="Minimum number of fusion UMI to consider a cell as a cell with fusion event.",
+        default=1)
