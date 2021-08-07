@@ -51,6 +51,17 @@ def fastq_line(name, seq, qual):
 
 class Convert(Step):
     def __init__(self, args, step_name):
+        """
+        Features
+        
+        - Convert barcodes and UMIs.
+        
+        Output
+        
+        - `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
+        - `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads.
+        - `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads.
+        """
         Step.__init__(self, args, step_name)
 
         # common parameter
