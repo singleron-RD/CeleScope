@@ -26,15 +26,18 @@ class Split_tag(Step):
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
+        if not (args.split_matrix or args.split_fastq):
+            return
 
         # set
-        self.matrix_outdir = f'{args.outdir}/matrix/'
-        matrix_10X_dir = glob.glob(f'{args.match_dir}/05.count/*_matrix_10X*')[0]
-        self.raw_mat, self.raw_features_path, self.raw_barcodes = read_raw_matrix(matrix_10X_dir)
-
         df_umi_tag = pd.read_csv(args.umi_tag_file, sep='\t', index_col=0)
         df_umi_tag = df_umi_tag.rename_axis('barcode').reset_index()
         self.tag_barcode_dict = {tag: set(row["barcode"].tolist()) for tag, row in df_umi_tag.groupby("tag")}
+
+        if args.split_matrix:
+            self.matrix_outdir = f'{args.outdir}/matrix/'
+            matrix_10X_dir = glob.glob(f'{args.match_dir}/05.count/*_matrix_10X*')[0]
+            self.raw_mat, self.raw_features_path, self.raw_barcodes = read_raw_matrix(matrix_10X_dir)
 
         if args.split_fastq:
             self.rna_fq_file = glob.glob(f'{args.match_dir}/*barcode/*_2.fq*')[0]

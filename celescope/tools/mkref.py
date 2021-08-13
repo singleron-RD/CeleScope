@@ -20,6 +20,7 @@ def parse_genomeDir(genomeDir, entrys=None):
 
 
 class Mkref():
+
     def __init__(self, genome_type, args):
         self.genomeDir = args.genomeDir
         self.thread = args.thread

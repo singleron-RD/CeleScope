@@ -1,3 +1,19 @@
+## Features
+- Create a fusion genome directory.
+
+## Output
+
+- STAR genome index files
+- Genome config file
+
+## Usage
+```
+celescope fusion mkref \
+--genome_name {genome_name} \
+--fasta fusion.fasta \
+--fusion_pos fusion_pos.txt \
+--genomeSAindexNbases 4
+```
 
 
 ## Arguments
@@ -9,7 +25,7 @@
 
 `--dry_run` Only write config file and exit.
 
-`--fasta` fusion fasta file
+`--fasta` Fusion fasta file.
 
 `--fusion_pos` fusion position file. A two column tab-delimited text file with header.
 "pos" is the end postion of the first gene(1-based).
