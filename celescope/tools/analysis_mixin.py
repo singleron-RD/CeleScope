@@ -15,9 +15,16 @@ class AnalysisMixin():
     """
 
     def __init__(self, args):
+        self.args = args
         if hasattr(args, "match_dir") and args.match_dir:
             self.match_dir = args.match_dir
             self.read_match_dir()
+        elif hasattr(args, "tsne_file") and args.tsne_file:
+            tsne_df_file = args.tsne_file
+            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
+            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+            marker_df_file = args.marker_file
+            self.marker_df = pd.read_csv(marker_df_file, sep="\t")
         else:
             self.match_dir = args.outdir + "/../"  # use self
 
@@ -112,12 +119,13 @@ class AnalysisMixin():
         if match_dir is not self, should read match_dir at init
         if it is self, read at run_analysis - need to run seurat first
         """
-        match_dict = utils.parse_match_dir(self.match_dir)
-        tsne_df_file = match_dict['tsne_coord']
-        self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-        self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-        marker_df_file = match_dict['markers']
-        self.marker_df = pd.read_csv(marker_df_file, sep="\t")
+        if hasattr(self.args, "match_dir") and self.args.match_dir:
+            match_dict = utils.parse_match_dir(self.match_dir)
+            tsne_df_file = match_dict['tsne_coord']
+            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
+            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+            marker_df_file = match_dict['markers']
+            self.marker_df = pd.read_csv(marker_df_file, sep="\t")
 
     def run_analysis(self):
         self.read_match_dir()

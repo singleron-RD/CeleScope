@@ -29,7 +29,9 @@ class Analysis_tag(Step, AnalysisMixin):
 def get_opts_analysis_tag(parser, sub_program):
     if sub_program:
         parser.add_argument('--tsne_tag_file', help='`{sample}_tsne_tag.tsv` from count_tag. ', required=True)
-        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory. ", required=True)
+        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory. ")
+        parser.add_argument("--tsne_file", help="t-SNE coord file.")
+        parser.add_argument("--marker_file", help="Marker file.")
         parser = s_common(parser)
 
 
