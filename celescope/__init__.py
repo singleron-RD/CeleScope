@@ -30,5 +30,6 @@ HELP_DICT = {
     'thread': 'Thread to use.',
     'debug': 'If this argument is used, celescope may output addtional file for debugging.',
     'fasta': 'Required. Genome fasta file. Use relative path to `genomeDir`.',
-    'outdir': 'Output directory.'
+    'outdir': 'Output directory.',
+    'matrix_dir': 'Match celescope scRNA-Seq matrix directory.',
 }

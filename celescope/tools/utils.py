@@ -559,6 +559,12 @@ def read_barcode_file(match_dir, return_file=False):
     return match_barcode, cell_total
 
 
+def get_barcodes_from_matrix_dir(matrix_dir):
+    barcodes_file = f'{matrix_dir}/barcodes.tsv'
+    match_barcode, _cell_total = read_one_col(barcodes_file)
+    return match_barcode
+
+
 def parse_match_dir(match_dir):
     match_dict = {}
     match_barcode, cell_total = read_barcode_file(match_dir)
