@@ -91,7 +91,7 @@ class Variant_calling(Step):
         self.filter_vcf_file = f'{self.out_prefix}_filter.vcf'
         self.variant_count_file = f'{self.out_prefix}_variant_count.tsv'
         self.otsu_dir = f'{self.out_prefix}_otsu/'
-        self.otsu_threshold_file = f'{self.otsu_dir}/{sample}_otsu_threshold.tsv'
+        self.otsu_threshold_file = f'{self.otsu_dir}/{self.sample}_otsu_threshold.tsv'
         self.filter_variant_count_file = f'{self.out_prefix}_filter_variant_count.tsv'
         if args.min_support_read == 'auto':
             utils.check_mkdir(self.otsu_dir)
