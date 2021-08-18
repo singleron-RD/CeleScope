@@ -15,6 +15,8 @@
 
 `--match_dir` Match celescope scRNA-Seq directory.
 
+`--matrix_dir` Match celescope scRNA-Seq matrix directory.
+
 `--R1_read` R1 read path.
 
 `--outdir` Output diretory.

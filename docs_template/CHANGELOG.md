@@ -1,4 +1,13 @@
-## [unreleased] - 2021-07-09
+## [unreleased] - 2021-08-17
+ ### Added
+
+ ### Changed
+
+ ### Fixed
+
+ ### Removed
+
+## [1.4.0b0] - 2021-08-17
  ### Added
 
  - Add `min_consensus_read` argument to `celescope.tools.consensus`. If 

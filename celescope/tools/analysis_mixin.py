@@ -16,6 +16,7 @@ class AnalysisMixin():
 
     def __init__(self, args):
         self.args = args
+        self.match_dir = None
         if hasattr(args, "match_dir") and args.match_dir:
             self.match_dir = args.match_dir
             self.read_match_dir()
@@ -119,7 +120,7 @@ class AnalysisMixin():
         if match_dir is not self, should read match_dir at init
         if it is self, read at run_analysis - need to run seurat first
         """
-        if hasattr(self.args, "match_dir") and self.args.match_dir:
+        if self.match_dir:
             match_dict = utils.parse_match_dir(self.match_dir)
             tsne_df_file = match_dict['tsne_coord']
             self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
