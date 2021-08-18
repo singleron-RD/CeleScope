@@ -91,7 +91,7 @@ class Variant_calling(Step):
         self.filter_vcf_file = f'{self.out_prefix}_filter.vcf'
         self.variant_count_file = f'{self.out_prefix}_variant_count.tsv'
         self.otsu_dir = f'{self.out_prefix}_otsu/'
-        self.otsu_threshold_file = f'{self.otsu_dir}_otsu_threshold.tsv'
+        self.otsu_threshold_file = f'{self.otsu_dir}/{sample}_otsu_threshold.tsv'
         self.filter_variant_count_file = f'{self.out_prefix}_filter_variant_count.tsv'
         if args.min_support_read == 'auto':
             utils.check_mkdir(self.otsu_dir)
@@ -375,7 +375,7 @@ class Variant_calling(Step):
         get variant and ref UMI supporting an allele
         '''
 
-        """
+
         _df_index, df_valid = self.read_CID()
 
         df_UMI_list = []
@@ -390,7 +390,7 @@ class Variant_calling(Step):
         df_UMI['VID'] = df_UMI['VID'].astype('int')
         df_UMI.sort_values(by=['VID', 'CID'], inplace=True)
         df_UMI.to_csv(self.variant_count_file, sep='\t', index=False)
-        """
+
         df_UMI = pd.read_csv(self.variant_count_file, sep='\t', header=0)
         if self.args.min_support_read == 'auto':
             df_otsu_threshold = pd.DataFrame(columns=['VID', 'threshold'])
@@ -449,7 +449,7 @@ class Variant_calling(Step):
         mmwrite(self.support_matrix_file, support_mtx)
 
     def run(self):
-        """
+
         self.SplitNCigarReads()
         self.split_bam()
         self.call_all_snp()
@@ -458,7 +458,7 @@ class Variant_calling(Step):
         else:
             self.merge_vcf()
         self.write_VID_file()
-        """
+
         self.get_UMI()
         self.filter_vcf()
         self.write_support_matrix()
