@@ -38,7 +38,7 @@ class FeatureCounts(Step):
         # set
         self.gtf = parse_genomeDir_rna(self.args.genomeDir)['gtf']
         self.featureCounts_param = args.featureCounts_param
-        self.other_featureCounts_param = args.other_featureCounts_param
+
         # out files
         input_basename = os.path.basename(self.args.input)
         self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
@@ -90,13 +90,7 @@ class FeatureCounts(Step):
             f'{self.args.input} '
         )
         if self.featureCounts_param:
-            cmd += (" " + "-O -M")
-        if self.other_featureCounts_param:
-            for i in self.other_featureCounts_param.split(','):
-                if len(i) > 1:
-                    cmd += (" -" + i[0] + " "+ i[1:])
-                else:
-                    cmd += (" -" + i)
+            cmd += (" " + self.featureCounts_param)
         FeatureCounts.run_featureCounts.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -140,8 +134,7 @@ def add_tag(bam, gtf):
         read.set_tag(tag='UB', value=umi, value_type='Z')
         if read.has_tag('XT'):
             gene_id = read.get_tag('XT')
-            #gene_name = id_name[gene_id]
-            gene_name = id_name.get(gene_id)
+            gene_name = id_name[gene_id]
             read.set_tag(tag='GN', value=gene_name, value_type='Z')
             read.set_tag(tag='GX', value=gene_id, value_type='Z')
         new_bam.write(read)
@@ -163,10 +156,9 @@ def get_opts_featureCounts(parser, sub_program):
         help='Specify feature type in GTF annotation',
         default='exon'
     )
-
-    parser.add_argument('--featureCounts_param', help='The multiple-mapped reads will be counted many times',action='store_true')
-    parser.add_argument('--other_featureCounts_param', help='other_featureCounts_param',default="")
     parser.add_argument('--genomeDir', help='Required. Genome directory.')
+    parser.add_argument('--featureCounts_param', help='Other featureCounts parameters', default="")
+
     if sub_program:
         parser.add_argument('--input', help='Required. BAM file path.', required=True)
         parser = s_common(parser)
