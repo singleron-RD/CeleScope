@@ -90,7 +90,11 @@ class FeatureCounts(Step):
             f'{self.args.input} '
         )
         if self.featureCounts_param:
-            cmd += (" " + self.featureCounts_param)
+            for i in self.featureCounts_param.split(','):
+                if len(i) > 1:
+                    cmd += (" -" + i[0] + " "+ i[1:])
+                else:
+                    cmd += (" -" + i)
         FeatureCounts.run_featureCounts.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -134,7 +138,8 @@ def add_tag(bam, gtf):
         read.set_tag(tag='UB', value=umi, value_type='Z')
         if read.has_tag('XT'):
             gene_id = read.get_tag('XT')
-            gene_name = id_name[gene_id]
+            #gene_name = id_name[gene_id]
+            gene_name = id_name.get(gene_id)
             read.set_tag(tag='GN', value=gene_name, value_type='Z')
             read.set_tag(tag='GX', value=gene_id, value_type='Z')
         new_bam.write(read)
