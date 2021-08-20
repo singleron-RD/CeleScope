@@ -134,10 +134,16 @@ def add_tag(bam, gtf):
         read.set_tag(tag='UB', value=umi, value_type='Z')
         if read.has_tag('XT'):
             gene_id = read.get_tag('XT')
-            #gene_name = id_name[gene_id]
-            gene_name = id_name.get(gene_id)
-            read.set_tag(tag='GN', value=gene_name, value_type='Z')
-            read.set_tag(tag='GX', value=gene_id, value_type='Z')
+            try:
+                gene_name = id_name[gene_id]
+            except KeyError as error:
+                for i in gene_id.split(','):
+                    gene_name = id_name[i]
+                    read.set_tag(tag='GN', value=gene_name, value_type='Z')
+                    read.set_tag(tag='GX', value=i, value_type='Z')
+            else:
+                read.set_tag(tag='GN', value=gene_name, value_type='Z')
+                read.set_tag(tag='GX', value=gene_id, value_type='Z')
         new_bam.write(read)
     new_bam.close()
     cmd = f'mv {bam}.temp {bam}'
