@@ -37,6 +37,7 @@ class FeatureCounts(Step):
 
         # set
         self.gtf = parse_genomeDir_rna(self.args.genomeDir)['gtf']
+        self.featureCounts_param = args.featureCounts_param
 
         # out files
         input_basename = os.path.basename(self.args.input)
@@ -88,6 +89,8 @@ class FeatureCounts(Step):
             f'-t {self.args.gtf_type} '
             f'{self.args.input} '
         )
+        if self.featureCounts_param:
+            cmd += (" " + self.featureCounts_param)
         FeatureCounts.run_featureCounts.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -131,9 +134,16 @@ def add_tag(bam, gtf):
         read.set_tag(tag='UB', value=umi, value_type='Z')
         if read.has_tag('XT'):
             gene_id = read.get_tag('XT')
-            gene_name = id_name[gene_id]
-            read.set_tag(tag='GN', value=gene_name, value_type='Z')
-            read.set_tag(tag='GX', value=gene_id, value_type='Z')
+            try:
+                gene_name = id_name[gene_id]
+            except KeyError:
+                gene_name = [id_name[i] for i in gene_id.split(',')]
+                gene_name = ','.join(gene_name)
+                read.set_tag(tag='GN', value=gene_name, value_type='Z')
+                read.set_tag(tag='GX', value=gene_id, value_type='Z')
+            else:
+                read.set_tag(tag='GN', value=gene_name, value_type='Z')
+                read.set_tag(tag='GX', value=gene_id, value_type='Z')
         new_bam.write(read)
     new_bam.close()
     cmd = f'mv {bam}.temp {bam}'
@@ -154,6 +164,8 @@ def get_opts_featureCounts(parser, sub_program):
         default='exon'
     )
     parser.add_argument('--genomeDir', help='Required. Genome directory.')
+    parser.add_argument('--featureCounts_param', help='Other featureCounts parameters', default="")
+
     if sub_program:
         parser.add_argument('--input', help='Required. BAM file path.', required=True)
         parser = s_common(parser)
