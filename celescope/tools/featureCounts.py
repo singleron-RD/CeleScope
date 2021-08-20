@@ -90,11 +90,7 @@ class FeatureCounts(Step):
             f'{self.args.input} '
         )
         if self.featureCounts_param:
-            for i in self.featureCounts_param.split(','):
-                if len(i) > 1:
-                    cmd += (" -" + i[0] + " "+ i[1:])
-                else:
-                    cmd += (" -" + i)
+            cmd += (" " + self.featureCounts_param)
         FeatureCounts.run_featureCounts.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
