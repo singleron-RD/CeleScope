@@ -29,17 +29,6 @@ class Multi_vdj10X(Multi):
         )
         self.process_cmd(cmd, step, sample, m=self.args.mem, x=self.args.thread)
         
-    def match(self, sample):
-        step = 'match'
-        cmd_line = self.get_cmd_line(step, sample)
-        match_dir = f'{self.col4_dict[sample]}'
-        contig_df = f'{self.outdir_dic[sample]["assemble"]}/contigs.csv'
-        cmd = (
-            f'{cmd_line} '
-            f'--match_dir {match_dir} '
-            f'--contig_df {contig_df} ' 
-        )
-        self.process_cmd(cmd, step, sample, m=5, x=1)
 
 def main():
     multi = Multi_vdj10X(__ASSAY__)
