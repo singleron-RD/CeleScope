@@ -5,6 +5,7 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 
 import pandas as pd
+import numpy as np
 import pysam
 from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
@@ -13,6 +14,9 @@ import celescope.tools.utils as utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import parse_genomeDir_rna
+
+
+OTSU_READ_MIN = 30
 
 
 def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
@@ -38,6 +42,7 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
             rec_dict[info] = rec.info[info]
 
         df = df.append(pd.Series(rec_dict), ignore_index=True)
+    vcf.close()
     return df
 
 
@@ -46,6 +51,67 @@ def read_CID(CID_file):
     df_valid = df_index[df_index['valid'] == 'True']
     return df_index, df_valid
 
+
+@utils.add_log
+def call_snp(CID, outdir, fasta):
+
+    call_snp.logger.info('Processing Cell %s' % CID)
+    bam = f'{outdir}/cells/cell{CID}/cell{CID}.bam'
+    # sort
+    sorted_bam = f'{outdir}/cells/cell{CID}/cell{CID}_sorted.bam'
+    cmd_sort = (
+        f'samtools sort {bam} -o {sorted_bam}'
+    )
+    subprocess.check_call(cmd_sort, shell=True)
+
+    # mpileup
+    bcf = f'{outdir}/cells/cell{CID}/cell{CID}.bcf'
+    cmd_mpileup = (
+        f'bcftools mpileup -Ou '
+        f'-f {fasta} '
+        f'{sorted_bam} -o {bcf} '
+    )
+    subprocess.check_call(cmd_mpileup, shell=True)
+
+    # call
+    out_vcf = f'{outdir}/cells/cell{CID}/cell{CID}.vcf'
+    cmd_call = (
+        f'bcftools call -mv -Ov '
+        f'-o {out_vcf} '
+        f'{bcf}'
+        f'>/dev/null 2>&1 '
+    )
+    subprocess.check_call(cmd_call, shell=True)
+
+    # norm
+    norm_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_norm.vcf'
+    cmd_norm = (
+        f'bcftools norm -d none '
+        f'-f {fasta} '
+        f'{out_vcf} '
+        f'-o {norm_vcf} '
+    )
+    subprocess.check_call(cmd_norm, shell=True)
+
+    # call all position
+    out_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all.vcf'
+    cmd_all_call = (
+        f'bcftools call -m -Ov '
+        f'-o {out_all_vcf} '
+        f'{bcf}'
+        f'>/dev/null 2>&1 '
+    )
+    subprocess.check_call(cmd_all_call, shell=True)
+
+    # norm all
+    norm_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all_norm.vcf'
+    cmd_all_norm = (
+        f'bcftools norm -d none '
+        f'-f {fasta} '
+        f'{out_all_vcf} '
+        f'-o {norm_all_vcf} '
+    )
+    subprocess.check_call(cmd_all_norm, shell=True)
 
 class Variant_calling(Step):
     """
@@ -83,8 +149,14 @@ class Variant_calling(Step):
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
         self.CID_file = f'{self.out_prefix}_CID.tsv'
         self.VID_file = f'{self.out_prefix}_VID.tsv'
-        self.final_vcf_file = f'{self.out_prefix}.vcf'
+        self.final_vcf_file = f'{self.out_prefix}_merged.vcf'
+        self.filter_vcf_file = f'{self.out_prefix}_filter.vcf'
         self.variant_count_file = f'{self.out_prefix}_variant_count.tsv'
+        self.otsu_dir = f'{self.out_prefix}_otsu/'
+        self.otsu_threshold_file = f'{self.otsu_dir}/{self.sample}_otsu_threshold.tsv'
+        self.filter_variant_count_file = f'{self.out_prefix}_filter_variant_count.tsv'
+        if args.min_support_read == 'auto':
+            utils.check_mkdir(self.otsu_dir)
         self.support_matrix_file = f'{self.out_prefix}_support.mtx'
 
     @utils.add_log
@@ -130,7 +202,7 @@ class Variant_calling(Step):
 
                 # assign read to barcode
                 bam_dict[barcode].append(read)
-
+        samfile.close()
         self.split_bam.logger.info('writing cell bam...')
         # write new bam
         CID = 0
@@ -158,68 +230,6 @@ class Variant_calling(Step):
         df_CID.index.name = 'CID'
         df_CID.to_csv(self.CID_file, sep='\t')
 
-    @staticmethod
-    @utils.add_log
-    def call_snp(CID, outdir, fasta):
-
-        Variant_calling.call_snp.logger.info('Processing Cell %s' % CID)
-        bam = f'{outdir}/cells/cell{CID}/cell{CID}.bam'
-        # sort
-        sorted_bam = f'{outdir}/cells/cell{CID}/cell{CID}_sorted.bam'
-        cmd_sort = (
-            f'samtools sort {bam} -o {sorted_bam}'
-        )
-        subprocess.check_call(cmd_sort, shell=True)
-
-        # mpileup
-        bcf = f'{outdir}/cells/cell{CID}/cell{CID}.bcf'
-        cmd_mpileup = (
-            f'bcftools mpileup -Ou '
-            f'-f {fasta} '
-            f'{sorted_bam} -o {bcf} '
-        )
-        subprocess.check_call(cmd_mpileup, shell=True)
-
-        # call
-        out_vcf = f'{outdir}/cells/cell{CID}/cell{CID}.vcf'
-        cmd_call = (
-            f'bcftools call -mv -Ov '
-            f'-o {out_vcf} '
-            f'{bcf}'
-            f'>/dev/null 2>&1 '
-        )
-        subprocess.check_call(cmd_call, shell=True)
-
-        # norm
-        norm_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_norm.vcf'
-        cmd_norm = (
-            f'bcftools norm -d none '
-            f'-f {fasta} '
-            f'{out_vcf} '
-            f'-o {norm_vcf} '
-        )
-        subprocess.check_call(cmd_norm, shell=True)
-
-        # call all position
-        out_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all.vcf'
-        cmd_all_call = (
-            f'bcftools call -m -Ov '
-            f'-o {out_all_vcf} '
-            f'{bcf}'
-            f'>/dev/null 2>&1 '
-        )
-        subprocess.check_call(cmd_all_call, shell=True)
-
-        # norm all
-        norm_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all_norm.vcf'
-        cmd_all_norm = (
-            f'bcftools norm -d none '
-            f'-f {fasta} '
-            f'{out_all_vcf} '
-            f'-o {norm_all_vcf} '
-        )
-        subprocess.check_call(cmd_all_norm, shell=True)
-
     @utils.add_log
     def call_all_snp(self):
         all_res = []
@@ -228,7 +238,7 @@ class Variant_calling(Step):
         outdir_arg = [self.outdir] * len(CID_arg)
         fasta_arg = [self.fasta] * len(CID_arg)
         with ProcessPoolExecutor(self.thread) as pool:
-            for res in pool.map(self.call_snp, CID_arg, outdir_arg, fasta_arg):
+            for res in pool.map(call_snp, CID_arg, outdir_arg, fasta_arg):
                 all_res.append(res)
 
     def read_CID(self):
@@ -260,13 +270,16 @@ class Variant_calling(Step):
                     v_dict[v]['record'] = rec
                 else:
                     v_dict[v]['CID'].append(CID)
+            vcf.close()
 
         # output
         def get_vcf_header(CIDs):
             CID = CIDs[0]
             vcf_file = f'{self.outdir}/cells/cell{CID}/cell{CID}_norm.vcf'
             vcf = pysam.VariantFile(vcf_file, 'r')
-            return vcf.header
+            header = vcf.header
+            vcf.close()
+            return header
         vcf_header = get_vcf_header(CIDs)
         vcf_header.info.add('VID', number=1, type='String', description='Variant ID')
         vcf_header.info.add('CID', number=1, type='String', description='Cell ID')
@@ -307,9 +320,12 @@ class Variant_calling(Step):
             rec.info['VID'] = str(VID)
             VID_vcf.write(rec)
         VID_vcf.close()
+        vcf.close()
 
     @staticmethod
+    @utils.add_log
     def cell_UMI(CID, outdir, final_vcf_file):
+        Variant_calling.cell_UMI.logger.info(str(CID) + ' cell')
         df_vcf = parse_vcf(final_vcf_file)
         df_UMI = pd.DataFrame(columns=['VID', 'CID', 'ref_count', 'alt_count'])
         norm_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all_norm.vcf'
@@ -353,11 +369,17 @@ class Variant_calling(Step):
                 df_UMI = df_UMI.append(dic, ignore_index=True)
         return df_UMI
 
+    def otsu_threshold(self, array):
+        threshold = utils.otsu_min_support_read(array, self.otsu_plot)
+        return threshold
+
     @utils.add_log
     def get_UMI(self):
         '''
         get variant and ref UMI supporting an allele
         '''
+
+
         _df_index, df_valid = self.read_CID()
 
         df_UMI_list = []
@@ -372,6 +394,49 @@ class Variant_calling(Step):
         df_UMI['VID'] = df_UMI['VID'].astype('int')
         df_UMI.sort_values(by=['VID', 'CID'], inplace=True)
         df_UMI.to_csv(self.variant_count_file, sep='\t', index=False)
+
+        df_UMI = pd.read_csv(self.variant_count_file, sep='\t', header=0)
+        if self.args.min_support_read == 'auto':
+            df_otsu_threshold = pd.DataFrame(columns=['VID', 'threshold'])
+            df_filter = df_UMI.copy()
+            VIDs = np.unique(df_UMI['VID'].values)
+            for VID in VIDs:
+                df = df_UMI[df_UMI['VID'] == VID]
+                df_alt = df[df['alt_count'] > 0]
+                array = list(df_alt['alt_count'])
+                if array:
+                    if len(array) >= OTSU_READ_MIN:
+                        min_support_read = utils.otsu_min_support_read(array, f'{self.otsu_dir}/{VID}.png')
+                    else:
+                        min_support_read = np.median(array) * 0.2
+                    df_otsu_threshold = df_otsu_threshold.append(
+                        {'VID': VID, 'threshold': min_support_read}, ignore_index=True)
+                    df_filter.loc[((df_filter['VID'] == VID) & (df_filter['alt_count'] < min_support_read)), 'alt_count'] = 0
+        else:
+            min_support_read = int(self.args.min_support_read)
+            df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
+        df_otsu_threshold.to_csv(self.otsu_threshold_file, sep='\t', index=False)
+        df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
+
+    @utils.add_log
+    def filter_vcf(self):
+        """
+        filter cells with zero variant UMI
+        """
+        df_filter = pd.read_csv(self.filter_variant_count_file, sep='\t')
+        df_filter = df_filter[df_filter['alt_count']>0]
+
+        vcf = pysam.VariantFile(self.final_vcf_file, 'r')
+        vcf_header = vcf.header
+        filter_vcf = pysam.VariantFile(self.filter_vcf_file, 'w', header=vcf_header)
+        for rec in vcf.fetch():
+            VID = int(rec.info['VID'])
+            CIDs = df_filter[df_filter['VID']==VID]['CID'].values
+            rec.info['CID'] = ','.join([str(CID) for CID in CIDs])
+            filter_vcf.write(rec)
+        filter_vcf.close()
+        vcf.close()
+
 
     @utils.add_log
     def write_support_matrix(self):
@@ -389,6 +454,7 @@ class Variant_calling(Step):
         mmwrite(self.support_matrix_file, support_mtx)
 
     def run(self):
+        
         self.SplitNCigarReads()
         self.split_bam()
         self.call_all_snp()
@@ -397,7 +463,9 @@ class Variant_calling(Step):
         else:
             self.merge_vcf()
         self.write_VID_file()
+
         self.get_UMI()
+        self.filter_vcf()
         self.write_support_matrix()
         self.clean_up()
 
@@ -418,6 +486,11 @@ def get_opts_variant_calling(parser, sub_program):
         help="""VCF file. If vcf file is not provided, celescope will perform variant calling at single cell level 
 and use these variants as input vcf.""",
         required=False
+    )
+    parser.add_argument(
+        "--min_support_read",
+        help="""Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.""",
+        default='auto',
     )
     if sub_program:
         parser.add_argument(

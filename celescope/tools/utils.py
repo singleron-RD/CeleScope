@@ -21,6 +21,7 @@ import xopen
 
 import celescope.tools
 from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
@@ -699,3 +700,15 @@ def index_bam(input_bam):
 def check_mkdir(dir_name):
     if not os.path.exists(dir_name):
         os.system(f"mkdir -p {dir_name}")
+
+
+def otsu_min_support_read(array, otsu_plot):
+    """
+    get otsu threshold and plot
+    """
+    array = np.log10(array)
+    hist = array2hist(array)
+    thresh = threshold_otsu(hist)
+    makePlot(hist, thresh, otsu_plot)
+    threshold = round(10 ** thresh,1)
+    return threshold
