@@ -1,7 +1,7 @@
 
 
 ## Arguments
-`--annovar_config` annovar soft config file
+`--annovar_config` annovar soft config file.
 
 `--outdir` Output diretory.
 
@@ -13,11 +13,11 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--match_dir` match_dir
+`--match_dir` Match celescope scRNA-Seq directory.
 
-`--vcf` vcf file
+`--filter_vcf` filter vcf file.
 
-`--CID_file` CID_file
+`--CID_file` CID_file.
 
-`--variant_count_file` variant count file
+`--filter_variant_count_file` filter variant count file.
 

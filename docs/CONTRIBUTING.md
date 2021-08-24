@@ -83,6 +83,6 @@ Released assays will be added to `manual.md`.
 
 ## Tests
 If you add new steps, you need to create a small data for integration tests. 
-To run sample tests, See [tests.md](tests.md)
+To run sample tests, See https://github.com/singleron-RD/celescope_test_script
 
 Then you need to create your own test based on this example.

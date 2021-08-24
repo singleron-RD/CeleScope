@@ -1,4 +1,4 @@
-## [unreleased] - 2021-08-17
+## [unreleased] - 2021-08-24
  ### Added
 
  ### Changed
@@ -7,7 +7,8 @@
 
  ### Removed
 
-## [1.4.0b0] - 2021-08-17
+## [1.4.0] - 2021-08-24
+
  ### Added
 
  - Add `min_consensus_read` argument to `celescope.tools.consensus`. If 
@@ -16,13 +17,20 @@
     
 then we will add that residue type, otherwise an ambiguous character will be added.
 
-- Use otsu method to calculate `min_support_read` for `capture_virus`.
-
  ### Changed
+ - By default, use otsu method to calculate `min_support_read` for `capture_virus`.
+
+ - By default, use otsu method to calculate `min_support_read` for `snp`.
+
+ - Improved the code of `celescope.snp.variant_calling` to reduce memory usage and speed up analysis.
+
+ - Add serveral arguments in `vdj` and `tag` to support WDL workflow.
 
  ### Fixed
 
- - Fix an error when there is no `Undetermined` cells in `celescope tag count_tag`.
+ - Fix a bug in `celescope.tag.count_tag` when there is no `Undetermined` cells.
+
+ - Fix a bug in `celescope.snp.variant_calling` when there are multiple variants at the same loci in a cell.
 
  ### Removed
 

@@ -24,6 +24,8 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
 
 `--genomeDir` Required. Genome directory.
 
+`--featureCounts_param` Other featureCounts parameters
+
 `--input` Required. BAM file path.
 
 `--outdir` Output diretory.

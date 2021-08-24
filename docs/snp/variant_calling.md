@@ -19,8 +19,7 @@
 ## Arguments
 `--genomeDir` Genome directory after running `mkref`.
 
-`--vcf` VCF file. If vcf file is not provided, celescope will perform variant calling at single cell level 
-and use these variants as input vcf.
+`--min_support_read` Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.
 
 `--bam` Input BAM file from step `target_metrics`.
 

@@ -107,12 +107,13 @@ is higher than or equal to this value.
 
 `--gtf_type` Specify feature type in GTF annotation
 
+`--featureCounts_param` Other featureCounts parameters
+
 `--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
 
 `--genomeDir` Genome directory after running `mkref`.
 
-`--vcf` VCF file. If vcf file is not provided, celescope will perform variant calling at single cell level 
-and use these variants as input vcf.
+`--min_support_read` Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.
 
-`--annovar_config` annovar soft config file
+`--annovar_config` annovar soft config file.
 
