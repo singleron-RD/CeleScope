@@ -24,10 +24,9 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
     parse vcf into df
     '''
     vcf = pysam.VariantFile(vcf_file)
-    df = pd.DataFrame(columns=list(cols) + list(infos))
-    rec_dict = {}
+    rec_dict_list = []
     for rec in vcf.fetch():
-
+        rec_dict = {}
         for col in cols:
             rec_dict[col] = getattr(rec, col)
             # if ref == alt: alleles=(ref,)
@@ -35,13 +34,14 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
             if col == 'alleles':
                 rec_dict['ref'] = rec_dict['alleles'][0]
                 rec_dict['alt'] = '.'
-                if len(rec_dict['alleles']) == 2:
-                    rec_dict['alt'] = rec_dict['alleles'][1]
+                if len(rec_dict['alleles']) >= 2:
+                    rec_dict['alt'] = ','.join(rec_dict['alleles'][1:])
 
         for info in infos:
             rec_dict[info] = rec.info[info]
+        rec_dict_list.append(rec_dict)
 
-        df = df.append(pd.Series(rec_dict), ignore_index=True)
+    df = pd.DataFrame.from_dict(rec_dict_list)
     vcf.close()
     return df
 
@@ -113,6 +113,62 @@ def call_snp(CID, outdir, fasta):
     )
     subprocess.check_call(cmd_all_norm, shell=True)
 
+
+def map_vcf_row(row, df_cell_vcf):
+    """
+    get ref and UMI for each variant
+    Args:
+        row: each row from merged_vcf
+    """
+    pos = row['pos']
+    chrom = row['chrom']
+    alt = row['alt']
+    df_pos = df_cell_vcf[(df_cell_vcf['pos'] == pos) & (df_cell_vcf['chrom'] == chrom)]
+    df_ref = df_pos[df_pos['alt'] == '.']
+    df_alt = df_pos[df_pos['alt'] == alt]
+    ref_UMI = 0
+    alt_UMI = 0
+    if df_ref.shape[0] != 0:
+        ref_UMI = get_DP4(df_ref, 'ref')
+    if df_alt.shape[0] != 0:
+        alt_UMI = get_DP4(df_alt, 'alt')
+    return ref_UMI, alt_UMI
+
+
+def get_DP4(row, alt):
+    DP4 = row['DP4'].iloc[0]
+    if alt == 'ref':
+        indexs = [0, 1]
+    elif alt == 'alt':
+        indexs = [2, 3]
+    umi = sum([DP4[index] for index in indexs])
+    return umi
+
+@utils.add_log
+def cell_UMI(CID, outdir, df_vcf):
+    """
+    help function to get ref and alt UMI for each (cell, variant)
+    """
+    cell_UMI.logger.info(str(CID) + ' cell')
+    norm_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all_norm.vcf'
+    df_cell_vcf = parse_vcf(norm_all_vcf, infos=['DP4'])
+
+    dict_list = []
+    for _index, row in df_vcf.iterrows():
+        ref_UMI, alt_UMI = map_vcf_row(row, df_cell_vcf)
+        if (ref_UMI + alt_UMI) != 0:
+            VID = row['VID']
+            dic = {
+                'VID': VID,
+                'CID': CID,
+                'ref_count': ref_UMI,
+                'alt_count': alt_UMI,
+            }
+            dict_list.append(dic)
+    df_UMI = pd.DataFrame(dict_list)
+    return df_UMI
+
+
 class Variant_calling(Step):
     """
     Features
@@ -139,17 +195,13 @@ class Variant_calling(Step):
         # set
         self.barcodes, _num = utils.read_barcode_file(args.match_dir)
         self.fasta = parse_genomeDir_rna(args.genomeDir)['fasta']
-        if args.vcf:
-            self.vcf_bool = True
-        else:
-            self.vcf_bool = False
         self.df_vcf = None
 
         # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
         self.CID_file = f'{self.out_prefix}_CID.tsv'
         self.VID_file = f'{self.out_prefix}_VID.tsv'
-        self.final_vcf_file = f'{self.out_prefix}_merged.vcf'
+        self.merged_vcf_file = f'{self.out_prefix}_merged.vcf'
         self.filter_vcf_file = f'{self.out_prefix}_filter.vcf'
         self.variant_count_file = f'{self.out_prefix}_variant_count.tsv'
         self.otsu_dir = f'{self.out_prefix}_otsu/'
@@ -247,7 +299,6 @@ class Variant_calling(Step):
     @utils.add_log
     def merge_vcf(self):
         '''
-        if vcf not provided,
         merge cell vcf into one non-duplicated vcf
         add VID(variant ID) and CID(cell ID)
         '''
@@ -283,7 +334,7 @@ class Variant_calling(Step):
         vcf_header = get_vcf_header(CIDs)
         vcf_header.info.add('VID', number=1, type='String', description='Variant ID')
         vcf_header.info.add('CID', number=1, type='String', description='Cell ID')
-        merged_vcf = pysam.VariantFile(self.final_vcf_file, 'w', header=vcf_header)
+        merged_vcf = pysam.VariantFile(self.merged_vcf_file, 'w', header=vcf_header)
 
         VID = 0
         for v in sorted(v_dict.keys()):
@@ -301,73 +352,9 @@ class Variant_calling(Step):
 
     @utils.add_log
     def write_VID_file(self):
-        df_vcf = parse_vcf(self.final_vcf_file)
+        df_vcf = parse_vcf(self.merged_vcf_file)
         df_VID = df_vcf.loc[:, ['VID', 'chrom', 'pos', 'ref', 'alt']]
         df_VID.to_csv(self.VID_file, sep='\t', index=False)
-
-    @utils.add_log
-    def add_VID(self):
-        vcf = pysam.VariantFile(self.args.vcf, 'r')
-        vcf_header = vcf.header
-        if 'VID' in vcf_header.info:
-            logging.info('VID is already in vcf file!')
-            return
-        vcf_header.info.add('VID', number=1, type='String', description='Variant ID')
-        VID_vcf = pysam.VariantFile(self.final_vcf_file, 'w', header=vcf_header)
-        VID = 0
-        for rec in vcf.fetch():
-            VID += 1
-            rec.info['VID'] = str(VID)
-            VID_vcf.write(rec)
-        VID_vcf.close()
-        vcf.close()
-
-    @staticmethod
-    @utils.add_log
-    def cell_UMI(CID, outdir, final_vcf_file):
-        Variant_calling.cell_UMI.logger.info(str(CID) + ' cell')
-        df_vcf = parse_vcf(final_vcf_file)
-        df_UMI = pd.DataFrame(columns=['VID', 'CID', 'ref_count', 'alt_count'])
-        norm_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all_norm.vcf'
-        df_cell_vcf = parse_vcf(norm_all_vcf, infos=['DP4'])
-
-        def get_DP4(row, alt):
-            DP4 = row['DP4'].iloc[0]
-            if alt == 'ref':
-                indexs = [0, 1]
-            elif alt == 'alt':
-                indexs = [2, 3]
-            umi = sum([DP4[index] for index in indexs])
-            return umi
-
-        def map_vcf_row(row, df_cell_vcf):
-            pos = row['pos']
-            chrom = row['chrom']
-            alt = row['alt']
-            df_pos = df_cell_vcf[(df_cell_vcf['pos'] == pos) & (df_cell_vcf['chrom'] == chrom)]
-            df_ref = df_pos[df_pos['alt'] == '.']
-            df_alt = df_pos[df_pos['alt'] == alt]
-            ref_UMI = 0
-            alt_UMI = 0
-            if df_ref.shape[0] != 0:
-                ref_UMI = get_DP4(df_ref, 'ref')
-            if df_alt.shape[0] != 0:
-                alt_UMI = get_DP4(df_alt, 'alt')
-            return ref_UMI, alt_UMI, pos, chrom, alt
-
-        for index in df_vcf.index:
-            row = df_vcf.loc[index, ]
-            ref_UMI, alt_UMI, _pos, _chrom, _alt = map_vcf_row(row, df_cell_vcf)
-            if (ref_UMI + alt_UMI) != 0:
-                VID = row['VID']
-                dic = {
-                    'VID': VID,
-                    'CID': CID,
-                    'ref_count': ref_UMI,
-                    'alt_count': alt_UMI,
-                }
-                df_UMI = df_UMI.append(dic, ignore_index=True)
-        return df_UMI
 
     def otsu_threshold(self, array):
         threshold = utils.otsu_min_support_read(array, self.otsu_plot)
@@ -379,15 +366,15 @@ class Variant_calling(Step):
         get variant and ref UMI supporting an allele
         '''
 
-
         _df_index, df_valid = self.read_CID()
 
         df_UMI_list = []
         CID_arg = list(df_valid.index)
         outdir_arg = [self.outdir] * len(CID_arg)
-        final_vcf_file_arg = [self.final_vcf_file] * len(CID_arg)
+        df_vcf = parse_vcf(self.merged_vcf_file)
+        vcf_arg = [df_vcf] * len(CID_arg)
         with ProcessPoolExecutor(self.thread) as pool:
-            for res in pool.map(Variant_calling.cell_UMI, CID_arg, outdir_arg, final_vcf_file_arg):
+            for res in pool.map(cell_UMI, CID_arg, outdir_arg, vcf_arg):
                 df_UMI_list.append(res)
 
         df_UMI = pd.concat(df_UMI_list)
@@ -426,7 +413,7 @@ class Variant_calling(Step):
         df_filter = pd.read_csv(self.filter_variant_count_file, sep='\t')
         df_filter = df_filter[df_filter['alt_count']>0]
 
-        vcf = pysam.VariantFile(self.final_vcf_file, 'r')
+        vcf = pysam.VariantFile(self.merged_vcf_file, 'r')
         vcf_header = vcf.header
         filter_vcf = pysam.VariantFile(self.filter_vcf_file, 'w', header=vcf_header)
         for rec in vcf.fetch():
@@ -446,7 +433,7 @@ class Variant_calling(Step):
             support_bit = ref_bit + alt_bit
             return support_bit
 
-        df_variant_count = pd.read_csv(self.variant_count_file, sep='\t')
+        df_variant_count = pd.read_csv(self.filter_variant_count_file, sep='\t')
         df_variant_count['support'] = df_variant_count.apply(set_support_bit, axis=1)
         support_mtx = coo_matrix(
             (df_variant_count.support, (df_variant_count.VID - 1, df_variant_count.CID - 1))
@@ -454,16 +441,13 @@ class Variant_calling(Step):
         mmwrite(self.support_matrix_file, support_mtx)
 
     def run(self):
-        
+        """
         self.SplitNCigarReads()
         self.split_bam()
         self.call_all_snp()
-        if self.vcf_bool:
-            self.add_VID()
-        else:
-            self.merge_vcf()
+        self.merge_vcf()
         self.write_VID_file()
-
+        """
         self.get_UMI()
         self.filter_vcf()
         self.write_support_matrix()
@@ -481,12 +465,6 @@ def variant_calling(args):
 def get_opts_variant_calling(parser, sub_program):
 
     parser.add_argument("--genomeDir", help=HELP_DICT['genomeDir'], required=True)
-    parser.add_argument(
-        "--vcf",
-        help="""VCF file. If vcf file is not provided, celescope will perform variant calling at single cell level 
-and use these variants as input vcf.""",
-        required=False
-    )
     parser.add_argument(
         "--min_support_read",
         help="""Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.""",

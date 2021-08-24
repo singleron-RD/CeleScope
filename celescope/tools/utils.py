@@ -493,6 +493,7 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
         '''
 
         df = df.append(pd.Series(rec_dict), ignore_index=True)
+    vcf.close()
     return df
 
 
