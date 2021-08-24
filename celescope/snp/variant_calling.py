@@ -382,9 +382,9 @@ class Variant_calling(Step):
         df_UMI.to_csv(self.variant_count_file, sep='\t', index=False)
 
         df_UMI = pd.read_csv(self.variant_count_file, sep='\t', header=0)
+        df_filter = df_UMI.copy()
         if self.args.min_support_read == 'auto':
             df_otsu_threshold = pd.DataFrame(columns=['VID', 'threshold'])
-            df_filter = df_UMI.copy()
             VIDs = np.unique(df_UMI['VID'].values)
             for VID in VIDs:
                 df = df_UMI[df_UMI['VID'] == VID]
@@ -397,11 +397,11 @@ class Variant_calling(Step):
                         min_support_read = np.median(array) * 0.2
                     df_otsu_threshold = df_otsu_threshold.append(
                         {'VID': VID, 'threshold': min_support_read}, ignore_index=True)
+                    df_otsu_threshold.to_csv(self.otsu_threshold_file, sep='\t', index=False)
                     df_filter.loc[((df_filter['VID'] == VID) & (df_filter['alt_count'] < min_support_read)), 'alt_count'] = 0
         else:
             min_support_read = int(self.args.min_support_read)
             df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
-        df_otsu_threshold.to_csv(self.otsu_threshold_file, sep='\t', index=False)
         df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
 
     @utils.add_log
@@ -419,7 +419,8 @@ class Variant_calling(Step):
             VID = int(rec.info['VID'])
             CIDs = df_filter[df_filter['VID']==VID]['CID'].values
             rec.info['CID'] = ','.join([str(CID) for CID in CIDs])
-            filter_vcf.write(rec)
+            if rec.info['CID']:
+                filter_vcf.write(rec)
         filter_vcf.close()
         vcf.close()
 
@@ -440,13 +441,12 @@ class Variant_calling(Step):
         mmwrite(self.support_matrix_file, support_mtx)
 
     def run(self):
-        """
+
         self.SplitNCigarReads()
         self.split_bam()
         self.call_all_snp()
         self.merge_vcf()
         self.write_VID_file()
-        """
         self.get_UMI()
         self.filter_vcf()
         self.write_support_matrix()
