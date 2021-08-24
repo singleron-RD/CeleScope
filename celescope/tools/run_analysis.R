@@ -1,8 +1,6 @@
 library(Seurat) # v4.0
 library(tidyverse)
 library(argparser)
-library(hdf5r)
-library(rhdf5)
 
 # CONSTANTS
 DIMS = 20

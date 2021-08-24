@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "1.3.2b1"
+__VERSION__ = "1.4.0b0"
 __version__ = __VERSION__
 
 ASSAY_DICT = {
@@ -16,8 +16,6 @@ ASSAY_DICT = {
     'tag': 'Single-cell tag',
     'citeseq': 'Single Cell CITE-Seq',
     'tcr_fl': 'Single Cell full length TCR',
-    'tracer_vdj': 'Single Cell Full Length V(D)J Assemble',
-    'trust_vdj': 'Single Cell Full Length V(D)J Assemble',
     'dynaseq': 'Single-cell dynaseq'
 }
 
@@ -32,4 +30,6 @@ HELP_DICT = {
     'thread': 'Thread to use.',
     'debug': 'If this argument is used, celescope may output addtional file for debugging.',
     'fasta': 'Required. Genome fasta file. Use relative path to `genomeDir`.',
+    'outdir': 'Output directory.',
+    'matrix_dir': 'Match celescope scRNA-Seq matrix directory.',
 }

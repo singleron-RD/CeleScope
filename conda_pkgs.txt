@@ -7,9 +7,7 @@ samtools=1.9
 r-seurat=4.0.1
 r-argparser
 r-tidyverse
-r-hdf5r
 mixcr=3.0.3
 bioconductor-dropletutils
 bcftools==1.9
-seqkt
-bowtie2
+gatk4

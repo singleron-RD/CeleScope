@@ -73,6 +73,8 @@ at least {overlap} bases match between adapter and read.
 
 `--not_consensus` Skip the consensus step.
 
+`--min_consensus_read` Minimum number of reads to support a base.
+
 `--genomeDir` Required. Genome directory.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
@@ -88,7 +90,9 @@ is higher than or equal to this value.
 
 `--virus_genomeDir` virus genome dir
 
-`--min_query_length` minimum query length
+`--min_query_length` Minimum query length.
+
+`--min_support_read` Minimum number of reads supporting a UMI
 
 `--umi_threshold` method to find virus UMI threshold
 

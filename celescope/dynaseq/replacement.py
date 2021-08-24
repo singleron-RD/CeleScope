@@ -175,7 +175,7 @@ class Replacement(Step):
 
         tmph = infile.readline().strip().split()
         fill_na = ['0'] * len(tmph)
-        tmph.insert( 0, 'geneID')
+        tmph.insert( 0, '')
         outnew.write('\t'.join(tmph)+'\n')
         outold.write('\t'.join(tmph)+'\n')
         con_mat.write('\t'.join(tmph)+'\n')
@@ -231,6 +231,7 @@ class Replacement(Step):
         mats = {}
         with open(inmat) as f:
             hh = f.readline().strip().split()
+            hh.insert(0,'')
             outmat.write('\t'.join(hh)+'\n')
             for h in hh[1:]:
                 cells[h] = [[],[]]
@@ -319,8 +320,8 @@ def replacement(args):
 def get_opts_replacement(parser, sub_program):
     parser.add_argument('--bg_cov', type=int, default=1, help='background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format')
     if sub_program:
-        parser.add_argument('--bam', help='bam file', required=True)
-        parser.add_argument('--bg', help='background snp file', required=True)
+        parser.add_argument('--bam', help='bam file from conversion step', required=True)
+        parser.add_argument('--bg', help='background snp file, csv or vcf format', required=True)
         parser.add_argument('--cell_keep', type=int, default=100000, help='filter cell')
         parser.add_argument('--min_cell', type=int, default=10, help='a gene expressed in at least cells, default 10')
         parser.add_argument('--min_gene', type=int, default=10, help='at least gene num in a cell, default 10')

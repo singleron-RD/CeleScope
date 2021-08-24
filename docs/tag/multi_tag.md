@@ -106,3 +106,5 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.
 
 `--split_fastq` If used, will split scRNA-Seq fastq file according to tag assignment.
 
+`--split_matrix` If used, will split scRNA-Seq matrix file according to tag assignment.
+

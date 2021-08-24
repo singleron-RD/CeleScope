@@ -43,7 +43,10 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
     )
     if sub_program:
         parser.add_argument("--read_count_file", help="Tag read count file.", required=True)
-        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory.", required=True)
+        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory.")
+        parser.add_argument("--matrix_dir", help="Match celescope scRNA-Seq matrix directory.")
+        parser.add_argument("--tsne_file", help="t-SNE coord file.")
+        
         s_common(parser)
 
 
@@ -76,7 +79,6 @@ class Count_tag(Step):
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
         self.read_count_file = args.read_count_file
-        self.match_dir = args.match_dir
         self.UMI_min = args.UMI_min
         self.SNR_min = args.SNR_min
         self.combine_cluster = args.combine_cluster
@@ -86,11 +88,20 @@ class Count_tag(Step):
         # read
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)
 
-        match_dict = utils.parse_match_dir(self.match_dir)
-        self.match_barcode = match_dict['match_barcode']
-        self.cell_total = match_dict['cell_total']
-        self.tsne_file = match_dict['tsne_coord']
-        self.matrix_dir = match_dict['matrix_dir']
+        if args.match_dir:
+            match_dict = utils.parse_match_dir(args.match_dir)
+            self.match_barcode = match_dict['match_barcode']
+            self.cell_total = match_dict['cell_total']
+            self.tsne_file = match_dict['tsne_coord']
+            self.matrix_dir = match_dict['matrix_dir']
+        elif args.matrix_dir:
+            df_barcode = pd.read_csv(f'{args.matrix_dir}/barcodes.tsv', header=None)
+            self.match_barcode = df_barcode[0].tolist()
+            self.cell_total = len(self.match_barcode)
+            self.tsne_file = args.tsne_file
+            self.matrix_dir = args.matrix_dir
+        else:
+            raise ValueError("--match_dir or --matrix_dir is required.")
 
         # init
         self.no_noise = False
@@ -279,12 +290,13 @@ class Count_tag(Step):
 
         sr_tag_count = df_UMI_cell["tag"].value_counts()  # series(index:tag name, value:tag count)
         for tag_name in ("Undetermined", "Multiplet"):
-            self.add_metric(
-                name=tag_name + ' Cells',
-                value=sr_tag_count[tag_name],
-                total=self.cell_total,
-            )
-            sr_tag_count.drop(tag_name, inplace=True)
+            if tag_name in sr_tag_count:
+                self.add_metric(
+                    name=tag_name + ' Cells',
+                    value=sr_tag_count[tag_name],
+                    total=self.cell_total,
+                )
+                sr_tag_count.drop(tag_name, inplace=True)
         for tag_name in sorted(sr_tag_count.index):
             self.add_metric(
                 name=tag_name + ' Cells',

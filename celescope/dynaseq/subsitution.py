@@ -203,6 +203,6 @@ def subsitution(args):
 
 def get_opts_subsitution(parser, sub_program):
     if sub_program:
-        parser.add_argument('--bam', help='bam file', required=True)
+        parser.add_argument('--bam', help='bam file from conversion step', required=True)
         parser = s_common(parser) 
     return parser

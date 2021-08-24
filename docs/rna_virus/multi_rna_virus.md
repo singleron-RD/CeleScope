@@ -84,9 +84,25 @@ is higher than or equal to this value.
 
 `--gtf_type` Specify feature type in GTF annotation
 
-`--genomeDir` Required. Genome directory.
-
 `--expected_cell_num` Default `3000`. Expected cell number.
 
 `--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.
+
+`--genomeDir` Required. Genome directory.
+
+`--save_rds` Write rds to disk.
+
+`--type_marker_tsv` A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
+```
+cell_type	marker
+Alveolar	"CLDN18,FOLR1,AQP4,PEBP4"
+Endothelial	"CLDN5,FLT1,CDH5,RAMP2"
+Epithelial	"CAPS,TMEM190,PIFO,SNTN"
+Fibroblast	"COL1A1,DCN,COL1A2,C1R"
+B_cell	"CD79A,IGKC,IGLC3,IGHG3"
+Myeloid	"LYZ,MARCO,FCGR3A"
+T_cell	"CD3D,TRBC1,TRBC2,TRAC"
+LUAD	"NKX2-1,NAPSA,EPCAM"
+LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
+```
 

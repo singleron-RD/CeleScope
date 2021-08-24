@@ -11,6 +11,8 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope tag` for Single-cell Multiplexing data generated with CLindex Sample Multiplexing kits. It performs preprocessing, tag counting, tag assignment and multiplets identification.
 
+- `celescope dynaseq` for Single cell dynamic transcriptome data generated with Dynascope kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering, nucleotide substitution statistic and nascent RNA identification.
+
 
 ## [Quick start](quick_start.md)
 

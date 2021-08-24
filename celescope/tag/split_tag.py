@@ -11,6 +11,7 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
+from celescope.tools.cellranger3.wrapper import Cell_calling, read_raw_matrix
 
 
 class Split_tag(Step):
@@ -19,17 +20,29 @@ class Split_tag(Step):
     - Split scRNA-Seq fastq according to tag assignment.
 
     Output
-    - `fastq/{tag}_{1,2}.fq` Fastq files of each tag.
+    - `matrix/` Matrix files of each tag.(Optional)
+    - `fastq/` Fastq files of each tag.(Optional)
     """
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
+        if not (args.split_matrix or args.split_fastq):
+            return
 
         # set
-
         df_umi_tag = pd.read_csv(args.umi_tag_file, sep='\t', index_col=0)
         df_umi_tag = df_umi_tag.rename_axis('barcode').reset_index()
         self.tag_barcode_dict = {tag: set(row["barcode"].tolist()) for tag, row in df_umi_tag.groupby("tag")}
+
+        if args.split_matrix:
+            self.matrix_outdir = f'{args.outdir}/matrix/'
+            if args.match_dir:
+                matrix_10X_dir = glob.glob(f'{args.match_dir}/05.count/*_matrix_10X*')[0]
+            elif args.matrix_dir:
+                matrix_10X_dir = args.matrix_dir
+            else:
+                raise ValueError("--match_dir or --matrix_dir is required.")
+            self.raw_mat, self.raw_features_path, self.raw_barcodes = read_raw_matrix(matrix_10X_dir)
 
         if args.split_fastq:
             self.rna_fq_file = glob.glob(f'{args.match_dir}/*barcode/*_2.fq*')[0]
@@ -79,7 +92,21 @@ class Split_tag(Step):
             self.r1_fastq_files_handle[tag].close()
 
     @utils.add_log
+    def split_matrix(self):
+        for tag in self.tag_barcode_dict:
+            outdir = f'{self.matrix_outdir}/{tag}_matrix_10X/'
+            runner = Cell_calling(outdir, self.raw_mat, self.raw_features_path, self.raw_barcodes)
+            tag_barcodes = list(self.tag_barcode_dict[tag])
+            raw_barcodes = list(runner.raw_barcodes)
+            tag_barcodes_indices = [raw_barcodes.index(barcode) for barcode in tag_barcodes]
+            tag_barcodes_indices.sort()
+            runner.write_slice_matrix(tag_barcodes_indices)
+
+
+    @utils.add_log
     def run(self):
+        if self.args.split_matrix:
+            self.split_matrix()
         if self.args.split_fastq:
             self.write_r2_fastq_files()
             self.write_r1_fastq_files()
@@ -97,8 +124,14 @@ def get_opts_split_tag(parser, sub_program):
         help="If used, will split scRNA-Seq fastq file according to tag assignment.",
         action='store_true',
     )
+    parser.add_argument(
+        "--split_matrix",
+        help="If used, will split scRNA-Seq matrix file according to tag assignment.",
+        action='store_true',
+    )
     if sub_program:
         parser.add_argument("--umi_tag_file", help="UMI tag file.", required=True)
-        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'], required=True)
+        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
+        parser.add_argument("--matrix_dir", help="Match celescope scRNA-Seq matrix directory.")
         parser.add_argument("--R1_read", help='R1 read path.')
         s_common(parser)

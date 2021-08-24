@@ -8,9 +8,9 @@
 
 
 ## Arguments
-`--strand` gene strand file
+`--strand` gene strand file, the format is "geneID,+/-"
 
-`--bam` featureCount bam
+`--bam` featureCount bam(sortedByCoord), must have "MD" tag, set in star step
 
 `--cell` barcode cell list
 

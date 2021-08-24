@@ -11,13 +11,13 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--bam` None
+`--bam` STAR bam file.
 
-`--match_dir` match scRNA-Seq dir
+`--match_dir` Match celescope scRNA-Seq directory.
 
-`--fusion_genomeDir` fusion genome directory
+`--fusion_genomeDir` Fusion genome directory.
 
-`--flanking_base` None
+`--flanking_base` Number of bases flanking the fusion position.
 
-`--UMI_min` None
+`--UMI_min` Minimum number of fusion UMI to consider a cell as a cell with fusion event.
 

@@ -104,7 +104,7 @@ LUAD	"NKX2-1,NAPSA,EPCAM"
 LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
 ```
 
-`--strand` gene strand file
+`--strand` gene strand file, the format is "geneID,+/-"
 
 `--bg_cov` background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format
 
