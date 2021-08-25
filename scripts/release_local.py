@@ -16,7 +16,7 @@ def create_conda():
     set -eo pipefail
     conda create -n {ENV_NAME}
     source activate {ENV_NAME}
-    conda install -y --file conda_pkgs.txt --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing
+    conda install -y --file conda_pkgs.txt
 
     pip install -i https://pypi.mirrors.ustc.edu.cn/simple/ -r requirements.txt
     python setup.py install
