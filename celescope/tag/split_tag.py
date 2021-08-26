@@ -59,6 +59,15 @@ class Split_tag(Step):
                 self.r1_fastq_files_handle[tag] = open(r1_fastq_file_name, 'w')
 
             self.tag_read_index_dict = defaultdict(set)
+        
+        if args.split_vdj:
+            self.cell_confident_vdj = glob.glob(f'{args.match_dir}/*count_vdj/*cell_confident.tsv*')[0]
+
+            vdj_outdir = f'{args.outdir}/vdj/'
+            if not os.path.exists(vdj_outdir):
+                os.system(f'mkdir -p {vdj_outdir}')
+
+            
 
     @utils.add_log
     def write_r2_fastq_files(self):
@@ -101,6 +110,11 @@ class Split_tag(Step):
             tag_barcodes_indices = [raw_barcodes.index(barcode) for barcode in tag_barcodes]
             tag_barcodes_indices.sort()
             runner.write_slice_matrix(tag_barcodes_indices)
+
+    @utils.add_log
+    def split_vdj(self):
+        for tag in self.tag_barcode_dict:
+            tag_barcodes = list(self.tag_barcode_dict[tag])
 
 
     @utils.add_log
