@@ -16,7 +16,7 @@ ASSAY_DICT = {
     'tag': 'Single-cell tag',
     'citeseq': 'Single Cell CITE-Seq',
     'tcr_fl': 'Single Cell full length TCR',
-    'vdj10X': 'vdj 10X',
+    'vdj_full_len': 'Single Cell TCR/BCR full length assembly',
 }
 
 ROOT_PATH = os.path.dirname(__file__)
