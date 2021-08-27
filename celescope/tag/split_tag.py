@@ -14,6 +14,27 @@ from celescope.__init__ import HELP_DICT
 from celescope.tools.cellranger3.wrapper import Cell_calling, read_raw_matrix
 
 
+def get_clonotypes_table(df):
+    chains = set(df['chain'].tolist())
+    res = pd.DataFrame(columns=['barcode'])
+    for c in chains:
+        df_c = df[df['chain']==c][['barcode', 'aaSeqCDR3', 'nSeqCDR3']]
+        df_c = df_c.rename(columns={'aaSeqCDR3': f'{c}_aaSeqCDR3', 'nSeqCDR3': f'{c}_nSeqCDR3'})
+        res = pd.merge(res, df_c, on='barcode', how='outer').fillna('NaN')
+    group_l = res.columns.tolist()
+    group_l.remove('barcode')
+    clonotypes = res.groupby(group_l, as_index=False).agg({'barcode': 'count'})
+    clonotypes = clonotypes.rename(columns={'barcode': 'barcode_count'})
+    sum_cb = clonotypes['barcode_count'].sum()
+    clonotypes['percent'] = clonotypes['barcode_count'].apply(lambda x: round(x/sum_cb, 2))
+    clonotypes['clonetype_ID'] = [i for i in range(1, clonotypes.shape[0]+1)]
+    group_l.insert(0, 'clonetype_ID')
+    group_l.append('barcode_count')
+    group_l.append('percent')
+    clonotypes = clonotypes.reindex(columns=group_l)
+    return clonotypes
+
+
 class Split_tag(Step):
     """
     Features
@@ -26,7 +47,7 @@ class Split_tag(Step):
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
-        if not (args.split_matrix or args.split_fastq):
+        if not (args.split_matrix or args.split_fastq or args.split_vdj):
             return
 
         # set
@@ -61,12 +82,11 @@ class Split_tag(Step):
             self.tag_read_index_dict = defaultdict(set)
         
         if args.split_vdj:
-            self.cell_confident_vdj = glob.glob(f'{args.match_dir}/*count_vdj/*cell_confident.tsv*')[0]
+            self.cell_confident_vdj = glob.glob(f'{args.vdj_dir}/*count_vdj/*cell_confident.tsv*')[0]
 
-            vdj_outdir = f'{args.outdir}/vdj/'
-            if not os.path.exists(vdj_outdir):
-                os.system(f'mkdir -p {vdj_outdir}')
-
+            self.vdj_outdir = f'{args.outdir}/vdj/'
+            if not os.path.exists(self.vdj_outdir):
+                os.system(f'mkdir -p {self.vdj_outdir}')
             
 
     @utils.add_log
@@ -113,9 +133,18 @@ class Split_tag(Step):
 
     @utils.add_log
     def split_vdj(self):
+
+        df_vdj = pd.read_csv(self.cell_confident_vdj, sep='\t')
         for tag in self.tag_barcode_dict:
             tag_barcodes = list(self.tag_barcode_dict[tag])
-
+            temp = df_vdj[df_vdj.barcode.isin(tag_barcodes)]
+            if not temp.empty:
+                temp.to_csv(f'{self.vdj_outdir}/{tag}_cell_confident.tsv', sep='\t', index=False)
+                clonotypes = get_clonotypes_table(temp)
+                clonotypes.to_csv(f'{self.vdj_outdir}/{tag}_clonotypes.tsv', sep='\t', index=False)
+            else:
+                continue
+            
 
     @utils.add_log
     def run(self):
@@ -124,6 +153,8 @@ class Split_tag(Step):
         if self.args.split_fastq:
             self.write_r2_fastq_files()
             self.write_r1_fastq_files()
+        if self.args.split_vdj:
+            self.split_vdj()
 
 
 def split_tag(args):
@@ -143,6 +174,12 @@ def get_opts_split_tag(parser, sub_program):
         help="If used, will split scRNA-Seq matrix file according to tag assignment.",
         action='store_true',
     )
+    parser.add_argument(
+        "--split_vdj", 
+        help="If used, will split scRNA-Seq vdj count file according to tag assignment.", 
+        action='store_true',
+    )
+    parser.add_argument("--vdj_dir", help="Match celescope vdj directory. Required when --split_vdj is specified.")
     if sub_program:
         parser.add_argument("--umi_tag_file", help="UMI tag file.", required=True)
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
