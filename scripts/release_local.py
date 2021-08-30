@@ -39,7 +39,7 @@ def lint_code():
         # W0105 (String statement has no effect)
         # W0511 TODO!
         # E1130 bad operand type for unary ~: _isnan (invalid-unary-operand-type)
-    pylint --disable=all --enable=E,W --disable=W1618,E1101,W1633,W1619,W0105,W0511,E1130 celescope
+    pylint --disable=all --enable=E,W --disable=W1618,E1101,W1633,W1619,W0105,W0511,E1130 --jobs=16 celescope
     """
     print(cmd)
     subprocess.check_call(cmd, shell=True)

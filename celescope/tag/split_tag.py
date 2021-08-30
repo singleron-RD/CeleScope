@@ -36,7 +36,12 @@ class Split_tag(Step):
 
         if args.split_matrix:
             self.matrix_outdir = f'{args.outdir}/matrix/'
-            matrix_10X_dir = glob.glob(f'{args.match_dir}/05.count/*_matrix_10X*')[0]
+            if args.match_dir:
+                matrix_10X_dir = glob.glob(f'{args.match_dir}/05.count/*_matrix_10X*')[0]
+            elif args.matrix_dir:
+                matrix_10X_dir = args.matrix_dir
+            else:
+                raise ValueError("--match_dir or --matrix_dir is required.")
             self.raw_mat, self.raw_features_path, self.raw_barcodes = read_raw_matrix(matrix_10X_dir)
 
         if args.split_fastq:
@@ -126,6 +131,7 @@ def get_opts_split_tag(parser, sub_program):
     )
     if sub_program:
         parser.add_argument("--umi_tag_file", help="UMI tag file.", required=True)
-        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'], required=True)
+        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
+        parser.add_argument("--matrix_dir", help="Match celescope scRNA-Seq matrix directory.")
         parser.add_argument("--R1_read", help='R1 read path.')
         s_common(parser)

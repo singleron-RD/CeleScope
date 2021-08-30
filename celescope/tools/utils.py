@@ -21,6 +21,7 @@ import xopen
 
 import celescope.tools
 from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
@@ -492,6 +493,7 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
         '''
 
         df = df.append(pd.Series(rec_dict), ignore_index=True)
+    vcf.close()
     return df
 
 
@@ -557,6 +559,12 @@ def read_barcode_file(match_dir, return_file=False):
     if return_file:
         return match_barcode, (cell_total, match_barcode_file)
     return match_barcode, cell_total
+
+
+def get_barcodes_from_matrix_dir(matrix_dir):
+    barcodes_file = f'{matrix_dir}/barcodes.tsv'
+    match_barcode, _cell_total = read_one_col(barcodes_file)
+    return match_barcode
 
 
 def parse_match_dir(match_dir):
@@ -693,3 +701,15 @@ def index_bam(input_bam):
 def check_mkdir(dir_name):
     if not os.path.exists(dir_name):
         os.system(f"mkdir -p {dir_name}")
+
+
+def otsu_min_support_read(array, otsu_plot):
+    """
+    get otsu threshold and plot
+    """
+    array = np.log10(array)
+    hist = array2hist(array)
+    thresh = threshold_otsu(hist)
+    makePlot(hist, thresh, otsu_plot)
+    threshold = round(10 ** thresh,1)
+    return threshold

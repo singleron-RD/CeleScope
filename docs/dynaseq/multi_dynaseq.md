@@ -82,6 +82,8 @@ is higher than or equal to this value.
 
 `--gtf_type` Specify feature type in GTF annotation
 
+`--featureCounts_param` Other featureCounts parameters
+
 `--expected_cell_num` Default `3000`. Expected cell number.
 
 `--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.
