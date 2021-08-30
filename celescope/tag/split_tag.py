@@ -15,7 +15,7 @@ from celescope.tools.cellranger3.wrapper import Cell_calling, read_raw_matrix
 
 
 def get_clonotypes_table(df):
-    chains = set(df['chain'].tolist())
+    chains = sorted(set(df['chain'].tolist()))
     res = pd.DataFrame(columns=['barcode'])
     for c in chains:
         df_c = df[df['chain']==c][['barcode', 'aaSeqCDR3', 'nSeqCDR3']]
@@ -32,7 +32,10 @@ def get_clonotypes_table(df):
     group_l.append('barcode_count')
     group_l.append('percent')
     clonotypes = clonotypes.reindex(columns=group_l)
-    return clonotypes
+    if chains[0].startswith("TR"):
+        return clonotypes, 'TCR'
+    elif chains[0].startswith("IG"):
+        return clonotypes, 'BCR'
 
 
 class Split_tag(Step):
@@ -139,9 +142,9 @@ class Split_tag(Step):
             tag_barcodes = list(self.tag_barcode_dict[tag])
             temp = df_vdj[df_vdj.barcode.isin(tag_barcodes)]
             if not temp.empty:
-                temp.to_csv(f'{self.vdj_outdir}/{tag}_cell_confident.tsv', sep='\t', index=False)
-                clonotypes = get_clonotypes_table(temp)
-                clonotypes.to_csv(f'{self.vdj_outdir}/{tag}_clonotypes.tsv', sep='\t', index=False)
+                clonotypes, seqtype = get_clonotypes_table(temp)
+                temp.to_csv(f'{self.vdj_outdir}/{tag}_{seqtype}_cell_confident.tsv', sep='\t', index=False)
+                clonotypes.to_csv(f'{self.vdj_outdir}/{tag}_{seqtype}_clonotypes.tsv', sep='\t', index=False)
             else:
                 continue
             
