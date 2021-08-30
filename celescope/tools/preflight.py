@@ -17,7 +17,7 @@ def check_file(mapfile):
             if not line or line.startswith('#'):
                 continue
             line_split = line.split()
-            library_id, library_path, sample_name = line_split[:3]
+            library_id, library_path, _sample_name = line_split[:3]
             if not library_path.startswith('/'):
                 raise Exception("Specified %s file must be an absolute path: %s" % (library_id, library_path))
             if not os.path.exists(library_path):
