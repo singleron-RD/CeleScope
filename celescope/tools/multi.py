@@ -4,11 +4,11 @@ import itertools
 import os
 from collections import defaultdict
 
+import celescope.tools.preflight as pre
 import celescope
 import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
-
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
 
@@ -340,6 +340,10 @@ job_end
                     f.write(self.shell_dict[sample])
 
     def run(self):
+        pre.check_env()
+        pre.check_soft()
+        self.args = self.parser.parse_args()
+        pre.check_file(mapfile=self.args.mapfile)
         self.prepare()
         self.run_steps()
         self.end()
