@@ -62,6 +62,22 @@ class Analysis_capture_virus(Step, AnalysisMixin):
     def get_virus_tsne(self, virus_df):
         virus_tsne_df = pd.merge(self.tsne_df, virus_df, on="barcode", how="left")
         virus_tsne_df.to_csv(self.virus_tsne_file, sep='\t')
+        
+        #get the sum of virus
+        total_virus = virus_tsne_df.loc[:,"tag"].count()
+        #get the sum of virus in each cluster
+        cluster_virus = virus_tsne_df.groupby("cluster")["tag"].count()
+        #Total cell each cluster
+        total_cell_cluster = virus_tsne_df.groupby("cluster")["barcode"].count()
+        #add sum of virus to metric
+        self.add_metric(name = 'Number of Cells with Virus',value = f'{total_virus}({round(total_virus/sum(total_cell_cluster),2)}%)')
+        #add sum of virus in each cluster to metric
+        cluster = 1    
+        for num_virus in cluster_virus:
+            total_cell = total_cell_cluster[cluster]
+            self.add_metric(name = f'Cluster_{cluster}',value = f'{num_virus}({round(num_virus/total_cell,2)}%)')
+            cluster += 1
+        
         virus_tsne_df["UMI"] = virus_tsne_df["UMI"].fillna(0)
         tSNE_1 = list(virus_tsne_df.tSNE_1)
         tSNE_2 = list(virus_tsne_df.tSNE_2)
