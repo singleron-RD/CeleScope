@@ -300,6 +300,12 @@ class Assemble(Step):
         # match
         df_sgr = pd.DataFrame(self.match_cell_barcodes, columns=['barcode'])
         df_match = pd.merge(df_sgr, filter_contig, on='barcode', how='inner')
+        if self.seqtype == 'BCR':
+            df_h = df_match[df_match['chain']=='IGH']
+            df_temp = df_match[df_match['chain']!='IGH']
+            df_temp = df_temp.sort_values(by='umis', ascending=False)
+            df_temp = df_temp.drop_duplicates(['barcode'])
+            df_match = pd.concat([df_h, df_temp], ignore_index=True)
         
         # get match summary
         match_summary = get_vj_annot(df_match, self.chains, self.pair)
