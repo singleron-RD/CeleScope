@@ -16,7 +16,8 @@ ASSAY_DICT = {
     'tag': 'Single-cell tag',
     'citeseq': 'Single Cell CITE-Seq',
     'tcr_fl': 'Single Cell full length TCR',
-    'dynaseq': 'Single-cell dynaseq'
+    'dynaseq': 'Single-cell dynaseq',
+    'trust_vdj': 'Single-cell full length TCR/BCR'
 }
 
 ROOT_PATH = os.path.dirname(__file__)
