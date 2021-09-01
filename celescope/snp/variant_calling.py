@@ -1,8 +1,10 @@
 import os
 import subprocess
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Pool
 from itertools import groupby
+from functools import partial
+from concurrent.futures import ProcessPoolExecutor
 
 import pandas as pd
 import numpy as np
@@ -47,13 +49,13 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
 
 
 def read_CID(CID_file):
-    df_index = pd.read_csv(CID_file, sep='\t', index_col=0)
+    df_index = pd.read_csv(CID_file, sep='\t', index_col=0).reset_index()
     df_valid = df_index[df_index['valid'] == True]
     return df_index, df_valid
 
 
 @utils.add_log
-def call_snp(CID, outdir, fasta):
+def call_snp(outdir, fasta, CID):
 
     call_snp.logger.info('Processing Cell %s' % CID)
     bam = f'{outdir}/cells/cell{CID}/cell{CID}.bam'
@@ -276,11 +278,10 @@ class Variant_calling(Step):
     @utils.add_log
     def call_all_snp(self):
         _df_index, df_valid = self.read_CID()
-        CID_arg = df_valid['CID']
-        outdir_arg = [self.outdir] * len(CID_arg)
-        fasta_arg = [self.fasta] * len(CID_arg)
-        with ProcessPoolExecutor(self.thread) as pool:
-            pool.map(call_snp, CID_arg, outdir_arg, fasta_arg)
+        CIDs = df_valid['CID']
+        func = partial(call_snp, self.outdir, self.fasta)
+        with Pool(self.thread) as pool:
+            pool.map(func, CIDs)
 
 
     def read_CID(self):
@@ -293,7 +294,7 @@ class Variant_calling(Step):
         add VID(variant ID) and CID(cell ID)
         '''
         _df_index, df_valid = self.read_CID()
-        CIDs = df_valid['CID']
+        CIDs = list(df_valid['CID'])
         # variant dict
         v_cols = ['chrom', 'pos', 'alleles']
         v_dict = {}
@@ -319,8 +320,7 @@ class Variant_calling(Step):
             vcf = pysam.VariantFile(vcf_file, 'r')
             header = vcf.header
             vcf.close()
-            return header
-        print("CIDs", CIDs)    
+            return header 
         vcf_header = get_vcf_header(CIDs)
         vcf_header.info.add('VID', number=1, type='String', description='Variant ID')
         vcf_header.info.add('CID', number=1, type='String', description='Cell ID')
@@ -433,12 +433,10 @@ class Variant_calling(Step):
 
     def run(self):
         
-
         self.SplitNCigarReads()
         self.split_bam()
         self.write_CID_file()
         self.call_all_snp()
-
         self.merge_vcf()
         self.write_VID_file()
         self.get_UMI()
