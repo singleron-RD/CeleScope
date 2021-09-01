@@ -1,5 +1,6 @@
 import os
 
+
 import numpy as np
 import pandas as pd
 
@@ -100,4 +101,3 @@ class Analysis_capture_virus(Step, AnalysisMixin):
         )
         df_thresh = df_virus[df_virus["UMI"] >= threshold]
         df_thresh.to_csv(self.otsu_virus_file, sep='\t')
-        self.virus_tsne_file
