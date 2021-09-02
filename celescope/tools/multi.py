@@ -4,8 +4,8 @@ import itertools
 import os
 from collections import defaultdict
 
-import celescope.tools.preflight as pre
 import celescope
+import celescope.tools.preflight as pre
 import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
@@ -341,7 +341,7 @@ job_end
 
     def run(self):
         self.args = self.parser.parse_args()
-        pre.run_prefligh(mapfile=self.args.mapfile,outdir=self.args.outdir)
+        pre.run_prefligh(outdir=self.args.outdir)
         self.prepare()
         self.run_steps()
         self.end()
