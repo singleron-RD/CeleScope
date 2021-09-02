@@ -6,12 +6,14 @@ import celescope.snp.variant_calling as vc
 from tests.unittests.__init__ import TEST_DIR_ROOT
 
 
+
 class Test_snp(unittest.TestCase):
     def setUp(self):
         os.chdir(f'{TEST_DIR_ROOT}/snp/')
         self.sample = 'test1'
         self.vcf_file = f'{self.sample}/07.variant_calling/{self.sample}_merged.vcf'
 
+    @unittest.skip('skip')
     def test_cell_UMI(self):
         cid = 7996
         outdir = f'{self.sample}/07.variant_calling/'

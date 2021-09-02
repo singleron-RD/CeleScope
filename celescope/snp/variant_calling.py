@@ -1,6 +1,8 @@
-import os
 import subprocess
 from collections import defaultdict
+from multiprocessing import Pool
+from itertools import groupby
+from functools import partial
 from concurrent.futures import ProcessPoolExecutor
 
 import pandas as pd
@@ -46,13 +48,13 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
 
 
 def read_CID(CID_file):
-    df_index = pd.read_csv(CID_file, sep='\t', index_col=0, dtype=object)
-    df_valid = df_index[df_index['valid'] == 'True']
+    df_index = pd.read_csv(CID_file, sep='\t', index_col=0).reset_index()
+    df_valid = df_index[df_index['valid'] == True]
     return df_index, df_valid
 
 
 @utils.add_log
-def call_snp(CID, outdir, fasta):
+def call_snp(outdir, fasta, CID):
 
     call_snp.logger.info('Processing Cell %s' % CID)
     bam = f'{outdir}/cells/cell{CID}/cell{CID}.bam'
@@ -198,8 +200,10 @@ class Variant_calling(Step):
 
         # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
+        self.splitN_bam_name_sorted = f'{self.out_prefix}_splitN_name_sorted.bam'
         self.CID_file = f'{self.out_prefix}_CID.tsv'
         self.VID_file = f'{self.out_prefix}_VID.tsv'
+        self.cells_dir = f'{self.outdir}/cells/'
         self.merged_vcf_file = f'{self.out_prefix}_merged.vcf'
         self.filter_vcf_file = f'{self.out_prefix}_filter.vcf'
         self.variant_count_file = f'{self.out_prefix}_variant_count.tsv'
@@ -209,6 +213,14 @@ class Variant_calling(Step):
         if args.min_support_read == 'auto':
             utils.check_mkdir(self.otsu_dir)
         self.support_matrix_file = f'{self.out_prefix}_support.mtx'
+
+        # run
+        self.CID_dict = defaultdict(dict)
+        for index, barcode in enumerate(self.barcodes):
+            CID = index + 1
+            self.CID_dict[barcode]['CID'] = CID
+            self.CID_dict[barcode]['valid'] = False
+
 
     @utils.add_log
     def SplitNCigarReads(self):
@@ -234,63 +246,42 @@ class Variant_calling(Step):
             CID: assign ID(1-based) to cells
         '''
 
-        # init
-        bam_dict = defaultdict(list)
-        CID_dict = defaultdict(dict)
-        cells_dir = f'{self.outdir}/cells/'
+        # name sort
+        samtools_runner = utils.Samtools(self.splitN_bam, self.splitN_bam_name_sorted, threads=self.thread)
+        samtools_runner.sort_bam(by='name', print_log=True)
+
+        def keyfunc(x):
+            # return barcode
+            return x.query_name.split('_', 1)[0]
 
         # read bam and split
-        samfile = pysam.AlignmentFile(self.splitN_bam, "rb")
-        header = samfile.header
-        for read in samfile:
-            try:
-                barcode = read.get_tag('CB')
-            except KeyError:
-                continue
-            if barcode in self.barcodes:
-                CID = self.barcodes.index(barcode) + 1
-                read.set_tag(tag='CL', value=f'CELL{CID}', value_type='Z')
+        with pysam.AlignmentFile(self.splitN_bam_name_sorted, "rb") as samfile:
+            header = samfile.header
+            for barcode, g in groupby(samfile, keyfunc):
+                if barcode in self.barcodes:
+                    CID = self.barcodes.index(barcode) + 1
+                    self.CID_dict[barcode]['valid'] = True
+                    cell_dir = f'{self.cells_dir}/cell{CID}'
+                    utils.check_mkdir(cell_dir)
+                    cell_bam = f'{self.cells_dir}/cell{CID}/cell{CID}.bam'
+                    with pysam.AlignmentFile(cell_bam, "wb", header=header) as out_bam:
+                        for read in g:
+                            out_bam.write(read)
 
-                # assign read to barcode
-                bam_dict[barcode].append(read)
-        samfile.close()
-        self.split_bam.logger.info('writing cell bam...')
-        # write new bam
-        CID = 0
-        for barcode in self.barcodes:
-            # init
-            CID += 1
-            CID_dict[CID]['barcode'] = barcode
-            CID_dict[CID]['valid'] = False
-
-            # out bam
-            if barcode in bam_dict:
-                cell_dir = f'{cells_dir}/cell{CID}'
-                cell_bam_file = f'{cell_dir}/cell{CID}.bam'
-                if not os.path.exists(cell_dir):
-                    os.makedirs(cell_dir)
-                CID_dict[CID]['valid'] = True
-                cell_bam = pysam.AlignmentFile(
-                    f'{cell_bam_file}', "wb", header=header)
-                for read in bam_dict[barcode]:
-                    cell_bam.write(read)
-                cell_bam.close()
-
-        # out CID
-        df_CID = pd.DataFrame(CID_dict).T
-        df_CID.index.name = 'CID'
+    def write_CID_file(self):
+        # out CID file
+        df_CID = pd.DataFrame(self.CID_dict).T
+        df_CID.index.name = 'barcode'
         df_CID.to_csv(self.CID_file, sep='\t')
 
     @utils.add_log
     def call_all_snp(self):
-        all_res = []
         _df_index, df_valid = self.read_CID()
-        CID_arg = df_valid.index
-        outdir_arg = [self.outdir] * len(CID_arg)
-        fasta_arg = [self.fasta] * len(CID_arg)
-        with ProcessPoolExecutor(self.thread) as pool:
-            for res in pool.map(call_snp, CID_arg, outdir_arg, fasta_arg):
-                all_res.append(res)
+        CIDs = df_valid['CID']
+        func = partial(call_snp, self.outdir, self.fasta)
+        with Pool(self.thread) as pool:
+            pool.map(func, CIDs)
+
 
     def read_CID(self):
         return read_CID(self.CID_file)
@@ -302,8 +293,7 @@ class Variant_calling(Step):
         add VID(variant ID) and CID(cell ID)
         '''
         _df_index, df_valid = self.read_CID()
-        CIDs = df_valid.index
-
+        CIDs = list(df_valid['CID'])
         # variant dict
         v_cols = ['chrom', 'pos', 'alleles']
         v_dict = {}
@@ -329,7 +319,7 @@ class Variant_calling(Step):
             vcf = pysam.VariantFile(vcf_file, 'r')
             header = vcf.header
             vcf.close()
-            return header
+            return header 
         vcf_header = get_vcf_header(CIDs)
         vcf_header.info.add('VID', number=1, type='String', description='Variant ID')
         vcf_header.info.add('CID', number=1, type='String', description='Cell ID')
@@ -368,7 +358,7 @@ class Variant_calling(Step):
         _df_index, df_valid = self.read_CID()
 
         df_UMI_list = []
-        CID_arg = list(df_valid.index)
+        CID_arg = list(df_valid['CID'])
         outdir_arg = [self.outdir] * len(CID_arg)
         df_vcf = parse_vcf(self.merged_vcf_file)
         vcf_arg = [df_vcf] * len(CID_arg)
@@ -441,9 +431,10 @@ class Variant_calling(Step):
         mmwrite(self.support_matrix_file, support_mtx)
 
     def run(self):
-
+        
         self.SplitNCigarReads()
         self.split_bam()
+        self.write_CID_file()
         self.call_all_snp()
         self.merge_vcf()
         self.write_VID_file()
