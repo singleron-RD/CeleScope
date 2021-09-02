@@ -340,10 +340,8 @@ job_end
                     f.write(self.shell_dict[sample])
 
     def run(self):
-        pre.check_env()
-        pre.check_soft()
         self.args = self.parser.parse_args()
-        pre.check_file(mapfile=self.args.mapfile)
+        pre.run_prefligh(mapfile=self.args.mapfile,outdir=self.args.outdir)
         self.prepare()
         self.run_steps()
         self.end()
