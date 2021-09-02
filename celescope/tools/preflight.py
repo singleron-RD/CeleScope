@@ -158,14 +158,14 @@ def record_package_versions(outdir,PACKAGE_VERSION_CMDS):
             files = os.listdir(pypath)
             for file in files:
                 if name in file:
-                    version = re.findall('\d+',file)
+                    version = re.findall(r'\d+',file)
                     version = '.'.join(version)
                 else:
                     continue
         head.append(name)
         data.append(version)
     for index in range(len(data)):
-        data[index] = re.findall('\d+',data[index])
+        data[index] = re.findall(r'\d+',data[index])
         data[index] = '.'.join(data[index])
         if head[index] == 'STAR':
             data[index] = data[index][:5]
@@ -202,17 +202,17 @@ def compare_version(ver_dict,ref_dict):
 
 
 def run_prefligh(mapfile,outdir):
-        check_env()
-        check_file(mapfile)
-        check_soft()
-        ver_dict = record_package_versions(outdir,PACKAGE_VERSION_CMDS=get_version())
-        compare_version(ver_dict,ref_dict)
+    check_env()
+    check_file(mapfile)
+    check_soft()
+    ver_dict = record_package_versions(outdir,PACKAGE_VERSION_CMDS=get_version())
+    compare_version(ver_dict,ref_dict=ref_vers)
 
 
 '''
 celescope required package vision
 '''
-ref_dict ={'python': '3.6.7', 
+ref_vers ={'python': '3.6.7', 
             'STAR': '2.6.1', 
             'cutadapt': '1.17',
             'samtools': '1.9', 
