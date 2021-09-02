@@ -1,4 +1,3 @@
-import os
 import subprocess
 from collections import defaultdict
 from multiprocessing import Pool
