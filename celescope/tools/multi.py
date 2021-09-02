@@ -341,7 +341,7 @@ job_end
 
     def run(self):
         self.args = self.parser.parse_args()
-        pre.run_prefligh(outdir=self.args.outdir)
+        pre.run_preflight(outdir=self.args.outdir)
         self.prepare()
         self.run_steps()
         self.end()

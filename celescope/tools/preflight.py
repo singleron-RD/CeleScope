@@ -38,9 +38,9 @@ def check_soft():
     print("Checking required tools and packages for environment (%s) ..." % (os.path.basename(os.environ['CONDA_DEFAULT_ENV'])))
     
     # check Bins
-    Bin = ['STAR','cutadapt','featureCounts','picard','samtools','mixcr',
+    Bins = ['STAR','cutadapt','featureCounts','picard','samtools','mixcr',
            'subread-align','subread-buildindex','subread-fullscan','gatk','bcftools']
-    for tool in Bin:
+    for tool in Bins:
         try:
             subprocess.check_output(['which',tool])
         except subprocess.CalledProcessError:
@@ -91,14 +91,14 @@ def get_version():
     res = subprocess.check_output(cmd,shell=True)
     res = res.decode('utf8').strip().split()
     Bins = ['python','star','cutadapt','samtools','picard','mixcr','subread','bcftools','featureCounts']
-    for bin in Bins:
-        if bin in res:
-            PACKAGE_VERSION_CMDS += [{'name':bin, 'version':res[res.index(bin)+1]}]
-        elif bin == 'featureCounts':
+    for Bin in Bins:
+        if Bin in res:
+            PACKAGE_VERSION_CMDS += [{'name':Bin, 'version':res[res.index(Bin)+1]}]
+        elif Bin == 'featureCounts':
             cmd = 'featureCounts 2>&1| grep "^ *Version"' 
             version = subprocess.check_output(cmd, shell=True)
             version = version.decode('utf8').strip().split()[1]
-            PACKAGE_VERSION_CMDS += [{'name':bin, 'version':version}]
+            PACKAGE_VERSION_CMDS += [{'name':Bin, 'version':version}]
 
     # py-package
     pypacks = ['pysam','cutadapt','scipy','numpy','xopen','jinja2','sklearn','plotly','matplotlib','Cython','pytest','plotnine','editdistance']
@@ -182,7 +182,7 @@ def compare_version(ver_dict,ref_dict):
                       %(key,ver_dict[key],ref_dict[key]))
 
 
-def run_prefligh(outdir):
+def run_preflight(outdir):
     check_env()
     check_soft()
     ver_dict = record_package_versions(outdir,PACKAGE_VERSION_CMDS=get_version())
