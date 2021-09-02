@@ -1,0 +1,35 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>Cells    <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+    <div class="box">
+      <div class="description" style="display: none;">
+        <p><b>Number of Cells with Virus</b> : The sum of virus cells.</p>
+        <p><b>Cluster_n(n = 1,2,3...)</b> : The number virus cells in each cluster.</p>
+      </div>
+      <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+        {% for item in analysis_capture_virus_summary %}
+          {% if loop.index <= (loop.length+1)/2 %}
+          <tr>
+            {% for i in item %} 
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+
+      <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+        {% for item in analysis_capture_virus_summary %}
+          {% if loop.index > (loop.length+1)/2 %}
+          <tr>
+            {% for i in item %} 
+            <td>{{ i|e }}</td>
+            {% endfor %}
+          </tr>
+          {% endif %}
+        {% endfor %}
+      </table>
+
+      <div class="clear" ></div>
+
+    </div>
+  </div>
