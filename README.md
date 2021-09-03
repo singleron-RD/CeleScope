@@ -19,7 +19,7 @@ git clone https://gitee.com/singleron-rd/celescope.git
 git clone https://github.com/singleron-RD/CeleScope.git
 ```
 
-2. Install conda packages
+2. Create conda environment and install conda packages
 ```
 cd CeleScope
 conda create -n celescope
@@ -28,10 +28,10 @@ conda install -y --file conda_pkgs.txt
 ```
 
 3. Install celescope
+
+Make sure you have activated the `celescope` conda environment before running `pip install celescope`. 
 ```
 pip install celescope
-# Use pypi mirror to accelerate downloading if you are in china
-pip install -i https://pypi.mirrors.ustc.edu.cn/simple/ celescope
 ```
 
 

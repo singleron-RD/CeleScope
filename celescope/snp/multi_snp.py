@@ -5,6 +5,9 @@ from celescope.tools.multi import Multi
 class Multi_snp(Multi):
     """
     Usage
+
+    ### Use Reads
+
     ```
     multi_snp\\
         --mapfile ./test1.mapfile\\
@@ -13,7 +16,22 @@ class Multi_snp(Multi):
         --mod shell\\
         --gene_list gene_list.tsv\\
         --annovar_config annovar.config\\
+        --not_consensus
     ```
+
+    ### Use UMI 
+
+    ```
+    multi_snp\\
+        --mapfile ./test1.mapfile\\
+        --genomeDir {genomeDir after running celescope snp mkref}\\
+        --thread 10\\
+        --mod shell\\
+        --gene_list gene_list.tsv\\
+        --annovar_config annovar.config\\
+        --min_support
+    ```
+
     annovar_config file
     ```
     [ANNOVAR]
