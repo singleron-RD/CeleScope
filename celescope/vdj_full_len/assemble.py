@@ -19,7 +19,7 @@ def reversed_compl(seq):
 
 def get_vj_annot(df, chains, pairs):
     fl_pro_pair_df = pd.DataFrame(df[(df['full_length']==True)&(df['productive']==True)].drop_duplicates(['barcode', 'chain']).barcode.value_counts())
-    fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']==2]
+    fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']>=2]
     l = []
     cell_nums = len(set(df['barcode'].tolist()))
     l.append({
@@ -59,46 +59,7 @@ def get_vj_annot(df, chains, pairs):
             'count': len(set(df[(df['productive']==True)&(df['chain']==c)].barcode.tolist())),
             'total_count': cell_nums
         })
-    # l.append({
-    #     'item': 'Cells With TRA Contig',
-    #     'count': len(set(df[df['chain']=='TRA'].barcode.tolist())),
-    #     'total_count': cell_nums
-    # })
-    # l.append({
-    #     'item': 'Cells With TRB Contig',
-    #     'count': len(set(df[df['chain']=='TRB'].barcode.tolist())),
-    #     'total_count': cell_nums
-    # })
-    # l.append({
-    #     'item': 'Cells With CDR3-annotated TRA Contig',
-    #     'count': len(set(df[(df['cdr3']!='None')&(df['chain']=='TRA')].barcode.tolist())),
-    #     'total_count': cell_nums
-    # })
-    # l.append({
-    #     'item': 'Cells With CDR3-annotated TRB Contig',
-    #     'count': len(set(df[(df['cdr3']!='None')&(df['chain']=='TRB')].barcode.tolist())),
-    #     'total_count': cell_nums
-    # })
-    # l.append({
-    #     'item': 'Cells With V-J Spanning TRA Contig',
-    #     'count': len(set(df[(df['full_length']==True)&(df['chain']=='TRA')].barcode.tolist())),
-    #     'total_count': cell_nums
-    # })
-    # l.append({
-    #     'item': 'Cells With V-J Spanning TRB Contig',
-    #     'count': len(set(df[(df['full_length']==True)&(df['chain']=='TRB')].barcode.tolist())),
-    #     'total_count': cell_nums
-    # })
-    # l.append({
-    #     'item': 'Cells With Productive TRA Contig',
-    #     'count': len(set(df[(df['productive']==True)&(df['chain']=='TRA')].barcode.tolist())),
-    #     'total_count': cell_nums
-    # })
-    # l.append({
-    #     'item': 'Cells With Productive TRB Contig',
-    #     'count': len(set(df[(df['productive']==True)&(df['chain']=='TRB')].barcode.tolist())),
-    #     'total_count': cell_nums
-    # })
+
     return l
      
 class Assemble(Step):
@@ -235,16 +196,7 @@ class Assemble(Step):
                 'count': int(read_count * (float(sum_dict[0][f'Reads Mapped to {c}'].strip('%'))/100)), 
                 'total_count': read_count
             })
-        # common_summary.append({
-        #     'item': 'Reads Mapped to TRA',
-        #     'count': int(read_count * (float(sum_dict[0]['Reads Mapped to TRA'].strip('%'))/100)),
-        #     'total_count': read_count,
-        # })
-        # common_summary.append({
-        #     'item': 'Reads Mapped to TRB',
-        #     'count': int(read_count * (float(sum_dict[0]['Reads Mapped to TRB'].strip('%'))/100)),
-        #     'total_count': read_count
-        # })
+
         common_summary.append({
             'item': 'Fraction Reads in Cells',
             'count': int(read_count * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/100)),
@@ -265,16 +217,7 @@ class Assemble(Step):
                     'total_count': np.nan
                 })
                 
-        # common_summary.append({
-        #     'item': 'Median used TRA UMIs per Cell',
-        #     'count': int(filter_contig[filter_contig['chain']=='TRA']['umis'].median()), 
-        #     'total_count': np.nan
-        # })
-        # common_summary.append({
-        #     'item': 'Median used TRB UMIs per Cell',
-        #     'count': int(filter_contig[filter_contig['chain']=='TRB']['umis'].median()), 
-        #     'total_count': np.nan
-        # })
+
         # get all results stat_file
         all_summary = get_vj_annot(filter_contig, self.chains, self.pair)   
 
@@ -300,12 +243,7 @@ class Assemble(Step):
         # match
         df_sgr = pd.DataFrame(self.match_cell_barcodes, columns=['barcode'])
         df_match = pd.merge(df_sgr, filter_contig, on='barcode', how='inner')
-        if self.seqtype == 'BCR':
-            df_h = df_match[df_match['chain']=='IGH']
-            df_temp = df_match[df_match['chain']!='IGH']
-            df_temp = df_temp.sort_values(by='umis', ascending=False)
-            df_temp = df_temp.drop_duplicates(['barcode'])
-            df_match = pd.concat([df_h, df_temp], ignore_index=True)
+
         
         # get match summary
         match_summary = get_vj_annot(df_match, self.chains, self.pair)
