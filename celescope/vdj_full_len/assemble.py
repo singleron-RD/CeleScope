@@ -75,6 +75,7 @@ class Assemble(Step):
         self.fqs_dir = args.fqs_dir
         self.match_dir = args.match_dir
         self.seqtype = args.seqtype
+        self.remove_3rd_chain = args.remove_3rd_chain
         
         # chain parameters
         if self.seqtype == 'TCR':
@@ -141,10 +142,13 @@ class Assemble(Step):
         barcode_df = pd.read_csv(self.barcode_dic, sep='\t', index_col=1)
         barcode_dict = barcode_df.to_dict()['sgr']
         
-        # get sum_metrics
+        # get barcode_stat
+        stat_dict = pd.read_csv(f'{self.outdir}/../01.barcode/stat.txt', sep=':', header=None)
+        read_count = int(stat_dict.iloc[0, 1].replace(',', ''))
         sum_dict = pd.read_csv(f'{self.outs}/metrics_summary.csv', sep=',', index_col=None)
         sum_dict = sum_dict.T.to_dict()
-        read_count = int(sum_dict[0]["Number of Read Pairs"].replace(',', ''))
+        total_reads = int(sum_dict[0]["Number of Read Pairs"].replace(',', ''))
+
         
         # gen clone table
         raw_clonotypes = pd.read_csv(f'{self.outs}/clonotypes.csv', sep=',', index_col=None)
@@ -187,19 +191,19 @@ class Assemble(Step):
         })
         common_summary.append({
             'item': 'Reads Mapped to Any V(D)J Gene',
-            'count': int(read_count * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/100)), 
+            'count': int(total_reads * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/200)), 
             'total_count': read_count
         })
         for c in self.chains:
             common_summary.append({
                 'item': f'Reads Mapped to {c}', 
-                'count': int(read_count * (float(sum_dict[0][f'Reads Mapped to {c}'].strip('%'))/100)), 
+                'count': int(total_reads * (float(sum_dict[0][f'Reads Mapped to {c}'].strip('%'))/200)), 
                 'total_count': read_count
             })
 
         common_summary.append({
             'item': 'Fraction Reads in Cells',
-            'count': int(read_count * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/100)),
+            'count': int(total_reads * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/200)),
             'total_count': read_count
         })
         for c in self.chains:
@@ -243,7 +247,16 @@ class Assemble(Step):
         # match
         df_sgr = pd.DataFrame(self.match_cell_barcodes, columns=['barcode'])
         df_match = pd.merge(df_sgr, filter_contig, on='barcode', how='inner')
+        if df_match.empty:
+            raise Exception('No match results found in scRNA-seq, please check your match_dir!')
 
+        if self.remove_3rd_chain:
+            if self.seqtype == 'BCR':
+                df_h = df_match[df_match['chain']=='IGH']
+                df_temp = df_match[df_match['chain']!='IGH']
+                df_temp = df_temp.sort_values(by='umis', ascending=False)
+                df_temp = df_temp.drop_duplicates(['barcode'])
+                df_match = pd.concat([df_h, df_temp], ignore_index=True)
         
         # get match summary
         match_summary = get_vj_annot(df_match, self.chains, self.pair)
@@ -322,6 +335,7 @@ def get_opts_assemble(parser, sub_program):
         default='4.0.0')
     parser.add_argument('--mem', help='memory (G)', default=10)
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    parser.add_argument('--remove_3rd_chain', help='remove IGK or IGL according to umis when a cell has 3 chains at the same time.', action='store_true')
     if sub_program:
         s_common(parser)
         parser.add_argument('--fqs_dir', help='fastq dir', required=True)
