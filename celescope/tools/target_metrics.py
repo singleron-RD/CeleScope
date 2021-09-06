@@ -27,7 +27,7 @@ class Target_metrics(Step):
         self.match_barcode, _num = utils.read_barcode_file(args.match_dir)
         self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
         self.count_dict = utils.genDict(dim=3, valType=int)
-
+        
         self.add_metric(
             name="Number of Target Genes",
             value=self.n_gene,
@@ -58,43 +58,38 @@ class Target_metrics(Step):
 
     @utils.add_log
     def parse_count_dict_add_metrics(self):
-        total_UMIs = 0
-        enriched_UMIs = 0
-        enriched_UMIs_in_cells = 0
-        enriched_UMIs_per_cell_list = []
+        total_reads = 0
+        enriched_reads = 0
+        enriched_reads_in_cells = 0
+        enriched_reads_per_cell_list = []
 
         for barcode in self.count_dict:
-            cell_enriched_UMI = 0
+            cell_enriched_read = 0
             for gene_name in self.count_dict[barcode]:
-                gene_UMI = len(self.count_dict[barcode][gene_name])
-                total_UMIs += gene_UMI
+                gene_read = sum(self.count_dict[barcode][gene_name].values())
+                total_reads += gene_read
                 if gene_name in self.gene_list:
-                    enriched_UMIs += gene_UMI
+                    enriched_reads += gene_read
                     if barcode in self.match_barcode:
-                        enriched_UMIs_in_cells += gene_UMI
-                        cell_enriched_UMI += gene_UMI
-
+                        enriched_reads_in_cells += gene_read
+                        cell_enriched_read += gene_read
             if barcode in self.match_barcode:
-                enriched_UMIs_per_cell_list.append(cell_enriched_UMI)
-
+                enriched_reads_per_cell_list.append(cell_enriched_read)
+        
+        
         self.add_metric(
-            name="Total UMIs",
-            value=total_UMIs,
-        )
-
-        self.add_metric(
-            name="Enriched UMIs",
-            value=enriched_UMIs,
-            total=total_UMIs,
+            name="Enriched Reads",
+            value=enriched_reads,
+            total=total_reads,
         )
         self.add_metric(
-            name="Enriched UMIs in Cells",
-            value=enriched_UMIs_in_cells,
-            total=total_UMIs,
+            name="Enriched Reads in Cells",
+            value=enriched_reads_in_cells,
+            total=total_reads,
         )
         self.add_metric(
-            name="Median Enriched UMIs per Cell",
-            value=np.median(enriched_UMIs_per_cell_list),
+            name="Median Enriched Reads per Cell",
+            value=np.median(enriched_reads_per_cell_list),
         )
 
     def run(self):
