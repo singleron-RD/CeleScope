@@ -1,7 +1,8 @@
 import subprocess
+import os
 
 from celescope.tools import utils
-from celescope.trust_vdj.__init__ import TRUST
+from celescope.trust_vdj.__init__ import TRUST, INDEX
 from celescope.tools.step import Step, s_common
 
 class Assemble(Step):
@@ -24,31 +25,30 @@ class Assemble(Step):
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
 
-        self.outdir = args.outdir
+        self.outdir = f'{args.outdir}/all_outs'
         self.fq1 = args.fq1
         self.fq2 = args.fq2
         self.sample = args.sample
         self.species = args.species
         self.speed_up = args.speed_up
-        self.umiRange = args.umiRange
 
+        if not os.path.exists(self.outdir):
+            os.makedirs(self.outdir)
 
     @utils.add_log
     def run(self):
         species = self.species
-        index_file = f'{TRUST}/index/{species}/{species}_ref.fa'
-        ref = f'{TRUST}/index/{species}/{species}_IMGT+C.fa'
+        index_file = f'{INDEX}/{species}/{species}_ref.fa'
+        ref = f'{INDEX}/{species}/{species}_IMGT+C.fa'
         string1 = ''
         if self.speed_up:
             string1 = '--repseq '
 
         cmd = (
-            f'{TRUST}/run-trust4 -t {self.thread} '
+            f'run-trust4 -t {self.thread} '
             f'-u {self.fq2} '
             f'--barcode {self.fq1} '
             f'--barcodeRange 0 23 + '
-            f'--UMI {self.fq1} '
-            f'--umiRange {self.umiRange} '
             f'-f {index_file} '
             f'--ref {ref} '
             f'{string1}'
@@ -58,6 +58,14 @@ class Assemble(Step):
         Assemble.run.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
+    @utils.add_log
+    def get_full_len_assembly(self):
+        cmd = (
+            f'perl {TRUST}/GetFullLengthAssembly.pl {self.outdir}/{self.sample}_annot.fa > '
+            f'{self.outdir}/{self.sample}_full_len.fa '
+        )
+        Assemble.get_full_len_assembly.info(cmd)
+        subprocess.check_call(cmd, shell=True)
 
 @utils.add_log
 def assemble(args):
@@ -73,8 +81,7 @@ def get_opts_assemble(parser, sub_program):
         parser.add_argument('--fq2', help='R2 reads matched with scRNA-seq.', required=True)
 
     parser.add_argument('--species', help='species', choices=["Mmus", "Hsap"], required=True)
-    parser.add_argument('--speed_up', help='Speed assemble for TCR/BCR seq data.', action='store_true')  
-    parser.add_argument('--umiRange', help='specified UMI range in fq1 file, start, end, strand: INT INT CHAR. Example: 24 -1 +.', default='24 -1 +')     
+    parser.add_argument('--speed_up', help='Speed assemble for TCR/BCR seq data.', action='store_true')    
 
 
 
