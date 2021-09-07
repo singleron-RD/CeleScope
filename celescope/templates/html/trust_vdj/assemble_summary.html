@@ -1,0 +1,34 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+	<h2>Cells		<i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+	<div class="box">
+	  <div class="description" style="display: none;">
+		<p></p>
+		<p><b>Estimated number of cells:</b> Number of cells which contain at least one chain (for TCR: TRA or TRB, for BCR: IGH, IGL or IGK).</p>
+		<p><b>Mean Read Pairs per Cell:</b> Number of input reads divided by the estimated number of cells.</p>
+		<p><b>Mean Used Read Pairs per Cell:</b> Mean number of reads used in assembly per cell-associated barcode.</p>
+		<p><b>Fraction Reads in Cells:</b> Number of reads with cell-associated barcodes divided by the number of reads with valid barcodes.</p>
+		<p><b>Reads Mapped to Any V(D)J Gene:</b> Fraction of reads that partially or wholly map to any germline V(D)J gene segment.</p>
+		<p><b>Reads Mapped to TRA:</b> Fraction of reads that map partially or wholly to a germline TRA gene segment. For BCR, this should be one of [IGH, IGL, IGK].</p>
+		<p><b>Median TRA UMIs per cell:</b> Median number of UMIs assigned to a TRA contig per cell. For BCR, this should be one of [IGH, IGL, IGK].</p>
+		<p><b>Reads Mapped to TRB:</b> Fraction of reads that map partially or wholly to a germline TRB gene segment. For BCR, this should be one of [IGH, IGL, IGK].</p>
+		<p><b>Median TRB UMIs per cell:</b> Median number of UMIs assigned to a TRB contig per cell. For BCR, this should be one of [IGH, IGL, IGK].</p>
+	</div>
+	  <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+		{% for item in assemble_summary %}
+		  <tr>
+			{% for i in item %} 
+			<td>{{ i|e }}</td>
+			{% endfor %}
+		  </tr>
+		{% endfor %}
+	  </table>
+  
+	  <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+		{{ chart|safe }}
+	  </div>
+  
+	  <hr />
+	  
+	  <div class="clear" ></div>
+	</div>
+  </div>

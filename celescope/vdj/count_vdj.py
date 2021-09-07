@@ -70,7 +70,7 @@ class Count_vdj(Step):
             rank_UMI = df_UMI_sum_sorted.iloc[CELL_CALLING_RANK, :]["UMI"]
             UMI_min = int(rank_UMI / 10)
         else:
-            UMI_min = int(UMI_min)
+            UMI_min = int(self.args.UMI_min)
         df_UMI_cell = df_UMI_sum[df_UMI_sum.UMI >= UMI_min]
         df_UMI_sum["mark"] = df_UMI_sum["UMI"].apply(
             lambda x: "CB" if (x >= UMI_min) else "UB")
