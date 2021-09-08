@@ -1,14 +1,14 @@
 import os
+import subprocess
 from collections import defaultdict
 
 import numpy as np
 import pandas as pd
 import pysam
-import subprocess
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.trust_vdj.__init__ import TRUST
+from celescope.trust_vdj.__init__ import TRUST, CHAIN, PAIRED_CHAIN
 
 
 @utils.add_log
@@ -145,15 +145,10 @@ class Summarize(Step):
         self.fa = args.fa
         self.annot_fa = args.annot_fa
 
-        if self.seqtype == 'TCR':
-            self.chains = ['TRA', 'TRB']
-            self.paired_groups = ['TRA_TRB']
-        elif self.seqtype == 'BCR':
-            self.chains = ['IGH', 'IGL', 'IGK']
-            self.paired_groups = ['IGH_IGL', 'IGH_IGK']
+        self.chains = CHAIN[self.seqtype]
+        self.paired_groups = PAIRED_CHAIN[self.seqtype]
 
         # common variables
-
             
     @utils.add_log
     def get_full_len_assembly(self):

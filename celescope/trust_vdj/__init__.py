@@ -1,5 +1,14 @@
-__STEPS__ = ['sample', 'barcode', 'cutadapt', 'matching', 'assemble']
+__STEPS__ = ['sample', 'barcode', 'cutadapt', 'assemble']
 __ASSAY__ = 'trust_vdj'
 
-TRUST = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
+TOOLS_DIR = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
 INDEX = '/SGRNJ03/randd/zhouxin/data_base/index'
+CHAIN = {
+	'TCR': ['TRA', 'TRB'], 
+	'BCR': ['IGH', 'IGL', 'IGK']
+	}
+PAIRED_CHAIN = {
+	'TCR': ['TRA_TRB'],
+	'BCR': ['IGH_IGL', 'IGH_IGK']
+}
+CONDA_PATH = '/SGRNJ/Public/Software/conda_env/zhouxinT'

@@ -69,7 +69,6 @@ class Matching(Step):
             out_fq1.close()
             out_fq2.close()
 
-
     @utils.add_log
     def run(self):
         self.get_match_fastq()
