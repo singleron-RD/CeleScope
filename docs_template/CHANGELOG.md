@@ -3,6 +3,8 @@
 
  ### Changed
 
+ - `snp.variant_calling` change `--do-not-fix-overhangs` from `false` to `true` to avoid omitting variants in the overhang region.
+
  ### Fixed
 
  ### Removed
