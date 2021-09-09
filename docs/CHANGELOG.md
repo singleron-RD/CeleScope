@@ -1,7 +1,17 @@
-## [unreleased] - 2021-08-24
+## [unreleased] - 2021-09-09
+ ### Added
+
+ ### Changed
+
+ ### Fixed
+
+ ### Removed
+
+## [1.5.0] - 2021-09-09
  ### Added
 
  - Add `--split_vdj` in `celescope.tag.split_tag` to split vdj library according to tag assignment.
+ - Add Docs for `snp`.
 
  ### Changed
 

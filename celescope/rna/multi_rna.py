@@ -13,7 +13,6 @@ class Multi_rna(Multi):
         --mod shell
     ```
     """
-    pass
 
 
 def main():
