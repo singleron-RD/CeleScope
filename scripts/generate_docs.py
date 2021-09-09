@@ -34,6 +34,7 @@ def get_class_docs(step_module):
             continue
         doc = inspect.getdoc(class_obj)
         
+        # only write class docs when the doc contains at least one title
         write_bool = False
         if doc:
             for title in titles:

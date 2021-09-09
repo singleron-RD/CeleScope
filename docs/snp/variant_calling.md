@@ -17,7 +17,7 @@
 
 
 ## Arguments
-`--genomeDir` Genome directory after running `mkref`.
+`--genomeDir` Required. Genome directory after running `mkref`.
 
 `--min_support_read` Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.
 

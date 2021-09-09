@@ -5,13 +5,15 @@ Each pipeline consists of several steps and they all have two identical pre-proc
 
 Currently, CeleScope includes the follwing pipelines:
 
-- `celescope rna` for Single-cell RNA-seq data generated with GEXSCOPE kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering, marker gene expression analysis and cell type assignment(optional).
+- `celescope rna` for Single-cell RNA-seq data generated with GEXSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering, marker gene expression analysis and cell type assignment(optional).
 
-- `celescope vdj` for Single-cell Immune Repertoire data generated with GEXSCOPE IR kits. It performs preprocessing, UMI consensus, vdj sequence alignment, UMI filtering and clonetypes counting.
+- `celescope vdj` for Single-cell Immune Repertoire data generated with GEXSCOPE<sup>TM</sup> IR kits. It performs preprocessing, UMI consensus, vdj sequence alignment, UMI filtering and clonetypes counting.
 
-- `celescope tag` for Single-cell Multiplexing data generated with CLindex Sample Multiplexing kits. It performs preprocessing, tag counting, tag assignment and multiplets identification.
+- `celescope tag` for Single-cell Multiplexing data generated with CLindex<sup>TM</sup> Sample Multiplexing kits. It performs preprocessing, tag counting, tag assignment and multiplets identification.
 
-- `celescope dynaseq` for Single cell dynamic transcriptome data generated with Dynascope kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering, nucleotide substitution statistic and nascent RNA identification.
+- `celescope dynaseq` for Single cell dynamic transcriptome data generated with DynaSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering, nucleotide substitution statistic and nascent RNA identification.
+
+- `celescope snp` for Single cell variant data generated with FocuSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, variant calling, variant filtering and variant annotation.
 
 
 ## [Quick start](quick_start.md)
