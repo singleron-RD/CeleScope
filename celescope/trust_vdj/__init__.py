@@ -1,4 +1,4 @@
-__STEPS__ = ['sample', 'barcode', 'cutadapt', 'assemble']
+__STEPS__ = ['sample', 'barcode', 'cutadapt', 'assemble', 'summarize']
 __ASSAY__ = 'trust_vdj'
 
 TOOLS_DIR = '/SGRNJ03/randd/zhouxin/software/TRUST4/scripts'

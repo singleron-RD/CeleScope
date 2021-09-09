@@ -1,48 +1,65 @@
-import os
-from re import T
-import subprocess
 import glob
+import os
+import subprocess
 from collections import defaultdict
-
 from concurrent.futures import ProcessPoolExecutor
-import pysam
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+import pysam
 from Bio.Seq import Seq
 from celescope.tools import utils
-from celescope.tools.step import Step, s_common
-from celescope.trust_vdj.__init__ import INDEX, TOOLS_DIR, CHAIN, CONDA_PATH
 from celescope.tools.cellranger3 import get_plot_elements
+from celescope.tools.step import Step, s_common
+from celescope.trust_vdj.__init__ import CHAIN, CONDA_PATH, INDEX, TOOLS_DIR
 
 
 @utils.add_log
-def trust_assemble(thread, index, fq, bc_fa, umi_fa, outdir, sample, trimLevel=1):
+def mapping(thread, species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange):
+    cmd = (
+        f'{CONDA_PATH}/bin/fastq-extractor -t {thread} '
+        f'-f {INDEX}/{species}/{index_prefix}.fa '
+        f'-o {outdir}/{sample}_{index_prefix} '
+        f'--barcodeStart {barcodeRange[0]} '
+        f'--barcodeEnd {barcodeRange[1]} '
+        f'--umiStart {umiRange[0]} '
+        f'--umiEnd {umiRange[1]} '
+        f'-u {fq2} '
+        f'--barcode {fq1} '
+        f'--UMI {fq1} '
+    )
+    Assemble.process.logger.info(cmd)
+    subprocess.check_call(cmd, shell=True)
+
+
+@utils.add_log
+def trust_assemble(thread, species, outdir, sample, trimLevel=1):
 
     cmd = (
-        f'{CONDA_PATH}/bin/trust4  -t {thread} '
-        f'-f {index} '
+        f'{CONDA_PATH}/bin/trust4 -t {thread} '
+        f'-f {INDEX}/{species}/bcrtcr.fa '
         f'-o {outdir}/{sample} '
-        f'-u {fq} '
-        f'--barcode {bc_fa} '
-        f'--UMI {umi_fa} '
+        f'-u {outdir}/{sample}.fq '
+        f'--barcode {outdir}/{sample}_bc.fa '
+        f'--UMI {outdir}/{sample}_umi.fa '
         f'--trimLevel {trimLevel}'
     )
     trust_assemble.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
 @utils.add_log
-def get_full_len_assembly(outdir, sample, annotated_fa):
+def get_full_len_assembly(filedir, sample):
     cmd = (
         f'perl {TOOLS_DIR}/GetFullLengthAssembly.pl '
-        f'{outdir}/{sample}_annot.fa > '
-        f'{outdir}/{sample}_full_len.fa '
+        f'{filedir}/{sample}_annot.fa > '
+        f'{filedir}/{sample}_full_len.fa '
     )
     get_full_len_assembly.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
 
 @utils.add_log
-def annotate(index, input_file, sample, thread, outdir, species):
+def annotate(sample, thread, outdir, species):
 
     cmd = (
         f'{CONDA_PATH}/bin/annotator -f {INDEX}/{species}/IMGT+C.fa '
@@ -89,8 +106,8 @@ class Assemble(Step):
         self.expect_cells = int(args.expect_cells)
 
         # summarys
-        self.cell_summary = []
         self.match_summary = []
+        self.mapping_summary = []
 
         # common variables
         self.chains = CHAIN[self.seqtype]
@@ -119,33 +136,38 @@ class Assemble(Step):
         out_fq1 = open(self.match_fq1, 'w')
         out_fq2 = open(self.match_fq2, 'w')
 
-        matched_cbs = set()
         self.matched_reads = 0
         
+        read_dict = defaultdict(list)
         with pysam.FastxFile(self.fq2) as fq:
             for read in fq:
                 attr = read.name.split('_')
                 cb = attr[0]
-                umi = attr[1]
-                qual = 'F' * len(cb + umi)
-                reversed_cb = str(Seq(cb).reverse_complement())
-                if reversed_cb in self.match_barcodes:
+                read_dict[cb].append(read)
+            rna_cbs = [str(Seq(cb).reverse_complement()) for cb in self.match_barcodes]
+            matched_cbs = set(list(read_dict.keys())).intersection(set(rna_cbs))
+            if len(matched_cbs)==0:
+                raise Exception('No matched barcodes found! Please check your match dir!')
+            for cb in matched_cbs:
+                for read in read_dict[cb]:
+                    umi = attr[1]
+                    qual = 'F' * len(cb + umi)
                     seq1 = f'@{read.name}\n{cb}{umi}\n+\n{qual}\n'
                     out_fq1.write(seq1)
                     out_fq2.write(str(read)+'\n')
-                    matched_cbs.add(reversed_cb)
+                    matched_cbs.add(cb)
                     self.matched_reads += 1
 
             out_fq1.close()
             out_fq2.close()
         
         self.match_summary.append({
-            'item': 'Matched Barcodes',
+            'item': 'Matched Barcodes with scRNA-seq',
             'count': len(matched_cbs),
             'total_count': np.nan
         })
         self.match_summary.append({
-            'item': 'Matched Reads',
+            'item': 'Matched Reads with scRNA-seq',
             'count': self.matched_reads, 
             'total_count': np.nan
         })
@@ -155,53 +177,42 @@ class Assemble(Step):
         # process all vdj
         cb_range = self.barcodeRange.split(' ')
         umi_range = self.umiRange.split(' ')
-        cmd = (
-            f'{CONDA_PATH}/bin/fastq-extractor -t {self.thread} '
-            f'-f {INDEX}/{self.species}/bcrtcr.fa '
-            f'-o {self.temp_dir}/{self.sample} '
-            f'--barcodeStart {int(cb_range[0])} '
-            f'--barcodeEnd {int(cb_range[1])} '
-            f'--umiStart {int(umi_range[0])} '
-            f'--umiEnd {int(umi_range[1])} '
-            f'-u {self.match_fq2} '
-            f'--barcode {self.match_fq1} '
-            f'--UMI {self.match_fq1} ' 
-        )
-        Assemble.process.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
 
         # process single chain
-        for c in self.chains:
-            cmd = (
-                f'{CONDA_PATH}/bin/fastq-extractor -t {self.thread} '
-                f'-f {INDEX}/{self.species}/{c}.fa '
-                f'-o {self.temp_dir}/{c}_toassemble '
-                f'--barcodeStart {int(cb_range[0])} '
-                f'--barcodeEnd {int(cb_range[1])} '
-                f'--umiStart {int(umi_range[0])} '
-                f'--umiEnd {int(umi_range[1])} '
-                f'-u {self.match_fq2} '
-                f'--barcode {self.match_fq1} '
-                f'--UMI {self.match_fq1} '
-            )
-            Assemble.process.logger.info(cmd)
-            subprocess.check_call(cmd, shell=True)
+        map_res = []
+        
+        map_index_prefix = ['bcrtcr'] + self.chains
+        samples = [self.sample] * len(map_index_prefix)
+        map_threads = [self.thread] * len(map_index_prefix)
+        map_species = [self.species] * len(map_index_prefix)
+        map_outdirs = [self.temp_dir] * len(map_index_prefix)
+        map_fq1 = [self.match_fq1] * len(map_index_prefix)
+        map_fq2 = [self.match_fq2] * len(map_index_prefix)
+        map_cb_range = [cb_range] * len(map_index_prefix)
+        map_umi_range = [umi_range] * len(map_index_prefix)
+        with ProcessPoolExecutor(len(map_index_prefix)) as pool:
+            for res in pool.map(mapping, map_threads, map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range):
+                map_res.append(res) 
 
-            f = pysam.FastxFile(f'{self.temp_dir}/{c}_toassemble.fq')
-            # self.cell_summary.append({
-            #     'item': f'Reads Mapped to {c}', 
-            #     'count': len(list(f)), 
-            #     'total_count': self.matched_reads
-            # })
+        with pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq') as fl:
+            self.mapping_summary.append({
+                'item': f'Reads Mapped to Any V(D)J genes', 
+                'count': len(list(fl)),
+                'total_count': self.matched_reads
+            })
+        del fl
+
+        for c in self.chains:
+            with pysam.FastxFile(f'{self.temp_dir}/{self.sample}_{c}.fq') as f:
+                self.mapping_summary.append({
+                    'item': f'Reads Mapped to {c}', 
+                    'count': len(list(f)), 
+                    'total_count': self.matched_reads
+                })
             del f
 
         # cutoff by umi num
-        fl = pysam.FastxFile(f'{self.temp_dir}/{self.sample}.fq')
-        # self.cell_summary.append({
-        #     'item': f'Reads Mapped to Any V(D)J genes', 
-        #     'count': len(list(fl)),
-        #     'total_count': self.matched_reads
-        # })
+        fl = pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq')
         read_count_dict = defaultdict(int)
         umi_count_dict = defaultdict(set)
         read_dict = defaultdict(list)
@@ -222,12 +233,14 @@ class Assemble(Step):
         RANK = int(self.expect_cells / 100)
         rank_UMI = df.iloc[RANK, :]["UMI"]
         UMI_min = int(rank_UMI / 10)
-        df_UMI_cell = df[df.UMI >= UMI_min]
         df["mark"] = df["UMI"].apply(
             lambda x: "CB" if (x >= UMI_min) else "UB")
+
+        del barcode_list
+        del read_count_list
+        del umi_count_list
         
         df.to_csv(f'{self.assemble_out}/count.txt', sep='\t', index=False)
-        self.add_data_item(chart=get_plot_elements.plot_barcode_rank(f'{self.assemble_out}/count.txt'))
 
         df_to_split = df[df['mark']=='CB']
         df_to_split = df_to_split.sort_values(by='UMI', ascending=False)
@@ -263,50 +276,64 @@ class Assemble(Step):
             cb_fa.close()
             umi_fa.close()
 
-        references = [f'{INDEX}/{self.species}/bcrtcr.fa'] * len(idx)
-        imgt_refs = [f'{INDEX}/{self.species}/IMGT+C.fa'] * len(idx)
-        fqs = [f'{self.temp_dir}/temp_{i}.fq' for i in range(len(idx)-1)]
-        bc_fas = [f'{self.temp_dir}/temp_{i}_bc.fa' for i in range(len(idx)-1)]
-        umi_fas = [f'{self.temp_dir}/temp_{i}_umi.fa' for i in range(len(idx)-1)]
         threads = [self.thread] * len(idx)
         temp_dirs = [self.temp_dir] * len(idx)
-        species = [self.species] * len(idx)
-        samples = [f'temp_{i}' for i in range(len(idx)-1)]
-        ass_outs = [f'{self.temp_dir}/temp_{i}_final.out' for i in range(len(idx)-1)]
-        annot_outs = [f'{self.temp_dir}/temp_{i}_annot.fa' for i in range(len(idx)-1)]
+        temp_species = [self.species] * len(idx)
+        temp_samples = [f'temp_{i}' for i in range(len(idx)-1)]
         ass = []
-        with ProcessPoolExecutor(self.thread) as pool:
-            for res in pool.map(trust_assemble, threads, references, fqs, bc_fas, umi_fas, temp_dirs, samples):
+        with ProcessPoolExecutor(len(idx)-1) as pool:
+            for res in pool.map(trust_assemble, threads, temp_species, temp_dirs, temp_samples):
                 ass.append(res)
         annot = []
-        with ProcessPoolExecutor(self.thread) as pool:
-            for res in pool.map(annotate, imgt_refs, ass_outs, samples, threads, temp_dirs, species):
+        with ProcessPoolExecutor(len(idx)-1) as pool:
+            for res in pool.map(annotate, temp_samples, threads, temp_dirs, temp_species):
                 annot.append(res) 
-        gfla = []
-        with ProcessPoolExecutor(self.thread) as pool:
-            for res in pool.map(get_full_len_assembly, temp_dirs, samples, annot_outs):
-                ass.append(res)
-        # for i in range(len(idx)-1):
-        #     fq = f'{self.temp_dir}/temp_{i}.fq'
-        #     bc_fa = f'{self.temp_dir}/temp_{i}_bc.fa'
-        #     umi_fa = f'{self.temp_dir}/temp_{i}_umi.fa'
-        #     trust_assemble(self.thread, reference, fq, bc_fa, umi_fa, 
-        #                     self.temp_dir, f'temp_{i}')
-        #     annotate(imgt_ref, f'{self.temp_dir}/temp_{i}_final.out', 
-        #                 f'temp_{i}', self.thread, self.temp_dir, self.species)
-        #     get_full_len_assembly(self.temp_dir, f'temp_{i}', f'{self.temp_dir}/temp_{i}_annot.fa')
+        gfl = []
+        with ProcessPoolExecutor(len(idx)-1) as pool:
+            for res in pool.map(get_full_len_assembly, temp_dirs, temp_samples):
+                gfl.append(res)
 
+        # out put assemble results
         temp_outs_fa = glob.glob(f'{self.temp_dir}/temp_*_annot.fa')
         string = ' '.join(temp_outs_fa)
         cmd = f'cat {string} > {self.assemble_out}/{self.sample}_annot.fa'
         Assemble.process.logger.info(cmd)
         os.system(cmd)
 
+        temp_outs_cdr3 = glob.glob(f'{self.temp_dir}/temp_*_cdr3.out')
+        string = ' '.join(temp_outs_cdr3)
+        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_cdr3.out'
+        Assemble.process.logger.info(cmd)
+        os.system(cmd)
+
+        temp_out_assembled_reads = glob.glob(f'{self.temp_dir}/temp_*_assembled_reads.fa')
+        string = ' '.join(temp_out_assembled_reads)
+        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_assembled_reads.fa'
+        Assemble.process.logger.info(cmd)
+        os.system(cmd)
+
+        temp_out_reads_assign = glob.glob(f'{self.temp_dir}/temp_*_assign.out')
+        string = ' '.join(temp_out_reads_assign)
+        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_assign.out'
+        Assemble.process.logger.info(cmd)
+        os.system(cmd)       
+
+        temp_out_full_len = glob.glob(f'{self.temp_dir}/temp_*_full_len.fa')
+        string = ' '.join(temp_out_full_len)
+        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_full_len.fa'
+        Assemble.process.logger.info(cmd)
+        os.system(cmd) 
+
+        stat_file = self.outdir + '/stat.txt'
+        all_summary = self.match_summary + self.mapping_summary
+        sum_df = pd.DataFrame(all_summary, columns=['item', 'count', 'total_count'])
+        utils.gen_stat(sum_df, stat_file)   
+
     def run(self):
-        if not os.path.exists(self.match_fq2):
-            self.get_match_fastq()
+        self.get_match_fastq()
         self.process()
         os.system(f'rm -rf {self.temp_dir}')
+        self.clean_up()
 
 @utils.add_log
 def assemble(args):
@@ -319,19 +346,11 @@ def get_opts_assemble(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fq2', help='R2 reads matched with scRNA-seq.', required=True)
-        parser.add_argument('--match_dir', help='match scRNA-seq directory.', required=True)
+        parser.add_argument('--match_dir', help='Match scRNA-seq directory.', required=True)
 
-    parser.add_argument('--species', help='species.', choices=["hg19", "hg38", "GRCm38"], required=True)
+    parser.add_argument('--species', help='Species name and version.', choices=["hg19", "hg38", "GRCm38"], required=True)
     parser.add_argument('--seqtype', help='TCR/BCR seq data.', choices=['TCR', 'BCR'], required=True)
-    parser.add_argument('--barcodeRange', help='barcode range in fq1, INT INT CHAR.', default='0 23 +') 
-    parser.add_argument('--umiRange', help='umi range in fq1, INT INT CHAR.', default='24 -1 +')
+    parser.add_argument('--barcodeRange', help='Barcode range in fq1, INT INT CHAR.', default='0 23 +') 
+    parser.add_argument('--umiRange', help='UMI range in fq1, INT INT CHAR.', default='24 -1 +')
     parser.add_argument('--trimLevel', help='INT: 0: no trim; 1: trim low quality; 2: trim unmatched.', default=1)
     parser.add_argument('--expect_cells', help='Expected Cells number, INT.', default=3000)
-
-
-
-
-
-
-
-

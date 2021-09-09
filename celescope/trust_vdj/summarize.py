@@ -1,23 +1,22 @@
-import os
-import subprocess
 from collections import defaultdict
 
-import numpy as np
 import pandas as pd
+import numpy as np
 import pysam
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.trust_vdj.__init__ import TRUST, CHAIN, PAIRED_CHAIN
+from celescope.trust_vdj.__init__ import CHAIN, PAIRED_CHAIN
+from celescope.tools.cellranger3 import get_plot_elements
 
 
 @utils.add_log
-def fa_to_csv(annot_fa, assign_file, outdir, chains, average_coverage=5):
+def fa_to_csv(full_len_fa, assign_file, outdir, chains):
     # reads assignment 
     assignment = pd.read_csv(assign_file, sep='\t', header=None)
     contigs = open(f'{outdir}/all_contigs.csv', 'w')
     contigs.write('barcode,is_cell,contig_id,high_confidence,length,chain,v_gene,d_gene,j_gene,c_gene,full_length,productive,cdr3,cdr3_nt,reads,umis,raw_clonotype_id,raw_consensus_id,coverage\n')
-    with pysam.FastxFile(annot_fa) as fa:
+    with pysam.FastxFile(full_len_fa) as fa:
         for read in fa:
             name = read.name
             comment = read.comment
@@ -26,8 +25,6 @@ def fa_to_csv(annot_fa, assign_file, outdir, chains, average_coverage=5):
             is_cell = 'True'
             high_confidence = 'True'
             length = attrs[0]
-            if float(attrs[1]) < int(average_coverage):
-                continue
             for c in chains:
                 if c in comment:
                     chain = c
@@ -53,7 +50,10 @@ def fa_to_csv(annot_fa, assign_file, outdir, chains, average_coverage=5):
                 c_gene = attrs[5].split('(')[0]
             else:
                 c_gene = 'None'
-
+            if 'null' in attrs[6]:
+                full_length = 'False'
+            if 'null' in attrs[7]:
+                full_length = 'False'
             cdr3 = attrs[8].split('=')[1]
             cdr3_aa = 'None'
             productive = 'False'
@@ -68,20 +68,18 @@ def fa_to_csv(annot_fa, assign_file, outdir, chains, average_coverage=5):
             raw_consensus_id = 'None'
             raw_clonotype_id = 'None'
                 
-            string = ','.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis, raw_clonotype_id, raw_consensus_id, attrs[1]])
+            string = ','.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis, raw_clonotype_id, raw_consensus_id])
             contigs.write(f'{string}\n')
 
     contigs.close()
-    df_all = pd.read_csv(f'{outdir}/all_contig.csv', sep=',')
-    df_all = df_all.sort_values(by='coverage', ascending=False)
-    df_all = df_all.drop_duplicates(['barcode', 'chain'])
+    df_all = pd.read_csv(f'{outdir}/all_contigs.csv', sep=',')
 
     return df_all
 
 
 def get_vj_annot(df, chains, pairs):
-    fl_pro_pair_df = pd.DataFrame(df[(df['full_length']==True)&(df['productive']==True)].drop_duplicates(['barcode', 'chain']).barcode.value_counts())
-    fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']==2]
+    fl_pro_pair_df = pd.DataFrame(df.barcode.value_counts())
+    fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']>=2]
     l = []
     cell_nums = len(set(df['barcode'].tolist()))
     l.append({
@@ -108,7 +106,7 @@ def get_vj_annot(df, chains, pairs):
         })
         l.append({
             'item': f'Cells With CDR3-annotated {c} Contig',
-            'count': len(set(df[(df['chain']==c)&(df['cdr3']!='None')].barcode.tolist())),
+            'count': len(set(df[(df['chain']==c)&(df['productive']==True)].barcode.tolist())),
             'total_count': cell_nums
         })
         l.append({
@@ -123,6 +121,7 @@ def get_vj_annot(df, chains, pairs):
         })
 
     return l
+
 
 class Summarize(Step):
     """
@@ -141,86 +140,129 @@ class Summarize(Step):
         self.outdir = args.outdir
         self.sample = args.sample
         self.seqtype = args.seqtype
-        self.all_rep = args.all_rep
-        self.fa = args.fa
-        self.annot_fa = args.annot_fa
+        self.full_len_assembly = args.full_len_assembly
+        self.reads_assignment = args.reads_assignment
+        self.keep_partial = args.keep_partial
+        self.fq2 = args.fq2
+        self.assembled_fa = args.assembled_fa
 
         self.chains = CHAIN[self.seqtype]
         self.paired_groups = PAIRED_CHAIN[self.seqtype]
+        
 
         # common variables
-            
-    @utils.add_log
-    def get_full_len_assembly(self):
-        cmd = (
-            f'perl {TRUST}/GetFullLengthAssembly.pl {self.annot_fa} > {self.outdir}/all_contigs.fasta'
-        )
-        Summarize.get_full_len_assembly.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
 
     
     @utils.add_log
-    def filter_table(self):
-        df = pd.read_csv(f'{self.outdir}/all_contigs.csv', sep=',')
-        df_sort = df.sort_values(by='reads', ascending=False)
-        df_filter = df_sort.drop_duplicates(['barcode', 'chain'])
-        df_filter.to_csv(f'{self.outdir}/filtered_contigs.csv')
+    def process(self):
+        df = fa_to_csv(self.full_len_assembly, self.reads_assignment, self.outdir, self.chains)
+        
+        # gen clonotypes table
+        if self.keep_partial:
+            df_for_clono = df[df['productive']==True]
+        else:
+            df_for_clono = df[(df['productive']==True) & (df['full_length']==True)]
 
+        summarize_summary = get_vj_annot(df_for_clono, self.chains, self.paired_groups)
 
-    @utils.add_log
-    def gen_stat_file(self):
-        summarize_summary = []
-        data = pd.read_csv(self.all_rep, sep=',')
-        pro_data = data[(data['full_length']==True) & (data['productive']==True)]
-        barcodes = set(data['barcode'].tolist())
-        total_count = len(barcodes)
-        res = pd.DataFrame()
+        cell_barcodes = set(df_for_clono['barcode'].tolist())
+        total_cells =len(cell_barcodes)
 
-        for c in self.chain:
-            tmp = pro_data[pro_data['chain']==c]
+        summarize_summary.append({
+            'item': 'Estimated Number of Cells',
+            'count': total_cells,
+            'total_count': np.nan
+        })
 
-            tmp = tmp.set_index('barcode')
-            tmp = tmp.rename(columns={'chain': f'{c}_chain'})
+        df_for_clono['chain_cdr3aa'] = df_for_clono[['chain', 'cdr3']].apply(':'.join, axis=1)   
 
-            res = pd.concat([res, tmp], axis=1, join='outer', sort=False).fillna('None')
-            
-        for pg in self.paired_groups:
-            attrs = pg.split('_')
-            chain1 = attrs[0]
-            chain2 = attrs[1]
-            tmp = res[(res[f'{chain1}_chain']!='None') & (res[f'{chain2}_chain']!='None')]
-            item = f'Number of cells with V-J spanning productive paired {chain1} and {chain2}'
-            count = int(tmp.shape[0])
+        cbs = set(df_for_clono['barcode'].tolist())
+        clonotypes = open(f'{self.outdir}/clonotypes.csv', 'w')
+        clonotypes.write('barcode\tcdr3s_aa\n')
+        for cb in cbs:
+            temp = df_for_clono[df_for_clono['barcode']==cb]
+            temp = temp.sort_values(by='chain', ascending=True)
+            chain_list = temp['chain_cdr3aa'].tolist()
+            chain_str = ';'.join(chain_list)
+            clonotypes.write(f'{cb}\t{chain_str}\n')
+        clonotypes.close() 
+
+        df_clonotypes = pd.read_csv(f'{self.outdir}/clonotypes.csv', sep='\t', index_col=None)
+        df_clonotypes = df_clonotypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
+        df_clonotypes = df_clonotypes.rename(columns={'barcode': 'frequency'})
+        sum_f = df_clonotypes['frequency'].sum()
+        df_clonotypes['proportion'] = df_clonotypes['frequency'].apply(lambda x: x/sum_f)
+        df_clonotypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonotypes.shape[0]+1)]
+        df_clonotypes = df_clonotypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
+        df_clonotypes = df_clonotypes.sort_values(by='frequency', ascending=False)
+        df_clonotypes.to_csv(f'{self.outdir}/clonotypes.csv', sep=',', index=False) 
+
+        df_clonotypes['ClonotypeID'] = df_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
+        df_clonotypes['Frequency'] = df_clonotypes['frequency']
+        df_clonotypes['Proportion'] = df_clonotypes['proportion'].apply(lambda x: f'{round(x*100, 2)}%')
+        df_clonotypes['CDR3_aa'] = df_clonotypes['cdr3s_aa'].apply(lambda x: x.replace(';', '<br>'))
+
+        title = 'Clonetypes'
+        table_dict = self.get_table(title, 'clonetypes_table', df_clonotypes[['ClonotypeID', 'CDR3_aa', 'Frequency', 'Proportion']])
+        self.add_data_item(table_dict=table_dict)
+
+        # reads summary
+        read_count = 0
+        umi_dict = defaultdict(set)
+        umi_count = defaultdict()
+        with pysam.FastxFile(self.fq2) as fq:
+            for read in fq:
+                read_count+=1
+                cb = read.name.split('_')[0]
+                umi = read.name.split('_')[1]
+                umi_dict[cb].add(umi)
+        for cb in umi_dict:
+            umi_count[cb] = len(umi_dict[cb])
+        df_umi = pd.DataFrame.from_dict(umi_count, orient='index', columns=['UMI'])
+        df_umi['barcode'] = df_umi.index
+        df_umi = df_umi.reset_index(drop=True)
+        df_umi = df_umi.reindex(columns=['barcode', 'UMI'])
+        df_umi = df_umi.sort_values(by='UMI', ascending=False)
+        df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cell_barcodes else 'UB')
+        df_umi.to_csv(f'{self.outdir}/count.txt', sep='\t', index=False)
+
+        self.add_data_item(chart=get_plot_elements.plot_barcode_rank(f'{self.outdir}/count.txt'))
+        
+
+        summarize_summary.append({
+            'item': 'Mean Read Pairs per Cell',
+            'count': int(read_count/total_cells),
+            'total_count': np.nan
+        })
+        with pysam.FastaFile(self.assembled_fa) as fa:
             summarize_summary.append({
-                'item': item,
-                'count': count,
-                'total_count': total_count
+                'item': 'Mean Used Read Pairs per Cell',
+                'count': int(fa.nreferences/total_cells), 
+                'total_count': np.nan
+            })
+            summarize_summary.append({
+                'item': 'Fraction of Reads in Cells',
+                'count': fa.nreferences,
+                'total_count': read_count
             })
         
-        for c in self.chain:
-            dic = {}
-            tmp = data[data['chain'] == c]
-            dic[f'Cells With {c} Contig'] = tmp.shape[0]
-            dic[f'Cells With V-J spanning {c} Contig'] = tmp[tmp['full_length']==True].shape[0]
-            dic[f'Cells With productive {c} Contig'] = tmp[(tmp['productive']==True) & (tmp['full_length']==True)].shape[0]
-                        
-            for item in list(dic.keys()):
-                summarize_summary.append({
-                    'item': item,
-                    'count': int(dic[item]), 
-                    'total_count': total_count
-                })
-                                    
+        for c in self.chains:
+            temp_df = df_for_clono[df_for_clono['chain']==c]
+            summarize_summary.append({
+                'item': f'Median {c} UMIs per Cell',
+                'count': int(temp_df['umis'].median()),
+                'total_count': np.nan
+            })
+        
+        # gen stat file          
         stat_file = self.outdir + '/stat.txt'
         sum_df = pd.DataFrame(summarize_summary, columns=['item', 'count', 'total_count'])
-        utils.gen_stat(sum_df, stat_file)          
+        utils.gen_stat(sum_df, stat_file)     
 
-            
+        
     @utils.add_log
     def run(self):
-
-        self.gen_stat_file()
-
+        self.process()
         self.clean_up()
 
 
@@ -233,11 +275,13 @@ def summarize(args):
 
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
-
+    parser.add_argument('--keep_partial', help='Keep partial contigs for clonotype', action='store_true')
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--all_rep', help='filtered assemble report without imputation', required=True)
-        parser.add_argument('--annot_fa', help='assembled fasta contig file.', required=True)
+        parser.add_argument('--full_len_assembly', help='Full length assembly fasta file.', required=True)
+        parser.add_argument('--reads_assignment', help='File records reads assigned to contigs.', required=True)
+        parser.add_argument('--fq2', help='Matched R2 reads with scRNA-seq.', required=True)
+        parser.add_argument('--assembled_fa', help='Read used for assembly', required=True)
 
 
 
