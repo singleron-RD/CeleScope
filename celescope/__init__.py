@@ -21,7 +21,7 @@ ASSAY_DICT = {
 
 ROOT_PATH = os.path.dirname(__file__)
 
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq']
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp']
 
 HELP_DICT = {
     'match_dir': 'Match celescope scRNA-Seq directory.',

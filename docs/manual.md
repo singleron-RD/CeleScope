@@ -37,6 +37,15 @@ Currently, CeleScope includes the follwing pipelines:
 - [mapping_vdj](vdj/mapping_vdj.md)
 - [count_vdj](vdj/count_vdj.md)
 - [multi_vdj](vdj/multi_vdj.md)
+## Single-cell variant
+- [mkref](snp/mkref.md)
+- [consensus](tools/consensus.md)
+- [star](rna/star.md)
+- [featureCounts](tools/featureCounts.md)
+- [target_metrics](tools/target_metrics.md)
+- [variant_calling](snp/variant_calling.md)
+- [analysis_snp](snp/analysis_snp.md)
+- [multi_snp](snp/multi_snp.md)
 ## Single-cell tag
 - [mapping_tag](tag/mapping_tag.md)
 - [count_tag](tag/count_tag.md)
