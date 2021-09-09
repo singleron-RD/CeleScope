@@ -11,8 +11,11 @@ Run `multi_{assay} -h` for help.
 
 ## Usage Example
 
-- Single-cell rna
+Take Single-cell rna as an example:
 
+1. Generate scripts for each sample
+
+Under your working directory, write a shell script `run.sh` as
 	```
 	conda activate celescope
 	multi_rna\
@@ -21,7 +24,7 @@ Run `multi_{assay} -h` for help.
  	--thread 8\
  	--mod shell
  	```
-`--mapfile` Required. Mapfile path.
+`--mapfile` Required. See below on how to write a mapfile.
 
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
@@ -29,14 +32,15 @@ Run `multi_{assay} -h` for help.
 
 `--mod` Create `sjm`(simple job manager https://github.com/StanfordBioinformatics/SJM) or `shell` scripts. 
 
-Scripts above will generate a `shell` directory containing `{sample}.sh` files.
+After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will be generated.
 
-You can start your analysis by running:
+2. You can start your analysis by running:
 ```
 sh ./shell/{sample}.sh
 ```
+Note that the `./shell/{sample}.sh` must be ran under the working directory(i.e. you shouldn't run them under the `shell` directory)
 
-- Single cell vdj
+3. See [multi_rna.md](./rna/multi_rna.md) for all available arguments.
 
 ```
 conda activate celescope

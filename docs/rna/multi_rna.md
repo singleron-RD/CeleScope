@@ -1,3 +1,11 @@
+## Usage
+```
+    multi_rna\
+    --mapfile ./rna.mapfile\
+    --genomeDir /SGRNJ/Public/Database/genome/homo_mus\
+    --thread 8\
+    --mod shell
+```
 
 
 ## Arguments

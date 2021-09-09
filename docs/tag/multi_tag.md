@@ -1,3 +1,11 @@
+## Usage
+```
+multi_tag \
+    --mapfile ./tag.mapfile\
+    --barcode_fasta ./smk_barcode.fa\
+    --fq_pattern L25C45\
+    --mod shell
+```
 
 
 ## Arguments
@@ -107,4 +115,8 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.
 `--split_fastq` If used, will split scRNA-Seq fastq file according to tag assignment.
 
 `--split_matrix` If used, will split scRNA-Seq matrix file according to tag assignment.
+
+`--split_vdj` If used, will split scRNA-Seq vdj count file according to tag assignment.
+
+`--vdj_dir` Match celescope vdj directory. Required when --split_vdj is specified.
 

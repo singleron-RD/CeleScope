@@ -1,3 +1,11 @@
+## Usage
+```
+multi_vdj \
+    --mapfile ./vdj.mapfile \
+    --type TCR \
+    --thread 8 \
+    --mod shell
+``` 
 
 
 ## Arguments

@@ -3,6 +3,16 @@ from celescope.tools.multi import Multi
 
 
 class Multi_tag(Multi):
+    """
+    Usage
+    ```
+    multi_tag \\
+        --mapfile ./tag.mapfile\\
+        --barcode_fasta ./smk_barcode.fa\\
+        --fq_pattern L25C45\\
+        --mod shell
+    ```
+    """
 
     def mapping_tag(self, sample):
         step = 'mapping_tag'
