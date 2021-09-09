@@ -25,7 +25,7 @@ operation = g,f
 ### Run multi_snp
 There are two ways to run `multi_snp`
 
-1. Do not perform consensus before alignment and report read count(recommended for FocusScope).
+1. Do not perform consensus before alignment and report read count(recommended for data generated with FocuSCOPE kit).
 
 ```
 multi_snp\

@@ -10,12 +10,49 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 
 Run `multi_{assay} -h` for help.
 
-
 ## Usage Example
 
 Take Single-cell rna as an example:
 
-1. Make a reference genomeDir
+1. Make a rna genomeDir
+
+### Homo sapiens
+
+```
+mkdir hs_ensembl_99
+cd hs_ensembl_99
+
+wget ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+wget ftp://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz
+
+gunzip Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+gunzip Homo_sapiens.GRCh38.99.gtf.gz
+
+conda activate celescope
+celescope rna mkref \
+ --genome_name Homo_sapiens_ensembl_99 \
+ --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \
+ --gtf Homo_sapiens.GRCh38.99.gtf
+```
+
+### Mus musculus
+
+```
+mkdir mmu_ensembl_99
+cd mmu_ensembl_99
+
+wget ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
+wget ftp://ftp.ensembl.org/pub/release-99/gtf/mus_musculus/Mus_musculus.GRCm38.99.gtf.gz
+
+gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz 
+gunzip Mus_musculus.GRCm38.99.gtf.gz
+
+conda activate celescope
+celescope rna mkref \
+ --genome_name Mus_musculus_ensembl_99 \
+ --fasta Mus_musculus.GRCm38.dna.primary_assembly.fa \
+ --gtf Mus_musculus.GRCm38.99.gtf
+```
 
 2. Generate scripts for each sample
 
@@ -39,7 +76,7 @@ multi_rna\
 
 After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will be generated.
 
-3. You can start your analysis by running:
+3. Start the analysis by running:
 ```
 sh ./shell/{sample}.sh
 ```
