@@ -121,6 +121,7 @@ class Docs():
 
 def main():
     cmd = (
+        "set -eo pipefail;"
         f"rm -r {DOCS_DIR};"
         f"cp -r {TEMPLATE_DIR} {DOCS_DIR}"
     )

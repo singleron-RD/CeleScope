@@ -6,7 +6,32 @@ class Multi_snp(Multi):
     """
     Usage
 
-    ### Use Reads
+    ### Make a snp reference genomeDir
+
+    1. Run `celescope rna mkref`. If you already have a rna genomeDir, you can use it and skip this step.
+    2. Run `celescope snp mkref` under the rna genomeDir. Check [mkref.md](./mkref.md) for help.
+
+    ### Install ANNOVAR, download the annotation database and write a annovar config file.
+    https://annovar.openbioinformatics.org/en/latest/user-guide/download/
+
+    ```
+    perl /Public/Software/annovar/annotate_variation.pl -downdb -buildver hg38 -webfrom annovar cosmic70 humandb/
+    ```
+
+    annovar_config file
+    ```
+    [ANNOVAR]
+    dir = /Public/Software/annovar/  
+    db = /SGRNJ/Database/script/database/annovar/humandb  
+    buildver = hg38  
+    protocol = refGene,cosmic70  
+    operation = g,f  
+    ```
+
+    ### Run multi_snp
+    There are two ways to run `multi_snp`
+
+    1. Do not perform consensus before alignment and report read count(recommended for FocusScope).
 
     ```
     multi_snp\\
@@ -19,7 +44,7 @@ class Multi_snp(Multi):
         --not_consensus
     ```
 
-    ### Use UMI 
+    2. Do consensus before alignment and report UMI count. 
 
     ```
     multi_snp\\
@@ -29,18 +54,9 @@ class Multi_snp(Multi):
         --mod shell\\
         --gene_list gene_list.tsv\\
         --annovar_config annovar.config\\
-        --min_support
+        --min_support_read 1
     ```
 
-    annovar_config file
-    ```
-    [ANNOVAR]
-    dir = /Public/Software/annovar/  
-    db = /SGRNJ/Database/script/database/annovar/humandb  
-    buildver = hg38  
-    protocol = refGene,cosmic70  
-    operation = g,f  
-    ```
     """
 
     def star(self, sample):

@@ -5,6 +5,8 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 - rna
 - vdj
 - tag
+- dynaseq
+- snp
 
 Run `multi_{assay} -h` for help.
 
@@ -16,14 +18,15 @@ Take Single-cell rna as an example:
 1. Generate scripts for each sample
 
 Under your working directory, write a shell script `run.sh` as
-	```
-	conda activate celescope
-	multi_rna\
- 	--mapfile ./rna.mapfile\
- 	--genomeDir /SGRNJ/Public/Database/genome/homo_mus\
- 	--thread 8\
- 	--mod shell
- 	```
+
+```
+conda activate celescope
+multi_rna\
+	--mapfile ./rna.mapfile\
+	--genomeDir /SGRNJ/Public/Database/genome/homo_mus\
+	--thread 8\
+	--mod shell
+```
 `--mapfile` Required. See below on how to write a mapfile.
 
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
@@ -38,48 +41,17 @@ After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will b
 ```
 sh ./shell/{sample}.sh
 ```
-Note that the `./shell/{sample}.sh` must be ran under the working directory(i.e. you shouldn't run them under the `shell` directory)
+Note that the `./shell/{sample}.sh` must be run under the working directory(You shouldn't run them under the `shell` directory)
 
 3. See [multi_rna.md](./rna/multi_rna.md) for all available arguments.
 
-```
-conda activate celescope
-multi_vdj \
- --mapfile ./vdj.mapfile \
- --type TCR \
- --thread 8 \
- --mod shell
-```  
+## Uasge
 
-`--type` Required. TCR or BCR. 
-
-- Single cell tag
-
-```
-conda activate celescope
-multi_tag \
- --mapfile ./tag.mapfile\
- --barcode_fasta ./smk_barcode.fa\
- --fq_pattern L25C45\
- --mod shell
-```  
-
-`--barcode_fasta` Required. Tag barcode fasta file.
-```
->tag_0
-GGGCGTCTGTGACCGCGTGATACTGCATTGTAGACCGCCCAACTC
->tag_1
-TTCCTCCAGAGGAGACCGAGCCGGTCAATTCAGGAGAACGTCCGG
->tag_2
-AGGGCTAGGCGTGTCATTTGGCGAGGTCCTGAGGTCATGGAGCCA
->tag_3
-CACTGGTCATCGACACTGGGAACCTGAGGTGAGTTCGCGCGCAAG
-```  
-
-`--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases. 
-
-`L` linker(common sequences)  
-`C` tag barcode  
+- [multi_rna.md](./rna/multi_rna.md)
+- [multi_vdj.md](./vdj/multi_vdj.md)
+- [multi_tag.md](./tag/multi_tag.md)
+- [multi_dynaseq.md](./dynaseq/multi_dynaseq.md)
+- [multi_snp.md](./snp/multi_snp.md)
 
 ## How to write mapfile
 
@@ -92,6 +64,8 @@ Mapfile is a tab-delimited text file with as least three columns. Each line of m
 - `rna` Optional, forced cell number.
 - `vdj` Optional, matched_dir.
 - `tag` Required, matched_dir.
+- `dynaseq` Optional, forced cell number.
+- `snp` Required, matched_dir.
 
 ### Example
 
@@ -109,6 +83,9 @@ fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
 $ls fastq_dir2
 fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 ```
+
+## Test data
+https://github.com/singleron-RD/celescope_test_script
 
 
  

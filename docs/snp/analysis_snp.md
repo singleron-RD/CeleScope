@@ -1,7 +1,7 @@
 
 
 ## Arguments
-`--annovar_config` annovar soft config file.
+`--annovar_config` ANNOVAR config file.
 
 `--outdir` Output diretory.
 

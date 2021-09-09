@@ -1,6 +1,31 @@
 ## Usage
 
-### Use Reads
+### Make a snp reference genomeDir
+
+1. Run `celescope rna mkref`. If you already have a rna genomeDir, you can use it and skip this step.
+2. Run `celescope snp mkref` under the rna genomeDir. Check [mkref.md](./mkref.md) for help.
+
+### Install ANNOVAR, download the annotation database and write a annovar config file.
+https://annovar.openbioinformatics.org/en/latest/user-guide/download/
+
+```
+perl /Public/Software/annovar/annotate_variation.pl -downdb -buildver hg38 -webfrom annovar cosmic70 humandb/
+```
+
+annovar_config file
+```
+[ANNOVAR]
+dir = /Public/Software/annovar/  
+db = /SGRNJ/Database/script/database/annovar/humandb  
+buildver = hg38  
+protocol = refGene,cosmic70  
+operation = g,f  
+```
+
+### Run multi_snp
+There are two ways to run `multi_snp`
+
+1. Do not perform consensus before alignment and report read count(recommended for FocusScope).
 
 ```
 multi_snp\
@@ -13,7 +38,7 @@ multi_snp\
     --not_consensus
 ```
 
-### Use UMI 
+2. Do consensus before alignment and report UMI count. 
 
 ```
 multi_snp\
@@ -23,17 +48,7 @@ multi_snp\
     --mod shell\
     --gene_list gene_list.tsv\
     --annovar_config annovar.config\
-    --min_support
-```
-
-annovar_config file
-```
-[ANNOVAR]
-dir = /Public/Software/annovar/  
-db = /SGRNJ/Database/script/database/annovar/humandb  
-buildver = hg38  
-protocol = refGene,cosmic70  
-operation = g,f  
+    --min_support_read 1
 ```
 
 
@@ -133,5 +148,5 @@ is higher than or equal to this value.
 
 `--min_support_read` Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.
 
-`--annovar_config` annovar soft config file.
+`--annovar_config` ANNOVAR config file.
 
