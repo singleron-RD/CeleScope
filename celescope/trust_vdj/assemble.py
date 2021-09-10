@@ -9,7 +9,6 @@ import pandas as pd
 import pysam
 from Bio.Seq import Seq
 from celescope.tools import utils
-from celescope.tools.cellranger3 import get_plot_elements
 from celescope.tools.step import Step, s_common
 from celescope.trust_vdj.__init__ import CHAIN, CONDA_PATH, INDEX, TOOLS_DIR
 
@@ -131,12 +130,12 @@ class Assemble(Step):
         self.match_fq1 = f'{self.match_out}/{self.sample}_matched_R1.fq'
         self.match_fq2 = f'{self.match_out}/{self.sample}_matched_R2.fq'
 
+        self.matched_reads = 0
+
     @utils.add_log
     def get_match_fastq(self):
         out_fq1 = open(self.match_fq1, 'w')
         out_fq2 = open(self.match_fq2, 'w')
-
-        self.matched_reads = 0
         
         read_dict = defaultdict(list)
         with pysam.FastxFile(self.fq2) as fq:
@@ -196,7 +195,7 @@ class Assemble(Step):
 
         with pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq') as fl:
             self.mapping_summary.append({
-                'item': f'Reads Mapped to Any V(D)J genes', 
+                'item': 'Reads Mapped to Any V(D)J genes', 
                 'count': len(list(fl)),
                 'total_count': self.matched_reads
             })
