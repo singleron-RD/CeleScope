@@ -32,6 +32,10 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.
 
 `--match_dir` Match celescope scRNA-Seq directory.
 
+`--matrix_dir` Match celescope scRNA-Seq matrix directory.
+
+`--tsne_file` t-SNE coord file.
+
 `--outdir` Output diretory.
 
 `--assay` Assay name.

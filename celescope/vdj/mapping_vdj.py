@@ -55,7 +55,7 @@ class Mapping_vdj(Step):
             f'--species {self.args.species} '
             f'-t {self.args.thread} '
             f'--not-aligned-R1 {self.not_align_fq} '
-            f'--report {self.mixcr_report}'
+            f'--report {self.mixcr_report} '
             '-OallowPartialAlignments=true '
             '-OvParameters.geneFeatureToAlign=VTranscriptWithP '
             f'{self.args.fq} {self.read2_vdjca} '

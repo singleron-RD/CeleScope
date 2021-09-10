@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 import celescope.tools.utils as utils
+from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
 
@@ -39,12 +40,16 @@ class Count_vdj(Step):
             for seq in SEQUENCES_HEADER:
                 self.cols.append("_".join([seq, chain]))
 
-        self.match_bool = True
-        if (not args.match_dir) or (args.match_dir == "None"):
-            self.match_bool = False
-        if self.match_bool:
+        self.match_bool = False
+        if args.match_dir and args.match_dir.strip() != 'None':
             self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
                 args.match_dir)
+            self.match_bool = True
+        elif args.matrix_dir and args.matrix_dir.strip() != 'None':
+            self.match_cell_barcodes= utils.get_barcodes_from_matrix_dir(args.matrix_dir)            
+            self.match_bool = True
+        if self.match_bool:
+            self.match_cell_barcodes = set(self.match_cell_barcodes)
 
         # out files
         self.cell_confident_file = f"{self.out_prefix}_cell_confident.tsv"
@@ -65,7 +70,7 @@ class Count_vdj(Step):
             rank_UMI = df_UMI_sum_sorted.iloc[CELL_CALLING_RANK, :]["UMI"]
             UMI_min = int(rank_UMI / 10)
         else:
-            UMI_min = int(UMI_min)
+            UMI_min = int(self.args.UMI_min)
         df_UMI_cell = df_UMI_sum[df_UMI_sum.UMI >= UMI_min]
         df_UMI_sum["mark"] = df_UMI_sum["UMI"].apply(
             lambda x: "CB" if (x >= UMI_min) else "UB")
@@ -370,9 +375,6 @@ For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""",
     if sub_program:
         parser.add_argument("--UMI_count_filter_file",
                             help="Required. File from step mapping_vdj.", required=True)
-        parser.add_argument(
-            "--match_dir",
-            help="Match celescope scRNA-Seq directory. ",
-            default=None
-        )
+        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
+        parser.add_argument("--matrix_dir", help=HELP_DICT['matrix_dir'])
         parser = s_common(parser)

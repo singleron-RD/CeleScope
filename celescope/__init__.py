@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "1.3.2b1"
+__VERSION__ = "1.5.0"
 __version__ = __VERSION__
 
 ASSAY_DICT = {
@@ -21,14 +21,15 @@ ASSAY_DICT = {
 
 ROOT_PATH = os.path.dirname(__file__)
 
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq']
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp']
 
 HELP_DICT = {
     'match_dir': 'Match celescope scRNA-Seq directory.',
     'gene_list': 'Required. Gene list file, one gene symbol per line. Only results of these genes are reported.',
-    'genomeDir': 'Genome directory after running `mkref`.',
+    'genomeDir': 'Required. Genome directory after running `mkref`.',
     'thread': 'Thread to use.',
     'debug': 'If this argument is used, celescope may output addtional file for debugging.',
     'fasta': 'Required. Genome fasta file. Use relative path to `genomeDir`.',
-    'outdir': 'Output directory.'
+    'outdir': 'Output directory.',
+    'matrix_dir': 'Match celescope scRNA-Seq matrix directory.',
 }

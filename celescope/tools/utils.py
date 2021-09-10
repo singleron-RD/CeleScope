@@ -9,7 +9,6 @@ import os
 import re
 import resource
 import subprocess
-import sys
 import time
 from collections import Counter, defaultdict
 from datetime import timedelta
@@ -22,6 +21,7 @@ import xopen
 
 import celescope.tools
 from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
@@ -38,10 +38,7 @@ def add_log(func):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
 
-    fileHandler = logging.FileHandler("./celescope_log.txt")
-    fileHandler.setFormatter(logFormatter)
-    logger.addHandler(fileHandler)
-    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler = logging.StreamHandler()
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
 
@@ -496,6 +493,7 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
         '''
 
         df = df.append(pd.Series(rec_dict), ignore_index=True)
+    vcf.close()
     return df
 
 
@@ -561,6 +559,12 @@ def read_barcode_file(match_dir, return_file=False):
     if return_file:
         return match_barcode, (cell_total, match_barcode_file)
     return match_barcode, cell_total
+
+
+def get_barcodes_from_matrix_dir(matrix_dir):
+    barcodes_file = f'{matrix_dir}/barcodes.tsv'
+    match_barcode, _cell_total = read_one_col(barcodes_file)
+    return match_barcode
 
 
 def parse_match_dir(match_dir):
@@ -692,3 +696,37 @@ def sort_bam(input_bam, output_bam, threads=1):
 def index_bam(input_bam):
     cmd = f"samtools index {input_bam}"
     subprocess.check_call(cmd, shell=True)
+
+
+def check_mkdir(dir_name):
+    if not os.path.exists(dir_name):
+        os.system(f"mkdir -p {dir_name}")
+
+
+def otsu_min_support_read(array, otsu_plot):
+    """
+    get otsu threshold and plot
+    """
+    array = np.log10(array)
+    hist = array2hist(array)
+    thresh = threshold_otsu(hist)
+    makePlot(hist, thresh, otsu_plot)
+    threshold = round(10 ** thresh,1)
+    return threshold
+
+
+class Samtools():
+    def __init__(self, in_bam, out_bam, threads=1):
+        self.in_bam = in_bam
+        self.out_bam = out_bam
+        self.threads = threads
+
+    def sort_bam(self, by='coord', print_log=False):
+        cmd = f"samtools sort {self.in_bam} -o {self.out_bam} --threads {self.threads}"
+        if by == "name":
+            cmd += " -n"
+        if print_log:
+            print(cmd)
+        subprocess.check_call(cmd, shell=True)
+        return cmd
+

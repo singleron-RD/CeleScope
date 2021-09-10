@@ -3,6 +3,16 @@ from celescope.vdj.__init__ import __ASSAY__
 
 
 class Multi_vdj(Multi):
+    """
+    Usage
+    ```
+    multi_vdj \\
+        --mapfile ./vdj.mapfile \\
+        --type TCR \\
+        --thread 8 \\
+        --mod shell
+    ``` 
+    """
 
     def mapping_vdj(self, sample):
         step = 'mapping_vdj'

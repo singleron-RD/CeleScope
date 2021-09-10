@@ -26,7 +26,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install astroid==2.5.6 pylint==2.8.2
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install celescope
     - name: Install
       run: |
         python setup.py install

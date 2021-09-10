@@ -488,6 +488,5 @@ def get_opts_count(parser, sub_program):
         parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
         parser.add_argument(
             '--force_cell_num',
-            help='Default `None`. Force the cell number to be this value ± 10%.',
-            default=None
+            help='Default `None`. Force the cell number within (value * 0.9, value * 1.1). ',
         )

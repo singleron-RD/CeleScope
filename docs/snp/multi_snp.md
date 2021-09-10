@@ -1,13 +1,17 @@
 ## Usage
+
+### Make a snp reference genomeDir
+
+1. Run `celescope rna mkref`. If you already have a rna genomeDir, you can use it and skip this step.
+2. Run `celescope snp mkref` under the rna genomeDir. Check [mkref.md](./mkref.md) for help.
+
+### Install ANNOVAR, download the annotation database and write a annovar config file.
+https://annovar.openbioinformatics.org/en/latest/user-guide/download/
+
 ```
-multi_snp\
-    --mapfile ./test1.mapfile\
-    --genomeDir {genomeDir after running celescope snp mkref}\
-    --thread 10\
-    --mod shell\
-    --gene_list gene_list.tsv\
-    --annovar_config annovar.config\
+perl /Public/Software/annovar/annotate_variation.pl -downdb -buildver hg38 -webfrom annovar cosmic70 humandb/
 ```
+
 annovar_config file
 ```
 [ANNOVAR]
@@ -18,17 +22,73 @@ protocol = refGene,cosmic70
 operation = g,f  
 ```
 
+### Run multi_snp
+There are two ways to run `multi_snp`
+
+1. Do not perform consensus before alignment and report read count(recommended for data generated with FocuSCOPE kit).
+
+```
+multi_snp\
+    --mapfile ./test1.mapfile\
+    --genomeDir {genomeDir after running celescope snp mkref}\
+    --thread 10\
+    --mod shell\
+    --gene_list gene_list.tsv\
+    --annovar_config annovar.config\
+    --not_consensus
+```
+
+2. Do consensus before alignment and report UMI count. 
+
+```
+multi_snp\
+    --mapfile ./test1.mapfile\
+    --genomeDir {genomeDir after running celescope snp mkref}\
+    --thread 10\
+    --mod shell\
+    --gene_list gene_list.tsv\
+    --annovar_config annovar.config\
+    --min_support_read 1
+```
+
 
 ## Arguments
-`--mod` mod, sjm or shell
+`--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
 
-`--mapfile` tsv file, 4 columns:
-                1st col: LibName;
-                2nd col: DataDir;
-                3rd col: SampleName;
-                4th col: optional;
+1st column: Fastq file prefix.  
+2nd column: Fastq file directory path.  
+3rd column: Sample name, which is the prefix of all output files.  
+4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
-`--rm_files` remove redundant fq.gz and bam after running
+- `rna` Optional, forced cell number.
+- `vdj` Optional, matched_dir.
+- `tag` Required, matched_dir.
+- `dynaseq` Optional, forced cell number.
+- `snp` Required, matched_dir.
+
+5th column:
+- `dynaseq` Required, background snp file.
+
+Example
+
+Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
+```
+$cat ./my.mapfile
+fastq_prefix1	fastq_dir1	sample1
+fastq_prefix2	fastq_dir2	sample1
+fastq_prefix3	fastq_dir1	sample2
+
+$ls fastq_dir1
+fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
+fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
+
+$ls fastq_dir2
+fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
+```
+
+`--mod` Which type of script to generate, `sjm` or `shell`.
+
+`--rm_files` Remove redundant fastq and bam files after running.
 
 `--steps_run` Steps to run. Multiple Steps are separated by comma.
 
@@ -92,12 +152,14 @@ at least {overlap} bases match between adapter and read.
 
 `--not_consensus` Skip the consensus step.
 
+`--min_consensus_read` Minimum number of reads to support a base.
+
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
-`--out_unmapped` Output unmapped reads
+`--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Other STAR parameters
+`--STAR_param` Other STAR parameters.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
@@ -105,12 +167,13 @@ is higher than or equal to this value.
 
 `--gtf_type` Specify feature type in GTF annotation
 
+`--featureCounts_param` Other featureCounts parameters
+
 `--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
 
-`--genomeDir` Genome directory after running `mkref`.
+`--genomeDir` Required. Genome directory after running `mkref`.
 
-`--vcf` VCF file. If vcf file is not provided, celescope will perform variant calling at single cell level 
-and use these variants as input vcf.
+`--min_support_read` Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.
 
-`--annovar_config` annovar soft config file
+`--annovar_config` ANNOVAR config file.
 

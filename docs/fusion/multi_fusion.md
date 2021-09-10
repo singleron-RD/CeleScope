@@ -1,15 +1,52 @@
+## Features
+- Generate multi-sample scripts.
+
+## Usage
+```
+multi_fusion\
+--mapfile ./fusion.mapfile\
+--fusion_genomeDir {fusion_genomeDir}\  
+--mod shell
+```
 
 
 ## Arguments
-`--mod` mod, sjm or shell
+`--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
 
-`--mapfile` tsv file, 4 columns:
-                1st col: LibName;
-                2nd col: DataDir;
-                3rd col: SampleName;
-                4th col: optional;
+1st column: Fastq file prefix.  
+2nd column: Fastq file directory path.  
+3rd column: Sample name, which is the prefix of all output files.  
+4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
-`--rm_files` remove redundant fq.gz and bam after running
+- `rna` Optional, forced cell number.
+- `vdj` Optional, matched_dir.
+- `tag` Required, matched_dir.
+- `dynaseq` Optional, forced cell number.
+- `snp` Required, matched_dir.
+
+5th column:
+- `dynaseq` Required, background snp file.
+
+Example
+
+Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
+```
+$cat ./my.mapfile
+fastq_prefix1	fastq_dir1	sample1
+fastq_prefix2	fastq_dir2	sample1
+fastq_prefix3	fastq_dir1	sample2
+
+$ls fastq_dir1
+fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
+fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
+
+$ls fastq_dir2
+fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
+```
+
+`--mod` Which type of script to generate, `sjm` or `shell`.
+
+`--rm_files` Remove redundant fastq and bam files after running.
 
 `--steps_run` Steps to run. Multiple Steps are separated by comma.
 
@@ -69,22 +106,22 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
-`--genomeDir` Required. Genome directory.
+`--genomeDir` Required. Genome directory after running `mkref`.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
-`--out_unmapped` Output unmapped reads
+`--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Other STAR parameters
+`--STAR_param` Other STAR parameters.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--fusion_genomeDir` fusion genome directory
+`--fusion_genomeDir` Fusion genome directory.
 
-`--flanking_base` None
+`--flanking_base` Number of bases flanking the fusion position.
 
-`--UMI_min` None
+`--UMI_min` Minimum number of fusion UMI to consider a cell as a cell with fusion event.
 

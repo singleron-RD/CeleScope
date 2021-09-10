@@ -1,12 +1,64 @@
-# Change Log
+## [unreleased] - 2021-09-09
+ ### Added
 
-## [unreleased] - 2021-06-09
+ ### Changed
+
+ ### Fixed
+
+ ### Removed
+
+## [1.5.0] - 2021-09-09
+ ### Added
+
+ - Add `--split_vdj` in `celescope.tag.split_tag` to split vdj library according to tag assignment.
+ - Add Docs for `snp`.
+
+ ### Changed
+
+ - `snp.variant_calling` change `--do-not-fix-overhangs` from `false` to `true` to avoid omitting variants in the overhang region.
+
+ ### Fixed
+
+ - Fix a memory leak in `snp.variant_calling`.
+
+ ### Removed
+
+## [1.4.0] - 2021-08-24
+
+ ### Added
+
+ - Add `min_consensus_read` argument to `celescope.tools.consensus`. If 
+    1. the percentage of the most common residue type > threshold;
+    2. most common residue reads >= min_consensus_read;
+    
+then we will add that residue type, otherwise an ambiguous character will be added.
+
+ ### Changed
+ - By default, use otsu method to calculate `min_support_read` for `capture_virus`.
+
+ - By default, use otsu method to calculate `min_support_read` for `snp`.
+
+ - Improved the code of `celescope.snp.variant_calling` to reduce memory usage and speed up analysis.
+
+ - Add serveral arguments in `vdj` and `tag` to support WDL workflow.
+
+ ### Fixed
+
+ - Fix a bug in `celescope.tag.count_tag` when there is no `Undetermined` cells.
+
+ - Fix a bug in `celescope.snp.variant_calling` when there are multiple variants at the same loci in a cell.
+
+ ### Removed
+
+## [1.3.2] - 2021-07-09
 ### Added
 
 - Add `dynascope` assay.
 - Add `celescope tag split_tag`. 
 
 ### Changed
+- Change fastq file pattern of mapfile: Remove * before library_id.
+- `celescope.tools.count_capture_virus`: Change `min_support_read` from 1 to 2.
 
 ### Fixed
 - `celescope.tools.count` will report an error when there are multiple gtf or refFlat file under `genomeDir`.

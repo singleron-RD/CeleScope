@@ -9,6 +9,7 @@ import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step, s_common
 from celescope.snp.variant_calling import read_CID
+from celescope.__init__ import HELP_DICT
 
 
 class Analysis_variant(Step, AnalysisMixin):
@@ -16,9 +17,9 @@ class Analysis_variant(Step, AnalysisMixin):
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
         AnalysisMixin.__init__(self, args)
-        self.variant_count_file = args.variant_count_file
+        self.filter_variant_count_file = args.filter_variant_count_file
         self.CID_file = args.CID_file
-        self.vcf = args.vcf
+        self.filter_vcf = args.filter_vcf
         self.annovar_config = args.annovar_config
         self.match_dir = args.match_dir
         self.vcf_GT = None
@@ -27,7 +28,7 @@ class Analysis_variant(Step, AnalysisMixin):
         '''
         output: f'{self.outdir}/{self.sample}_count_tsne.tsv'
         '''
-        df_vc = pd.read_csv(self.variant_count_file, sep='\t')
+        df_vc = pd.read_csv(self.filter_variant_count_file, sep='\t')
         df_vc = df_vc[df_vc["alt_count"] > 0]
         df_vc_cell = df_vc.groupby('CID').agg({
             'alt_count': 'count',
@@ -68,7 +69,7 @@ class Analysis_variant(Step, AnalysisMixin):
         '''
         add genotype to VCF file to avoid vcf parse error
         '''
-        vcf = pysam.VariantFile(self.vcf, 'r')
+        vcf = pysam.VariantFile(self.filter_vcf, 'r')
         out_vcf_file = f'{self.outdir}/{self.sample}_addGT.vcf'
         out_vcf = pysam.VariantFile(out_vcf_file, 'w', header=vcf.header)
         for rec in vcf:
@@ -157,10 +158,10 @@ def analysis_snp(args):
 
 
 def get_opts_analysis_snp(parser, sub_program):
-    parser.add_argument('--annovar_config', help='annovar soft config file', required=True)
+    parser.add_argument('--annovar_config', help='ANNOVAR config file.', required=True)
     if sub_program:
         s_common(parser)
-        parser.add_argument('--match_dir', help='match_dir', required=True)
-        parser.add_argument('--vcf', help='vcf file', required=True)
-        parser.add_argument('--CID_file', help='CID_file', required=True)
-        parser.add_argument('--variant_count_file', help='variant count file', required=True)
+        parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
+        parser.add_argument('--filter_vcf', help='filter vcf file.', required=True)
+        parser.add_argument('--CID_file', help='CID_file.', required=True)
+        parser.add_argument('--filter_variant_count_file', help='filter variant count file.', required=True)

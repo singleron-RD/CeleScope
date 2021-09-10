@@ -12,6 +12,24 @@ def parse_genomeDir_fusion(genomeDir):
 
 
 class Mkref_fusion(Mkref):
+    """
+    Features
+    - Create a fusion genome directory.
+
+    Output
+
+    - STAR genome index files
+    - Genome config file
+    
+    Usage
+    ```
+    celescope fusion mkref \\
+    --genome_name {genome_name} \\
+    --fasta fusion.fasta \\
+    --fusion_pos fusion_pos.txt \\
+    --genomeSAindexNbases 4
+    ```
+    """
     def __init__(self, genome_type, args):
         Mkref.__init__(self, genome_type, args)
         self.fasta = args.fasta
@@ -59,7 +77,7 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fasta", help="fusion fasta file", required=True)
+        parser.add_argument("--fasta", help="Fusion fasta file.", required=True)
         parser.add_argument(
             "--fusion_pos",
             help="""

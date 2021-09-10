@@ -55,18 +55,45 @@ class Multi():
         parser = argparse.ArgumentParser(readme,
                                          formatter_class=ArgFormatter,
                                          conflict_handler='resolve')
-        parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
         parser.add_argument(
             '--mapfile',
             help='''
-                tsv file, 4 columns:
-                1st col: LibName;
-                2nd col: DataDir;
-                3rd col: SampleName;
-                4th col: optional;
-            ''',
+Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
+
+1st column: Fastq file prefix.  
+2nd column: Fastq file directory path.  
+3rd column: Sample name, which is the prefix of all output files.  
+4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
+
+- `rna` Optional, forced cell number.
+- `vdj` Optional, matched_dir.
+- `tag` Required, matched_dir.
+- `dynaseq` Optional, forced cell number.
+- `snp` Required, matched_dir.
+
+5th column:
+- `dynaseq` Required, background snp file.
+
+Example
+
+Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
+```
+$cat ./my.mapfile
+fastq_prefix1	fastq_dir1	sample1
+fastq_prefix2	fastq_dir2	sample1
+fastq_prefix3	fastq_dir1	sample2
+
+$ls fastq_dir1
+fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
+fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
+
+$ls fastq_dir2
+fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
+```
+''',
             required=True)
-        parser.add_argument('--rm_files', action='store_true', help='remove redundant fq.gz and bam after running')
+        parser.add_argument('--mod', help='Which type of script to generate, `sjm` or `shell`.', choices=['sjm', 'shell'], default='sjm')
+        parser.add_argument('--rm_files', action='store_true', help='Remove redundant fastq and bam files after running.')
         parser.add_argument('--steps_run', help='Steps to run. Multiple Steps are separated by comma.', default='all')
         # sub_program parser do not have
         parser.add_argument('--outdir', help='Output directory.', default="./")
@@ -350,7 +377,7 @@ def get_read(library_id, library_path, read='1'):
     fq_list = ['fq', 'fastq']
     suffix_list = ["", ".gz"]
     read_pattern_list = [
-        f'{library_path}/*{library_id}*{read}.{fq_str}{suffix}'
+        f'{library_path}/{library_id}*{read}.{fq_str}{suffix}'
         for read in read1_list
         for fq_str in fq_list
         for suffix in suffix_list

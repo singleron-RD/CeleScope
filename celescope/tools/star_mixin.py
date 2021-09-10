@@ -4,7 +4,7 @@ import subprocess
 import celescope.tools.utils as utils
 from celescope.tools.mkref import parse_genomeDir
 from celescope.tools.step import s_common
-
+from celescope.__init__ import HELP_DICT
 
 class StarMixin():
     """
@@ -115,7 +115,7 @@ class StarMixin():
 def get_opts_star_mixin(parser, sub_program):
     parser.add_argument(
         '--genomeDir',
-        help='Required. Genome directory.'
+        help=HELP_DICT['genomeDir'],
     )
     parser.add_argument(
         '--outFilterMatchNmin',
@@ -125,10 +125,10 @@ is higher than or equal to this value.""",
     )
     parser.add_argument(
         '--out_unmapped',
-        help='Output unmapped reads',
+        help='Output unmapped reads.',
         action='store_true'
     )
-    parser.add_argument('--STAR_param', help='Other STAR parameters', default="")
+    parser.add_argument('--STAR_param', help='Other STAR parameters.', default="")
     parser.add_argument(
         '--outFilterMultimapNmax',
         help='Default `1`. How many places are allowed to match a read at most.',
@@ -141,5 +141,5 @@ is higher than or equal to this value.""",
     )
     if sub_program:
         parser.add_argument('--fq', help="Required. R2 fastq file.", required=True)
-        parser.add_argument("--consensus_fq", action='store_true', help="Input fastq has been consensused")
+        parser.add_argument("--consensus_fq", action='store_true', help="A indicator that the input fastq has been consensused.")
         parser = s_common(parser)

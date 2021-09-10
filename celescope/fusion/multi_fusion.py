@@ -3,6 +3,18 @@ from celescope.tools.multi import Multi
 
 
 class Multi_fusion(Multi):
+    """
+    Features
+    - Generate multi-sample scripts.
+
+    Usage
+    ```
+    multi_fusion\\
+    --mapfile ./fusion.mapfile\\
+    --fusion_genomeDir {fusion_genomeDir}\\  
+    --mod shell
+    ```
+    """
 
     def star_fusion(self, sample):
         step = 'star_fusion'
