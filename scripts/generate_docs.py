@@ -34,6 +34,7 @@ def get_class_docs(step_module):
             continue
         doc = inspect.getdoc(class_obj)
         
+        # only write class docs when the doc contains at least one title
         write_bool = False
         if doc:
             for title in titles:
@@ -121,6 +122,7 @@ class Docs():
 
 def main():
     cmd = (
+        "set -eo pipefail;"
         f"rm -r {DOCS_DIR};"
         f"cp -r {TEMPLATE_DIR} {DOCS_DIR}"
     )

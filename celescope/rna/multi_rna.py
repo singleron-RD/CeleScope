@@ -3,7 +3,16 @@ from celescope.tools.multi import Multi
 
 
 class Multi_rna(Multi):
-    pass
+    """
+    Usage
+    ```
+        multi_rna\\
+        --mapfile ./rna.mapfile\\
+        --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
+        --thread 8\\
+        --mod shell
+    ```
+    """
 
 
 def main():

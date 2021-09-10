@@ -12,6 +12,7 @@
 	<table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
 		{% for item in assemble_summary %}
 		  {% if loop.index <= (loop.length+1)/2 %}
+
 		  <tr>
 			{% for i in item %} 
 			<td>{{ i|e }}</td>

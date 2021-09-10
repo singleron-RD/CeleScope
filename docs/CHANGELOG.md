@@ -1,9 +1,25 @@
-## [unreleased] - 2021-08-24
+## [unreleased] - 2021-09-09
  ### Added
 
  ### Changed
 
  ### Fixed
+
+ ### Removed
+
+## [1.5.0] - 2021-09-09
+ ### Added
+
+ - Add `--split_vdj` in `celescope.tag.split_tag` to split vdj library according to tag assignment.
+ - Add Docs for `snp`.
+
+ ### Changed
+
+ - `snp.variant_calling` change `--do-not-fix-overhangs` from `false` to `true` to avoid omitting variants in the overhang region.
+
+ ### Fixed
+
+ - Fix a memory leak in `snp.variant_calling`.
 
  ### Removed
 

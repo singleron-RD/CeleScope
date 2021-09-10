@@ -713,3 +713,20 @@ def otsu_min_support_read(array, otsu_plot):
     makePlot(hist, thresh, otsu_plot)
     threshold = round(10 ** thresh,1)
     return threshold
+
+
+class Samtools():
+    def __init__(self, in_bam, out_bam, threads=1):
+        self.in_bam = in_bam
+        self.out_bam = out_bam
+        self.threads = threads
+
+    def sort_bam(self, by='coord', print_log=False):
+        cmd = f"samtools sort {self.in_bam} -o {self.out_bam} --threads {self.threads}"
+        if by == "name":
+            cmd += " -n"
+        if print_log:
+            print(cmd)
+        subprocess.check_call(cmd, shell=True)
+        return cmd
+
