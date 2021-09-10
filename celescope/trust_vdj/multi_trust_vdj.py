@@ -1,4 +1,3 @@
-from celescope.tools import step
 from celescope.trust_vdj.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
 

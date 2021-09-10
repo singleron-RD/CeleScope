@@ -113,6 +113,7 @@ class Assemble(Step):
 
         # input
         self.match_barcodes, cell_num = utils.read_barcode_file(self.match_dir)
+        del cell_num
 
         # output
         # dir 
@@ -171,6 +172,8 @@ class Assemble(Step):
             'total_count': np.nan
         })
 
+        del read_dict
+        
     @utils.add_log
     def process(self):
         # process all vdj
