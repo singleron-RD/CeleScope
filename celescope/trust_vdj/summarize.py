@@ -15,7 +15,7 @@ def fa_to_csv(full_len_fa, assign_file, outdir, chains):
     # reads assignment 
     assignment = pd.read_csv(assign_file, sep='\t', header=None)
     contigs = open(f'{outdir}/all_contigs.csv', 'w')
-    contigs.write('barcode,is_cell,contig_id,high_confidence,length,chain,v_gene,d_gene,j_gene,c_gene,full_length,productive,cdr3,cdr3_nt,reads,umis,raw_clonotype_id,raw_consensus_id,coverage\n')
+    contigs.write('barcode\tis_cell\tcontig_id\thigh_confidence\tlength\tchain\tv_gene\td_gene\tj_gene\tc_gene\tfull_length\tproductive\tcdr3\tcdr3_nt\treads\tumis\traw_clonotype_id\traw_consensus_id\n')
     with pysam.FastxFile(full_len_fa) as fa:
         for read in fa:
             name = read.name
@@ -32,35 +32,15 @@ def fa_to_csv(full_len_fa, assign_file, outdir, chains):
                 else:
                     continue
             full_length = 'True'
-            if not attrs[2]=='*':
-                v_gene = attrs[2].split('(')[0]
-            else:
-                v_gene = 'None'
-                full_length = 'False'
-            if not attrs[3]=='*':
-                d_gene = attrs[3].split('(')[0]
-            else:
-                d_gene = 'None'
-            if not attrs[4]=='*':
-                j_gene = attrs[4].split('(')[0]
-            else:
-                j_gene = 'None'
-                full_length = 'False'
-            if not attrs[5]=='*':
-                c_gene = attrs[5].split('(')[0]
-            else:
-                c_gene = 'None'
-            if 'null' in attrs[6]:
-                full_length = 'False'
-            if 'null' in attrs[7]:
+            v_gene = attrs[2].split('(')[0]
+            d_gene = attrs[3]
+            j_gene = attrs[4].split('(')[0]
+            c_gene = attrs[5]
+            if 'null' in attrs[6] or 'null' in attrs[7]:
                 full_length = 'False'
             cdr3 = attrs[8].split('=')[1]
             cdr3_aa = 'None'
             productive = 'False'
-            if not cdr3 == 'null':
-                cdr3_aa = str(Seq(cdr3).translate())
-                if (int(len(cdr3)) % 3 == 0) and (not '*' in cdr3_aa):
-                    productive = 'True'
             temp = assignment[assignment[1]==name]
             read_list = [i for i in temp[0].tolist() if i.split('_')[0] in name]
             reads = str(len(read_list))
@@ -68,14 +48,20 @@ def fa_to_csv(full_len_fa, assign_file, outdir, chains):
             raw_consensus_id = 'None'
             raw_clonotype_id = 'None'
                 
-            string = ','.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis, raw_clonotype_id, raw_consensus_id])
+            string = '\t'.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis, raw_clonotype_id, raw_consensus_id])
             contigs.write(f'{string}\n')
 
     contigs.close()
-    df_all = pd.read_csv(f'{outdir}/all_contigs.csv', sep=',')
 
-    return df_all
+    df = pd.read_csv(f'{outdir}/all_contigs.csv', sep='\t')
+    df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
+    df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
+    df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
+    df['productive'] = df['cdr3'].apply(lambda x: True if not x=='None' else False)
 
+    df.to_csv(f'{outdir}/all_contigs.csv', sep=',')
+
+    return df
 
 def get_vj_annot(df, chains, pairs):
     fl_pro_pair_df = pd.DataFrame(df.barcode.value_counts())
@@ -156,18 +142,17 @@ class Summarize(Step):
     @utils.add_log
     def process(self):
         df = fa_to_csv(self.full_len_assembly, self.reads_assignment, self.outdir, self.chains)
-        
+
         # gen clonotypes table
         if self.keep_partial:
             df_for_clono = df[df['productive']==True]
         else:
             df_for_clono = df[(df['productive']==True) & (df['full_length']==True)]
 
-        summarize_summary = get_vj_annot(df_for_clono, self.chains, self.paired_groups)
-
         cell_barcodes = set(df_for_clono['barcode'].tolist())
         total_cells =len(cell_barcodes)
 
+        summarize_summary = []
         summarize_summary.append({
             'item': 'Estimated Number of Cells',
             'count': total_cells,
@@ -254,6 +239,8 @@ class Summarize(Step):
                 'total_count': np.nan
             })
         
+        annotation_summary = get_vj_annot(df_for_clono, self.chains, self.paired_groups)
+        summarize_summary = summarize_summary + annotation_summary
         # gen stat file          
         stat_file = self.outdir + '/stat.txt'
         sum_df = pd.DataFrame(summarize_summary, columns=['item', 'count', 'total_count'])

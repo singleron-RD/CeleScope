@@ -11,7 +11,7 @@
       </div>
 
       <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
-        {% for item in summarize_summary[10:] %}
+        {% for item in summarize_summary[:6] %}
           <tr>
           {% for i in item %} 
           <td>{{ i|e }}</td>
@@ -44,7 +44,7 @@
           
       </div>
         <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
-          {% for item in summarize_summary[:10] %}
+          {% for item in summarize_summary[6:] %}
             {% if loop.index <= (loop.length+1)/2 %}
             <tr>
               {% for i in item %} 
@@ -56,7 +56,7 @@
         </table>
   
         <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
-          {% for item in summarize_summary[:10] %}
+          {% for item in summarize_summary[6:] %}
             {% if loop.index > (loop.length+1)/2 %}
             <tr>
               {% for i in item %} 

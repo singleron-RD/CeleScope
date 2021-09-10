@@ -65,7 +65,7 @@ def annotate(sample, thread, outdir, species):
         f'-a {outdir}/{sample}_final.out '
         f'-t {thread} '
         f'-o {outdir}/{sample} '
-        f'--barcode --UMI '
+        f'--barcode --UMI --noImpute '
         f'--readAssignment {outdir}/{sample}_assign.out '
         f'-r {outdir}/{sample}_assembled_reads.fa > {outdir}/{sample}_annot.fa'
     )
