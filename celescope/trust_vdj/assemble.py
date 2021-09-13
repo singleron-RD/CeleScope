@@ -73,6 +73,64 @@ def annotate(sample, thread, outdir, species):
     subprocess.check_call(cmd, shell=True)
 
 
+@utils.add_log
+def fa_to_csv(outdir, sample):
+    # file name
+    full_len_fa = f'{outdir}/{sample}_full_len.fa'
+    assign_file = f'{outdir}/{sample}_assign.out'
+    # reads assignment 
+    assignment = pd.read_csv(assign_file, sep='\t', header=None)
+    assignment['read_barcode'] = assignment[0].apply(lambda x: x.split('_')[0])
+    assignment['contig_barcode'] = assignment[1].apply(lambda x: x.split('_')[0])
+    assignment['match_barcode'] = assignment[['read_barcode', 'contig_barcode']].apply(lambda x: x['read_barcode']==x['contig_barcode'], axis=1)
+    assignment = assignment[assignment['match_barcode']==True]
+    assignment['umi'] = assignment[0].apply(lambda x: x.split('_')[1])
+    # write contig csv
+    contigs = open(f'{outdir}/{sample}_contig.csv', 'w')
+    # contigs.write('barcode\tis_cell\tcontig_id\thigh_confidence\tlength\tchain\tv_gene\td_gene\tj_gene\tc_gene\tfull_length\tproductive\tcdr3\tcdr3_nt\treads\tumis\traw_clonotype_id\traw_consensus_id\n')
+    process_read = 0
+    with pysam.FastxFile(full_len_fa) as fa:
+        for read in fa:
+            name = read.name
+            comment = read.comment
+            attrs = comment.split(' ')
+            barcode = name.split('_')[0]
+            is_cell = 'True'
+            high_confidence = 'True'
+            length = attrs[0]
+            chain = attrs[2][:3]
+            full_length = 'True'
+            v_gene = attrs[2].split('(')[0]
+            d_gene = attrs[3]
+            j_gene = attrs[4].split('(')[0]
+            c_gene = attrs[5]
+            cdr3 = attrs[8].split('=')[1]
+            cdr3_aa = 'None'
+            productive = 'False'
+            temp = assignment[assignment[1]==name]
+            reads = str(len(temp[0].tolist()))
+            umis = str(len(set(temp['umi'].tolist())))
+            raw_consensus_id = 'None'
+            raw_clonotype_id = 'None'
+                
+            string = '\t'.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis, raw_clonotype_id, raw_consensus_id])
+            contigs.write(f'{string}\n')
+            process_read+=1
+            if process_read % 10000 == 0:
+                fa_to_csv.logger.info(f'Processed {process_read} contigs')
+
+    contigs.close()
+
+    # df = pd.read_csv(f'{outdir}/{sample}_contig.csv', sep='\t')
+    # df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
+    # df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
+    # df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
+    # df['productive'] = df['cdr3'].apply(lambda x: True if not x=='None' else False)
+
+    # df.to_csv(f'{outdir}/{sample}_contig.csv', sep=',')
+
+    # return df
+
 class Assemble(Step):
     """
     Features
@@ -119,12 +177,10 @@ class Assemble(Step):
         # dir 
         self.match_out = f'{self.outdir}/match'
         self.assemble_out = f'{self.outdir}/assemble'
-        self.summarize_out = f'{self.outdir}/summarize'
         self.temp_dir = f'{self.assemble_out}/temp'
         # check dir
         utils.check_mkdir(self.match_out)
         utils.check_mkdir(self.assemble_out)
-        utils.check_mkdir(self.summarize_out)
         utils.check_mkdir(self.temp_dir)
 
         # file
@@ -294,6 +350,10 @@ class Assemble(Step):
         with ProcessPoolExecutor(len(idx)-1) as pool:
             for res in pool.map(get_full_len_assembly, temp_dirs, temp_samples):
                 gfl.append(res)
+        mk_csv = []
+        with ProcessPoolExecutor(len(idx)-1) as pool:
+            for res in pool.map(fa_to_csv, temp_dirs, temp_samples):
+                mk_csv.append(res)
 
         # out put assemble results
         temp_outs_fa = glob.glob(f'{self.temp_dir}/temp_*_annot.fa')
@@ -318,7 +378,15 @@ class Assemble(Step):
         string = ' '.join(temp_out_reads_assign)
         cmd = f'cat {string} > {self.assemble_out}/{self.sample}_assign.out'
         Assemble.process.logger.info(cmd)
-        os.system(cmd)       
+        os.system(cmd) 
+
+        temp_contigs = glob.glob(f'{self.temp_dir}/temp_*_contig.csv')
+        string = ' '.join(temp_contigs)
+        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_contig.csv'
+        Assemble.process.logger.info(cmd)
+        os.system(cmd)
+
+        # get_full_len_assembly(self.assemble_out, self.sample)      
 
         temp_out_full_len = glob.glob(f'{self.temp_dir}/temp_*_full_len.fa')
         string = ' '.join(temp_out_full_len)
