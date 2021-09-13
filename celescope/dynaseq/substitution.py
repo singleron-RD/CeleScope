@@ -191,17 +191,17 @@ class Subsitution(Step):
 
 
     def report_prepare(self,outdiv):
-        self.add_data_item(subsitution=outdiv)
+        self.add_data_item(substitution=outdiv)
 
 
 @utils.add_log
-def subsitution(args):
+def substitution(args):
 
-    step_name = "subsitution"
-    subsitution_obj = Subsitution(args, step_name)
-    subsitution_obj.run()
+    step_name = "substitution"
+    substitution_obj = Subsitution(args, step_name)
+    substitution_obj.run()
 
-def get_opts_subsitution(parser, sub_program):
+def get_opts_substitution(parser, sub_program):
     if sub_program:
         parser.add_argument('--bam', help='bam file from conversion step', required=True)
         parser = s_common(parser) 
