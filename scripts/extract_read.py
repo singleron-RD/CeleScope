@@ -64,7 +64,7 @@ class Extract_read():
 
 
 def main():
-    parser = argparse.ArgumentParser(description='plot snp', formatter_class=ArgFormatter) 
+    parser = argparse.ArgumentParser(description='Extract fq1 and fq2 reads according to barcode.', formatter_class=ArgFormatter) 
     parser.add_argument("--barcode_file", help="file with barcode to extract", required=True)
     parser.add_argument("--match_dir", help=HELP_DICT['match_dir'], required=True)
     parser.add_argument("--R1_read", help='R1 read path.')

@@ -16,8 +16,8 @@ class Multi_dynaseq(Multi):
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
-    def subsitution(self, sample):
-        step = 'subsitution'
+    def substitution(self, sample):
+        step = 'substitution'
         bam = f'{self.outdir_dic[sample]["conversion"]}/{sample}.PosTag.bam'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (

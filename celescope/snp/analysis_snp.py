@@ -158,7 +158,7 @@ def analysis_snp(args):
 
 
 def get_opts_analysis_snp(parser, sub_program):
-    parser.add_argument('--annovar_config', help='annovar soft config file.', required=True)
+    parser.add_argument('--annovar_config', help='ANNOVAR config file.', required=True)
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)

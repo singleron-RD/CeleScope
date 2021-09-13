@@ -5,15 +5,19 @@ from celescope.tools.multi import Multi
 class Multi_snp(Multi):
     """
     Usage
+
+    ### Make a snp reference genomeDir
+
+    1. Run `celescope rna mkref`. If you already have a rna genomeDir, you can use it and skip this step.
+    2. Run `celescope snp mkref` under the rna genomeDir. Check [mkref.md](./mkref.md) for help.
+
+    ### Install ANNOVAR, download the annotation database and write a annovar config file.
+    https://annovar.openbioinformatics.org/en/latest/user-guide/download/
+
     ```
-    multi_snp\\
-        --mapfile ./test1.mapfile\\
-        --genomeDir {genomeDir after running celescope snp mkref}\\
-        --thread 10\\
-        --mod shell\\
-        --gene_list gene_list.tsv\\
-        --annovar_config annovar.config\\
+    perl /Public/Software/annovar/annotate_variation.pl -downdb -buildver hg38 -webfrom annovar cosmic70 humandb/
     ```
+
     annovar_config file
     ```
     [ANNOVAR]
@@ -23,6 +27,36 @@ class Multi_snp(Multi):
     protocol = refGene,cosmic70  
     operation = g,f  
     ```
+
+    ### Run multi_snp
+    There are two ways to run `multi_snp`
+
+    1. Do not perform consensus before alignment and report read count(recommended for data generated with FocuSCOPE kit).
+
+    ```
+    multi_snp\\
+        --mapfile ./test1.mapfile\\
+        --genomeDir {genomeDir after running celescope snp mkref}\\
+        --thread 10\\
+        --mod shell\\
+        --gene_list gene_list.tsv\\
+        --annovar_config annovar.config\\
+        --not_consensus
+    ```
+
+    2. Do consensus before alignment and report UMI count. 
+
+    ```
+    multi_snp\\
+        --mapfile ./test1.mapfile\\
+        --genomeDir {genomeDir after running celescope snp mkref}\\
+        --thread 10\\
+        --mod shell\\
+        --gene_list gene_list.tsv\\
+        --annovar_config annovar.config\\
+        --min_support_read 1
+    ```
+
     """
 
     def star(self, sample):

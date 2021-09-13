@@ -11,6 +11,10 @@
 
 `--split_matrix` If used, will split scRNA-Seq matrix file according to tag assignment.
 
+`--split_vdj` If used, will split scRNA-Seq vdj count file according to tag assignment.
+
+`--vdj_dir` Match celescope vdj directory. Required when --split_vdj is specified.
+
 `--umi_tag_file` UMI tag file.
 
 `--match_dir` Match celescope scRNA-Seq directory.

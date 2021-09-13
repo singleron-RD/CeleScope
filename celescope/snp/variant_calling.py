@@ -227,6 +227,7 @@ class Variant_calling(Step):
         cmd = (
             f'gatk '
             f'SplitNCigarReads '
+            f'--do-not-fix-overhangs '
             f'-R {self.fasta} '
             f'-I {self.args.bam} '
             f'-O {self.splitN_bam} '
