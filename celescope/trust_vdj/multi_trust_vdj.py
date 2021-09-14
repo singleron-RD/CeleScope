@@ -21,7 +21,7 @@ class Multi_trust_vdj(Multi):
         full_len_assembly = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_full_len.fa'
         reads_assignment = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_assign.out'
         assembled_fa = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_assembled_reads.fa'
-        fq2 = f'{self.outdir_dic[sample]["assemble"]}/match/{sample}_matched_R2.fq'
+        fq2 = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
         cmd = (
             f'{cmd_line} '
             f'--full_len_assembly {full_len_assembly} '

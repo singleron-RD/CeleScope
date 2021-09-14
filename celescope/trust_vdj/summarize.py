@@ -96,9 +96,15 @@ class Summarize(Step):
         df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
         df['productive'] = df['cdr3'].apply(lambda x: True if not x=='None' else False)
 
-        df.to_csv(f'{self.outdir}/../03.assemble/assemble/{self.sample}_contig.csv', sep=',')
-        df = df.sort_values(by='umis', ascending=False)
-        df_for_clono = df.drop_duplicates(['barcode', 'chain'])
+        df.to_csv(f'{self.outdir}/{self.sample}_contig.csv', sep=',', index=False)
+        # df = df.sort_values(by='umis', ascending=False)
+        igh = df[df['chain']=='IGH']
+        temp = df[df['chain']!='IGH']
+        temp = temp.sort_values(by='umis', ascending=False)
+        temp = temp.drop_duplicates(['barcode'])
+        df_for_clono = pd.concat([igh, temp], ignore_index=True)
+        df_for_clono = df_for_clono.sort_values(by='umis', ascending=False)
+        df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
 
         # gen clonotypes table
 
@@ -219,7 +225,7 @@ def get_opts_summarize(parser, sub_program):
         parser = s_common(parser)
         parser.add_argument('--full_len_assembly', help='Full length assembly fasta file.', required=True)
         parser.add_argument('--reads_assignment', help='File records reads assigned to contigs.', required=True)
-        parser.add_argument('--fq2', help='Matched R2 reads with scRNA-seq.', required=True)
+        parser.add_argument('--fq2', help='Cutadapt R2 reads.', required=True)
         parser.add_argument('--assembled_fa', help='Read used for assembly', required=True)
 
 
