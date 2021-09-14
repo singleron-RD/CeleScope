@@ -160,7 +160,7 @@ class Assemble(Step):
         self.umiRange = args.umiRange
         self.match_dir = args.match_dir
         self.trimLevel = args.trimLevel
-        self.expect_cells = int(args.expect_cells)
+        self.UMI_min = args.UMI_min
 
         # summarys
         self.match_summary = []
@@ -206,7 +206,7 @@ class Assemble(Step):
                 raise Exception('No matched barcodes found! Please check your match dir!')
             for cb in matched_cbs:
                 for read in read_dict[cb]:
-                    umi = attr[1]
+                    umi = read.name.split('_')[1]
                     qual = 'F' * len(cb + umi)
                     seq1 = f'@{read.name}\n{cb}{umi}\n+\n{qual}\n'
                     out_fq1.write(seq1)
@@ -288,9 +288,12 @@ class Assemble(Step):
                             'read_count': read_count_list, 
                             'UMI': umi_count_list})
         df = df.sort_values(by='UMI', ascending=False)
-        RANK = int(self.expect_cells / 100)
-        rank_UMI = df.iloc[RANK, :]["UMI"]
-        UMI_min = int(rank_UMI / 10)
+        if self.UMI_min == "auto":
+            RANK = 20
+            rank_UMI = df.iloc[RANK, :]["UMI"]
+            UMI_min = int(rank_UMI / 10)
+        else:
+            UMI_min = int(self.UMI_min)
         df["mark"] = df["UMI"].apply(
             lambda x: "CB" if (x >= UMI_min) else "UB")
 
@@ -423,4 +426,4 @@ def get_opts_assemble(parser, sub_program):
     parser.add_argument('--barcodeRange', help='Barcode range in fq1, INT INT CHAR.', default='0 23 +') 
     parser.add_argument('--umiRange', help='UMI range in fq1, INT INT CHAR.', default='24 -1 +')
     parser.add_argument('--trimLevel', help='INT: 0: no trim; 1: trim low quality; 2: trim unmatched.', default=1)
-    parser.add_argument('--expect_cells', help='Expected Cells number, INT.', default=3000)
+    parser.add_argument('--UMI_min', help='UMI number, INT.', default='auto')
