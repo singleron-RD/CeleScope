@@ -4,6 +4,7 @@
  ### Changed
 
  ### Fixed
+ - Fix a bug where `celescope.fusion.count_fusion` do not recognize fusion reads correctly.
 
  ### Removed
 
