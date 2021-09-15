@@ -30,7 +30,7 @@ celescope fusion mkref \
 `--fusion_pos` fusion position file. A two column tab-delimited text file with header.
 "pos" is the end postion of the first gene(1-based).
 e.g.  
-tag	pos  
+name	pos  
 PML_3	183  
 PML_4	254  
 PML_5	326  
