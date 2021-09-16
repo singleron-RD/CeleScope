@@ -387,9 +387,7 @@ class Assemble(Step):
         string = ' '.join(temp_contigs)
         cmd = f'cat {string} > {self.assemble_out}/{self.sample}_contig.csv'
         Assemble.process.logger.info(cmd)
-        os.system(cmd)
-
-        # get_full_len_assembly(self.assemble_out, self.sample)      
+        os.system(cmd)     
 
         temp_out_full_len = glob.glob(f'{self.temp_dir}/temp_*_full_len.fa')
         string = ' '.join(temp_out_full_len)

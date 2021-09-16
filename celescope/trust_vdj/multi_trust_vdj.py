@@ -18,13 +18,11 @@ class Multi_trust_vdj(Multi):
     def summarize(self, sample):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
-        full_len_assembly = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_full_len.fa'
         reads_assignment = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_assign.out'
         assembled_fa = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_assembled_reads.fa'
         fq2 = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
         cmd = (
             f'{cmd_line} '
-            f'--full_len_assembly {full_len_assembly} '
             f'--reads_assignment {reads_assignment} '
             f'--assembled_fa {assembled_fa} '
             f'--fq2 {fq2} '

@@ -11,7 +11,7 @@ from celescope.tools.cellranger3 import get_plot_elements
 
 
 def get_vj_annot(df, chains, pairs):
-    fl_pro_pair_df = pd.DataFrame(df.barcode.value_counts())
+    fl_pro_pair_df = pd.DataFrame(df[df['productive']==True].barcode.value_counts())
     fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']>=2]
     l = []
     cell_nums = len(set(df['barcode'].tolist()))
@@ -73,7 +73,6 @@ class Summarize(Step):
         self.outdir = args.outdir
         self.sample = args.sample
         self.seqtype = args.seqtype
-        self.full_len_assembly = args.full_len_assembly
         self.reads_assignment = args.reads_assignment
         self.fq2 = args.fq2
         self.assembled_fa = args.assembled_fa
@@ -87,28 +86,31 @@ class Summarize(Step):
     
     @utils.add_log
     def process(self):
-        # df = fa_to_csv(self.full_len_assembly, self.reads_assignment, self.outdir, self.chains)
         df = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/{self.sample}_contig.csv', sep='\t', header=None)
         df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'raw_clonotype_id', 'raw_consensus_id']
 
         df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
         df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
         df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
-        df['productive'] = df['cdr3'].apply(lambda x: True if not x=='None' else False)
+        df['productive'] = df['cdr3'].apply(lambda x: False if x=='None' else True)
 
         df.to_csv(f'{self.outdir}/{self.sample}_contig.csv', sep=',', index=False)
         # df = df.sort_values(by='umis', ascending=False)
-        igh = df[df['chain']=='IGH']
-        temp = df[df['chain']!='IGH']
-        temp = temp.sort_values(by='umis', ascending=False)
-        temp = temp.drop_duplicates(['barcode'])
-        df_for_clono = pd.concat([igh, temp], ignore_index=True)
-        df_for_clono = df_for_clono.sort_values(by='umis', ascending=False)
-        df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
-
+        if self.seqtype == 'BCR':
+            igh = df[df['chain']=='IGH']
+            temp = df[(df['chain']=='IGK') | (df['chain']=='IGL')]
+            temp = temp.sort_values(by='umis', ascending=False)
+            temp = temp.drop_duplicates(['barcode'])
+            df_for_clono = pd.concat([igh, temp], ignore_index=True)
+            df_for_clono = df_for_clono.sort_values(by='umis', ascending=False)
+            df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
+        else:
+            df = df[(df['chain']=='TRA') | (df['chain']=='TRB')]
+            df = df.sort_values(by='umis', ascending=False)
+            df_for_clono = df.drop_duplicates(['barcode', 'chain'])
         # gen clonotypes table
-
-        cell_barcodes = set(df_for_clono['barcode'].tolist())
+        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+        cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
         total_cells =len(cell_barcodes)
 
         summarize_summary = []
@@ -118,13 +120,13 @@ class Summarize(Step):
             'total_count': np.nan
         })
 
-        df_for_clono['chain_cdr3aa'] = df_for_clono[['chain', 'cdr3']].apply(':'.join, axis=1)   
+        df_for_clono_pro['chain_cdr3aa'] = df_for_clono_pro[['chain', 'cdr3']].apply(':'.join, axis=1)   
 
-        cbs = set(df_for_clono['barcode'].tolist())
+        cbs = set(df_for_clono_pro['barcode'].tolist())
         clonotypes = open(f'{self.outdir}/clonotypes.csv', 'w')
         clonotypes.write('barcode\tcdr3s_aa\n')
         for cb in cbs:
-            temp = df_for_clono[df_for_clono['barcode']==cb]
+            temp = df_for_clono_pro[df_for_clono_pro['barcode']==cb]
             temp = temp.sort_values(by='chain', ascending=True)
             chain_list = temp['chain_cdr3aa'].tolist()
             chain_str = ';'.join(chain_list)
@@ -191,7 +193,7 @@ class Summarize(Step):
             })
         
         for c in self.chains:
-            temp_df = df_for_clono[df_for_clono['chain']==c]
+            temp_df = df_for_clono_pro[df_for_clono_pro['chain']==c]
             summarize_summary.append({
                 'item': f'Median {c} UMIs per Cell',
                 'count': int(temp_df['umis'].median()),
@@ -214,7 +216,7 @@ class Summarize(Step):
 
 @utils.add_log
 def summarize(args):
-    step_name = 'summarize'
+    step_name = f'{args.seqtype}_summarize'
     summarize_obj = Summarize(args, step_name)
     summarize_obj.run()
 
@@ -223,7 +225,6 @@ def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--full_len_assembly', help='Full length assembly fasta file.', required=True)
         parser.add_argument('--reads_assignment', help='File records reads assigned to contigs.', required=True)
         parser.add_argument('--fq2', help='Cutadapt R2 reads.', required=True)
         parser.add_argument('--assembled_fa', help='Read used for assembly', required=True)
