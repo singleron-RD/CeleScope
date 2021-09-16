@@ -141,9 +141,13 @@
       {% include "html/trust_vdj/assemble_summary.html"%}
       {% endif %} 
 
-      {% if summarize_summary is defined %}
-      {% include "html/trust_vdj/summarize_summary.html"%}
+      {% if TCR_summarize_summary is defined %}
+      {% include "html/trust_vdj/TCR_summarize_summary.html"%}
       {% endif %}      
+
+      {% if BCR_summarize_summary is defined %}
+      {% include "html/trust_vdj/BCR_summarize_summary.html"%}
+      {% endif %}   
 
       {% if table_dict is defined %}
       {% include "html/trust_vdj/clonotypes.html"%}
