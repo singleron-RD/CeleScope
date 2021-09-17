@@ -1,5 +1,5 @@
 ## Features
-- Perform variant calling.
+- Perform variant calling at single cell level.
 
 ## Output
 
@@ -7,10 +7,17 @@
 
 `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
 
-`{sample}_variant_count.tsv`  Reference and variant supporting reads/UMIs count.
+`{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 
-`{sample}_support.mtx` Support matrix, only high quality bases are considered.   
-0 : no reads/UMIs cover the position.  
+`{sample}_filter.vcf` VCF file after filtering. Invalid `CID`s are removed from the `INFO` column.
+
+`{sample}_variant_count.tsv`  Reference and variant supporting reads/UMIs counts.
+
+`{sample}_filter_variant_count.tsv`  Reference and variant supporting reads/UMIs counts after filtering.
+
+`{sample}_support.mtx` Support matrix in [Matrix Market Exchange Formats](https://math.nist.gov/MatrixMarket/formats.html). Rows 
+are variants(VID) and columns are cells(CID). The value can be 1, 2 or 3.
+
 1 : all reads/UMIs at the position support the ref allele.  
 2 : all reads/UMIs at the position support the alt allele.  
 3 : one or more reads/UMIs support both the alt and the ref allele.  

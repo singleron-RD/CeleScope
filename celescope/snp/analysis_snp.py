@@ -13,6 +13,15 @@ from celescope.__init__ import HELP_DICT
 
 
 class Analysis_variant(Step, AnalysisMixin):
+    """
+    Features
+    - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+
+    Output
+    - `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
+
+    - `{sample}_variant_table.tsv` Formatted `multianno` file with `nCell`(number of cells with the variant) added.
+    """
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
