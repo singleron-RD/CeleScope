@@ -7,6 +7,9 @@
     --mod shell
 ```
 
+If Single nuclei RNA-Seq is used, you need to add `--gtf_type gene` to include reads mapped to 
+intronic regions.
+
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
