@@ -310,22 +310,6 @@ class Count(Step):
         df_sum = df_sum.sort_values(col, ascending=False)
         return df_sum
 
-    '''
-    @utils.add_log
-    def plot_barcode_UMI(df_sum, threshold, expected_cell_num, cell_num, outdir, sample, cell_calling_method, col='UMI'):
-        out_plot = f'{outdir}/{sample}_barcode_UMI_plot.pdf'
-        import matplotlib
-        import matplotlib.pyplot as plt
-        fig = plt.figure()
-        plt.plot(df_sum['UMI'])
-        plt.hlines(threshold, 0, cell_num, linestyle='dashed')
-        plt.vlines(cell_num, 0, threshold, linestyle='dashed')
-        plt.title('cell_calling_method: %s, expected_cell_num: %s\n %s threshold: %s, cell num: %s' %
-                (cell_calling_method, expected_cell_num, col, threshold, cell_num))
-        plt.loglog()
-        plt.savefig(out_plot)
-    '''
-
     def get_cell_stats(self, df_sum, cell_bc):
         df_sum.loc[:, 'mark'] = 'UB'
         df_sum.loc[df_sum.index.isin(cell_bc), 'mark'] = 'CB'
