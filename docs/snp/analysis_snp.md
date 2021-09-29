@@ -1,3 +1,10 @@
+## Features
+- Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+
+## Output
+- `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
+
+- `{sample}_variant_table.tsv` Formatted `multianno` file with `nCell`(number of cells with the variant) added.
 
 
 ## Arguments

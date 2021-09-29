@@ -15,6 +15,15 @@ from celescope.__init__ import HELP_DICT
 
 
 class Analysis_variant(Step, AnalysisMixin):
+    """
+    Features
+    - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+
+    Output
+    - `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
+
+    - `{sample}_variant_table.tsv` Formatted `multianno` file with `nCell`(number of cells with the variant) added.
+    """
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
@@ -24,8 +33,15 @@ class Analysis_variant(Step, AnalysisMixin):
         self.filter_vcf = args.filter_vcf
         self.annovar_config = args.annovar_config
         self.match_dir = args.match_dir
-        self.vcf_GT = None
+
+        # parse
+        self.annovar_section = self.read_annovar_config()
+
+        # out
         self.nell_file = args.ncell_file
+        self.vcf_GT = f'{self.out_prefix}_addGT.vcf'
+        buildver = self.annovar_section['buildver']
+        self.annovar_file = f'{self.out_prefix}.{buildver}_multianno.txt'
 
     def get_df_count_tsne(self):
         '''
@@ -72,16 +88,12 @@ class Analysis_variant(Step, AnalysisMixin):
         '''
         add genotype to VCF file to avoid vcf parse error
         '''
-        vcf = pysam.VariantFile(self.filter_vcf, 'r')
-        out_vcf_file = f'{self.outdir}/{self.sample}_addGT.vcf'
-        out_vcf = pysam.VariantFile(out_vcf_file, 'w', header=vcf.header)
-        for rec in vcf:
-            for sample in rec.samples:
-                rec.samples[sample]["GT"] = (1, 1)
-                out_vcf.write(rec)
-        vcf.close()
-        out_vcf.close()
-        self.vcf_GT = out_vcf_file
+        with pysam.VariantFile(self.filter_vcf, 'r') as vcf:
+            with pysam.VariantFile(self.vcf_GT, 'w', header=vcf.header) as vcf_GT:
+                for rec in vcf:
+                    for sample in rec.samples:
+                        rec.samples[sample]["GT"] = (1, 1)
+                        vcf_GT.write(rec)
 
     def get_df_table(self):
         
@@ -126,13 +138,19 @@ class Analysis_variant(Step, AnalysisMixin):
         self.add_data_item(table_dict=table_dict)
         self.clean_up()
 
-    @utils.add_log
-    def annovar(self):
-
-        # config
+    def read_annovar_config(self):
+        '''
+        read annovar config file
+        '''
         config = configparser.ConfigParser()
         config.read(self.annovar_config)
         section = config['ANNOVAR']
+        return section
+
+    @utils.add_log
+    def annovar(self):
+
+        section = self.annovar_section
         annovar_dir = section['dir']
         db = section['db']
         buildver = section['buildver']
@@ -164,8 +182,7 @@ class Analysis_variant(Step, AnalysisMixin):
         subprocess.check_call(cmd, shell=True)
 
         # df
-        annovar_file = f'{self.outdir}/{self.sample}.{buildver}_multianno.txt'
-        df_annovar = utils.parse_annovar(annovar_file)
+        df_annovar = utils.parse_annovar(self.annovar_file)
         return df_annovar
 
 

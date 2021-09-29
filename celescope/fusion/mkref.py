@@ -84,7 +84,7 @@ def get_opts_mkref(parser, sub_program):
 fusion position file. A two column tab-delimited text file with header.
 "pos" is the end postion of the first gene(1-based).
 e.g.  
-tag\tpos  
+name\tpos  
 PML_3\t183  
 PML_4\t254  
 PML_5\t326  
