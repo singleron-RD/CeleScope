@@ -8,7 +8,7 @@ class Multi_tag(Multi):
     ```
     multi_tag \\
         --mapfile ./tag.mapfile\\
-        --barcode_fasta ./smk_barcode.fa\\
+        --barcode_fasta ./tag_barcode.fasta\\
         --fq_pattern L25C45\\
         --mod shell
     ```
