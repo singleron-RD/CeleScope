@@ -1,7 +1,6 @@
 
 import configparser
 import subprocess
-from numpy.lib.utils import deprecate
 
 import pandas as pd
 import pysam
