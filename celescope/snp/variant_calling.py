@@ -1,3 +1,4 @@
+from operator import index
 import os
 import subprocess
 from collections import defaultdict
@@ -21,6 +22,12 @@ OTSU_READ_MIN = 30
 def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
     '''
     parse vcf into df
+
+     chrom        pos  alleles ref alt VID
+      11     534242   (A, G)   A   G   1
+      11     534313   (A, C)   A   C   2
+       3  179218234   (G, A)   G   A   3
+       7  140753316   (A, C)   A   C   4
     '''
     vcf = pysam.VariantFile(vcf_file)
     rec_dict_list = []
@@ -48,15 +55,14 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
 def read_CID(CID_file):
     df_index = pd.read_csv(CID_file, sep='\t', index_col=0, dtype=object)
     df_valid = df_index[df_index['valid'] == 'True']
+    #df_valid为有效的细胞
     return df_index, df_valid
-
 
 @utils.add_log
 def call_snp(CID, outdir, fasta):
 
     call_snp.logger.info('Processing Cell %s' % CID)
     bam = f'{outdir}/cells/cell{CID}/cell{CID}.bam'
-    # sort
     sorted_bam = f'{outdir}/cells/cell{CID}/cell{CID}_sorted.bam'
     cmd_sort = (
         f'samtools sort {bam} -o {sorted_bam}'
@@ -116,6 +122,17 @@ def call_snp(CID, outdir, fasta):
 def map_vcf_row(row, df_cell_vcf):
     """
     get ref and UMI for each variant
+
+    merged_vcf
+    #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	.//test1/07.variant_calling/cells/cell458/cell458_sorted.bam
+	114716084	.	T	C	.	.	VID=1;CID=4229	.	.
+	179218208	.	A	T	.	.	VID=2;CID=458	.	.
+	179218257	.	A	G	.	.	VID=3;CID=4229	.	.
+	179230350	.	A	G	.	.	VID=4;CID=4229	.	.
+	55173925	.	T	A	.	.	VID=5;CID=7996	.	.
+	55173995	.	C	CA	.	.	VID=6;CID=7996	.	.
+ 	55181378	.	C	T	.	.	VID=7;CID=458,4229,4621,7996	.	.
+	55181398	.	T	A	.	.	VID=8;CID=458,4229,4621,7996	.	.
     Args:
         row: each row from merged_vcf
     """
@@ -190,13 +207,9 @@ class Variant_calling(Step):
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
-
-        # set
         self.barcodes, _num = utils.read_barcode_file(args.match_dir)
         self.fasta = parse_genomeDir_rna(args.genomeDir)['fasta']
         self.df_vcf = None
-
-        # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
         self.CID_file = f'{self.out_prefix}_CID.tsv'
         self.VID_file = f'{self.out_prefix}_VID.tsv'
@@ -206,6 +219,7 @@ class Variant_calling(Step):
         self.otsu_dir = f'{self.out_prefix}_otsu/'
         self.otsu_threshold_file = f'{self.otsu_dir}/{self.sample}_otsu_threshold.tsv'
         self.filter_variant_count_file = f'{self.out_prefix}_filter_variant_count.tsv'
+        self.summarize_capture_vid = f'{self.out_prefix}_variant_ncell.tsv'
         if args.min_support_read == 'auto':
             utils.check_mkdir(self.otsu_dir)
         self.support_matrix_file = f'{self.out_prefix}_support.mtx'
@@ -233,8 +247,7 @@ class Variant_calling(Step):
             count_dict: UMI counts per cell
             CID: assign ID(1-based) to cells
         '''
-
-        # init
+        # init 
         bam_dict = defaultdict(list)
         CID_dict = defaultdict(dict)
         cells_dir = f'{self.outdir}/cells/'
@@ -250,7 +263,6 @@ class Variant_calling(Step):
             if barcode in self.barcodes:
                 CID = self.barcodes.index(barcode) + 1
                 read.set_tag(tag='CL', value=f'CELL{CID}', value_type='Z')
-
                 # assign read to barcode
                 bam_dict[barcode].append(read)
         samfile.close()
@@ -262,7 +274,6 @@ class Variant_calling(Step):
             CID += 1
             CID_dict[CID]['barcode'] = barcode
             CID_dict[CID]['valid'] = False
-
             # out bam
             if barcode in bam_dict:
                 cell_dir = f'{cells_dir}/cell{CID}'
@@ -402,7 +413,38 @@ class Variant_calling(Step):
         else:
             min_support_read = int(self.args.min_support_read)
             df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
+
+        df_filter.loc[:,"vid_judge"] = df_filter.loc[:,"ref_count"] + df_filter.loc[:,"alt_count"]
+        df_filter_tmp = df_filter[df_filter.loc[:,"vid_judge"] > 0]
+
+        #summarize
+        vid_summarize = {}
+        #add vid col
+        vid = list(df_filter_tmp.loc[:,"VID"])
+        vid_summarize["VID"] = list(set(vid))
+        #add cell colum
+        vid_summarize["ncell_cover"] = list(df_filter_tmp.groupby("VID")["vid_judge"].count())
+        #count table
+        variant_count =  (df_filter_tmp.loc[:,"alt_count"] != 0).astype(int)
+        ref_count =  (df_filter_tmp.loc[:,"ref_count"] != 0).astype(int)
+        #add VID colums 
+        variant_count["VID"] = df_filter_tmp.loc[:,"VID"]
+        ref_count["VID"] = df_filter_tmp.loc[:,"VID"]
+        
+        vid_summarize["ncell_ref"] = list(ref_count.groupby("VID").sum())
+        vid_summarize["ncell_alt"] = list(variant_count.groupby("VID").sum())
+        vid_summarize = pd.DataFrame(vid_summarize)
+        
+        #keep number of cells with variant read count only and  number of cells with reference read count only
+        vid_summarize.loc[:,"both_ref_and_variant"] =  (vid_summarize.loc[:,"ncell_ref"] + vid_summarize.loc[:,"ncell_alt"]) - vid_summarize.loc[:,"ncell_cover"] 
+        vid_summarize.loc[:,"ncell_ref"] = vid_summarize.loc[:,"ncell_ref"] - vid_summarize.loc[:,"both_ref_and_variant"]
+        vid_summarize.loc[:,"ncell_alt"] = vid_summarize.loc[:,"ncell_alt"] - vid_summarize.loc[:,"both_ref_and_variant"]
+
+        df_filter = df_filter.drop("vid_judge",axis=1)
         df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
+        
+        vid_summarize = vid_summarize.drop("both_ref_and_variant",axis=1)
+        vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
 
     @utils.add_log
     def filter_vcf(self):
