@@ -1,8 +1,7 @@
+from operator import index
+import os
 import subprocess
 from collections import defaultdict
-from multiprocessing import Pool
-from itertools import groupby
-from functools import partial
 from concurrent.futures import ProcessPoolExecutor
 
 import pandas as pd
@@ -48,17 +47,15 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
 
 
 def read_CID(CID_file):
-    df_index = pd.read_csv(CID_file, sep='\t', index_col=0).reset_index()
-    df_valid = df_index[df_index['valid'] == True]
+    df_index = pd.read_csv(CID_file, sep='\t', index_col=0, dtype=object)
+    df_valid = df_index[df_index['valid'] == 'True']
     return df_index, df_valid
 
-
 @utils.add_log
-def call_snp(outdir, fasta, CID):
+def call_snp(CID, outdir, fasta):
 
     call_snp.logger.info('Processing Cell %s' % CID)
     bam = f'{outdir}/cells/cell{CID}/cell{CID}.bam'
-    # sort
     sorted_bam = f'{outdir}/cells/cell{CID}/cell{CID}_sorted.bam'
     cmd_sort = (
         f'samtools sort {bam} -o {sorted_bam}'
@@ -118,8 +115,7 @@ def call_snp(outdir, fasta, CID):
 def map_vcf_row(row, df_cell_vcf):
     """
     get ref and UMI for each variant
-    Args:
-        row: each row from merged_vcf
+    row: each row from merged_vcf
     """
     pos = row['pos']
     chrom = row['chrom']
@@ -192,42 +188,28 @@ class Variant_calling(Step):
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
-
-        # set
         self.barcodes, _num = utils.read_barcode_file(args.match_dir)
         self.fasta = parse_genomeDir_rna(args.genomeDir)['fasta']
         self.df_vcf = None
-
-        # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
-        self.splitN_bam_name_sorted = f'{self.out_prefix}_splitN_name_sorted.bam'
         self.CID_file = f'{self.out_prefix}_CID.tsv'
         self.VID_file = f'{self.out_prefix}_VID.tsv'
-        self.cells_dir = f'{self.outdir}/cells/'
         self.merged_vcf_file = f'{self.out_prefix}_merged.vcf'
         self.filter_vcf_file = f'{self.out_prefix}_filter.vcf'
         self.variant_count_file = f'{self.out_prefix}_variant_count.tsv'
         self.otsu_dir = f'{self.out_prefix}_otsu/'
         self.otsu_threshold_file = f'{self.otsu_dir}/{self.sample}_otsu_threshold.tsv'
         self.filter_variant_count_file = f'{self.out_prefix}_filter_variant_count.tsv'
+        self.summarize_capture_vid = f'{self.out_prefix}_variant_ncell.tsv'
         if args.min_support_read == 'auto':
             utils.check_mkdir(self.otsu_dir)
         self.support_matrix_file = f'{self.out_prefix}_support.mtx'
-
-        # run
-        self.CID_dict = defaultdict(dict)
-        for index, barcode in enumerate(self.barcodes):
-            CID = index + 1
-            self.CID_dict[barcode]['CID'] = CID
-            self.CID_dict[barcode]['valid'] = False
-
 
     @utils.add_log
     def SplitNCigarReads(self):
         cmd = (
             f'gatk '
             f'SplitNCigarReads '
-            f'--do-not-fix-overhangs '
             f'-R {self.fasta} '
             f'-I {self.args.bam} '
             f'-O {self.splitN_bam} '
@@ -246,43 +228,61 @@ class Variant_calling(Step):
             count_dict: UMI counts per cell
             CID: assign ID(1-based) to cells
         '''
-
-        # name sort
-        samtools_runner = utils.Samtools(self.splitN_bam, self.splitN_bam_name_sorted, threads=self.thread)
-        samtools_runner.sort_bam(by='name', print_log=True)
-
-        def keyfunc(x):
-            # return barcode
-            return x.query_name.split('_', 1)[0]
+        # init 
+        bam_dict = defaultdict(list)
+        CID_dict = defaultdict(dict)
+        cells_dir = f'{self.outdir}/cells/'
 
         # read bam and split
-        with pysam.AlignmentFile(self.splitN_bam_name_sorted, "rb") as samfile:
-            header = samfile.header
-            for barcode, g in groupby(samfile, keyfunc):
-                if barcode in self.barcodes:
-                    CID = self.barcodes.index(barcode) + 1
-                    self.CID_dict[barcode]['valid'] = True
-                    cell_dir = f'{self.cells_dir}/cell{CID}'
-                    utils.check_mkdir(cell_dir)
-                    cell_bam = f'{self.cells_dir}/cell{CID}/cell{CID}.bam'
-                    with pysam.AlignmentFile(cell_bam, "wb", header=header) as out_bam:
-                        for read in g:
-                            out_bam.write(read)
+        samfile = pysam.AlignmentFile(self.splitN_bam, "rb")
+        header = samfile.header
+        for read in samfile:
+            try:
+                barcode = read.get_tag('CB')
+            except KeyError:
+                continue
+            if barcode in self.barcodes:
+                CID = self.barcodes.index(barcode) + 1
+                read.set_tag(tag='CL', value=f'CELL{CID}', value_type='Z')
+                # assign read to barcode
+                bam_dict[barcode].append(read)
+        samfile.close()
+        self.split_bam.logger.info('writing cell bam...')
+        # write new bam
+        CID = 0
+        for barcode in self.barcodes:
+            # init
+            CID += 1
+            CID_dict[CID]['barcode'] = barcode
+            CID_dict[CID]['valid'] = False
+            # out bam
+            if barcode in bam_dict:
+                cell_dir = f'{cells_dir}/cell{CID}'
+                cell_bam_file = f'{cell_dir}/cell{CID}.bam'
+                if not os.path.exists(cell_dir):
+                    os.makedirs(cell_dir)
+                CID_dict[CID]['valid'] = True
+                cell_bam = pysam.AlignmentFile(
+                    f'{cell_bam_file}', "wb", header=header)
+                for read in bam_dict[barcode]:
+                    cell_bam.write(read)
+                cell_bam.close()
 
-    def write_CID_file(self):
-        # out CID file
-        df_CID = pd.DataFrame(self.CID_dict).T
-        df_CID.index.name = 'barcode'
+        # out CID
+        df_CID = pd.DataFrame(CID_dict).T
+        df_CID.index.name = 'CID'
         df_CID.to_csv(self.CID_file, sep='\t')
 
     @utils.add_log
     def call_all_snp(self):
+        all_res = []
         _df_index, df_valid = self.read_CID()
-        CIDs = df_valid['CID']
-        func = partial(call_snp, self.outdir, self.fasta)
-        with Pool(self.thread) as pool:
-            pool.map(func, CIDs)
-
+        CID_arg = df_valid.index
+        outdir_arg = [self.outdir] * len(CID_arg)
+        fasta_arg = [self.fasta] * len(CID_arg)
+        with ProcessPoolExecutor(self.thread) as pool:
+            for res in pool.map(call_snp, CID_arg, outdir_arg, fasta_arg):
+                all_res.append(res)
 
     def read_CID(self):
         return read_CID(self.CID_file)
@@ -294,7 +294,8 @@ class Variant_calling(Step):
         add VID(variant ID) and CID(cell ID)
         '''
         _df_index, df_valid = self.read_CID()
-        CIDs = list(df_valid['CID'])
+        CIDs = df_valid.index
+
         # variant dict
         v_cols = ['chrom', 'pos', 'alleles']
         v_dict = {}
@@ -320,7 +321,7 @@ class Variant_calling(Step):
             vcf = pysam.VariantFile(vcf_file, 'r')
             header = vcf.header
             vcf.close()
-            return header 
+            return header
         vcf_header = get_vcf_header(CIDs)
         vcf_header.info.add('VID', number=1, type='String', description='Variant ID')
         vcf_header.info.add('CID', number=1, type='String', description='Cell ID')
@@ -359,7 +360,7 @@ class Variant_calling(Step):
         _df_index, df_valid = self.read_CID()
 
         df_UMI_list = []
-        CID_arg = list(df_valid['CID'])
+        CID_arg = list(df_valid.index)
         outdir_arg = [self.outdir] * len(CID_arg)
         df_vcf = parse_vcf(self.merged_vcf_file)
         vcf_arg = [df_vcf] * len(CID_arg)
@@ -393,7 +394,38 @@ class Variant_calling(Step):
         else:
             min_support_read = int(self.args.min_support_read)
             df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
+
+        df_filter.loc[:,"vid_judge"] = df_filter.loc[:,"ref_count"] + df_filter.loc[:,"alt_count"]
+        df_filter_tmp = df_filter[df_filter.loc[:,"vid_judge"] > 0]
+
+        #summarize
+        vid_summarize = {}
+        #add vid col
+        vid = list(df_filter_tmp.loc[:,"VID"])
+        vid_summarize["VID"] = list(set(vid))
+        #add cell colum
+        vid_summarize["ncell_cover"] = list(df_filter_tmp.groupby("VID")["vid_judge"].count())
+        #count table
+        variant_count =  (df_filter_tmp.loc[:,"alt_count"] != 0).astype(int)
+        ref_count =  (df_filter_tmp.loc[:,"ref_count"] != 0).astype(int)
+        #add VID colums 
+        variant_count["VID"] = df_filter_tmp.loc[:,"VID"]
+        ref_count["VID"] = df_filter_tmp.loc[:,"VID"]
+        
+        vid_summarize["ncell_ref"] = list(ref_count.groupby("VID").sum())
+        vid_summarize["ncell_alt"] = list(variant_count.groupby("VID").sum())
+        vid_summarize = pd.DataFrame(vid_summarize)
+        
+        #keep number of cells with variant read count only and  number of cells with reference read count only
+        vid_summarize.loc[:,"both_ref_and_variant"] =  (vid_summarize.loc[:,"ncell_ref"] + vid_summarize.loc[:,"ncell_alt"]) - vid_summarize.loc[:,"ncell_cover"] 
+        vid_summarize.loc[:,"ncell_ref"] = vid_summarize.loc[:,"ncell_ref"] - vid_summarize.loc[:,"both_ref_and_variant"]
+        vid_summarize.loc[:,"ncell_alt"] = vid_summarize.loc[:,"ncell_alt"] - vid_summarize.loc[:,"both_ref_and_variant"]
+
+        df_filter = df_filter.drop("vid_judge",axis=1)
         df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
+        
+        vid_summarize = vid_summarize.drop("both_ref_and_variant",axis=1)
+        vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
 
     @utils.add_log
     def filter_vcf(self):
@@ -432,10 +464,9 @@ class Variant_calling(Step):
         mmwrite(self.support_matrix_file, support_mtx)
 
     def run(self):
-        
+
         self.SplitNCigarReads()
         self.split_bam()
-        self.write_CID_file()
         self.call_all_snp()
         self.merge_vcf()
         self.write_VID_file()
