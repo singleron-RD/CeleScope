@@ -4,6 +4,8 @@ import subprocess
 
 import pandas as pd
 import pysam
+from pyvenn import venn
+import matplotlib
 
 import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin
@@ -113,6 +115,16 @@ class Analysis_variant(Step, AnalysisMixin):
         cols = ['VID', "CID",'Chrom', 'Pos', 'Alleles', 'Gene',  'ncell_cover', 'ncell_alt','mRNA', 'Protein', 'COSMIC']
         df_vcf = df_vcf[cols]
         return df_vcf
+   
+    def get_venn_plot(self):
+        df_top_5 = self.get_df_table().sort_values(by = "ncell_alt",ascending=False).iloc[:5,:]
+        cid = df_top_5.loc[:,"CID"].to_list()
+        vid = df_top_5.loc[:,"VID"].to_list()
+        #venn plot
+        labels = venn.get_labels(cid, fill=['logic','number','percent'])
+        fig,ax = venn.venn5(labels, names=vid)
+        fig.savefig(f'{self.outdir}/{self.sample}_variant_top5.jpg')
+
 
     def run(self):
         self.add_GT()
@@ -121,6 +133,7 @@ class Analysis_variant(Step, AnalysisMixin):
         count_tsne = self.get_count_tsne(df_count_tsne)
         df_vcf = self.get_df_table()
         table_dict = Step.get_table(title='Variant table', table_id='variant_table', df_table=df_vcf)
+        self.get_venn_plot()
 
         self.add_data_item(cluster_tsne=cluster_tsne)
         self.add_data_item(count_tsne=count_tsne)
