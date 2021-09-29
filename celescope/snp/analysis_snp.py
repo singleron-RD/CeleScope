@@ -23,6 +23,7 @@ class Analysis_variant(Step, AnalysisMixin):
         self.annovar_config = args.annovar_config
         self.match_dir = args.match_dir
         self.vcf_GT = None
+        self.nell_file = args.ncell_file
 
     def get_df_count_tsne(self):
         '''
@@ -85,12 +86,19 @@ class Analysis_variant(Step, AnalysisMixin):
         df_vcf = utils.parse_vcf(self.vcf_GT, infos=['VID', 'CID'])
         df_annovar = self.annovar()
         df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
+        ncell_df = pd.read_table(self.nell_file,sep = "\t")
+        ncell_df.loc[:,"VID"] = ncell_df.loc[:,"VID"].astype(str)
         df_vcf["nCell"] = df_vcf["CID"].apply(func=lambda row: 1 if isinstance(row, str) else len(row))
 
-        out_df_vcf = f'{self.outdir}/{self.sample}_variant_table.tsv'
-        df_vcf.to_csv(out_df_vcf, sep='\t', index=False)
+        df_vcf = pd.merge(left = df_vcf,
+                          right = ncell_df,
+                          on = "VID",
+                          how = "left").drop("ncell_ref",axis = 1)
 
-        cols = ['VID', 'Chrom', 'Pos', 'Alleles', 'Gene', 'nCell', 'mRNA', 'Protein', 'COSMIC']
+        out_df_vcf = f'{self.outdir}/{self.sample}_variant_table.tsv'
+        df_vcf.drop("nCell",axis = 1).to_csv(out_df_vcf, sep='\t', index=False)
+
+        cols = ['VID', "CID",'Chrom', 'Pos', 'Alleles', 'Gene',  'ncell_cover', 'ncell_alt','mRNA', 'Protein', 'COSMIC']
         df_vcf = df_vcf[cols]
         return df_vcf
 
@@ -165,3 +173,4 @@ def get_opts_analysis_snp(parser, sub_program):
         parser.add_argument('--filter_vcf', help='filter vcf file.', required=True)
         parser.add_argument('--CID_file', help='CID_file.', required=True)
         parser.add_argument('--filter_variant_count_file', help='filter variant count file.', required=True)
+        parser.add_argument('--ncell_file', help='filter cell count file.', required=True)
