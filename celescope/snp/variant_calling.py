@@ -22,12 +22,6 @@ OTSU_READ_MIN = 30
 def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
     '''
     parse vcf into df
-
-     chrom        pos  alleles ref alt VID
-      11     534242   (A, G)   A   G   1
-      11     534313   (A, C)   A   C   2
-       3  179218234   (G, A)   G   A   3
-       7  140753316   (A, C)   A   C   4
     '''
     vcf = pysam.VariantFile(vcf_file)
     rec_dict_list = []
@@ -55,7 +49,6 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
 def read_CID(CID_file):
     df_index = pd.read_csv(CID_file, sep='\t', index_col=0, dtype=object)
     df_valid = df_index[df_index['valid'] == 'True']
-    #df_valid为有效的细胞
     return df_index, df_valid
 
 @utils.add_log
@@ -122,19 +115,7 @@ def call_snp(CID, outdir, fasta):
 def map_vcf_row(row, df_cell_vcf):
     """
     get ref and UMI for each variant
-
-    merged_vcf
-    #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	.//test1/07.variant_calling/cells/cell458/cell458_sorted.bam
-	114716084	.	T	C	.	.	VID=1;CID=4229	.	.
-	179218208	.	A	T	.	.	VID=2;CID=458	.	.
-	179218257	.	A	G	.	.	VID=3;CID=4229	.	.
-	179230350	.	A	G	.	.	VID=4;CID=4229	.	.
-	55173925	.	T	A	.	.	VID=5;CID=7996	.	.
-	55173995	.	C	CA	.	.	VID=6;CID=7996	.	.
- 	55181378	.	C	T	.	.	VID=7;CID=458,4229,4621,7996	.	.
-	55181398	.	T	A	.	.	VID=8;CID=458,4229,4621,7996	.	.
-    Args:
-        row: each row from merged_vcf
+    row: each row from merged_vcf
     """
     pos = row['pos']
     chrom = row['chrom']
