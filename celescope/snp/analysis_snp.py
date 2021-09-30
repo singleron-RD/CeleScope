@@ -1,4 +1,3 @@
-
 import configparser
 import subprocess
 
@@ -14,6 +13,13 @@ from celescope.__init__ import HELP_DICT
 
 
 class Analysis_variant(Step, AnalysisMixin):
+    """
+    Features
+    - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+    Output
+    - `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
+    - `{sample}_variant_table.tsv` Formatted `multianno` file with `nCell`(number of cells with the variant) added.
+    """
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
@@ -24,6 +30,14 @@ class Analysis_variant(Step, AnalysisMixin):
         self.annovar_config = args.annovar_config
         self.match_dir = args.match_dir
         self.nell_file = args.ncell_file
+
+        # parse
+        self.annovar_section = self.read_annovar_config()
+
+        # out
+        self.vcf_GT = f'{self.out_prefix}_addGT.vcf'
+        buildver = self.annovar_section['buildver']
+        self.annovar_file = f'{self.out_prefix}.{buildver}_multianno.txt'
 
     def get_df_count_tsne(self):
         '''
@@ -97,7 +111,6 @@ class Analysis_variant(Step, AnalysisMixin):
         cols = ['VID', "CID",'Chrom', 'Pos', 'Alleles', 'Gene',  'ncell_cover', 'ncell_alt','mRNA', 'Protein', 'COSMIC']
         df_vcf = df_vcf[cols]
         return df_vcf
-
     def get_venn_plot(self):
         df_top_5 = self.get_df_table().sort_values(by = "ncell_alt",ascending=False).iloc[:5,:]
         plot = {}
@@ -128,7 +141,7 @@ class Analysis_variant(Step, AnalysisMixin):
         df_count_tsne = self.get_df_count_tsne()
         count_tsne = self.get_count_tsne(df_count_tsne)
         df_vcf = self.get_df_table()
-        table_dict = Step.get_table(title='Variant table', table_id='variant_table', df_table=df_vcf.drop(["CID"],axis = 1))
+        table_dict = Step.get_table(title='Variant table', table_id='variant_table', df_table=df_vcf)
         self.get_venn_plot()
 
         self.add_data_item(cluster_tsne=cluster_tsne)
@@ -143,6 +156,12 @@ class Analysis_variant(Step, AnalysisMixin):
         config = configparser.ConfigParser()
         config.read(self.annovar_config)
         section = config['ANNOVAR']
+        return section
+
+    @utils.add_log
+    def annovar(self):
+
+        section = self.annovar_section
         annovar_dir = section['dir']
         db = section['db']
         buildver = section['buildver']
