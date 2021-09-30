@@ -125,7 +125,7 @@ class Analysis_variant(Step, AnalysisMixin):
             plot_dic[f"VID_{vid}"] = set(cid)
         #venn plot
         labels = get_labels(plot_dic.values(), fill=["number","percent"])
-        fig,ax = venn5(labels, names=plot_dic.keys())
+        fig,_ax = venn5(labels, names=plot_dic.keys())
         fig.savefig(f'{self.outdir}/{self.sample}_variant_top5.jpg',dpi = 600)
 
     def run(self):
