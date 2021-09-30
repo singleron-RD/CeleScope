@@ -102,12 +102,14 @@ class Multi_snp(Multi):
         CID_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_CID.tsv'
         filter_variant_count_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_filter_variant_count.tsv'
         cmd_line = self.get_cmd_line(step, sample)
+        ncell_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_variant_ncell.tsv'
         cmd = (
             f'{cmd_line} '
             f'--match_dir {self.col4_dict[sample]} '
             f'--filter_vcf {filter_vcf} '
             f'--CID_file {CID_file} '
             f'--filter_variant_count_file {filter_variant_count_file} '
+            f'--ncell_file {ncell_file}'
         )
         self.process_cmd(cmd, step, sample, m=8, x=1)
 

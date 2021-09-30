@@ -1,7 +1,7 @@
 
 import configparser
 import subprocess
-
+from venn import get_labels, venn5
 import pandas as pd
 import pysam
 
@@ -31,6 +31,7 @@ class Analysis_variant(Step, AnalysisMixin):
         self.filter_vcf = args.filter_vcf
         self.annovar_config = args.annovar_config
         self.match_dir = args.match_dir
+        self.nell_file = args.ncell_file
 
         # parse
         self.annovar_section = self.read_annovar_config()
@@ -97,14 +98,33 @@ class Analysis_variant(Step, AnalysisMixin):
         df_vcf = utils.parse_vcf(self.vcf_GT, infos=['VID', 'CID'])
         df_annovar = self.annovar()
         df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
+        ncell_df = pd.read_table(self.nell_file,sep = "\t")
+        ncell_df.loc[:,"VID"] = ncell_df.loc[:,"VID"].astype(str)
         df_vcf["nCell"] = df_vcf["CID"].apply(func=lambda row: 1 if isinstance(row, str) else len(row))
+
+        df_vcf = pd.merge(left = df_vcf,
+                          right = ncell_df,
+                          on = "VID",
+                          how = "left").drop("ncell_ref",axis = 1)
 
         out_df_vcf = f'{self.outdir}/{self.sample}_variant_table.tsv'
         df_vcf.to_csv(out_df_vcf, sep='\t', index=False)
 
-        cols = ['VID', 'Chrom', 'Pos', 'Alleles', 'Gene', 'nCell', 'mRNA', 'Protein', 'COSMIC']
+        cols = ['VID', "CID",'Chrom', 'Pos', 'Alleles', 'Gene',  'ncell_cover', 'ncell_alt','mRNA', 'Protein', 'COSMIC']
         df_vcf = df_vcf[cols]
         return df_vcf
+
+    def get_venn_plot(self):
+        df_top_5 = self.get_df_table().sort_values(by = "ncell_alt",ascending=False).iloc[:5,:]
+        plot_dic = {}
+        cid_lst = df_top_5.loc[:,"CID"].to_list()
+        vid_lst = df_top_5.loc[:,"VID"].to_list()
+        for cid,vid in zip(cid_lst,vid_lst):
+            plot_dic[f"VID_{vid}"] = set(cid)
+        #venn plot
+        labels = get_labels(plot_dic.values(), fill=["number","percent"])
+        fig,_ax = venn5(labels, names=plot_dic.keys())
+        fig.savefig(f'{self.outdir}/{self.sample}_variant_top5.jpg',dpi = 600)
 
     def run(self):
         self.add_GT()
@@ -112,7 +132,8 @@ class Analysis_variant(Step, AnalysisMixin):
         df_count_tsne = self.get_df_count_tsne()
         count_tsne = self.get_count_tsne(df_count_tsne)
         df_vcf = self.get_df_table()
-        table_dict = Step.get_table(title='Variant table', table_id='variant_table', df_table=df_vcf)
+        table_dict = Step.get_table(title='Variant table', table_id='variant_table', df_table=df_vcf.drop("CID",axis = 1))
+        self.get_venn_plot()
 
         self.add_data_item(cluster_tsne=cluster_tsne)
         self.add_data_item(count_tsne=count_tsne)
@@ -182,3 +203,4 @@ def get_opts_analysis_snp(parser, sub_program):
         parser.add_argument('--filter_vcf', help='filter vcf file.', required=True)
         parser.add_argument('--CID_file', help='CID_file.', required=True)
         parser.add_argument('--filter_variant_count_file', help='filter variant count file.', required=True)
+        parser.add_argument('--ncell_file', help='filter cell count file.', required=True)

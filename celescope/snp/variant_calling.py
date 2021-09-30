@@ -217,6 +217,7 @@ class Variant_calling(Step):
         self.otsu_dir = f'{self.out_prefix}_otsu/'
         self.otsu_threshold_file = f'{self.otsu_dir}/{self.sample}_otsu_threshold.tsv'
         self.filter_variant_count_file = f'{self.out_prefix}_filter_variant_count.tsv'
+        self.summarize_capture_vid = f'{self.out_prefix}_variant_ncell.tsv'
         if args.min_support_read == 'auto':
             utils.check_mkdir(self.otsu_dir)
         self.support_matrix_file = f'{self.out_prefix}_support.mtx'
@@ -401,6 +402,38 @@ class Variant_calling(Step):
             min_support_read = int(self.args.min_support_read)
             df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
         df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
+
+        df_filter.loc[:,"vid_judge"] = df_filter.loc[:,"ref_count"] + df_filter.loc[:,"alt_count"]
+        df_filter_tmp = df_filter[df_filter.loc[:,"vid_judge"] > 0]
+
+        #summarize
+        vid_summarize = {}
+        #add vid col
+        vid = list(df_filter_tmp.loc[:,"VID"])
+        vid_summarize["VID"] = list(set(vid))
+        #add cell colum
+        vid_summarize["ncell_cover"] = list(df_filter_tmp.groupby("VID")["vid_judge"].count())
+        #count table
+        variant_count =  (df_filter_tmp.loc[:,"alt_count"] != 0).astype(int)
+        ref_count =  (df_filter_tmp.loc[:,"ref_count"] != 0).astype(int)
+        #add VID colums 
+        variant_count["VID"] = df_filter_tmp.loc[:,"VID"]
+        ref_count["VID"] = df_filter_tmp.loc[:,"VID"]
+        
+        vid_summarize["ncell_ref"] = list(ref_count.groupby("VID").sum())
+        vid_summarize["ncell_alt"] = list(variant_count.groupby("VID").sum())
+        vid_summarize = pd.DataFrame(vid_summarize)
+        
+        #keep number of cells with variant read count only and  number of cells with reference read count only
+        vid_summarize.loc[:,"both_ref_and_variant"] =  (vid_summarize.loc[:,"ncell_ref"] + vid_summarize.loc[:,"ncell_alt"]) - vid_summarize.loc[:,"ncell_cover"] 
+        vid_summarize.loc[:,"ncell_ref"] = vid_summarize.loc[:,"ncell_ref"] - vid_summarize.loc[:,"both_ref_and_variant"]
+        vid_summarize.loc[:,"ncell_alt"] = vid_summarize.loc[:,"ncell_alt"] - vid_summarize.loc[:,"both_ref_and_variant"]
+
+        df_filter = df_filter.drop("vid_judge",axis=1)
+        df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
+        
+        vid_summarize = vid_summarize.drop("both_ref_and_variant",axis=1)
+        vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
 
     @utils.add_log
     def filter_vcf(self):
