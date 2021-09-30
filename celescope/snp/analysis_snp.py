@@ -123,8 +123,8 @@ class Analysis_variant(Step, AnalysisMixin):
         for cid,vid in zip(cid_lst,vid_lst):
             plot[f"VID_{vid}"] = set(cid)
         #venn plot
-        set_cid = plot.values()
-        set_name = plot.keys()
+        set_cid = list(plot.values())
+        set_name = list(plot.keys())
         labels = generate_petal_labels(set_cid)
         plot = draw_venn(
                          petal_labels=labels, 
