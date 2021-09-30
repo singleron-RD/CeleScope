@@ -135,7 +135,7 @@ class Replacement(Step):
                 for i in f:
                     ii = i.strip().split(',')
                     if int(ii[2])<cov: continue
-                    chr_pos = ii[1]+'_'+ii[5]
+                    chr_pos = ii[4]+'_'+ii[1]
                     outdict[chr_pos] = 1
         elif bgfile.endswith('.vcf'):
             bcf_in = pysam.VariantFile(bgfile)

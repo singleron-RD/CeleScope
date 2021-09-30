@@ -118,6 +118,7 @@ def cutadapt(args):
 
 
 def get_opts_cutadapt(parser, sub_program):
+    parser.add_argument('--gzip', help="Output gzipped fastq", action='store_true')
     parser.add_argument('--adapter_fasta', help='Addtional adapter fasta file.')
     parser.add_argument(
         '--minimum_length',
@@ -150,6 +151,5 @@ at least {overlap} bases match between adapter and read. """,
     )
     if sub_program:
         parser.add_argument('--fq', help='Required. R2 reads from step Barcode.', required=True)
-        parser.add_argument('--gzip', help="Output gzipped fastq", action='store_true')
         parser = s_common(parser)
     return parser

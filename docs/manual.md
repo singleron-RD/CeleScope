@@ -58,7 +58,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [count](tools/count.md)
 - [analysis](rna/analysis.md)
 - [conversion](dynaseq/conversion.md)
-- [subsitution](dynaseq/subsitution.md)
+- [substitution](dynaseq/substitution.md)
 - [replacement](dynaseq/replacement.md)
 - [replace_tsne](dynaseq/replace_tsne.md)
 - [multi_dynaseq](dynaseq/multi_dynaseq.md)

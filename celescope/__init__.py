@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "1.5.0"
+__VERSION__ = "1.5.1"
 __version__ = __VERSION__
 
 ASSAY_DICT = {
