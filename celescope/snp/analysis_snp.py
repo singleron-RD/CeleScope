@@ -4,7 +4,6 @@ import subprocess
 
 import pandas as pd
 import pysam
-import matplotlib
 from venn import get_labels, venn5
 
 import celescope.tools.utils as utils
