@@ -59,3 +59,6 @@ same time.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
+```--probe_file``` Probe fasta file
+
+```--amp_file``` amplification fasta file

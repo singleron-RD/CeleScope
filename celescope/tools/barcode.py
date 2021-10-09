@@ -4,6 +4,7 @@ import glob
 import os
 import re
 import sys
+import pandas as pd
 from collections import Counter, defaultdict
 from itertools import combinations, product
 
@@ -14,23 +15,20 @@ import celescope.tools.utils as utils
 from celescope.tools.__init__ import __PATTERN_DICT__
 from celescope.tools.step import Step, s_common
 
-MIN_T = 10
+MIN_T = 10 
 
-
-def seq_ranges(seq, pattern_dict):
+def seq_ranges(seq, pattern_dict):   
     # get subseq with intervals in arr and concatenate
     return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
-
 
 def get_seq_list(seq, pattern_dict, abbr):
     # get subseq list
     return (seq[item[0]: item[1]] for item in pattern_dict[abbr])
 
-
 @utils.add_log
-def parse_pattern(pattern):
+def parse_pattern(pattern):         
     pattern_dict = defaultdict(list)
-    p = re.compile(r'([CLUNT])(\d+)')
+    p = re.compile(r'([CLUNT])(\d+)')   
     tmp = p.findall(pattern)
     if not tmp:
         parse_pattern.logger.error(f'Invalid pattern: {pattern}')
@@ -42,21 +40,43 @@ def parse_pattern(pattern):
         start = end
     return pattern_dict
 
-
-def get_scope_bc(chemistry):
+def get_scope_bc(chemistry):        
     import celescope
-    root_path = os.path.dirname(celescope.__file__)
+    root_path = os.path.dirname(celescope.__file__)  
     if chemistry == 'scopeV1':
         return None, None
     linker_f = glob.glob(f'{root_path}/data/chemistry/{chemistry}/linker*')[0]
     whitelist_f = f'{root_path}/data/chemistry/{chemistry}/bclist'
     return linker_f, whitelist_f
 
+def read_fasta(fasta_file, equal=False):
+    # seq must have equal length
+    dict = {}
+    LENGTH = 0
+    with open(fasta_file, "rt") as f:
+        while True:
+            line1 = f.readline()
+            line2 = f.readline()
+            if not line2:
+                break
+            name = line1.strip(">").strip()
+            seq = line2.strip()
+            seq_length = len(seq)
+            if equal:
+                if LENGTH == 0:
+                    LENGTH = seq_length
+                else:
+                    if LENGTH != seq_length:
+                        raise Exception(f"{fasta_file} have different seq length")
+            dict[name] = seq
+    if equal:
+        return dict, LENGTH
+    return dict
 
 def read_fastq(f):
     """
-    Deprecated!
-    Return tuples: (name, sequence, qualities).
+    Deprecated!  
+    Return tuples: (name, sequence, qualities).  
     qualities is a string and it contains the unmodified, encoded qualities.
     """
     i = 3
@@ -78,17 +98,17 @@ def read_fastq(f):
         raise Exception("FASTQ file ended prematurely")
 
 
-def ord2chr(q, offset=33):
-    return chr(int(q) + offset)
+def ord2chr(q, offset=33):   
+    return chr(int(q) + offset)  
 
 
 def qual_int(char, offset=33):
-    return ord(char) - offset
+    return ord(char) - offset  
 
 
 def low_qual(quals, minQ, num):
     # print(ord('/')-33)           14
-    return True if len([q for q in quals if qual_int(q) < minQ]) > num else False
+    return True if len([q for q in quals if qual_int(q) < minQ]) > num else False 
 
 
 def check_seq(seq_file, pattern_dict, seq_abbr):
@@ -96,7 +116,7 @@ def check_seq(seq_file, pattern_dict, seq_abbr):
     for item in pattern_dict[seq_abbr]:
         start = item[0]
         end = item[1]
-        length += end - start
+        length += end - start      
     with open(seq_file, 'r') as fh:
         for seq in fh:
             seq = seq.strip()
@@ -106,8 +126,7 @@ def check_seq(seq_file, pattern_dict, seq_abbr):
                 raise Exception(
                     f'length of L in pattern ({length}) do not equal to length in {seq_file} ({len(seq)}) !')
 
-
-def get_mismatch(seq, n_mismatch=1, bases='ACGTN'):
+def get_mismatch(seq, n_mismatch=1, bases='ACGTN'):    
     '''
     choose locations where there's going to be a mismatch using combinations
     and then construct all satisfying lists using product
@@ -120,16 +139,15 @@ def get_mismatch(seq, n_mismatch=1, bases='ACGTN'):
     seq_len = len(seq)
     if n_mismatch > seq_len:
         n_mismatch = seq_len
-    for locs in combinations(range(seq_len), n_mismatch):
+    for locs in combinations(range(seq_len), n_mismatch):  
         seq_locs = [[base] for base in seq]
         for loc in locs:
             seq_locs[loc] = list(bases)
-        for poss in product(*seq_locs):
+        for poss in product(*seq_locs):     
             seq_set.add(''.join(poss))
     for mismatch_seq in seq_set:
         mismatch_dict[mismatch_seq] = seq
     return mismatch_dict
-
 
 @utils.add_log
 def get_all_mismatch(seq_list, n_mismatch=1):
@@ -145,12 +163,12 @@ def get_all_mismatch(seq_list, n_mismatch=1):
         if seq == '':
             continue
         correct_set.add(seq)
-        mismatch_dict.update(get_mismatch(seq, n_mismatch=n_mismatch))
+        mismatch_dict.update(get_mismatch(seq, n_mismatch=n_mismatch))  
 
     return correct_set, mismatch_dict
 
 
-def check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list):
+def check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list):  
     '''
     Return bool_valid, bool_corrected
     '''
@@ -177,8 +195,8 @@ class Chemistry():
 
     def __init__(self, fq1):
         self.fq1 = fq1
-        self.fq1_list = fq1.split(',')
-        self.nRead = 10000
+        self.fq1_list = fq1.split(',')  
+        self.nRead = 10000  
 
     @utils.add_log
     def check_chemistry(self):
@@ -192,14 +210,14 @@ class Chemistry():
         return chemistry_list
 
     @utils.add_log
-    def get_chemistry(self, fq1):
+    def get_chemistry(self, fq1):      
         '''
         'scopeV2.0.1': 'C8L16C8L16C8L1U8T18'
         'scopeV2.1.1': 'C8L16C8L16C8L1U12T18'
         'scopeV2.2.1': 'C8L16C8L16C8L1U12T18' with 4 types of linkers
         '''
         # init
-        linker_4_file, _whitelist = get_scope_bc('scopeV2.2.1')
+        linker_4_file, _whitelist = get_scope_bc('scopeV2.2.1') 
         linker_4_list, _num = utils.read_one_col(linker_4_file)
         linker_4_dict = defaultdict(int)
         linker_wrong_dict = defaultdict(int)
@@ -207,6 +225,8 @@ class Chemistry():
         T4_n = 0
         L57C_n = 0
 
+        #'L': [[8, 24], [32, 48], [56, 57]],    linker(common sequences)
+        #'U': [[57, 69]],   
         with pysam.FastxFile(fq1) as fh:
             for _ in range(self.nRead):
                 entry = fh.__next__()
@@ -217,7 +237,7 @@ class Chemistry():
                 T4 = seq[65:69]
                 if T4 == 'TTTT':
                     T4_n += 1
-                linker = seq_ranges(seq, pattern_dict=pattern_dict['L'])
+                linker = seq_ranges(seq, pattern_dict=pattern_dict['L']) 
                 if linker in linker_4_list:
                     linker_4_dict[linker] += 1
                 else:
@@ -285,7 +305,7 @@ class Barcode(Step):
             ch = Chemistry(args.fq1)
             self.chemistry_list = ch.check_chemistry()
         else:
-            self.chemistry_list = [args.chemistry] * self.fq_number
+            self.chemistry_list = [args.chemistry] * self.fq_number 
         self.barcode_corrected_num = 0
         self.linker_corrected_num = 0
         self.total_num = 0
@@ -305,6 +325,8 @@ class Barcode(Step):
         self.allowNoLinker = args.allowNoLinker
         self.nopolyT = args.nopolyT  # true == output nopolyT reads
         self.noLinker = args.noLinker
+        self.probefile=args.probe_file
+        self.ampfile=args.amp_file
 
         # out file
         if args.gzip:
@@ -336,6 +358,7 @@ class Barcode(Step):
                 write valid R2 read to file
         """
 
+        #读取fastq文件
         fh3 = xopen(self.out_fq2, 'w')
 
         if self.nopolyT:
@@ -359,7 +382,7 @@ class Barcode(Step):
             # get linker and whitelist
             bc_pattern = __PATTERN_DICT__[chemistry]
             if (bc_pattern):
-                (linker, whitelist) = get_scope_bc(chemistry)
+                (linker, whitelist) = get_scope_bc(chemistry) 
             else:
                 bc_pattern = self.pattern
                 linker = self.linker
@@ -371,27 +394,46 @@ class Barcode(Step):
             # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
             # [[44, 52]], 'L': [[8, 18], [26, 36]]})
             pattern_dict = parse_pattern(bc_pattern)
+            #return pattern_dict
 
-            bool_T = True if 'T' in pattern_dict else False
+            bool_T = True if 'T' in pattern_dict else False 
             bool_L = True if 'L' in pattern_dict else False
             bool_whitelist = (whitelist is not None) and whitelist != "None"
-            C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
+            C_len = sum([item[1] - item[0] for item in pattern_dict['C']])  
+
+            bool_probe=False
+            probefile=self.probefile
+            if probefile and probefile != 'None':
+                bool_probe = True
+                count_dic = utils.genDict(dim=3)
+                valid_count_dic = utils.genDict(dim=2)
+                probe_dic = read_fasta(probefile)
+                reads_without_probe = 0
+
+            bool_amp=False
+            ampfile=self.ampfile
+            if ampfile and ampfile != 'None':
+                bool_amp=True
+                count_amp_dic=utils.genDict(dim=3)
+                valid_count_amp_dic=utils.genDict(dim=2)
+                amp_dic=read_fasta(ampfile)
+                reads_without_amp = 0
 
             if bool_whitelist:
                 seq_list, _ = utils.read_one_col(whitelist)
-                barcode_correct_set, barcode_mismatch_dict = get_all_mismatch(seq_list, n_mismatch=1)
-                barcode_correct_set_list = [barcode_correct_set] * 3
+                barcode_correct_set, barcode_mismatch_dict = get_all_mismatch(seq_list, n_mismatch=1) 
+                barcode_correct_set_list = [barcode_correct_set] * 3               
                 barcode_mismatch_dict_list = [barcode_mismatch_dict] * 3
             if bool_L:
                 seq_list, _ = utils.read_one_col(linker)
-                check_seq(linker, pattern_dict, "L")
+                check_seq(linker, pattern_dict, "L")    
                 linker_correct_set_list = []
                 linker_mismatch_dict_list = []
                 start = 0
                 for item in pattern_dict['L']:
                     end = start + item[1] - item[0]
                     linker_seq_list = [seq[start:end] for seq in seq_list]
-                    linker_correct_set, linker_mismatch_dict = get_all_mismatch(linker_seq_list, n_mismatch=2)
+                    linker_correct_set, linker_mismatch_dict = get_all_mismatch(linker_seq_list, n_mismatch=2) 
                     linker_correct_set_list.append(linker_correct_set)
                     linker_mismatch_dict_list.append(linker_mismatch_dict)
                     start = end
@@ -401,7 +443,7 @@ class Barcode(Step):
 
             for entry1 in fq1:
                 entry2 = next(fq2)
-                header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
+                header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality     
                 header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
                 self.total_num += 1
 
@@ -458,11 +500,43 @@ class Barcode(Step):
 
                 umi = seq_ranges(seq1, pattern_dict['U'])
 
+                read_name_probe = 'None'
+                if bool_probe:
+                    # valid count
+                    valid_count_dic[cb][umi] += 1
+
+                    # output probe UMi and read count
+                    find_probe = False
+                    for probe_name in probe_dic:
+                        probe_seq = probe_dic[probe_name]
+                        probe_seq = probe_seq.upper()
+                        if seq1.find(probe_seq) != -1:
+                            count_dic[probe_name][cb][umi] += 1
+                            read_name_probe = probe_name
+                            find_probe = True
+                            break
+                    if not find_probe:
+                        reads_without_probe += 1
+
+                if bool_amp:
+                    valid_count_amp_dic[cb][umi] += 1
+                    find_amp=False
+                    for amp_name in amp_dic:
+                        amp_seq=amp_dic[amp_name]
+                        if seq2[0:18].find(amp_seq) != -1:
+                            count_amp_dic[amp_name][cb][umi] += 1
+                            read_name_amp=amp_name
+                            find_amp=True
+                            break
+                    if not find_amp:
+                        reads_without_amp += 1
+
                 self.clean_num += 1
                 self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                 self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
                 fh3.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+
             Barcode.run.logger.info(self.fq1_list[i] + ' finished.')
         fh3.close()
 
@@ -483,8 +557,78 @@ class Barcode(Step):
             raise Exception(
                 'no valid reads found! please check the --chemistry parameter.')
 
+
+        if bool_probe:
+            # total probe summary
+            total_umi = 0
+            total_valid_read = 0
+            for cb in valid_count_dic:
+                total_umi += len(valid_count_dic[cb])
+                total_valid_read += sum(valid_count_dic[cb].values())
+            Barcode.run.logger.info("total umi:"+str(total_umi))
+            Barcode.run.logger.info("total valid read:"+str(total_valid_read))
+            Barcode.run.logger.info("reads without probe:"+str(reads_without_probe))
+
+            # probe summary
+            count_list = []
+            for probe_name in probe_dic:
+                UMI_count = 0
+                read_count = 0
+                if probe_name in count_dic:
+                    for cb in count_dic[probe_name]:
+                        UMI_count += len(count_dic[probe_name][cb])
+                        read_count += sum(count_dic[probe_name][cb].values())
+                count_list.append(
+                    {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
+            df_count = pd.DataFrame(count_list, columns=[
+                                "probe_name", "read_count", "UMI_count"])
+            def format_percent(x):
+                x = str(round(x*100, 2))+"%"
+                return x
+            df_count["read_fraction"] = (
+                df_count["read_count"]/total_valid_read).apply(format_percent)
+            df_count["UMI_fraction"] = (
+                df_count["UMI_count"]/total_umi).apply(format_percent)
+            df_count.sort_values(by="UMI_count", inplace=True, ascending=False)
+            df_count_file = self.outdir + '/' + self.sample + '_probe_count.tsv'
+            df_count.to_csv(df_count_file, sep="\t", index=False)
+        
+        if bool_amp:
+            total_amp_umi = 0
+            total_valid_amp_read = 0
+            for cb in valid_count_amp_dic:
+                total_amp_umi += len(valid_count_amp_dic[cb])
+                total_valid_amp_read += sum(valid_count_amp_dic[cb].values())
+            Barcode.run.logger.info("total amp umi:"+str(total_umi))
+            Barcode.run.logger.info("total valid amp read:"+str(total_valid_amp_read))
+            Barcode.run.logger.info("reads without amp:"+str(reads_without_amp))
+
+            # probe summary
+            count_amp_list = []
+            for amp_name in amp_dic:
+                UMI_count = 0
+                read_count = 0
+                if amp_name in count_amp_dic:
+                    for cb in count_amp_dic[amp_name]:
+                        UMI_count += len(count_amp_dic[amp_name][cb])
+                        read_count += sum(count_amp_dic[amp_name][cb].values())
+                count_amp_list.append(
+                    {"amp_name": amp_name, "UMI_count": UMI_count, "read_count": read_count})
+            df_amp_count = pd.DataFrame(count_amp_list, columns=[
+                                "amp_name", "read_count", "UMI_count"])
+            def format_percent(x):
+                x = str(round(x*100, 2))+"%"
+                return x
+            df_amp_count["read_fraction"] = (
+                df_amp_count["read_count"]/total_valid_amp_read).apply(format_percent)
+            df_amp_count["UMI_fraction"] = (
+                df_amp_count["UMI_count"]/total_amp_umi).apply(format_percent)
+            df_amp_count.sort_values(by="UMI_count", inplace=True, ascending=False)
+            df_amp_count_file = self.outdir + '/' + self.sample + '_amp_count.tsv'
+            df_amp_count.to_csv(df_amp_count_file, sep="\t", index=False)    
+
         # stat
-        BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
+        BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(  #此处的值为什么设置为30
             30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
         UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= ord2chr(
             30)]) / float(sum(self.umi_qual_Counter.values())) * 100
@@ -578,6 +722,12 @@ lowQual will be regarded as low-quality bases.',
         '--gzip',
         help="Output gzipped fastq files.",
         action='store_true'
+    )
+    parser.add_argument(
+        '--probe_file', help="probe fasta file"
+    )
+    parser.add_argument(
+        '--amp_file', help="amplification fasta file"
     )
     if sub_program:
         parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
