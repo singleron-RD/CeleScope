@@ -267,8 +267,8 @@ class Variant_calling(Step):
         with pysam.AlignmentFile(self.splitN_bam_name_sorted, "rb") as samfile:
             header = samfile.header
             for barcode, g in groupby(samfile, keyfunc):
-                if barcode in self.barcodes:
-                    CID = self.barcodes.index(barcode) + 1
+                if barcode in self.CID_dict:
+                    CID = self.CID_dict[barcode]['CID']
                     self.CID_dict[barcode]['valid'] = True
                     cell_dir = f'{self.cells_dir}/cell{CID}'
                     utils.check_mkdir(cell_dir)
@@ -305,7 +305,7 @@ class Variant_calling(Step):
         CIDs = list(df_valid['CID'])
         # variant dict
         v_cols = ['chrom', 'pos', 'alleles']
-        v_dict = {}
+        v_dict = dict()
 
         for CID in CIDs:
             CID = str(CID)

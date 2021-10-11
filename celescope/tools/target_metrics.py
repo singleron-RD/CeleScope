@@ -25,7 +25,9 @@ class Target_metrics(Step):
 
         # set
         self.match_barcode, _num = utils.read_barcode_file(args.match_dir)
+        self.match_barcode = set(self.match_barcode)
         self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
+        self.gene_list = set(self.gene_list)
         self.count_dict = utils.genDict(dim=3, valType=int)
         
         self.add_metric(
@@ -58,6 +60,7 @@ class Target_metrics(Step):
 
     @utils.add_log
     def parse_count_dict_add_metrics(self):
+
         total_reads = 0
         enriched_reads = 0
         enriched_reads_in_cells = 0
