@@ -4,7 +4,9 @@
 ## Output
 - `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
 
-- `{sample}_variant_table.tsv` Formatted `multianno` file with `nCell`(number of cells with the variant) added.
+- `{sample}_variant_table.tsv` Formatted `multianno` file with `ncell_cover`(number of cells with the variant) and `ncell_alt`(number of cells with variant read count only) added.
+
+- `{sample}_variant_top5.jpg` The Venn diagram of the CIDs corresponding to the top 5 VIDs
 
 
 ## Arguments

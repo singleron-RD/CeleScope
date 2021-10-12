@@ -7,6 +7,8 @@
 
 `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
 
+`{sample}_variant_ncell.tsv` VID count of ref and alt.
+
 `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 
 `{sample}_filter.vcf` VCF file after filtering. Invalid `CID`s are removed from the `INFO` column.

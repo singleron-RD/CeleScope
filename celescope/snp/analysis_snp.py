@@ -21,7 +21,9 @@ class Analysis_variant(Step, AnalysisMixin):
     Output
     - `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
 
-    - `{sample}_variant_table.tsv` Formatted `multianno` file with `nCell`(number of cells with the variant) added.
+    - `{sample}_variant_table.tsv` Formatted `multianno` file with `ncell_cover`(number of cells with the variant) and ncell_alt(number of cells with variant read count only) added.
+    
+    - `{sample}_variant_top5.jpg` The Venn diagram of the CIDs corresponding to the top 5 VIDs
     """
 
     def __init__(self, args, step_name):
@@ -106,7 +108,7 @@ class Analysis_variant(Step, AnalysisMixin):
         df_vcf = pd.merge(left = df_vcf,
                           right = ncell_df,
                           on = "VID",
-                          how = "left").drop("ncell_ref",axis = 1)
+                          how = "left").drop(["ncell_ref","ncell_ref_and_alt"],axis = 1)
 
         out_df_vcf = f'{self.outdir}/{self.sample}_variant_table.tsv'
         df_vcf.drop("nCell",axis = 1).to_csv(out_df_vcf, sep='\t', index=False)
