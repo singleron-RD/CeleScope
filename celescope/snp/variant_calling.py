@@ -181,6 +181,8 @@ class Variant_calling(Step):
 
     `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
 
+    `{sample}_variant_ncell.tsv` VID count of ref and alt. `VID`: A unique numeric ID is assigned for each variant. `ncell_cover`: means number of cells with read count at this position. `ncell_alt`: means number of cells with variant read count only. `ncell_ref`: number of cells with reference read count only. `ncell_ref_and_alt`: means number of cells with meanwhile have read count and reference read count.
+
     `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 
     `{sample}_filter.vcf` VCF file after filtering. Invalid `CID`s are removed from the `INFO` column.
@@ -425,14 +427,13 @@ class Variant_calling(Step):
         vid_summarize = pd.DataFrame(vid_summarize)
         
         #keep number of cells with variant read count only and  number of cells with reference read count only
-        vid_summarize.loc[:,"both_ref_and_variant"] =  (vid_summarize.loc[:,"ncell_ref"] + vid_summarize.loc[:,"ncell_alt"]) - vid_summarize.loc[:,"ncell_cover"] 
-        vid_summarize.loc[:,"ncell_ref"] = vid_summarize.loc[:,"ncell_ref"] - vid_summarize.loc[:,"both_ref_and_variant"]
-        vid_summarize.loc[:,"ncell_alt"] = vid_summarize.loc[:,"ncell_alt"] - vid_summarize.loc[:,"both_ref_and_variant"]
+        vid_summarize.loc[:,"ncell_ref_and_alt"] =  (vid_summarize.loc[:,"ncell_ref"] + vid_summarize.loc[:,"ncell_alt"]) - vid_summarize.loc[:,"ncell_cover"] 
+        vid_summarize.loc[:,"ncell_ref"] = vid_summarize.loc[:,"ncell_ref"] - vid_summarize.loc[:,"ncell_ref_and_alt"]
+        vid_summarize.loc[:,"ncell_alt"] = vid_summarize.loc[:,"ncell_alt"] - vid_summarize.loc[:,"ncell_ref_and_alt"]
 
         df_filter = df_filter.drop("vid_judge",axis=1)
         df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
         
-        vid_summarize = vid_summarize.drop("both_ref_and_variant",axis=1)
         vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
 
     @utils.add_log
