@@ -122,31 +122,31 @@ def add_tag(bam, gtf):
     - GX gene id
     """
     id_name = get_id_name_dict(gtf)
-    samfile = pysam.AlignmentFile(bam, "rb")
-    header = samfile.header
-    new_bam = pysam.AlignmentFile(
-        bam + ".temp", "wb", header=header)
-    for read in samfile:
-        attr = read.query_name.split('_')
-        barcode = attr[0]
-        umi = attr[1]
-        read.set_tag(tag='CB', value=barcode, value_type='Z')
-        read.set_tag(tag='UB', value=umi, value_type='Z')
-        if read.has_tag('XT'):
-            gene_id = read.get_tag('XT')
-            try:
-                gene_name = id_name[gene_id]
-            except KeyError:
-                gene_name = [id_name[i] for i in gene_id.split(',')]
-                gene_name = ','.join(gene_name)
-                read.set_tag(tag='GN', value=gene_name, value_type='Z')
-                read.set_tag(tag='GX', value=gene_id, value_type='Z')
-            else:
-                read.set_tag(tag='GN', value=gene_name, value_type='Z')
-                read.set_tag(tag='GX', value=gene_id, value_type='Z')
-        new_bam.write(read)
-    new_bam.close()
-    cmd = f'mv {bam}.temp {bam}'
+    temp_bam_file = bam + ".temp"
+
+    with pysam.AlignmentFile(bam, "rb") as original_bam:
+        header = original_bam.header
+        with pysam.AlignmentFile(temp_bam_file, "wb", header=header) as temp_bam:
+            for read in original_bam:
+                attr = read.query_name.split('_')
+                barcode = attr[0]
+                umi = attr[1]
+                read.set_tag(tag='CB', value=barcode, value_type='Z')
+                read.set_tag(tag='UB', value=umi, value_type='Z')
+                # assign to some gene
+                if read.has_tag('XT'):
+                    gene_id = read.get_tag('XT')
+                    # if multi-mapping reads are included in original bam,
+                    # there are multiple gene_ids
+                    if ',' in gene_id:
+                        gene_name = [id_name[i] for i in gene_id.split(',')]
+                        gene_name = ','.join(gene_name)
+                    else:
+                        gene_name = id_name[gene_id]
+                    read.set_tag(tag='GN', value=gene_name, value_type='Z')
+                    read.set_tag(tag='GX', value=gene_id, value_type='Z')
+                temp_bam.write(read)
+    cmd = f'mv {temp_bam_file} {bam}'
     subprocess.check_call(cmd, shell=True)
 
 
