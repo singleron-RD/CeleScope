@@ -9,6 +9,8 @@
 
 
 ## Arguments
+`--gzip` Output gzipped fastq files.
+
 `--adapter_fasta` Addtional adapter fasta file.
 
 `--minimum_length` Default `20`. Discard processed reads that are shorter than LENGTH.
@@ -29,8 +31,6 @@ at least {overlap} bases match between adapter and read.
 `--insert` Default `150`. Read2 insert length.
 
 `--fq` Required. R2 reads from step Barcode.
-
-`--gzip` Output gzipped fastq
 
 `--outdir` Output diretory.
 

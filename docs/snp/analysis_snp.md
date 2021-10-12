@@ -28,3 +28,5 @@
 
 `--filter_variant_count_file` filter variant count file.
 
+`--ncell_file` filter cell count file.
+

@@ -4,10 +4,10 @@ import os
 
 import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
-from celescope.__init__ import ASSAY_DICT, RELEASED_ASSAYS, ROOT_PATH
+from celescope.__init__ import ASSAY_DICT, RELEASED_ASSAYS
 
 PRE_PROCESSING_STEPS = ('sample', 'barcode', 'cutadapt')
-DOCS_DIR = f'{ROOT_PATH}/../docs/'
+DOCS_DIR = f'docs/'
 TEMPLATE_DIR = 'docs_template/'
 MANUAL = f'{DOCS_DIR}/manual.md'
 
@@ -67,7 +67,10 @@ class Docs():
 
         assay_dir = f'docs/{assay}'
         if not os.path.exists(assay_dir):
-            os.system(f'mkdir -p {assay_dir}')    
+            os.system(f'mkdir -p {assay_dir}') 
+        tools_dir = 'docs/tools'
+        if not os.path.exists(tools_dir):
+            os.system(f'mkdir {tools_dir}')
 
     @utils.add_log
     def get_argument_docs(self, step, step_module):

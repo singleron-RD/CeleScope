@@ -118,7 +118,7 @@ def cutadapt(args):
 
 
 def get_opts_cutadapt(parser, sub_program):
-    parser.add_argument('--gzip', help="Output gzipped fastq", action='store_true')
+    parser.add_argument('--gzip', help="Output gzipped fastq files.", action='store_true')
     parser.add_argument('--adapter_fasta', help='Addtional adapter fasta file.')
     parser.add_argument(
         '--minimum_length',
