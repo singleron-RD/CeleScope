@@ -599,7 +599,7 @@ class Barcode(Step):
             for cb in valid_count_amp_dic:
                 total_amp_umi += len(valid_count_amp_dic[cb])
                 total_valid_amp_read += sum(valid_count_amp_dic[cb].values())
-            Barcode.run.logger.info("total amp umi:"+str(total_umi))
+            Barcode.run.logger.info("total amp umi:"+str(total_amp_umi))
             Barcode.run.logger.info("total valid amp read:"+str(total_valid_amp_read))
             Barcode.run.logger.info("reads without amp:"+str(reads_without_amp))
 
