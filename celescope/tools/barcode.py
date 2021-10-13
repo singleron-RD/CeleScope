@@ -55,7 +55,7 @@ def get_scope_bc(chemistry):
 
 def read_fasta(fasta_file, equal=False):
     # seq must have equal length
-    dict = {}
+    dic = {}
     LENGTH = 0
     with open(fasta_file, "rt") as f:
         while True:
@@ -72,10 +72,10 @@ def read_fasta(fasta_file, equal=False):
                 else:
                     if LENGTH != seq_length:
                         raise Exception(f"{fasta_file} have different seq length")
-            dict[name] = seq
+            dic[name] = seq
     if equal:
-        return dict, LENGTH
-    return dict
+        return dic, LENGTH
+    return dic
 
 def read_fastq(f):
     """
