@@ -50,5 +50,8 @@ jobs:
         # W0212 Access to a protected member _option_string_actions of a client class (protected-access)
         pylint --disable=all --enable=E,W --disable=W1618,E1101,W1633,W1619,W0105,W0511,E1130,W0212 --jobs=2 celescope
 
+        # unittest
+        python -m unittest discover -s celescope/ -t .  -p "*.py" -v
+
 
   
