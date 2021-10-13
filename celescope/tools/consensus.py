@@ -1,4 +1,5 @@
 import subprocess
+import unittest
 from collections import defaultdict
 from itertools import groupby
 
@@ -200,3 +201,23 @@ def get_opts_consensus(parser, sub_program):
     if sub_program:
         parser.add_argument("--fq", help="Required. Fastq file.", required=True)
         s_common(parser)
+
+
+class Consensus_unittest(unittest.TestCase):
+
+    def test_get_read_length(self):
+        read_list = [['AAAA', 'FFFF'], ['TTT', 'FFF'], ['CCC', 'FFF'], ['GGGGGGG', 'FFFFFFF']]
+        assert get_read_length(read_list, 0.5) == 4
+
+    def test_dumb_consensus(self):
+        read_list = [('AAAA', 'FFFF'), ('TTT', 'FF;'), ('CCCC', 'FFFF'), ('GGGAGGG', 'FFFFFFF')]
+        consensus_seq, consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(read_list, 0.5)
+        self.assertEqual(consensus_seq, 'NNNA')
+
+        read_list = [('AAAA', 'FFFF'), ('TTT', 'FF;'), ('CCC', 'FFF'), ('GGGGGGG', 'FFFFFFF')]
+        consensus_seq, consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(read_list, 0.5)
+        self.assertEqual(consensus_seq, 'NNNN')
+
+
+if __name__ == '__main__':
+    unittest.main()

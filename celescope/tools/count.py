@@ -6,6 +6,7 @@ import os
 import random
 import subprocess
 import sys
+import unittest
 from collections import defaultdict
 from itertools import groupby
 
@@ -474,3 +475,29 @@ def get_opts_count(parser, sub_program):
             '--force_cell_num',
             help='Default `None`. Force the cell number within (value * 0.9, value * 1.1). ',
         )
+
+
+class Count_test(unittest.TestCase):
+    def test_correct_umi(self):
+        dic = {
+            "apple1": 2,
+            "apple2": 30,
+            "bears1": 5,
+            "bears2": 10,
+            "bears3": 100,
+            "ccccc1": 20,
+            "ccccc2": 199,
+        }
+        n_corrected_umi, n_corrected_read = Count.correct_umi(dic)
+        dic_after_correct = {
+            'ccccc1': 20,
+            'apple2': 32,
+            'bears3': 115,
+            'ccccc2': 199,
+        }
+        self.assertEqual(dic, dic_after_correct)
+        self.assertEqual(n_corrected_umi, 3)
+        self.assertEqual(n_corrected_read, 2 + 5 + 10)
+
+if __name__ == "__main__":
+    unittest.main()
