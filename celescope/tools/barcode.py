@@ -25,6 +25,10 @@ def get_seq_list(seq, pattern_dict, abbr):
     # get subseq list
     return (seq[item[0]: item[1]] for item in pattern_dict[abbr])
 
+def format_percent(x):
+    x = str(round(x*100, 2))+"%"
+    return x
+
 @utils.add_log
 def parse_pattern(pattern):         
     pattern_dict = defaultdict(list)
@@ -500,7 +504,6 @@ class Barcode(Step):
 
                 umi = seq_ranges(seq1, pattern_dict['U'])
 
-                read_name_probe = 'None'
                 if bool_probe:
                     # valid count
                     valid_count_dic[cb][umi] += 1
@@ -512,9 +515,11 @@ class Barcode(Step):
                         probe_seq = probe_seq.upper()
                         if seq1.find(probe_seq) != -1:
                             count_dic[probe_name][cb][umi] += 1
-                            read_name_probe = probe_name
+                            #_read_name_probe = probe_name
                             find_probe = True
                             break
+                        #else:
+                        #    read_name_probe = 'None'
                     if not find_probe:
                         reads_without_probe += 1
 
@@ -525,7 +530,7 @@ class Barcode(Step):
                         amp_seq=amp_dic[amp_name]
                         if seq2[0:18].find(amp_seq) != -1:
                             count_amp_dic[amp_name][cb][umi] += 1
-                            read_name_amp=amp_name
+                            #read_name_amp=amp_name
                             find_amp=True
                             break
                     if not find_amp:
@@ -557,7 +562,6 @@ class Barcode(Step):
             raise Exception(
                 'no valid reads found! please check the --chemistry parameter.')
 
-
         if bool_probe:
             # total probe summary
             total_umi = 0
@@ -582,9 +586,6 @@ class Barcode(Step):
                     {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
             df_count = pd.DataFrame(count_list, columns=[
                                 "probe_name", "read_count", "UMI_count"])
-            def format_percent(x):
-                x = str(round(x*100, 2))+"%"
-                return x
             df_count["read_fraction"] = (
                 df_count["read_count"]/total_valid_read).apply(format_percent)
             df_count["UMI_fraction"] = (
@@ -616,9 +617,6 @@ class Barcode(Step):
                     {"amp_name": amp_name, "UMI_count": UMI_count, "read_count": read_count})
             df_amp_count = pd.DataFrame(count_amp_list, columns=[
                                 "amp_name", "read_count", "UMI_count"])
-            def format_percent(x):
-                x = str(round(x*100, 2))+"%"
-                return x
             df_amp_count["read_fraction"] = (
                 df_amp_count["read_count"]/total_valid_amp_read).apply(format_percent)
             df_amp_count["UMI_fraction"] = (
