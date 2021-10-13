@@ -7,7 +7,12 @@
 
 `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
 
-`{sample}_variant_ncell.tsv` VID count of ref and alt. `VID`: A unique numeric ID is assigned for each variant. `ncell_cover`: means number of cells with read count at this position. `ncell_alt`: means number of cells with variant read count only. `ncell_ref`: number of cells with reference read count only. `ncell_ref_and_alt`: means number of cells with meanwhile have read count and reference read count.
+`{sample}_variant_ncell.tsv` Number of cells with read count at each variant's position. 
+- `VID`: Variant ID. 
+- `ncell_cover`: number of cells with read count at this position. 
+- `ncell_alt`: number of cells with variant read count only. 
+- `ncell_ref`: number of cells with reference read count only. 
+- `ncell_ref_and_alt`: number of cells with both variant and reference read count.
 
 `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 

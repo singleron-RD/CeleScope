@@ -21,7 +21,7 @@ class Analysis_variant(Step, AnalysisMixin):
     Output
     - `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
 
-    - `{sample}_variant_table.tsv` Formatted `multianno` file with `ncell_cover`and ncell_alt added.
+    - `{sample}_variant_table.tsv` Formatted `multianno` file with `ncell_cover`and `ncell_alt` added.
     
     - `{sample}_variant_top5.jpg` The Venn diagram of the 5 variants with the highest `ncell_alt`.
     """
