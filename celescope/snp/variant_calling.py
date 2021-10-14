@@ -179,11 +179,11 @@ class Variant_calling(Step):
     Output
 
     `{sample}_VID.tsv` A unique numeric ID is assigned for each variant, 
-    - `RID`: Target region ID. This column will be added when `--bed_file` option were provided.
+    - `RID`: Target region ID. This column will be added when `--bed_file` was provided.
 
     `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
 
-    `{sample}_RID.tsv` A unique numeric ID is assigned for each target region. This file will be created when `--bed_file` option were provided.
+    `{sample}_RID.tsv` A unique numeric ID is assigned for each target region. This file will be created when `--bed_file` was provided.
 
     `{sample}_variant_ncell.tsv` Number of cells with read count at each variant's position. 
     - `VID`: Variant ID. 
@@ -191,7 +191,7 @@ class Variant_calling(Step):
     - `ncell_alt`: number of cells with variant read count only. 
     - `ncell_ref`: number of cells with reference read count only. 
     - `ncell_ref_and_alt`: number of cells with both variant and reference read count.
-    - `RID`: Target region ID. This column will be added when `--bed_file` option were provided.
+    - `RID`: Target region ID. This column will be added when `--bed_file` was provided.
 
     `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 
