@@ -409,23 +409,25 @@ class Variant_calling(Step):
             min_support_read = int(self.args.min_support_read)
             df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
         df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
-
-        df_filter.loc[:,"vid_judge"] = df_filter.loc[:,"ref_count"] + df_filter.loc[:,"alt_count"]
-        df_filter_tmp = df_filter[df_filter.loc[:,"vid_judge"] > 0]
-
+    
+    @utils.add_log
+    def ncell_metrics(self):
+        variant_count_df = pd.read_table(self.filter_variant_count_file, sep='\t')
+        variant_count_df.loc[:,"vid_judge"] = variant_count_df.loc[:,"ref_count"] + variant_count_df.loc[:,"alt_count"]
+        variant_count_df_filter = variant_count_df[variant_count_df.loc[:,"vid_judge"] > 0]
         #summarize
         vid_summarize = {}
-        #add vid col
-        vid = list(df_filter_tmp.loc[:,"VID"])
+        #add vid column
+        vid = list(variant_count_df_filter.loc[:,"VID"])
         vid_summarize["VID"] = list(set(vid))
-        #add cell colum
-        vid_summarize["ncell_cover"] = list(df_filter_tmp.groupby("VID")["vid_judge"].count())
+        #add cell column
+        vid_summarize["ncell_cover"] = list(variant_count_df_filter.groupby("VID")["vid_judge"].count())
         #count table
-        variant_count =  (df_filter_tmp.loc[:,"alt_count"] != 0).astype(int)
-        ref_count =  (df_filter_tmp.loc[:,"ref_count"] != 0).astype(int)
-        #add VID colums 
-        variant_count["VID"] = df_filter_tmp.loc[:,"VID"]
-        ref_count["VID"] = df_filter_tmp.loc[:,"VID"]
+        variant_count =  (variant_count_df_filter.loc[:,"alt_count"] != 0).astype(int)
+        ref_count =  (variant_count_df_filter.loc[:,"ref_count"] != 0).astype(int)
+        #add VID column 
+        variant_count["VID"] = variant_count_df_filter.loc[:,"VID"]
+        ref_count["VID"] = variant_count_df_filter.loc[:,"VID"]
         
         vid_summarize["ncell_ref"] = list(ref_count.groupby("VID").sum())
         vid_summarize["ncell_alt"] = list(variant_count.groupby("VID").sum())
@@ -435,12 +437,9 @@ class Variant_calling(Step):
         vid_summarize.loc[:,"ncell_ref_and_alt"] =  (vid_summarize.loc[:,"ncell_ref"] + vid_summarize.loc[:,"ncell_alt"]) - vid_summarize.loc[:,"ncell_cover"] 
         vid_summarize.loc[:,"ncell_ref"] = vid_summarize.loc[:,"ncell_ref"] - vid_summarize.loc[:,"ncell_ref_and_alt"]
         vid_summarize.loc[:,"ncell_alt"] = vid_summarize.loc[:,"ncell_alt"] - vid_summarize.loc[:,"ncell_ref_and_alt"]
-
-        df_filter = df_filter.drop("vid_judge",axis=1)
-        df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
         
         vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
-
+    
     @utils.add_log
     def filter_vcf(self):
         """
@@ -486,6 +485,7 @@ class Variant_calling(Step):
         self.merge_vcf()
         self.write_VID_file()
         self.get_UMI()
+        self.ncell_metrics()
         self.filter_vcf()
         self.write_support_matrix()
         self.clean_up()
