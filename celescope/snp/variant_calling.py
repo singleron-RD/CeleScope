@@ -509,8 +509,8 @@ class Variant_calling(Step):
         #save
         vid_file.to_csv(self.VID_file,sep = '\t',index = None)
         ncell_file.to_csv(self.summarize_capture_vid,sep = '\t',index = None)
-    @utils.add_log
     
+    @utils.add_log
     def filter_vcf(self):
         """
         filter cells with zero variant UMI
