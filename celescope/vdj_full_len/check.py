@@ -4,6 +4,10 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 
+'''
+The warning metrics of samples' analysis result are marked in red in the report
+'''
+
 warnings = {
     'Q30 of Barcodes':0.90, # Ideal > 90%. Application performance may be affected.
     'Q30 of UMIs':0.90, # Ideal > 90%. Application performance may be affected.
