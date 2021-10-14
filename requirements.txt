@@ -12,3 +12,4 @@ matplotlib==3.3.0
 cython
 pytest
 venn
+pyranges

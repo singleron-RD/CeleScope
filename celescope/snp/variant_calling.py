@@ -7,6 +7,7 @@ from concurrent.futures import ProcessPoolExecutor
 
 import pandas as pd
 import numpy as np
+import pyranges as pr
 import pysam
 from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
@@ -177,9 +178,12 @@ class Variant_calling(Step):
 
     Output
 
-    `{sample}_VID.tsv` A unique numeric ID is assigned for each variant.
+    `{sample}_VID.tsv` A unique numeric ID is assigned for each variant, 
+    - `RID`: Target region ID. This column will be added when `--bed_file` option were provided.
 
     `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
+
+    `{sample}_RID.tsv` A unique numeric ID is assigned for each target region. This file will be created when `--bed_file` option were provided.
 
     `{sample}_variant_ncell.tsv` Number of cells with read count at each variant's position. 
     - `VID`: Variant ID. 
@@ -187,6 +191,7 @@ class Variant_calling(Step):
     - `ncell_alt`: number of cells with variant read count only. 
     - `ncell_ref`: number of cells with reference read count only. 
     - `ncell_ref_and_alt`: number of cells with both variant and reference read count.
+    - `RID`: Target region ID. This column will be added when `--bed_file` option were provided.
 
     `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 
@@ -211,12 +216,14 @@ class Variant_calling(Step):
         self.barcodes, _num = utils.read_barcode_file(args.match_dir)
         self.fasta = parse_genomeDir_rna(args.genomeDir)['fasta']
         self.df_vcf = None
+        self.bed_file = args.bed_file
 
         # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
         self.splitN_bam_name_sorted = f'{self.out_prefix}_splitN_name_sorted.bam'
         self.CID_file = f'{self.out_prefix}_CID.tsv'
         self.VID_file = f'{self.out_prefix}_VID.tsv'
+        self.RID_file = f'{self.out_prefix}_RID.tsv'
         self.cells_dir = f'{self.outdir}/cells/'
         self.merged_vcf_file = f'{self.out_prefix}_merged.vcf'
         self.filter_vcf_file = f'{self.out_prefix}_filter.vcf'
@@ -410,22 +417,24 @@ class Variant_calling(Step):
             df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
         df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
 
-        df_filter.loc[:,"vid_judge"] = df_filter.loc[:,"ref_count"] + df_filter.loc[:,"alt_count"]
-        df_filter_tmp = df_filter[df_filter.loc[:,"vid_judge"] > 0]
-
+    @utils.add_log
+    def ncell_metrics(self):
+        variant_count_df = pd.read_table(self.filter_variant_count_file, sep='\t')
+        variant_count_df.loc[:,"vid_judge"] = variant_count_df.loc[:,"ref_count"] + variant_count_df.loc[:,"alt_count"]
+        variant_count_df_filter = variant_count_df[variant_count_df.loc[:,"vid_judge"] > 0]
         #summarize
         vid_summarize = {}
-        #add vid col
-        vid = list(df_filter_tmp.loc[:,"VID"])
+        #add vid column
+        vid = list(variant_count_df_filter.loc[:,"VID"])
         vid_summarize["VID"] = list(set(vid))
-        #add cell colum
-        vid_summarize["ncell_cover"] = list(df_filter_tmp.groupby("VID")["vid_judge"].count())
+        #add cell column
+        vid_summarize["ncell_cover"] = list(variant_count_df_filter.groupby("VID")["vid_judge"].count())
         #count table
-        variant_count =  (df_filter_tmp.loc[:,"alt_count"] != 0).astype(int)
-        ref_count =  (df_filter_tmp.loc[:,"ref_count"] != 0).astype(int)
-        #add VID colums 
-        variant_count["VID"] = df_filter_tmp.loc[:,"VID"]
-        ref_count["VID"] = df_filter_tmp.loc[:,"VID"]
+        variant_count =  (variant_count_df_filter.loc[:,"alt_count"] != 0).astype(int)
+        ref_count =  (variant_count_df_filter.loc[:,"ref_count"] != 0).astype(int)
+        #add VID column 
+        variant_count["VID"] = variant_count_df_filter.loc[:,"VID"]
+        ref_count["VID"] = variant_count_df_filter.loc[:,"VID"]
         
         vid_summarize["ncell_ref"] = list(ref_count.groupby("VID").sum())
         vid_summarize["ncell_alt"] = list(variant_count.groupby("VID").sum())
@@ -435,13 +444,72 @@ class Variant_calling(Step):
         vid_summarize.loc[:,"ncell_ref_and_alt"] =  (vid_summarize.loc[:,"ncell_ref"] + vid_summarize.loc[:,"ncell_alt"]) - vid_summarize.loc[:,"ncell_cover"] 
         vid_summarize.loc[:,"ncell_ref"] = vid_summarize.loc[:,"ncell_ref"] - vid_summarize.loc[:,"ncell_ref_and_alt"]
         vid_summarize.loc[:,"ncell_alt"] = vid_summarize.loc[:,"ncell_alt"] - vid_summarize.loc[:,"ncell_ref_and_alt"]
-
-        df_filter = df_filter.drop("vid_judge",axis=1)
-        df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
         
         vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
-
+    
+    def read_bed_file(self): 
+        bed_file_df = pd.read_table(self.bed_file,
+                                      usecols=[0,1,2],
+                                      names=['Chromosome', 'Start', 'End'],
+                                      sep = "\t")
+        return bed_file_df
+    
     @utils.add_log
+    def write_RID_file(self):
+        rid_file = self.read_bed_file()
+        rid_file.insert(0, 'RID', [rid + 1 for rid in range(len(rid_file))], allow_duplicates=False)
+        rid_file.to_csv(self.RID_file,sep = '\t',index = False)
+    
+    @utils.add_log
+    def find_region(self):
+        """
+        return a list of RID of each VID
+        """
+        bed_file_df = self.read_bed_file()
+        rid_file = pd.read_table(self.RID_file,sep = '\t')
+        vid_file = pd.read_table(self.VID_file,sep = '\t')
+        
+        gr = pr.PyRanges(bed_file_df)
+        vid_rid_result = []
+        for _, row in vid_file.iterrows():
+            bed_region = gr[str(row['chrom']), row['pos']:row['pos']+1]
+            if bed_region:
+                bed_chr = bed_region.as_df().loc[:,"Chromosome"].astype(int).to_list()
+                bed_start = bed_region.as_df().loc[:,"Start"].to_list()
+                bed_end = bed_region.as_df().loc[:,"End"].to_list()
+                #get rid
+                rid_lst = []
+                for chr, start, end in zip(bed_chr,bed_start,bed_end):
+                    rid = rid_file[(rid_file.loc[:,"Chromosome"] == chr) 
+                                 & (rid_file.loc[:,"Start"] == start) 
+                                 & (rid_file.loc[:,"End"] == end)].loc[:,"RID"].to_list()[0]
+                    rid_lst.append(rid)
+                if len(rid_lst) == 1:
+                    vid_rid_result.append(rid_lst[0])
+                else:
+                    vid_rid_result.append(tuple(rid_lst))
+            else:
+                vid_rid_result.append("None")
+        return vid_rid_result
+    
+    @utils.add_log
+    def get_position_region(self):
+        #read file
+        vid_file = pd.read_table(self.VID_file,sep = '\t')
+        ncell_file = pd.read_table(self.summarize_capture_vid,sep = '\t')
+        
+        #insert rid and save data
+        rid_result = self.find_region()
+        vid_file.insert(1, 'RID',rid_result, allow_duplicates=False)
+        ncell_file = pd.merge(left = ncell_file,
+                              right = vid_file,
+                              on = "VID",
+                              how="left").drop(["chrom", "pos", "ref", "alt"],axis = 1)
+        #save
+        vid_file.to_csv(self.VID_file,sep = '\t',index = None)
+        ncell_file.to_csv(self.summarize_capture_vid,sep = '\t',index = None)
+    @utils.add_log
+    
     def filter_vcf(self):
         """
         filter cells with zero variant UMI
@@ -486,6 +554,10 @@ class Variant_calling(Step):
         self.merge_vcf()
         self.write_VID_file()
         self.get_UMI()
+        self.ncell_metrics()
+        if self.bed_file != '':
+            self.write_RID_file()
+            self.get_position_region()
         self.filter_vcf()
         self.write_support_matrix()
         self.clean_up()
@@ -507,6 +579,11 @@ def get_opts_variant_calling(parser, sub_program):
         help="""Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.""",
         default='auto',
     )
+    parser.add_argument(
+        "--bed_file",
+        help = "The path of bed file.",
+        default = ''
+        )
     if sub_program:
         parser.add_argument(
             "--bam",
