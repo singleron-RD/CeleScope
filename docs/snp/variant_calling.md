@@ -3,9 +3,12 @@
 
 ## Output
 
-`{sample}_VID.tsv` A unique numeric ID is assigned for each variant.
+`{sample}_VID.tsv` A unique numeric ID is assigned for each variant, 
+- `RID`: Target region ID. This column will be added when `--bed_file` option were provided.
 
 `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
+
+`{sample}_RID.tsv` A unique numeric ID is assigned for each target region. This file will be created when `--bed_file` option were provided.
 
 `{sample}_variant_ncell.tsv` Number of cells with read count at each variant's position. 
 - `VID`: Variant ID. 
@@ -13,6 +16,7 @@
 - `ncell_alt`: number of cells with variant read count only. 
 - `ncell_ref`: number of cells with reference read count only. 
 - `ncell_ref_and_alt`: number of cells with both variant and reference read count.
+- `RID`: Target region ID. This column will be added when `--bed_file` option were provided.
 
 `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 
@@ -34,6 +38,8 @@ are variants(VID) and columns are cells(CID). The value can be 1, 2 or 3.
 `--genomeDir` Required. Genome directory after running `mkref`.
 
 `--min_support_read` Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.
+
+`--bed_file` The path of bed file. 
 
 `--bam` Input BAM file from step `target_metrics`.
 
