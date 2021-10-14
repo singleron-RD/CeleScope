@@ -479,8 +479,8 @@ class Variant_calling(Step):
                 bed_end = bed_region.as_df().loc[:,"End"].to_list()
                 #get rid
                 rid_lst = []
-                for chr, start, end in zip(bed_chr,bed_start,bed_end):
-                    rid = rid_file[(rid_file.loc[:,"Chromosome"] == chr) 
+                for chrs, start, end in zip(bed_chr,bed_start,bed_end):
+                    rid = rid_file[(rid_file.loc[:,"Chromosome"] == chrs) 
                                  & (rid_file.loc[:,"Start"] == start) 
                                  & (rid_file.loc[:,"End"] == end)].loc[:,"RID"].to_list()[0]
                     rid_lst.append(rid)
