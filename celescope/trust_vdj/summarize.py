@@ -8,7 +8,7 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.trust_vdj.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.cellranger3 import get_plot_elements
-
+import sys
 
 def get_vj_annot(df, chains, pairs):
     fl_pro_pair_df = pd.DataFrame(df[df['productive']==True].barcode.value_counts())
@@ -54,6 +54,27 @@ def get_vj_annot(df, chains, pairs):
         })
 
     return l
+'''
+# expected_cell_num 
+def find_threshold(df_sum, idx):
+    return int(df_sum.iloc[idx - 1, df_sum.columns == 'umis'])
+
+def get_cell_bc(df_sum, threshold, col='umis'):
+    return list(df_sum[df_sum[col] >= threshold]['barcode'])
+
+def auto_cell(df_sum,expected_cell_num):
+    idx = int(expected_cell_num * 0.01)
+    barcode_number = df_sum.shape[0]
+    idx = int(min(barcode_number, idx))
+    if idx == 0:
+        sys.exit("cell number equals zero!")
+    # calculate threshold
+    threshold = (find_threshold(df_sum, idx) * 0.1)
+    threshold = max(1, threshold)
+    cell_bc = get_cell_bc(df_sum, threshold)
+    
+    return cell_bc, threshold
+'''
 
 
 class Summarize(Step):
@@ -80,6 +101,7 @@ class Summarize(Step):
         self.chains = CHAIN[self.seqtype]
         self.paired_groups = PAIRED_CHAIN[self.seqtype]
         
+        self.min_read_count = args.min_read_count
 
         # common variables
 
@@ -106,12 +128,100 @@ class Summarize(Step):
             df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
         else:
             df = df[(df['chain']=='TRA') | (df['chain']=='TRB')]
-            df = df.sort_values(by='umis', ascending=False)
-            df_for_clono = df.drop_duplicates(['barcode', 'chain'])
+            df_for_clono = df.sort_values(by='umis', ascending=False)
+            df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
+
+        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+        cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
+        total_cells_all =len(cell_barcodes) # cell number before filter
+        
+        '''
+        filter cell by cell type from trust barcode filtered report
+        filter cell by read count from trust report 
+        '''
+        filterbc = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/barcoderepfl.tsv',sep='\t')
+        trust_rep = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/report.out', sep='\t')
+        filterbc = filterbc.rename(columns = {'#barcode':'barcode'})
+        filterbc = filterbc[(filterbc['chain1']!='*') | (filterbc['chain2']!='*')]
+        filterbc = set(filterbc['barcode'].tolist())
+
+        trust_rep = trust_rep[trust_rep['cid_full_length'] >= 1]
+        trust_rep = trust_rep[trust_rep['CDR3aa'] != 'out_of_frame']
+        trust_rep = trust_rep.rename(columns = {'cid':'barcode', '#count':'count'})
+        trust_rep['barcode'] = trust_rep['barcode'].apply(lambda x:x.split('_')[0])
+        trust_rep = trust_rep.sort_values(by = 'count', ascending = False)
+        if self.min_read_count == "auto":
+            trust_rep = trust_rep[trust_rep['count'] >= 4]
+        else:
+            min_read_count = int(self.min_read_count)
+            trust_rep = trust_rep[trust_rep['count'] >= min_read_count]
+        trust_rep = set(trust_rep['barcode'].tolist())
+
+        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(filterbc)]
+        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(trust_rep)]
+
         # gen clonotypes table
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
         total_cells =len(cell_barcodes)
+        
+
+        ''' use expected_cell_num parameter
+
+        filter method 1
+        if self.expected_cell_num != None:
+            df_used_for_cell_nums = df_for_clono_pro.drop_duplicates(['barcode'])
+            cell_bc, threshold = auto_cell(df_used_for_cell_nums, self.expected_cell_num)
+            total_cells = len(set(cell_bc))
+            df_for_clono = df_for_clono[df_for_clono['umis'] >= threshold]
+            df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+            print(threshold)
+            print(total_cells)
+
+        filter method 2
+        if self.expected_cell_num != None:
+            #df_for_clono = df_for_clono.sort_values(by='umis',ascending=True)
+            #df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+            self.expected_cell_num = int(self.expected_cell_num)
+            fl_pro_pair_df = pd.DataFrame(df_for_clono[df_for_clono['productive']==True].barcode.value_counts())
+            fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']>=2]
+            
+            # find median productive umi value
+            bc_l = list(fl_pro_pair_df.index)
+            median_umi = df_for_clono[df_for_clono['barcode'].isin(bc_l)].agg({'umis':'median'})
+            median_umi = int(median_umi.umis)
+            print(median_umi)
+            
+            df_for_clono = df_for_clono.reset_index().drop('index',axis=1)
+            start_loc = df_for_clono[df_for_clono['umis']==median_umi].index.tolist()[0] - int(self.expected_cell_num / 2)
+            end_loc = int(start_loc + self.expected_cell_num)
+            df_for_clono = df_for_clono.iloc[start_loc:end_loc,]
+            df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+            cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
+            total_cells =len(cell_barcodes)
+            print(total_cells)
+        
+        # method 3
+        if self.expected_cell_num != None:
+            self.expected_cell_num = int(self.expected_cell_num)
+            fl_pro_pair_df = pd.DataFrame(df_for_clono[df_for_clono['productive']==True].barcode.value_counts())
+            fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']>=2]
+
+            # find median productive umi value
+            bc_l = list(fl_pro_pair_df.index)
+            median_umi = df_for_clono[df_for_clono['barcode'].isin(bc_l)].agg({'umis':'median'})
+            median_umi = int(median_umi.umis)
+            print(median_umi)
+            
+            df_for_expected = df_for_clono.reset_index().drop('index',axis=1)
+            start_loc = df_for_expected[df_for_expected['umis']==median_umi].index.tolist()[0] - int(self.expected_cell_num / 2)
+            end_loc = int(start_loc + self.expected_cell_num)
+            df_for_expected = df_for_expected.iloc[start_loc:end_loc,]
+            df_for_expected_pro = df_for_expected[df_for_expected['productive']==True]
+            cell_barcodes_expected = set(df_for_expected_pro['barcode'].tolist())
+            total_cells =len(cell_barcodes_expected)
+            print(total_cells)
+        '''
 
         summarize_summary = []
         summarize_summary.append({
@@ -177,13 +287,13 @@ class Summarize(Step):
 
         summarize_summary.append({
             'item': 'Mean Read Pairs per Cell',
-            'count': int(read_count/total_cells),
+            'count': int(read_count/total_cells_all),
             'total_count': np.nan
         })
         with pysam.FastaFile(self.assembled_fa) as fa:
             summarize_summary.append({
                 'item': 'Mean Used Read Pairs per Cell',
-                'count': int(fa.nreferences/total_cells), 
+                'count': int(fa.nreferences/total_cells_all), 
                 'total_count': np.nan
             })
             summarize_summary.append({
@@ -223,6 +333,7 @@ def summarize(args):
 
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    parser.add_argument('--min_read_count', help ='filter cell by read count number, int type required', default='auto')
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--reads_assignment', help='File records reads assigned to contigs.', required=True)

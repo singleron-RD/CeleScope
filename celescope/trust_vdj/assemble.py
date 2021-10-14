@@ -12,6 +12,36 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.trust_vdj.__init__ import CHAIN, CONDA_PATH, INDEX, TOOLS_DIR
 
+@utils.add_log
+def get_trust_report(filedir, sample):
+    cmd = (
+        f'perl {TOOLS_DIR}/trust-simplerep.pl '
+        f'{filedir}/{sample}_cdr3.out > '
+        f'{filedir}/report.out'
+    )
+    get_trust_report.logger.info(cmd)
+    subprocess.check_call(cmd, shell=True)
+
+@utils.add_log
+def get_bc_report(filedir, sample):
+    cmd = (
+        f'perl {TOOLS_DIR}/trust-barcoderep.pl '
+        f'{filedir}/{sample}_cdr3.out > '
+        f'{filedir}/barcoderep.tsv ' 
+    )
+    get_bc_report.logger.info(cmd)
+    subprocess.check_call(cmd, shell=True)
+
+@utils.add_log
+def get_bcfilter_report(filedir, sample):
+    cmd = (
+        f'python {TOOLS_DIR}/barcoderep-filter.py '
+        f'-b {filedir}/barcoderep.tsv > '
+        f'{filedir}/barcoderepfl.tsv '
+    )
+    get_bcfilter_report.logger.info(cmd)
+    subprocess.check_call(cmd, shell=True)
+
 
 @utils.add_log
 def mapping(thread, species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange):
@@ -399,6 +429,10 @@ class Assemble(Step):
         all_summary = self.match_summary + self.mapping_summary
         sum_df = pd.DataFrame(all_summary, columns=['item', 'count', 'total_count'])
         utils.gen_stat(sum_df, stat_file)   
+
+        get_trust_report(self.assemble_out,self.sample)
+        get_bc_report(self.assemble_out, self.sample)
+        get_bcfilter_report(self.assemble_out, self.sample)
 
     def run(self):
         self.get_match_fastq()
