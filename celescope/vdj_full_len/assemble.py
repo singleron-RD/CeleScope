@@ -220,21 +220,8 @@ class Assemble(Step):
                     'count': 0,
                     'total_count': np.nan
                 })
+              
                 
-<<<<<<< HEAD:celescope/vdj_full_len/assemble.py
-
-=======
-        # common_summary.append({
-        #     'item': 'Median used TRA UMIs per Cell',
-        #     'count': int(filter_contig[filter_contig['chain']=='TRA']['umis'].median()), 
-        #     'total_count': np.nan
-        # })
-        # common_summary.append({
-        #     'item': 'Median used TRB UMIs per Cell',
-        #     'count': int(filter_contig[filter_contig['chain']=='TRB']['umis'].median()), 
-        #     'total_count': np.nan
-        # })
->>>>>>> sgr/vdj10x_report:celescope/vdj10X/assemble.py
         # get all results stat_file
         all_summary = get_vj_annot(filter_contig, self.chains, self.pair)   
 
