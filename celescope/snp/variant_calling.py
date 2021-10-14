@@ -454,6 +454,7 @@ class Variant_calling(Step):
                                       sep = "\t")
         return bed_file_df
     
+
     @utils.add_log
     def write_RID_file(self):
         rid_file = self.read_bed_file()
@@ -558,6 +559,7 @@ class Variant_calling(Step):
         if self.bed_file != '':
             self.write_RID_file()
             self.get_position_region()
+
         self.filter_vcf()
         self.write_support_matrix()
         self.clean_up()
