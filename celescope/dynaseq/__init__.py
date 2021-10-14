@@ -7,7 +7,7 @@ __STEPS__ = [
     "count",
     'analysis',
     'conversion',
-    'subsitution',
+    'substitution',
     'replacement',
     'replace_tsne']
 
