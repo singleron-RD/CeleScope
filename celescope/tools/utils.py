@@ -325,7 +325,6 @@ def read_one_col(file):
     return col1, num
 
 def get_gene_region_from_bed(prefix):
-    import celescope
     root_path = os.path.dirname(celescope.__file__)
     file_path = glob.glob(f'{root_path}/data/snp/panel/{prefix}_*.bed')[0]
     bed_file_df = pd.read_table(file_path, 
