@@ -179,6 +179,7 @@ class Variant_calling(Step):
     Output
 
     `{sample}_VID.tsv` A unique numeric ID is assigned for each variant, 
+
     - `RID`: Target region ID. This column will be added when `--panel` option were provided.
 
     `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
@@ -191,6 +192,7 @@ class Variant_calling(Step):
     - `ncell_alt`: number of cells with variant read count only. 
     - `ncell_ref`: number of cells with reference read count only. 
     - `ncell_ref_and_alt`: number of cells with both variant and reference read count.
+
     - `RID`: Target region ID. This column will be added when `--panel` option were provided.
 
     `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
@@ -449,7 +451,62 @@ class Variant_calling(Step):
     
     def read_bed_file(self): 
         bed_file_df = utils.get_gene_region_from_bed(prefix = self.bed_file_panel)[1]
-        return bed_file_df
+        return bed_file_df  
+
+    @utils.add_log
+    def write_RID_file(self):
+        rid_file = self.read_bed_file()
+        rid_file.insert(0, 'RID', [rid + 1 for rid in range(len(rid_file))], allow_duplicates=False)
+        rid_file.to_csv(self.RID_file,sep = '\t',index = False)
+    
+    @utils.add_log
+    def find_region(self):
+        """
+        return a list of RID of each VID
+        """
+        bed_file_df = self.read_bed_file()
+        rid_file = pd.read_table(self.RID_file,sep = '\t')
+        vid_file = pd.read_table(self.VID_file,sep = '\t')
+        
+        gr = pr.PyRanges(bed_file_df)
+        vid_rid_result = []
+        for _, row in vid_file.iterrows():
+            bed_region = gr[str(row['chrom']), row['pos']:row['pos']+1]
+            if bed_region:
+                bed_chr = bed_region.as_df().loc[:,"Chromosome"].astype(int).to_list()
+                bed_start = bed_region.as_df().loc[:,"Start"].to_list()
+                bed_end = bed_region.as_df().loc[:,"End"].to_list()
+                #get rid
+                rid_lst = []
+                for chrs, start, end in zip(bed_chr,bed_start,bed_end):
+                    rid = rid_file[(rid_file.loc[:,"Chromosome"] == chrs) 
+                                 & (rid_file.loc[:,"Start"] == start) 
+                                 & (rid_file.loc[:,"End"] == end)].loc[:,"RID"].to_list()[0]
+                    rid_lst.append(rid)
+                if len(rid_lst) == 1:
+                    vid_rid_result.append(rid_lst[0])
+                else:
+                    vid_rid_result.append(tuple(rid_lst))
+            else:
+                vid_rid_result.append("None")
+        return vid_rid_result
+    
+    @utils.add_log
+    def get_position_region(self):
+        #read file
+        vid_file = pd.read_table(self.VID_file,sep = '\t')
+        ncell_file = pd.read_table(self.summarize_capture_vid,sep = '\t')
+        
+        #insert rid and save data
+        rid_result = self.find_region()
+        vid_file.insert(1, 'RID',rid_result, allow_duplicates=False)
+        ncell_file = pd.merge(left = ncell_file,
+                              right = vid_file,
+                              on = "VID",
+                              how="left").drop(["chrom", "pos", "ref", "alt"],axis = 1)
+        #save
+        vid_file.to_csv(self.VID_file,sep = '\t',index = None)
+        ncell_file.to_csv(self.summarize_capture_vid,sep = '\t',index = None)
     
     @utils.add_log
     def write_RID_file(self):
