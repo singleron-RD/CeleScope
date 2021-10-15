@@ -25,6 +25,7 @@ class Target_metrics(Step):
 
         # set
         self.match_barcode, _num = utils.read_barcode_file(args.match_dir)
+        self.match_barcode = set(self.match_barcode)
         
         if (self.assay == "snp" and args.panel != '') :
             self.bed_file_panel = args.panel
