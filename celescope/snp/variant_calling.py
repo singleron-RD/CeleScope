@@ -179,11 +179,11 @@ class Variant_calling(Step):
     Output
 
     `{sample}_VID.tsv` A unique numeric ID is assigned for each variant, 
-    - `RID`: Target region ID. This column will be added when `--bed_file` was provided.
+    - `RID`: Target region ID. This column will be added when `--panel` option were provided.
 
     `{sample}_CID.tsv` A unique numeric ID is assigned for each cell.
 
-    `{sample}_RID.tsv` A unique numeric ID is assigned for each target region. This file will be created when `--bed_file` was provided.
+    `{sample}_RID.tsv` A unique numeric ID is assigned for each target region. This file will be created when `--panel` option were provided.
 
     `{sample}_variant_ncell.tsv` Number of cells with read count at each variant's position. 
     - `VID`: Variant ID. 
@@ -191,7 +191,7 @@ class Variant_calling(Step):
     - `ncell_alt`: number of cells with variant read count only. 
     - `ncell_ref`: number of cells with reference read count only. 
     - `ncell_ref_and_alt`: number of cells with both variant and reference read count.
-    - `RID`: Target region ID. This column will be added when `--bed_file` was provided.
+    - `RID`: Target region ID. This column will be added when `--panel` option were provided.
 
     `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 
@@ -216,7 +216,7 @@ class Variant_calling(Step):
         self.barcodes, _num = utils.read_barcode_file(args.match_dir)
         self.fasta = parse_genomeDir_rna(args.genomeDir)['fasta']
         self.df_vcf = None
-        self.bed_file = args.bed_file
+        self.bed_file_panel = args.panel
 
         # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
@@ -448,13 +448,9 @@ class Variant_calling(Step):
         vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
     
     def read_bed_file(self): 
-        bed_file_df = pd.read_table(self.bed_file,
-                                      usecols=[0,1,2],
-                                      names=['Chromosome', 'Start', 'End'],
-                                      sep = "\t")
+        bed_file_df = utils.get_gene_region_from_bed(prefix = self.bed_file_panel)[1]
         return bed_file_df
     
-
     @utils.add_log
     def write_RID_file(self):
         rid_file = self.read_bed_file()
@@ -509,8 +505,8 @@ class Variant_calling(Step):
         #save
         vid_file.to_csv(self.VID_file,sep = '\t',index = None)
         ncell_file.to_csv(self.summarize_capture_vid,sep = '\t',index = None)
-    
     @utils.add_log
+    
     def filter_vcf(self):
         """
         filter cells with zero variant UMI
@@ -556,10 +552,9 @@ class Variant_calling(Step):
         self.write_VID_file()
         self.get_UMI()
         self.ncell_metrics()
-        if self.bed_file != '':
+        if self.bed_file_panel != '':
             self.write_RID_file()
             self.get_position_region()
-
         self.filter_vcf()
         self.write_support_matrix()
         self.clean_up()
@@ -582,8 +577,8 @@ def get_opts_variant_calling(parser, sub_program):
         default='auto',
     )
     parser.add_argument(
-        "--bed_file",
-        help = "The path of bed file.",
+        "--panel",
+        help = "The prefix of bed file, such as `lung_1`.",
         default = ''
         )
     if sub_program:
