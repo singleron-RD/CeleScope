@@ -9,29 +9,29 @@ The warning metrics of samples' analysis result are marked in red in the report
 '''
 
 warnings = {
-    'Q30 of Barcodes':0.90, # Ideal > 90%. Application performance may be affected.
-    'Q30 of UMIs':0.90, # Ideal > 90%. Application performance may be affected.
-    'Estimated Number of Cells':10, #Ideal >= 10. This usually indicates poor cell quality, poor library quality, or poor sequencing quality. Application performance is likely to be affected.
-    'Reads Mapped to Any V(D)J Gene':0.60, #Ideal > 60%. This can indicate poor specificity of the V(D)J enrichment, use of the wrong germline reference, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.
-    'Cells With Productive V-J Spanning Pair':0.30, # This can indicate poor cell quality, low yield from the RT reaction, poor specificity of the V(D)J enrichment, poor sequencing quality, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected
-    'Median used TRA UMIs per Cell':0.1, #Ideal > 0. This can indicate cells with extremely low TRA expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.
-    'Median used TRB UMIs per Cell':0.1, #Ideal > 0. This can indicate cells with extremely low TRB expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.
-    'Median used IGH UMIs per Cell':0.1, #Ideal > 0. This can indicate cells with extremely low IGH expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.
-    'Median used IGL UMIs per Cell':0.1, #Ideal > 0. This can indicate cells with extremely low IGL expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.
-    'Median used IGK UMIs per Cell':0.1  #Ideal > 0. This can indicate cells with extremely low IGK expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected. 
+    'Q30 of Barcodes':0.90,
+    'Q30 of UMIs':0.90,
+    'Estimated Number of Cells':10.0,
+    'Reads Mapped to Any V(D)J Gene':0.60,
+    'Cells With Productive V-J Spanning Pair':0.30,
+    'Median used TRA UMIs per Cell':0.1,
+    'Median used TRB UMIs per Cell':0.1,
+    'Median used IGH UMIs per Cell':0.1,
+    'Median used IGL UMIs per Cell':0.1,
+    'Median used IGK UMIs per Cell':0.1  
            }
 
 warnings_help = {
-    'Q30 of Barcodes':'Ideal > 90%. Application performance may be affected.',
-    'Q30 of UMIs': 'Ideal > 90%. Application performance may be affected.',
-    'Estimated Number of Cells': 'Ideal >= 10. This usually indicates poor cell quality, poor library quality, or poor sequencing quality. Application performance is likely to be affected.',
+    'Q30 of Barcodes': "Ideal > 90%. Application performance may be affected.",
+    'Q30 of UMIs': "Ideal > 90%. Application performance may be affected.",
+    'Estimated Number of Cells': "Ideal >= 10. This usually indicates poor cell quality, poor library quality, or poor sequencing quality. Application performance is likely to be affected.",
     'Reads Mapped to Any V(D)J Gene': "Ideal > 60%. This can indicate poor specificity of the V(D)J enrichment, use of the wrong germline reference, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.",
-    'Cells With Productive V-J Spanning Pair': "This can indicate poor cell quality, low yield from the RT reaction, poor specificity of the V(D)J enrichment, poor sequencing quality, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected",
-    'Median used TRA UMIs per Cell':"Ideal > 0. This can indicate cells with extremely low TRA expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.",
+    'Cells With Productive V-J Spanning Pair': "This can indicate poor cell quality, low yield from the RT reaction, poor specificity of the V(D)J enrichment, poor sequencing quality, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.",
+    'Median used TRA UMIs per Cell': "Ideal > 0. This can indicate cells with extremely low TRA expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.",
     'Median used TRB UMIs per Cell': "Ideal > 0. This can indicate cells with extremely low TRB expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.",
     'Median used IGH UMIs per Cell': "Ideal > 0. This can indicate cells with extremely low IGH expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.",
     'Median used IGL UMIs per Cell': "Ideal > 0. This can indicate cells with extremely low IGL expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected.",
-    'Median used IGK UMIs per Cell':'Ideal > 0. This can indicate cells with extremely low IGK expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected. '
+    'Median used IGK UMIs per Cell': "Ideal > 0. This can indicate cells with extremely low IGK expression, poor cell quality, low yield from the RT reaction, or the use of an unsupported chemistry type (e.g., using Single Cell 3\' for V(D)J assembly). Application performance may be affected."
            }
 
 
@@ -47,10 +47,8 @@ class Check(Step):
         self.html = args.html
         
         self.warning_list=[]
-    
-    # output
-        self.warning = f'{self.outdir}/WARNING.txt'
-        
+
+
         if self.seqtype =='TCR':
             self.target = [
                 'Q30 of Barcodes','Q30 of UMIs','Estimated Number of Cells','Reads Mapped to Any V(D)J Gene','Cells With Productive V-J Spanning Pair',
@@ -64,7 +62,6 @@ class Check(Step):
     @utils.add_log
     def run_check(self):
         rep = dict()
-        rep1 = dict()
         warning_summary = []
 
         with open(self.rep_bc,'r') as f:
@@ -74,12 +71,10 @@ class Check(Step):
         with open(self.rep,'r') as f:
             lines = (line.strip().split(':') for line in f)
             for line in lines:
-                rep[line[0]] = (line[1])
+                rep[line[0]] = line[1]
         
-        for key,value in rep.items():
-            if key in self.target:
-                rep1[key] = value
-        
+        rep1 = {key:value for key,value in rep.items() if key in self.target}
+
         for i in rep1.keys():
             rep1[i] = rep1[i].strip()
             if ',' in rep1[i]:
