@@ -26,8 +26,14 @@ class Target_metrics(Step):
         # set
         self.match_barcode, _num = utils.read_barcode_file(args.match_dir)
         self.match_barcode = set(self.match_barcode)
-        self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
-        self.gene_list = set(self.gene_list)
+        
+        if (self.assay == "snp" and args.panel != '') :
+            self.bed_file_panel = args.panel
+            gene = utils.get_gene_region_from_bed(prefix = self.bed_file_panel)[0]
+            self.gene_list, self.n_gene = gene,len(gene)
+        else:
+            self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
+        
         self.count_dict = utils.genDict(dim=3, valType=int)
         
         self.add_metric(
@@ -60,7 +66,6 @@ class Target_metrics(Step):
 
     @utils.add_log
     def parse_count_dict_add_metrics(self):
-
         total_reads = 0
         enriched_reads = 0
         enriched_reads_in_cells = 0
@@ -115,7 +120,8 @@ def target_metrics(args):
 
 
 def get_opts_target_metrics(parser, sub_program):
-    parser.add_argument("--gene_list", help=HELP_DICT['gene_list'], required=True)
+    parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
+    parser.add_argument("--panel",help = "The prefix of bed file, such as `lung_1`.",default = '')
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
