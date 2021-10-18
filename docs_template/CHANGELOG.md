@@ -2,18 +2,11 @@
  ### Added
 
  ### Changed
-
- ### Fixed
-
- ### Removed
-
-## [1.5.1] - 2021-09-14
- ### Added
-
- ### Changed
+ - Improve the speed of `snp`.
 
  ### Fixed
  - Fix a bug where `celescope.fusion.count_fusion` do not recognize fusion reads correctly.
+ - Use local css instead of css url to avoid connection issues.
 
  ### Removed
 
