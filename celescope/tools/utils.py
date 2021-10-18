@@ -21,6 +21,7 @@ import xopen
 
 import celescope.tools
 from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.__init__ import ROOT_PATH
 from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
@@ -324,16 +325,15 @@ def read_one_col(file):
     num = len(col1)
     return col1, num
 
-def get_gene_region_from_bed(prefix):
-    root_path = os.path.dirname(celescope.__file__)
-    file_path = glob.glob(f'{root_path}/data/snp/panel/{prefix}_*.bed')[0]
+def get_gene_region_from_bed(panel):
+    file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
     bed_file_df = pd.read_table(file_path, 
                                 usecols=[0,1,2,3],
                                 names=['Chromosome', 'Start', 'End','Gene'],
                                 sep = "\t")
     position_df = bed_file_df.loc[:,['Chromosome', 'Start', 'End']]
-    gene = bed_file_df.loc[:,'Gene'].to_list()
-    return set(gene),position_df
+    genes = set(bed_file_df.loc[:,'Gene'].to_list())
+    return genes, position_df
 
 def read_fasta(fasta_file, equal=False):
     # seq must have equal length

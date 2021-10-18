@@ -28,9 +28,8 @@ class Target_metrics(Step):
         self.match_barcode = set(self.match_barcode)
         
         if (self.assay == "snp" and args.panel != '') :
-            self.bed_file_panel = args.panel
-            gene = utils.get_gene_region_from_bed(prefix = self.bed_file_panel)[0]
-            self.gene_list, self.n_gene = gene,len(gene)
+            self.gene_list = utils.get_gene_region_from_bed(args.panel)[0]
+            self.n_gene = len(self.gene_list)
         else:
             self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
         
