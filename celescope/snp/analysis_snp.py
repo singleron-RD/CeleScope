@@ -124,6 +124,9 @@ class Analysis_variant(Step, AnalysisMixin):
         vid_lst = df_top_5.loc[:,"VID"].to_list()
         for cid,vid in zip(cid_lst,vid_lst):
             plot[f"VID_{vid}"] = set(cid)
+        share_cid  = list(set.intersection(*map(set,cid_lst)))
+        if share_cid == []:
+            share_cid.append("None")
         #venn plot
         set_cid = list(plot.values())
         set_name = list(plot.keys())
@@ -140,6 +143,7 @@ class Analysis_variant(Step, AnalysisMixin):
                          )
         fig = plot.get_figure()
         fig.savefig(f'{self.outdir}/{self.sample}_variant_top5.jpg',dpi = 600)
+        pd.DataFrame({"top5_variant_shared_cells":share_cid}).to_csv(f'{self.outdir}/{self.sample}_top5_shared_cells.tsv',sep = '\t',index = None)
 
     def run(self):
         self.add_GT()

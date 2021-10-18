@@ -495,6 +495,7 @@ class Variant_calling(Step):
         #read file
         vid_file = pd.read_table(self.VID_file,sep = '\t')
         ncell_file = pd.read_table(self.summarize_capture_vid,sep = '\t')
+        variant_conut_file = pd.read_table(self.filter_variant_count_file,sep = '\t')
         
         #insert rid and save data
         rid_result = self.find_region()
@@ -503,9 +504,14 @@ class Variant_calling(Step):
                               right = vid_file,
                               on = "VID",
                               how="left").drop(["chrom", "pos", "ref", "alt"],axis = 1)
+        variant_conut_file = pd.merge(left = variant_conut_file,
+                              right = vid_file,
+                              on = "VID",
+                              how="left").drop(["chrom", "pos", "ref", "alt"],axis = 1)
         #save
         vid_file.to_csv(self.VID_file,sep = '\t',index = None)
         ncell_file.to_csv(self.summarize_capture_vid,sep = '\t',index = None)
+        variant_conut_file.to_csv(self.filter_variant_count_file,sep = '\t',index = None)
     
     @utils.add_log
     def filter_vcf(self):
