@@ -1,4 +1,3 @@
-
 import configparser
 import subprocess
 
@@ -19,11 +18,19 @@ class Analysis_variant(Step, AnalysisMixin):
     - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
 
     Output
-    - `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
+    `{sample}.{genome_version}_multianno.txt` Annovar main output file. `CID` and `VID` are added to the `Otherinfo` column.
 
-    - `{sample}_variant_table.tsv` Formatted `multianno` file with `ncell_cover`and `ncell_alt` added.
+    `{sample}_variant_table.tsv` Formatted `multianno` file with `ncell_cover`and `ncell_alt` added.
     
-    - `{sample}_variant_top5.jpg` The Venn diagram of the 5 variants with the highest `ncell_alt`.
+    `{sample}_variant_top5.jpg` The Venn diagram of the 5 variants with the highest `ncell_alt`.
+
+    `{sample}_variant_ncell.tsv` Number of cells with read count at each variant's position. 
+    - `VID`: Variant ID. 
+    - `ncell_cover`: number of cells with read count at this position. 
+    - `ncell_alt`: number of cells with variant read count only. 
+    - `ncell_ref`: number of cells with reference read count only. 
+    - `ncell_ref_and_alt`: number of cells with both variant and reference read count.
+    - `RID`: Target region ID. This column will be added when `--panel` option were provided.
     """
 
     def __init__(self, args, step_name):
@@ -34,15 +41,35 @@ class Analysis_variant(Step, AnalysisMixin):
         self.filter_vcf = args.filter_vcf
         self.annovar_config = args.annovar_config
         self.match_dir = args.match_dir
-        self.nell_file = args.ncell_file
 
         # parse
         self.annovar_section = self.read_annovar_config()
 
         # out
+        self.ncell_file = f'{self.out_prefix}_variant_ncell.tsv'
         self.vcf_GT = f'{self.out_prefix}_addGT.vcf'
         buildver = self.annovar_section['buildver']
         self.annovar_file = f'{self.out_prefix}.{buildver}_multianno.txt'
+
+    @utils.add_log
+    def ncell_metrics(self):
+        variant_count_df = pd.read_table(self.filter_variant_count_file, sep='\t')
+        df_cover = variant_count_df.groupby('VID').agg({'RID':'first','CID':'count'})
+        df_ref = variant_count_df.loc[(variant_count_df["ref_count"]!=0) & 
+            (variant_count_df["alt_count"]==0)].groupby('VID').agg({'CID':'count'})
+        df_alt = variant_count_df.loc[(variant_count_df["ref_count"]==0) & 
+            (variant_count_df["alt_count"]!=0)].groupby('VID').agg({'CID':'count'})
+        df_ref_and_alt = variant_count_df.loc[(variant_count_df["ref_count"]!=0) & 
+            (variant_count_df["alt_count"]!=0)].groupby('VID').agg({'CID':'count'})
+
+        df_list = [df_ref, df_alt, df_ref_and_alt]
+        df_ncell = df_cover
+        for df in df_list:
+            df_ncell = pd.merge(df_ncell, df, on='VID', how='left')
+        df_ncell.fillna(0, inplace=True)
+        df_ncell.columns = ['RID', 'ncell_cover','ncell_ref','ncell_alt','ncell_ref_and_alt']
+
+        df_ncell.to_csv(self.ncell_file, sep = '\t',index = True)
 
     def get_df_count_tsne(self):
         '''
@@ -101,7 +128,7 @@ class Analysis_variant(Step, AnalysisMixin):
         df_vcf = utils.parse_vcf(self.vcf_GT, infos=['VID', 'CID'])
         df_annovar = self.annovar()
         df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
-        ncell_df = pd.read_table(self.nell_file,sep = "\t")
+        ncell_df = pd.read_table(self.ncell_file,sep = "\t")
         ncell_df.loc[:,"VID"] = ncell_df.loc[:,"VID"].astype(str)
         df_vcf["nCell"] = df_vcf["CID"].apply(func=lambda row: 1 if isinstance(row, str) else len(row))
 
@@ -147,6 +174,7 @@ class Analysis_variant(Step, AnalysisMixin):
 
     def run(self):
         self.add_GT()
+        self.ncell_metrics()
         cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
         df_count_tsne = self.get_df_count_tsne()
         count_tsne = self.get_count_tsne(df_count_tsne)
@@ -222,4 +250,4 @@ def get_opts_analysis_snp(parser, sub_program):
         parser.add_argument('--filter_vcf', help='filter vcf file.', required=True)
         parser.add_argument('--CID_file', help='CID_file.', required=True)
         parser.add_argument('--filter_variant_count_file', help='filter variant count file.', required=True)
-        parser.add_argument('--ncell_file', help='filter cell count file.', required=True)
+

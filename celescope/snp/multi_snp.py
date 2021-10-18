@@ -101,7 +101,6 @@ class Multi_snp(Multi):
         filter_vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_filter.vcf'
         CID_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_CID.tsv'
         filter_variant_count_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_filter_variant_count.tsv'
-        ncell_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_variant_ncell.tsv'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
@@ -109,7 +108,6 @@ class Multi_snp(Multi):
             f'--filter_vcf {filter_vcf} '
             f'--CID_file {CID_file} '
             f'--filter_variant_count_file {filter_variant_count_file} '
-            f'--ncell_file {ncell_file}'
         )
         self.process_cmd(cmd, step, sample, m=8, x=1)
 

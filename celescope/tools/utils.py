@@ -326,6 +326,11 @@ def read_one_col(file):
     return col1, num
 
 def get_gene_region_from_bed(panel):
+    """
+    Returns 
+    - genes
+    - position_df with 'Chromosome', 'Start', 'End'
+    """
     file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
     bed_file_df = pd.read_table(file_path, 
                                 usecols=[0,1,2,3],

@@ -186,13 +186,6 @@ class Variant_calling(Step):
 
     `{sample}_RID.tsv` A unique numeric ID is assigned for each target region. This file will be created when `--panel` option were provided.
 
-    `{sample}_variant_ncell.tsv` Number of cells with read count at each variant's position. 
-    - `VID`: Variant ID. 
-    - `ncell_cover`: number of cells with read count at this position. 
-    - `ncell_alt`: number of cells with variant read count only. 
-    - `ncell_ref`: number of cells with reference read count only. 
-    - `ncell_ref_and_alt`: number of cells with both variant and reference read count.
-    - `RID`: Target region ID. This column will be added when `--panel` option were provided.
 
     `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
 
@@ -218,6 +211,7 @@ class Variant_calling(Step):
         self.fasta = parse_genomeDir_rna(args.genomeDir)['fasta']
         self.df_vcf = None
         self.panel = args.panel
+        self.panel_bool = self.panel and self.panel != "None"
 
         # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
@@ -232,7 +226,6 @@ class Variant_calling(Step):
         self.otsu_dir = f'{self.out_prefix}_otsu/'
         self.otsu_threshold_file = f'{self.otsu_dir}/{self.sample}_otsu_threshold.tsv'
         self.filter_variant_count_file = f'{self.out_prefix}_filter_variant_count.tsv'
-        self.summarize_capture_vid = f'{self.out_prefix}_variant_ncell.tsv'
         if args.min_support_read == 'auto':
             utils.check_mkdir(self.otsu_dir)
         self.support_matrix_file = f'{self.out_prefix}_support.mtx'
@@ -306,7 +299,6 @@ class Variant_calling(Step):
         with Pool(self.thread) as pool:
             pool.map(func, CIDs)
 
-
     def read_CID(self):
         return read_CID(self.CID_file)
 
@@ -325,48 +317,48 @@ class Variant_calling(Step):
         for CID in CIDs:
             CID = str(CID)
             vcf_file = f'{self.outdir}/cells/cell{CID}/cell{CID}_norm.vcf'
-            vcf = pysam.VariantFile(vcf_file, 'r')
-            for rec in vcf.fetch():
-                v = ','.join([str(getattr(rec, col)) for col in v_cols])
-                if not v in v_dict:
-                    v_dict[v] = dict()
-                    v_dict[v]['CID'] = [CID]
-                    v_dict[v]['record'] = rec
-                else:
-                    v_dict[v]['CID'].append(CID)
-            vcf.close()
+            with pysam.VariantFile(vcf_file, 'r') as vcf:
+                for rec in vcf.fetch():
+                    v = ','.join([str(getattr(rec, col)) for col in v_cols])
+                    if not v in v_dict:
+                        v_dict[v] = dict()
+                        for col in v_cols:
+                            v_dict[v][col] = getattr(rec, col)
+                        v_dict[v]['CID'] = [CID]
+                        v_dict[v]['record'] = rec
+                    else:
+                        v_dict[v]['CID'].append(CID)
 
         # output
         def get_vcf_header(CIDs):
             CID = CIDs[0]
             vcf_file = f'{self.outdir}/cells/cell{CID}/cell{CID}_norm.vcf'
-            vcf = pysam.VariantFile(vcf_file, 'r')
-            header = vcf.header
-            vcf.close()
-            return header 
+            with pysam.VariantFile(vcf_file, 'r') as vcf:
+                return vcf.header
+
         vcf_header = get_vcf_header(CIDs)
         vcf_header.info.add('VID', number=1, type='String', description='Variant ID')
         vcf_header.info.add('CID', number=1, type='String', description='Cell ID')
-        merged_vcf = pysam.VariantFile(self.merged_vcf_file, 'w', header=vcf_header)
-
-        VID = 0
-        for v in sorted(v_dict.keys()):
-            VID += 1
-            rec = v_dict[v]['record']
-            CID = ','.join(v_dict[v]['CID'])
-            record = merged_vcf.new_record()
-            cols = ['chrom', 'pos', 'alleles']
-            for col in cols:
-                setattr(record, col, getattr(rec, col))
-            record.info['VID'] = str(VID)
-            record.info['CID'] = CID
-            merged_vcf.write(record)
-        merged_vcf.close()
+        with pysam.VariantFile(self.merged_vcf_file, 'w', header=vcf_header) as merged_vcf:
+            VID = 0
+            for _keys, values in sorted(v_dict.items(), 
+                key=lambda x: (x[1]['chrom'], x[1]['pos'], x[1]['alleles'])):
+                VID += 1
+                rec = values['record']
+                CID = ','.join(values['CID'])
+                record = merged_vcf.new_record()
+                cols = ['chrom', 'pos', 'alleles']
+                for col in cols:
+                    setattr(record, col, getattr(rec, col))
+                record.info['VID'] = str(VID)
+                record.info['CID'] = CID
+                merged_vcf.write(record)
 
     @utils.add_log
     def write_VID_file(self):
         df_vcf = parse_vcf(self.merged_vcf_file)
         df_VID = df_vcf.loc[:, ['VID', 'chrom', 'pos', 'ref', 'alt']]
+
         df_VID.to_csv(self.VID_file, sep='\t', index=False)
 
     def otsu_threshold(self, array):
@@ -417,37 +409,7 @@ class Variant_calling(Step):
             min_support_read = int(self.args.min_support_read)
             df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
         df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
-
-    @utils.add_log
-    def ncell_metrics(self):
-        variant_count_df = pd.read_table(self.filter_variant_count_file, sep='\t')
-        variant_count_df.loc[:,"vid_judge"] = variant_count_df.loc[:,"ref_count"] + variant_count_df.loc[:,"alt_count"]
-        variant_count_df_filter = variant_count_df[variant_count_df.loc[:,"vid_judge"] > 0]
-        #summarize
-        vid_summarize = {}
-        #add vid column
-        vid = list(variant_count_df_filter.loc[:,"VID"])
-        vid_summarize["VID"] = list(set(vid))
-        #add cell column
-        vid_summarize["ncell_cover"] = list(variant_count_df_filter.groupby("VID")["vid_judge"].count())
-        #count table
-        variant_count =  (variant_count_df_filter.loc[:,"alt_count"] != 0).astype(int)
-        ref_count =  (variant_count_df_filter.loc[:,"ref_count"] != 0).astype(int)
-        #add VID column 
-        variant_count["VID"] = variant_count_df_filter.loc[:,"VID"]
-        ref_count["VID"] = variant_count_df_filter.loc[:,"VID"]
-        
-        vid_summarize["ncell_ref"] = list(ref_count.groupby("VID").sum())
-        vid_summarize["ncell_alt"] = list(variant_count.groupby("VID").sum())
-        vid_summarize = pd.DataFrame(vid_summarize)
-        
-        #keep number of cells with variant read count only and  number of cells with reference read count only
-        vid_summarize.loc[:,"ncell_ref_and_alt"] =  (vid_summarize.loc[:,"ncell_ref"] + vid_summarize.loc[:,"ncell_alt"]) - vid_summarize.loc[:,"ncell_cover"] 
-        vid_summarize.loc[:,"ncell_ref"] = vid_summarize.loc[:,"ncell_ref"] - vid_summarize.loc[:,"ncell_ref_and_alt"]
-        vid_summarize.loc[:,"ncell_alt"] = vid_summarize.loc[:,"ncell_alt"] - vid_summarize.loc[:,"ncell_ref_and_alt"]
-        
-        vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
-    
+   
     def get_bed_df(self):
         bed_df = utils.get_gene_region_from_bed(self.panel)[1]
         return bed_df
@@ -459,59 +421,46 @@ class Variant_calling(Step):
         rid_file.to_csv(self.RID_file,sep = '\t',index = False)
     
     @utils.add_log
-    def find_region(self):
+    def get_region_dict(self):
         """
-        return a list of RID of each VID
+        Return a dict
+        - key: vid
+        - value: rid
         """
-        bed_file_df = self.get_bed_df()
-        rid_file = pd.read_table(self.RID_file,sep = '\t')
-        vid_file = pd.read_table(self.VID_file,sep = '\t')
+        df_rid = pd.read_table(self.RID_file,sep = '\t')
+        df_vid = pd.read_table(self.VID_file,sep = '\t')
         
+        bed_file_df = self.get_bed_df()
         gr = pr.PyRanges(bed_file_df)
-        vid_rid_result = []
-        for _, row in vid_file.iterrows():
-            bed_region = gr[str(row['chrom']), row['pos']:row['pos']+1]
+        region_dict = {}
+        for _, row in df_vid.iterrows():
+            vid = row['VID']
+            bed_region = gr[str(row['chrom']), row['pos']: row['pos'] + 1]
             if bed_region:
                 bed_chr = bed_region.as_df().loc[:,"Chromosome"].astype(int).to_list()
                 bed_start = bed_region.as_df().loc[:,"Start"].to_list()
                 bed_end = bed_region.as_df().loc[:,"End"].to_list()
                 #get rid
-                rid_lst = []
                 for chrs, start, end in zip(bed_chr,bed_start,bed_end):
-                    rid = rid_file[(rid_file.loc[:,"Chromosome"] == chrs) 
-                                 & (rid_file.loc[:,"Start"] == start) 
-                                 & (rid_file.loc[:,"End"] == end)].loc[:,"RID"].to_list()[0]
-                    rid_lst.append(rid)
-                if len(rid_lst) == 1:
-                    vid_rid_result.append(rid_lst[0])
-                else:
-                    vid_rid_result.append(tuple(rid_lst))
+                    rid = df_rid[(df_rid.loc[:,"Chromosome"] == chrs) 
+                                 & (df_rid.loc[:,"Start"] == start) 
+                                 & (df_rid.loc[:,"End"] == end)].loc[:,"RID"].to_list()[0]
+                    region_dict[vid] = rid
             else:
-                vid_rid_result.append("None")
-        return vid_rid_result
+                region_dict[vid] = "None"
+        return region_dict
     
     @utils.add_log
-    def get_position_region(self):
-        #read file
-        vid_file = pd.read_table(self.VID_file,sep = '\t')
-        ncell_file = pd.read_table(self.summarize_capture_vid,sep = '\t')
-        variant_conut_file = pd.read_table(self.filter_variant_count_file,sep = '\t')
+    def add_RID(self):
+        df_vid = pd.read_table(self.VID_file,sep = '\t')
+        df_filter_variant_conut = pd.read_table(self.filter_variant_count_file,sep = '\t')
         
-        #insert rid and save data
-        rid_result = self.find_region()
-        vid_file.insert(1, 'RID',rid_result, allow_duplicates=False)
-        ncell_file = pd.merge(left = ncell_file,
-                              right = vid_file,
-                              on = "VID",
-                              how="left").drop(["chrom", "pos", "ref", "alt"],axis = 1)
-        variant_conut_file = pd.merge(left = variant_conut_file,
-                              right = vid_file,
-                              on = "VID",
-                              how="left").drop(["chrom", "pos", "ref", "alt"],axis = 1)
-        #save
-        vid_file.to_csv(self.VID_file,sep = '\t',index = None)
-        ncell_file.to_csv(self.summarize_capture_vid,sep = '\t',index = None)
-        variant_conut_file.to_csv(self.filter_variant_count_file,sep = '\t',index = None)
+        region_dict = self.get_region_dict()
+        df_vid['RID'] = df_vid['VID'].apply(lambda x: region_dict[x])
+        df_filter_variant_conut['RID'] = df_filter_variant_conut['VID'].apply(lambda x: region_dict[x])
+
+        df_vid.to_csv(self.VID_file,sep = '\t',index = None)
+        df_filter_variant_conut.to_csv(self.filter_variant_count_file,sep = '\t',index = None)
     
     @utils.add_log
     def filter_vcf(self):
@@ -558,10 +507,9 @@ class Variant_calling(Step):
         self.merge_vcf()
         self.write_VID_file()
         self.get_UMI()
-        self.ncell_metrics()
-        if self.panel != '':
+        if self.panel_bool:
             self.write_RID_file()
-            self.get_position_region()
+            self.add_RID()
         self.filter_vcf()
         self.write_support_matrix()
         self.clean_up()
