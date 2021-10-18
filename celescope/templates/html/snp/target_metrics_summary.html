@@ -3,10 +3,12 @@
 
     <div class="box">
       <div class="description" style="display: none;">
-        <p><b>Number of Target Genes</b> : number of target genes in gene_list.</p>
+        <p><b>Number of Target Genes</b> : number of target genes.</p>
+        <p><b>Number of Cells</b> : number of matched scRNA-Seq cells.</p>
+        <p><b>Number of Valid Cells</b> : number of cells with enriched reads > 0.</p>
         <p><b>Enriched Reads</b> : number of reads mapped to target genes.</p>
         <p><b>Enriched Reads in Cells</b> : number of enriched cell reads.</p>
-        <p><b>Median Enriched Reads per Cell</b> : median of enriched reads per cell(cell with Enriched reads > 0).</p>
+        <p><b>Median Enriched Reads per Valid Cell</b> : median of enriched reads per valid cell.</p>
       </div>
       <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
         {% for item in target_metrics_summary %}

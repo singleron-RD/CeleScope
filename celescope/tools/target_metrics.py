@@ -24,7 +24,7 @@ class Target_metrics(Step):
         Step.__init__(self, args, step_name)
 
         # set
-        self.match_barcode, _num = utils.read_barcode_file(args.match_dir)
+        self.match_barcode, self.n_cell = utils.read_barcode_file(args.match_dir)
         self.match_barcode = set(self.match_barcode)
         
         if (self.assay == "snp" and args.panel != '') :
@@ -34,10 +34,14 @@ class Target_metrics(Step):
             self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
         
         self.count_dict = utils.genDict(dim=3, valType=int)
-        
+
         self.add_metric(
             name="Number of Target Genes",
             value=self.n_gene,
+        )
+        self.add_metric(
+            name="Number of Cells",
+            value=self.n_cell,
         )
 
         # out file
@@ -83,7 +87,11 @@ class Target_metrics(Step):
             if barcode in self.match_barcode:
                 enriched_reads_per_cell_list.append(cell_enriched_read)
         
-        
+        self.add_metric(
+            name="Number of Valid Cells",
+            value=len(enriched_reads_per_cell_list),
+            total=self.n_cell,
+        )        
         self.add_metric(
             name="Enriched Reads",
             value=enriched_reads,
@@ -95,7 +103,7 @@ class Target_metrics(Step):
             total=total_reads,
         )
         self.add_metric(
-            name="Median Enriched Reads per Cell",
+            name="Median Enriched Reads per Valid Cell",
             value=np.median(enriched_reads_per_cell_list),
         )
 
