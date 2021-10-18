@@ -192,7 +192,6 @@ class Variant_calling(Step):
     - `ncell_alt`: number of cells with variant read count only. 
     - `ncell_ref`: number of cells with reference read count only. 
     - `ncell_ref_and_alt`: number of cells with both variant and reference read count.
-
     - `RID`: Target region ID. This column will be added when `--panel` option were provided.
 
     `{sample}_merged.vcf ` VCF file containing all variants of all cells. `VID` and `CID` are added to the `INFO` column.
@@ -218,7 +217,7 @@ class Variant_calling(Step):
         self.barcodes, _num = utils.read_barcode_file(args.match_dir)
         self.fasta = parse_genomeDir_rna(args.genomeDir)['fasta']
         self.df_vcf = None
-        self.bed_file_panel = args.panel
+        self.panel = args.panel
 
         # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
@@ -449,13 +448,13 @@ class Variant_calling(Step):
         
         vid_summarize.to_csv(self.summarize_capture_vid,sep = '\t',index = False)
     
-    def read_bed_file(self): 
-        bed_file_df = utils.get_gene_region_from_bed(prefix = self.bed_file_panel)[1]
-        return bed_file_df  
+    def get_bed_df(self):
+        bed_df = utils.get_gene_region_from_bed(self.panel)[1]
+        return bed_df
 
     @utils.add_log
     def write_RID_file(self):
-        rid_file = self.read_bed_file()
+        rid_file = self.get_bed_df()
         rid_file.insert(0, 'RID', [rid + 1 for rid in range(len(rid_file))], allow_duplicates=False)
         rid_file.to_csv(self.RID_file,sep = '\t',index = False)
     
@@ -464,7 +463,7 @@ class Variant_calling(Step):
         """
         return a list of RID of each VID
         """
-        bed_file_df = self.read_bed_file()
+        bed_file_df = self.get_bed_df()
         rid_file = pd.read_table(self.RID_file,sep = '\t')
         vid_file = pd.read_table(self.VID_file,sep = '\t')
         
@@ -554,7 +553,7 @@ class Variant_calling(Step):
         self.write_VID_file()
         self.get_UMI()
         self.ncell_metrics()
-        if self.bed_file_panel != '':
+        if self.panel != '':
             self.write_RID_file()
             self.get_position_region()
         self.filter_vcf()
