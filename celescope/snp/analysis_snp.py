@@ -54,20 +54,29 @@ class Analysis_variant(Step, AnalysisMixin):
     @utils.add_log
     def ncell_metrics(self):
         variant_count_df = pd.read_table(self.filter_variant_count_file, sep='\t')
-        df_cover = variant_count_df.groupby('VID').agg({'RID':'first','CID':'count'})
+        if 'RID' in variant_count_df.columns: 
+            df_cover = variant_count_df.groupby('VID').agg({'RID':'first','CID':'count'})
+        else:
+            df_cover = variant_count_df.groupby('VID').agg({'CID': 'count'})
+        df_cover.rename(columns={'CID': 'ncell_cover'}, inplace=True)
+
         df_ref = variant_count_df.loc[(variant_count_df["ref_count"]!=0) & 
             (variant_count_df["alt_count"]==0)].groupby('VID').agg({'CID':'count'})
+        df_ref.rename(columns={'CID': 'ncell_ref'}, inplace=True)
+
         df_alt = variant_count_df.loc[(variant_count_df["ref_count"]==0) & 
             (variant_count_df["alt_count"]!=0)].groupby('VID').agg({'CID':'count'})
+        df_alt.rename(columns={'CID': 'ncell_alt'}, inplace=True)
+
         df_ref_and_alt = variant_count_df.loc[(variant_count_df["ref_count"]!=0) & 
             (variant_count_df["alt_count"]!=0)].groupby('VID').agg({'CID':'count'})
+        df_ref_and_alt.rename(columns={'CID': 'ncell_ref_and_alt'}, inplace=True)
 
         df_list = [df_ref, df_alt, df_ref_and_alt]
         df_ncell = df_cover
         for df in df_list:
             df_ncell = pd.merge(df_ncell, df, on='VID', how='left')
         df_ncell.fillna(0, inplace=True)
-        df_ncell.columns = ['RID', 'ncell_cover','ncell_ref','ncell_alt','ncell_ref_and_alt']
 
         df_ncell.to_csv(self.ncell_file, sep = '\t',index = True)
 
