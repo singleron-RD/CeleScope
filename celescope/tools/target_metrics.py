@@ -1,6 +1,7 @@
 
 import numpy as np
 import pysam
+import sys
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
@@ -32,6 +33,9 @@ class Target_metrics(Step):
             self.n_gene = len(self.gene_list)
         else:
             self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
+
+        if not self.gene_list:
+            sys.exit("You must provide either --panel or --gene_list!")            
         
         self.count_dict = utils.genDict(dim=3, valType=int)
 
@@ -86,10 +90,18 @@ class Target_metrics(Step):
                         cell_enriched_read += gene_read
             if barcode in self.match_barcode:
                 enriched_reads_per_cell_list.append(cell_enriched_read)
+
+        if self.debug:
+            self.parse_count_dict_add_metrics.logger.debug(
+                f'enriched_reads_per_cell_list: '
+                f'{sorted(enriched_reads_per_cell_list)}'
+                f'len: {len(enriched_reads_per_cell_list)}'
+            )
         
+        n_valid_cell = len([cell for cell in enriched_reads_per_cell_list if cell > 0])
         self.add_metric(
             name="Number of Valid Cells",
-            value=len(enriched_reads_per_cell_list),
+            value=n_valid_cell,
             total=self.n_cell,
         )        
         self.add_metric(
