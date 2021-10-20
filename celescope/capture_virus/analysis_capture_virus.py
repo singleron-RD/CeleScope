@@ -84,13 +84,17 @@ class Analysis_capture_virus(Step, AnalysisMixin):
         cluster_virus = virus_tsne_df.groupby("cluster")["tag"].count()
         #Total cell each cluster
         total_cell_cluster = virus_tsne_df.groupby("cluster")["barcode"].count()
+        total_cell = sum(total_cell_cluster)
         #add sum of virus to metric
-        self.add_metric(name = 'Number of Cells with Virus',value = f'{total_virus}({round(total_virus/sum(total_cell_cluster),2)}%)')
-        #add sum of virus in each cluster to metric
+        self.add_metric(name = 'Number of Cells with Virus',
+                        value = total_virus,
+                        total = total_cell)
         cluster = 1    
         for num_virus in cluster_virus:
-            total_cell = total_cell_cluster[cluster]
-            self.add_metric(name = f'Cluster_{cluster}',value = f'{num_virus}({round(num_virus/total_cell,2)}%)')
+            cluster_cell_num = total_cell_cluster[cluster]
+            self.add_metric(name = f'Cluster_{cluster}',
+                            value = num_virus,
+                            total = cluster_cell_num)
             cluster += 1
 
 
