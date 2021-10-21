@@ -128,9 +128,14 @@ class Analysis_capture_virus(Step, AnalysisMixin):
         """
         df_virus = pd.read_csv(self.virus_file, sep='\t')
         umis = df_virus["UMI"]
-        sorted_umis = sorted(umis, reverse=True)
-        percentile_99_umi = sorted_umis[self.n_cell//100]
-        threshold = math.ceil(percentile_99_umi / 10)
+
+        cell_99th = self.n_cell // 100
+        if cell_99th >= len(umis):
+            threshold = 1
+        else:
+            sorted_umis = sorted(umis, reverse=True)
+            percentile_99_umi = sorted_umis[cell_99th]
+            threshold = math.ceil(percentile_99_umi / 10)
         self.add_metric(
             name='Auto UMI Threshold',
             value=threshold,
