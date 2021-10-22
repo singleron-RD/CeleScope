@@ -78,6 +78,11 @@ class Analysis_variant(Step, AnalysisMixin):
             df_ncell = pd.merge(df_ncell, df, on='VID', how='left')
         df_ncell.fillna(0, inplace=True)
 
+        # dtype after fillna is float
+        float_cols = ['ncell_ref', 'ncell_alt', 'ncell_ref_and_alt']
+        for col in float_cols:
+            df_ncell[col] = df_ncell[col].astype('int')
+
         df_ncell.to_csv(self.ncell_file, sep = '\t',index = True)
 
     def get_df_count_tsne(self):
