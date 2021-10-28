@@ -1,14 +1,21 @@
-## [unreleased] - 2021-09-14
- ### Added
+## [unreleased] 
 
- ### Changed
- - Improve the speed of `snp`.
+## [1.5.1] - 2021-10-28
+ ### `snp`
+ - Add `--panel` option.
+ - Add output files.
+ - Improve the speed of `variant_calling`.
 
- ### Fixed
+
+ ### `fusion`
  - Fix a bug where `celescope.fusion.count_fusion` do not recognize fusion reads correctly.
- - Use local css instead of css url to avoid connection issues.
 
- ### Removed
+ ### `dynascope`
+ - Fix some bugs (#62).
+
+ ### General improvments
+  - Use local css instead of urls to avoid connection issues.
+
 
 ## [1.5.0] - 2021-09-09
  ### Added

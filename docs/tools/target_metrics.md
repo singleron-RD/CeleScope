@@ -12,6 +12,8 @@
 ## Arguments
 `--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
 
+`--panel` The prefix of bed file, such as `lung_1`.
+
 `--bam` Input bam file
 
 `--match_dir` Match celescope scRNA-Seq directory.
