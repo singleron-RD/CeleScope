@@ -17,7 +17,6 @@ from functools import wraps
 import numpy as np
 import pandas as pd
 import pysam
-import xopen
 
 import celescope.tools
 from celescope.tools.__init__ import __PATTERN_DICT__

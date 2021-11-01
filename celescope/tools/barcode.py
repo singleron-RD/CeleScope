@@ -1,7 +1,4 @@
-"""barcode step."""
-
 import glob
-import os
 import re
 import sys
 import unittest
@@ -110,7 +107,6 @@ def findall_mismatch(seq, n_mismatch=1, bases='ACGTN'):
     True
     """
     seq_set = set()
-    mismatch_dict = {}
     seq_len = len(seq)
     if n_mismatch > seq_len:
         n_mismatch = seq_len
@@ -140,7 +136,7 @@ def get_mismatch_dict(seq_list, n_mismatch=1):
         seq = seq.strip()
         if seq == '':
             continue
-        for mismatch_seq in findall_mismatch(seq):
+        for mismatch_seq in findall_mismatch(seq, n_mismatch):
             mismatch_dict[mismatch_seq] = seq
 
     return mismatch_dict
@@ -181,7 +177,7 @@ def parse_linker_file(linker_file):
 
 def parse_chemistry(chemistry):
     """
-    Returns: pattern_dict, barcode_mismatch_list, linker_mismatch_list
+    Returns: pattern_dict, barcode_set_list, barcode_mismatch_list, linker_set_list, linker_mismatch_list
     """
     pattern = __PATTERN_DICT__[chemistry]
     pattern_dict = parse_pattern(pattern)
@@ -275,12 +271,6 @@ class Chemistry():
 
     @utils.add_log
     def get_chemistry(self, fq1):
-        '''
-        'scopeV2.0.1': 'C8L16C8L16C8L1U8T18'
-        'scopeV2.1.1': 'C8L16C8L16C8L1U12T18'
-        'scopeV2.2.1': 'C8L16C8L16C8L1U12T18' with 4 types of linkers
-        'scopeV3.0.1': 'C9L16C9L16C9L1U12T18' with 4 types of linkers
-        '''
         results = defaultdict(int)
 
         with pysam.FastxFile(fq1) as fh:
@@ -305,7 +295,7 @@ class Chemistry():
             raise Exception(
                 'Auto chemistry detection failed! '
                 'If the sample is from Singleron, ask the technical staff you are connecting with for the chemistry used. '
-                'You need to use `--chemistry scopeV1` for scopeV1, and `--chemistry auto` should be fine for scopeV2.* '
+                'You need to use `--chemistry scopeV1` for scopeV1, and `--chemistry auto` should be fine for scopeV2 and V3 '
                 )
         Chemistry.get_chemistry.logger.info(f'chemistry: {chemistry}')
         return chemistry
@@ -414,11 +404,11 @@ class Barcode(Step):
             # get linker and whitelist
             bc_pattern = __PATTERN_DICT__[chemistry]
             if (bc_pattern):
-                (linker, whitelist) = get_scope_bc(chemistry)
+                linker_file, whitelist_file = get_scope_bc(chemistry)
             else:
                 bc_pattern = self.pattern
-                linker = self.linker
-                whitelist = self.whitelist
+                linker_file = self.linker
+                whitelist_file = self.whitelist
             if not bc_pattern:
                 raise Exception("invalid bc_pattern!")
 
@@ -429,29 +419,15 @@ class Barcode(Step):
 
             bool_T = True if 'T' in pattern_dict else False
             bool_L = True if 'L' in pattern_dict else False
-            bool_whitelist = (whitelist is not None) and whitelist != "None"
+            bool_whitelist = (whitelist_file is not None) and whitelist_file != "None"
             C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
 
             if bool_whitelist:
-                seq_list, _ = utils.read_one_col(whitelist)
-                barcode_correct_set = set(seq_list)
-                barcode_mismatch_dict = get_mismatch_dict(seq_list, n_mismatch=1)
-                barcode_correct_set_list = [barcode_correct_set] * 3
-                barcode_mismatch_dict_list = [barcode_mismatch_dict] * 3
+                barcode_set_list, barcode_mismatch_list = parse_whitelist_file(whitelist_file, 
+                n_mismatch=1, n_repeat=len(pattern_dict['C']))
             if bool_L:
-                seq_list, _ = utils.read_one_col(linker)
-                check_seq(linker, pattern_dict, "L")
-                linker_correct_set_list = []
-                linker_mismatch_dict_list = []
-                start = 0
-                for item in pattern_dict['L']:
-                    end = start + item[1] - item[0]
-                    linker_seq_list = [seq[start:end] for seq in seq_list]
-                    linker_correct_set = set(linker_seq_list)
-                    linker_mismatch_dict = get_mismatch_dict(linker_seq_list, n_mismatch=2)
-                    linker_correct_set_list.append(linker_correct_set)
-                    linker_mismatch_dict_list.append(linker_mismatch_dict)
-                    start = end
+                linker_set_list, linker_mismatch_list = parse_linker_file(linker_file)
+                
 
             fq1 = pysam.FastxFile(self.fq1_list[i], persist=False)
             fq2 = pysam.FastxFile(self.fq2_list[i], persist=False)
@@ -484,9 +460,9 @@ class Barcode(Step):
 
                 # linker filter
                 if bool_L and (not self.allowNoLinker):
-                    seq_list = get_seq_list(seq1, pattern_dict, 'L')
+                    seq_str = get_seq_str(seq1, pattern_dict['L'])
                     bool_valid, bool_corrected, _ = check_seq_mismatch(
-                        seq_list, linker_correct_set_list, linker_mismatch_dict_list)
+                        [seq_str], linker_set_list, linker_mismatch_list)
                     if not bool_valid:
                         self.no_linker_num += 1
                         if self.noLinker:
@@ -502,7 +478,7 @@ class Barcode(Step):
                 seq_list = get_seq_list(seq1, pattern_dict, 'C')
                 if bool_whitelist:
                     bool_valid, bool_corrected, corrected_seq = check_seq_mismatch(
-                        seq_list, barcode_correct_set_list, barcode_mismatch_dict_list)
+                        seq_list, barcode_set_list, barcode_mismatch_list)
 
                     if not bool_valid:
                         self.no_barcode_num += 1
