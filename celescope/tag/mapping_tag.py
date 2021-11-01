@@ -6,6 +6,7 @@ import pandas as pd
 import pysam
 
 import celescope.tools.utils as utils
+import celescope.tools.barcode as Barcode
 from celescope.tools.barcode import parse_pattern
 from celescope.tools.step import Step, s_common
 
@@ -123,12 +124,12 @@ class Mapping_tag(Step):
                 seq = record.sequence
 
                 if self.linker_length != 0:
-                    seq_linker = utils.seq_ranges(seq, self.pattern_dict['L'])
+                    seq_linker = Barcode.get_seq_str(seq, self.pattern_dict['L'])
                     if len(seq_linker) < self.linker_length:
                         reads_unmapped_too_short += 1
                         continue
                 if self.barcode_dict:
-                    seq_barcode = utils.seq_ranges(seq, self.pattern_dict['C'])
+                    seq_barcode = Barcode.get_seq_str(seq, self.pattern_dict['C'])
                     if self.barcode_length != len(seq_barcode):
                         miss_length = self.barcode_length - len(seq_barcode)
                         if miss_length > 2:
