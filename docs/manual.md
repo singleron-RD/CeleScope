@@ -24,7 +24,6 @@ Currently, CeleScope includes the follwing pipelines:
 
 - [barcode](tools/barcode.md)
 - [cutadapt](tools/cutadapt.md)
-
 ## Single-cell rna
 - [mkref](rna/mkref.md)
 - [star](rna/star.md)

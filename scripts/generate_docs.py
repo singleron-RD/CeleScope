@@ -8,7 +8,6 @@ from celescope.__init__ import ASSAY_DICT, RELEASED_ASSAYS
 
 PRE_PROCESSING_STEPS = ('sample', 'barcode', 'cutadapt')
 DOCS_DIR = f'docs/'
-TEMPLATE_DIR = 'docs_template/'
 MANUAL = f'{DOCS_DIR}/manual.md'
 
 
@@ -72,6 +71,10 @@ class Docs():
         if not os.path.exists(tools_dir):
             os.system(f'mkdir {tools_dir}')
 
+        # manual
+        self.manual_lines = []
+
+
     @utils.add_log
     def get_argument_docs(self, step, step_module):
         self.get_argument_docs.logger.info(step)
@@ -105,32 +108,46 @@ class Docs():
 
     def run(self):
         if self.release_bool:
-            with open(MANUAL, 'a') as writer:
-                writer.write(f'## {ASSAY_DICT[self.assay]}\n')            
+            self.manual_lines.append(f'## {ASSAY_DICT[self.assay]}\n')            
 
         for step in self.steps:
             self.write_step_doc(step)
             if self.release_bool:
-                self.write_step_in_manual(step)
+                self.add_step_in_manual(step)
+
+        self.write_manual()
 
 
-    def write_step_in_manual(self, step):
+    def add_step_in_manual(self, step):
         """
         - [mkref](rna/mkref.md)
         """
         if not step in PRE_PROCESSING_STEPS:
-            with open(MANUAL, 'a') as writer:
-                writer.write(f'- [{step}]({self.relative_md_path[step]})\n')
+            self.manual_lines.append(f'- [{step}]({self.relative_md_path[step]})\n')
+
+    def write_manual(self):
+        with open(MANUAL, 'a') as writer:
+            for line in self.manual_lines:
+                writer.write(line)
+
+
+def remove_old_assays():
+    contents = []
+    with open(MANUAL, 'r') as reader:
+        for line in reader:
+            contents.append(line)
+            if line.find("tools/cutadapt.md") != -1:
+                break
+    
+    with open(MANUAL, 'w') as writer:
+        for line in contents:
+            writer.write(line)
 
 
 def main():
-    cmd = (
-        "set -eo pipefail;"
-        f"rm -r {DOCS_DIR};"
-        f"cp -r {TEMPLATE_DIR} {DOCS_DIR}"
-    )
-    os.system(cmd)
 
+    remove_old_assays()
+    
     for assay in ASSAY_DICT:
         docs_obj = Docs(assay)
         docs_obj.run()

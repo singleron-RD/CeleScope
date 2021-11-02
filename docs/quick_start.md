@@ -10,9 +10,11 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 
 Run `multi_{assay} -h` for help.
 
+Note: `multi_rna` works for both single-cell RNA-Seq(scRNA-seq) and single-nucleus RNA-seq(snRNA-seq). The default settings are fine for scRNA-seq, but for snRNA-seq, you need to add `--gtf_type gene` to include reads mapped to intronic regions.
+
 ## Usage Example
 
-Take Single-cell rna as an example:
+Take single-cell rna as an example:
 
 1. Make a rna genomeDir
 
