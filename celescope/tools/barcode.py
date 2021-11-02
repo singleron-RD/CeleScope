@@ -145,6 +145,17 @@ def get_mismatch_dict(seq_list, n_mismatch=1):
 def check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list):
     '''
     Return bool_valid, bool_corrected, corrected_seq
+
+    >>> seq_list = ['ATA', 'AAT', 'ATA']
+    >>> correct_set_list = [{'AAA'},{'AAA'},{'AAA'}]
+    >>> mismatch_dict_list = [get_mismatch_dict(['AAA'])] * 3
+
+    >>> check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
+    (True, True, 'AAAAAAAAA')
+
+    >>> seq_list = ['AAA', 'AAA', 'AAA']
+    >>> check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
+    (True, False, 'AAAAAAAAA')
     '''
     bool_valid = True
     bool_corrected = False
@@ -412,9 +423,6 @@ class Barcode(Step):
             if not bc_pattern:
                 raise Exception("invalid bc_pattern!")
 
-            # parse pattern to dict, C8L10C8L10C8U8
-            # defaultdict(<type 'list'>, {'C': [[0, 8], [18, 26], [36, 44]], 'U':
-            # [[44, 52]], 'L': [[8, 18], [26, 36]]})
             pattern_dict = parse_pattern(bc_pattern)
 
             bool_T = True if 'T' in pattern_dict else False
@@ -426,8 +434,7 @@ class Barcode(Step):
                 barcode_set_list, barcode_mismatch_list = parse_whitelist_file(whitelist_file, 
                 n_mismatch=1, n_repeat=len(pattern_dict['C']))
             if bool_L:
-                linker_set_list, linker_mismatch_list = parse_linker_file(linker_file)
-                
+                linker_set_list, linker_mismatch_list = parse_linker_file(linker_file)                
 
             fq1 = pysam.FastxFile(self.fq1_list[i], persist=False)
             fq2 = pysam.FastxFile(self.fq2_list[i], persist=False)

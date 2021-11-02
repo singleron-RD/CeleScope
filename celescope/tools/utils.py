@@ -236,8 +236,13 @@ def get_id_name_dict(gtf_file):
 
 
 def read_one_col(file):
+    """
+    Read file with one column. Strip each line.
+    Returns col_list, line number
+    """
     df = pd.read_csv(file, header=None)
     col1 = list(df.iloc[:, 0])
+    col1 = [item.strip() for item in col1]
     num = len(col1)
     return col1, num
 
