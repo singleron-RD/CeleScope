@@ -81,7 +81,7 @@ def generate_docs():
 
 @add_log
 def modify_changelog():
-    header = f"## [unreleased] - {TIME}\n ### Added\n\n ### Changed\n\n ### Fixed\n\n ### Removed\n\n"
+    header = f"## [unreleased] - {TIME}\n "
     lines = [header]
     with open(CHANGELOG, 'r') as f:
         for line in f:

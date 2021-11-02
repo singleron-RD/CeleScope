@@ -1,4 +1,8 @@
-## [unreleased] 
+## [unreleased] - 2021-11-02
+
+## [1.5.2] - 2021-11-02
+ ### General improvments
+ - Add auto-detection for chemistry `scopeV3.0.1`.
 
 ## [1.5.1] - 2021-10-28
  ### `snp`
