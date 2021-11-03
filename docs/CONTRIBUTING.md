@@ -81,8 +81,12 @@ There is a python script at the root of this repo `generate_docs.py` to generate
   
 Released assays will be added to `manual.md`.
 
+Under CeleScope root direcotry, run
+`python scripts/generate_docs.py`
+
 ## Tests
 If you add new steps, you need to create a small data for integration tests. 
-To run sample tests, See https://github.com/singleron-RD/celescope_test_script
+ - To run sample tests, See https://github.com/singleron-RD/celescope_test_script
+ - You can use `scripts/extract_read.py` to extract reads assigned to some cells.
 
 Then you need to create your own test based on this example.
