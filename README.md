@@ -22,7 +22,8 @@ git clone https://github.com/singleron-RD/CeleScope.git
 cd CeleScope
 conda create -n celescope
 conda activate celescope
-conda install -y --file conda_pkgs.txt
+conda install mamba -c conda-forge
+mamba install -y --file conda_pkgs.txt
 ```
 
 3. Install celescope
