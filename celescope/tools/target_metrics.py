@@ -25,8 +25,8 @@ class Target_metrics(Step):
         Step.__init__(self, args, step_name)
 
         # set
-        self.match_barcode, self.n_cell = utils.read_barcode_file(args.match_dir)
-        self.match_barcode = set(self.match_barcode)
+        self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
+        self.match_barcode = set(self.match_barcode_list)
         
         if (self.assay == "snp" and args.panel != '') :
             self.gene_list = utils.get_gene_region_from_bed(args.panel)[0]
@@ -55,7 +55,14 @@ class Target_metrics(Step):
     @utils.add_log
     def read_bam_write_filtered(self):
         with pysam.AlignmentFile(self.args.bam, "rb") as reader:
-            with pysam.AlignmentFile(self.out_bam_file, "wb", header=reader.header) as writer:
+            header = reader.header.to_dict()
+            header['RG'] = []
+            for index, barcode in enumerate(self.match_barcode_list):
+                header['RG'].append({
+                    'ID': barcode,
+                    'SM': index + 1,
+                })
+            with pysam.AlignmentFile(self.out_bam_file, "wb", header=header) as writer:
                 for record in reader:
                     try:
                         gene_name = record.get_tag('GN')
@@ -68,6 +75,7 @@ class Target_metrics(Step):
                     except KeyError:
                         continue
                     if barcode in self.match_barcode and gene_name in self.gene_list:
+                        record.set_tag(tag='RG', value=record.get_tag('CB'), value_type='Z')
                         writer.write(record)
                     self.count_dict[barcode][gene_name][UMI] += 1
 
@@ -144,4 +152,5 @@ def get_opts_target_metrics(parser, sub_program):
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
+        parser.add_argument('--RG', help='Add tag read group: RG. RG is the same as CB(cell barcode)', action='store_true')
         parser = s_common(parser)
