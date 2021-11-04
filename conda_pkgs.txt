@@ -11,3 +11,4 @@ imperial-college-research-computing::mixcr=3.0.3
 bioconda::bioconductor-dropletutils
 bioconda::bcftools==1.9
 bioconda::gatk4
+bioconda::trust4

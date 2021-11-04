@@ -12,6 +12,9 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.trust_vdj.__init__ import CHAIN, CONDA_PATH, INDEX, TOOLS_DIR
 
+def reversed_compl(seq):
+    return str(Seq(seq).reverse_complement())
+
 @utils.add_log
 def get_trust_report(filedir, sample):
     cmd = (
@@ -142,7 +145,7 @@ def fa_to_csv(outdir, sample):
             umis = str(len(set(temp['umi'].tolist())))
             raw_consensus_id = 'None'
             raw_clonotype_id = 'None'
-                
+
             string = '\t'.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis, raw_clonotype_id, raw_consensus_id])
             contigs.write(f'{string}\n')
             process_read+=1
@@ -428,7 +431,19 @@ class Assemble(Step):
         stat_file = self.outdir + '/stat.txt'
         all_summary = self.match_summary + self.mapping_summary
         sum_df = pd.DataFrame(all_summary, columns=['item', 'count', 'total_count'])
-        utils.gen_stat(sum_df, stat_file)   
+        utils.gen_stat(sum_df, stat_file) 
+        
+        # all contig.fasta
+        os.system(f'mkdir {self.outdir}/../04.summarize')
+        full_len_fa = f'{self.assemble_out}/{self.sample}_full_len.fa'
+        all_fa = open(f'{self.outdir}/../04.summarize/{self.sample}_all_contig.fasta','w')
+        with pysam.FastxFile(full_len_fa) as fa:
+            for read in fa: 
+                name = read.name
+                barcode = name.split('_')[0]
+                sequence = read.sequence
+                all_fa.write('>' + reversed_compl(barcode) + '_' + name.split('_')[1] + '\n' + sequence + '\n')    
+        all_fa.close()
 
         get_trust_report(self.assemble_out,self.sample)
         get_bc_report(self.assemble_out, self.sample)

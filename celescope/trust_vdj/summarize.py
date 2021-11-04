@@ -3,12 +3,16 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 import pysam
+import copy
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.trust_vdj.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.cellranger3 import get_plot_elements
 import sys
+
+def reversed_compl(seq):
+    return str(Seq(seq).reverse_complement())
 
 def get_vj_annot(df, chains, pairs):
     fl_pro_pair_df = pd.DataFrame(df[df['productive']==True].barcode.value_counts())
@@ -84,8 +88,8 @@ class Summarize(Step):
     - Calculate clonetypes.
 
     Output
-    - `06.summarize/clonetypes.tsv` Record each clonetype and its frequent.
-    - `06.summarize/all_{type}.csv` Containing detailed information for each barcode.
+    - `04.summarize/clonetypes.tsv` Record each clonetype and its frequent.
+    - `04.summarize/all_{type}.csv` Containing detailed information for each barcode.
     """
 
     def __init__(self, args, step_name):
@@ -101,6 +105,7 @@ class Summarize(Step):
         self.chains = CHAIN[self.seqtype]
         self.paired_groups = PAIRED_CHAIN[self.seqtype]
         
+        # use for cell filtering  default = 4
         self.min_read_count = args.min_read_count
 
         # common variables
@@ -116,7 +121,12 @@ class Summarize(Step):
         df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
         df['productive'] = df['cdr3'].apply(lambda x: False if x=='None' else True)
 
-        df.to_csv(f'{self.outdir}/{self.sample}_contig.csv', sep=',', index=False)
+        # all contig.csv
+        df_revcompl = copy.deepcopy(df)
+        df_revcompl['barcode'] = df_revcompl['barcode'].apply(lambda x: reversed_compl(x))
+        df_revcompl['contig_id'] = df_revcompl['contig_id'].apply(lambda x: reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
+        df_revcompl.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
+        
         # df = df.sort_values(by='umis', ascending=False)
         if self.seqtype == 'BCR':
             igh = df[df['chain']=='IGH']
@@ -127,8 +137,8 @@ class Summarize(Step):
             df_for_clono = df_for_clono.sort_values(by='umis', ascending=False)
             df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
         else:
-            df = df[(df['chain']=='TRA') | (df['chain']=='TRB')]
-            df_for_clono = df.sort_values(by='umis', ascending=False)
+            df_for_clono = df[(df['chain']=='TRA') | (df['chain']=='TRB')]
+            df_for_clono = df_for_clono.sort_values(by='umis', ascending=False)
             df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
 
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
@@ -165,7 +175,25 @@ class Summarize(Step):
         cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
         total_cells =len(cell_barcodes)
         
+        # filter contig.csv
+        df_filter_contig = copy.deepcopy(df)
+        df_filter_contig = df_filter_contig[df_filter_contig['barcode'].isin(cell_barcodes)]
+        df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(lambda x: reversed_compl(x))
+        df_filter_contig['contig_id'] = df_filter_contig['contig_id'].apply(lambda x: reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
+        df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
 
+        # filter contig.fasta
+        all_contig_fasta = f'{self.outdir}/{self.sample}_all_contig.fasta'
+        filter_contig_fasta = f'{self.outdir}/{self.sample}_filtered_contig.fasta'
+        filter_contig_fasta = open(filter_contig_fasta,'w')
+        with pysam.FastxFile(all_contig_fasta) as fa:
+            for read in fa:
+                name = read.name
+                barcode = name.split('_')[0]
+                sequence = read.sequence
+                if reversed_compl(barcode) in cell_barcodes:
+                    filter_contig_fasta.write('>' + name + '\n' + sequence + '\n')
+        filter_contig_fasta.close()
         ''' use expected_cell_num parameter
 
         filter method 1
@@ -248,9 +276,9 @@ class Summarize(Step):
         df_clonotypes = df_clonotypes.rename(columns={'barcode': 'frequency'})
         sum_f = df_clonotypes['frequency'].sum()
         df_clonotypes['proportion'] = df_clonotypes['frequency'].apply(lambda x: x/sum_f)
+        df_clonotypes = df_clonotypes.sort_values(by='frequency', ascending=False)
         df_clonotypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonotypes.shape[0]+1)]
         df_clonotypes = df_clonotypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
-        df_clonotypes = df_clonotypes.sort_values(by='frequency', ascending=False)
         df_clonotypes.to_csv(f'{self.outdir}/clonotypes.csv', sep=',', index=False) 
 
         df_clonotypes['ClonotypeID'] = df_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
@@ -280,6 +308,7 @@ class Summarize(Step):
         df_umi = df_umi.reindex(columns=['barcode', 'UMI'])
         df_umi = df_umi.sort_values(by='UMI', ascending=False)
         df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cell_barcodes else 'UB')
+        df_umi['barcode'] = df_umi['barcode'].apply(lambda x: reversed_compl(x))
         df_umi.to_csv(f'{self.outdir}/count.txt', sep='\t', index=False)
 
         self.add_data_item(chart=get_plot_elements.plot_barcode_rank(f'{self.outdir}/count.txt'))
