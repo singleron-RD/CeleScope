@@ -265,7 +265,7 @@ class Variant_calling(Step):
 
         # name sort
         samtools_runner = utils.Samtools(self.splitN_bam, self.splitN_bam_name_sorted, threads=self.thread)
-        samtools_runner.sort_bam(by='name', print_log=True)
+        samtools_runner.sort_bam(by='name', debug=self.debug)
 
         def keyfunc(x):
             # return barcode

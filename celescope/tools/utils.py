@@ -657,12 +657,71 @@ class Samtools():
         self.out_bam = out_bam
         self.threads = threads
 
-    def sort_bam(self, by='coord', print_log=False):
+    def sort_bam(self, by='coord', debug=False):
         cmd = f"samtools sort {self.in_bam} -o {self.out_bam} --threads {self.threads}"
         if by == "name":
             cmd += " -n"
-        if print_log:
+        if debug:
             print(cmd)
         subprocess.check_call(cmd, shell=True)
         return cmd
+
+    @add_log
+    def add_tag(self, gtf):
+        """
+        - CB cell barcode
+        - UB UMI
+        - GN gene name
+        - GX gene id
+        - RG read group, optional
+        """
+        id_name = get_id_name_dict(gtf)
+        temp_sam_file = "{self.in_bam}_sam.temp"
+
+        with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
+            header = original_bam.header
+            with pysam.AlignmentFile(temp_sam_file, "w", header=header) as temp_sam:
+                for read in original_bam:
+                    attr = read.query_name.split('_')
+                    barcode = attr[0]
+                    umi = attr[1]
+                    read.set_tag(tag='CB', value=barcode, value_type='Z')
+                    read.set_tag(tag='UB', value=umi, value_type='Z')
+                    # assign to some gene
+                    if read.has_tag('XT'):
+                        gene_id = read.get_tag('XT')
+                        # if multi-mapping reads are included in original bam,
+                        # there are multiple gene_ids
+                        if ',' in gene_id:
+                            gene_name = [id_name[i] for i in gene_id.split(',')]
+                            gene_name = ','.join(gene_name)
+                        else:
+                            gene_name = id_name[gene_id]
+                        read.set_tag(tag='GN', value=gene_name, value_type='Z')
+                        read.set_tag(tag='GX', value=gene_id, value_type='Z')
+                    temp_sam.write(read)
+        cmd = f'samtools view -b {temp_sam_file} -o {self.out_bam}; rm {temp_sam_file}'
+        subprocess.check_call(cmd, shell=True)
+
+    @add_log
+    def add_RG(self, barcodes):
+        """
+        barcodes list
+        """
+        temp_sam_file = "{self.in_bam}_sam.temp"
+
+        with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
+            header = original_bam.header.to_dict()
+            header['RG'] = []
+            for index, barcode in enumerate(barcodes):
+                header['RG'].append({
+                    'ID': barcode,
+                    'SM': index + 1,
+                })
+
+            with pysam.AlignmentFile(temp_sam_file, "w", header=header) as temp_sam:
+                for read in original_bam:
+                    read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
+
+
 
