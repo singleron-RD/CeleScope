@@ -708,7 +708,7 @@ class Samtools():
         """
         barcodes list
         """
-        temp_sam_file = "{self.in_bam}_sam.temp"
+        temp_sam_file = "{self.out_bam}_sam.temp"
 
         with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
             header = original_bam.header.to_dict()
@@ -723,5 +723,7 @@ class Samtools():
                 for read in original_bam:
                     read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
 
+        cmd = f'samtools view -b {temp_sam_file} -o {self.out_bam_file}; rm {temp_sam_file}'
+        subprocess.check_call(cmd, shell=True)
 
 

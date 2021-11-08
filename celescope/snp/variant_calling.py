@@ -499,8 +499,9 @@ class Variant_calling(Step):
         mmwrite(self.support_matrix_file, support_mtx)
 
     def run(self):
-        
+
         self.SplitNCigarReads()
+        """
         self.split_bam()
         self.write_CID_file()
         self.call_all_snp()
@@ -513,7 +514,7 @@ class Variant_calling(Step):
         self.filter_vcf()
         self.write_support_matrix()
         self.clean_up()
-
+        """
 
 @utils.add_log
 def variant_calling(args):

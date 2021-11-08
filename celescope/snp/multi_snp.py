@@ -82,6 +82,7 @@ class Multi_snp(Multi):
             f'{cmd_line} '
             f'--bam {bam} '
             f'--match_dir {self.col4_dict[sample]} '
+            f'--add_RG '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 

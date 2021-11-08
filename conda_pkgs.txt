@@ -9,5 +9,5 @@ conda-forge::r-argparser
 conda-forge::r-tidyverse
 imperial-college-research-computing::mixcr=3.0.3
 bioconda::bioconductor-dropletutils
-bioconda::bcftools==1.9
+bioconda::bcftools=1.9
 bioconda::gatk4
