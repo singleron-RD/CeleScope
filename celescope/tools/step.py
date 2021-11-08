@@ -4,6 +4,7 @@ import io
 import json
 import numbers
 import os
+import subprocess
 from collections import namedtuple
 
 import pandas as pd
@@ -221,6 +222,14 @@ class Step:
         self.dump_content(slot="data")
         self.dump_content(slot="metric")
         self.render_html()
+
+    @add_log
+    def debug_subprocess_call(self, cmd):
+        '''
+        debug subprocess call
+        '''
+        self.debug_subprocess_call.logger.debug(f'cmd: {cmd}')
+        subprocess.check_call(cmd, shell=True)
 
     @abc.abstractmethod
     def run(self):

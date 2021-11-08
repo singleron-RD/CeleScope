@@ -246,13 +246,21 @@ def read_one_col(file):
     num = len(col1)
     return col1, num
 
+
+def get_bed_file_path(panel):
+    bed_file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
+    if not os.path.exists(bed_file_path):
+        return None
+    else:
+        return bed_file_path
+
 def get_gene_region_from_bed(panel):
     """
     Returns 
     - genes
     - position_df with 'Chromosome', 'Start', 'End'
     """
-    file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
+    file_path = get_bed_file_path(panel)
     bed_file_df = pd.read_table(file_path, 
                                 usecols=[0,1,2,3],
                                 names=['Chromosome', 'Start', 'End','Gene'],
@@ -722,6 +730,7 @@ class Samtools():
             with pysam.AlignmentFile(temp_sam_file, "w", header=header) as temp_sam:
                 for read in original_bam:
                     read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
+                    temp_sam.write(read)
 
         cmd = f'samtools view -b {temp_sam_file} -o {self.out_bam_file}; rm {temp_sam_file}'
         subprocess.check_call(cmd, shell=True)

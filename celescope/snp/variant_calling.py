@@ -21,6 +21,7 @@ from celescope.rna.mkref import parse_genomeDir_rna
 OTSU_READ_MIN = 30
 
 
+
 def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles',), infos=('VID',)):
     '''
     parse vcf into df
@@ -54,66 +55,6 @@ def read_CID(CID_file):
     return df_index, df_valid
 
 
-@utils.add_log
-def call_snp(outdir, fasta, CID):
-
-    call_snp.logger.info('Processing Cell %s' % CID)
-    bam = f'{outdir}/cells/cell{CID}/cell{CID}.bam'
-    # sort
-    sorted_bam = f'{outdir}/cells/cell{CID}/cell{CID}_sorted.bam'
-    cmd_sort = (
-        f'samtools sort {bam} -o {sorted_bam}'
-    )
-    subprocess.check_call(cmd_sort, shell=True)
-
-    # mpileup
-    bcf = f'{outdir}/cells/cell{CID}/cell{CID}.bcf'
-    cmd_mpileup = (
-        f'bcftools mpileup -Ou '
-        f'-f {fasta} '
-        f'{sorted_bam} -o {bcf} '
-    )
-    subprocess.check_call(cmd_mpileup, shell=True)
-
-    # call
-    out_vcf = f'{outdir}/cells/cell{CID}/cell{CID}.vcf'
-    cmd_call = (
-        f'bcftools call -mv -Ov '
-        f'-o {out_vcf} '
-        f'{bcf}'
-        f'>/dev/null 2>&1 '
-    )
-    subprocess.check_call(cmd_call, shell=True)
-
-    # norm
-    norm_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_norm.vcf'
-    cmd_norm = (
-        f'bcftools norm -d none '
-        f'-f {fasta} '
-        f'{out_vcf} '
-        f'-o {norm_vcf} '
-    )
-    subprocess.check_call(cmd_norm, shell=True)
-
-    # call all position
-    out_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all.vcf'
-    cmd_all_call = (
-        f'bcftools call -m -Ov '
-        f'-o {out_all_vcf} '
-        f'{bcf}'
-        f'>/dev/null 2>&1 '
-    )
-    subprocess.check_call(cmd_all_call, shell=True)
-
-    # norm all
-    norm_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all_norm.vcf'
-    cmd_all_norm = (
-        f'bcftools norm -d none '
-        f'-f {fasta} '
-        f'{out_all_vcf} '
-        f'-o {norm_all_vcf} '
-    )
-    subprocess.check_call(cmd_all_norm, shell=True)
 
 
 def map_vcf_row(row, df_cell_vcf):
@@ -145,30 +86,6 @@ def get_DP4(row, alt):
         indexs = [2, 3]
     umi = sum([DP4[index] for index in indexs])
     return umi
-
-@utils.add_log
-def cell_UMI(CID, outdir, df_vcf):
-    """
-    help function to get ref and alt UMI for each (cell, variant)
-    """
-    cell_UMI.logger.info(str(CID) + ' cell')
-    norm_all_vcf = f'{outdir}/cells/cell{CID}/cell{CID}_all_norm.vcf'
-    df_cell_vcf = parse_vcf(norm_all_vcf, infos=['DP4'])
-
-    dict_list = []
-    for _index, row in df_vcf.iterrows():
-        ref_UMI, alt_UMI = map_vcf_row(row, df_cell_vcf)
-        if (ref_UMI + alt_UMI) != 0:
-            VID = row['VID']
-            dic = {
-                'VID': VID,
-                'CID': CID,
-                'ref_count': ref_UMI,
-                'alt_count': alt_UMI,
-            }
-            dict_list.append(dic)
-    df_UMI = pd.DataFrame(dict_list)
-    return df_UMI
 
 
 class Variant_calling(Step):
@@ -211,7 +128,7 @@ class Variant_calling(Step):
         self.fasta = parse_genomeDir_rna(args.genomeDir)['fasta']
         self.df_vcf = None
         self.panel = args.panel
-        self.panel_bool = self.panel and self.panel != "None"
+        self.bed = utils.get_bed_file_path(self.panel)
 
         # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'
@@ -229,6 +146,9 @@ class Variant_calling(Step):
         if args.min_support_read == 'auto':
             utils.check_mkdir(self.otsu_dir)
         self.support_matrix_file = f'{self.out_prefix}_support.mtx'
+
+        self.raw_bcf_file = f'{self.out_prefix}_raw.bcf'
+        self.raw_vcf_file = f'{self.out_prefix}_raw.vcf'
 
         # run
         self.CID_dict = defaultdict(dict)
@@ -251,39 +171,26 @@ class Variant_calling(Step):
         Variant_calling.SplitNCigarReads.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @utils.add_log
-    def split_bam(self):
-        '''
-        input:
-            bam: bam from splitN
-            barcodes: cell barcodes, list
-        ouput:
-            bam_dict: assign reads to cell barcodes and UMI
-            count_dict: UMI counts per cell
-            CID: assign ID(1-based) to cells
-        '''
+    def call_variants(self):
+        cmd = (
+            f'bcftools mpileup '
+            f'-f {self.fasta} '
+            f'--threads {self.thread} '
+            f'--annotate DP,AD -d 10000 '
+            f'-o {self.raw_bcf_file} '
+            f'{self.splitN_bam} '
+        )
+        if self.bed:
+            cmd += f' --regions-file {self.bed} '
+        self.debug_subprocess_call(cmd)
 
-        # name sort
-        samtools_runner = utils.Samtools(self.splitN_bam, self.splitN_bam_name_sorted, threads=self.thread)
-        samtools_runner.sort_bam(by='name', debug=self.debug)
-
-        def keyfunc(x):
-            # return barcode
-            return x.query_name.split('_', 1)[0]
-
-        # read bam and split
-        with pysam.AlignmentFile(self.splitN_bam_name_sorted, "rb") as samfile:
-            header = samfile.header
-            for barcode, g in groupby(samfile, keyfunc):
-                if barcode in self.CID_dict:
-                    CID = self.CID_dict[barcode]['CID']
-                    self.CID_dict[barcode]['valid'] = True
-                    cell_dir = f'{self.cells_dir}/cell{CID}'
-                    utils.check_mkdir(cell_dir)
-                    cell_bam = f'{self.cells_dir}/cell{CID}/cell{CID}.bam'
-                    with pysam.AlignmentFile(cell_bam, "wb", header=header) as out_bam:
-                        for read in g:
-                            out_bam.write(read)
+        cmd = (
+            f'bcftools call '
+            f'-mv -Ov '
+            f'-o {self.raw_vcf_file} '
+            f'{self.raw_bcf_file} '
+        )
+        self.debug_subprocess_call(cmd)
 
     def write_CID_file(self):
         # out CID file
@@ -291,13 +198,6 @@ class Variant_calling(Step):
         df_CID.index.name = 'barcode'
         df_CID.to_csv(self.CID_file, sep='\t')
 
-    @utils.add_log
-    def call_all_snp(self):
-        _df_index, df_valid = self.read_CID()
-        CIDs = df_valid['CID']
-        func = partial(call_snp, self.outdir, self.fasta)
-        with Pool(self.thread) as pool:
-            pool.map(func, CIDs)
 
     def read_CID(self):
         return read_CID(self.CID_file)
@@ -364,51 +264,6 @@ class Variant_calling(Step):
     def otsu_threshold(self, array):
         threshold = utils.otsu_min_support_read(array, self.otsu_plot)
         return threshold
-
-    @utils.add_log
-    def get_UMI(self):
-        '''
-        get variant and ref UMI supporting an allele
-        '''
-
-        _df_index, df_valid = self.read_CID()
-
-        df_UMI_list = []
-        CID_arg = list(df_valid['CID'])
-        outdir_arg = [self.outdir] * len(CID_arg)
-        df_vcf = parse_vcf(self.merged_vcf_file)
-        vcf_arg = [df_vcf] * len(CID_arg)
-        with ProcessPoolExecutor(self.thread) as pool:
-            for res in pool.map(cell_UMI, CID_arg, outdir_arg, vcf_arg):
-                df_UMI_list.append(res)
-
-        df_UMI = pd.concat(df_UMI_list)
-        df_UMI['VID'] = df_UMI['VID'].astype('int')
-        df_UMI.sort_values(by=['VID', 'CID'], inplace=True)
-        df_UMI.to_csv(self.variant_count_file, sep='\t', index=False)
-
-        df_UMI = pd.read_csv(self.variant_count_file, sep='\t', header=0)
-        df_filter = df_UMI.copy()
-        if self.args.min_support_read == 'auto':
-            df_otsu_threshold = pd.DataFrame(columns=['VID', 'threshold'])
-            VIDs = np.unique(df_UMI['VID'].values)
-            for VID in VIDs:
-                df = df_UMI[df_UMI['VID'] == VID]
-                df_alt = df[df['alt_count'] > 0]
-                array = list(df_alt['alt_count'])
-                if array:
-                    if len(array) >= OTSU_READ_MIN:
-                        min_support_read = utils.otsu_min_support_read(array, f'{self.otsu_dir}/{VID}.png')
-                    else:
-                        min_support_read = np.median(array) * 0.2
-                    df_otsu_threshold = df_otsu_threshold.append(
-                        {'VID': VID, 'threshold': min_support_read}, ignore_index=True)
-                    df_otsu_threshold.to_csv(self.otsu_threshold_file, sep='\t', index=False)
-                    df_filter.loc[((df_filter['VID'] == VID) & (df_filter['alt_count'] < min_support_read)), 'alt_count'] = 0
-        else:
-            min_support_read = int(self.args.min_support_read)
-            df_filter.loc[df_filter['alt_count'] < min_support_read, 'alt_count'] = 0
-        df_filter.to_csv(self.filter_variant_count_file, sep='\t', index=False)
    
     def get_bed_df(self):
         bed_df = utils.get_gene_region_from_bed(self.panel)[1]
@@ -501,20 +356,9 @@ class Variant_calling(Step):
     def run(self):
 
         self.SplitNCigarReads()
-        """
-        self.split_bam()
-        self.write_CID_file()
-        self.call_all_snp()
-        self.merge_vcf()
-        self.write_VID_file()
-        self.get_UMI()
-        if self.panel_bool:
-            self.write_RID_file()
-            self.add_RID()
-        self.filter_vcf()
-        self.write_support_matrix()
-        self.clean_up()
-        """
+        self.call_variants()
+        #self.clean_up()
+
 
 @utils.add_log
 def variant_calling(args):
