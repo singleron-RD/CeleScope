@@ -58,38 +58,20 @@ def get_vj_annot(df, chains, pairs):
         })
 
     return l
-'''
-# expected_cell_num 
-def find_threshold(df_sum, idx):
-    return int(df_sum.iloc[idx - 1, df_sum.columns == 'umis'])
-
-def get_cell_bc(df_sum, threshold, col='umis'):
-    return list(df_sum[df_sum[col] >= threshold]['barcode'])
-
-def auto_cell(df_sum,expected_cell_num):
-    idx = int(expected_cell_num * 0.01)
-    barcode_number = df_sum.shape[0]
-    idx = int(min(barcode_number, idx))
-    if idx == 0:
-        sys.exit("cell number equals zero!")
-    # calculate threshold
-    threshold = (find_threshold(df_sum, idx) * 0.1)
-    threshold = max(1, threshold)
-    cell_bc = get_cell_bc(df_sum, threshold)
-    
-    return cell_bc, threshold
-'''
 
 
 class Summarize(Step):
     """
     Features
 
-    - Calculate clonetypes.
+    - TCR/BCR full length assembly results.
 
     Output
-    - `04.summarize/clonetypes.tsv` Record each clonetype and its frequent.
-    - `04.summarize/all_{type}.csv` Containing detailed information for each barcode.
+    - `04.summarize/clonetypes.tsv` High-level descriptions of each clonotype.
+    - `04.summarize/{sample}_all_contig.csv` High-level and detailed annotations of each contig.
+    - `04.summarize/{sample}_all_contig.fasta` All assembled contig sequences.
+    - `04.summarize/{sample}_filtered_contig.csv` High-level annotations of each cellular contig after filter. This is a subset of all_contig_annotations.csv.
+    - `04.summarize/{sample}_filtered_contig.fasta` Assembled contig sequences after filter.
     """
 
     def __init__(self, args, step_name):
@@ -114,7 +96,7 @@ class Summarize(Step):
     @utils.add_log
     def process(self):
         df = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/{self.sample}_contig.csv', sep='\t', header=None)
-        df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'raw_clonotype_id', 'raw_consensus_id']
+        df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis']
 
         df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
         df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
@@ -125,7 +107,6 @@ class Summarize(Step):
         df_revcompl = copy.deepcopy(df)
         df_revcompl['barcode'] = df_revcompl['barcode'].apply(lambda x: reversed_compl(x))
         df_revcompl['contig_id'] = df_revcompl['contig_id'].apply(lambda x: reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
-        df_revcompl.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
         
         # df = df.sort_values(by='umis', ascending=False)
         if self.seqtype == 'BCR':
@@ -170,7 +151,7 @@ class Summarize(Step):
         df_for_clono = df_for_clono[df_for_clono['barcode'].isin(filterbc)]
         df_for_clono = df_for_clono[df_for_clono['barcode'].isin(trust_rep)]
 
-        # gen clonotypes table
+
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
         total_cells =len(cell_barcodes)
@@ -180,7 +161,6 @@ class Summarize(Step):
         df_filter_contig = df_filter_contig[df_filter_contig['barcode'].isin(cell_barcodes)]
         df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(lambda x: reversed_compl(x))
         df_filter_contig['contig_id'] = df_filter_contig['contig_id'].apply(lambda x: reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
-        df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
 
         # filter contig.fasta
         all_contig_fasta = f'{self.outdir}/{self.sample}_all_contig.fasta'
@@ -194,62 +174,7 @@ class Summarize(Step):
                 if reversed_compl(barcode) in cell_barcodes:
                     filter_contig_fasta.write('>' + name + '\n' + sequence + '\n')
         filter_contig_fasta.close()
-        ''' use expected_cell_num parameter
 
-        filter method 1
-        if self.expected_cell_num != None:
-            df_used_for_cell_nums = df_for_clono_pro.drop_duplicates(['barcode'])
-            cell_bc, threshold = auto_cell(df_used_for_cell_nums, self.expected_cell_num)
-            total_cells = len(set(cell_bc))
-            df_for_clono = df_for_clono[df_for_clono['umis'] >= threshold]
-            df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
-            print(threshold)
-            print(total_cells)
-
-        filter method 2
-        if self.expected_cell_num != None:
-            #df_for_clono = df_for_clono.sort_values(by='umis',ascending=True)
-            #df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
-            self.expected_cell_num = int(self.expected_cell_num)
-            fl_pro_pair_df = pd.DataFrame(df_for_clono[df_for_clono['productive']==True].barcode.value_counts())
-            fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']>=2]
-            
-            # find median productive umi value
-            bc_l = list(fl_pro_pair_df.index)
-            median_umi = df_for_clono[df_for_clono['barcode'].isin(bc_l)].agg({'umis':'median'})
-            median_umi = int(median_umi.umis)
-            print(median_umi)
-            
-            df_for_clono = df_for_clono.reset_index().drop('index',axis=1)
-            start_loc = df_for_clono[df_for_clono['umis']==median_umi].index.tolist()[0] - int(self.expected_cell_num / 2)
-            end_loc = int(start_loc + self.expected_cell_num)
-            df_for_clono = df_for_clono.iloc[start_loc:end_loc,]
-            df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
-            cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
-            total_cells =len(cell_barcodes)
-            print(total_cells)
-        
-        # method 3
-        if self.expected_cell_num != None:
-            self.expected_cell_num = int(self.expected_cell_num)
-            fl_pro_pair_df = pd.DataFrame(df_for_clono[df_for_clono['productive']==True].barcode.value_counts())
-            fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode']>=2]
-
-            # find median productive umi value
-            bc_l = list(fl_pro_pair_df.index)
-            median_umi = df_for_clono[df_for_clono['barcode'].isin(bc_l)].agg({'umis':'median'})
-            median_umi = int(median_umi.umis)
-            print(median_umi)
-            
-            df_for_expected = df_for_clono.reset_index().drop('index',axis=1)
-            start_loc = df_for_expected[df_for_expected['umis']==median_umi].index.tolist()[0] - int(self.expected_cell_num / 2)
-            end_loc = int(start_loc + self.expected_cell_num)
-            df_for_expected = df_for_expected.iloc[start_loc:end_loc,]
-            df_for_expected_pro = df_for_expected[df_for_expected['productive']==True]
-            cell_barcodes_expected = set(df_for_expected_pro['barcode'].tolist())
-            total_cells =len(cell_barcodes_expected)
-            print(total_cells)
-        '''
 
         summarize_summary = []
         summarize_summary.append({
@@ -272,6 +197,8 @@ class Summarize(Step):
         clonotypes.close() 
 
         df_clonotypes = pd.read_csv(f'{self.outdir}/clonotypes.csv', sep='\t', index_col=None)
+        contig_with_clonotype = copy.deepcopy(df_clonotypes)
+
         df_clonotypes = df_clonotypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
         df_clonotypes = df_clonotypes.rename(columns={'barcode': 'frequency'})
         sum_f = df_clonotypes['frequency'].sum()
@@ -280,6 +207,7 @@ class Summarize(Step):
         df_clonotypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonotypes.shape[0]+1)]
         df_clonotypes = df_clonotypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
         df_clonotypes.to_csv(f'{self.outdir}/clonotypes.csv', sep=',', index=False) 
+        used_for_merge = df_clonotypes[['cdr3s_aa','clonotype_id']]
 
         df_clonotypes['ClonotypeID'] = df_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
         df_clonotypes['Frequency'] = df_clonotypes['frequency']
@@ -289,6 +217,19 @@ class Summarize(Step):
         title = 'Clonetypes'
         table_dict = self.get_table(title, 'clonetypes_table', df_clonotypes[['ClonotypeID', 'CDR3_aa', 'Frequency', 'Proportion']])
         self.add_data_item(table_dict=table_dict)
+
+        # add clonotype_id in contig.csv file
+        df_merge = pd.merge(used_for_merge, contig_with_clonotype, on='cdr3s_aa', how='outer')
+        df_merge = df_merge[['barcode','clonotype_id']]
+        df_merge['barcode'] = df_merge['barcode'].apply(lambda x: reversed_compl(x))
+        df_revcompl = pd.merge(df_merge, df_revcompl, on='barcode',how='outer')
+        df_filter_contig = pd.merge(df_merge, df_filter_contig, on='barcode',how='outer')
+        df_revcompl.fillna('None',inplace = True)
+        df_filter_contig.fillna('None',inplace = True)
+        df_revcompl = df_revcompl[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
+        df_filter_contig = df_filter_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
+        df_revcompl.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
+        df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
 
         # reads summary
         read_count = 0

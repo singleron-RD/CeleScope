@@ -143,10 +143,10 @@ def fa_to_csv(outdir, sample):
             temp = assignment[assignment[1]==name]
             reads = str(len(temp[0].tolist()))
             umis = str(len(set(temp['umi'].tolist())))
-            raw_consensus_id = 'None'
-            raw_clonotype_id = 'None'
+            #raw_consensus_id = 'None'
+            #raw_clonotype_id = 'None'
 
-            string = '\t'.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis, raw_clonotype_id, raw_consensus_id])
+            string = '\t'.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis])
             contigs.write(f'{string}\n')
             process_read+=1
             if process_read % 10000 == 0:
@@ -171,15 +171,19 @@ class Assemble(Step):
     - Assemble TCR/BCR seq data.
 
     Output
+    - `03.assemble/match/{sample}_matched_R1.fq` New R1 reads matched with scRNA-seq
+    - `03.assemble/match/{sample}_matched_R1.fq` New R2 reads matched with scRNA-seq
 
-    - `03.assemble/{sample}_toassemble.fq` Reads to assemble.
-    - `03.assemble/{sample}_toassemble_bc.fa` Barcodes to assemble.
-    - `03.assemble/{sample}_cdr3.out` All assembled CDR3 output.
-    - `03.assemble/{sample}_barcode_report.tsv` Record chain information in each barcode.
-    - `03.assemble/{sample}_annot.fa` Assembled annotated contig sequences.
-    - `03.assemble/{sample}_assembled_reads.fa` Assembled raw reads.
-    - `03.assemble/{sample}_report.tsv` Record assembled CDR3 types and count.
+    - `03.assemble/assemble/{sample}_cdr3.out` All assembled CDR3 output and gene information.
+    - `03.assemble/assemble/{sample}_assign.out` read assignment results.
+    - `03.assemble/assemble/{sample}_assembled_reads.fa` Assembled raw reads.
+    - `03.assemble/assemble/{sample}_annot.fa` Assembled annotated contig sequences.
+    - `03.assemble/assemble/{sample}_full_len.fa` Assembled full length contig sequences.
+    - `03.assemble/assemble/report.out` Record assembled CDR3 types, read count and proportion of read count.
+    - `03.assemble/assemble/barcoderep.tsv` Record chain information for each barcode.
+    - `03.assemble/assemble/barcoderepfl.tsv` Record chain information for each barcode(preliminary filter).
     """
+
 
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
