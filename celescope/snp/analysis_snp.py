@@ -53,6 +53,7 @@ class Analysis_variant(Step, AnalysisMixin):
         self.ncell_file = f'{self.out_prefix}_variant_ncell.tsv'
         buildver = self.annovar_section['buildver']
         self.multianno_file = f'{self.out_prefix}.{buildver}_multianno.txt'
+        self.variant_table_file = f'{self.out_prefix}_variant_table.tsv'
 
     @utils.add_log
     def write_gt(self):
@@ -71,7 +72,7 @@ class Analysis_variant(Step, AnalysisMixin):
         """
         df = pd.read_csv(self.gt_file, index_col=0)
         df_ncell = df.apply(pd.Series.value_counts, axis=1).fillna(0).astype(int)
-        df_ncell.to_csv(self.ncell_file, sep = '\t',index = True)
+        df_ncell.to_csv(self.ncell_file, index = True)
 
     @utils.add_log
     def run_annovar(self):
@@ -87,9 +88,9 @@ class Analysis_variant(Step, AnalysisMixin):
         input_file = f'{self.outdir}/{self.sample}.input'
         cmd = (
             f'perl {annovar_dir}/convert2annovar.pl '
-            f'-format vcf4 '
+            f'--format vcf4old '
             f'--includeinfo '
-            f'{self.vcf_GT} > {input_file}'
+            f'{self.vcf_file} > {input_file}'
         )
         self.debug_subprocess_call(cmd)
 
@@ -147,27 +148,15 @@ class Analysis_variant(Step, AnalysisMixin):
         count_tsne = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "text": text, 'value': value, 'title': title}
         return count_tsne
 
-
     def get_df_table(self):
 
-        df_vcf = utils.parse_vcf(self.vcf_GT, infos=['VID', 'CID'])
+        df_vcf = utils.parse_vcf(self.vcf_file, infos=[])
         df_annovar = utils.parse_annovar(self.multianno_file)
         df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
-        ncell_df = pd.read_table(self.ncell_file,sep = "\t")
-        ncell_df.loc[:,"VID"] = ncell_df.loc[:,"VID"].astype(str)
-        df_vcf["nCell"] = df_vcf["CID"].apply(func=lambda row: 1 if isinstance(row, str) else len(row))
+        df_ncell = pd.read_csv(self.ncell_file)
+        df_vcf = pd.concat([df_vcf, df_ncell], axis=1)
 
-        df_vcf = pd.merge(left = df_vcf,
-                          right = ncell_df,
-                          on = "VID",
-                          how = "left")
-
-        out_df_vcf = f'{self.outdir}/{self.sample}_variant_table.tsv'
-        df_vcf.drop("nCell",axis = 1).to_csv(out_df_vcf, sep='\t', index=False)
-
-        cols = ['VID', "CID",'Chrom', 'Pos', 'Alleles', 'Gene',  
-            'ncell_cover', "ncell_ref", 'ncell_alt', "ncell_ref_and_alt",
-            'mRNA', 'Protein', 'COSMIC']
+        cols = ['Chrom', 'Pos', 'Alleles', 'Gene', '0/0', "0/1", '1/1', 'mRNA', 'Protein', 'COSMIC']
         df_vcf = df_vcf[cols]
         return df_vcf
     
@@ -203,14 +192,14 @@ class Analysis_variant(Step, AnalysisMixin):
         self.write_gt()
         self.write_ncell()
         self.run_annovar()
-        cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
-        df_count_tsne = self.get_df_count_tsne()
-        count_tsne = self.get_count_tsne(df_count_tsne)
+        #cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
+        #df_count_tsne = self.get_df_count_tsne()
+        #count_tsne = self.get_count_tsne(df_count_tsne)
         df_vcf = self.get_df_table()
-        table_dict = self.get_table(title='Variant table', table_id='variant_table', df_table=df_vcf.drop(["CID"],axis = 1))
+        table_dict = self.get_table(title='Variant table', table_id='variant_table', df_table=df_vcf)
 
-        self.add_data_item(cluster_tsne=cluster_tsne)
-        self.add_data_item(count_tsne=count_tsne)
+        #self.add_data_item(cluster_tsne=cluster_tsne)
+        #self.add_data_item(count_tsne=count_tsne)
         self.add_data_item(table_dict=table_dict)
         self.clean_up()
         #self.get_venn_plot()
@@ -223,40 +212,6 @@ class Analysis_variant(Step, AnalysisMixin):
         config.read(self.annovar_config)
         section = config['ANNOVAR']
         return section
-
-    @utils.add_log
-    def run_annovar(self):
-
-        section = self.annovar_section
-        annovar_dir = section['dir']
-        db = section['db']
-        buildver = section['buildver']
-        protocol = section['protocol']
-        operation = section['operation']
-
-        # convert
-        input_file = f'{self.outdir}/{self.sample}.input'
-        cmd = (
-            f'perl {annovar_dir}/convert2annovar.pl '
-            f'-format vcf4 '
-            f'--includeinfo '
-            f'{self.vcf_GT} > {input_file}'
-        )
-        self.debug_subprocess_call(cmd)
-
-        # annotate
-        cmd = (
-            f'perl {annovar_dir}/table_annovar.pl '
-            f'{input_file} '
-            f'{db} '
-            f'-buildver {buildver} '
-            f'-protocol {protocol} '
-            f'-operation {operation} '
-            f'-out {self.outdir}/{self.sample} '
-            f'--otherinfo '
-        )
-        self.debug_subprocess_call(cmd)
-
 
 
 @utils.add_log

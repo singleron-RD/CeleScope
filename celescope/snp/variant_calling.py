@@ -84,6 +84,7 @@ class Variant_calling(Step):
 
     @utils.add_log
     def call_variants(self):
+        """
         cmd = (
             f'bcftools mpileup '
             f'-f {self.fasta} '
@@ -103,11 +104,12 @@ class Variant_calling(Step):
             f'{self.raw_bcf_file} '
         )
         self.debug_subprocess_call(cmd)
-
+        """
         cmd = (
             f'bcftools norm '
             f'-f {self.fasta} '
             f'-o {self.norm_vcf_file} '
+            f'-m -any '
             f'{self.raw_vcf_file} '
         )
         self.debug_subprocess_call(cmd)
