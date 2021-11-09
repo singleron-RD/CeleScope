@@ -156,7 +156,7 @@ def target_metrics(args):
 
 def get_opts_target_metrics(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
-    parser.add_argument("--panel",help = "The prefix of bed file, such as `lung_1`.",default = '')
+    parser.add_argument("--panel", help = HELP_DICT['panel'])
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)

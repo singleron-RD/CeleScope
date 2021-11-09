@@ -736,3 +736,10 @@ class Samtools():
         subprocess.check_call(cmd, shell=True)
 
 
+def read_CID(CID_file):
+    """
+    return df_index, df_valid
+    """
+    df_index = pd.read_csv(CID_file, sep='\t', index_col=0).reset_index()
+    df_valid = df_index[df_index['valid'] == True]
+    return df_index, df_valid
