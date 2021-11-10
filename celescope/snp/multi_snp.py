@@ -95,7 +95,7 @@ class Multi_snp(Multi):
             f'--bam {bam} '
             f'--match_dir {self.col4_dict[sample]} '
         )
-        self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
+        self.process_cmd(cmd, step, sample, m=8, x=1)
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
@@ -108,7 +108,7 @@ class Multi_snp(Multi):
             f'--vcf {vcf} '
             f'--CID_file {CID_file} '
         )
-        self.process_cmd(cmd, step, sample, m=8, x=1)
+        self.process_cmd(cmd, step, sample, m=2, x=1)
 
 
 def main():
