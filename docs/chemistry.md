@@ -6,5 +6,5 @@
 - There are no changes in other arguments.
 
 ## Where to find pattern, whitelist and linker of each chemistry?
-- pattern: https://github.com/singleron-RD/CeleScope/blob/master/celescope/tools/\_\_init\_\_.py
+- pattern: https://github.com/singleron-RD/CeleScope/blob/master/celescope/tools/__init__.py
 - whitelist and linker:  https://github.com/singleron-RD/CeleScope/tree/master/celescope/data/chemistry/ . `bclist` is the barcode whitelist.
