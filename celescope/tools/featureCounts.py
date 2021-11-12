@@ -4,9 +4,9 @@ import re
 import subprocess
 
 import pysam
+import celescope.tools.utils as utils
 from celescope.rna.mkref import parse_genomeDir_rna
 from celescope.tools.step import Step, s_common
-from celescope.tools.utils import add_log, format_number, get_id_name_dict
 
 
 class FeatureCounts(Step):
@@ -32,8 +32,8 @@ class FeatureCounts(Step):
     - `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # set
         self.gtf = parse_genomeDir_rna(self.args.genomeDir)['gtf']
@@ -71,13 +71,13 @@ class FeatureCounts(Step):
             total = sum(tmp_arr)
             tmp_arr = [
                 '%s(%.2f%%)' %
-                (format_number(n), (n + 0.0) / total * 100) for n in tmp_arr]
+                (utils.format_number(n), (n + 0.0) / total * 100) for n in tmp_arr]
             for t, s in zip(['Assigned', 'Unassigned_NoFeatures',
                             'Unassigned_Ambiguity'], tmp_arr):
                 stat_fh.write('%s: %s\n' % (t, s))
         fh.close()
 
-    @add_log
+    @utils.add_log
     def run_featureCounts(self):
         cmd = (
             'featureCounts '
@@ -94,7 +94,7 @@ class FeatureCounts(Step):
         FeatureCounts.run_featureCounts.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @add_log
+    @utils.add_log
     def name_sort_bam(self):
         cmd = (
             'samtools sort -n '
@@ -113,7 +113,7 @@ class FeatureCounts(Step):
         self.clean_up()
 
 
-@add_log
+@utils.add_log
 def add_tag(bam, gtf):
     """
     - CB cell barcode
@@ -121,7 +121,7 @@ def add_tag(bam, gtf):
     - GN gene name
     - GX gene id
     """
-    id_name = get_id_name_dict(gtf)
+    id_name = utils.get_id_name_dict(gtf)
     temp_bam_file = bam + ".temp"
 
     with pysam.AlignmentFile(bam, "rb") as original_bam:
@@ -150,11 +150,10 @@ def add_tag(bam, gtf):
     subprocess.check_call(cmd, shell=True)
 
 
-@add_log
+@utils.add_log
 def featureCounts(args):
-    step_name = "featureCounts"
-    featureCounts_obj = FeatureCounts(args)
-    featureCounts_obj.run()
+    with FeatureCounts(args) as runner:
+        runner.run()
 
 
 def get_opts_featureCounts(parser, sub_program):

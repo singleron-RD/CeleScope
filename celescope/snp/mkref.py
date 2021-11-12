@@ -1,6 +1,7 @@
 import configparser
 import os
 import subprocess
+from celescope.capture_virus.mkref import Mkref_virus
 
 import celescope.tools.utils as utils
 from celescope.tools.mkref import Mkref
@@ -72,8 +73,9 @@ class Mkref_snp(Mkref):
 
 def mkref(args):
     genome_type = 'snp'
-    runner = Mkref_snp(genome_type, args)
-    runner.run()
+    with Mkref_snp(genome_type,args) as runner:
+        runner.run()
+
 
 
 def get_opts_mkref(parser, sub_program):

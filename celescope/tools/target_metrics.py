@@ -133,9 +133,8 @@ class Target_metrics(Step):
 
 @utils.add_log
 def target_metrics(args):
-    step_name = "target_metrics"
-    runner = Target_metrics(args)
-    runner.run()
+    with Target_metrics(args) as runner:
+        runner.run()
 
 
 def get_opts_target_metrics(parser, sub_program):

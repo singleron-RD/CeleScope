@@ -23,8 +23,8 @@ class Cutadapt(Step):
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # set
         self.adapter_args = self.read_adapter_fasta(args.adapter_fasta)
@@ -111,11 +111,8 @@ class Cutadapt(Step):
 
 @utils.add_log
 def cutadapt(args):
-
-    step_name = "cutadapt"
-    cutadapt_obj = Cutadapt(args)
-    cutadapt_obj.run()
-
+    with Cutadapt(args) as runner:
+        runner.run()
 
 def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--gzip', help="Output gzipped fastq files.", action='store_true')

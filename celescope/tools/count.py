@@ -454,9 +454,8 @@ class Count(Step):
 
 @utils.add_log
 def count(args):
-    step_name = "count"
-    runner = Count(args)
-    runner.run()
+    with Count(args) as runner:
+        runner.run()
 
 
 def get_opts_count(parser, sub_program):

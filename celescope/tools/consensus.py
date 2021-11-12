@@ -188,10 +188,8 @@ def get_read_length(read_list, threshold=0.5):
 
 @utils.add_log
 def consensus(args):
-
-    step_name = "consensus"
-    consensus_obj = Consensus(args)
-    consensus_obj.run()
+    with Consensus(args) as runner:
+        runner.run()
 
 
 def get_opts_consensus(parser, sub_program):

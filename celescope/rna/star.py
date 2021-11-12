@@ -38,8 +38,8 @@ class Star_rna(Step, StarMixin):
     - `{sample}_region.log` Picard CollectRnaSeqMetrics results.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
         StarMixin.__init__(self, args)
         # parse
         self.refflat = f"{self.genomeDir}/{self.genome['refflat']}"
@@ -152,10 +152,8 @@ class Star_rna(Step, StarMixin):
 
 
 def star(args):
-    step_name = "star"
-    runner = Star_rna(args)
-    runner.run()
-
+    with Star_rna(args) as runner:
+        runner.run()
 
 def get_opts_star(parser, sub_program):
     get_opts_star_mixin(parser, sub_program)

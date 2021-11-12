@@ -1,3 +1,4 @@
+from re import A
 import pandas as pd
 
 from celescope.tools.analysis_mixin import AnalysisMixin
@@ -67,10 +68,8 @@ class Analysis_rna(Step, AnalysisMixin):
 
 @utils.add_log
 def analysis(args):
-
-    step_name = "analysis"
-    ana = Analysis_rna(args)
-    ana.run()
+    with Analysis_rna(args) as runner:
+        runner.run()
 
 
 def get_opts_analysis(parser, sub_program):

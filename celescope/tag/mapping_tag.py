@@ -52,9 +52,8 @@ with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1,
 
 @utils.add_log
 def mapping_tag(args):
-    step_name = "mapping_tag"
-    runner = Mapping_tag(args)
-    runner.run()
+    with Mapping_tag(args) as runner:
+        runner.run()
 
 
 class Mapping_tag(Step):
@@ -72,8 +71,8 @@ class Mapping_tag(Step):
         `read_count` read count per UMI  
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # read args
         self.fq = args.fq
