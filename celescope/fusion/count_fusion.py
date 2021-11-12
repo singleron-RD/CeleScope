@@ -129,7 +129,7 @@ class CountFusion(Step):
 @utils.add_log
 def count_fusion(args):
     step_name = "count_fusion"
-    runner = CountFusion(args, step_name)
+    runner = CountFusion(args)
     runner.run()
 
 

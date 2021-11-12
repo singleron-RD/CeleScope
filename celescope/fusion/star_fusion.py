@@ -17,7 +17,7 @@ class StarFusion(Step, StarMixin):
 @utils.add_log
 def star_fusion(args):
     step_name = "star_fusion"
-    runner = StarFusion(args, step_name)
+    runner = StarFusion(args)
     runner.run()
 
 

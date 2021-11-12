@@ -201,7 +201,7 @@ def mapping_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
     step_name = f"{args.type}_mapping_vdj"
-    mapping_vdj_obj = Mapping_vdj(args, step_name)
+    mapping_vdj_obj = Mapping_vdj(args)
     mapping_vdj_obj.run()
 
 

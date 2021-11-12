@@ -89,7 +89,7 @@ class Count_capture_virus(Step):
 def count_capture_virus(args):
 
     step_name = 'count_capture_virus'
-    runner = Count_capture_virus(args, step_name)
+    runner = Count_capture_virus(args)
     runner.run()
 
 

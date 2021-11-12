@@ -69,7 +69,7 @@ class Analysis_rna(Step, AnalysisMixin):
 def analysis(args):
 
     step_name = "analysis"
-    ana = Analysis_rna(args, step_name)
+    ana = Analysis_rna(args)
     ana.run()
 
 

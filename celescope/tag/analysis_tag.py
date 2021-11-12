@@ -38,5 +38,5 @@ def get_opts_analysis_tag(parser, sub_program):
 @utils.add_log
 def analysis_tag(args):
     step_name = 'analysis_tag'
-    ana = Analysis_tag(args, step_name)
+    ana = Analysis_tag(args)
     ana.run()

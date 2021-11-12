@@ -53,7 +53,7 @@ with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1,
 @utils.add_log
 def mapping_tag(args):
     step_name = "mapping_tag"
-    runner = Mapping_tag(args, step_name)
+    runner = Mapping_tag(args)
     runner.run()
 
 

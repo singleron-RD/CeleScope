@@ -163,7 +163,7 @@ class Replace_tsne(Step):
 def replace_tsne(args):
 
     step_name = "replace_tsne"
-    replace_tsne_obj = Replace_tsne(args, step_name)
+    replace_tsne_obj = Replace_tsne(args)
     replace_tsne_obj.run()
 
 def get_opts_replace_tsne(parser, sub_program):

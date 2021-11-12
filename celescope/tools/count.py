@@ -455,7 +455,7 @@ class Count(Step):
 @utils.add_log
 def count(args):
     step_name = "count"
-    runner = Count(args, step_name)
+    runner = Count(args)
     runner.run()
 
 

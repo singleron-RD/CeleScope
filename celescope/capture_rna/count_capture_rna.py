@@ -115,7 +115,7 @@ def count_capture_rna(args):
     # TODO!
     # need barcode_capture_rna
     step_name = "count_capture_rna"
-    runner = Count_capture_rna(args, step_name)
+    runner = Count_capture_rna(args)
     runner.run()
 
 

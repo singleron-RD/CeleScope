@@ -84,6 +84,7 @@ class StarMixin():
             # number amd percent
             unique_reads_list = []
             multi_reads_list = []
+            total_reads = 0
             for line in map_log:
                 if line.strip() == '':
                     continue
@@ -91,10 +92,11 @@ class StarMixin():
                     unique_reads_list.append(line.strip().split()[-1])
                 if re.search(r'of reads mapped to too many loci', line):
                     multi_reads_list.append(line.strip().split()[-1])
+                if re.search(r'Number of input reads', line):
+                    total_reads = int(line.strip().split()[-1])
+
         unique_reads = int(unique_reads_list[0])
-        unique_reads_fraction = float(unique_reads_list[1].strip('%')) / 100
         multi_reads = int(multi_reads_list[0])
-        multi_reads_fraction = float(multi_reads_list[1].strip('%')) / 100
 
         self.add_metric(
             name='Genome',
@@ -103,12 +105,12 @@ class StarMixin():
         self.add_metric(
             name=f'Uniquely Mapped {self.stat_prefix}',
             value=unique_reads,
-            fraction=unique_reads_fraction,
+            total=total_reads,
         )
         self.add_metric(
             name=f'Multi-Mapped {self.stat_prefix}',
             value=multi_reads,
-            fraction=multi_reads_fraction,
+            total=total_reads,
         )
 
 

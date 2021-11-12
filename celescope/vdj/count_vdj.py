@@ -353,7 +353,7 @@ def count_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
     step_name = f"{args.type}_count_vdj"
-    count_vdj_obj = Count_vdj(args, step_name)
+    count_vdj_obj = Count_vdj(args)
     count_vdj_obj.run()
 
 

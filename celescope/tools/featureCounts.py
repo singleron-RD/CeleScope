@@ -153,7 +153,7 @@ def add_tag(bam, gtf):
 @add_log
 def featureCounts(args):
     step_name = "featureCounts"
-    featureCounts_obj = FeatureCounts(args, step_name)
+    featureCounts_obj = FeatureCounts(args)
     featureCounts_obj.run()
 
 

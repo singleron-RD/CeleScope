@@ -254,7 +254,7 @@ class Conversion(Step):
 def conversion(args):
 
     step_name = "conversion"
-    conversion_obj = Conversion(args, step_name)
+    conversion_obj = Conversion(args)
     conversion_obj.run()
 
 def get_opts_conversion(parser, sub_program):

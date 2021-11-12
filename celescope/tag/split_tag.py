@@ -162,7 +162,7 @@ class Split_tag(Step):
 
 def split_tag(args):
     step_name = "split_tag"
-    runner = Split_tag(args, step_name)
+    runner = Split_tag(args)
     runner.run()
 
 

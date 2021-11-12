@@ -329,8 +329,8 @@ class Barcode(Step):
     the read name is `{barcode}_{UMI}_{read ID}`.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
@@ -501,7 +501,7 @@ class Barcode(Step):
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
                     out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-                    self.run.logger.info(self.fq1_list[i] + ' finished.')
+            self.run.logger.info(self.fq1_list[i] + ' finished.')
         out_fq2.close()
 
         # logging
@@ -523,36 +523,40 @@ class Barcode(Step):
 
         # stat
         BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
-            30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
+            30)]) / float(sum(self.barcode_qual_Counter.values())) 
+        BarcodesQ30 = round(BarcodesQ30 * 100, 2)
         UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= ord2chr(
-            30)]) / float(sum(self.umi_qual_Counter.values())) * 100
+            30)]) / float(sum(self.umi_qual_Counter.values())) 
+        UMIsQ30 = round(UMIsQ30 * 100, 2)
 
         self.add_metric(
             name='Raw Reads',
             value=self.total_num,
+            help_info='total reads from FASTQ files'
         )
         self.add_metric(
-            name='Valid Reads:',
+            name='Valid Reads',
             value=self.clean_num,
             total=self.total_num,
+            help_info='reads pass filtering(filtered: reads without poly T, reads without linker, reads without correct barcode or low quality reads)'
         )
         self.add_metric(
             name='Q30 of Barcodes',
             value=BarcodesQ30,
+            help_info='percent of barcode base pairs with quality scores over Q30',
         )
         self.add_metric(
             name='Q30 of UMIs',
             value=UMIsQ30,
+            help_info='percent of UMI base pairs with quality scores over Q30',
         )
-
-        self.clean_up()
 
 
 @utils.add_log
 def barcode(args):
-    step_name = "barcode"
-    barcode_obj = Barcode(args, step_name)
-    barcode_obj.run()
+    with Barcode(args) as runner:
+        runner.run()
+
 
 
 def get_opts_barcode(parser, sub_program=True):

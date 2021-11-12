@@ -17,7 +17,7 @@ TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 def analysis_capture_virus(args):
 
     step_name = 'analysis_capture_virus'
-    runner = Analysis_capture_virus(args, step_name)
+    runner = Analysis_capture_virus(args)
     runner.run()
 
 

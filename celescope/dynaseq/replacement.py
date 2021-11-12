@@ -313,7 +313,7 @@ class Replacement(Step):
 def replacement(args):
 
     step_name = "replacement"
-    replacement_obj = Replacement(args, step_name)
+    replacement_obj = Replacement(args)
     replacement_obj.run()
 
 

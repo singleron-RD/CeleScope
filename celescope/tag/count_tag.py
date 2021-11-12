@@ -53,7 +53,7 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
 def count_tag(args):
 
     step_name = "count_tag"
-    runner = Count_tag(args, step_name)
+    runner = Count_tag(args)
     runner.run()
 
 

@@ -153,7 +153,7 @@ class Star_rna(Step, StarMixin):
 
 def star(args):
     step_name = "star"
-    runner = Star_rna(args, step_name)
+    runner = Star_rna(args)
     runner.run()
 
 

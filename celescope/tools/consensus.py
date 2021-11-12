@@ -190,7 +190,7 @@ def get_read_length(read_list, threshold=0.5):
 def consensus(args):
 
     step_name = "consensus"
-    consensus_obj = Consensus(args, step_name)
+    consensus_obj = Consensus(args)
     consensus_obj.run()
 
 

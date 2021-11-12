@@ -134,7 +134,7 @@ class Target_metrics(Step):
 @utils.add_log
 def target_metrics(args):
     step_name = "target_metrics"
-    runner = Target_metrics(args, step_name)
+    runner = Target_metrics(args)
     runner.run()
 
 

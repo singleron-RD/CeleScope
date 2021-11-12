@@ -113,7 +113,7 @@ class Cutadapt(Step):
 def cutadapt(args):
 
     step_name = "cutadapt"
-    cutadapt_obj = Cutadapt(args, step_name)
+    cutadapt_obj = Cutadapt(args)
     cutadapt_obj.run()
 
 

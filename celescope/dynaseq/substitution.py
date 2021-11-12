@@ -198,7 +198,7 @@ class Subsitution(Step):
 def substitution(args):
 
     step_name = "substitution"
-    substitution_obj = Subsitution(args, step_name)
+    substitution_obj = Subsitution(args)
     substitution_obj.run()
 
 def get_opts_substitution(parser, sub_program):

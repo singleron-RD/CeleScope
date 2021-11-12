@@ -519,7 +519,7 @@ class Variant_calling(Step):
 def variant_calling(args):
 
     step_name = 'variant_calling'
-    variant_calling_obj = Variant_calling(args, step_name)
+    variant_calling_obj = Variant_calling(args)
     variant_calling_obj.run()
 
 

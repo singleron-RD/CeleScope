@@ -64,7 +64,7 @@ class Assemble_TCR(Step):
 
 def assemble(args):
     step_name = "assemble"
-    runner = Assemble_TCR(args, step_name)
+    runner = Assemble_TCR(args)
     runner.run()
 
 

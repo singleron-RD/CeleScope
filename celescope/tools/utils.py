@@ -635,6 +635,7 @@ def index_bam(input_bam):
 
 
 def check_mkdir(dir_name):
+    """if dir_name is not exist, make one"""
     if not os.path.exists(dir_name):
         os.system(f"mkdir -p {dir_name}")
 
