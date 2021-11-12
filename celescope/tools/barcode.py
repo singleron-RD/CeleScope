@@ -329,8 +329,8 @@ class Barcode(Step):
     the read name is `{barcode}_{UMI}_{read ID}`.
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
@@ -554,7 +554,7 @@ class Barcode(Step):
 
 @utils.add_log
 def barcode(args):
-    with Barcode(args) as runner:
+    with Barcode(args, display_title='Demultiplexing') as runner:
         runner.run()
 
 
