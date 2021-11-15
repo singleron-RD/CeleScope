@@ -101,16 +101,19 @@ class StarMixin():
         self.add_metric(
             name='Genome',
             value=self.genome['genome_name'],
+            help_info='reference database'
         )
         self.add_metric(
             name=f'Uniquely Mapped {self.stat_prefix}',
             value=unique_reads,
             total=total_reads,
+            help_info='uniquely mapped Reads or UMIs'
         )
         self.add_metric(
             name=f'Multi-Mapped {self.stat_prefix}',
             value=multi_reads,
             total=total_reads,
+            help_info='Multi-Mapped Reads or UMIs'
         )
 
 

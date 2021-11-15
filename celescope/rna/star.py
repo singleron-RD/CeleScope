@@ -5,7 +5,7 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
-from celescope.tools.step import Step
+from celescope.tools.step import Step 
 
 
 class Star_rna(Step, StarMixin):
@@ -78,16 +78,19 @@ class Star_rna(Step, StarMixin):
             name='Base Pairs Mapped to Exonic Regions',
             value=exonic_regions,
             total=total,
+            help_info='Number of processed base pairs that mapped to exonic regions'
         )
         self.add_metric(
             name='Base Pairs Mapped to Intronic Regions',
             value=intronic_regions,
             total=total,
+            help_info='Number of processed base pairs that mapped to intronic regions'
         )
         self.add_metric(
             name='Base Pairs Mapped to Intergenic Regions',
             value=intergenic_regions,
             total=total,
+            help_info='Number of processed base pairs that mapped to intergenic regions'
         )
 
         # ribo
@@ -104,6 +107,7 @@ class Star_rna(Step, StarMixin):
                     name=f'{self.stat_prefix} Mapped to rRNA',
                     value=Reads_Mapped_to_rRNA,
                     total=Reads_Total,
+                    help_info='Number of reads or umis that mapped to rRNA'
                 )
 
         region_plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],

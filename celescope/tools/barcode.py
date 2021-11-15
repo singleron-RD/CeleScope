@@ -530,7 +530,7 @@ class Barcode(Step):
         UMIsQ30 = round(UMIsQ30 * 100, 2)
 
         self.add_metric(
-            name='Raw Reads',
+            name='Raw Reads', 
             value=self.total_num,
             help_info='total reads from FASTQ files'
         )

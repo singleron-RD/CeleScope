@@ -72,6 +72,7 @@ class Cutadapt(Step):
                     f'{line}'
                 )
             p_list.append({"item": attr[0], "value": attr[1]})
+        
         p_df = pd.DataFrame(p_list)
         p_df.iloc[0, 0] = 'Reads with Adapters'
         p_df.iloc[1, 0] = 'Reads too Short'
@@ -79,7 +80,40 @@ class Cutadapt(Step):
         p_df.iloc[3, 0] = 'Base Pairs Processed'
         p_df.iloc[4, 0] = 'Base Pairs Quality-Trimmed'
         p_df.iloc[5, 0] = 'Base Pairs Written'
-        p_df.to_csv(self.stat_file, sep=':', index=False, header=None)
+        #p_df.to_csv(self.stat_file, sep=':', index=False, header=None)
+        #stat
+        self.add_metric(
+            name='Reads with Adapters',
+            value=p_df.iloc[0,1],
+            help_info='the number of reads with adapters'
+        )
+        self.add_metric(
+            name='Reads too Short',
+            value=p_df.iloc[1,1],
+            help_info='the number of reads that were too short'
+        )
+        self.add_metric(
+            name='Reads Written',
+            value=p_df.iloc[2,1],
+            help_info='Reads written (passing filters).Discard processed reads that are shorter than LENGTH,default `20`.'
+        )
+        self.add_metric(
+            name='Base Pairs Processed', 
+            value=p_df.iloc[3,1],
+            help_info='Number of processed base pairs'
+        )
+        self.add_metric(
+            name='Base Pairs Quality-Trimmed',
+            value=p_df.iloc[4,1],
+            help_info='Quality-trimmed'
+        )
+        self.add_metric(
+            name='Base Pairs Written',
+            value=p_df.iloc[5,1],
+            help_info='Total written (filtered)'
+        )
+        
+
 
     @utils.add_log
     def run(self):
