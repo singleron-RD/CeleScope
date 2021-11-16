@@ -29,7 +29,7 @@ class Target_metrics(Step):
         self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
         self.match_barcode = set(self.match_barcode_list)
         
-        if (self.assay == "snp" and args.panel != '') :
+        if args.panel:
             self.gene_list = utils.get_gene_region_from_bed(args.panel)[0]
             self.n_gene = len(self.gene_list)
         else:
