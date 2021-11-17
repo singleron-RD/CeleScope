@@ -103,7 +103,7 @@ class FeatureCounts(Step):
             threads=self.thread,
             )
         samtools_runner.add_tag(self.gtf)
-        samtools_runner.sort_bam(by='name')
+        samtools_runner.temp_sam2bam(by='name')
         self.format_stat()
         self.clean_up()
 

@@ -664,15 +664,20 @@ class Samtools():
         self.in_bam = in_bam
         self.out_bam = out_bam
         self.threads = threads
+        self.temp_sam_file = "{self.out_bam}_sam.temp"
 
-    def sort_bam(self, by='coord', debug=False):
-        cmd = f"samtools sort {self.in_bam} -o {self.out_bam} --threads {self.threads}"
+    @staticmethod
+    def samtools_sort(in_file, out_file, threads=1, by='coord', debug=False):
+        cmd = f"samtools sort {in_file} -o {out_file} --threads {threads}"
         if by == "name":
             cmd += " -n"
         if debug:
             print(cmd)
         subprocess.check_call(cmd, shell=True)
         return cmd
+
+    def sort_bam(self, by='coord', debug=False):
+        self.samtools_sort(self.in_bam, self.out_bam, threads=self.threads, by=by, debug=debug)
 
     @add_log
     def add_tag(self, gtf):
@@ -684,11 +689,10 @@ class Samtools():
         - RG read group, optional
         """
         id_name = get_id_name_dict(gtf)
-        temp_sam_file = "{self.in_bam}_sam.temp"
 
         with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
             header = original_bam.header
-            with pysam.AlignmentFile(temp_sam_file, "w", header=header) as temp_sam:
+            with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
                 for read in original_bam:
                     attr = read.query_name.split('_')
                     barcode = attr[0]
@@ -708,15 +712,12 @@ class Samtools():
                         read.set_tag(tag='GN', value=gene_name, value_type='Z')
                         read.set_tag(tag='GX', value=gene_id, value_type='Z')
                     temp_sam.write(read)
-        cmd = f'samtools view -b {temp_sam_file} -o {self.out_bam}; rm {temp_sam_file}'
-        subprocess.check_call(cmd, shell=True)
 
     @add_log
     def add_RG(self, barcodes):
         """
         barcodes list
         """
-        temp_sam_file = "{self.out_bam}_sam.temp"
 
         with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
             header = original_bam.header.to_dict()
@@ -727,12 +728,18 @@ class Samtools():
                     'SM': index + 1,
                 })
 
-            with pysam.AlignmentFile(temp_sam_file, "w", header=header) as temp_sam:
+            with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
                 for read in original_bam:
                     read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
                     temp_sam.write(read)
 
-        cmd = f'samtools view -b {temp_sam_file} -o {self.out_bam_file}; rm {temp_sam_file}'
+
+    def temp_sam2bam(self, by=None):
+        self.samtools_sort(self.temp_sam_file, self.out_bam, threads=self.threads, by=by)
+        self.rm_temp_sam()
+
+    def rm_temp_sam(self):
+        cmd = f"rm {self.temp_sam_file}"
         subprocess.check_call(cmd, shell=True)
 
 
