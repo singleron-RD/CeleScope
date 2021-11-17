@@ -7,6 +7,7 @@ bioconda::samtools=1.9
 conda-forge::r-seurat=4.0.1
 conda-forge::r-argparser
 conda-forge::r-tidyverse
+conda-forge::r-deldir=1.0_6
 imperial-college-research-computing::mixcr=3.0.3
 bioconda::bioconductor-dropletutils
 bioconda::bcftools==1.9
