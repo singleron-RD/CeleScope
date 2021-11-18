@@ -6,7 +6,7 @@
             {% if item.help_info %}
                 <p><b>{{ item.name|e }}</b> : {{ item.help_info }}.</p>
             {% endif %}  
-        {% endfor %}
+        {% endfor %} 
       </div>
       <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
         {% for item in step_summary.metric_list %}
@@ -17,7 +17,7 @@
           </tr>
           {% endif %}
         {% endfor %}
-      </table>
+      </table> 
 
       <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
         {% for item in step_summary.metric_list %}

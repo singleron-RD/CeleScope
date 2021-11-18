@@ -1,5 +1,5 @@
 import subprocess
-
+import re
 import pandas as pd
 
 import celescope.tools.utils as utils
@@ -38,8 +38,8 @@ class Star_rna(Step, StarMixin):
     - `{sample}_region.log` Picard CollectRnaSeqMetrics results.
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
         StarMixin.__init__(self, args)
         # parse
         self.refflat = f"{self.genomeDir}/{self.genome['refflat']}"
@@ -56,6 +56,40 @@ class Star_rna(Step, StarMixin):
         add region plot
         if debug, add ribosomal RNA reads percent
         """
+        with open(self.STAR_map_log, 'r') as map_log:
+            # number amd percent
+            unique_reads_list = []
+            multi_reads_list = []
+            total_reads = 0
+            for line in map_log:
+                if line.strip() == '':
+                    continue
+                if re.search(r'Uniquely mapped reads', line):
+                    unique_reads_list.append(line.strip().split()[-1])
+                if re.search(r'of reads mapped to too many loci', line):
+                    multi_reads_list.append(line.strip().split()[-1])
+                if re.search(r'Number of input reads', line):
+                    total_reads = int(line.strip().split()[-1])
+
+        unique_reads = int(unique_reads_list[0])
+        multi_reads = int(multi_reads_list[0])
+
+        self.add_metric(
+            name='Genome',
+            value=self.genome['genome_name']
+        )
+        self.add_metric(
+            name=f'Uniquely Mapped {self.stat_prefix}',
+            value=unique_reads,
+            total=total_reads,
+            help_info='reads that mapped uniquely to the genome'
+        )
+        self.add_metric(
+            name=f'Multi-Mapped {self.stat_prefix}',
+            value=multi_reads,
+            total=total_reads,
+            help_info='reads that mapped to multiple locations in the genome'
+        )
 
         with open(self.picard_region_log, 'r') as picard_log:
             region_dict = {}
@@ -78,19 +112,19 @@ class Star_rna(Step, StarMixin):
             name='Base Pairs Mapped to Exonic Regions',
             value=exonic_regions,
             total=total,
-            help_info='Number of processed base pairs that mapped to exonic regions'
+            help_info='bases in primary alignments that align to a coding base or a UTR base for some gene'
         )
         self.add_metric(
             name='Base Pairs Mapped to Intronic Regions',
             value=intronic_regions,
             total=total,
-            help_info='Number of processed base pairs that mapped to intronic regions'
+            help_info='bases in primary alignments that align to an intronic base for some gene, and not a coding or UTR base'
         )
         self.add_metric(
             name='Base Pairs Mapped to Intergenic Regions',
             value=intergenic_regions,
             total=total,
-            help_info='Number of processed base pairs that mapped to intergenic regions'
+            help_info='bases in primary alignments that do not align to any gene'
         )
 
         # ribo
@@ -152,11 +186,10 @@ class Star_rna(Step, StarMixin):
         if self.debug:
             self.ribo()
         self.add_other_metrics()
-        self.clean_up()
 
 
 def star(args):
-    with Star_rna(args) as runner:
+    with Star_rna(args,display_title="Mapping") as runner:
         runner.run()
 
 def get_opts_star(parser, sub_program):

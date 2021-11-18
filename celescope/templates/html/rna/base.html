@@ -120,22 +120,27 @@
       {% endif %}
 
       {% if cutadapt_summary is defined %}
-      {% include "html/common/cutadapt_summary.html"%}
+      {% set step_summary = cutadapt_summary %}
+      {% include "html/utils/step.html"%}
       {% endif %}
 
-      {% if star_summary is defined %}
+      {% if star_rna_summary is defined %}
+      {% set step_summary = star_rna_summary %}
       {% include "html/rna/star_summary.html"%}
       {% endif %}
 
-      {% if featureCounts_summary is defined%}
-      {% include "html/rna/featureCounts_summary.html"%}
+      {% if featureCounts_summary is defined %}
+      {% set step_summary = featurecounts_summary %}
+      {% include "html/utils/step.html"%}
       {% endif %}
 
       {% if umi_summary is defined %}
+      {% set step_summary = count_summary %}
       {% include "html/rna/umi_summary.html"%}
       {% endif %}
 
       {% if cluster_tsne is defined %}
+      {% set step_summary = analysis_rna_summary %}
       {% include "html/rna/analysis_summary.html"%}
       {% endif %}
 

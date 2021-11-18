@@ -32,8 +32,8 @@ class FeatureCounts(Step):
     - `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
 
         # set
         self.gtf = parse_genomeDir_rna(self.args.genomeDir)['gtf']
@@ -74,7 +74,22 @@ class FeatureCounts(Step):
                 (utils.format_number(n), (n + 0.0) / total * 100) for n in tmp_arr]
             for t, s in zip(['Assigned', 'Unassigned_NoFeatures',
                             'Unassigned_Ambiguity'], tmp_arr):
-                stat_fh.write('%s: %s\n' % (t, s))
+                stat_fh.write('%s: %s\n' % (t, s)) 
+            self.add_metric(
+                name='Assigned', 
+                value=tmp_arr[0],
+                help_info='reads that can be successfully assigned without ambiguity'
+            )
+            self.add_metric(
+                name='Unassigned_NoFeatures', 
+                value=tmp_arr[0],
+                help_info='alignments that do not overlap any feature'
+            )
+            self.add_metric(
+                name='Unassigned_Ambiguity', 
+                value=tmp_arr[0],
+                help_info='alignments that overlap two or more features'
+            )         
         fh.close()
 
     @utils.add_log
@@ -92,7 +107,7 @@ class FeatureCounts(Step):
         if self.featureCounts_param:
             cmd += (" " + self.featureCounts_param)
         FeatureCounts.run_featureCounts.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        subprocess.check_call(cmd, shell=True) 
 
     @utils.add_log
     def name_sort_bam(self):
@@ -109,8 +124,7 @@ class FeatureCounts(Step):
         self.run_featureCounts()
         add_tag(self.featureCounts_bam, self.gtf)
         self.name_sort_bam()
-        self.format_stat()
-        self.clean_up()
+        self.format_stat() 
 
 
 @utils.add_log
