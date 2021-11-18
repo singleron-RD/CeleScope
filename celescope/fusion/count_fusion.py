@@ -60,21 +60,24 @@ class CountFusion(Step):
                     pos = self.pos_dic[name]
                     left = pos - self.flanking_base
                     right = pos + self.flanking_base
-                    for read in bam.fetch(
-                        reference=name,
-                        start=left,
-                        end=right,
-                    ):
-                        left_bases = read.get_overlap(left, pos)
-                        right_bases = read.get_overlap(pos, right)
-                        if left_bases < self.flanking_base or right_bases <  self.flanking_base:
-                            continue
-                        attr = read.query_name.split("_")
-                        barcode = attr[0]
-                        umi = attr[1]
-                        if barcode in self.match_barcode:
-                            fusion_bam.write(read)
-                            count_dic[barcode][name][umi] += 1
+                    try:
+                        for read in bam.fetch(
+                            reference=name,
+                            start=left,
+                            end=right,
+                        ):
+                            left_bases = read.get_overlap(left, pos)
+                            right_bases = read.get_overlap(pos, right)
+                            if left_bases < self.flanking_base or right_bases <  self.flanking_base:
+                                continue
+                            attr = read.query_name.split("_")
+                            barcode = attr[0]
+                            umi = attr[1]
+                            if barcode in self.match_barcode:
+                                fusion_bam.write(read)
+                                count_dic[barcode][name][umi] += 1
+                    except ValueError:
+                        continue
 
         # write dic to pandas df
         rows = []
