@@ -55,30 +55,29 @@ class CountFusion(Step):
 
         with pysam.AlignmentFile(self.bam, "rb") as bam:
             header = bam.header
+            references = set(bam.references)
+            pos_name =  references.intersection(self.pos_dic.keys())
             with pysam.AlignmentFile(self.fusion_bam, "wb", header=header) as fusion_bam:
-                for name in self.pos_dic:
+                for name in pos_name:
                     pos = self.pos_dic[name]
                     left = pos - self.flanking_base
                     right = pos + self.flanking_base
-                    try:
-                        for read in bam.fetch(
-                            reference=name,
-                            start=left,
-                            end=right,
-                        ):
-                            left_bases = read.get_overlap(left, pos)
-                            right_bases = read.get_overlap(pos, right)
-                            if left_bases < self.flanking_base or right_bases <  self.flanking_base:
-                                continue
-                            attr = read.query_name.split("_")
-                            barcode = attr[0]
-                            umi = attr[1]
-                            if barcode in self.match_barcode:
-                                fusion_bam.write(read)
-                                count_dic[barcode][name][umi] += 1
-                    except ValueError:
-                        continue
-
+                    for read in bam.fetch(
+                        reference=name,
+                        start=left,
+                        end=right,
+                    ):
+                        left_bases = read.get_overlap(left, pos)
+                        right_bases = read.get_overlap(pos, right)
+                        if left_bases < self.flanking_base or right_bases <  self.flanking_base:
+                            continue
+                        attr = read.query_name.split("_")
+                        barcode = attr[0]
+                        umi = attr[1]
+                        if barcode in self.match_barcode:
+                            fusion_bam.write(read)
+                            count_dic[barcode][name][umi] += 1
+        
         # write dic to pandas df
         rows = []
         for barcode in count_dic:
