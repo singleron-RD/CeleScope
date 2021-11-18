@@ -56,7 +56,7 @@ class CountFusion(Step):
         with pysam.AlignmentFile(self.bam, "rb") as bam:
             header = bam.header
             references = set(bam.references)
-            pos_name =  references.intersection(self.pos_dic.keys())
+            pos_name =  references.intersection(set(self.pos_dic.keys()))
             with pysam.AlignmentFile(self.fusion_bam, "wb", header=header) as fusion_bam:
                 for name in pos_name:
                     pos = self.pos_dic[name]
