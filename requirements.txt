@@ -11,4 +11,6 @@ plotnine==0.8.0
 matplotlib==3.3.0
 cython
 pytest
+venn
+pyranges
 biopython
