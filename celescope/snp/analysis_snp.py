@@ -28,7 +28,7 @@ class Analysis_variant(Step, AnalysisMixin):
     
     `{sample}_variant_top5.jpg` The Venn diagram of the 5 variants with the highest `ncell_alt`.
 
-    `{sample}_variant_ncell.tsv` Number of cells with read count at each variant's position. 
+    `{sample}_variant_ncell.csv` Number of cells with read count at each variant's position. 
     - `VID`: Variant ID. 
     - `ncell_cover`: number of cells with read count at this position. 
     - `ncell_alt`: number of cells with variant read count only. 
@@ -50,7 +50,7 @@ class Analysis_variant(Step, AnalysisMixin):
 
         # out
         self.gt_file = f'{self.out_prefix}_gt.csv'
-        self.ncell_file = f'{self.out_prefix}_variant_ncell.tsv'
+        self.ncell_file = f'{self.out_prefix}_variant_ncell.csv'
         buildver = self.annovar_section['buildver']
         self.multianno_file = f'{self.out_prefix}.{buildver}_multianno.txt'
         self.variant_table_file = f'{self.out_prefix}_variant_table.tsv'
