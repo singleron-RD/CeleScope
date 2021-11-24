@@ -417,6 +417,9 @@ def report_prepare(outdir, **kwargs):
 
 
 def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
+    """
+    Read cols and infos into pandas df
+    """
     vcf = pysam.VariantFile(vcf_file)
     df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
     rec_dict = {}

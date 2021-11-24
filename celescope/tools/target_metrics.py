@@ -61,10 +61,10 @@ class Target_metrics(Step):
             # add RG to header
             if self.args.add_RG:
                 header['RG'] = []
-                for index, barcode in enumerate(self.match_barcode_list):
+                for barcode in self.match_barcode_list:
                     header['RG'].append({
                         'ID': barcode,
-                        'SM': index + 1,
+                        'SM': barcode,
                     })
             with pysam.AlignmentFile(sam_temp, "w", header=header) as writer:
                 for record in reader:
