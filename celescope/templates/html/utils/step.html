@@ -2,6 +2,9 @@
     <h2>{{ step_summary.display_title}}    <i class="icon-help-circled" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
     <div class="box">
       <div class="description" style="display: none;">
+        {% if step_summary == mapping_vdj_summary %}
+            <p>If '--not_consensus' argument was used, Reads were used instead of UMIs.</p>
+        {% endif %}
         {% for item in step_summary.metric_list %}
             {% if item.help_info %}
                 <p><b>{{ item.name|e }}</b> : {{ item.help_info }}.</p>
@@ -11,7 +14,7 @@
       <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
         {% for item in step_summary.metric_list %}
           {% if loop.index <= (loop.length+1)/2 %}
-          <tr>
+          <tr> 
             <td>{{ item.name|e }}</td>
             <td>{{ item.display|e }}</td>
           </tr>

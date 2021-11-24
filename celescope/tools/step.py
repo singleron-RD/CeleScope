@@ -3,6 +3,7 @@ import collections
 import io
 import json
 import numbers
+import numpy as np
 import os
 from collections import namedtuple
 
@@ -11,6 +12,18 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 import celescope.tools.utils as utils
 from celescope.__init__ import HELP_DICT
+
+
+class ExtendEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.int64,np.int32)):
+            return int(obj)
+        elif isinstance(obj,(np.float32,np.float64)):
+            return float(obj)
+        elif isinstance(obj,(np.ndarray,)):
+            return obj.tolist()
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 
 def s_common(parser):
@@ -109,7 +122,7 @@ class Step:
         for slot, path in self.path_dict.items():            
             if self.content_dict[slot]:
                 with open(path, 'w') as f:
-                    json.dump(self.content_dict[slot], f, indent=4)
+                    json.dump(self.content_dict[slot], f, indent=4,cls=ExtendEncoder)
 
     @utils.add_log
     def render_html(self):

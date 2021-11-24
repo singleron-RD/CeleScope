@@ -134,3 +134,28 @@ class AnalysisMixin():
         self.gene_tsne = self.get_gene_tsne()
         marker_table = self.get_marker_table()
         self.table_dict = self.get_table_dict(marker_table)
+        self.add_metric(
+            name='Top Marker Genes by Cluster', 
+            value=314,
+            help_info='differential expression analysis based on the non-parameteric Wilcoxon rank sum test'
+        )
+        self.add_metric(
+            name='avg_log2FC',
+            value=314,
+            help_info='log fold-change of the average expression between the cluster and the rest of the sample'
+        )
+        self.add_metric(
+            name='pct.1',
+            value=314,
+            help_info='The percentage of cells where the gene is detected in the cluster'
+        )
+        self.add_metric(
+            name='pct.2',
+            value=314,
+            help_info='The percentage of cells where the gene is detected in the rest of the sample'
+        )
+        self.add_metric(
+            name='p_val_adj',
+            value=314,
+            help_info='Adjusted p-value, based on bonferroni correction using all genes in the dataset'
+        )

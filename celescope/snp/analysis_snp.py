@@ -34,8 +34,8 @@ class Analysis_variant(Step, AnalysisMixin):
     - `RID`: Target region ID. This column will be added when `--panel` option were provided.
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
         AnalysisMixin.__init__(self, args)
         self.filter_variant_count_file = args.filter_variant_count_file
         self.CID_file = args.CID_file
@@ -256,7 +256,7 @@ class Analysis_variant(Step, AnalysisMixin):
 
 @utils.add_log
 def analysis_snp(args):
-    with Analysis_variant(args) as runner:
+    with Analysis_variant(args,display_title="Analysis") as runner:
         runner.run()
 
 

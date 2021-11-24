@@ -62,31 +62,6 @@ class Analysis_rna(Step, AnalysisMixin):
         self.add_data_item(cluster_tsne=self.cluster_tsne)
         self.add_data_item(gene_tsne=self.gene_tsne)
         self.add_data_item(table_dict=self.table_dict)
-        self.add_metric(
-            name='Top Marker Genes by Cluster',
-            value=314,
-            help_info='differential expression analysis based on the non-parameteric Wilcoxon rank sum test'
-        )
-        self.add_metric(
-            name='avg_log2FC',
-            value=314,
-            help_info='log fold-change of the average expression between the cluster and the rest of the sample'
-        )
-        self.add_metric(
-            name='pct.1',
-            value=314,
-            help_info='The percentage of cells where the gene is detected in the cluster'
-        )
-        self.add_metric(
-            name='pct.2',
-            value=314,
-            help_info='The percentage of cells where the gene is detected in the rest of the sample'
-        )
-        self.add_metric(
-            name='p_val_adj',
-            value=314,
-            help_info='Adjusted p-value, based on bonferroni correction using all genes in the dataset'
-        )
 
 
 @utils.add_log

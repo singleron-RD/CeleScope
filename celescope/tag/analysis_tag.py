@@ -12,8 +12,8 @@ class Analysis_tag(Step, AnalysisMixin):
     - Combine scRNA-Seq clustering infromation with tag assignment.
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
         AnalysisMixin.__init__(self, args)
 
     def run(self):
@@ -38,5 +38,5 @@ def get_opts_analysis_tag(parser, sub_program):
 
 @utils.add_log
 def analysis_tag(args):
-    with Analysis_tag(args) as runner:
+    with Analysis_tag(args,display_title="Analysis") as runner:
         runner.run()
