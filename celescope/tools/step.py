@@ -1,12 +1,10 @@
 import abc
-import collections
+import sys
 import io
 import json
 import numbers
 import os
-from collections import namedtuple
 
-import pandas as pd
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 import celescope.tools.utils as utils
@@ -123,7 +121,7 @@ class Step:
         step_summary = {}
         step_summary['display_title'] = self.display_title
         step_summary['metric_list'] = self.metric_list
-        self.content_dict['data'][self.step_name + '_summary'] = step_summary
+        self.content_dict['data'][f'{self.step_name}_summary'] = step_summary
 
     def add_content_metric(self):
         metric_dict = dict()
@@ -136,6 +134,15 @@ class Step:
                 metric_dict[f'{name} Fraction'] = fraction
 
         self.content_dict['metric'][self.step_name + '_summary'] = metric_dict
+    
+    def add_data(self, **kwargs):
+        """
+        add data(other than f'{self.step_name}_summary') to self.content_dict['data']
+        for example: add plots and tables
+        """
+        for key, value in kwargs.items():
+            self.content_dict['data'][key] = value
+
 
     @staticmethod
     def get_table(title, table_id, df_table):
@@ -163,7 +170,7 @@ class Step:
 
     @abc.abstractmethod
     def run(self):
-        return
+        sys.exit('Please implement run() method.')
 
     def __enter__(self):
         return self

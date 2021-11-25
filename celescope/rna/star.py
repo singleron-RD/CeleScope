@@ -38,8 +38,8 @@ class Star_rna(Step, StarMixin):
     - `{sample}_region.log` Picard CollectRnaSeqMetrics results.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args, display_title=display_title)
         StarMixin.__init__(self, args)
         # parse
         self.refflat = f"{self.genomeDir}/{self.genome['refflat']}"
@@ -78,16 +78,19 @@ class Star_rna(Step, StarMixin):
             name='Base Pairs Mapped to Exonic Regions',
             value=exonic_regions,
             total=total,
+            help_info='bases in primary alignments that align to a coding base or a UTR base for some gene'
         )
         self.add_metric(
             name='Base Pairs Mapped to Intronic Regions',
             value=intronic_regions,
             total=total,
+            help_info='bases in primary alignments that align to an intronic base for some gene, and not a coding or UTR base'
         )
         self.add_metric(
             name='Base Pairs Mapped to Intergenic Regions',
             value=intergenic_regions,
             total=total,
+            help_info='bases in primary alignments that do not align to any gene'
         )
 
         # ribo
@@ -108,7 +111,7 @@ class Star_rna(Step, StarMixin):
 
         region_plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                        'region_values': [exonic_regions, intronic_regions, intergenic_regions]}
-        self.add_content_item("data", STAR_plot=region_plot)
+        self.add_data(region_plot=region_plot)
 
     @utils.add_log
     def ribo(self):
@@ -148,13 +151,11 @@ class Star_rna(Step, StarMixin):
         if self.debug:
             self.ribo()
         self.add_other_metrics()
-        self.clean_up()
 
 
 def star(args):
-    step_name = "star"
-    runner = Star_rna(args)
-    runner.run()
+    with Star_rna(args,display_title="Mapping") as runner:
+        runner.run()
 
 
 def get_opts_star(parser, sub_program):

@@ -106,11 +106,13 @@ class StarMixin():
             name=f'Uniquely Mapped {self.stat_prefix}',
             value=unique_reads,
             total=total_reads,
+            help_info='reads that mapped uniquely to the genome'
         )
         self.add_metric(
             name=f'Multi-Mapped {self.stat_prefix}',
             value=multi_reads,
             total=total_reads,
+            help_info='reads that mapped to multiple locations in the genome'
         )
 
 

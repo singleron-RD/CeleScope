@@ -17,14 +17,13 @@ class Cutadapt(Step):
     - Trim adapters in R2 reads with cutadapt. Default adapters includes:
         - polyT=A{18}, 18 A bases. 
         - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
-
     Output
     - `cutadapt.log` Cutadapt output log file.
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.adapter_args = self.read_adapter_fasta(args.adapter_fasta)
@@ -52,17 +51,15 @@ class Cutadapt(Step):
 
     def format_and_write_stat(self, cutadapt_log):
         # Total reads processed:...Total written (filtered):
-        start_line = 9
-        end_line = 16
-        useful_content = islice(cutadapt_log.split('\n'), start_line, end_line)
+        start_line = 8
+        end_line = 15
+        useful_content = islice(cutadapt_log.split('\n'), start_line, end_line + 1)
         p_list = []
+        remove_strs = [r',', r' bp', r'\(.*\)']
         for line_index, line in enumerate(useful_content):
-            if line.strip() == '':
-                continue
-            line = re.sub(r'\s{2,}', r'', line)
-            line = re.sub(r' bp', r'', line)
-            line = re.sub(r'(?<=\d)\s+\(', r'(', line)
             line = line.strip()
+            if not line:
+                continue
             attr = line.split(":")
             if len(attr) < 2:
                 raise Exception(
@@ -71,15 +68,54 @@ class Cutadapt(Step):
                     f'cutadapt log error at line {line_index + start_line}:\n'
                     f'{line}'
                 )
-            p_list.append({"item": attr[0], "value": attr[1]})
-        p_df = pd.DataFrame(p_list)
-        p_df.iloc[0, 0] = 'Reads with Adapters'
-        p_df.iloc[1, 0] = 'Reads too Short'
-        p_df.iloc[2, 0] = 'Reads Written'
-        p_df.iloc[3, 0] = 'Base Pairs Processed'
-        p_df.iloc[4, 0] = 'Base Pairs Quality-Trimmed'
-        p_df.iloc[5, 0] = 'Base Pairs Written'
-        p_df.to_csv(self.stat_file, sep=':', index=False, header=None)
+            number = attr[1].strip()
+            for remove_str in remove_strs:
+                number = re.sub(remove_str, '', number)
+            p_list.append(int(number))
+        
+        total_reads = p_list[0]
+        reads_with_adapters = p_list[1]
+        reads_too_short = p_list[2]
+        reads_written = p_list[3]
+        total_base_pairs = p_list[4]
+        quality_trimmed = p_list[5]
+        base_pairs_written = p_list[6]
+
+        self.add_metric(
+            name='Reads with Adapters',
+            value=reads_with_adapters,
+            total=total_reads,
+            help_info='reads with sequencing adapters or reads two with poly A(read-through adpaters)'
+        )
+        self.add_metric(
+            name='Reads too Short',
+            value=reads_too_short,
+            total=total_reads,
+            help_info='reads with read length less than 20bp after trimming'
+        )
+        self.add_metric(
+            name='Reads Written',
+            value=reads_written,
+            total=total_reads,
+            help_info='reads pass filtering'
+        )
+        self.add_metric(
+            name='Base Pairs Processed', 
+            value=total_base_pairs,
+            help_info='total processed base pairs'
+        )
+        self.add_metric(
+            name='Base Pairs Quality-Trimmed',
+            value=quality_trimmed,
+            total=total_base_pairs,
+            help_info='bases pairs removed from the end of the read whose quality is smaller than the given threshold'
+        )
+        self.add_metric(
+            name='Base Pairs Written',
+            value=base_pairs_written,
+            total=total_base_pairs,
+            help_info='base pairs pass filtering'
+        )
 
     @utils.add_log
     def run(self):
@@ -106,15 +142,11 @@ class Cutadapt(Step):
         with open(self.cutadapt_log_file, 'w') as f:
             f.write(cutadapt_log)
         self.format_and_write_stat(cutadapt_log)
-        self.clean_up()
-
 
 @utils.add_log
 def cutadapt(args):
-
-    step_name = "cutadapt"
-    cutadapt_obj = Cutadapt(args)
-    cutadapt_obj.run()
+    with Cutadapt(args, display_title="Trimming") as runner:
+        runner.run() 
 
 
 def get_opts_cutadapt(parser, sub_program):
