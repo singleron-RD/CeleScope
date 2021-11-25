@@ -1,16 +1,4 @@
 import subprocess
-from collections import defaultdict
-from multiprocessing import Pool
-from itertools import groupby
-from functools import partial
-from concurrent.futures import ProcessPoolExecutor
-
-import pandas as pd
-import numpy as np
-import pyranges as pr
-import pysam
-from scipy.io import mmwrite
-from scipy.sparse import coo_matrix
 
 import celescope.tools.utils as utils
 from celescope.__init__ import HELP_DICT
