@@ -3,6 +3,7 @@ assign cell identity based on SNR and UMI_min
 """
 
 from celescope.__init__ import ROOT_PATH
+from celescope.tools.count import Count_test
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 import pandas as pd
@@ -52,9 +53,8 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
 
 def count_tag(args):
 
-    step_name = "count_tag"
-    runner = Count_tag(args, step_name)
-    runner.run()
+    with Count_tag(args,display_title="Cells") as runner:
+        runner.run()
 
 
 class Count_tag(Step):
@@ -76,8 +76,8 @@ class Count_tag(Step):
 
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
         self.read_count_file = args.read_count_file
         self.UMI_min = args.UMI_min
         self.SNR_min = args.SNR_min
@@ -210,6 +210,7 @@ class Count_tag(Step):
             name='Mapped Reads in Cells',
             value=mapped_read_in_cell,
             total=mapped_read,
+            help_info="Mapped reads with scRNA-Seq cell barcode"
         )
 
         # UMI
@@ -239,11 +240,13 @@ class Count_tag(Step):
         self.add_metric(
             name='Median UMI per Cell',
             value=umi_median,
+            help_info="Median UMI per scRNA-Seq cell barcode"
         )
 
         self.add_metric(
             name='Mean UMI per Cell',
             value=umi_mean,
+            help_info="Mean UMI per scRNA-Seq cell barcode"
         )
 
         UMI_min = Count_tag.get_UMI_min(df_UMI_cell, self.UMI_min)
@@ -307,8 +310,6 @@ class Count_tag(Step):
         # seurat hashtag
         if self.debug:
             self.seurat_hashtag()
-
-        self.clean_up()
 
     @utils.add_log
     def seurat_hashtag(self):

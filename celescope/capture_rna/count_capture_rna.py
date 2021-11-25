@@ -114,9 +114,8 @@ class Count_capture_rna(Count):
 def count_capture_rna(args):
     # TODO!
     # need barcode_capture_rna
-    step_name = "count_capture_rna"
-    runner = Count_capture_rna(args, step_name)
-    runner.run()
+    with Count_capture_rna(args) as runner:
+        runner.run()
 
 
 def get_opts_count_capture_rna(parser, sub_program):

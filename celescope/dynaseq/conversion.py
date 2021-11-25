@@ -21,8 +21,8 @@ class Conversion(Step):
     - `{sample}.PosTag.csv` SNP info in csv format.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
         # input files
         self.ifile = os.path.join(args.outdir, args.sample+'.bam')
         self.sample = args.sample
@@ -253,9 +253,9 @@ class Conversion(Step):
 @utils.add_log
 def conversion(args):
 
-    step_name = "conversion"
-    conversion_obj = Conversion(args, step_name)
-    conversion_obj.run()
+    with Conversion(args) as runner:
+        runner.run()
+    
 
 def get_opts_conversion(parser, sub_program):
     parser.add_argument('--strand', help='gene strand file, the format is "geneID,+/-"', required=True)

@@ -50,7 +50,7 @@ class Analysis_rna_virus(Step, AnalysisMixin):
 def analysis_rna_virus(args):
 
     step_name = "analysis_rna_virus"
-    runner = Analysis_rna_virus(args, step_name)
+    runner = Analysis_rna_virus(args)
     runner.run()
 
 

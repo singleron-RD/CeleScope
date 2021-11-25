@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 import pandas as pd
+from celescope.rna.analysis import Analysis_rna
 
 import celescope.tools
 from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
@@ -16,10 +17,8 @@ TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 @utils.add_log
 def analysis_capture_virus(args):
 
-    step_name = 'analysis_capture_virus'
-    runner = Analysis_capture_virus(args, step_name)
-    runner.run()
-
+    with Analysis_capture_virus(args) as runner:
+        runner.run()
 
 def get_opts_analysis_capture_virus(parser, sub_program):
     parser.add_argument("--umi_threshold", help='method to find virus UMI threshold',
@@ -32,8 +31,8 @@ def get_opts_analysis_capture_virus(parser, sub_program):
 
 class Analysis_capture_virus(Step, AnalysisMixin):
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
         AnalysisMixin.__init__(self, args)
         self.virus_file = args.virus_file
         self.umi_threshold = args.umi_threshold

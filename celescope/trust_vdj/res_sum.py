@@ -102,7 +102,7 @@ class Res_sum(Step):
 @utils.add_log
 def res_sum(args):
     step_name = 'res_sum'
-    res_sum_obj = Res_sum(args, step_name)
+    res_sum_obj = Res_sum(args)
     res_sum_obj.run()
 
 

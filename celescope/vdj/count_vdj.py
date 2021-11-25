@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from celescope.tag.count_tag import Count_tag
 
 import celescope.tools.utils as utils
 from celescope.__init__ import HELP_DICT
@@ -30,8 +31,8 @@ class Count_vdj(Step):
     This file will only be produced when the `match_dir` parameter is provided.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
 
         # set
         self.chains = CHAINS[args.type]
@@ -86,6 +87,7 @@ class Count_vdj(Step):
         self.add_metric(
             name="Estimated Number of Cells",
             value=total_cell_number,
+            help_info="number of barcodes considered as cell-associated"
         )
 
         df_cell = df_UMI_count_filter[df_UMI_count_filter.barcode.isin(
@@ -166,6 +168,7 @@ class Count_vdj(Step):
                 self.add_metric(
                     name=f"Median {chain} UMIs per Cell",
                     value=Median_chain_UMIs_per_Cell,
+                    help_info=f"median number of UMI mapped to {chain} per cell"
                 )
 
             df_TRA_TRB = df_valid_count[
@@ -176,7 +179,8 @@ class Count_vdj(Step):
             self.add_metric(
                 name="Cell with TRA and TRB",
                 value=cell_with_confident_TRA_and_TRB,
-                total=total_cell_number
+                total=total_cell_number,
+                help_info=f"cells with as least {self.args.iUMI} UMI mapped to each chain"
             )
 
             if self.match_bool:
@@ -195,12 +199,14 @@ class Count_vdj(Step):
                 self.add_metric(
                     name="Cell with Barcode Match",
                     value=cell_with_match_barcode_number,
-                    total=total_cell_number
+                    total=total_cell_number,
+                    help_info="cells with barcode matched with scRNA-seq library"
                 )
                 self.add_metric(
                     name="Cell with Barcode Match, TRA and TRB",
                     value=match_cell_with_TRA_and_TRB,
-                    total=total_cell_number
+                    total=total_cell_number,
+                    help_info=f"cell with matched barcode and with as least {self.args.iUMI} UMI mapped to each chain"
                 )
 
         # BCR
@@ -223,6 +229,7 @@ class Count_vdj(Step):
                 self.add_metric(
                     name=f"Median {chain} UMIs per Cell",
                     value=Median_chain_UMIs_per_Cell,
+                    help_info="median number of UMI mapped to each chain per cell"
                 )
 
             df_heavy_and_light = df_valid_count[
@@ -236,7 +243,8 @@ class Count_vdj(Step):
             self.add_metric(
                 name="Cell with Heavy and Light Chain",
                 value=Cell_with_Heavy_and_Light_Chain,
-                total=total_cell_number
+                total=total_cell_number,
+                help_info=f"cells with as least {self.args.iUMI} UMI mapped to each chain"
             )
 
             if self.match_bool:
@@ -259,12 +267,14 @@ class Count_vdj(Step):
                 self.add_metric(
                     name="Cell with Barcode Match",
                     value=cell_with_match_barcode_number,
-                    total=total_cell_number
+                    total=total_cell_number,
+                    help_info="cells with barcode matched with scRNA-seq library"
                 )
                 self.add_metric(
                     name="Cell with Barcode Match, Heavy and Light Chain",
                     value=match_cell_with_heavy_and_light,
-                    total=total_cell_number
+                    total=total_cell_number,
+                    help_info=f"cell with matched barcode and with as least {self.args.iUMI} UMI mapped to each chain"
                 )
 
         if self.match_bool:
@@ -346,15 +356,13 @@ class Count_vdj(Step):
         self.write_cell_confident_count(
             df_valid_count, df_clonetypes, df_confident)
         self.write_clonetypes_table_to_data(df_clonetypes, df_match_clonetypes)
-        self.clean_up()
 
 
 def count_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
-    step_name = f"{args.type}_count_vdj"
-    count_vdj_obj = Count_vdj(args, step_name)
-    count_vdj_obj.run()
+    with Count_vdj(args,display_title="Cell") as runner:
+        runner.run()
 
 
 def get_opts_count_vdj(parser, sub_program):

@@ -5,6 +5,7 @@ import os
 import sys
 import subprocess
 import pandas as pd
+from celescope.dynaseq.replace_tsne import Replace_tsne
 import pysam
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
@@ -27,8 +28,8 @@ class Replacement(Step):
     - `{sample}.fraction_of_newRNA_matrix.txt` Fraction of new RNA of each cell and gene.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # input files
         self.outdir = args.outdir
@@ -312,9 +313,8 @@ class Replacement(Step):
 @utils.add_log
 def replacement(args):
 
-    step_name = "replacement"
-    replacement_obj = Replacement(args, step_name)
-    replacement_obj.run()
+    with Replacement(args) as runner:
+        runner.run()
 
 
 def get_opts_replacement(parser, sub_program):

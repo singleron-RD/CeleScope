@@ -20,8 +20,8 @@ class Subsitution(Step):
     - `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # input files
         self.sample = args.sample 
@@ -197,9 +197,8 @@ class Subsitution(Step):
 @utils.add_log
 def substitution(args):
 
-    step_name = "substitution"
-    substitution_obj = Subsitution(args, step_name)
-    substitution_obj.run()
+    with Subsitution(args) as runner:
+        runner.run()
 
 def get_opts_substitution(parser, sub_program):
     if sub_program:

@@ -22,8 +22,8 @@ class Target_metrics(Step):
     - `filtered.bam` BAM file after filtering.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None): 
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
@@ -43,10 +43,12 @@ class Target_metrics(Step):
         self.add_metric(
             name="Number of Target Genes",
             value=self.n_gene,
+            help_info='number of target genes'
         )
         self.add_metric(
             name="Number of Cells",
             value=self.n_cell,
+            help_info='number of matched scRNA-Seq cells'
         )
 
         # out file
@@ -119,20 +121,24 @@ class Target_metrics(Step):
             name="Number of Valid Cells",
             value=n_valid_cell,
             total=self.n_cell,
+            help_info='number of cells with enriched reads'
         )        
         self.add_metric(
             name="Enriched Reads",
             value=enriched_reads,
             total=total_reads,
+            help_info='number of reads mapped to target genes'
         )
         self.add_metric(
             name="Enriched Reads in Cells",
             value=enriched_reads_in_cells,
             total=total_reads,
+            help_info='number of enriched cell reads'
         )
         self.add_metric(
             name="Median Enriched Reads per Valid Cell",
             value=np.median(enriched_reads_per_cell_list),
+            help_info='median of enriched reads per valid cell'
         )
 
     def run(self):
@@ -144,14 +150,12 @@ class Target_metrics(Step):
             threads=self.thread,
         )
         utils.index_bam(self.out_bam_file_sorted)
-        self.clean_up()
 
 
 @utils.add_log
 def target_metrics(args):
-    step_name = "target_metrics"
-    runner = Target_metrics(args, step_name)
-    runner.run()
+    with Target_metrics(args,display_title='Target Enrichment') as runner:
+        runner.run()
 
 
 def get_opts_target_metrics(parser, sub_program):

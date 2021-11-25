@@ -10,7 +10,7 @@
       </div>
       <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
         {% for item in variant_calling_summary %}
-          {% if loop.index <= (loop.length+1)/2 %}
+          {% if loop.index <= (loop.length+1)/2 %} 
           <tr>
             {% for i in item %} 
             <td>{{ i|e }}</td>

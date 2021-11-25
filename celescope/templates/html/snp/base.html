@@ -109,31 +109,38 @@
       <h1 align="center">CeleScope Report</h1>
 
       {% if sample_summary is defined %}
-      {% include "html/common/sample_summary.html"%}
+      {% set step_summary = sample_summary %}
+      {% include "html/utils/step.html"%} 
       {% endif %}
 
       {% if barcode_summary is defined %}
-      {% include "html/common/barcode_summary.html"%}
+      {% set step_summary = barcode_summary %}
+      {% include "html/utils/step.html"%}
       {% endif %}
 
       {% if cutadapt_summary is defined %}
-      {% include "html/common/cutadapt_summary.html"%}
+      {% set step_summary = cutadapt_summary %}
+      {% include "html/utils/step.html"%}
       {% endif %}
 
       {% if consensus_summary is defined %}
-      {% include "html/common/consensus_summary.html"%}
+      {% set step_summary = consensus_summary %}
+      {% include "html/utils/step.html"%}
       {% endif %}
       
-      {% if star_summary is defined %}
+      {% if star_rna_summary is defined %}
+      {% set step_summary = star_rna_summary %}
       {% include "html/rna/star_summary.html"%}
       {% endif %}
 
-      {% if featureCounts_summary is defined%}
-      {% include "html/rna/featureCounts_summary.html"%}
+      {% if featurecounts_summary is defined %}
+      {% set step_summary = featurecounts_summary %}
+      {% include "html/utils/step.html"%}
       {% endif %}
 
       {% if target_metrics_summary is defined%}
-      {% include "html/snp/target_metrics_summary.html"%}
+      {% set step_summary = target_metrics_summary %}
+      {% include "html/utils/step.html"%}
       {% endif %}
 
       {% if snpCalling_summary is defined %}

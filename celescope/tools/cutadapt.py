@@ -23,8 +23,8 @@ class Cutadapt(Step):
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
 
         # set
         self.adapter_args = self.read_adapter_fasta(args.adapter_fasta)
@@ -72,6 +72,7 @@ class Cutadapt(Step):
                     f'{line}'
                 )
             p_list.append({"item": attr[0], "value": attr[1]})
+        
         p_df = pd.DataFrame(p_list)
         p_df.iloc[0, 0] = 'Reads with Adapters'
         p_df.iloc[1, 0] = 'Reads too Short'
@@ -79,7 +80,40 @@ class Cutadapt(Step):
         p_df.iloc[3, 0] = 'Base Pairs Processed'
         p_df.iloc[4, 0] = 'Base Pairs Quality-Trimmed'
         p_df.iloc[5, 0] = 'Base Pairs Written'
-        p_df.to_csv(self.stat_file, sep=':', index=False, header=None)
+        #p_df.to_csv(self.stat_file, sep=':', index=False, header=None)
+        #stat
+        self.add_metric(
+            name='Reads with Adapters',
+            value=p_df.iloc[0,1],
+            help_info='reads with sequencing adapters or reads two with poly A(read-through adpaters)'
+        )
+        self.add_metric(
+            name='Reads too Short',
+            value=p_df.iloc[1,1],
+            help_info='reads with read length less than 20bp after trimming'
+        )
+        self.add_metric(
+            name='Reads Written',
+            value=p_df.iloc[2,1],
+            help_info='reads pass filtering'
+        )
+        self.add_metric(
+            name='Base Pairs Processed', 
+            value=p_df.iloc[3,1],
+            help_info='total processed base pairs'
+        )
+        self.add_metric(
+            name='Base Pairs Quality-Trimmed',
+            value=p_df.iloc[4,1],
+            help_info='bases pairs removed from the end of the read whose quality is smaller than the given threshold'
+        )
+        self.add_metric(
+            name='Base Pairs Written',
+            value=p_df.iloc[5,1],
+            help_info='base pairs pass filtering'
+        )
+        
+
 
     @utils.add_log
     def run(self):
@@ -106,16 +140,12 @@ class Cutadapt(Step):
         with open(self.cutadapt_log_file, 'w') as f:
             f.write(cutadapt_log)
         self.format_and_write_stat(cutadapt_log)
-        self.clean_up()
 
 
 @utils.add_log
 def cutadapt(args):
-
-    step_name = "cutadapt"
-    cutadapt_obj = Cutadapt(args, step_name)
-    cutadapt_obj.run()
-
+    with Cutadapt(args,display_title="Trimming") as runner:
+        runner.run() 
 
 def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--gzip', help="Output gzipped fastq files.", action='store_true')

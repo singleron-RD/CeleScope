@@ -7,8 +7,8 @@ from celescope.tools.step import Step,s_common
 from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
 
 class Count_capture_virus(Step):
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # set
         self.min_query_length = int(args.min_query_length)
@@ -89,7 +89,7 @@ class Count_capture_virus(Step):
 def count_capture_virus(args):
 
     step_name = 'count_capture_virus'
-    runner = Count_capture_virus(args, step_name)
+    runner = Count_capture_virus(args)
     runner.run()
 
 

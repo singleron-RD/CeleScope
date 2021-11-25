@@ -1,3 +1,4 @@
+from re import A
 import pandas as pd
 
 from celescope.tools.analysis_mixin import AnalysisMixin
@@ -41,8 +42,8 @@ class Analysis_rna(Step, AnalysisMixin):
         - `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args, display_title=display_title)
         AnalysisMixin.__init__(self, args)
         self.matrix_file = args.matrix_file
         self.genomeDir = args.genomeDir
@@ -62,15 +63,11 @@ class Analysis_rna(Step, AnalysisMixin):
         self.add_data_item(gene_tsne=self.gene_tsne)
         self.add_data_item(table_dict=self.table_dict)
 
-        self.clean_up()
-
 
 @utils.add_log
 def analysis(args):
-
-    step_name = "analysis"
-    ana = Analysis_rna(args, step_name)
-    ana.run()
+    with Analysis_rna(args,display_title='Analysis') as runner:
+        runner.run()
 
 
 def get_opts_analysis(parser, sub_program):

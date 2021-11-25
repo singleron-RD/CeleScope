@@ -38,8 +38,8 @@ class Variant_calling(Step):
     3 : one or more reads/UMIs support both the alt and the ref allele.  
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
 
         # set
         self.barcodes, _num = utils.read_barcode_file(args.match_dir)
@@ -127,9 +127,8 @@ class Variant_calling(Step):
 @utils.add_log
 def variant_calling(args):
 
-    step_name = 'variant_calling'
-    variant_calling_obj = Variant_calling(args, step_name)
-    variant_calling_obj.run()
+    with Variant_calling(args,display_title="Variant Calling") as runner:
+        runner.run()
 
 
 def get_opts_variant_calling(parser, sub_program):

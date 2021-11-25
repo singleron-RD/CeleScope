@@ -1,4 +1,5 @@
 import pandas as pd
+from celescope.snp.analysis_snp import Analysis_variant
 
 import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin
@@ -11,8 +12,8 @@ class Analysis_tag(Step, AnalysisMixin):
     - Combine scRNA-Seq clustering infromation with tag assignment.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
         AnalysisMixin.__init__(self, args)
 
     def run(self):
@@ -22,8 +23,6 @@ class Analysis_tag(Step, AnalysisMixin):
         self.add_data_item(cluster_tsne=self.cluster_tsne)
         self.add_data_item(feature_tsne=feature_tsne)
         self.add_data_item(table_dict=self.table_dict)
-
-        self.clean_up()
 
 
 def get_opts_analysis_tag(parser, sub_program):
@@ -37,6 +36,5 @@ def get_opts_analysis_tag(parser, sub_program):
 
 @utils.add_log
 def analysis_tag(args):
-    step_name = 'analysis_tag'
-    ana = Analysis_tag(args, step_name)
-    ana.run()
+    with Analysis_tag(args,display_title="Analysis") as runner:
+        runner.run()

@@ -23,7 +23,7 @@ class StarVirus(Step, StarMixin):
 @utils.add_log
 def star_virus(args):
     step_name = "star_virus"
-    runner = StarVirus(args, step_name)
+    runner = StarVirus(args)
     runner.run()
 
 

@@ -2,6 +2,7 @@ import configparser
 import subprocess
 
 import pandas as pd
+from celescope.capture_virus.analysis_capture_virus import Analysis_capture_virus
 import pysam
 from venn import generate_petal_labels,draw_venn,generate_colors
 
@@ -21,8 +22,8 @@ class Analysis_variant(Step, AnalysisMixin):
 
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
         AnalysisMixin.__init__(self, args)
         self.vcf_file = args.vcf
         self.annovar_config = args.annovar_config
@@ -156,9 +157,8 @@ class Analysis_variant(Step, AnalysisMixin):
 
 @utils.add_log
 def analysis_snp(args):
-    step = 'analysis_snp'
-    step_snp = Analysis_variant(args, step)
-    step_snp.run()
+    with Analysis_variant(args,display_title="Analysis") as runner:
+        runner.run()
 
 
 def get_opts_analysis_snp(parser, sub_program):

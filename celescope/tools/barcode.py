@@ -329,8 +329,8 @@ class Barcode(Step):
     the read name is `{barcode}_{UMI}_{read ID}`.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
@@ -367,13 +367,13 @@ class Barcode(Step):
             suffix = ".gz"
         else:
             suffix = ""
-        self.out_fq2 = f'{self.outdir}/{self.sample}_2.fq{suffix}'
+        self.out_fq2 = f'{self.out_prefix}_2.fq{suffix}'
         if self.nopolyT:
-            self.nopolyT_1 = f'{self.outdir}/noPolyT_1.fq'
-            self.nopolyT_2 = f'{self.outdir}/noPolyT_2.fq'
+            self.nopolyT_1 = f'{self.out_prefix}/noPolyT_1.fq'
+            self.nopolyT_2 = f'{self.out_prefix}/noPolyT_2.fq'
         if self.noLinker:
-            self.noLinker_1 = f'{self.outdir}/noLinker_1.fq'
-            self.noLinker_2 = f'{self.outdir}/noLinker_2.fq'
+            self.noLinker_1 = f'{self.out_prefix}/noLinker_1.fq'
+            self.noLinker_2 = f'{self.out_prefix}/noLinker_2.fq'
 
     @utils.add_log
     def run(self):
@@ -392,7 +392,7 @@ class Barcode(Step):
                 write valid R2 read to file
         """
 
-        fh3 = xopen(self.out_fq2, 'w')
+        out_fq2 = xopen(self.out_fq2, 'w')
 
         if self.nopolyT:
             fh1_without_polyT = xopen(self.nopolyT_1, 'w')
@@ -436,88 +436,86 @@ class Barcode(Step):
             if bool_L:
                 linker_set_list, linker_mismatch_list = parse_linker_file(linker_file)                
 
-            fq1 = pysam.FastxFile(self.fq1_list[i], persist=False)
-            fq2 = pysam.FastxFile(self.fq2_list[i], persist=False)
+            with pysam.FastxFile(self.fq1_list[i], persist=False) as fq1, \
+                pysam.FastxFile(self.fq2_list[i], persist=False) as fq2:
+                for entry1, entry2 in zip(fq1, fq2):
+                    header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
+                    header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
+                    self.total_num += 1
 
-            for entry1 in fq1:
-                entry2 = next(fq2)
-                header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
-                header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
-                self.total_num += 1
+                    # polyT filter
+                    if bool_T and (not self.allowNoPolyT):
+                        polyT = get_seq_str(seq1, pattern_dict['T'])
+                        if polyT.count('T') < MIN_T:
+                            self.no_polyT_num += 1
+                            if self.nopolyT:
+                                fh1_without_polyT.write(
+                                    '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                                fh2_without_polyT.write(
+                                    '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+                            continue
 
-                # polyT filter
-                if bool_T and (not self.allowNoPolyT):
-                    polyT = get_seq_str(seq1, pattern_dict['T'])
-                    if polyT.count('T') < MIN_T:
-                        self.no_polyT_num += 1
-                        if self.nopolyT:
-                            fh1_without_polyT.write(
-                                '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                            fh2_without_polyT.write(
-                                '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+                    # lowQual filter
+                    C_U_quals_ascii = get_seq_str(
+                        qual1, pattern_dict['C'] + pattern_dict['U'])
+                    # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
+                    if lowQual > 0 and low_qual(C_U_quals_ascii, lowQual, lowNum):
+                        self.lowQual_num += 1
                         continue
 
-                # lowQual filter
-                C_U_quals_ascii = get_seq_str(
-                    qual1, pattern_dict['C'] + pattern_dict['U'])
-                # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
-                if lowQual > 0 and low_qual(C_U_quals_ascii, lowQual, lowNum):
-                    self.lowQual_num += 1
-                    continue
+                    # linker filter
+                    if bool_L and (not self.allowNoLinker):
+                        seq_str = get_seq_str(seq1, pattern_dict['L'])
+                        bool_valid, bool_corrected, _ = check_seq_mismatch(
+                            [seq_str], linker_set_list, linker_mismatch_list)
+                        if not bool_valid:
+                            self.no_linker_num += 1
+                            if self.noLinker:
+                                fh1_without_linker.write(
+                                    '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
+                                fh2_without_linker.write(
+                                    '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
+                            continue
+                        elif bool_corrected:
+                            self.linker_corrected_num += 1
 
-                # linker filter
-                if bool_L and (not self.allowNoLinker):
-                    seq_str = get_seq_str(seq1, pattern_dict['L'])
-                    bool_valid, bool_corrected, _ = check_seq_mismatch(
-                        [seq_str], linker_set_list, linker_mismatch_list)
-                    if not bool_valid:
-                        self.no_linker_num += 1
-                        if self.noLinker:
-                            fh1_without_linker.write(
-                                '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                            fh2_without_linker.write(
-                                '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
-                        continue
-                    elif bool_corrected:
-                        self.linker_corrected_num += 1
+                    # barcode filter
+                    seq_list = get_seq_list(seq1, pattern_dict, 'C')
+                    if bool_whitelist:
+                        bool_valid, bool_corrected, corrected_seq = check_seq_mismatch(
+                            seq_list, barcode_set_list, barcode_mismatch_list)
 
-                # barcode filter
-                seq_list = get_seq_list(seq1, pattern_dict, 'C')
-                if bool_whitelist:
-                    bool_valid, bool_corrected, corrected_seq = check_seq_mismatch(
-                        seq_list, barcode_set_list, barcode_mismatch_list)
+                        if not bool_valid:
+                            self.no_barcode_num += 1
+                            continue
+                        elif bool_corrected:
+                            self.barcode_corrected_num += 1
+                        cb = corrected_seq
+                    else:
+                        cb = "".join(seq_list)
 
-                    if not bool_valid:
-                        self.no_barcode_num += 1
-                        continue
-                    elif bool_corrected:
-                        self.barcode_corrected_num += 1
-                    cb = corrected_seq
-                else:
-                    cb = "".join(seq_list)
+                    umi = get_seq_str(seq1, pattern_dict['U'])
 
-                umi = get_seq_str(seq1, pattern_dict['U'])
+                    self.clean_num += 1
+                    self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
+                    self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
-                self.clean_num += 1
-                self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
-                self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
-
-                fh3.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-            Barcode.run.logger.info(self.fq1_list[i] + ' finished.')
-        fh3.close()
+                    out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+            self.run.logger.info(self.fq1_list[i] + ' finished.')
+        out_fq2.close()
 
         # logging
-        Barcode.run.logger.info(
+        self.run.logger.info(
             f'processed reads: {utils.format_number(self.total_num)}. '
             f'valid reads: {utils.format_number(self.clean_num)}. '
         )
 
-        Barcode.run.logger.info(f'no polyT reads number : {self.no_polyT_num}')
-        Barcode.run.logger.info(f'low qual reads number: {self.lowQual_num}')
-        Barcode.run.logger.info(f'no_linker: {self.no_linker_num}')
-        Barcode.run.logger.info(f'no_barcode: {self.no_barcode_num}')
-        Barcode.run.logger.info(f'corrected linker: {self.linker_corrected_num}')
-        Barcode.run.logger.info(f'corrected barcode: {self.barcode_corrected_num}')
+        self.run.logger.info(f'no polyT reads number : {self.no_polyT_num}')
+        self.run.logger.info(f'low qual reads number: {self.lowQual_num}')
+        self.run.logger.info(f'no_linker: {self.no_linker_num}')
+        self.run.logger.info(f'no_barcode: {self.no_barcode_num}')
+        self.run.logger.info(f'corrected linker: {self.linker_corrected_num}')
+        self.run.logger.info(f'corrected barcode: {self.barcode_corrected_num}')
 
         if self.clean_num == 0:
             raise Exception(
@@ -525,32 +523,40 @@ class Barcode(Step):
 
         # stat
         BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
-            30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
+            30)]) / float(sum(self.barcode_qual_Counter.values())) 
+        BarcodesQ30 = round(BarcodesQ30 * 100, 2)
         UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= ord2chr(
-            30)]) / float(sum(self.umi_qual_Counter.values())) * 100
+            30)]) / float(sum(self.umi_qual_Counter.values())) 
+        UMIsQ30 = round(UMIsQ30 * 100, 2)
 
-        def cal_percent(x): return "{:.2%}".format((x + 0.0) / self.total_num)
-        stat_info = '''
-            Raw Reads: %s
-            Valid Reads: %s(%s)
-            Q30 of Barcodes: %.2f%%
-            Q30 of UMIs: %.2f%%
-        '''
-        with open(self.stat_file, 'w') as fh:
-            stat_info = stat_info % (utils.format_number(self.total_num), utils.format_number(self.clean_num),
-                                     cal_percent(self.clean_num), BarcodesQ30,
-                                     UMIsQ30)
-            stat_info = re.sub(r'^\s+', r'', stat_info, flags=re.M)
-            fh.write(stat_info)
-
-        self.clean_up()
+        self.add_metric(
+            name='Raw Reads', 
+            value=self.total_num,
+            help_info='total reads from FASTQ files'
+        )
+        self.add_metric(
+            name='Valid Reads',
+            value=self.clean_num,
+            total=self.total_num,
+            help_info='reads pass filtering(filtered: reads without poly T, reads without linker, reads without correct barcode or low quality reads)'
+        )
+        self.add_metric(
+            name='Q30 of Barcodes',
+            value=BarcodesQ30,
+            help_info='percent of barcode base pairs with quality scores over Q30',
+        )
+        self.add_metric(
+            name='Q30 of UMIs',
+            value=UMIsQ30,
+            help_info='percent of UMI base pairs with quality scores over Q30',
+        )
 
 
 @utils.add_log
 def barcode(args):
-    step_name = "barcode"
-    barcode_obj = Barcode(args, step_name)
-    barcode_obj.run()
+    with Barcode(args, display_title='Demultiplexing') as runner:
+        runner.run()
+
 
 
 def get_opts_barcode(parser, sub_program=True):
