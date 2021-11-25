@@ -160,11 +160,10 @@ class Step:
 
     @utils.add_log
     def clean_up(self):
-        if self.metric_list:
-            self.add_content_data()
-            self.add_content_metric()
-            self.write_stat()
-            self.dump_content()
+        self.add_content_data()
+        self.add_content_metric()
+        self.write_stat()
+        self.dump_content()
         self.render_html() 
 
     @abc.abstractmethod
