@@ -5,6 +5,7 @@ vdj mapping
 import subprocess
 
 import pandas as pd
+from celescope.tag.mapping_tag import Mapping_tag
 import pysam
 
 import celescope.tools.utils as utils
@@ -30,8 +31,8 @@ class Mapping_vdj(Step):
     - `{sample}_alignments.txt` The alignment result of each UMI/read.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # set
         self.read_type = "UMIs"
@@ -200,9 +201,8 @@ class Mapping_vdj(Step):
 def mapping_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
-    step_name = f"{args.type}_mapping_vdj"
-    mapping_vdj_obj = Mapping_vdj(args)
-    mapping_vdj_obj.run()
+    with Mapping_vdj(args) as runner:
+        runner.run()
 
 
 def get_opts_mapping_vdj(parser, sub_program):

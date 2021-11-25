@@ -111,7 +111,7 @@ class Step:
 
     @utils.add_log
     def render_html(self):
-        template = self.env.get_template(f'html/{self.assay}/base.html')
+        template = self.env.get_template(f'html/{self.assay}/base.html') 
         report_html = f"{self.outdir}/../{self.sample}_report.html"
         with io.open(report_html, 'w', encoding='utf8') as f:
             html = template.render(self.content_dict['data'])
@@ -144,6 +144,19 @@ class Step:
             self.content_dict['data'][key] = value
 
 
+    def add_content_item(self, slot, **kwargs):
+        for key, value in kwargs.items():
+            # if value is a dict, and some value in this dict is float, format these value
+            if isinstance(value, collections.abc.Mapping):
+                for value_key, value_value in value.items():
+                    if isinstance(value_value, float):
+                        value[value_key] = round(value_value, 4)
+
+            self.content_dict[slot][key] = value
+
+    def add_data_item(self, **kwargs):
+        self.add_content_item("data", **kwargs)
+
     @staticmethod
     def get_table(title, table_id, df_table):
         """
@@ -166,7 +179,7 @@ class Step:
             self.add_content_metric()
             self.write_stat()
             self.dump_content()
-        self.render_html()
+        self.render_html() 
 
     @abc.abstractmethod
     def run(self):
@@ -177,3 +190,4 @@ class Step:
 
     def __exit__(self, *args, **kwargs):
         self.clean_up()
+

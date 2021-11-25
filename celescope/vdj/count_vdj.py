@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from celescope.tag.count_tag import Count_tag
 
 import celescope.tools.utils as utils
 from celescope.__init__ import HELP_DICT
@@ -30,8 +31,8 @@ class Count_vdj(Step):
     This file will only be produced when the `match_dir` parameter is provided.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # set
         self.chains = CHAINS[args.type]
@@ -352,9 +353,8 @@ class Count_vdj(Step):
 def count_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
-    step_name = f"{args.type}_count_vdj"
-    count_vdj_obj = Count_vdj(args)
-    count_vdj_obj.run()
+    with Count_vdj(args) as runner:
+        runner.run()
 
 
 def get_opts_count_vdj(parser, sub_program):

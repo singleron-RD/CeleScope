@@ -22,8 +22,13 @@ class Cutadapt(Step):
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
     """
 
+<<<<<<< HEAD
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
+=======
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
+>>>>>>> 3f81847b1d48b8e2bfd56dca0104f3e16929436a
 
         # set
         self.adapter_args = self.read_adapter_fasta(args.adapter_fasta)

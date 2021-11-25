@@ -73,8 +73,8 @@ class Count(Step):
 
     """
 
-    def __init__(self, args, step):
-        Step.__init__(self, args, step)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
         self.force_cell_num = args.force_cell_num
         self.cell_calling_method = args.cell_calling_method
         self.expected_cell_num = int(args.expected_cell_num)
@@ -124,7 +124,6 @@ class Count(Step):
         self.report_prepare()
 
         self.add_content_item('metric', downsample_summary=res_dict)
-        self.clean_up()
 
     def report_prepare(self):
 
@@ -350,8 +349,10 @@ class Count(Step):
                     CB_reads_count, reads_mapped_to_transcriptome):
 
         # total read
-        str_number = self.content_dict['data']['barcode_summary'][1][1].split("(")[0]
-        valid_read_number = int(str_number.replace(",", ""))
+        #str_number = self.content_dict['data']['barcode_summary'][1][1].split("(")[0]
+        #valid_read_number = int(str_number.replace(",", ""))
+        str_number = self.content_dict['data']['barcode_summary']['metric_list'][1]['value']
+        valid_read_number = int(str_number)
 
         summary = pd.Series([0, 0, 0, 0, 0, 0, 0],
                             index=[
@@ -375,7 +376,7 @@ class Count(Step):
         summary['Median UMI per Cell'] = int(CB_describe.loc['50%', 'UMI'])
         summary['Total Genes'] = int(CB_total_Genes)
         summary['Median Genes per Cell'] = int(CB_describe.loc['50%', 'geneID'])
-        summary['Saturation'] = '%.2f%%' % (saturation)
+        summary['Saturation'] = '%.2f%%' % (saturation) 
         # 测序饱和度，认定为细胞中的reads中UMI>2的reads比例
         need_format = [
             'Estimated Number of Cells',
@@ -386,6 +387,43 @@ class Count(Step):
         for item in need_format:
             summary[item] = utils.format_number(summary[item])
         summary.to_csv(self.stat_file, header=False, sep=':')
+
+        self.add_metric(
+            name='Estimated Number of Cells',
+            value=summary['Estimated Number of Cells'],
+            help_info='the number of barcodes considered as cell-associated'
+        )
+        self.add_metric(
+            name='Fraction Reads in Cells',
+            value=summary['Fraction Reads in Cells'],
+            help_info='the fraction of uniquely-mapped-to-transcriptome reads with cell-associated barcodes'
+        )
+        self.add_metric(
+            name='Mean Reads per Cell',
+            value=summary['Mean Reads per Cell'],
+            help_info='the number of valid reads divided by the estimated number of cells'
+        )
+        self.add_metric(
+            name='Median UMI per Cell',
+            value=summary['Median UMI per Cell'],
+            help_info='the median number of UMI counts per cell-associated barcode'
+        )
+        self.add_metric(
+            name='Total Genes',
+            value=summary['Total Genes'],
+            help_info='the number of genes with at least one UMI count in any cell'
+        )
+        self.add_metric(
+            name='Median Genes per Cell',
+            value=summary['Median Genes per Cell'],
+            help_info='the median number of genes detected per cell-associated barcode'
+        )
+        self.add_metric(
+            name='Saturation',
+            value=summary['Saturation'],
+            help_info='the fraction of UMI originating from an already-observed UMI'
+        )
+
 
     @staticmethod
     def sub_sample(fraction, df_cell, cell_read_index):
@@ -454,9 +492,8 @@ class Count(Step):
 
 @utils.add_log
 def count(args):
-    step_name = "count"
-    runner = Count(args)
-    runner.run()
+    with Count(args,display_title="Cells") as runner:
+        runner.run()
 
 
 def get_opts_count(parser, sub_program):
