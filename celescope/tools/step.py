@@ -143,20 +143,6 @@ class Step:
         for key, value in kwargs.items():
             self.content_dict['data'][key] = value
 
-
-    def add_content_item(self, slot, **kwargs):
-        for key, value in kwargs.items():
-            # if value is a dict, and some value in this dict is float, format these value
-            if isinstance(value, collections.abc.Mapping):
-                for value_key, value_value in value.items():
-                    if isinstance(value_value, float):
-                        value[value_key] = round(value_value, 4)
-
-            self.content_dict[slot][key] = value
-
-    def add_data_item(self, **kwargs):
-        self.add_content_item("data", **kwargs)
-
     @staticmethod
     def get_table(title, table_id, df_table):
         """

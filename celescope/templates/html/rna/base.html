@@ -134,9 +134,9 @@
       {% include "html/utils/step.html" %}
       {% endif %}
 
-      {% if umi_summary is defined %}
+      {% if count_summary is defined %}
       {% set step_summary = count_summary %}
-      {% include "html/rna/umi_summary.html"%}
+      {% include "html/rna/count_summary.html"%}
       {% endif %}
 
       {% if cluster_tsne is defined %}
