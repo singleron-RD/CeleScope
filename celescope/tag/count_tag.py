@@ -311,8 +311,6 @@ class Count_tag(Step):
         if self.debug:
             self.seurat_hashtag()
 
-        self.clean_up()
-
     @utils.add_log
     def seurat_hashtag(self):
         app = f'{ROOT_PATH}/tag/seurat_hashtag.R'

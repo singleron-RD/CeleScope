@@ -24,8 +24,6 @@ class Analysis_tag(Step, AnalysisMixin):
         self.add_data_item(feature_tsne=feature_tsne)
         self.add_data_item(table_dict=self.table_dict)
 
-        self.clean_up()
-
 
 def get_opts_analysis_tag(parser, sub_program):
     if sub_program:

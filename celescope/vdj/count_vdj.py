@@ -356,7 +356,6 @@ class Count_vdj(Step):
         self.write_cell_confident_count(
             df_valid_count, df_clonetypes, df_confident)
         self.write_clonetypes_table_to_data(df_clonetypes, df_match_clonetypes)
-        self.clean_up()
 
 
 def count_vdj(args):
