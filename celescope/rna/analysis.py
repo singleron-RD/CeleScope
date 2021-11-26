@@ -78,11 +78,11 @@ class Analysis_rna(Step, AnalysisMixin):
 
 
     def run(self):
-        """
+
         self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
         if self.auto_assign_bool:
             self.auto_assign(self.type_marker_tsv)
-        """
+
         self.run_analysis()
         self.add_data(cluster_tsne=self.cluster_tsne)
         self.add_data(gene_tsne=self.gene_tsne)
