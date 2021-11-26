@@ -173,9 +173,7 @@ is higher than or equal to this value.
 
 `--genomeDir` Required. Genome directory after running `mkref`.
 
-`--min_support_read` Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.
-
-`--panel` The prefix of bed file, such as `lung_1`.
+`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
 
 `--annovar_config` ANNOVAR config file.
 

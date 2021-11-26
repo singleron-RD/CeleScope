@@ -43,7 +43,7 @@ CeleScope >=1.2.0 does not output this file.
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
-`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.
+`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`
 
 `--outdir` Output diretory.
 
