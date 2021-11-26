@@ -3,7 +3,6 @@ import os
 import re
 import subprocess
 
-import pysam
 from celescope.rna.mkref import parse_genomeDir_rna
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils

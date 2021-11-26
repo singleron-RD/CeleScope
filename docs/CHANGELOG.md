@@ -1,5 +1,8 @@
 ## [unreleased] - 2021-11-02
 
+### General improvments
+ - - Remove support for cell-calling method `inflection`.
+
 ## [1.5.2] - 2021-11-02
  ### General improvments
  - Add auto-detection for chemistry `scopeV3.0.1`.

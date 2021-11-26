@@ -501,7 +501,7 @@ class Barcode(Step):
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
                     out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-                    self.run.logger.info(self.fq1_list[i] + ' finished.')
+            self.run.logger.info(self.fq1_list[i] + ' finished.')
         out_fq2.close()
 
         # logging
@@ -532,7 +532,7 @@ class Barcode(Step):
             value=self.total_num,
         )
         self.add_metric(
-            name='Valid Reads:',
+            name='Valid Reads',
             value=self.clean_num,
             total=self.total_num,
         )

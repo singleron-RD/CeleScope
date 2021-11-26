@@ -1,8 +1,6 @@
 import configparser
-import subprocess
 
 import pandas as pd
-import pysam
 from venn import generate_petal_labels,draw_venn,generate_colors
 
 import celescope.tools.utils as utils
@@ -17,7 +15,9 @@ class Analysis_variant(Step, AnalysisMixin):
     - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
 
     Output
-
+    - `{sample}_gt.csv` genotypes of variants of each cell. Row is variant, column is cell.
+    - `{sample}_variant_ncell.csv` Number of cells with each genotype.
+    - `{sample}_variant_table.csv` Annotated `{sample}_variant_ncell.csv`.
 
     """
 
@@ -31,6 +31,9 @@ class Analysis_variant(Step, AnalysisMixin):
         # parse
         self.annovar_section = self.read_annovar_config()
         buildver = self.annovar_section['buildver']
+
+        # data
+        self.variant_table = None
 
         # out
         self.annovar_outdir = f'{self.outdir}/annovar/'
