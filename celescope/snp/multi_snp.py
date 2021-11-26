@@ -82,6 +82,7 @@ class Multi_snp(Multi):
             f'{cmd_line} '
             f'--bam {bam} '
             f'--match_dir {self.col4_dict[sample]} '
+            f'--add_RG '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
@@ -94,22 +95,18 @@ class Multi_snp(Multi):
             f'--bam {bam} '
             f'--match_dir {self.col4_dict[sample]} '
         )
-        self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
+        self.process_cmd(cmd, step, sample, m=8, x=1)
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
-        filter_vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_filter.vcf'
-        CID_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_CID.tsv'
-        filter_variant_count_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_filter_variant_count.tsv'
+        vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_norm.vcf'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--match_dir {self.col4_dict[sample]} '
-            f'--filter_vcf {filter_vcf} '
-            f'--CID_file {CID_file} '
-            f'--filter_variant_count_file {filter_variant_count_file} '
+            f'--vcf {vcf} '
         )
-        self.process_cmd(cmd, step, sample, m=8, x=1)
+        self.process_cmd(cmd, step, sample, m=2, x=1)
 
 
 def main():

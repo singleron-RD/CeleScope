@@ -3,7 +3,7 @@ import subprocess
 
 import celescope.tools.utils as utils
 from celescope.tools.mkref import parse_genomeDir
-from celescope.tools.step import s_common
+from celescope.tools.utils import s_common
 from celescope.__init__ import HELP_DICT
 
 class StarMixin():

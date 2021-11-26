@@ -7,6 +7,7 @@ import pysam
 import celescope.tools.utils as utils
 from celescope.rna.mkref import parse_genomeDir_rna
 from celescope.tools.step import Step, s_common
+import celescope.tools.utils as utils
 
 
 class FeatureCounts(Step):
@@ -103,60 +104,19 @@ class FeatureCounts(Step):
         FeatureCounts.run_featureCounts.logger.info(cmd)
         subprocess.check_call(cmd, shell=True) 
 
-    @utils.add_log
-    def name_sort_bam(self):
-        cmd = (
-            'samtools sort -n '
-            f'-@ {self.thread} '
-            f'-o {self.name_sorted_bam} '
-            f'{self.featureCounts_bam} '
-        )
-        FeatureCounts.name_sort_bam.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
 
     def run(self):
 
         self.run_featureCounts()
-        add_tag(self.featureCounts_bam, self.gtf)
-        self.name_sort_bam()
-        self.format_stat() 
-
-
-@utils.add_log
-def add_tag(bam, gtf):
-    """
-    - CB cell barcode
-    - UB UMI
-    - GN gene name
-    - GX gene id
-    """
-    id_name = utils.get_id_name_dict(gtf)
-    temp_bam_file = bam + ".temp"
-
-    with pysam.AlignmentFile(bam, "rb") as original_bam:
-        header = original_bam.header
-        with pysam.AlignmentFile(temp_bam_file, "wb", header=header) as temp_bam:
-            for read in original_bam:
-                attr = read.query_name.split('_')
-                barcode = attr[0]
-                umi = attr[1]
-                read.set_tag(tag='CB', value=barcode, value_type='Z')
-                read.set_tag(tag='UB', value=umi, value_type='Z')
-                # assign to some gene
-                if read.has_tag('XT'):
-                    gene_id = read.get_tag('XT')
-                    # if multi-mapping reads are included in original bam,
-                    # there are multiple gene_ids
-                    if ',' in gene_id:
-                        gene_name = [id_name[i] for i in gene_id.split(',')]
-                        gene_name = ','.join(gene_name)
-                    else:
-                        gene_name = id_name[gene_id]
-                    read.set_tag(tag='GN', value=gene_name, value_type='Z')
-                    read.set_tag(tag='GX', value=gene_id, value_type='Z')
-                temp_bam.write(read)
-    cmd = f'mv {temp_bam_file} {bam}'
-    subprocess.check_call(cmd, shell=True)
+        samtools_runner = utils.Samtools(
+            in_bam=self.featureCounts_bam,
+            out_bam=self.featureCounts_bam,
+            threads=self.thread,
+            )
+        samtools_runner.add_tag(self.gtf)
+        samtools_runner.sort_bam(by='name')
+        self.format_stat()
+        self.clean_up()
 
 
 @utils.add_log

@@ -20,8 +20,8 @@ class Consensus(Step):
     - `{sample}_consensus.fq` Consensus fastq.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.min_consensus_read = int(self.args.min_consensus_read)
@@ -45,17 +45,20 @@ class Consensus(Step):
         )
 
         self.add_metric(
-            name="UMI Counts",
+            name="UMI Counts", 
             value=n,
+            help_info='total UMI from FASTQ files',
         )
         self.add_metric(
             name="Mean UMI Length",
             value=round(np.mean(length_list), 2),
+            help_info='mean of all UMI length'
         )
         self.add_metric(
-            name="Ambiguous Base Counts",
+            name="Ambiguous Base Counts",   
             value=total_ambiguous_base_n,
             total=sum(length_list),
+            help_info='number of bases that do not pass consensus threshold'
         )
         self.clean_up()
 
@@ -188,7 +191,7 @@ def get_read_length(read_list, threshold=0.5):
 
 @utils.add_log
 def consensus(args):
-    with Consensus(args) as runner:
+    with Consensus(args,display_title="Consensus") as runner:
         runner.run()
 
 

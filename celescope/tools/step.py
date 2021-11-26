@@ -4,6 +4,7 @@ import io
 import json
 import numbers
 import os
+import numpy as np
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -21,6 +22,16 @@ def s_common(parser):
     parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
     return parser
 
+class ExtendEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.int64,np.int32)):
+            return int(obj)
+        elif isinstance(obj,(np.float32,np.float64)):
+            return float(obj)
+        elif isinstance(obj,(np.ndarray,)):
+            return obj.tolist()
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 class Step:
     """
@@ -49,6 +60,7 @@ class Step:
         self.__slots__ = ['data', 'metric']
         self.out_prefix = f'{self.outdir}/{self.sample}'
         self.metric_list = []
+        self.help_content = []
         self.path_dict = {}
         for slot in self.__slots__:
             self.path_dict[slot] = f'{self.outdir}/../.{slot}.json'
@@ -107,7 +119,7 @@ class Step:
         for slot, path in self.path_dict.items():            
             if self.content_dict[slot]:
                 with open(path, 'w') as f:
-                    json.dump(self.content_dict[slot], f, indent=4)
+                    json.dump(self.content_dict[slot], f, indent=4,cls=ExtendEncoder)
 
     @utils.add_log
     def render_html(self):
@@ -121,6 +133,7 @@ class Step:
         step_summary = {}
         step_summary['display_title'] = self.display_title
         step_summary['metric_list'] = self.metric_list
+        step_summary['help_content'] = self.help_content
         self.content_dict['data'][f'{self.step_name}_summary'] = step_summary
 
     def add_content_metric(self):
@@ -143,19 +156,16 @@ class Step:
         for key, value in kwargs.items():
             self.content_dict['data'][key] = value
 
-
-    def add_content_item(self, slot, **kwargs):
-        for key, value in kwargs.items():
-            # if value is a dict, and some value in this dict is float, format these value
-            if isinstance(value, collections.abc.Mapping):
-                for value_key, value_value in value.items():
-                    if isinstance(value_value, float):
-                        value[value_key] = round(value_value, 4)
-
-            self.content_dict[slot][key] = value
-
-    def add_data_item(self, **kwargs):
-        self.add_content_item("data", **kwargs)
+    def add_help_content(self, name, content):
+        """
+        add help info before metrics' help_info
+        """
+        self.help_content.append(
+            {
+                'name': name,
+                'content': content
+            }
+        )
 
     @staticmethod
     def get_table(title, table_id, df_table):
@@ -174,11 +184,10 @@ class Step:
 
     @utils.add_log
     def clean_up(self):
-        if self.metric_list:
-            self.add_content_data()
-            self.add_content_metric()
-            self.write_stat()
-            self.dump_content()
+        self.add_content_data()
+        self.add_content_metric()
+        self.write_stat()
+        self.dump_content()
         self.render_html() 
 
     @abc.abstractmethod
