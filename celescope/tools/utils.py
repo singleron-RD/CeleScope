@@ -667,7 +667,7 @@ class Samtools():
         self.in_bam = in_bam
         self.out_bam = out_bam
         self.threads = threads
-        self.temp_sam_file = "{self.out_bam}_sam.temp"
+        self.temp_sam_file = f"{self.out_bam}_sam.temp"
 
     @staticmethod
     def samtools_sort(in_file, out_file, threads=1, by='coord', debug=False):
