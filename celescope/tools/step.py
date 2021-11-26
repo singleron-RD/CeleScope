@@ -49,6 +49,7 @@ class Step:
         self.__slots__ = ['data', 'metric']
         self.out_prefix = f'{self.outdir}/{self.sample}'
         self.metric_list = []
+        self.help_content = []
         self.path_dict = {}
         for slot in self.__slots__:
             self.path_dict[slot] = f'{self.outdir}/../.{slot}.json'
@@ -121,6 +122,7 @@ class Step:
         step_summary = {}
         step_summary['display_title'] = self.display_title
         step_summary['metric_list'] = self.metric_list
+        step_summary['help_content'] = self.help_content
         self.content_dict['data'][f'{self.step_name}_summary'] = step_summary
 
     def add_content_metric(self):
@@ -142,6 +144,17 @@ class Step:
         """
         for key, value in kwargs.items():
             self.content_dict['data'][key] = value
+
+    def add_help_content(self, name, content):
+        """
+        add help info before metrics' help_info
+        """
+        self.help_content.append(
+            {
+                'name': name,
+                'content': content
+            }
+        )
 
     @staticmethod
     def get_table(title, table_id, df_table):
