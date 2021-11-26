@@ -100,13 +100,11 @@ class Multi_snp(Multi):
     def analysis_snp(self, sample):
         step = 'analysis_snp'
         vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_norm.vcf'
-        CID_file = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_CID.tsv'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--match_dir {self.col4_dict[sample]} '
             f'--vcf {vcf} '
-            f'--CID_file {CID_file} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 

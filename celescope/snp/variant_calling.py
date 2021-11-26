@@ -1,16 +1,4 @@
 import subprocess
-from collections import defaultdict
-from multiprocessing import Pool
-from itertools import groupby
-from functools import partial
-from concurrent.futures import ProcessPoolExecutor
-
-import pandas as pd
-import numpy as np
-import pyranges as pr
-import pysam
-from scipy.io import mmwrite
-from scipy.sparse import coo_matrix
 
 import celescope.tools.utils as utils
 from celescope.__init__ import HELP_DICT
@@ -66,6 +54,7 @@ class Variant_calling(Step):
 
         self.raw_bcf_file = f'{self.out_prefix}_raw.bcf'
         self.raw_vcf_file = f'{self.out_prefix}_raw.vcf'
+        self.fixed_header_vcf = f'{self.out_prefix}_fixed.vcf'
         self.norm_vcf_file = f'{self.out_prefix}_norm.vcf'
 
 
@@ -81,6 +70,26 @@ class Variant_calling(Step):
         )
         Variant_calling.SplitNCigarReads.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
+
+    @utils.add_log
+    def fix_header(self):
+        cmd = (
+            'picard FixVcfHeader '
+            f'I={self.raw_vcf_file} '
+            f'O={self.fixed_header_vcf} '
+        )
+        self.debug_subprocess_call(cmd)
+
+    @utils.add_log
+    def gatk_norm(self):
+        cmd = (
+            f'gatk LeftAlignAndTrimVariants '
+            f'-R {self.fasta} '
+            f'-V {self.fixed_header_vcf} '
+            f'-O {self.norm_vcf_file} ' 
+            '--split-multi-allelics '
+        )
+        self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def call_variants(self):
@@ -103,20 +112,15 @@ class Variant_calling(Step):
             f'{self.raw_bcf_file} '
         )
         self.debug_subprocess_call(cmd)
-        cmd = (
-            f'bcftools norm '
-            f'-f {self.fasta} '
-            f'-o {self.norm_vcf_file} '
-            f'-m -any '
-            f'{self.raw_vcf_file} '
-        )
-        self.debug_subprocess_call(cmd)
+
 
 
     def run(self):
 
         self.SplitNCigarReads()
         self.call_variants()
+        self.fix_header()
+        self.gatk_norm()
         self.clean_up()
 
 
