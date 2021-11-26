@@ -680,6 +680,7 @@ class Samtools():
         return cmd
 
     def sort_bam(self, by='coord', debug=False):
+        """sort in_bam"""
         self.samtools_sort(self.in_bam, self.out_bam, threads=self.threads, by=by, debug=debug)
 
     @add_log
@@ -689,7 +690,6 @@ class Samtools():
         - UB UMI
         - GN gene name
         - GX gene id
-        - RG read group, optional
         """
         id_name = get_id_name_dict(gtf)
 
