@@ -48,8 +48,8 @@ class Split_tag(Step):
     - `fastq/` Fastq files of each tag.(Optional)
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
         if not (args.split_matrix or args.split_fastq or args.split_vdj):
             return
 
