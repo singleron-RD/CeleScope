@@ -31,8 +31,8 @@ class Mapping_vdj(Step):
     - `{sample}_alignments.txt` The alignment result of each UMI/read.
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args,display_title=None):
+        Step.__init__(self, args,display_title=display_title)
 
         # set
         self.read_type = "UMIs"
@@ -78,6 +78,7 @@ class Mapping_vdj(Step):
             name=f"{self.read_type} Mapped to Any VDJ Gene",
             value=align_read,
             total=total_read,
+            help_info=f"{self.read_type} Mapped to any germline VDJ gene segments"
         )
 
         # CDR3
@@ -87,6 +88,7 @@ class Mapping_vdj(Step):
             name=f"{self.read_type} with CDR3",
             value=align_read_with_CDR3,
             total=total_read,
+            help_info=f"{self.read_type} with CDR3 sequence"
         )
 
         # correct CDR3
@@ -96,6 +98,7 @@ class Mapping_vdj(Step):
             name=f"{self.read_type} with Correct CDR3",
             value=align_read_with_correct_CDR3,
             total=total_read,
+            help_info=f"{self.read_type} with CDR3 might have stop codon and these UMIs(or Reads) are classified as incorrect"
         )
 
         # VDJ
@@ -111,6 +114,7 @@ class Mapping_vdj(Step):
             name=f"{self.read_type} Mapped Confidently to VJ Gene",
             value=Reads_Mapped_Confidently_to_VJ_Gene,
             total=total_read,
+            help_info=f"{self.read_type} mapped to VJ gene pairs and with correct CDR3"
         )
 
         # chain
@@ -118,9 +122,10 @@ class Mapping_vdj(Step):
             df_chain = df_VJ[df_VJ.chain == chain]
             Reads_Mapped_to_chain = df_chain.shape[0]
             self.add_metric(
-                name=f"{self.read_type} Mapped to {chain}",
+                name=f"{self.read_type} Mapped to {chain}", 
                 value=Reads_Mapped_to_chain,
                 total=total_read,
+                help_info=f"{self.read_type} mapped confidently to {chain}"
             )
 
         # unique UMI
@@ -201,7 +206,7 @@ class Mapping_vdj(Step):
 def mapping_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
-    with Mapping_vdj(args) as runner:
+    with Mapping_vdj(args,display_title="Mapping") as runner:
         runner.run()
 
 
