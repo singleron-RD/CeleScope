@@ -1,7 +1,16 @@
-## [unreleased] - 2021-11-02
+## [Unreleased] - 2021-11-29
 
-### General improvments
- - - Remove support for cell-calling method `inflection`.
+## [1.6.0] - 2021-11-29
+
+ ### `snp` 
+   - Improve the speed and memory usage.
+   - Format the output files to avoid redundant information.
+   - Fix an issue that the number of cells of each genotypes were not calculated correctly.
+   - Remove `CID` and `VID` in all the output files.   
+
+ ### General improvments
+  - Improve the speed of `add_tag`.
+  - Remove support for deprecated cell-calling method `inflection`.
 
 ## [1.5.2] - 2021-11-02
  ### General improvments
