@@ -91,14 +91,23 @@ class Variant_calling(Step):
         )
         self.debug_subprocess_call(cmd)
 
-
+    def bcftools_norm(self):
+        cmd = (
+            'bcftools norm '
+            '-m- '  
+            f'-f {self.fasta} '
+            f'{self.raw_vcf_file} '
+            '| bcftools norm '
+            '-d both '
+            f'-o {self.norm_vcf_file} ' 
+        )
+        self.debug_subprocess_call(cmd)
 
     def run(self):
 
         self.SplitNCigarReads()
         self.call_variants()
-        self.fix_header()
-        self.gatk_norm()
+        self.bcftools_norm()
         self.clean_up()
 
 
