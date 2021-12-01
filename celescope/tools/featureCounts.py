@@ -100,9 +100,15 @@ class FeatureCounts(Step):
             in_bam=self.featureCounts_bam,
             out_bam=self.featureCounts_bam,
             threads=self.thread,
+            debug=self.debug
             )
         samtools_runner.add_tag(self.gtf)
-        samtools_runner.temp_sam2bam(by='name')
+        samtools_runner.temp_sam2bam(by='coord')
+        samtools_runner.samtools_sort(
+            in_file=self.featureCounts_bam,
+            out_file=self.name_sorted_bam,
+            by='name',
+        )
         self.format_stat()
         self.clean_up()
 

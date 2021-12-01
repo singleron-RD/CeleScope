@@ -663,25 +663,26 @@ def otsu_min_support_read(array, otsu_plot):
 
 
 class Samtools():
-    def __init__(self, in_bam, out_bam, threads=1):
+    def __init__(self, in_bam, out_bam, threads=1, debug=False):
         self.in_bam = in_bam
         self.out_bam = out_bam
         self.threads = threads
         self.temp_sam_file = f"{self.out_bam}_sam.temp"
+        self.debug = debug
 
-    @staticmethod
-    def samtools_sort(in_file, out_file, threads=1, by='coord', debug=False):
-        cmd = f"samtools sort {in_file} -o {out_file} --threads {threads}"
+    @add_log
+    def samtools_sort(self, in_file, out_file, by='coord'):
+        cmd = f"samtools sort {in_file} -o {out_file} --threads {self.threads}"
         if by == "name":
             cmd += " -n"
-        if debug:
-            print(cmd)
+        if self.debug:
+            self.samtools_sort.logger.debug(cmd)
         subprocess.check_call(cmd, shell=True)
         return cmd
 
-    def sort_bam(self, by='coord', debug=False):
+    def sort_bam(self, by='coord'):
         """sort in_bam"""
-        self.samtools_sort(self.in_bam, self.out_bam, threads=self.threads, by=by, debug=debug)
+        self.samtools_sort(self.in_bam, self.out_bam, by=by)
 
     @add_log
     def add_tag(self, gtf):
@@ -738,7 +739,7 @@ class Samtools():
 
 
     def temp_sam2bam(self, by=None):
-        self.samtools_sort(self.temp_sam_file, self.out_bam, threads=self.threads, by=by)
+        self.samtools_sort(self.temp_sam_file, self.out_bam, by=by)
         self.rm_temp_sam()
 
     def rm_temp_sam(self):
