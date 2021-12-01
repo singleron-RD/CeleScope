@@ -108,7 +108,7 @@ class Variant_calling(Step):
 
     def run(self):
 
-        #self.SplitNCigarReads()
+        self.SplitNCigarReads()
         self.call_variants()
         self.bcftools_norm()
         self.clean_up()
