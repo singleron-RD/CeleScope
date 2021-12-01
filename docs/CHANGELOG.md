@@ -1,4 +1,13 @@
-## [Unreleased] - 2021-11-29
+## [Unreleased] 
+
+## [1.6.1] - 2021-12-01
+ ### `snp`
+  - Increase `max-depth` from 1M to 100M to avoid calculation errors at very deep sites.
+
+ ### General improvments
+  - Fix a bug that `featureCounts` didn't output name sorted bam file.
+  - Fix a bug that `Median Enriched Reads per Valid Cell` in `target_metrics` used all cell number as denominator, not valid cell number.
+  - Fix a problem that the Q30 metrics in the html report showed too much precision.
 
 ## [1.6.0] - 2021-11-29
 

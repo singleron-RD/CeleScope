@@ -71,11 +71,14 @@ class Variant_calling(Step):
 
     @utils.add_log
     def call_variants(self):
+        """
+        max depth 100M
+        """
         cmd = (
             f'bcftools mpileup '
             f'-f {self.fasta} '
             f'--threads {self.thread} '
-            f'--annotate DP,AD -d 1000000 '
+            f'--annotate DP,AD -d 100000000 '
             f'-o {self.raw_bcf_file} '
             f'{self.splitN_bam} '
         )
@@ -105,7 +108,7 @@ class Variant_calling(Step):
 
     def run(self):
 
-        self.SplitNCigarReads()
+        #self.SplitNCigarReads()
         self.call_variants()
         self.bcftools_norm()
         self.clean_up()
