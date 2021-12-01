@@ -114,7 +114,8 @@ class Target_metrics(Step):
                 f'len: {len(enriched_reads_per_cell_list)}'
             )
         
-        n_valid_cell = len([cell for cell in enriched_reads_per_cell_list if cell > 0])
+        valid_enriched_reads_per_cell_list = [cell for cell in enriched_reads_per_cell_list if cell > 0]
+        n_valid_cell = len(valid_enriched_reads_per_cell_list)
         self.add_metric(
             name="Number of Valid Cells",
             value=n_valid_cell,
@@ -132,7 +133,7 @@ class Target_metrics(Step):
         )
         self.add_metric(
             name="Median Enriched Reads per Valid Cell",
-            value=np.median(enriched_reads_per_cell_list),
+            value=np.median(valid_enriched_reads_per_cell_list),
         )
 
     def run(self):
