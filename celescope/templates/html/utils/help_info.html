@@ -4,9 +4,12 @@
         <p><b>{{ item.name|e }}</b> {{ item.content }}.</p>
     {% endfor %}
 
-    {% for item in step_summary.metric_list %}
+    {% for item in step_summary.metric_list %} 
         {% if item.help_info %}
-            <p><b>{{ item.name|e }}</b> {{ item.help_info }}.</p>
+            {% if step_summary == mapping_vdj_summary %}
+                <p>If '--not_consensus' argument was used, Reads were used instead of UMIs.</p>
+            {% endif %}
+            <p><b>{{ item.name|e }}</b> : {{ item.help_info }}.</p>
         {% endif %}  
     {% endfor %}
 

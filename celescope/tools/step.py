@@ -4,6 +4,7 @@ import io
 import json
 import numbers
 import os
+import numpy as np
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -21,6 +22,16 @@ def s_common(parser):
     parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
     return parser
 
+class ExtendEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.int64,np.int32)):
+            return int(obj)
+        elif isinstance(obj,(np.float32,np.float64)):
+            return float(obj)
+        elif isinstance(obj,(np.ndarray,)):
+            return obj.tolist()
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 class Step:
     """
@@ -108,7 +119,7 @@ class Step:
         for slot, path in self.path_dict.items():            
             if self.content_dict[slot]:
                 with open(path, 'w') as f:
-                    json.dump(self.content_dict[slot], f, indent=4)
+                    json.dump(self.content_dict[slot], f, indent=4,cls=ExtendEncoder)
 
     @utils.add_log
     def render_html(self):

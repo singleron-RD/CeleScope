@@ -1,24 +1,8 @@
 <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
-    <h2>Cell    <i class="icon-help-circled" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+    <h2>{{step_summary.display_title}}    <i class="icon-help-circled" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
     <div class="box">
-      <div class="description" style="display: none;">
-        <p><b>Estimated Number of cells</b> : number of barcodes considered as cell-associated.</p>
-        <p><b>Median UMIs per Cell</b> : median number of UMI mapped to each chain per cell.</p>
-        <p><b>Cell with TRA and TRB</b> : cells with as least {{ iUMI }} UMI mapped to each chain.</p>
-        <p><b>Cell with Barcode Match </b> : cells with barcode matched with scRNA-seq library.</p>
-        <p><b>Cell with Barcode Match, TRA and TRB</b> : cell with matched barcode and with as least {{ iUMI }} UMI mapped to each chain.</p>
-    </div>
-      <table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
-        {% for item in TCR_count_vdj_summary %}
-          <tr>
-            {% for i in item %} 
-            <td>{{ i|e }}</td>
-            {% endfor %}
-          </tr>
-        {% endfor %}
-      </table>
-
-      </table>
+      {% include "html/utils/help_info.html" %}
+      {% include "html/utils/col1_metrics.html" %}
 
       <div id="myDivUMI" style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
         <script>
