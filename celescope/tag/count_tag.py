@@ -321,5 +321,4 @@ class Count_tag(Step):
             f'--umi_tag {self.UMI_tag_file} '
             f'--matrix_10X {self.matrix_dir} '
         )
-        Count_tag.seurat_hashtag.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        self.debug_subprocess_call(cmd)

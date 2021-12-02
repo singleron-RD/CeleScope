@@ -4,7 +4,6 @@ count step
 
 import os
 import random
-import subprocess
 import sys
 import unittest
 from collections import defaultdict
@@ -254,29 +253,6 @@ class Count(Step):
         threshold = Count.find_threshold(df_sum, initial_cell_num)
         return cell_bc, threshold
 
-    @utils.add_log
-    def inflection_cell(self, df_sum, threshold):
-        """
-        deprecated!
-        """
-        app = f'{TOOLS_DIR}/rescue.R'
-        cmd = (
-            f'Rscript {app} '
-            f'--matrix_dir {self.raw_matrix_10X_dir} '
-            f'--outdir {self.outdir} '
-            f'--sample {self.sample} '
-            f'--threshold {threshold}'
-        )
-        Count.inflection_cell.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
-        out_file = f'{self.outdir}/{self.sample}_rescue.tsv'
-        df = pd.read_csv(out_file, sep='\t')
-        inflection = int(df.loc[:, 'inflection'])
-        threshold = inflection
-        cell_bc = Count.get_cell_bc(df_sum, threshold)
-
-        return cell_bc, threshold
-
     @staticmethod
     def get_df_sum(df, col='UMI'):
         def num_gt2(x):
@@ -337,17 +313,18 @@ class Count(Step):
             help_info='the number of barcodes considered as cell-associated'
         )
 
-        fraction_reads_in_cells = '%.2f%%' % (float(CB_reads_count) / reads_mapped_to_transcriptome * 100)
+        fraction_reads_in_cells = round(float(CB_reads_count) / reads_mapped_to_transcriptome * 100, 2)
         self.add_metric(
             name='Fraction Reads in Cells',
             value=fraction_reads_in_cells,
+            display=f'{fraction_reads_in_cells}%',
             help_info='the fraction of uniquely-mapped-to-transcriptome reads with cell-associated barcodes'
         )
 
         try:
             valid_read_number = int(self.content_dict['data']['barcode_summary']['metric_list'][1]['value'])
         except KeyError:
-            self.get_summary.logger.warning('barcode_summary not found. Do not output `Mean Reads per Cell`')
+            self.get_summary.logger.warning('barcode_summary not found. Will not output `Mean Reads per Cell`')
         else:
             mean_reads_per_cell = int(valid_read_number / estimated_cells)
             self.add_metric(
@@ -377,10 +354,11 @@ class Count(Step):
             help_info='the median number of genes detected per cell-associated barcode'
         )
 
-        saturation = '%.2f%%' % (self.downsample_dict['umi_saturation'][-1]) 
+        saturation = round(self.downsample_dict['umi_saturation'][-1], 2) 
         self.add_metric(
             name='Saturation',
             value=saturation,
+            display=f'{saturation}%',
             help_info='the fraction of UMI originating from an already-observed UMI'
         )
 

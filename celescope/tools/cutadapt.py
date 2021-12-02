@@ -132,7 +132,7 @@ class Cutadapt(Step):
             f'-o {self.out_fq2} '
             f'{self.args.fq} '
         )
-        Cutadapt.run.logger.info(cmd)
+        self.run.logger.info(cmd)
         # need encoding argument to return str
         results = subprocess.run(
             cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE,

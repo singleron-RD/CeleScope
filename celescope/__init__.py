@@ -9,7 +9,6 @@ ASSAY_DICT = {
     'capture_virus': "Single Cell Capture Virus",
     'fusion': "Single Cell Fusion Gene",
     'vdj': "Single-cell vdj",
-    'mut': 'Single Cell Insertion and Deletion',
     'hla': 'Single Cell HLA',
     'capture_rna': 'Single Cell Capture RNA',
     'snp': 'Single-cell variant',

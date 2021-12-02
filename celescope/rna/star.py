@@ -160,8 +160,7 @@ class Star_rna(Step, StarMixin):
             f'overwrite=t '
             f'> {self.ribo_run_log} 2>&1 '
         )
-        Star_rna.ribo.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def picard(self):
@@ -176,8 +175,7 @@ class Star_rna(Step, StarMixin):
             'STRAND=NONE',
             'VALIDATION_STRINGENCY=SILENT']
         cmd_str = ' '.join(cmd)
-        Star_rna.picard.logger.info(cmd_str)
-        subprocess.check_call(cmd)
+        self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def run(self):

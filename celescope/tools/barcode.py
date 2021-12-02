@@ -525,9 +525,11 @@ class Barcode(Step):
         BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
             30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
         BarcodesQ30 = round(BarcodesQ30, 2)
+        BarcodesQ30_display = f'{BarcodesQ30}%'
         UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= ord2chr(
             30)]) / float(sum(self.umi_qual_Counter.values())) * 100
         UMIsQ30 = round(UMIsQ30, 2)
+        UMIsQ30_display = f'{UMIsQ30}%'
 
         self.add_metric(
             name='Raw Reads', 
@@ -543,11 +545,13 @@ class Barcode(Step):
         self.add_metric(
             name='Q30 of Barcodes',
             value=BarcodesQ30,
+            display=BarcodesQ30_display,
             help_info='percent of barcode base pairs with quality scores over Q30',
         )
         self.add_metric(
             name='Q30 of UMIs',
             value=UMIsQ30,
+            display=UMIsQ30_display,
             help_info='percent of UMI base pairs with quality scores over Q30',
         )
 

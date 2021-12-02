@@ -99,8 +99,7 @@ class FeatureCounts(Step):
         )
         if self.featureCounts_param:
             cmd += (" " + self.featureCounts_param)
-        FeatureCounts.run_featureCounts.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True) 
+        self.debug_subprocess_call(cmd)
 
 
     def run(self):
@@ -120,7 +119,6 @@ class FeatureCounts(Step):
             by='name',
         )
         self.format_stat()
-        self.clean_up()
 
 
 @utils.add_log

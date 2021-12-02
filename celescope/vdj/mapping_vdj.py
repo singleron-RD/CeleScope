@@ -67,11 +67,15 @@ class Mapping_vdj(Step):
             '-nFeature CDR3 -aaFeature CDR3 '
         )
 
-        Mapping_vdj.run_mixcr.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def mixcr_summary(self, total_read, df_align):
+
+        self.add_help_content(
+            name='',
+            content='If `--not_consensus` argument was used, reads were used instead of UMIs.',
+        )
 
         align_read = df_align.shape[0]
         self.add_metric(

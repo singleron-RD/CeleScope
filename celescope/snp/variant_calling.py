@@ -46,8 +46,7 @@ class Variant_calling(Step):
             f'-I {self.args.bam} '
             f'-O {self.splitN_bam} '
         )
-        Variant_calling.SplitNCigarReads.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def fix_header(self):

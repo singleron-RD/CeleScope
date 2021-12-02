@@ -676,14 +676,23 @@ class Samtools():
         cmd = f"samtools sort {in_file} -o {out_file} --threads {self.threads}"
         if by == "name":
             cmd += " -n"
-        if self.debug:
-            self.samtools_sort.logger.debug(cmd)
+        self.samtools_sort.logger.debug(cmd)
         subprocess.check_call(cmd, shell=True)
-        return cmd
+
+    @add_log
+    def samtools_index(self, in_file):
+        cmd = f"samtools index {in_file}"
+        self.samtools_index.logger.debug(cmd)
+        subprocess.check_call(cmd, shell=True)
 
     def sort_bam(self, by='coord'):
         """sort in_bam"""
         self.samtools_sort(self.in_bam, self.out_bam, by=by)
+
+    def index_bam(self):
+        """index out_bam"""
+        self.samtools_index(self.out_bam)
+
 
     @add_log
     def add_tag(self, gtf):

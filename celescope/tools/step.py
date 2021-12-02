@@ -83,13 +83,14 @@ class Step:
         # out file
         self.stat_file = f'{self.outdir}/stat.txt'
 
-    def add_metric(self, name, value, total=None, help_info=None):
+    def add_metric(self, name, value, total=None, help_info=None, display=None):
         '''add metric to metric_list
         '''
-        if isinstance(value, numbers.Number):
-            display = str(format(value, ','))
-        else:
-            display = value
+        if not display:
+            if isinstance(value, numbers.Number):
+                display = str(format(value, ','))
+            else:
+                display = value
         fraction = None
         if total:
             fraction = round(value / total * 100, 2)

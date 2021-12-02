@@ -22,8 +22,8 @@ class Target_metrics(Step):
     - `filtered.bam` BAM file after filtering.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
@@ -107,12 +107,11 @@ class Target_metrics(Step):
             if barcode in self.match_barcode:
                 enriched_reads_per_cell_list.append(cell_enriched_read)
 
-        if self.debug:
-            self.parse_count_dict_add_metrics.logger.debug(
-                f'enriched_reads_per_cell_list: '
-                f'{sorted(enriched_reads_per_cell_list)}'
-                f'len: {len(enriched_reads_per_cell_list)}'
-            )
+        self.parse_count_dict_add_metrics.logger.debug(
+            f'enriched_reads_per_cell_list: '
+            f'{sorted(enriched_reads_per_cell_list)}'
+            f'len: {len(enriched_reads_per_cell_list)}'
+        )
         
         valid_enriched_reads_per_cell_list = [cell for cell in enriched_reads_per_cell_list if cell > 0]
         n_valid_cell = len(valid_enriched_reads_per_cell_list)
@@ -139,18 +138,19 @@ class Target_metrics(Step):
     def run(self):
         self.read_bam_write_filtered()
         self.parse_count_dict_add_metrics()
-        utils.sort_bam(
+        samtools_runner = utils.Samtools(
             self.out_bam_file,
             self.out_bam_file_sorted,
-            threads=self.thread,
+            self.args.threads,
+            debug=self.debug,
         )
-        utils.index_bam(self.out_bam_file_sorted)
-        self.clean_up()
+        samtools_runner.sort_bam()
+        samtools_runner.index_bam()
 
 
 @utils.add_log
 def target_metrics(args):
-    with Target_metrics(args) as runner:
+    with Target_metrics(args, display_title='Target Enrichment') as runner:
         runner.run()
 
 
