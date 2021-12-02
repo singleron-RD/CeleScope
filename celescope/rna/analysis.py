@@ -83,9 +83,9 @@ class Analysis_rna(Step, AnalysisMixin):
         if self.auto_assign_bool:
             self.auto_assign(self.type_marker_tsv)
 
-        self.run_analysis()
+        self.get_analysis_data(feature_name="Gene Counts")
         self.add_data(cluster_tsne=self.cluster_tsne)
-        self.add_data(gene_tsne=self.gene_tsne)
+        self.add_data(feature_tsne=self.feature_tsne)
         self.add_data(table_dict=self.table_dict)
         self.add_help()
 

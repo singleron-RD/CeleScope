@@ -13,11 +13,7 @@
 
     {% if count_vdj_summary is defined %}
     {% set step_summary = count_vdj_summary %}
-    {% include "html/vdj/Count_vdj_summary.html"%}
+    {% include "html/vdj/count_vdj_summary.html"%}
     {% endif %} 
-
-    {% if table_dict is defined %}
-    {% include "html/vdj/clonetypes_table.html"%}
-    {% endif %}
 
 {% include "html/utils/end.html"%}

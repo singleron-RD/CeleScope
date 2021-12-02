@@ -11,52 +11,16 @@
 <style> {% include "./css/dataTables.jqueryui.min.css" %}</style>
 <style> {% include "./css/buttons.dataTables.min.css" %}</style>
 
-<script>
-    $(document).ready(function () {
-        var table = $('#marker_gene_table').DataTable({
-            dom: 'Bfrtip',
-            buttons: ['excel']
-        });
-        table.columns(0).order('asc').draw();
-    });
-
-    $(document).ready(function () {
-            var table = $('#marker_gene_table').DataTable();
-            var indexOfMyCol = 0 ;
-            var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-    $("#marker_gene_table thead th").each( function ( i ) {
-        if (i==indexOfMyCol){
-
-          var select = $('<select><option value=""></option></select>')
-            .appendTo( $(this).empty() )
-            .on( 'change', function () {
-                var pattern = ""
-                if ($(this).val()!="") {
-                    pattern= pattern="^"+$(this).val() +"$"
-                }
-                table.column( i )
-                .search(input=pattern, regex=true, smart=false)
-                .draw();
-            } );
- 
-        table.column( i).data().unique().sort(collator.compare).each( function ( d, j ) {
-            select.append( '<option value="'+d+'">'+d+'</option>' )
-        } );
-    }
-    } );
-    });
-</script>
-
 <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
     <h2>{{ step_summary.display_title}}   <i class="icon-help-circled" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
     <div class="box">
-        
+
         {% include "html/utils/help_info.html" %}
 
         <div id="cluster_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
         <script>
             var data = []
-            {% for cluster_item in cluster_tsne %}
+            {% for cluster_item in step_summary.cluster_tsne %}
                 var x_coord = {{cluster_item["tSNE_1"]}};
                 var y_coord = {{cluster_item["tSNE_2"]}};
                 var trace = {
@@ -99,22 +63,22 @@
         </script>       
       </div>
       
-      <div id="gene_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+      <div id="feature_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
         <script>
             var data = []
-            var x_coord = {{gene_tsne["tSNE_1"]}};
-            var y_coord = {{gene_tsne["tSNE_2"]}};
+            var x_coord = {{step_summary.feature_tsne["tSNE_1"]}};
+            var y_coord = {{step_summary.feature_tsne["tSNE_2"]}};
             var trace = {
                 x: x_coord,
                 y: y_coord,
-                text: {{gene_tsne["Gene_Counts"]}},
+                text: {{step_summary.feature_tsne["counts"]}},
                 mode: 'markers',
                 marker: { 
                     "opacity": 0.9, 
                     "size": 4,
-                    "color":{{gene_tsne["Gene_Counts"]}},
+                    "color":{{step_summary.feature_tsne["counts"]}},
                     "colorscale": "Jet", 
-                    "colorbar": {"title": "Gene Counts"},
+                    "colorbar": { "title": "{{step_summary.feature_tsne["feature_name"]}}" },
                 },
             }
             data.push(trace);
@@ -122,7 +86,7 @@
             var layout = {
 
                 hovermode:"closest", 
-                title: 't-SNE plot Colored by Gene Counts', 
+                title: 't-SNE plot Colored by {{step_summary.feature_tsne["feature_name"]}}', 
                 xaxis: {
                     zeroline: true,
                     showline: false,
@@ -145,20 +109,12 @@
                 "scrollZoom": false,
                 "displaylogo": false, 
             }
-            Plotly.newPlot('gene_tsne', data, layout, config);
+            Plotly.newPlot('feature_tsne', data, layout, config);
         </script>       
     </div>
-
-    <hr />
-    {% if table_dict is defined %}
-        <h3>{{table_dict['title']}}</h3>
-        <div style=" margin-left: 3%; margin-right:3%;">
-            {{table_dict['table'] | safe}}
-        </div>
-    {% endif %}
     
+    {% include "html/utils/table_dict.html" %}
 
-
-      <div class="clear" ></div>
+    <div class="clear" ></div>
     </div>
-  </div>
+</div>

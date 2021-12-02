@@ -39,7 +39,7 @@ class Analysis_tag(Step, AnalysisMixin):
         )
 
     def run(self):
-        self.run_analysis()
+        self.get_analysis_data()
         tsne_tag_df = pd.read_csv(self.args.tsne_tag_file, sep="\t", index_col=0)
         feature_tsne = self.get_cluster_tsne(colname='tag', tsne_df=tsne_tag_df, show_colname=False)
         self.add_data(cluster_tsne=self.cluster_tsne)

@@ -24,7 +24,7 @@ class Analysis_rna_virus(Step, AnalysisMixin):
         self.seurat(self.args.matrix_file, self.args.save_rds, self.args.genomeDir)
         if self.auto_assign_bool:
             self.auto_assign(self.type_marker_tsv)
-        self.run_analysis()
+        self.get_analysis_data()
         virus_tsne = self.virus_tsne_list()
         self.add_data(cluster_tsne=self.cluster_tsne)
         self.add_data(virus_tsne=virus_tsne)

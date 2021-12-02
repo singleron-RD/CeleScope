@@ -1,0 +1,10 @@
+<script>
+    $(document).ready(function () {
+        var table_id = {{ step_summary.table_dict['id']|safe }};
+        var table = $(table_id).DataTable({
+            dom: 'Bfrtip',
+            buttons: ['excel']
+        });
+        table.columns(-1).order('desc').draw();
+    });
+</script>

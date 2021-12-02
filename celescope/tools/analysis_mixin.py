@@ -29,6 +29,10 @@ class AnalysisMixin():
         else:
             self.match_dir = args.outdir + "/../"  # use self
 
+        # data
+        self.table_dict = None
+        self.feature_tsne = None
+
     @utils.add_log
     def seurat(self, matrix_file, save_rds, genomeDir):
         app = ROOT_PATH + "/tools/run_analysis.R"
@@ -80,14 +84,12 @@ class AnalysisMixin():
             res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
         return res
 
-    @staticmethod
-    def get_table_dict(marker_table):
-        table_dict = Step.get_table(
+    def get_table_dict(self, marker_table):
+        self.table_dict = Step.get_table(
             title='Marker Genes by Cluster',
             table_id='marker_gene_table',
             df_table=marker_table,
         )
-        return table_dict
 
     def get_marker_table(self):
         """
@@ -104,7 +106,7 @@ class AnalysisMixin():
 
         return marker_df
 
-    def get_gene_tsne(self):
+    def get_feature_tsne(self, feature_name):
         """
         return data dic
         """
@@ -112,8 +114,8 @@ class AnalysisMixin():
         tSNE_1 = list(tsne_df.tSNE_1)
         tSNE_2 = list(tsne_df.tSNE_2)
         Gene_Counts = list(tsne_df.Gene_Counts)
-        res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "Gene_Counts": Gene_Counts}
-        return res
+        res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "counts": Gene_Counts, 'feature_name':feature_name}
+        self.feature_tsne = res
 
     def read_match_dir(self):
         """
@@ -128,9 +130,9 @@ class AnalysisMixin():
             marker_df_file = match_dict['markers']
             self.marker_df = pd.read_csv(marker_df_file, sep="\t")
 
-    def run_analysis(self):
+    def get_analysis_data(self, feature_name):
         self.read_match_dir()
         self.cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
-        self.gene_tsne = self.get_gene_tsne()
+        self.get_feature_tsne(feature_name)
         marker_table = self.get_marker_table()
-        self.table_dict = self.get_table_dict(marker_table)
+        self.get_table_dict(marker_table)

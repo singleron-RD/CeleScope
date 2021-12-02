@@ -5,7 +5,7 @@
     {% include "html/utils/col1_metrics.html" %}
 
     <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
-      {{ chart|safe }}
+      {{ step_summary.chart|safe }}
     </div>
 
     <hr />
@@ -13,8 +13,8 @@
     <div id="myDivSaturation" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
       <script>
         var data = [{
-          x: {{ downsample.fraction|safe }},
-          y: {{ downsample.umi_saturation|safe }},
+          x: {{ step_summary.downsample.fraction|safe }},
+          y: {{ step_summary.downsample.umi_saturation|safe }},
           mode: 'lines'
         }];
         var layout = {
@@ -55,8 +55,8 @@
     <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
       <script>
         var data = [{
-          x: {{ downsample.fraction|safe }},
-          y: {{ downsample.median_gene|safe }},
+          x: {{ step_summary.downsample.fraction|safe }},
+          y: {{ step_summary.downsample.median_gene|safe }},
           mode: 'lines'
         }];
         var layout = {

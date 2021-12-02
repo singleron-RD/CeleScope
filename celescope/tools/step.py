@@ -78,6 +78,8 @@ class Step:
             else:
                 with open(path) as f:
                     self.content_dict[slot] = json.load(f)
+            # clear step_summary
+            self.content_dict[slot][self.step_summary_name] = {}
 
         # jinja env
         self.env = Environment(
@@ -141,7 +143,7 @@ class Step:
         step_summary['display_title'] = self.display_title
         step_summary['metric_list'] = self.metric_list
         step_summary['help_content'] = self.help_content
-        self.content_dict['data'][self.step_summary_name] = step_summary
+        self.content_dict['data'][self.step_summary_name].update(step_summary)
 
     def add_content_metric(self):
         metric_dict = dict()
@@ -153,15 +155,15 @@ class Step:
             if fraction:
                 metric_dict[f'{name} Fraction'] = fraction
 
-        self.content_dict['metric'][self.step_summary_name] = metric_dict
+        self.content_dict['metric'][self.step_summary_name].update(metric_dict)
     
     def add_data(self, **kwargs):
         """
-        add data(other than f'{self.step_name}_summary') to self.content_dict['data']
+        add data(other than metrics) to self.content_dict['data']
         for example: add plots and tables
         """
         for key, value in kwargs.items():
-            self.content_dict['data'][key] = value
+            self.content_dict['data'][self.step_summary_name][key] = value
 
     def add_help_content(self, name, content):
         """

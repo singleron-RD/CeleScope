@@ -128,6 +128,7 @@ class Star_rna(Step, StarMixin):
         )
 
         # ribo
+        """
         if self.debug:
             with open(self.ribo_log, 'r') as ribo_log:
                 for line in ribo_log:
@@ -143,6 +144,7 @@ class Star_rna(Step, StarMixin):
                     total=Reads_Total,
                     help_info='Number of reads or umis that mapped to rRNA'
                 )
+        """
 
         region_plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                        'region_values': [exonic_regions, intronic_regions, intergenic_regions]}
@@ -174,15 +176,13 @@ class Star_rna(Step, StarMixin):
             'REF_FLAT=%s' % (self.refflat),
             'STRAND=NONE',
             'VALIDATION_STRINGENCY=SILENT']
-        cmd_str = ' '.join(cmd)
+        cmd = ' '.join(cmd)
         self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def run(self):
         self.run_star()
         self.picard()
-        if self.debug:
-            self.ribo()
         self.add_other_metrics()
 
 

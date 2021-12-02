@@ -356,13 +356,12 @@ class Count_vdj(Step):
         self.write_cell_confident_count(
             df_valid_count, df_clonetypes, df_confident)
         self.write_clonetypes_table_to_data(df_clonetypes, df_match_clonetypes)
-        self.clean_up()
 
 
 def count_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
-    with Count_vdj(args,display_title="Cell") as runner:
+    with Count_vdj(args,display_title="Count") as runner:
         runner.run()
 
 

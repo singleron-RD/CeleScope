@@ -7,8 +7,8 @@
     <div id="myDivPie" style="float: left; margin-left: 3%; margin-right:0%; margin-top: 2%;width: 47%">
       <script>
         var data = [{
-          values: {{ region_plot.region_values|safe }},
-          labels: {{ region_plot.region_labels|safe }},
+          values: {{ step_summary.region_plot.region_values|safe }},
+          labels: {{ step_summary.region_plot.region_labels|safe }},
           type: 'pie',
           textposition: 'none',
         }];
