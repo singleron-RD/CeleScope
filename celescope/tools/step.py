@@ -24,6 +24,10 @@ def s_common(parser):
     return parser
 
 class ExtendEncoder(json.JSONEncoder):
+    """
+    convert numpy data types to python data types
+    json does not recognize NumPy data types
+    """
     def default(self, obj):
         if isinstance(obj, (np.int64,np.int32)):
             return int(obj)
@@ -60,6 +64,7 @@ class Step:
         # set
         self.__slots__ = ['data', 'metric']
         self.out_prefix = f'{self.outdir}/{self.sample}'
+        self.step_summary_name = f'{self.step_name}_summary'
         self.metric_list = []
         self.help_content = []
         self.path_dict = {}
@@ -121,7 +126,7 @@ class Step:
         for slot, path in self.path_dict.items():            
             if self.content_dict[slot]:
                 with open(path, 'w') as f:
-                    json.dump(self.content_dict[slot], f, indent=4,cls=ExtendEncoder)
+                    json.dump(self.content_dict[slot], f, indent=4, cls=ExtendEncoder)
 
     @utils.add_log
     def render_html(self):
@@ -136,7 +141,7 @@ class Step:
         step_summary['display_title'] = self.display_title
         step_summary['metric_list'] = self.metric_list
         step_summary['help_content'] = self.help_content
-        self.content_dict['data'][f'{self.step_name}_summary'] = step_summary
+        self.content_dict['data'][self.step_summary_name] = step_summary
 
     def add_content_metric(self):
         metric_dict = dict()
@@ -148,7 +153,7 @@ class Step:
             if fraction:
                 metric_dict[f'{name} Fraction'] = fraction
 
-        self.content_dict['metric'][self.step_name + '_summary'] = metric_dict
+        self.content_dict['metric'][self.step_summary_name] = metric_dict
     
     def add_data(self, **kwargs):
         """

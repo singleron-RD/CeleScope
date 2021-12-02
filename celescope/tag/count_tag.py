@@ -201,7 +201,7 @@ class Count_tag(Step):
     @utils.add_log
     def run(self):
 
-        mapped_read = self.df_read_count['read_count'].sum()
+        mapped_read = int(self.df_read_count['read_count'].sum())
 
         # in cell
         df_read_count_in_cell = self.df_read_count[self.df_read_count.index.isin(self.match_barcode)]
@@ -296,14 +296,14 @@ class Count_tag(Step):
             if tag_name in sr_tag_count:
                 self.add_metric(
                     name=tag_name + ' Cells',
-                    value=sr_tag_count[tag_name],
+                    value=int(sr_tag_count[tag_name]),
                     total=self.cell_total,
                 )
                 sr_tag_count.drop(tag_name, inplace=True)
         for tag_name in sorted(sr_tag_count.index):
             self.add_metric(
                 name=tag_name + ' Cells',
-                value=sr_tag_count[tag_name],
+                value=int(sr_tag_count[tag_name]),
                 total=self.cell_total,
             )
 

@@ -1,0 +1,14 @@
+{% if sample_summary is defined %}
+{% set step_summary = sample_summary %}
+{% include "html/utils/step.html"%}
+{% endif %}
+
+{% if barcode_summary is defined %}
+{% set step_summary = barcode_summary %}
+{% include "html/utils/step.html"%}
+{% endif %}
+
+{% if cutadapt_summary is defined %}
+{% set step_summary = cutadapt_summary %}
+{% include "html/utils/step.html"%}
+{% endif %}
