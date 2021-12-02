@@ -68,9 +68,9 @@ class Analysis_capture_virus(Step, AnalysisMixin):
         virus_tsne = self.get_virus_tsne(virus_df)
         table_dict = self.get_table_dict(self.get_marker_table())
 
-        self.add_data_item(cluster_tsne=cluster_tsne)
-        self.add_data_item(virus_tsne=virus_tsne)
-        self.add_data_item(table_dict=table_dict)
+        self.add_data(cluster_tsne=cluster_tsne)
+        self.add_data(virus_tsne=virus_tsne)
+        self.add_data(table_dict=table_dict)
         self.clean_up()
 
     def get_virus_tsne(self, virus_df):

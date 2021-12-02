@@ -4,7 +4,8 @@ import io
 import json
 import numbers
 import os
-import numpy as np
+import subprocess
+from collections import namedtuple
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -189,6 +190,14 @@ class Step:
         self.write_stat()
         self.dump_content()
         self.render_html() 
+
+    @utils.add_log
+    def debug_subprocess_call(self, cmd):
+        '''
+        debug subprocess call
+        '''
+        self.debug_subprocess_call.logger.debug(cmd)
+        subprocess.check_call(cmd, shell=True)
 
     @abc.abstractmethod
     def run(self):

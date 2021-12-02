@@ -155,8 +155,8 @@ class Replace_tsne(Step):
 
 
     def report_prepare(self,outdiv, outable):
-        self.add_data_item(replace_tsne=outdiv)
-        self.add_data_item(replace_tsne_table=outable)
+        self.add_data(replace_tsne=outdiv)
+        self.add_data(replace_tsne_table=outable)
 
 
 @utils.add_log

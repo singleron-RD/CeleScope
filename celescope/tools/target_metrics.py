@@ -2,6 +2,7 @@
 import numpy as np
 import pysam
 import sys
+import subprocess
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
@@ -25,10 +26,10 @@ class Target_metrics(Step):
         Step.__init__(self, args, step_name)
 
         # set
-        self.match_barcode, self.n_cell = utils.read_barcode_file(args.match_dir)
-        self.match_barcode = set(self.match_barcode)
+        self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
+        self.match_barcode = set(self.match_barcode_list)
         
-        if (self.assay == "snp" and args.panel != '') :
+        if args.panel:
             self.gene_list = utils.get_gene_region_from_bed(args.panel)[0]
             self.n_gene = len(self.gene_list)
         else:
@@ -54,8 +55,18 @@ class Target_metrics(Step):
 
     @utils.add_log
     def read_bam_write_filtered(self):
+        sam_temp = f'{self.out_bam_file}.temp'
         with pysam.AlignmentFile(self.args.bam, "rb") as reader:
-            with pysam.AlignmentFile(self.out_bam_file, "wb", header=reader.header) as writer:
+            header = reader.header.to_dict()
+            # add RG to header
+            if self.args.add_RG:
+                header['RG'] = []
+                for barcode in self.match_barcode_list:
+                    header['RG'].append({
+                        'ID': barcode,
+                        'SM': barcode,
+                    })
+            with pysam.AlignmentFile(sam_temp, "w", header=header) as writer:
                 for record in reader:
                     try:
                         gene_name = record.get_tag('GN')
@@ -68,8 +79,13 @@ class Target_metrics(Step):
                     except KeyError:
                         continue
                     if barcode in self.match_barcode and gene_name in self.gene_list:
+                        if self.args.add_RG:
+                            record.set_tag(tag='RG', value=record.get_tag('CB'), value_type='Z')
                         writer.write(record)
                     self.count_dict[barcode][gene_name][UMI] += 1
+
+            cmd = f'samtools view -b {sam_temp} -o {self.out_bam_file}; rm {sam_temp}'
+            subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
     def parse_count_dict_add_metrics(self):
@@ -98,7 +114,8 @@ class Target_metrics(Step):
                 f'len: {len(enriched_reads_per_cell_list)}'
             )
         
-        n_valid_cell = len([cell for cell in enriched_reads_per_cell_list if cell > 0])
+        valid_enriched_reads_per_cell_list = [cell for cell in enriched_reads_per_cell_list if cell > 0]
+        n_valid_cell = len(valid_enriched_reads_per_cell_list)
         self.add_metric(
             name="Number of Valid Cells",
             value=n_valid_cell,
@@ -116,7 +133,7 @@ class Target_metrics(Step):
         )
         self.add_metric(
             name="Median Enriched Reads per Valid Cell",
-            value=np.median(enriched_reads_per_cell_list),
+            value=np.median(valid_enriched_reads_per_cell_list),
         )
 
     def run(self):
@@ -139,8 +156,9 @@ def target_metrics(args):
 
 def get_opts_target_metrics(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
-    parser.add_argument("--panel",help = "The prefix of bed file, such as `lung_1`.",default = '')
+    parser.add_argument("--panel", help = HELP_DICT['panel'])
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
+        parser.add_argument('--add_RG', help='Add tag read group: RG. RG is the same as CB(cell barcode)', action='store_true')
         parser = s_common(parser)

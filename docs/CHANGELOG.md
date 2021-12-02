@@ -1,4 +1,25 @@
-## [unreleased] - 2021-11-02
+## [Unreleased] 
+
+## [1.6.1] - 2021-12-01
+ ### `snp`
+  - Increase `max-depth` from 1M to 100M to avoid calculation errors at very deep sites.
+
+ ### General improvments
+  - Fix a bug that `featureCounts` didn't output name sorted bam file.
+  - Fix a bug that `Median Enriched Reads per Valid Cell` in `target_metrics` used all cell number as denominator, not valid cell number.
+  - Fix a problem that the Q30 metrics in the html report showed too much precision.
+
+## [1.6.0] - 2021-11-29
+
+ ### `snp` 
+   - Improve the speed and memory usage.
+   - Format the output files to avoid redundant information.
+   - Fix an issue that the number of cells of each genotypes were not calculated correctly.
+   - Remove `CID` and `VID` in all the output files.   
+
+ ### General improvments
+  - Improve the speed of `add_tag`.
+  - Remove support for deprecated cell-calling method `inflection`.
 
 ## [1.5.2] - 2021-11-02
  ### General improvments

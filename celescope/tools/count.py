@@ -198,9 +198,6 @@ class Count(Step):
             cell_bc, UMI_threshold = self.auto_cell(df_sum)
         elif cell_calling_method == 'cellranger3':
             cell_bc, UMI_threshold = self.cellranger3_cell(df_sum)
-        elif cell_calling_method == 'inflection':
-            _cell_bc, UMI_threshold = self.auto_cell(df_sum)
-            cell_bc, UMI_threshold = self.inflection_cell(df_sum, UMI_threshold)
         return cell_bc, UMI_threshold
 
     @utils.add_log
@@ -259,6 +256,9 @@ class Count(Step):
 
     @utils.add_log
     def inflection_cell(self, df_sum, threshold):
+        """
+        deprecated!
+        """
         app = f'{TOOLS_DIR}/rescue.R'
         cmd = (
             f'Rscript {app} '
@@ -456,8 +456,8 @@ def get_opts_count(parser, sub_program):
     parser.add_argument('--expected_cell_num', help='Default `3000`. Expected cell number.', default=3000)
     parser.add_argument(
         '--cell_calling_method',
-        help='Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.',
-        choices=['auto', 'cellranger3', 'inflection', ],
+        help='Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`',
+        choices=['auto', 'cellranger3'],
         default='auto',
     )
     if sub_program:

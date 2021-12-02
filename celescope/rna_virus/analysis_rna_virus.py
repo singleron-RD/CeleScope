@@ -26,9 +26,9 @@ class Analysis_rna_virus(Step, AnalysisMixin):
             self.auto_assign(self.type_marker_tsv)
         self.run_analysis()
         virus_tsne = self.virus_tsne_list()
-        self.add_data_item(cluster_tsne=self.cluster_tsne)
-        self.add_data_item(virus_tsne=virus_tsne)
-        self.add_data_item(table_dict=self.table_dict)
+        self.add_data(cluster_tsne=self.cluster_tsne)
+        self.add_data(virus_tsne=virus_tsne)
+        self.add_data(table_dict=self.table_dict)
 
         self.clean_up()
 

@@ -246,13 +246,21 @@ def read_one_col(file):
     num = len(col1)
     return col1, num
 
+
+def get_bed_file_path(panel):
+    bed_file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
+    if not os.path.exists(bed_file_path):
+        return None
+    else:
+        return bed_file_path
+
 def get_gene_region_from_bed(panel):
     """
     Returns 
     - genes
     - position_df with 'Chromosome', 'Start', 'End'
     """
-    file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
+    file_path = get_bed_file_path(panel)
     bed_file_df = pd.read_table(file_path, 
                                 usecols=[0,1,2,3],
                                 names=['Chromosome', 'Start', 'End','Gene'],
@@ -409,6 +417,9 @@ def report_prepare(outdir, **kwargs):
 
 
 def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
+    """
+    Read cols and infos into pandas df
+    """
     vcf = pysam.VariantFile(vcf_file)
     df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
     rec_dict = {}
@@ -653,17 +664,94 @@ def otsu_min_support_read(array, otsu_plot):
 
 
 class Samtools():
-    def __init__(self, in_bam, out_bam, threads=1):
+    def __init__(self, in_bam, out_bam, threads=1, debug=False):
         self.in_bam = in_bam
         self.out_bam = out_bam
         self.threads = threads
+        self.temp_sam_file = f"{self.out_bam}_sam.temp"
+        self.debug = debug
 
-    def sort_bam(self, by='coord', print_log=False):
-        cmd = f"samtools sort {self.in_bam} -o {self.out_bam} --threads {self.threads}"
+    @add_log
+    def samtools_sort(self, in_file, out_file, by='coord'):
+        cmd = f"samtools sort {in_file} -o {out_file} --threads {self.threads}"
         if by == "name":
             cmd += " -n"
-        if print_log:
-            print(cmd)
+        if self.debug:
+            self.samtools_sort.logger.debug(cmd)
         subprocess.check_call(cmd, shell=True)
         return cmd
 
+    def sort_bam(self, by='coord'):
+        """sort in_bam"""
+        self.samtools_sort(self.in_bam, self.out_bam, by=by)
+
+    @add_log
+    def add_tag(self, gtf):
+        """
+        - CB cell barcode
+        - UB UMI
+        - GN gene name
+        - GX gene id
+        """
+        id_name = get_id_name_dict(gtf)
+
+        with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
+            header = original_bam.header
+            with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
+                for read in original_bam:
+                    attr = read.query_name.split('_')
+                    barcode = attr[0]
+                    umi = attr[1]
+                    read.set_tag(tag='CB', value=barcode, value_type='Z')
+                    read.set_tag(tag='UB', value=umi, value_type='Z')
+                    # assign to some gene
+                    if read.has_tag('XT'):
+                        gene_id = read.get_tag('XT')
+                        # if multi-mapping reads are included in original bam,
+                        # there are multiple gene_ids
+                        if ',' in gene_id:
+                            gene_name = [id_name[i] for i in gene_id.split(',')]
+                            gene_name = ','.join(gene_name)
+                        else:
+                            gene_name = id_name[gene_id]
+                        read.set_tag(tag='GN', value=gene_name, value_type='Z')
+                        read.set_tag(tag='GX', value=gene_id, value_type='Z')
+                    temp_sam.write(read)
+
+    @add_log
+    def add_RG(self, barcodes):
+        """
+        barcodes list
+        """
+
+        with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
+            header = original_bam.header.to_dict()
+            header['RG'] = []
+            for index, barcode in enumerate(barcodes):
+                header['RG'].append({
+                    'ID': barcode,
+                    'SM': index + 1,
+                })
+
+            with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
+                for read in original_bam:
+                    read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
+                    temp_sam.write(read)
+
+
+    def temp_sam2bam(self, by=None):
+        self.samtools_sort(self.temp_sam_file, self.out_bam, by=by)
+        self.rm_temp_sam()
+
+    def rm_temp_sam(self):
+        cmd = f"rm {self.temp_sam_file}"
+        subprocess.check_call(cmd, shell=True)
+
+
+def read_CID(CID_file):
+    """
+    return df_index, df_valid
+    """
+    df_index = pd.read_csv(CID_file, sep='\t', index_col=0).reset_index()
+    df_valid = df_index[df_index['valid'] == True]
+    return df_index, df_valid

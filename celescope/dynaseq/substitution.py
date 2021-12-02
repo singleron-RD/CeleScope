@@ -191,7 +191,7 @@ class Subsitution(Step):
 
 
     def report_prepare(self,outdiv):
-        self.add_data_item(substitution=outdiv)
+        self.add_data(substitution=outdiv)
 
 
 @utils.add_log

@@ -307,7 +307,7 @@ class Replacement(Step):
         return div
 
     def report_prepare(self,outdiv):
-        self.add_data_item(replacement=outdiv)
+        self.add_data(replacement=outdiv)
 
 
 @utils.add_log
