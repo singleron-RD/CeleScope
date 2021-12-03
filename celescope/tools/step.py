@@ -5,7 +5,8 @@ import json
 import numbers
 import os
 import subprocess
-from collections import namedtuple
+
+import numpy as np 
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -62,7 +63,7 @@ class Step:
         utils.check_mkdir(self.outdir)
 
         # set
-        self.__slots__ = ['data', 'metric']
+        self.__slots__ = ['data', 'metrics']
         self.out_prefix = f'{self.outdir}/{self.sample}'
         self.step_summary_name = f'{self.step_name}_summary'
         self.metric_list = []
@@ -138,14 +139,14 @@ class Step:
             html = template.render(self.content_dict['data'])
             f.write(html)
 
-    def add_content_data(self):
+    def _add_content_data(self):
         step_summary = {}
         step_summary['display_title'] = self.display_title
         step_summary['metric_list'] = self.metric_list
         step_summary['help_content'] = self.help_content
         self.content_dict['data'][self.step_summary_name].update(step_summary)
 
-    def add_content_metric(self):
+    def _add_content_metric(self):
         metric_dict = dict()
         for metric in self.metric_list:
             name = metric['name']
@@ -155,7 +156,7 @@ class Step:
             if fraction:
                 metric_dict[f'{name} Fraction'] = fraction
 
-        self.content_dict['metric'][self.step_summary_name].update(metric_dict)
+        self.content_dict['metrics'][self.step_summary_name].update(metric_dict)
     
     def add_data(self, **kwargs):
         """
@@ -193,8 +194,8 @@ class Step:
 
     @utils.add_log
     def clean_up(self):
-        self.add_content_data()
-        self.add_content_metric()
+        self._add_content_data()
+        self._add_content_metric()
         self.write_stat()
         self.dump_content()
         self.render_html() 
