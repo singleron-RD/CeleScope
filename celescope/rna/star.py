@@ -71,26 +71,6 @@ class Star_rna(Step, StarMixin):
                 if re.search(r'Number of input reads', line):
                     total_reads = int(line.strip().split()[-1])
 
-        unique_reads = int(unique_reads_list[0])
-        multi_reads = int(multi_reads_list[0])
-
-        self.add_metric(
-            name='Genome',
-            value=self.genome['genome_name']
-        )
-        self.add_metric(
-            name=f'Uniquely Mapped {self.stat_prefix}',
-            value=unique_reads,
-            total=total_reads,
-            help_info='reads that mapped uniquely to the genome'
-        )
-        self.add_metric(
-            name=f'Multi-Mapped {self.stat_prefix}',
-            value=multi_reads,
-            total=total_reads,
-            help_info='reads that mapped to multiple locations in the genome'
-        )
-
         with open(self.picard_region_log, 'r') as picard_log:
             region_dict = {}
             for line in picard_log:
@@ -148,7 +128,30 @@ class Star_rna(Step, StarMixin):
 
         region_plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                        'region_values': [exonic_regions, intronic_regions, intergenic_regions]}
-        self.add_data(region_plot=region_plot)
+        return region_plot
+
+    @utils.add_log
+    def pie(self,region_plot):
+        import plotly
+        import plotly.graph_objs as go
+        trace = [go.Pie(labels = region_plot["region_labels"],
+                        values = region_plot["region_values"])]
+        fig = go.Figure(data = trace)
+        layout = {      "height": 300,
+                "width": 400,
+                "margin": {
+                    "l": 50,
+                    "r": 35,
+                    "b": 10,
+                    "t": 10,
+                }}
+        fig.update_traces(textposition='none')
+        fig.update_layout(layout)
+        div = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
+        return div
+
+    def report_prepare(self,outdiv):
+        self.add_data(mapping=outdiv)
 
     @utils.add_log
     def ribo(self):
@@ -179,11 +182,15 @@ class Star_rna(Step, StarMixin):
         cmd = ' '.join(cmd)
         self.debug_subprocess_call(cmd)
 
+    
+
     @utils.add_log
     def run(self):
         self.run_star()
         self.picard()
-        self.add_other_metrics()
+        region_plot = self.add_other_metrics()
+        div_item = self.pie(region_plot)
+        self.report_prepare(div_item)
 
 
 def star(args):

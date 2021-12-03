@@ -40,7 +40,6 @@ class Subsitution(Step):
         div_item = self.sub_plot(self.outstat)
 
         self.report_prepare(div_item)
-        self.clean_up()
 
 
     @utils.add_log
