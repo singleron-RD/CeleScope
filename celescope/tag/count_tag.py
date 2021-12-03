@@ -174,6 +174,7 @@ class Count_tag(Step):
         signal_tags_str = "_".join(signal_tags)
         return signal_tags_str
 
+    @utils.add_log
     def write_and_plot(self, df, column_name, count_file, plot_file):
         df_count = df.groupby(["tag", column_name]).size().unstack()
         df_count.fillna(0, inplace=True)
@@ -189,10 +190,16 @@ class Count_tag(Step):
         margin_bottom = np.zeros(len(df_plot[column_name].drop_duplicates()))
 
         for num, tag_type in enumerate(types):
+            try:
+                color = colors[num * 3 + 1]
+            except IndexError:
+                print("not enough colors")
+                return
             values = list(df_plot.loc[df_plot["tag"] == tag_type, "percent"])
             df_plot[df_plot['tag'] == tag_type].plot.bar(
                 x=column_name, y='percent', ax=ax, stacked=True,
-                bottom=margin_bottom, label=tag_type, color=colors[num * 3 + 1])
+                bottom=margin_bottom, label=tag_type, color=color)
+
             margin_bottom += values
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
         plt.title("tag fraction")
