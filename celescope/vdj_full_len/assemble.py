@@ -111,8 +111,12 @@ class Assemble(Step):
         if (not args.match_dir) or (args.match_dir == "None"):
             self.match_bool = False
         if self.match_bool:
-            self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
-                args.match_dir)
+            try:
+                self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
+                    args.match_dir)
+            except IndexError as e:
+                print("Incorrect match_dir, Please Check the match_dir path" + "\n" + repr(e))
+                raise
              
     @utils.add_log
     def run_assemble(self):
