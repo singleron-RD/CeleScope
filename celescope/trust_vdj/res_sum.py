@@ -96,7 +96,7 @@ class Res_sum(Step):
 
         self.gen_stat_file()
 
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log

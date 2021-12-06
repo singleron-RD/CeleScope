@@ -20,7 +20,7 @@ def generate_matrix(gtf_file, matrix_file):
     return matrix
 
 
-class Analysis_rna(Step, AnalysisMixin):
+class Analysis(Step, AnalysisMixin):
     """
     Features
     - Cell clustering with Seurat.
@@ -92,7 +92,7 @@ class Analysis_rna(Step, AnalysisMixin):
 
 @utils.add_log
 def analysis(args):
-    with Analysis_rna(args, display_title='Analysis') as runner:
+    with Analysis(args, display_title='Analysis') as runner:
         runner.run()
 
 

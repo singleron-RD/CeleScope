@@ -203,7 +203,7 @@ class Mapping_vdj(Step):
         total_read = df_fastq.shape[0]
         df_align = self.get_df_align(df_fastq)
         self.mixcr_summary(total_read, df_align)
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log

@@ -123,7 +123,7 @@ class CountFusion(Step):
 
     def run(self):
         self.count_fusion()
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log

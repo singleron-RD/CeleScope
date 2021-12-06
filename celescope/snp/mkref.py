@@ -1,7 +1,6 @@
 import configparser
 import os
 import subprocess
-from celescope.capture_virus.mkref import Mkref_virus
 
 import celescope.tools.utils as utils
 from celescope.tools.mkref import Mkref
