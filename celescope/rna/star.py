@@ -132,6 +132,9 @@ class Star_rna(Step, StarMixin):
 
     @utils.add_log
     def pie(self,region_plot):
+        """
+        Replace the pie chart in HTML
+        """
         import plotly
         import plotly.graph_objs as go
         trace = [go.Pie(labels = region_plot["region_labels"],
@@ -147,11 +150,9 @@ class Star_rna(Step, StarMixin):
                 }}
         fig.update_traces(textposition='none')
         fig.update_layout(layout)
-        div = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
-        return div
-
-    def report_prepare(self,outdiv):
-        self.add_data(mapping=outdiv)
+        div_item = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
+        self.add_data(mapping=div_item)
+        
 
     @utils.add_log
     def ribo(self):
@@ -189,8 +190,7 @@ class Star_rna(Step, StarMixin):
         self.run_star()
         self.picard()
         region_plot = self.add_other_metrics()
-        div_item = self.pie(region_plot)
-        self.report_prepare(div_item)
+        self.pie(region_plot)
 
 
 def star(args):

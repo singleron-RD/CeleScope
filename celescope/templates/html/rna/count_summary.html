@@ -7,99 +7,10 @@
     <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
       {{ step_summary.chart|safe }}
     </div>
-
+    
     <hr />
 
-    <div id="myDivSaturation" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
-      <script>
-        var data = [{
-          x: {{ step_summary.downsample.fraction|safe }},
-          y: {{ step_summary.downsample.umi_saturation|safe }},
-          mode: 'lines'
-        }];
-        var layout = {
-            height: 313,
-            width: 400,
-            margin: {
-                l: 45,
-                r: 35,
-                b: 30,
-                t: 30,
-            },
-            
-            title: 'Sequencing Saturation',
-            xaxis: {
-                title: 'Reads Fraction',
-            },
-            yaxis: {
-                title: 'Sequencing Saturation(%)',
-                range: [0, 100]
-            },
-            
-            showlegend: false,
-
-        };
-
-        var config = { 
-            "displayModeBar": true, 
-            "staticPlot": false, 
-            "showAxisDragHandles": false, 
-            "modeBarButtons": [["toImage", "resetScale2d"]], 
-            "scrollZoom": false,
-            "displaylogo": false, 
-        };
-        Plotly.newPlot('myDivSaturation', data, layout, config);
-      </script>
-    </div>
-    
-    <div id="myDivMedianGeneNum" style="float: left; margin-left: 3%; margin-top: 2%; margin-right:0%; width: 47%">
-      <script>
-        var data = [{
-          x: {{ step_summary.downsample.fraction|safe }},
-          y: {{ step_summary.downsample.median_gene|safe }},
-          mode: 'lines'
-        }];
-        var layout = {
-            height: 313,
-            width: 400,
-            margin: {
-                l: 45,
-                r: 35,
-                b: 30,
-                t: 30,
-            },
-            title: 'Median Genes per Cell',
-            xaxis: {
-                title: 'Reads Fraction',
-            },
-            yaxis: {
-                title: 'Median Genes per Cell',
-                rangemode: 'tozero',
-            },
-            showlegend: false,
-
-        };
-
- //  Modebar Buttons names at https://github.com/plotly/plotly.js/blob/master/src/components/modebar/buttons.js
- //  - sendDataToCloud 
- //  - (2D): zoom2d, pan2d, select2d, lasso2d, zoomIn2d, zoomOut2d, autoScale2d, resetScale2d
- //  - (Cartesian): hoverClosestCartesian, hoverCompareCartesian 
- //  - (3D): zoom3d, pan3d, orbitRotation, tableRotation, handleDrag3d, resetCameraDefault3d, resetCameraLastSave3d, hoverClosest3d
- //  - (Geo): zoomInGeo, zoomOutGeo, resetGeo, hoverClosestGeo
- //  - hoverClosestGl2d, hoverClosestPie, toggleHover, resetViews 
-
-
-        var config = { 
-            "displayModeBar": true, 
-            "staticPlot": false, 
-            "showAxisDragHandles": false, 
-            "modeBarButtons": [["toImage", "resetScale2d"]], 
-            "scrollZoom": false,
-            "displaylogo": false, 
-        };
-        Plotly.newPlot('myDivMedianGeneNum', data, layout, config);
-      </script>
-    </div>
+    {{ step_summary.downsample|safe }}
 
     <div class="clear" ></div>
   </div>

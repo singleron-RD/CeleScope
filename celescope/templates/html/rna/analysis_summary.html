@@ -18,100 +18,16 @@
         {% include "html/utils/help_info.html" %}
 
         <div id="cluster_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
-        <script>
-            var data = []
-            {% for cluster_item in step_summary.cluster_tsne %}
-                var x_coord = {{cluster_item["tSNE_1"]}};
-                var y_coord = {{cluster_item["tSNE_2"]}};
-                var trace = {
-                    x: x_coord,
-                    y: y_coord,
-                    name: '{{cluster_item["name"]}}',
-                    mode: 'markers',
-                    marker: {"opacity": 0.9, "size": 4},
-                }
-                data.push(trace);
-            {% endfor %}
 
-            var layout = {
-
-                hovermode:"closest", 
-                title: 't-SNE plot Colored by Clusters', 
-                xaxis: {
-                    zeroline: true,
-                    showline: false,
-                    type: "linear",
-                    title: "t-SNE1"
-                },
-                yaxis: {
-                    zeroline: true,
-                    showline: false,
-                    type: "linear",
-                    title: "t-SNE2"
-                },
-            }
-
-            var config = { 
-                "displayModeBar": true, 
-                "staticPlot": false, 
-                "showAxisDragHandles": false, 
-                "modeBarButtons": [["toImage", "resetScale2d"]], 
-                "scrollZoom": false,
-                "displaylogo": false, 
-            }
-            Plotly.newPlot('cluster_tsne', data, layout, config);
-        </script>       
-      </div>
+            {{step_summary.downsample.downsample_clusters|safe}}
+        
+        </div>
       
       <div id="feature_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
-        <script>
-            var data = []
-            var x_coord = {{step_summary.feature_tsne["tSNE_1"]}};
-            var y_coord = {{step_summary.feature_tsne["tSNE_2"]}};
-            var trace = {
-                x: x_coord,
-                y: y_coord,
-                text: {{step_summary.feature_tsne["counts"]}},
-                mode: 'markers',
-                marker: { 
-                    "opacity": 0.9, 
-                    "size": 4,
-                    "color":{{step_summary.feature_tsne["counts"]}},
-                    "colorscale": "Jet", 
-                    "colorbar": { "title": "{{step_summary.feature_tsne["feature_name"]}}" },
-                },
-            }
-            data.push(trace);
 
-            var layout = {
-
-                hovermode:"closest", 
-                title: 't-SNE plot Colored by {{step_summary.feature_tsne["feature_name"]}}', 
-                xaxis: {
-                    zeroline: true,
-                    showline: false,
-                    type: "linear",
-                    title: "t-SNE1"
-                },
-                yaxis: {
-                    zeroline: true,
-                    showline: false,
-                    type: "linear",
-                    title: "t-SNE2"
-                },
-            }
-
-            var config = { 
-                "displayModeBar": true, 
-                "staticPlot": false, 
-                "showAxisDragHandles": false, 
-                "modeBarButtons": [["toImage", "resetScale2d"]], 
-                "scrollZoom": false,
-                "displaylogo": false, 
-            }
-            Plotly.newPlot('feature_tsne', data, layout, config);
-        </script>       
-    </div>
+        {{step_summary.downsample.downsample_gene|safe}}
+  
+      </div>
     
     {% include "html/utils/table_dict.html" %}
 
