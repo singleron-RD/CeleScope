@@ -29,14 +29,7 @@ def merge_report():
         data_dic = json.load(open(data_json))
         for summary in summarys:
             if summary not in data_dic.keys():
-                # TCR and BCR data_dict has prefix
-                bool_in = False
-                for key in data_dic.keys():
-                    if key.find(summary) != -1:
-                        summary = key
-                        bool_in = True
-                if not bool_in:
-                    continue
+                continue
 
             # add title
             if sample == samples[0]:
