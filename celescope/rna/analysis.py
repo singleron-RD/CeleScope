@@ -133,9 +133,9 @@ class Analysis_rna(Step, AnalysisMixin):
                          range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
         fig_clusters.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
                          range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig_clusters.update_layout(layout,title=dict(text= "t-SNE plot Colored by Clusters",x=0.4,y=0.95),
+        fig_clusters.update_layout(layout,title={"text":"t-SNE plot Colored by Clusters","x":0.5,"y":0.95,"font":{"size":15}},
                           plot_bgcolor = '#FFFFFF',hovermode="closest")
-        div_clusters = plotly.offline.plot(fig_clusters, include_plotlyjs=False, output_type='div',config=config)
+        div_clusters = plotly.offline.plot(fig_clusters, include_plotlyjs=True, output_type='div',config=config)
         fig_gene = go.Figure()
         fig_gene.add_trace(go.Scatter(x = tsne_data['tsne_1'],y = tsne_data['tsne_2'],mode = 'markers',
                            marker = go.scatter.Marker(opacity=0.9,size=4,color=tsne_data['gene_counts'],colorscale='Jet',
@@ -145,9 +145,9 @@ class Analysis_rna(Step, AnalysisMixin):
                          range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
         fig_gene.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
                          range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig_gene.update_layout(layout,title=dict(text= "t-SNE plot Colored by Gene Counts",x=0.5,y=0.95),
+        fig_gene.update_layout(layout,title={"text":"t-SNE plot Colored by Gene Counts","x":0.5,"y":0.95,"font":{"size":15}},
                           plot_bgcolor = '#FFFFFF',hovermode="closest")
-        div_gene = plotly.offline.plot(fig_gene, include_plotlyjs=False, output_type='div',config=config)
+        div_gene = plotly.offline.plot(fig_gene, include_plotlyjs=True, output_type='div',config=config)
         downsample = {"downsample_clusters":div_clusters, "downsample_gene":div_gene}
         self.add_data(downsample=downsample)        
 

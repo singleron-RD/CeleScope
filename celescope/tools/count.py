@@ -144,40 +144,18 @@ class Count(Step):
             "modeBarButtons": [["toImage", "resetScale2d"]], 
             "scrollZoom": True,
             "displaylogo": False,
-            "editable":True
+            #"editable":True
             }
-        fig.update_layout(layout, yaxis_zeroline=True, showlegend=False)
-        fig.update_layout(plot_bgcolor = '#FFFFFF')
+        fig.update_layout(layout, yaxis_zeroline=True, showlegend=False,plot_bgcolor = '#FFFFFF')
         fig.update_xaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True,
-                         ticks=None,tickmode = 'linear',tick0=0,dtick=0.5,title_text="Reads Fraction")
-        fig.update_yaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True, 
+                         ticks=None,tickmode = 'linear',tick0=0,dtick=0.5,
+                         title_text="Reads Fraction")
+        fig.update_yaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True,
                          ticks=None,title_text="Sequencing Saturation(%)",row=1, col=1, range=[0, 100])
-        fig.update_yaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True, 
+        fig.update_yaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True,
                          ticks=None,title_text="Median Genes per Cell",row=1, col=2, rangemode="tozero")
-        div_item = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div',config=config)
+        div_item = plotly.offline.plot(fig, include_plotlyjs=True, output_type='div',config=config)
         self.add_data(downsample=div_item)
-        """
-        trace_1 = go.Scatter(x=plot_data["percent"],y=plot_data["saturation"],mode = "lines")
-        fig_1 = go.Figure(data=[trace_1],layout=layout)
-        fig_1.update_layout(yaxis_zeroline=True, showlegend=False,plot_bgcolor = '#FFFFFF')  
-        fig_1.update_xaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True,
-                         ticks=None,tickmode = 'linear',tick0=0,dtick=0.5,title_text="Reads Fraction")
-        fig_1.update_yaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True, 
-                         ticks=None,title_text="Sequencing Saturation(%)", range=[0, 100])
-        trace_2 = go.Scatter(x=plot_data["percent"],y=plot_data["median_geneNum"],mode = "lines")
-        fig_2 = go.Figure(data=[trace_2],layout=layout)
-        fig_2.update_layout(yaxis_zeroline=True, showlegend=False,plot_bgcolor = '#FFFFFF')
-        fig_2.update_xaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True,
-                         ticks=None,tickmode = 'linear',tick0=0,dtick=0.5,title_text="Reads Fraction")
-        fig_2.update_yaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True, 
-                         ticks=None,title_text="Median Genes per Cell", rangemode="tozero") 
-        div_item_saturation = plotly.offline.plot(fig_1, include_plotlyjs=False, output_type='div',config=config)
-        #div_item_median = plotly.offline.plot(fig_2, include_plotlyjs=False, output_type='div',config=config)
-        downsample = {"downsample_saturation":div_item_saturation,
-                      "div_item_median":div_item_median
-                      }
-        self.add_data(downsample=downsample)
-        """
 
 
     @staticmethod
