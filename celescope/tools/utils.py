@@ -183,56 +183,73 @@ def generic_open(file_name, *args, **kwargs):
     return file_obj
 
 
-@add_log
-def get_id_name_dict(gtf_file):
-    """
-    get gene_id:gene_name from gtf file
-        - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
-        - one gene_id with multiple gene_name: error.
-        - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
+class Gtf_dict(dict):
+    '''
 
-    Returns:
-        {gene_id: gene_name} dict
-    """
+    key: gene_id
+    value: gene_name
+    '''
 
-    gene_id_pattern = re.compile(r'gene_id "(\S+)";')
-    gene_name_pattern = re.compile(r'gene_name "(\S+)"')
-    id_name = {}
-    c = Counter()
-    with generic_open(gtf_file) as f:
-        for line in f:
-            if not line.strip():
-                continue
-            if line.startswith('#'):
-                continue
-            tabs = line.split('\t')
-            gtf_type, attributes = tabs[2], tabs[-1]
-            if gtf_type == 'gene':
-                gene_id = gene_id_pattern.findall(attributes)[-1]
-                gene_names = gene_name_pattern.findall(attributes)
-                if not gene_names:
-                    gene_name = gene_id
-                else:
-                    gene_name = gene_names[-1]
-                c[gene_name] += 1
-                if c[gene_name] > 1:
-                    if gene_id in id_name:
-                        assert id_name[gene_id] == gene_name, (
-                            'one gene_id with multiple gene_name '
-                            f'gene_id: {gene_id}, '
-                            f'gene_name this line: {gene_name}'
-                            f'gene_name previous line: {id_name[gene_id]}'
-                        )
-                        get_id_name_dict.logger.warning(
-                            'duplicated (gene_id, gene_name)'
-                            f'gene_id: {gene_id}, '
-                            f'gene_name {gene_name}'
-                        )
-                        c[gene_name] -= 1
+    def __init__(self, gtf_file):
+        super().__init__()
+        self.gtf_file = gtf_file
+        self.load_gtf()
+
+
+    @add_log
+    def load_gtf(self):
+        """
+        get gene_id:gene_name from gtf file
+            - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
+            - one gene_id with multiple gene_name: error.
+            - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
+
+        Returns:
+            {gene_id: gene_name} dict
+        """
+
+        gene_id_pattern = re.compile(r'gene_id "(\S+)";')
+        gene_name_pattern = re.compile(r'gene_name "(\S+)"')
+        id_name = {}
+        c = Counter()
+        with generic_open(self.gtf_file) as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                if line.startswith('#'):
+                    continue
+                tabs = line.split('\t')
+                gtf_type, attributes = tabs[2], tabs[-1]
+                if gtf_type == 'gene':
+                    gene_id = gene_id_pattern.findall(attributes)[-1]
+                    gene_names = gene_name_pattern.findall(attributes)
+                    if not gene_names:
+                        gene_name = gene_id
                     else:
-                        gene_name = f'{gene_name}_{c[gene_name]}'
-                id_name[gene_id] = gene_name
-    return id_name
+                        gene_name = gene_names[-1]
+                    c[gene_name] += 1
+                    if c[gene_name] > 1:
+                        if gene_id in id_name:
+                            assert id_name[gene_id] == gene_name, (
+                                'one gene_id with multiple gene_name '
+                                f'gene_id: {gene_id}, '
+                                f'gene_name this line: {gene_name}'
+                                f'gene_name previous line: {id_name[gene_id]}'
+                            )
+                            self.load_gtf.logger.warning(
+                                'duplicated (gene_id, gene_name)'
+                                f'gene_id: {gene_id}, '
+                                f'gene_name {gene_name}'
+                            )
+                            c[gene_name] -= 1
+                        else:
+                            gene_name = f'{gene_name}_{c[gene_name]}'
+                    id_name[gene_id] = gene_name
+        self.update(id_name)
+
+    def __getitem__(self, key):
+        '''if key not exist, return key'''
+        return dict.get(self, key, key)
 
 
 def read_one_col(file):
@@ -685,14 +702,14 @@ class Samtools():
         self.samtools_sort(self.in_bam, self.out_bam, by=by)
 
     @add_log
-    def add_tag(self, gtf):
+    def add_tag(self, gtf_file):
         """
         - CB cell barcode
         - UB UMI
         - GN gene name
         - GX gene id
         """
-        id_name = get_id_name_dict(gtf)
+        gtf_dict = Gtf_dict(gtf_file)
 
         with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
             header = original_bam.header
@@ -709,10 +726,10 @@ class Samtools():
                         # if multi-mapping reads are included in original bam,
                         # there are multiple gene_ids
                         if ',' in gene_id:
-                            gene_name = [id_name[i] for i in gene_id.split(',')]
+                            gene_name = [gtf_dict[i] for i in gene_id.split(',')]
                             gene_name = ','.join(gene_name)
                         else:
-                            gene_name = id_name[gene_id]
+                            gene_name = gtf_dict[gene_id]
                         read.set_tag(tag='GN', value=gene_name, value_type='Z')
                         read.set_tag(tag='GX', value=gene_id, value_type='Z')
                     temp_sam.write(read)

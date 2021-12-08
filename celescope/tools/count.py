@@ -82,7 +82,7 @@ class Count(Step):
 
         # set
         self.gtf_file = parse_genomeDir_rna(args.genomeDir)['gtf']
-        self.id_name = utils.get_id_name_dict(self.gtf_file)
+        self.gtf_dict = utils.Gtf_dict(self.gtf_file)
 
         # output files
         self.count_detail_file = f'{self.outdir}/{self.sample}_count_detail.txt'
@@ -327,7 +327,7 @@ class Count(Step):
         mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.codes[0], df_UMI.index.codes[1])))
         gene_id = df_UMI.index.levels[0].to_series()
         # add gene symbol
-        gene_name = gene_id.apply(lambda x: self.id_name[x])
+        gene_name = gene_id.apply(lambda x: self.gtf_dict[x])
         genes = pd.concat([gene_id, gene_name], axis=1)
         genes.columns = ['gene_id', 'gene_name']
 

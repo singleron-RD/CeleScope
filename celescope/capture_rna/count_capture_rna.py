@@ -30,7 +30,7 @@ class Count_capture_rna(Count):
                         probe_gene_count_dict[probe]['total'][barcode][umi] += 1
                         if seg.has_tag('XT'):
                             geneID = seg.get_tag('XT')
-                            geneName = self.id_name[geneID]
+                            geneName = self.gtf_dict[geneID]
                             probe_gene_count_dict[probe][geneName][barcode][umi] += 1
                         else:
                             probe_gene_count_dict[probe]['None'][barcode][umi] += 1

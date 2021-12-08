@@ -8,10 +8,10 @@ import celescope.tools.utils as utils
 @utils.add_log
 def generate_matrix(gtf_file, matrix_file):
 
-    id_name = utils.get_id_name_dict(gtf_file)
+    gtf_dict = utils.Gtf_dict(gtf_file)
     matrix = pd.read_csv(matrix_file, sep="\t")
 
-    gene_name_col = matrix.geneID.apply(lambda x: id_name[x])
+    gene_name_col = matrix.geneID.apply(lambda x: gtf_dict[x])
     matrix.geneID = gene_name_col
     matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
     matrix = matrix.dropna()
