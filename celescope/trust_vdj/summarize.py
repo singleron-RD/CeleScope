@@ -72,6 +72,7 @@ class Summarize(Step):
     - `04.summarize/{sample}_all_contig.fasta` All assembled contig sequences.
     - `04.summarize/{sample}_filtered_contig.csv` High-level annotations of each cellular contig after filter. This is a subset of all_contig_annotations.csv.
     - `04.summarize/{sample}_filtered_contig.fasta` Assembled contig sequences after filter.
+    - `04.summarize/{sample}_chain_filtered_contig.csv`Keep the 2 contigs with the highest UMI. This is a subset of filtered_contig.csv.
     """
 
     def __init__(self, args, step_name):
@@ -230,6 +231,20 @@ class Summarize(Step):
         df_filter_contig = df_filter_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
         df_revcompl.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
+
+        # filter chains based on umis
+        df_filter_contig.sort_values(by=['barcode','umis'],ascending=[True,False],inplace=True)
+        df_filter_contig.reset_index(drop=True,inplace=True)
+        chain_filter_dict = df_filter_contig.groupby('barcode')['contig_id'].apply(lambda x:x.tolist()).to_dict()
+        chain_filter_set = set()
+        for key,val in chain_filter_dict.items():
+            if len(val)>2:
+                for contig_id in val[:2]:
+                    chain_filter_set.add(contig_id)
+            else:
+                chain_filter_set.add(val[0])
+        df_filter_contig = df_filter_contig[df_filter_contig['contig_id'].isin(chain_filter_set)]
+        df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_chain_filtered_contig.csv', sep=',', index=False)
 
         # reads summary
         read_count = 0
