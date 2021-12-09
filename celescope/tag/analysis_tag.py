@@ -16,6 +16,88 @@ class Analysis_tag(Step, AnalysisMixin):
         Step.__init__(self, args,display_title=display_title)
         AnalysisMixin.__init__(self, args)
 
+    @utils.add_log
+    def tsne_plot(self,df):
+        """
+        Replace tsne_plot in HTML
+        """
+        import math
+        import plotly
+        import plotly.graph_objs as go
+        import plotly.express as px
+        from collections import defaultdict
+        tsne_data = df
+        sum_cluster_df = tsne_data.groupby(['cluster']).agg("count").iloc[:, 0]
+        sum_tag_df = tsne_data.groupby(['tag']).agg("count").iloc[:, 0]
+        percent_cluster_df = sum_cluster_df.transform(lambda x: round(x / sum(x) * 100, 2))
+        percent_tag_df = sum_tag_df.transform(lambda x: round(x / sum(x) * 100, 2))
+        res_cluster_dict = defaultdict(int)
+        res_cluster_list = []
+        for cluster in sorted(tsne_data['cluster'].unique()):
+            name = f"cluster {cluster}({percent_cluster_df[cluster]}%)"
+            res_cluster_dict[cluster]= name
+            res_cluster_list.append(name)
+        tsne_data['name_cluster'] = 'name'
+        tsne_data.name_cluster = tsne_data.cluster.map(res_cluster_dict)
+        res_tag_dict = defaultdict(int)
+        res_tag_list = []
+        for tag in sorted(tsne_data['tag'].unique()):
+            name = f"{tag}({percent_tag_df[tag]}%)"
+            res_tag_dict[tag]= name
+            res_tag_list.append(name)    
+        tsne_data['name_tag'] = 'name'
+        tsne_data.name_tag = tsne_data.tag.map(res_tag_dict)
+        x_ = math.ceil(max(abs(tsne_data["tSNE_1"])))
+        y_ = math.ceil(max(abs(tsne_data["tSNE_2"])))
+        x_range,y_range = [-x_,x_],[-y_,y_]
+        layout = {
+            "height": 313,
+            "width": 400,
+            "margin": {
+                "l": 45,
+                "r": 35,
+                "b": 30,
+                "t": 30,}
+                }
+        config = {
+            "displayModeBar": True, 
+            "staticPlot": False, 
+            "showAxisDragHandles": False, 
+            "modeBarButtons": [["toImage", "resetScale2d"]], 
+            "scrollZoom": True,
+            "displaylogo": False
+            }
+        
+        fig_clusters = px.scatter(data_frame=tsne_data,
+                                 title="t-SNE plot Colored by Clusters",
+                                 x="tSNE_1", 
+                                 y="tSNE_2",
+                                 color="name_cluster",
+                                 labels={"name_cluster":"cluster"},
+                                 category_orders={"name_cluster":res_cluster_list})                               
+        fig_clusters.update_yaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE2',
+                         range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
+        fig_clusters.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
+                         range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
+        fig_clusters.update_layout(layout,title={"text":"t-SNE plot Colored by Clusters","x":0.5,"y":0.95,"font":{"size":15}},
+                          plot_bgcolor = '#FFFFFF',hovermode="closest")
+        div_clusters = plotly.offline.plot(fig_clusters, include_plotlyjs=True, output_type='div',config=config)
+        fig_tag = px.scatter(data_frame=tsne_data,
+                                 title="t-SNE plot Colored by tag",
+                                 x="tSNE_1", 
+                                 y="tSNE_2",
+                                 color="name_tag",
+                                 labels={"name_tag":"tag"},
+                                 category_orders={"name_tag":res_tag_list})                               
+        fig_tag.update_yaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE2',
+                         range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
+        fig_tag.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
+                         range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
+        fig_tag.update_layout(layout,title={"x":0.5,"y":0.95,"font":{"size":15}},plot_bgcolor = '#FFFFFF',hovermode="closest")
+        div_tag = plotly.offline.plot(fig_tag, include_plotlyjs=True, output_type='div',config=config)
+        downsample = {"downsample_clusters":div_clusters, "downsample_tag":div_tag}
+        self.add_data(downsample=downsample)
+
     def add_help(self):
         self.add_help_content(
             name='Marker Genes by Cluster',
@@ -39,12 +121,13 @@ class Analysis_tag(Step, AnalysisMixin):
         )
 
     def run(self):
-        self.get_analysis_data()
+        self.get_analysis_data(feature_name="tag")
         tsne_tag_df = pd.read_csv(self.args.tsne_tag_file, sep="\t", index_col=0)
         feature_tsne = self.get_cluster_tsne(colname='tag', tsne_df=tsne_tag_df, show_colname=False)
         self.add_data(cluster_tsne=self.cluster_tsne)
         self.add_data(feature_tsne=feature_tsne)
         self.add_data(table_dict=self.table_dict)
+        self.tsne_plot(tsne_tag_df)
         self.add_help()
 
 
