@@ -253,6 +253,20 @@ class Summarize(Step):
         df_filter_contig = df_filter_contig[df_filter_contig['contig_id'].isin(chain_filter_set)]
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_chain_filtered_contig.csv', sep=',', index=False)
 
+        # fasta file filter chains based on umis 
+        filter_contig_set = set(df_filter_contig['contig_id'].tolist())
+        chain_filtered_fasta = f'{self.outdir}/{self.sample}_chain_filtered_contig.fasta'
+        chain_filtered_fasta = open(chain_filtered_fasta,'w')
+        filter_contig_fasta = f'{self.outdir}/{self.sample}_filtered_contig.fasta'
+        with pysam.FastxFile(filter_contig_fasta) as fa:
+            for read in fa:
+                seq = read.sequence
+                name = read.name
+                if name in filter_contig_set:
+                    chain_filtered_fasta.write(">"+name+"\n"+seq+"\n")
+        chain_filtered_fasta.close()
+
+
         # reads summary
         read_count = 0
         umi_dict = defaultdict(set)
