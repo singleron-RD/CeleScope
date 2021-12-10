@@ -110,11 +110,53 @@ class Count(Step):
         self.get_summary(CB_describe, CB_total_Genes,
                          CB_reads_count, reads_mapped_to_transcriptome)
 
-        self.add_plot_data()
-
-    def add_plot_data(self):
-        self.add_data(downsample=self.downsample_dict)
+        self.line_plot()
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.marked_count_file))
+
+    @utils.add_log
+    def line_plot(self):
+        """
+        Replace line charts in HTML
+        """
+        import plotly
+        import plotly.graph_objs as go
+        from plotly.subplots import make_subplots
+        
+        plot_data = pd.read_csv(self.downsample_file,sep='\t')
+        fig = make_subplots(rows=1, cols=2,subplot_titles=['Sequencing Saturation','Median Genes per Cell'])
+        fig.add_trace(go.Scatter(x=plot_data["percent"],y=plot_data["saturation"],mode = "lines",name = "Sequencing Saturation"),
+                      row=1, col=1)
+        fig.add_trace(go.Scatter(x=plot_data["percent"],y=plot_data["median_geneNum"],mode = "lines",name = "Median Genes per Cell"),
+                      row=1, col=2)
+        layout = {
+            "height": 313,
+            "width": 800,
+            "margin": {
+                "l": 45,
+                "r": 35,
+                "b": 30,
+                "t": 30,}
+                }
+        config = {
+            "displayModeBar": True, 
+            "staticPlot": False, 
+            "showAxisDragHandles": False, 
+            "modeBarButtons": [["toImage", "resetScale2d"]], 
+            "scrollZoom": True,
+            "displaylogo": False,
+            #"editable":True
+            }
+        fig.update_layout(layout, yaxis_zeroline=True, showlegend=False,plot_bgcolor = '#FFFFFF')
+        fig.update_xaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True,
+                         ticks=None,tickmode = 'linear',tick0=0,dtick=0.5,
+                         title_text="Reads Fraction")
+        fig.update_yaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True,
+                         ticks=None,title_text="Sequencing Saturation(%)",row=1, col=1, range=[0, 100])
+        fig.update_yaxes(showgrid=True, gridcolor='#F5F5F5', linecolor='black', showline=True,
+                         ticks=None,title_text="Median Genes per Cell",row=1, col=2, rangemode="tozero")
+        div_item = plotly.offline.plot(fig, include_plotlyjs=True, output_type='div',config=config)
+        self.add_data(downsample=div_item)
+
 
     @staticmethod
     def correct_umi(umi_dict, percent=0.1):
