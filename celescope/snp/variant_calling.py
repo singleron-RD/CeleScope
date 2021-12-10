@@ -110,7 +110,7 @@ class Variant_calling(Step):
         self.SplitNCigarReads()
         self.call_variants()
         self.bcftools_norm()
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log

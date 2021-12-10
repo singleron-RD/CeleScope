@@ -107,7 +107,7 @@ class Count_capture_rna(Count):
         self.report_prepare()
 
         self.add_content_item('metric', downsample_summary=res_dict)
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log

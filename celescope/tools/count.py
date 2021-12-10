@@ -364,7 +364,11 @@ class Count(Step):
         )
 
         try:
-            valid_read_number = int(self.content_dict['data']['barcode_summary']['metric_list'][1]['value'])
+            valid_read_number = self.get_slot_key(
+                slot='metrics',
+                step_name='barcode',
+                key='Valid Reads',
+            )
         except KeyError:
             self.get_summary.logger.warning('barcode_summary not found. Will not output `Mean Reads per Cell`')
         else:

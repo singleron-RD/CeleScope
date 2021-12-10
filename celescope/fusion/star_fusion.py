@@ -11,7 +11,7 @@ class StarFusion(Step, StarMixin):
 
     def run(self):
         self.run_star()
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log

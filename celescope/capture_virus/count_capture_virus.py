@@ -82,7 +82,7 @@ class Count_capture_virus(Step):
 
     def run(self):
         self.sum_virus()
-        self.dump_content(slot="metric")
+        self._dump_content(slot="metric")
 
 
 @utils.add_log

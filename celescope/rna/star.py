@@ -8,7 +8,7 @@ from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
 from celescope.tools.step import Step 
 
 
-class Star_rna(Step, StarMixin):
+class Star(Step, StarMixin):
     """
     Features
     - Align R2 reads to the reference genome with STAR.
@@ -194,7 +194,7 @@ class Star_rna(Step, StarMixin):
 
 
 def star(args):
-    with Star_rna(args,display_title="Mapping") as runner:
+    with Star(args,display_title="Mapping") as runner:
         runner.run()
 
 def get_opts_star(parser, sub_program):

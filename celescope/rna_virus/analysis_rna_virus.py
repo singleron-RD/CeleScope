@@ -30,7 +30,7 @@ class Analysis_rna_virus(Step, AnalysisMixin):
         self.add_data(virus_tsne=virus_tsne)
         self.add_data(table_dict=self.table_dict)
 
-        self.clean_up()
+        self._clean_up()
 
 
     def virus_tsne_list(self):

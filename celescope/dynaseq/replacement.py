@@ -66,7 +66,7 @@ class Replacement(Step):
 
         # report
         self.report_prepare(div_item)
-        self.clean_up()
+        self._clean_up()
 
         # clean
         cmd=['rm', self.outread]
