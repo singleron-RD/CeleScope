@@ -1,0 +1,39 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+	<h2>Match and Mapping		<i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+	<div class="box">
+	  <div class="description" style="display: none;">
+		<p></p>
+		<p><b>Matched Barcodes with scRNA-seq:</b> Number of barcodes those were determined to be cells in scRNA-seq.</p>
+		<p><b>Matched Reads with scRNA-seq:</b> Number of reads those were from barcodes determined to be cells in scRNA-seq.</p>
+		<p><b>Reads Mapped to Any V(D)J genes:</b> Fraction of reads that partially or wholly map to any germline V(D)J gene segment.</p>
+		<p><b>Reads Mapped to TRA:</b> Fraction of reads that map partially or wholly to a germline TRA gene segment. For BCR, this should be one of [IGH, IGL, IGK].</p>
+		<p><b>Reads Mapped to TRB:</b> Fraction of reads that map partially or wholly to a germline TRB gene segment. For BCR, this should be one of [IGH, IGL, IGK].</p>
+	</div>
+	<table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+		{% for item in assemble_summary %}
+		  {% if loop.index <= (loop.length+1)/2 %}
+
+		  <tr>
+			{% for i in item %} 
+			<td>{{ i|e }}</td>
+			{% endfor %}
+		  </tr>
+		  {% endif %}
+		{% endfor %}
+	  </table>
+  
+	  <table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+		{% for item in assemble_summary %}
+		  {% if loop.index > (loop.length+1)/2 %}
+		  <tr>
+			{% for i in item %} 
+			<td>{{ i|e }}</td>
+			{% endfor %}
+		  </tr>
+		  {% endif %}
+		{% endfor %}
+	  </table>
+	  
+	  <div class="clear" ></div>
+	</div>
+  </div>
