@@ -1,7 +1,7 @@
 from celescope.trust_vdj_rna.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
 
-class Multi_trust_vdj(Multi):
+class Multi_trust_vdj_rna(Multi):
 
     def assemble(self, sample):
         step = 'assemble'
@@ -30,7 +30,7 @@ class Multi_trust_vdj(Multi):
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
 def main():
-    multi = Multi_trust_vdj(__ASSAY__)
+    multi = Multi_trust_vdj_rna(__ASSAY__)
     multi.run()
 
 if __name__ == '__main__':

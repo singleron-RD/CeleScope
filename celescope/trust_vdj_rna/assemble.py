@@ -10,7 +10,7 @@ import pysam
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.trust_vdj.__init__ import CHAIN, CONDA_PATH, INDEX, TOOLS_DIR
+from celescope.trust_vdj_rna.__init__ import CHAIN, CONDA_PATH, INDEX, TOOLS_DIR
 
 @utils.add_log
 def get_trust_report(filedir, sample):

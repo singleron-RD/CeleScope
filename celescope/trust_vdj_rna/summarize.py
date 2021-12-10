@@ -1,5 +1,5 @@
 from collections import defaultdict
-
+from collections import Counter
 import pandas as pd
 import numpy as np
 import pysam
@@ -7,7 +7,7 @@ import copy
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.trust_vdj.__init__ import CHAIN, PAIRED_CHAIN
+from celescope.trust_vdj_rna.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.cellranger3 import get_plot_elements
 import sys
 
@@ -237,6 +237,19 @@ class Summarize(Step):
                 chain_filter_set.add(val[0])
         df_filter_contig = df_filter_contig[df_filter_contig['contig_id'].isin(chain_filter_set)]
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_chain_filtered_contig.csv', sep=',', index=False)
+
+        # fasta file filter chains based on umis 
+        filter_contig_set = set(df_filter_contig['contig_id'].tolist())
+        chain_filtered_fasta = f'{self.outdir}/{self.sample}_chain_filtered_contig.fasta'
+        chain_filtered_fasta = open(chain_filtered_fasta,'w')
+        filter_contig_fasta = f'{self.outdir}/{self.sample}_filtered_contig.fasta'
+        with pysam.FastxFile(filter_contig_fasta) as fa:
+            for read in fa:
+                seq = read.sequence
+                name = read.name
+                if name in filter_contig_set:
+                    chain_filtered_fasta.write(">"+name+"\n"+seq+"\n")
+        chain_filtered_fasta.close()
 
         # reads summary
         read_count = 0
