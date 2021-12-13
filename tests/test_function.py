@@ -25,7 +25,7 @@ class Tests(unittest.TestCase):
 
         obj = Step(args, 'analysis')
         obj.stat_to_metric()
-        print(obj.content_dict['metric'])
+        print(obj.__content_dict['metric'])
 
     def test_test(self):
         assert 0 == 0

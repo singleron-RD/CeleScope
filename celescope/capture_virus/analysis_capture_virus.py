@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 import pandas as pd
-from celescope.rna.analysis import Analysis_rna
+from celescope.rna.analysis import Analysis
 
 import celescope.tools
 from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
@@ -71,7 +71,7 @@ class Analysis_capture_virus(Step, AnalysisMixin):
         self.add_data(cluster_tsne=cluster_tsne)
         self.add_data(virus_tsne=virus_tsne)
         self.add_data(table_dict=table_dict)
-        self.clean_up()
+        self._clean_up()
 
     def get_virus_tsne(self, virus_df):
         virus_tsne_df = pd.merge(self.tsne_df, virus_df, on="barcode", how="left")

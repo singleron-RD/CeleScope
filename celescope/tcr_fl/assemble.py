@@ -59,7 +59,7 @@ class Assemble_TCR(Step):
             for res in pool.map(tracer, fqs, outdirs):
                 all_res.append(res)
         self.tracer_summarise()
-        self.clean_up()
+        self._clean_up()
 
 
 def assemble(args):

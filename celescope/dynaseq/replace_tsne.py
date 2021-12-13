@@ -47,7 +47,7 @@ class Replace_tsne(Step):
 
         # report
         self.report_prepare(div_item, tbldiv)
-        self.clean_up()
+        self._clean_up()
 
 
 
