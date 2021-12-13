@@ -232,7 +232,8 @@ class Summarize(Step):
         df_revcompl.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
 
-        # filter chains based on umis
+        # keep chains with two two highest umi contigs in csv file
+        df_filter_contig=df_filter_contig[df_filter_contig['productive']==True]
         df_filter_contig.sort_values(by=['barcode','umis'],ascending=[True,False],inplace=True)
         df_filter_contig.reset_index(drop=True,inplace=True)
         contig_dict = df_filter_contig.groupby('barcode')['contig_id'].apply(lambda x:x.tolist()).to_dict()
@@ -253,7 +254,7 @@ class Summarize(Step):
         df_filter_contig = df_filter_contig[df_filter_contig['contig_id'].isin(chain_filter_set)]
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_chain_filtered_contig.csv', sep=',', index=False)
 
-        # fasta file filter chains based on umis 
+        # keep chains with two highest umi contigs in fasta file
         filter_contig_set = set(df_filter_contig['contig_id'].tolist())
         chain_filtered_fasta = f'{self.outdir}/{self.sample}_chain_filtered_contig.fasta'
         chain_filtered_fasta = open(chain_filtered_fasta,'w')
@@ -265,6 +266,36 @@ class Summarize(Step):
                 if name in filter_contig_set:
                     chain_filtered_fasta.write(">"+name+"\n"+seq+"\n")
         chain_filtered_fasta.close()
+
+        # IGH+IGK/IGL TRA+TRB pair csv
+        df_one_chain = pd.read_csv(f'{self.outdir}/{self.sample}_chain_filtered_contig.csv')
+        if self.seqtype == 'BCR':
+            df_one_chain_heavy = df_one_chain[ (df_one_chain['chain'] == 'IGH') ] 
+            df_one_chain_light = df_one_chain[ (df_one_chain['chain'] == 'IGL')|(df_one_chain['chain'] =='IGK')]
+            
+            df_one_chain_heavy = df_one_chain_heavy.sort_values(by='umis', ascending=False)
+            df_one_chain_light = df_one_chain_light.sort_values(by='umis', ascending=False)
+            df_one_chain_heavy = df_one_chain_heavy.drop_duplicates(['barcode'])
+            df_one_chain_light = df_one_chain_light.drop_duplicates(['barcode'])
+            df_one_chain_merge = pd.concat([df_one_chain_heavy, df_one_chain_light], ignore_index=True)
+            df_one_chain_merge = df_one_chain_merge.sort_values(by=['barcode','umis'], ascending=[True,False])
+        else:
+            df_one_chain = df_one_chain[(df_one_chain['chain']=='TRA') | (df_one_chain['chain']=='TRB')]
+            df_one_chain = df_one_chain.sort_values(by=['barcode','umis'], ascending=[True,False])
+            df_one_chain_merge = df_one_chain.drop_duplicates(['barcode', 'chain'])
+        df_one_chain_merge.to_csv(f'{self.outdir}/{self.sample}_one_chain_contig.csv', sep=',', index=False)
+            
+        # # IGH+IGK/IGL TRA+TRB pair fasta
+        one_chain_contig_set = set(df_one_chain_merge['contig_id'].tolist())
+        one_chain_fasta = f'{self.outdir}/{self.sample}_one_chain_contig.fasta'
+        one_chain_fasta = open(one_chain_fasta,'w')
+        with pysam.FastxFile(f'{self.outdir}/{self.sample}_filtered_contig.fasta') as fa:
+            for read in fa:
+                seq = read.sequence
+                name = read.name
+                if name in one_chain_contig_set:
+                    one_chain_fasta.write(">"+name+"\n"+seq+"\n")
+        one_chain_fasta.close()
 
 
         # reads summary
