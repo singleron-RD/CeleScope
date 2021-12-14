@@ -72,7 +72,7 @@ class Analysis(AnalysisMixin):
 
     def run(self):
 
-        #self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
+        self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
         if self.auto_assign_bool:
             self.auto_assign(self.type_marker_tsv)
 
@@ -80,11 +80,11 @@ class Analysis(AnalysisMixin):
 
         self.read_match_dir()
 
-        tsne_cluster = Tsne_plot(self.df_tsne, 'cluster')
-        self.add_data(tsne_cluster=tsne_cluster.plotly_div)
+        tsne_cluster = Tsne_plot(self.df_tsne, 'cluster').get_plotly_div()
+        self.add_data(tsne_cluster=tsne_cluster)
 
-        tsne_gene = Tsne_plot(self.df_tsne, 'Gene_Counts', discrete=False)
-        self.add_data(tsne_gene=tsne_gene.plotly_div)
+        tsne_gene = Tsne_plot(self.df_tsne, 'Gene_Counts', discrete=False).get_plotly_div()
+        self.add_data(tsne_gene=tsne_gene)
 
         self.add_data(table_dict=self.table_dict)
 

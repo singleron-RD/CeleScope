@@ -6,6 +6,7 @@ import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
 from celescope.tools.step import Step 
+from celescope.tools.plotly_plot import Pie_plot
 
 
 class Star(Step, StarMixin):
@@ -49,6 +50,7 @@ class Star(Step, StarMixin):
         self.picard_region_log = f'{self.out_prefix}_region.log'
         self.plot = None
         self.stats = pd.Series()
+        self.df_region = pd.DataFrame()
 
     def add_other_metrics(self):
         """
@@ -126,32 +128,9 @@ class Star(Step, StarMixin):
                 )
         """
 
-        region_plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
-                       'region_values': [exonic_regions, intronic_regions, intergenic_regions]}
-        return region_plot
-
-    @utils.add_log
-    def pie(self,region_plot):
-        """
-        Replace the pie chart in HTML
-        """
-        import plotly
-        import plotly.graph_objs as go
-        trace = [go.Pie(labels = region_plot["region_labels"],
-                        values = region_plot["region_values"])]
-        fig = go.Figure(data = trace)
-        layout = {      "height": 300,
-                "width": 400,
-                "margin": {
-                    "l": 50,
-                    "r": 35,
-                    "b": 10,
-                    "t": 10,
-                }}
-        fig.update_traces(textposition='none')
-        fig.update_layout(layout)
-        div_item = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
-        self.add_data(mapping=div_item)
+        region_plot = {'regions': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
+                       'values': [exonic_regions, intronic_regions, intergenic_regions]}
+        self.df_region = pd.DataFrame(region_plot)
         
 
     @utils.add_log
@@ -183,14 +162,14 @@ class Star(Step, StarMixin):
         cmd = ' '.join(cmd)
         self.debug_subprocess_call(cmd)
 
-    
-
     @utils.add_log
     def run(self):
         self.run_star()
         self.picard()
-        region_plot = self.add_other_metrics()
-        self.pie(region_plot)
+        self.add_other_metrics()
+
+        region_pie = Pie_plot(df_region=self.df_region).get_plotly_div()
+        self.add_data(region_pie=region_pie)
 
 
 def star(args):

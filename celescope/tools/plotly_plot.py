@@ -19,10 +19,27 @@ PLOTLY_CONFIG =  {
 COLORS = px.colors.qualitative.Plotly + px.colors.qualitative.Alphabet
 
 
-class Tsne_plot():
+class Plotly_plot():
+
+    def __init__(self, df):
+        self._df = df
+        self._fig = None
+
+    def get_plotly_div(self):
+
+        return plotly.offline.plot(
+            self._fig, 
+            include_plotlyjs=True, 
+            output_type='div', 
+            config=PLOTLY_CONFIG
+        )
+
+
+class Tsne_plot(Plotly_plot):
 
     def __init__(self, df_tsne, feature_name, discrete=True):
-        self.df_tsne = df_tsne
+        super().__init__(df_tsne)
+
         self.feature_name = feature_name
         self.discrete = discrete
         title_feature_name = feature_name[0].upper() + feature_name[1:]
@@ -30,8 +47,8 @@ class Tsne_plot():
         
         self._layout = {}
         self._dot_size = 4
-        self.df_tsne['size'] = self._dot_size
-        self.df_tsne['barcode_index'] = list(range(1, len(self.df_tsne) + 1))
+        self._df['size'] = self._dot_size
+        self._df['barcode_index'] = list(range(1, len(self._df) + 1))
         self._str_coord1 = "tSNE_1"
         self._str_coord2 = "tSNE_2"
         self.axes_config = {
@@ -50,7 +67,7 @@ class Tsne_plot():
             'x': self._str_coord1, 
             'y': self._str_coord2,
             'size_max': self._dot_size,
-            'hover_data': {
+            'hover_df': {
                 self._str_coord1: False,
                 self._str_coord2: False,
                 self.feature_name: True,
@@ -64,32 +81,25 @@ class Tsne_plot():
             'color_continuous_scale': px.colors.sequential.Jet,
         }
 
-        self._fig = None
-
         if discrete:
             self.discrete_tsne_plot()
         else:
             self.continuous_tsne_plot()
         self.update_fig()
 
-        self.plotly_div = plotly.offline.plot(self._fig, include_plotlyjs=True, output_type='div', config=PLOTLY_CONFIG)
-
     @utils.add_log
-    def discrete_tsne_plot(self):
-        
-        df_tsne = self.df_tsne
-        feature_name = self.feature_name
+    def discrete_tsne_plot(self):        
 
-        sum_df = df_tsne.groupby([feature_name]).agg("count").iloc[:, 0]
+        sum_df = self._df.groupby([self.feature_name]).agg("count").iloc[:, 0]
         percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
         res_dict = defaultdict(int)
         res_list = []
-        for cluster in sorted(df_tsne[feature_name].unique()):
+        for cluster in sorted(self._df[self.feature_name].unique()):
             name = f"{cluster}({percent_df[cluster]}%)"
             res_dict[cluster]= name
             res_list.append(name)
 
-        df_tsne[self.feature_name] = df_tsne[self.feature_name].map(res_dict)
+        self._df[self.feature_name] = self._df[self.feature_name].map(res_dict)
 
         self._fig = px.scatter(
             **self.scatter_config,
@@ -120,3 +130,32 @@ class Tsne_plot():
             plot_bgcolor = '#FFFFFF',
             hovermode="closest"
         )
+
+
+class Pie_plot(Plotly_plot):
+    
+    def __init__(self, df_region):
+        super().__init__(df_region)
+        self.set_fig()
+
+    def set_fig(self):
+        layout = {     
+            "height": 300,
+            "width": 400,
+            "margin": {
+                "l": 50,
+                "r": 35,
+                "b": 10,
+                "t": 10,
+            }
+        }
+        self._fig = px.pie(
+            self._df,
+            names='regions',
+            values='values',
+        )
+        self._fig.update_traces(textposition='none')
+        self._fig.update_layout(layout)
+
+
+        
