@@ -5,7 +5,6 @@ from collections import defaultdict
 
 import pandas as pd
 import plotly
-import plotly.graph_objs as go
 import plotly.express as px
 
 import celescope.tools.utils as utils
@@ -13,6 +12,113 @@ from celescope.__init__ import ROOT_PATH
 from celescope.rna.mkref import parse_genomeDir_rna
 from celescope.tools.step import Step
 
+
+PLOTLY_CONFIG =  {
+    "displayModeBar": True, 
+    "staticPlot": False, 
+    "showAxisDragHandles": False, 
+    "modeBarButtons": [["toImage", "resetScale2d"]], 
+    "scrollZoom": False,
+    "displaylogo": False
+}
+
+
+class Tsne_plot():
+
+    def __init__(self, df_tsne, feature_name, discrete=True):
+        self.df_tsne = df_tsne
+        self.feature_name = feature_name
+        self.discrete = discrete
+        self.title = f"t-SNE plot Colored by {feature_name}"
+        
+        self._layout = {}
+        self._dot_size = 4
+        self._str_coord1 = "tSNE_1"
+        self._str_coord2 = "tSNE_2"
+        self.axes_config = {
+            'showgrid': True,
+            'gridcolor': '#F5F5F5',
+            'showline': False, 
+            'ticks': None,
+            'zeroline': True,
+            'zerolinecolor': 'black',
+            'zerolinewidth': 0.7,
+        }
+        x_ = math.ceil(max(abs(df_tsne[self._str_coord1])))
+        y_ = math.ceil(max(abs(df_tsne[self._str_coord2])))
+        self.x_range, self.y_range = [-x_,x_], [-y_,y_] 
+
+        self.scatter_config = {
+            'data_frame': df_tsne,
+            'title': self.title,
+            'x': self._str_coord1, 
+            'y': self._str_coord2,
+            'size_max': self._dot_size,
+            'opacity': 0.9,
+            'color': self.feature_name,
+            'color_continuous_scale': px.colors.sequential.Jet,
+        }
+
+        self._fig = None
+
+        if discrete:
+            self.discrete_tsne_plot()
+        else:
+            self.continuous_tsne_plot()
+        self.update_fig()
+
+        self.plotly_div = plotly.offline.plot(self._fig, include_plotlyjs=True, output_type='div', config=PLOTLY_CONFIG)
+
+    @utils.add_log
+    def discrete_tsne_plot(self):
+        
+        df_tsne = self.df_tsne
+        feature_name = self.feature_name
+
+        sum_df = df_tsne.groupby([feature_name]).agg("count").iloc[:, 0]
+        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
+        res_dict = defaultdict(int)
+        res_list = []
+        for cluster in sorted(df_tsne[feature_name].unique()):
+            name = f"{cluster}({percent_df[cluster]}%)"
+            res_dict[cluster]= name
+            res_list.append(name)
+
+        df_tsne[self.feature_name] = df_tsne[self.feature_name].map(res_dict)
+
+        self._fig = px.scatter(
+            **self.scatter_config,
+            category_orders={"name":res_list}
+        )                               
+
+    @utils.add_log
+    def continuous_tsne_plot(self):
+
+        self._fig = px.scatter(
+            **self.scatter_config,
+        )   
+
+
+
+    def update_fig(self):
+        self._fig.update_xaxes(
+            title_text=self._str_coord1,
+            range=self.x_range,
+            **self.axes_config
+        )
+
+        self._fig.update_yaxes(
+            title_text=self._str_coord2,
+            range=self.y_range,
+            **self.axes_config
+        )
+        
+        self._fig.update_layout(
+            self._layout,
+            title={ "text":self.title, "x":0.5, "y":0.95, "font":{"size":15} },
+            plot_bgcolor = '#FFFFFF',
+            hovermode="closest"
+        )
 
 class AnalysisMixin(Step):
     """
@@ -29,8 +135,8 @@ class AnalysisMixin(Step):
             self.read_match_dir()
         elif hasattr(args, "tsne_file") and args.tsne_file:
             tsne_df_file = args.tsne_file
-            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
+            self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
             marker_df_file = args.marker_file
             self.marker_df = pd.read_csv(marker_df_file, sep="\t")
         else:
@@ -39,7 +145,6 @@ class AnalysisMixin(Step):
 
         # data
         self.table_dict = None
-        self.feature_tsne = None
 
     @utils.add_log
     def seurat(self, matrix_file, save_rds, genomeDir):
@@ -71,26 +176,6 @@ class AnalysisMixin(Step):
         self.auto_assign.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @staticmethod
-    def get_cluster_tsne(colname, tsne_df, show_colname=True):
-        """
-        tSNE_1	tSNE_2	cluster Gene_Counts
-        return data list
-        """
-
-        sum_df = tsne_df.groupby([colname]).agg("count").iloc[:, 0]
-        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-        res = []
-        for cluster in sorted(tsne_df[colname].unique()):
-            sub_df = tsne_df[tsne_df[colname] == cluster]
-            if show_colname:
-                name = f"{colname} {cluster}({percent_df[cluster]}%)"
-            else:
-                name = f"{cluster}({percent_df[cluster]}%)"
-            tSNE_1 = list(sub_df.tSNE_1)
-            tSNE_2 = list(sub_df.tSNE_2)
-            res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
-        return res
 
     def get_table_dict(self, marker_table):
         self.table_dict = Step.get_table(
@@ -114,16 +199,6 @@ class AnalysisMixin(Step):
 
         return marker_df
 
-    def get_feature_tsne(self, feature_name):
-        """
-        return data dic
-        """
-        tsne_df = self.tsne_df
-        tSNE_1 = list(tsne_df.tSNE_1)
-        tSNE_2 = list(tsne_df.tSNE_2)
-        Gene_Counts = list(tsne_df.Gene_Counts)
-        res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "counts": Gene_Counts, 'feature_name':feature_name}
-        self.feature_tsne = res
 
     def read_match_dir(self):
         """
@@ -133,145 +208,9 @@ class AnalysisMixin(Step):
         if self.match_dir:
             match_dict = utils.parse_match_dir(self.match_dir)
             tsne_df_file = match_dict['tsne_coord']
-            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
+            self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
             marker_df_file = match_dict['markers']
             self.marker_df = pd.read_csv(marker_df_file, sep="\t")
 
-    @utils.add_log
-    def continuous_tsne_plot(self):
-        pass
 
-    @utils.add_log
-    def discrete_tsne_plot(self, feature_name):
-        tsne_data = self.tsne_df
-        sum_df = tsne_data.groupby([feature_name]).agg("count").iloc[:, 0]
-        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-        res_dict = defaultdict(int)
-        res_list = []
-        for cluster in sorted(tsne_data[feature_name].unique()):
-            name = f"{feature_name} {cluster}({percent_df[cluster]}%)"
-            res_dict[cluster]= name
-            res_list.append(name)
-        tsne_data['name'] = 'name'
-        tsne_data.name = tsne_data.cluster.map(res_dict)
-        x_ = math.ceil(max(abs(tsne_data["tSNE_1"])))
-        y_ = math.ceil(max(abs(tsne_data["tSNE_2"])))
-        x_range,y_range = [-x_,x_],[-y_,y_]
-        title=f"t-SNE plot Colored by {feature_name}"
-        layout = {
-            "height": 313,
-            "width": 400,
-            "margin": {
-                "l": 45,
-                "r": 35,
-                "b": 30,
-                "t": 30,}
-                }
-        config = {
-            "displayModeBar": True, 
-            "staticPlot": False, 
-            "showAxisDragHandles": False, 
-            "modeBarButtons": [["toImage", "resetScale2d"]], 
-            "scrollZoom": True,
-            "displaylogo": False
-            }
-        
-        fig_clusters = px.scatter(data_frame=tsne_data,
-                                 title=title,
-                                 x="tSNE_1", 
-                                 y="tSNE_2",
-                                 color="name",
-                                 labels={"name":feature_name},
-                                 category_orders={"name":res_list})                               
-        fig_clusters.update_yaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE2',
-                         range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig_clusters.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
-                         range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig_clusters.update_layout(layout,title={"text":title, "x":0.5,"y":0.95,"font":{"size":15}},
-                          plot_bgcolor = '#FFFFFF',hovermode="closest")
-        div_clusters = plotly.offline.plot(fig_clusters, include_plotlyjs=True, output_type='div',config=config)
-
-        return div_clusters
-
-
-    @utils.add_log
-    def tsne_plot(self):
-        """
-        Replace tsne_plot in HTML
-        """
-        import math
-        import plotly
-        import plotly.graph_objs as go
-        import plotly.express as px
-        from collections import defaultdict
-
-        data = f'{self.out_prefix}_tsne_coord.tsv'
-        colnames = ["id","tsne_1","tsne_2","cluster","gene_counts"]
-        tsne_data = pd.read_csv(data,sep="\t",header=0,names=colnames)
-        sum_df = tsne_data.groupby(['cluster']).agg("count").iloc[:, 0]
-        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-        res_dict = defaultdict(int)
-        res_list = []
-        for cluster in sorted(tsne_df['cluster'].unique()):
-            name = f"cluster {cluster}({percent_df[cluster]}%)"
-            res_dict[cluster]= name
-            res_list.append(name)
-        tsne_df['name'] = 'name'
-        tsne_df.name = tsne_df.cluster.map(res_dict)
-        x_ = math.ceil(max(abs(tsne_df["tsne_1"])))
-        y_ = math.ceil(max(abs(tsne_df["tsne_2"])))
-        x_range,y_range = [-x_,x_],[-y_,y_]
-        layout = {
-            "height": 313,
-            "width": 400,
-            "margin": {
-                "l": 45,
-                "r": 35,
-                "b": 30,
-                "t": 30,}
-                }
-        config = {
-            "displayModeBar": True, 
-            "staticPlot": False, 
-            "showAxisDragHandles": False, 
-            "modeBarButtons": [["toImage", "resetScale2d"]], 
-            "scrollZoom": True,
-            "displaylogo": False
-            }
-        
-        fig_clusters = px.scatter(data_frame=tsne_df,
-                                 title="t-SNE plot Colored by Clusters",
-                                 x="tsne_1", 
-                                 y="tsne_2",
-                                 color="name",
-                                 labels={"name":"cluster"},
-                                 category_orders={"name":res_list})                               
-        fig_clusters.update_yaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE2',
-                         range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig_clusters.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
-                         range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig_clusters.update_layout(layout,title={"text":"t-SNE plot Colored by Clusters","x":0.5,"y":0.95,"font":{"size":15}},
-                          plot_bgcolor = '#FFFFFF',hovermode="closest")
-        div_clusters = plotly.offline.plot(fig_clusters, include_plotlyjs=True, output_type='div',config=config)
-        fig_gene = go.Figure()
-        fig_gene.add_trace(go.Scatter(x = tsne_df['tsne_1'],y = tsne_df['tsne_2'],mode = 'markers',
-                           marker = go.scatter.Marker(opacity=0.9,size=4,color=tsne_df['gene_counts'],colorscale='Jet',
-                                                      colorbar=go.scatter.marker.ColorBar(title='Gene Counts')),
-                           textposition='top center'))
-        fig_gene.update_yaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE2',
-                         range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig_gene.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
-                         range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig_gene.update_layout(layout,title={"text":"t-SNE plot Colored by Gene Counts","x":0.5,"y":0.95,"font":{"size":15}},
-                          plot_bgcolor = '#FFFFFF',hovermode="closest")
-        div_gene = plotly.offline.plot(fig_gene, include_plotlyjs=True, output_type='div',config=config)
-        downsample = {"downsample_clusters":div_clusters, "downsample_gene":div_gene}
-        self.add_data(downsample=downsample)   
-
-    def get_analysis_data(self, feature_name):
-        self.read_match_dir()
-        self.cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
-        self.get_feature_tsne(feature_name)
-        marker_table = self.get_marker_table()
-        self.get_table_dict(marker_table)

@@ -37,7 +37,7 @@ class Analysis_rna_virus(AnalysisMixin):
         """
         return data dic
         """
-        df = pd.merge(self.tsne_df, self.virus_df, on="barcode", how="left")
+        df = pd.merge(self.df_tsne, self.virus_df, on="barcode", how="left")
         df["UMI"] = df["UMI"].fillna(0)
         tSNE_1 = list(df.tSNE_1)
         tSNE_2 = list(df.tSNE_2)

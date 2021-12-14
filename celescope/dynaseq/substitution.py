@@ -41,7 +41,6 @@ class Subsitution(Step):
 
         self.report_prepare(div_item)
 
-
     @utils.add_log
     def get_sub_tag(self,bam):
         bamfile = pysam.AlignmentFile(bam, 'rb')
