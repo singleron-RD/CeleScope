@@ -1,12 +1,10 @@
 from re import A
+
 import pandas as pd
-import math
-import plotly
-import plotly.graph_objs as go
-import plotly.express as px
 from collections import defaultdict
 
-from celescope.tools.analysis_mixin import AnalysisMixin, Tsne_plot
+from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 

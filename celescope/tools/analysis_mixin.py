@@ -1,124 +1,12 @@
 import subprocess
 
-import math
-from collections import defaultdict
-
 import pandas as pd
-import plotly
-import plotly.express as px
 
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.rna.mkref import parse_genomeDir_rna
 from celescope.tools.step import Step
 
-
-PLOTLY_CONFIG =  {
-    "displayModeBar": True, 
-    "staticPlot": False, 
-    "showAxisDragHandles": False, 
-    "modeBarButtons": [["toImage", "resetScale2d"]], 
-    "scrollZoom": False,
-    "displaylogo": False
-}
-
-
-class Tsne_plot():
-
-    def __init__(self, df_tsne, feature_name, discrete=True):
-        self.df_tsne = df_tsne
-        self.feature_name = feature_name
-        self.discrete = discrete
-        self.title = f"t-SNE plot Colored by {feature_name}"
-        
-        self._layout = {}
-        self._dot_size = 4
-        self._str_coord1 = "tSNE_1"
-        self._str_coord2 = "tSNE_2"
-        self.axes_config = {
-            'showgrid': True,
-            'gridcolor': '#F5F5F5',
-            'showline': False, 
-            'ticks': None,
-            'zeroline': True,
-            'zerolinecolor': 'black',
-            'zerolinewidth': 0.7,
-        }
-        x_ = math.ceil(max(abs(df_tsne[self._str_coord1])))
-        y_ = math.ceil(max(abs(df_tsne[self._str_coord2])))
-        self.x_range, self.y_range = [-x_,x_], [-y_,y_] 
-
-        self.scatter_config = {
-            'data_frame': df_tsne,
-            'title': self.title,
-            'x': self._str_coord1, 
-            'y': self._str_coord2,
-            'size_max': self._dot_size,
-            'opacity': 0.9,
-            'color': self.feature_name,
-            'color_continuous_scale': px.colors.sequential.Jet,
-        }
-
-        self._fig = None
-
-        if discrete:
-            self.discrete_tsne_plot()
-        else:
-            self.continuous_tsne_plot()
-        self.update_fig()
-
-        self.plotly_div = plotly.offline.plot(self._fig, include_plotlyjs=True, output_type='div', config=PLOTLY_CONFIG)
-
-    @utils.add_log
-    def discrete_tsne_plot(self):
-        
-        df_tsne = self.df_tsne
-        feature_name = self.feature_name
-
-        sum_df = df_tsne.groupby([feature_name]).agg("count").iloc[:, 0]
-        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-        res_dict = defaultdict(int)
-        res_list = []
-        for cluster in sorted(df_tsne[feature_name].unique()):
-            name = f"{cluster}({percent_df[cluster]}%)"
-            res_dict[cluster]= name
-            res_list.append(name)
-
-        df_tsne[self.feature_name] = df_tsne[self.feature_name].map(res_dict)
-
-        self._fig = px.scatter(
-            **self.scatter_config,
-            category_orders={"name":res_list}
-        )                               
-
-    @utils.add_log
-    def continuous_tsne_plot(self):
-
-        self._fig = px.scatter(
-            **self.scatter_config,
-        )   
-
-
-
-    def update_fig(self):
-        self._fig.update_xaxes(
-            title_text=self._str_coord1,
-            range=self.x_range,
-            **self.axes_config
-        )
-
-        self._fig.update_yaxes(
-            title_text=self._str_coord2,
-            range=self.y_range,
-            **self.axes_config
-        )
-        
-        self._fig.update_layout(
-            self._layout,
-            title={ "text":self.title, "x":0.5, "y":0.95, "font":{"size":15} },
-            plot_bgcolor = '#FFFFFF',
-            hovermode="closest"
-        )
 
 class AnalysisMixin(Step):
     """
