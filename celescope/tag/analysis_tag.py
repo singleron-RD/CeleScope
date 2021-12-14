@@ -57,15 +57,6 @@ class Analysis_tag(Step, AnalysisMixin):
         x_ = math.ceil(max(abs(tsne_data["tSNE_1"])))
         y_ = math.ceil(max(abs(tsne_data["tSNE_2"])))
         x_range,y_range = [-x_,x_],[-y_,y_] 
-        layout = {
-            "height": 313,
-            "width": 400,
-            "margin": {
-                "l": 45,
-                "r": 35,
-                "b": 30,
-                "t": 30,}
-                }
         config = {
             "displayModeBar": True, 
             "staticPlot": False, 
@@ -87,7 +78,7 @@ class Analysis_tag(Step, AnalysisMixin):
                          range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
         fig.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
                          range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig.update_layout(layout,title={"text":f"t-SNE plot Colored by {type}","x":0.5,"y":0.95,"font":{"size":15}},
+        fig.update_layout(title={"text":f"t-SNE plot Colored by {type}","x":0.5,"y":0.95,"font":{"size":15}},
                           plot_bgcolor = '#FFFFFF',hovermode="closest")
         div_item = plotly.offline.plot(fig, include_plotlyjs=True, output_type='div',config=config)
         return div_item
