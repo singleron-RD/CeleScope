@@ -26,7 +26,7 @@ class Tsne_plot():
         self.feature_name = feature_name
         self.discrete = discrete
         title_feature_name = feature_name[0].upper() + feature_name[1:]
-        self.title = f"t-SNE plot Colored by {feature_name}"
+        self.title = f"t-SNE plot Colored by {title_feature_name}"
         
         self._layout = {}
         self._dot_size = 4
