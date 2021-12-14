@@ -1,31 +1,16 @@
 from re import A
+
 import pandas as pd
-import math
-import plotly
-import plotly.graph_objs as go
-import plotly.express as px
 from collections import defaultdict
 
 from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 
 
-@utils.add_log
-def generate_matrix(gtf_file, matrix_file):
 
-    id_name = utils.get_id_name_dict(gtf_file)
-    matrix = pd.read_csv(matrix_file, sep="\t")
-
-    gene_name_col = matrix.geneID.apply(lambda x: id_name[x])
-    matrix.geneID = gene_name_col
-    matrix = matrix.drop_duplicates(subset=["geneID"], keep="first")
-    matrix = matrix.dropna()
-    matrix = matrix.rename({"geneID": ""}, axis='columns')
-    return matrix
-
-
-class Analysis(Step, AnalysisMixin):
+class Analysis(AnalysisMixin):
     """
     Features
     - Cell clustering with Seurat.
@@ -48,8 +33,9 @@ class Analysis(Step, AnalysisMixin):
     """
 
     def __init__(self, args,display_title=None):
-        Step.__init__(self, args, display_title=display_title)
-        AnalysisMixin.__init__(self, args)
+
+        super().__init__(args, display_title)
+
         self.matrix_file = args.matrix_file
         self.genomeDir = args.genomeDir
         self.type_marker_tsv = args.type_marker_tsv
@@ -83,113 +69,25 @@ class Analysis(Step, AnalysisMixin):
             content='Adjusted p-value, based on bonferroni correction using all genes in the dataset'
         )
 
-    def plot_data(self):
-        """
-        Generate the data needed for the tsne_plot
-        """
-        data = f'{self.outdir}/{self.sample}_tsne_coord.tsv'
-        colnames = ["id","tsne_1","tsne_2","cluster","gene_counts"]
-        tsne_data = pd.read_csv(data,sep="\t",header=0,names=colnames)
-        sum_df = tsne_data.groupby(['cluster']).agg("count").iloc[:, 0]
-        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-        res_dict = defaultdict(int)
-        res_list = []
-        for cluster in sorted(tsne_data['cluster'].unique()):
-            name = f"cluster {cluster}({percent_df[cluster]}%)"
-            res_dict[cluster]= name
-            res_list.append(name)
-        tsne_data['name'] = 'name'
-        tsne_data['size'] = 4
-        tsne_data.name = tsne_data.cluster.map(res_dict)    
-        return tsne_data,res_list
-
-    @utils.add_log
-    def cluster_plot(self,cluster_data,res_list):
-        """
-        Replace cluster of tsne_plot in HTML
-        """
-        x_ = math.ceil(max(abs(cluster_data["tsne_1"])))
-        y_ = math.ceil(max(abs(cluster_data["tsne_2"])))
-        x_range,y_range = [-x_,x_],[-y_,y_] 
-        config = {
-            "displayModeBar": True, 
-            "staticPlot": False, 
-            "showAxisDragHandles": False, 
-            "modeBarButtons": [["toImage", "resetScale2d"]], 
-            "scrollZoom": True,
-            "displaylogo": False
-            }
-        fig = px.scatter(data_frame=cluster_data,
-                                 title="t-SNE plot Colored by Clusters",
-                                 x="tsne_1", 
-                                 y="tsne_2",
-                                 color="name",
-                                 opacity=0.9,
-                                 size='size',
-                                 size_max=4,
-                                 labels={"name":"cluster"},
-                                 category_orders={"name":res_list})                               
-        fig.update_yaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE2',
-                         range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
-                         range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig.update_layout(title={"text":"t-SNE plot Colored by Clusters","x":0.5,"y":0.95,"font":{"size":15}},
-                          plot_bgcolor = '#FFFFFF',hovermode="closest")
-        div_clusters = plotly.offline.plot(fig, include_plotlyjs=True, output_type='div',config=config)
-        return div_clusters
-
-    @utils.add_log
-    def gene_counts_plot(self,gene_counts_data):
-        """
-        Replace gene counts of tsne_plot in HTML
-        """
-        x_ = math.ceil(max(abs(gene_counts_data["tsne_1"])))
-        y_ = math.ceil(max(abs(gene_counts_data["tsne_2"])))
-        x_range,y_range = [-x_,x_],[-y_,y_] 
-        config = {
-            "displayModeBar": True, 
-            "staticPlot": False, 
-            "showAxisDragHandles": False, 
-            "modeBarButtons": [["toImage", "resetScale2d"]], 
-            "scrollZoom": True,
-            "displaylogo": False
-            }
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x = gene_counts_data['tsne_1'],y = gene_counts_data['tsne_2'],mode = 'markers',
-                           marker = go.scatter.Marker(opacity=0.9,size=4,color=gene_counts_data['gene_counts'],colorscale='Jet',
-                                                      colorbar=go.scatter.marker.ColorBar(title='Gene Counts')),
-                           textposition='top center'))
-        fig.update_yaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE2',
-                         range=y_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig.update_xaxes(showgrid=True,gridcolor='#F5F5F5',showline=False, ticks=None,title_text='t-SNE1',
-                         range=x_range,zeroline=True,zerolinecolor='black',zerolinewidth=0.7)
-        fig.update_layout(title={"text":"t-SNE plot Colored by Gene Counts","x":0.5,"y":0.95,"font":{"size":15}},
-                          plot_bgcolor = '#FFFFFF',hovermode="closest")
-        div_gene = plotly.offline.plot(fig, include_plotlyjs=True, output_type='div',config=config)
-        return div_gene
-
-    @utils.add_log
-    def add_plot(self,cluster,gene):
-        downsample = {"downsample_clusters":cluster, "downsample_gene":gene}
-        self.add_data(downsample=downsample)  
-
 
     def run(self):
 
-        self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
+        #self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
         if self.auto_assign_bool:
             self.auto_assign(self.type_marker_tsv)
 
-        self.get_analysis_data(feature_name="Gene Counts")
-        self.add_data(cluster_tsne=self.cluster_tsne)
-        self.add_data(feature_tsne=self.feature_tsne)
-        self.add_data(table_dict=self.table_dict)
         self.add_help()
-        tsne_data,res_list = self.plot_data()
-        div_cluster = self.cluster_plot(tsne_data,res_list=res_list)
-        div_gene = self.gene_counts_plot(tsne_data)
-        self.add_plot(cluster=div_cluster,gene=div_gene)
+
+        self.read_match_dir()
+
+        tsne_cluster = Tsne_plot(self.df_tsne, 'cluster')
+        self.add_data(tsne_cluster=tsne_cluster.plotly_div)
+
+        tsne_gene = Tsne_plot(self.df_tsne, 'Gene_Counts', discrete=False)
+        self.add_data(tsne_gene=tsne_gene.plotly_div)
+
+        self.add_data(table_dict=self.table_dict)
+
 
 @utils.add_log
 def analysis(args):

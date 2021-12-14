@@ -142,7 +142,7 @@ class Count(Step):
             "staticPlot": False, 
             "showAxisDragHandles": False, 
             "modeBarButtons": [["toImage", "resetScale2d"]], 
-            "scrollZoom": True,
+            "scrollZoom": False,
             "displaylogo": False,
             #"editable":True
             }

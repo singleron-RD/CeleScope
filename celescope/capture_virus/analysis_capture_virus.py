@@ -29,7 +29,7 @@ def get_opts_analysis_capture_virus(parser, sub_program):
         parser.add_argument('--virus_file', help='virus UMI count file', required=True)
 
 
-class Analysis_capture_virus(Step, AnalysisMixin):
+class Analysis_capture_virus(AnalysisMixin):
 
     def __init__(self, args):
         Step.__init__(self, args)
@@ -64,7 +64,7 @@ class Analysis_capture_virus(Step, AnalysisMixin):
             virus_file = self.virus_file
         virus_df = pd.read_csv(virus_file, sep="\t")
 
-        cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
+        cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.df_tsne)
         virus_tsne = self.get_virus_tsne(virus_df)
         table_dict = self.get_table_dict(self.get_marker_table())
 
@@ -74,7 +74,7 @@ class Analysis_capture_virus(Step, AnalysisMixin):
         self._clean_up()
 
     def get_virus_tsne(self, virus_df):
-        virus_tsne_df = pd.merge(self.tsne_df, virus_df, on="barcode", how="left")
+        virus_tsne_df = pd.merge(self.df_tsne, virus_df, on="barcode", how="left")
         virus_tsne_df.to_csv(self.virus_tsne_file, sep='\t')
         
         #get the sum of virus

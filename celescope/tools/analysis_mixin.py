@@ -8,30 +8,31 @@ from celescope.rna.mkref import parse_genomeDir_rna
 from celescope.tools.step import Step
 
 
-class AnalysisMixin():
+class AnalysisMixin(Step):
     """
     mixin class for analysis
-    child class must inherite Step class
     """
 
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, args, display_title=None):
+        
+        super().__init__(args, display_title=display_title)
+
         self.match_dir = None
         if hasattr(args, "match_dir") and args.match_dir:
             self.match_dir = args.match_dir
             self.read_match_dir()
         elif hasattr(args, "tsne_file") and args.tsne_file:
             tsne_df_file = args.tsne_file
-            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
+            self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
             marker_df_file = args.marker_file
             self.marker_df = pd.read_csv(marker_df_file, sep="\t")
         else:
             self.match_dir = args.outdir + "/../"  # use self
 
+
         # data
         self.table_dict = None
-        self.feature_tsne = None
 
     @utils.add_log
     def seurat(self, matrix_file, save_rds, genomeDir):
@@ -63,26 +64,6 @@ class AnalysisMixin():
         self.auto_assign.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @staticmethod
-    def get_cluster_tsne(colname, tsne_df, show_colname=True):
-        """
-        tSNE_1	tSNE_2	cluster Gene_Counts
-        return data list
-        """
-
-        sum_df = tsne_df.groupby([colname]).agg("count").iloc[:, 0]
-        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-        res = []
-        for cluster in sorted(tsne_df[colname].unique()):
-            sub_df = tsne_df[tsne_df[colname] == cluster]
-            if show_colname:
-                name = f"{colname} {cluster}({percent_df[cluster]}%)"
-            else:
-                name = f"{cluster}({percent_df[cluster]}%)"
-            tSNE_1 = list(sub_df.tSNE_1)
-            tSNE_2 = list(sub_df.tSNE_2)
-            res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
-        return res
 
     def get_table_dict(self, marker_table):
         self.table_dict = Step.get_table(
@@ -106,16 +87,6 @@ class AnalysisMixin():
 
         return marker_df
 
-    def get_feature_tsne(self, feature_name):
-        """
-        return data dic
-        """
-        tsne_df = self.tsne_df
-        tSNE_1 = list(tsne_df.tSNE_1)
-        tSNE_2 = list(tsne_df.tSNE_2)
-        Gene_Counts = list(tsne_df.Gene_Counts)
-        res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "counts": Gene_Counts, 'feature_name':feature_name}
-        self.feature_tsne = res
 
     def read_match_dir(self):
         """
@@ -125,14 +96,9 @@ class AnalysisMixin():
         if self.match_dir:
             match_dict = utils.parse_match_dir(self.match_dir)
             tsne_df_file = match_dict['tsne_coord']
-            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
+            self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
             marker_df_file = match_dict['markers']
             self.marker_df = pd.read_csv(marker_df_file, sep="\t")
 
-    def get_analysis_data(self, feature_name):
-        self.read_match_dir()
-        self.cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
-        self.get_feature_tsne(feature_name)
-        marker_table = self.get_marker_table()
-        self.get_table_dict(marker_table)
+

@@ -9,7 +9,7 @@ from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT, ROOT_PATH
 
 
-class Analysis_variant(Step, AnalysisMixin):
+class Analysis_variant(AnalysisMixin):
     """
     Features
     - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).

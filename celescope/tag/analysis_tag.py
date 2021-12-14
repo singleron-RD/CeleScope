@@ -10,7 +10,7 @@ from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.tools.step import Step, s_common
 
 
-class Analysis_tag(Step, AnalysisMixin):
+class Analysis_tag(AnalysisMixin):
     """
     Features
     - Combine scRNA-Seq clustering infromation with tag assignment.
