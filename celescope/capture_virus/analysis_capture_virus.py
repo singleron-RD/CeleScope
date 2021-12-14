@@ -29,7 +29,7 @@ def get_opts_analysis_capture_virus(parser, sub_program):
         parser.add_argument('--virus_file', help='virus UMI count file', required=True)
 
 
-class Analysis_capture_virus(Step, AnalysisMixin):
+class Analysis_capture_virus(AnalysisMixin):
 
     def __init__(self, args):
         Step.__init__(self, args)

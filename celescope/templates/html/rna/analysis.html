@@ -19,15 +19,15 @@
 
         <div id="cluster_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
 
-            {{step_summary.downsample.downsample_clusters|safe}}
+          {{step_summary.cluster_tsne|safe}}
         
         </div>
       
-      <div id="feature_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+        <div id="feature_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
 
-        {{step_summary.downsample.downsample_gene|safe}}
-  
-      </div>
+          {{step_summary.cluster_tsne|safe}}
+
+        </div>
     
     {% include "html/utils/table_dict.html" %}
 

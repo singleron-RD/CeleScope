@@ -6,7 +6,7 @@ from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.rna.analysis import get_opts_analysis
 
 
-class Analysis_rna_virus(Step, AnalysisMixin):
+class Analysis_rna_virus(AnalysisMixin):
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
         AnalysisMixin.__init__(self, args)

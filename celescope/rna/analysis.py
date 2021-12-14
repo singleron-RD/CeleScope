@@ -20,7 +20,7 @@ def generate_matrix(gtf_file, matrix_file):
     return matrix
 
 
-class Analysis(Step, AnalysisMixin):
+class Analysis(AnalysisMixin):
     """
     Features
     - Cell clustering with Seurat.
@@ -43,8 +43,9 @@ class Analysis(Step, AnalysisMixin):
     """
 
     def __init__(self, args,display_title=None):
-        Step.__init__(self, args, display_title=display_title)
-        AnalysisMixin.__init__(self, args)
+
+        super().__init__(args, display_title)
+
         self.matrix_file = args.matrix_file
         self.genomeDir = args.genomeDir
         self.type_marker_tsv = args.type_marker_tsv
@@ -153,16 +154,17 @@ class Analysis(Step, AnalysisMixin):
 
     def run(self):
 
-        self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
+        #self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
         if self.auto_assign_bool:
             self.auto_assign(self.type_marker_tsv)
 
         self.get_analysis_data(feature_name="Gene Counts")
-        self.add_data(cluster_tsne=self.cluster_tsne)
+        cluster_tsne = self.discrete_tsne_plot("cluster")
+        self.add_data(cluster_tsne=cluster_tsne)
         self.add_data(feature_tsne=self.feature_tsne)
         self.add_data(table_dict=self.table_dict)
         self.add_help()
-        self.tsne_plot()
+        #self.tsne_plot()
 
 @utils.add_log
 def analysis(args):
