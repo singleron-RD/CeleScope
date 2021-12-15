@@ -18,6 +18,16 @@ PLOTLY_CONFIG =  {
 
 COLORS = px.colors.qualitative.Plotly + px.colors.qualitative.Alphabet
 
+LAYOUT = {
+        "height": 313,
+        "width": 400,
+        "margin": {
+            "l": 45,
+            "r": 35,
+            "b": 30,
+            "t": 30,}
+}
+
 
 class Tsne_plot():
 
@@ -119,4 +129,79 @@ class Tsne_plot():
             title={ "text":self.title, "x":0.5, "y":0.95, "font":{"size":15} },
             plot_bgcolor = '#FFFFFF',
             hovermode="closest"
+        )
+
+class Line_plot():
+    def __init__(self, df_line,index: int):
+        self.df_line = df_line
+        self.index = index
+        self.title = ['Sequencing Saturation','Median Genes per Cell']
+        
+        self._str_coord1 = "Reads Fraction"
+        self._str_coord2 = ["Sequencing Saturation(%)","Median Genes per Cell"]
+
+        self.xaxes_config = {
+            'showgrid': True,
+            'gridcolor': '#F5F5F5',
+            'linecolor':'black',
+            'showline': True, 
+            'ticks': None,
+            'tickmode':'linear',
+            'tick0':0,
+            'dtick':0.5,
+        }
+
+        self.yaxes_config = [{
+            'showgrid': True,
+            'gridcolor': '#F5F5F5',
+            'linecolor':'black',
+            'showline': True, 
+            'ticks': None,
+            'range':[0,100]},
+            {
+            'showgrid': True,
+            'gridcolor': '#F5F5F5',
+            'linecolor':'black',
+            'showline': True, 
+            'ticks': None,
+            'rangemode':'tozero',
+        }]
+
+        self.line_config = {
+            'data_frame': df_line,
+            'title': self.title[index-1],
+            'x': self._str_coord1, 
+            'y': self._str_coord2[index-1],
+        }
+
+        self.line_plot()
+        self.update_fig()
+
+        self.plotly_div = plotly.offline.plot(self._fig, include_plotlyjs=True, output_type='div', config=PLOTLY_CONFIG)
+
+    @utils.add_log
+    def line_plot(self):
+        self._fig = px.line(
+            **self.line_config,
+        )  
+
+    def update_fig(self):
+        index = self.index
+        self._fig.update_xaxes(
+            title_text=self._str_coord1,
+            **self.xaxes_config
+        )
+
+        self._fig.update_yaxes(
+            title_text=self._str_coord2[index-1],
+            **self.yaxes_config[index-1]
+        )
+        
+        self._fig.update_layout(
+            LAYOUT,
+            title={"x":0.5, "y":0.95, "font":{"size":15}},
+            yaxis_zeroline = True,
+            showlegend = False,
+            plot_bgcolor = '#FFFFFF',
+            hovermode = "closest"
         )

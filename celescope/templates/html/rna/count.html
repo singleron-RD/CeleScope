@@ -10,7 +10,13 @@
     
     <hr />
 
-    {{ step_summary.downsample|safe }}
+    <div id="line_saturation" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+      {{step_summary.line_saturation|safe}}        
+    </div>
+  
+    <div id="line_median" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+      {{step_summary.line_median|safe}}
+    </div>
 
     <div class="clear" ></div>
   </div>
