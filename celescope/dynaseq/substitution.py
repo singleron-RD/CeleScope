@@ -11,7 +11,7 @@ from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 
 
-class Subsitution(Step):
+class Substitution(Step):
     """
     Features
     - Computes the overall conversion rates in reads and plots a barplot.
@@ -195,7 +195,7 @@ class Subsitution(Step):
 @utils.add_log
 def substitution(args):
 
-    with Subsitution(args) as runner:
+    with Substitution(args) as runner:
         runner.run()
 
 def get_opts_substitution(parser, sub_program):

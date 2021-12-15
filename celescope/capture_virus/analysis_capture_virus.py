@@ -21,7 +21,7 @@ def analysis_capture_virus(args):
         runner.run()
 
 def get_opts_analysis_capture_virus(parser, sub_program):
-    parser.add_argument("--umi_threshold", help='method to find virus UMI threshold',
+    parser.add_argument("--umi_threshold_method", help='method to find virus UMI threshold',
                         choices=['otsu', 'auto', 'none'], default='otsu')
     if sub_program:
         s_common(parser)
@@ -31,47 +31,43 @@ def get_opts_analysis_capture_virus(parser, sub_program):
 
 class Analysis_capture_virus(AnalysisMixin):
 
-    def __init__(self, args):
-        Step.__init__(self, args)
-        AnalysisMixin.__init__(self, args)
+    def __init__(self, args, display_title):
+        super().__init__(args, display_title)
+
         self.virus_file = args.virus_file
-        self.umi_threshold = args.umi_threshold
+        self.df_virus= pd.read_csv(virus_file, sep="\t")
+        self.umi_threshold_method = args.umi_threshold_method
 
         # parse
         _barcodes, self.n_cell = utils.read_barcode_file(self.match_dir)
 
         # set
-        self.threshold = "None"
-        self.add_metric(
-            name='Number of cells',
-            value=self.n_cell,
-        )
+        self.umi_threshold = 1
 
         # out
-        self.virus_tsne_file = f'{self.outdir}/{self.sample}_virus_tsne.tsv'
-        self.auto_virus_file = f'{self.outdir}/{self.sample}_auto_UMI_count.tsv'
-        self.otsu_virus_file = f'{self.outdir}/{self.sample}_otsu_UMI_count.tsv'
+        self.filter_virus_tsne_file = f'{self.outdir}/{self.sample}_filtered_virus_tsne.tsv'
         self.otsu_plot = f'{self.outdir}/{self.sample}_otsu_plot.png'
     
-    def run(self):
-        if self.umi_threshold == 'otsu':
-            self.otsu_threshold()
-            virus_file = self.otsu_virus_file
-        elif self.umi_threshold == 'auto':
+    def get_umi_threshold(self):
+        if self.umi_threshold_method == 'auto':
             self.auto_threshold()
-            virus_file = self.auto_virus_file
-        else:
-            virus_file = self.virus_file
-        virus_df = pd.read_csv(virus_file, sep="\t")
+        elif self.umi_threshold_method == 'otsu':
+            self.otsu_threshold()
 
-        cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.df_tsne)
-        virus_tsne = self.get_virus_tsne(virus_df)
-        table_dict = self.get_table_dict(self.get_marker_table())
 
-        self.add_data(cluster_tsne=cluster_tsne)
-        self.add_data(virus_tsne=virus_tsne)
-        self.add_data(table_dict=table_dict)
-        self._clean_up()
+    def filter_write_filter_tsne(self):
+        df_filter = self.df_virus[self.df_virus["UMI"] >= threshold]
+        df_filter_tsne = pd.merge(self.df_tsne, virus_df, on="barcode", how="left")
+        df_filter.fillna(0, inplace=True)
+        df_filter.to_csv(self.auto_virus_file, sep='\t')
+
+    def run(self):
+        self.get_umi_threshold()
+        self.filter_write_virus_df()
+
+        self.add_data(tsne_cluster=tsne_cluster)
+        self.add_data(tsne_virus=tsne_virus)
+
 
     def get_virus_tsne(self, virus_df):
         virus_tsne_df = pd.merge(self.df_tsne, virus_df, on="barcode", how="left")
@@ -84,10 +80,13 @@ class Analysis_capture_virus(AnalysisMixin):
         #Total cell each cluster
         total_cell_cluster = virus_tsne_df.groupby("cluster")["barcode"].count()
         total_cell = sum(total_cell_cluster)
-        #add sum of virus to metric
-        self.add_metric(name = 'Number of Cells with Virus',
-                        value = total_virus,
-                        total = total_cell)
+
+        self.add_metric(
+            name='Number of Cells with Virus',
+            value=total_virus,
+            total=total_cell,
+            help_info='Number of cells detected with virus',
+        )
         cluster = 1    
         for num_virus in cluster_virus:
             cluster_cell_num = total_cell_cluster[cluster]
@@ -112,13 +111,44 @@ class Analysis_capture_virus(AnalysisMixin):
         thresh = threshold_otsu(hist)
         makePlot(hist, thresh, self.otsu_plot)
 
-        threshold = int(10 ** thresh)
+        self.threshold = int(10 ** thresh)
+
+    @utils.add_log
+    def auto_threshold(self):
+        """
+        threhold = 99 percentile of all cell virus UMIs / 10
+        """
+        umis = self.df_virus["UMI"]
+
+        cell_99th = len(umis) // 100
+        sorted_umis = sorted(umis, reverse=True)
+        percentile_99_umi = sorted_umis[cell_99th]
+        self.threshold = int(percentile_99_umi / 10)
+    
+
+    def add_metrics(self):
+
         self.add_metric(
-            name='Otsu UMI Threshold',
-            value=threshold,
+            name='Number of cells',
+            value=self.n_cell,
+            help_info='Number of cells in the matched scRNA-Seq sample',
         )
-        df_thresh = df_virus[df_virus["UMI"] >= threshold]
-        df_thresh.to_csv(self.otsu_virus_file, sep='\t')
+
+        self.add_metric(
+            name='UMI Threshold Method',
+            value=self.umi_threshold_method,
+            help_info='Method to find UMI threshold',
+        )
+
+        self.add_metric(
+            name='UMI Threshold',
+            value=self.umi_threshold,
+            help_info='UMI threshold',
+        )
+        df_threshold = df_virus[df_virus["UMI"] >= threshold]
+        df_threshold.to_csv(self.otsu_virus_file, sep='\t')
+
+
 
     @utils.add_log
     def auto_threshold(self):

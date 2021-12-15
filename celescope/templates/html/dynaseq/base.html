@@ -15,20 +15,23 @@
     {% include "html/rna/count.html"%}
     {% endif %}
 
-    {% if analysis_rna_summary is defined %}
-    {% set step_summary = analysis_rna_summary %}
+    {% if analysis_summary is defined %}
+    {% set step_summary = analysis_summary %}
     {% include "html/rna/analysis.html"%}
     {% endif %}
 
-    {% if substitution is defined %}
+    {% if substitution_summary is defined %}
+    {% set step_summary = substitution_summary %}
     {% include "html/dynaseq/substitution.html"%}
     {% endif %}
 
-    {% if replacement is defined %}
+    {% if replacement_summary is defined %}
+    {% set step_summary = replacement_summary  %}
     {% include "html/dynaseq/replacement.html"%}
     {% endif %}
 
-    {% if replace_tsne is defined %}
+    {% if replace_tsne_summary is defined %}
+    {% set step_summary = replace_tsne_summary %}
     {% include "html/dynaseq/replace_tsne.html"%}
     {% endif %}
       
