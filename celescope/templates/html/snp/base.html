@@ -25,7 +25,7 @@
     {% include "html/utils/step.html"%}
     {% endif %}
 
-    {% if table_dict is defined %}
+    {% if analysis_snp_summary is defined %}
     {% set step_summary = analysis_snp_summary %}
     {% include "html/snp/analysis_snp.html" %}
     {% endif %}

@@ -17,9 +17,10 @@
         {% include "./html/utils/table_script/rna.html" %}
     {% elif step_summary.table_dict.id == "clonetypes" %}
         {% include "./html/utils/table_script/vdj.html" %}
+    {% elif step_summary.table_dict.id == "variant" %}
+        {% include "./html/utils/table_script/snp.html" %}
     {% endif %}
 
-    <hr />
     <h3>{{step_summary.table_dict['title']}}</h3>
     <div style=" margin-left: 3%; margin-right:3%;">
         {{step_summary.table_dict['table'] | safe}}

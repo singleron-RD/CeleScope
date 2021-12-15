@@ -9,7 +9,7 @@ from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT, ROOT_PATH
 
 
-class Analysis_variant(AnalysisMixin):
+class Analysis_snp(AnalysisMixin):
     """
     Features
     - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
@@ -21,9 +21,8 @@ class Analysis_variant(AnalysisMixin):
 
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
-        AnalysisMixin.__init__(self, args)
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title)
         self.vcf_file = args.vcf
         self.annovar_config = args.annovar_config
         self.match_dir = args.match_dir
@@ -137,14 +136,62 @@ class Analysis_variant(AnalysisMixin):
         fig.savefig(f'{self.outdir}/{self.sample}_variant_top5.jpg',dpi = 600)
         pd.DataFrame({"top5_variant_shared_cells":share_cid}).to_csv(f'{self.outdir}/{self.sample}_top5_shared_cells.tsv',sep = '\t',index = None)
 
+    def add_help(self):
+        '''
+            <p> Chrom : chromosome name.</p>
+            <p> Pos : the 1-based position of the variation on the given sequence..</p>
+            <p> Alleles : REF(reference base or bases in the case of an indel) - ALT(alternative alleles).</p>
+            <p> 0/0, 0/1, 1/1: number of cells with each genotype.</p>
+            <p> Gene : gene symbol.</p>
+            <p> mRNA :  A standard nomenclature is used in specifying the sequence changes.</p>
+            <p> Protein :  A standard nomenclature is used in specifying the sequence changes.</p>
+            <p> COSMIC : COSMIC annotation.</p>
+        '''
+        self.add_help_content(
+            name='Chrom',
+            content='Chromosome name'
+        )
+        self.add_help_content(
+            name='Pos',
+            content='the 1-based position of the variation on the given sequence'
+        )
+        self.add_help_content(
+            name='Alleles',
+            content='REF(reference base or bases in the case of an indel) - ALT(alternative alleles)'
+        )
+        self.add_help_content(
+            name='0/0, 0/1, 1/1',
+            content='number of cells with each genotype'
+        )
+        self.add_help_content(
+            name='Gene',
+            content='gene symbol'
+        )
+        self.add_help_content(
+            name='mRNA',
+            content='A standard nomenclature is used in specifying the sequence changes'
+        )
+        self.add_help_content(
+            name='Protein',
+            content='A standard nomenclature is used in specifying the sequence changes'
+        )
+        self.add_help_content(
+            name='COSMIC',
+            content='COSMIC annotation'
+        )
+
+
     def run(self):
+        '''
         self.write_gt()
         self.write_ncell()
         self.run_annovar()
+        '''
         self.get_variant_table()
-        table_dict = self.get_table_dict(title='Variant table', table_id='variant_table', df_table=self.variant_table)
+
+        self.add_help()
+        table_dict = self.get_table_dict(title='Variant table', table_id='variant', df_table=self.variant_table)
         self.add_data(table_dict=table_dict)
-        self._clean_up()
         #self.get_venn_plot()
 
     def read_annovar_config(self):
@@ -159,7 +206,7 @@ class Analysis_variant(AnalysisMixin):
 
 @utils.add_log
 def analysis_snp(args):
-    with Analysis_variant(args) as runner:
+    with Analysis_snp(args, display_title='Analysis') as runner:
         runner.run()
 
 

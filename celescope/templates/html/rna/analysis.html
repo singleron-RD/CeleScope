@@ -17,15 +17,17 @@
 
         {% include "html/utils/help_info.html" %}
 
-        <div id="cluster_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+        <div style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
           {{step_summary.tsne_cluster|safe}}        
         </div>
       
-        <div id="feature_tsne" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+        <div style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
           {{step_summary.tsne_gene|safe}}
         </div>
-    
-    {% include "html/utils/table_dict.html" %}
+        
+        <hr />
+
+        {% include "html/utils/table_dict.html" %}
 
     <div class="clear" ></div>
     </div>

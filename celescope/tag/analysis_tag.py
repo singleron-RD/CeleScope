@@ -3,7 +3,6 @@ import math
 import plotly
 import plotly.express as px
 from collections import defaultdict
-from celescope.snp.analysis_snp import Analysis_variant
 
 import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin
