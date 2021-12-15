@@ -129,7 +129,7 @@ class Check(Step):
             except:
                 pass
         
-        with open(self.html,'w',encoding='utf-8') as fp:
+        with open(f'{self.outdir}/{self.sample}_report.html','w',encoding='utf-8') as fp:
             fp.write(sp.prettify())
 
     def run(self):    
