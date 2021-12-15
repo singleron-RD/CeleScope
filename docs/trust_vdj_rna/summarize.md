@@ -12,6 +12,7 @@
 - `04.summarize/{sample}_chain_filtered_contig.fasta`Keep the 2 contigs with the highest UMI. This is a subset of filtered_contig.fasta.
 - `04.summarize/{sample}_one_chain_contig.csv`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.csv.
 - `04.summarize/{sample}_one_chain_contig.fasta`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.fasta.
+ 
 
 
 ## Arguments

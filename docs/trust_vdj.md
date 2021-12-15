@@ -48,7 +48,7 @@ The assembly results are analyzed by Trust-4 and output in `{sample}/03.assemble
 ### Input
 
 - `--seqtype` Select TCR/BCR seq data type. Choose from ['TCR', 'BCR']. Required.
-- `--min_read_count` Filter cell by read count number, int type required. Required..
+- `--min_read_count` Filter cell by read count number, int type required. Default '4'.
 
 ### Other parameters
 
@@ -63,12 +63,16 @@ The assembly results are analyzed by Trust-4 and output in `{sample}/03.assemble
 - `04.summarize/{sample}_all_contig.fasta` All assembled contig sequences.
 - `04.summarize/{sample}_filtered_contig.csv` High-level annotations of each cellular contig after filter. This is a subset of all_contig_annotations.csv.
 - `04.summarize/{sample}_filtered_contig.fasta` Assembled contig sequences after filter.
+- `04.summarize/{sample}_chain_filtered_contig.csv`Keep the 2 contigs with the highest UMI. This is a subset of filtered_contig.csv.
+- `04.summarize/{sample}_chain_filtered_contig.fasta`Keep the 2 contigs with the highest UMI. This is a subset of filtered_contig.fasta.
+- `04.summarize/{sample}_one_chain_contig.csv`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.csv.
+- `04.summarize/{sample}_one_chain_contig.fasta`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.fasta.
 
 # Example
 
 Test path: 
 
-`/SGRNJ03/randd/cjj/celedev/trust4/20211109clonotypes`
+`/SGRNJ03/randd/cjj/celedev/trust4/20211213_one_chain/3`
 
 Conda environment: 
 
@@ -83,20 +87,20 @@ multi_trust_vdj \
         --outdir ./ \
         --chemistry customized \
         --whitelist /SGRNJ03/randd/cjj/zhouxin/zhouxin/data_base/bclist \
-        --pattern U8C8L16C8L16C8 \
-        --linker /SGRNJ03/randd/cjj/zhouxin/zhouxin/data_base/linker \
-        --allowNoLinker --species GRCm38 --thread 4 --mod sjm \
-        --seqtype TCR \
+        --pattern U9C8L16C8L16C8L1 \
+        --linker /SGRNJ03/randd/zhouxin/data_base/linker_4types_reversed_new \
+        --allowNoLinker --species GRCm38 --thread 8 --mod sjm \
+        --seqtype BCR \
 ```
 
 ```
 $ cat shell/test.sh 
 set -eo pipefail
-celescope trust_vdj sample --outdir .//M_0805XQ_2_3Nlib/00.sample --sample M_0805XQ_2_3Nlib --assay trust_vdj --thread 4 --chemistry customized  --fq1 /SGRNJ03/DATA03/2108/20210817_2/R210811576_R1.fastq.gz
-celescope trust_vdj barcode --outdir .//M_0805XQ_2_3Nlib/01.barcode --sample M_0805XQ_2_3Nlib --assay trust_vdj --thread 4 --chemistry customized --pattern U8C8L16C8L16C8 --whitelist /SGRNJ03/randd/cjj/zhouxin/zhouxin/data_base/bclist --linker /SGRNJ03/randd/cjj/zhouxin/zhouxin/data_base/linker --lowNum 2 --allowNoLinker  --fq1 /SGRNJ03/DATA03/2108/20210817_2/R210811576_R1.fastq.gz --fq2 /SGRNJ03/DATA03/2108/20210817_2/R210811576_R2.fastq.gz
-celescope trust_vdj cutadapt --outdir .//M_0805XQ_2_3Nlib/02.cutadapt --sample M_0805XQ_2_3Nlib --assay trust_vdj --thread 4 --minimum_length 20 --nextseq_trim 20 --overlap 10 --insert 150  --fq .//M_0805XQ_2_3Nlib/01.barcode/M_0805XQ_2_3Nlib_2.fq
-celescope trust_vdj assemble --outdir .//M_0805XQ_2_3Nlib/03.assemble --sample M_0805XQ_2_3Nlib --assay trust_vdj --thread 4 --species GRCm38 --seqtype TCR --barcodeRange "0 23 +" --umiRange "24 -1 +" --trimLevel 1 --UMI_min auto  --fq2 .//M_0805XQ_2_3Nlib/02.cutadapt/M_0805XQ_2_3Nlib_clean_2.fq --match_dir /SGRNJ03/randd/RD20073101_SCOPEv2_TCR/20210824_5/M_0805XQ_2_Nlib/
-celescope trust_vdj summarize --outdir .//M_0805XQ_2_3Nlib/04.summarize --sample M_0805XQ_2_3Nlib --assay trust_vdj --thread 4 --seqtype TCR --min_read_count auto  --reads_assignment .//M_0805XQ_2_3Nlib/03.assemble/assemble/M_0805XQ_2_3Nlib_assign.out --assembled_fa .//M_0805XQ_2_3Nlib/03.assemble/assemble/M_0805XQ_2_3Nlib_assembled_reads.fa --fq2 .//M_0805XQ_2_3Nlib/02.cutadapt/M_0805XQ_2_3Nlib_clean_2.fq
+celescope trust_vdj sample --outdir .//BJ_1116PzB_Auto_V2_Nlib/00.sample --sample BJ_1116PzB_Auto_V2_Nlib --assay trust_vdj --thread 8 --chemistry customized  --fq1 /SGRNJ03/DATA03/2112/20211202_4/R211126086_R1.fastq.gz
+celescope trust_vdj barcode --outdir .//BJ_1116PzB_Auto_V2_Nlib/01.barcode --sample BJ_1116PzB_Auto_V2_Nlib --assay trust_vdj --thread 8 --chemistry customized --pattern U9C8L16C8L16C8L1 --whitelist /SGRNJ03/randd/cjj/zhouxin/zhouxin/data_base/bclist --linker /SGRNJ03/randd/zhouxin/data_base/linker_4types_reversed_new --lowNum 2 --allowNoLinker  --fq1 /SGRNJ03/DATA03/2112/20211202_4/R211126086_R1.fastq.gz --fq2 /SGRNJ03/DATA03/2112/20211202_4/R211126086_R2.fastq.gz
+celescope trust_vdj cutadapt --outdir .//BJ_1116PzB_Auto_V2_Nlib/02.cutadapt --sample BJ_1116PzB_Auto_V2_Nlib --assay trust_vdj --thread 8 --minimum_length 20 --nextseq_trim 20 --overlap 10 --insert 150  --fq .//BJ_1116PzB_Auto_V2_Nlib/01.barcode/BJ_1116PzB_Auto_V2_Nlib_2.fq
+celescope trust_vdj assemble --outdir .//BJ_1116PzB_Auto_V2_Nlib/03.assemble --sample BJ_1116PzB_Auto_V2_Nlib --assay trust_vdj --thread 8 --species GRCm38 --seqtype BCR --barcodeRange "0 23 +" --umiRange "24 -1 +" --trimLevel 1 --UMI_min auto  --fq2 .//BJ_1116PzB_Auto_V2_Nlib/02.cutadapt/BJ_1116PzB_Auto_V2_Nlib_clean_2.fq --match_dir /SGRNJ03/randd/RD20040201_SCOPEv2_TCR/20211205/BJ_1116PzB_Auto_V2_Nlib
+celescope trust_vdj summarize --outdir .//BJ_1116PzB_Auto_V2_Nlib/04.summarize --sample BJ_1116PzB_Auto_V2_Nlib --assay trust_vdj --thread 8 --seqtype BCR --min_read_count auto  --reads_assignment .//BJ_1116PzB_Auto_V2_Nlib/03.assemble/assemble/BJ_1116PzB_Auto_V2_Nlib_assign.out --assembled_fa .//BJ_1116PzB_Auto_V2_Nlib/03.assemble/assemble/BJ_1116PzB_Auto_V2_Nlib_assembled_reads.fa --fq2 .//BJ_1116PzB_Auto_V2_Nlib/02.cutadapt/BJ_1116PzB_Auto_V2_Nlib_clean_2.fq
 ```
 
 
