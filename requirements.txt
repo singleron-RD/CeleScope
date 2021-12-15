@@ -11,5 +11,4 @@ plotnine==0.8.0
 matplotlib==3.3.0
 biopython
 cython
-
 beautifulsoup4
