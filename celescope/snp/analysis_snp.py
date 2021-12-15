@@ -182,11 +182,9 @@ class Analysis_snp(AnalysisMixin):
 
 
     def run(self):
-        '''
         self.write_gt()
         self.write_ncell()
         self.run_annovar()
-        '''
         self.get_variant_table()
 
         self.add_help()
