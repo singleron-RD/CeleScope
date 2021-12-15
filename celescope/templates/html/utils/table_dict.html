@@ -13,9 +13,9 @@
     <style> {% include "./css/dataTables.jqueryui.min.css" %}</style>
     <style> {% include "./css/buttons.dataTables.min.css" %}</style>
 
-    {% if step_summary.table_dict.id == "marker_gene_table" %}
+    {% if step_summary.table_dict.id == "marker_genes" %}
         {% include "./html/utils/table_script/rna.html" %}
-    {% elif step_summary.table_dict.id == "clonetypes_table" %}
+    {% elif step_summary.table_dict.id == "clonetypes" %}
         {% include "./html/utils/table_script/vdj.html" %}
     {% endif %}
 

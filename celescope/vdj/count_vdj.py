@@ -342,7 +342,11 @@ class Count_vdj(Step):
             df_table, _table_header = format_table(df_match_clonetypes)
             title = 'Match Clonetypes'
 
-        table_dict = self.get_table(title, 'clonetypes_table', df_table)
+        table_dict = self.get_table_dict(
+            title=title, 
+            table_id='clonetypes',
+            df_table=df_table
+        )
         self.add_data(table_dict=table_dict)
 
     def run(self):

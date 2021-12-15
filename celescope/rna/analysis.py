@@ -9,7 +9,6 @@ from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 
 
-
 class Analysis(AnalysisMixin):
     """
     Features
@@ -46,6 +45,8 @@ class Analysis(AnalysisMixin):
         if args.type_marker_tsv and args.type_marker_tsv != 'None':
             self.auto_assign_bool = True
             self.save_rds = True
+
+        self._table_id = 'marker_genes'
 
     def add_help(self):
         self.add_help_content(
@@ -86,7 +87,12 @@ class Analysis(AnalysisMixin):
         tsne_gene = Tsne_plot(self.df_tsne, 'Gene_Counts', discrete=False).get_plotly_div()
         self.add_data(tsne_gene=tsne_gene)
 
-        self.add_data(table_dict=self.table_dict)
+        table_dict = self.get_table_dict(
+            title='Marker Genes by Cluster',
+            table_id=self._table_id,
+            df_table=self.df_marker,
+        )
+        self.add_data(table_dict=table_dict)
 
 
 @utils.add_log

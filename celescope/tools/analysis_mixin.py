@@ -26,13 +26,10 @@ class AnalysisMixin(Step):
             self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
             self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
             marker_df_file = args.marker_file
-            self.marker_df = pd.read_csv(marker_df_file, sep="\t")
+            self.read_format_df_marker(marker_df_file)
         else:
             self.match_dir = args.outdir + "/../"  # use self
 
-
-        # data
-        self.table_dict = None
 
     @utils.add_log
     def seurat(self, matrix_file, save_rds, genomeDir):
@@ -64,28 +61,18 @@ class AnalysisMixin(Step):
         self.auto_assign.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
+    def read_format_df_marker(self):
 
-    def get_table_dict(self, marker_table):
-        self.table_dict = Step.get_table(
-            title='Marker Genes by Cluster',
-            table_id='marker_gene_table',
-            df_table=marker_table,
-        )
-
-    def get_marker_table(self):
-        """
-        return html code
-        """
-
+        df_marker = pd.read_csv(self.df_marker_file, sep="\t")
         avg_logfc_col = "avg_log2FC"  # seurat 4
-        if "avg_logFC" in self.marker_df.columns:  # seurat 2.3.4
+        if "avg_logFC" in df_marker.columns:  # seurat 2.3.4
             avg_logfc_col = "avg_logFC"
-        marker_df = self.marker_df.loc[:,
-                                       ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
-                                       ]
-        marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
+        df_marker = df_marker.loc[:,
+            ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
+        ]
+        df_marker["cluster"] = df_marker["cluster"].apply(lambda x: f"cluster {x}")
 
-        return marker_df
+        self.df_marker = df_marker
 
 
     def read_match_dir(self):
@@ -98,7 +85,7 @@ class AnalysisMixin(Step):
             tsne_df_file = match_dict['tsne_coord']
             self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
             self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-            marker_df_file = match_dict['markers']
-            self.marker_df = pd.read_csv(marker_df_file, sep="\t")
+            self.df_marker_file = match_dict['markers']
+            self.read_format_df_marker()
 
 

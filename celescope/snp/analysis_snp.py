@@ -142,7 +142,7 @@ class Analysis_variant(AnalysisMixin):
         self.write_ncell()
         self.run_annovar()
         self.get_variant_table()
-        table_dict = self.get_table(title='Variant table', table_id='variant_table', df_table=self.variant_table)
+        table_dict = self.get_table_dict(title='Variant table', table_id='variant_table', df_table=self.variant_table)
         self.add_data(table_dict=table_dict)
         self._clean_up()
         #self.get_venn_plot()

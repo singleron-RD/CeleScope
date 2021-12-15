@@ -77,7 +77,7 @@ class Tsne_plot(Plotly_plot):
             'x': self._str_coord1, 
             'y': self._str_coord2,
             'size_max': self._dot_size,
-            'hover_df': {
+            'hover_data': {
                 self._str_coord1: False,
                 self._str_coord2: False,
                 self.feature_name: True,

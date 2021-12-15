@@ -184,10 +184,9 @@ class Step:
         '''
         return self.__content_dict[slot][step_name + '_summary'][key]
 
-    @staticmethod
-    def get_table(title, table_id, df_table):
+    def get_table_dict(self, title, table_id, df_table):
         """
-        return html code
+        table_dict {title: '', table_id: '', df_table: pd.DataFrame}
         """
         table_dict = {}
         table_dict['title'] = title

@@ -5,9 +5,9 @@
     {% include "html/utils/step.html" %}
     {% endif %}
     
-    {% if star_rna_summary is defined %}
-    {% set step_summary = star_rna_summary %}
-    {% include "html/rna/star_summary.html" %}
+    {% if star_summary is defined %}
+    {% set step_summary = star_summary %}
+    {% include "html/rna/star.html" %}
     {% endif %}
 
     {% if featureCounts_summary is defined %}
@@ -27,7 +27,7 @@
 
     {% if table_dict is defined %}
     {% set step_summary = analysis_snp_summary %}
-    {% include "html/snp/analysis_snp_summary.html" %}
+    {% include "html/snp/analysis_snp.html" %}
     {% endif %}
 
 {% include "html/utils/end.html"%}
