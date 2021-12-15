@@ -1,4 +1,5 @@
 from collections import defaultdict
+from random import randrange
 
 import pandas as pd
 import plotly
@@ -169,12 +170,20 @@ class Pie_plot(Plotly_plot):
 
 class Line_plot(Plotly_plot):
 
-    def __init__(self, df_line,index: int):
+    def __init__(self, df_line,feature_name,range=[0,100],section=True):
         super().__init__(df_line)
         self.df_line = df_line
-        self.index = index
+        self.feature_name = feature_name
+        self.range = range
+        self.section = section
+        self.index = None
+        #随title信息变更index
+        if self.feature_name == "Saturation":
+            self.index = 0
+        elif self.feature_name == "Median gene_Num":
+            self.index = 1
+        #更新填入title信息
         self.title = ['Sequencing Saturation','Median Genes per Cell']
-        
         self._str_coord1 = "Reads Fraction"
         self._str_coord2 = ["Sequencing Saturation(%)","Median Genes per Cell"]
 
@@ -188,28 +197,31 @@ class Line_plot(Plotly_plot):
             'tick0':0,
             'dtick':0.5,
         }
-
-        self.yaxes_config = [{
-            'showgrid': True,
-            'gridcolor': '#F5F5F5',
-            'linecolor':'black',
-            'showline': True, 
-            'ticks': None,
-            'range':[0,100]},
-            {
-            'showgrid': True,
-            'gridcolor': '#F5F5F5',
-            'linecolor':'black',
-            'showline': True, 
-            'ticks': None,
-            'rangemode':'tozero',
-        }]
+        
+        if self.section:
+            self.yaxes_config = {
+                'showgrid': True,
+                'gridcolor': '#F5F5F5',
+                'linecolor':'black',
+                'showline': True, 
+                'ticks': None,
+                'rangemode':'tozero',
+            }
+        else:
+            self.yaxes_config = {
+                'showgrid': True,
+                'gridcolor': '#F5F5F5',
+                'linecolor':'black',
+                'showline': True, 
+                'ticks': None,
+                'range':self.range,#range范围根据需要调节
+            }
 
         self.line_config = {
             'data_frame': df_line,
-            'title': self.title[index-1],
+            'title': self.title[self.index],
             'x': self._str_coord1, 
-            'y': self._str_coord2[index-1],
+            'y': self._str_coord2[self.index],
         }
 
         self.line_plot()
@@ -222,15 +234,12 @@ class Line_plot(Plotly_plot):
         )  
 
     def update_fig(self):
-        index = self.index
         self._fig.update_xaxes(
-            title_text=self._str_coord1,
             **self.xaxes_config
         )
 
         self._fig.update_yaxes(
-            title_text=self._str_coord2[index-1],
-            **self.yaxes_config[index-1]
+            **self.yaxes_config
         )
         
         self._fig.update_layout(
