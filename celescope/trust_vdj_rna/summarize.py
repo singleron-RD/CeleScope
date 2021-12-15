@@ -224,21 +224,29 @@ class Summarize(Step):
         df_all.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
 
-        # filter chains based on umis
+        # keep chains with two two highest umi contigs in csv file
+        df_filter_contig=df_filter_contig[df_filter_contig['productive']==True]
         df_filter_contig.sort_values(by=['barcode','umis'],ascending=[True,False],inplace=True)
         df_filter_contig.reset_index(drop=True,inplace=True)
-        chain_filter_dict = df_filter_contig.groupby('barcode')['contig_id'].apply(lambda x:x.tolist()).to_dict()
+        contig_dict = df_filter_contig.groupby('barcode')['contig_id'].apply(lambda x:x.tolist()).to_dict()
+        chain_dict = df_filter_contig.groupby('barcode')['chain'].apply(lambda x:x.tolist()).to_dict()
         chain_filter_set = set()
-        for key,val in chain_filter_dict.items():
-            if len(val)>2:
-                for contig_id in val[:2]:
-                    chain_filter_set.add(contig_id)
-            else:
-                chain_filter_set.add(val[0])
+        for key,val in chain_dict.items():
+            type_count=dict(Counter(val))
+            for _type, _count in type_count.items():
+                if _count>=2:
+                    index = [_i for _i,_j in enumerate(val) if _j == _type]
+                    for _index in index[:2]:
+                        chain_filter_set.add(contig_dict[key][_index])
+                elif _count==1:
+                    index = val.index(_type)
+                    chain_filter_set.add(contig_dict[key][index])
+                else:
+                    continue
         df_filter_contig = df_filter_contig[df_filter_contig['contig_id'].isin(chain_filter_set)]
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_chain_filtered_contig.csv', sep=',', index=False)
 
-        # fasta file filter chains based on umis 
+        # keep chains with two highest umi contigs in fasta file
         filter_contig_set = set(df_filter_contig['contig_id'].tolist())
         chain_filtered_fasta = f'{self.outdir}/{self.sample}_chain_filtered_contig.fasta'
         chain_filtered_fasta = open(chain_filtered_fasta,'w')
