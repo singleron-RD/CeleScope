@@ -21,7 +21,7 @@ class Consensus(Step):
     """
 
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
+        super().__init__(args, display_title=display_title)
 
         # set
         self.min_consensus_read = int(self.args.min_consensus_read)
@@ -32,10 +32,7 @@ class Consensus(Step):
 
     @utils.add_log
     def run(self):
-        if self.args.not_consensus:
-            Consensus.run.logger.warning("Will not perform UMI consensus!")
-            return
-
+        
         sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
         n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
             fq=self.fq_tmp_file,
@@ -189,6 +186,8 @@ def get_read_length(read_list, threshold=0.5):
 
 @utils.add_log
 def consensus(args):
+    if args.not_consensus:
+        return
     with Consensus(args,display_title="Consensus") as runner:
         runner.run()
 

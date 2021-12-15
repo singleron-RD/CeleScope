@@ -1,4 +1,6 @@
 ## [Unreleased] 
+ ### `tag`
+  - Remove `--marker_file` argument from `analysis_tag`.
 
 ## [1.6.1] - 2021-12-01
  ### `snp`

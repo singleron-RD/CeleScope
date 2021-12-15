@@ -141,7 +141,7 @@ class Target_metrics(Step):
         samtools_runner = utils.Samtools(
             self.out_bam_file,
             self.out_bam_file_sorted,
-            self.args.threads,
+            self.args.thread,
             debug=self.debug,
         )
         samtools_runner.sort_bam()
