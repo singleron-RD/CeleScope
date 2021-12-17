@@ -4,12 +4,12 @@ import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
-from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
+from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
 from celescope.tools.step import Step 
 from celescope.tools.plotly_plot import Pie_plot
 
 
-class Star(Step, StarMixin):
+class Star(Star_mixin):
     """
     Features
     - Align R2 reads to the reference genome with STAR.
@@ -39,9 +39,9 @@ class Star(Step, StarMixin):
     - `{sample}_region.log` Picard CollectRnaSeqMetrics results.
     """
 
-    def __init__(self, args,display_title=None):
-        Step.__init__(self, args, display_title=display_title)
-        StarMixin.__init__(self, args)
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title=display_title)
+
         # parse
         self.refflat = f"{self.genomeDir}/{self.genome['refflat']}"
 

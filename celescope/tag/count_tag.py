@@ -91,13 +91,13 @@ class Count_tag(Step):
         if args.match_dir:
             match_dict = utils.parse_match_dir(args.match_dir)
             self.match_barcode = match_dict['match_barcode']
-            self.cell_total = match_dict['cell_total']
+            self.n_match_barcode = match_dict['n_match_barcode']
             self.tsne_file = match_dict['tsne_coord']
             self.matrix_dir = match_dict['matrix_dir']
         elif args.matrix_dir:
             df_barcode = pd.read_csv(f'{args.matrix_dir}/barcodes.tsv', header=None)
             self.match_barcode = df_barcode[0].tolist()
-            self.cell_total = len(self.match_barcode)
+            self.n_match_barcode = len(self.match_barcode)
             self.tsne_file = args.tsne_file
             self.matrix_dir = args.matrix_dir
         else:
@@ -297,14 +297,14 @@ class Count_tag(Step):
                 self.add_metric(
                     name=tag_name + ' Cells',
                     value=int(sr_tag_count[tag_name]),
-                    total=self.cell_total,
+                    total=self.n_match_barcode,
                 )
                 sr_tag_count.drop(tag_name, inplace=True)
         for tag_name in sorted(sr_tag_count.index):
             self.add_metric(
                 name=tag_name + ' Cells',
                 value=int(sr_tag_count[tag_name]),
-                total=self.cell_total,
+                total=self.n_match_barcode,
             )
 
         # seurat hashtag

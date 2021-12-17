@@ -33,3 +33,10 @@ HELP_DICT = {
     'matrix_dir': 'Match celescope scRNA-Seq matrix directory.',
     'panel': 'The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.',
 }
+
+HELP_INFO_DICT = {
+    'matched_barcode_number': {
+        'display': 'Matched Barcode Number',
+        'info':'cell barcode number of matched scRNA-Seq sample',
+    }
+}

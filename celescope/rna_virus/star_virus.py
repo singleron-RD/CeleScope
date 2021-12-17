@@ -1,30 +1,28 @@
 import celescope.tools.utils as utils
-from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
+from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
 from celescope.tools.step import Step
 
 
-class StarVirus(Step, StarMixin):
+class Star_virus(Star_mixin):
     """
     star virus class
     """
 
-    def __init__(self, args, step_name):
-        # add genomeDir
+    def __init__(self, args, display_title=None):
+        # before init
         args.genomeDir = args.virus_genomeDir
 
-        Step.__init__(self, args, step_name)
-        StarMixin.__init__(self, args, add_prefix='virus')
+        super().__init__(args, add_prefix='virus', display_title=display_title)
+
 
     def run(self):
         self.run_star()
-        self._clean_up()
 
 
 @utils.add_log
 def star_virus(args):
-    step_name = "star_virus"
-    runner = StarVirus(args)
-    runner.run()
+    with Star_virus(args) as runner:
+        runner.run()
 
 
 def get_opts_star_virus(parser, sub_program):

@@ -95,6 +95,7 @@ class Step:
 
     def add_metric(self, name, value, total=None, help_info=None, display=None):
         '''add metric to metric_list
+        display controls how to display the metric in HTML report.
         '''
         if not display:
             if isinstance(value, numbers.Number):

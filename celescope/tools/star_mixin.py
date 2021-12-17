@@ -5,13 +5,16 @@ import celescope.tools.utils as utils
 from celescope.tools.mkref import parse_genomeDir
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT
+from celescope.tools.step import Step
 
-class StarMixin():
+class Star_mixin(Step):
     """
     Mixin class for STAR
     """
 
-    def __init__(self, args, add_prefix=None):
+    def __init__(self, args, add_prefix=None, display_title=None):
+        super().__init__(args, display_title)
+
         self.fq = args.fq
         self.genomeDir = args.genomeDir
         self.out_unmapped = args.out_unmapped
@@ -54,7 +57,7 @@ class StarMixin():
         cmd = ' '.join(cmd)
         if self.STAR_param:
             cmd += (" " + self.STAR_param)
-        StarMixin.STAR.logger.info(cmd)
+        self.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     def run_star(self):

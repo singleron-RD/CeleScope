@@ -36,14 +36,17 @@ class Plotly_plot():
         self._df = df
         self._fig = None
 
-    def get_plotly_div(self):
-
+    def plotly_plot(self):
         return plotly.offline.plot(
             self._fig, 
             include_plotlyjs=True, 
             output_type='div', 
             config=PLOTLY_CONFIG
         )
+
+    def get_plotly_div(self):
+
+        return self.plotly_plot()
 
 
 class Tsne_plot(Plotly_plot):
@@ -92,11 +95,19 @@ class Tsne_plot(Plotly_plot):
             'color_continuous_scale': px.colors.sequential.Jet,
         }
 
-        if discrete:
+    def set_color_scale(self, color_scale):
+        self.scatter_config['color_continuous_scale'] = color_scale
+    
+    @utils.add_log
+    def get_plotly_div(self):
+
+        if self.discrete:
             self.discrete_tsne_plot()
         else:
             self.continuous_tsne_plot()
         self.update_fig()
+
+        return self.plotly_plot()
 
     @utils.add_log
     def discrete_tsne_plot(self):        

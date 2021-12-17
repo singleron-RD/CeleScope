@@ -18,8 +18,8 @@ class Multi_capture_virus(Multi):
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
-    def count_capture_virus(self, sample):
-        step = 'count_capture_virus'
+    def count_virus(self, sample):
+        step = 'count_virus'
         cmd_line = self.get_cmd_line(step, sample)
         virus_bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
         cmd = (
@@ -27,16 +27,26 @@ class Multi_capture_virus(Multi):
             f'--virus_bam {virus_bam} '
             f'--match_dir {self.col4_dict[sample]} '
         )
-        self.process_cmd(cmd, step, sample, m=5, x=1)
+        self.process_cmd(cmd, step, sample, m=2, x=1)
 
-    def analysis_capture_virus(self, sample):
-        step = 'analysis_capture_virus'
+    def filter_virus(self, sample):
+        step = 'filter_virus'
         cmd_line = self.get_cmd_line(step, sample)
-        virus_file = f'{self.outdir_dic[sample]["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
+        umi_tsne_file = f'{self.outdir_dic[sample]["count_virus"]}/{sample}_UMI_tsne.csv'
         cmd = (
             f'{cmd_line} '
-            f'--virus_file {virus_file} '
-            f'--match_dir {self.col4_dict[sample]} '
+            f'--umi_tsne_file {umi_tsne_file} '
+        )
+        self.process_cmd(cmd, step, sample, m=1, x=1)
+
+
+    def analysis_virus(self, sample):
+        step = 'analysis_virus'
+        cmd_line = self.get_cmd_line(step, sample)
+        filter_tsne_file = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filter_tsne.csv'
+        cmd = (
+            f'{cmd_line} '
+            f'--filter_tsne_file {filter_tsne_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 

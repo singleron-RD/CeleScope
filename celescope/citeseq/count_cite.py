@@ -23,7 +23,7 @@ class Count_cite():
         self.assay = assay
         self.read_count_file = read_count_file
         self.match_dir = match_dir
-        self.match_barcode, self.cell_total = read_barcode_file(match_dir)
+        self.match_barcode, self.n_match_barcode = read_barcode_file(match_dir)
         self.df_read_count = pd.read_csv(read_count_file, sep="\t", index_col=0)
         self.tsne_file = glob.glob(f'{match_dir}/*analysis/*tsne_coord.tsv')[0]
 
