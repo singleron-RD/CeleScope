@@ -21,7 +21,7 @@ class Star_virus(Star_mixin):
 
 @utils.add_log
 def star_virus(args):
-    with Star_virus(args) as runner:
+    with Star_virus(args, display_title='Mapping') as runner:
         runner.run()
 
 

@@ -526,8 +526,8 @@ def parse_match_dir(match_dir):
     match_dict['matrix_dir'] = glob.glob(f'{match_dir}/*count*/*matrix_10X')[0]
     match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
     df_tsne = pd.read_csv(match_dict['tsne_coord'], sep='\t', index_col=0)
-    df_tsne['barcode'] = df_tsne.index
-    match_dict['df_tsne'] = df_tsne.reset_index(drop=True)
+    df_tsne.index.rename('barcode', inplace=True)
+    match_dict['df_tsne'] = df_tsne
     match_dict['markers'] = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
     try:
         match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]

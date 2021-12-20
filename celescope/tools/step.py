@@ -14,6 +14,16 @@ import celescope.tools.utils as utils
 from celescope.__init__ import HELP_DICT
 
 
+def cap_str_except_preposition(my_string):
+    prepositions = {"and", "or", "the", "a", "of", "in", "per", "after", 'with'}
+    lowercase_words = my_string.split(" ")
+
+    final_words = [word if word in prepositions else word[0].upper() + word[1:] for word in lowercase_words]
+    final_words = " ".join(final_words)
+    return final_words
+
+
+
 def s_common(parser):
     """subparser common arguments
     """
@@ -97,6 +107,7 @@ class Step:
         '''add metric to metric_list
         display controls how to display the metric in HTML report.
         '''
+        name = cap_str_except_preposition(name)
         if not display:
             if isinstance(value, numbers.Number):
                 display = str(format(value, ','))

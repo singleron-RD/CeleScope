@@ -25,7 +25,24 @@ class Analysis_virus(AnalysisMixin):
         super().__init__(args, display_title)
         self.df_tsne = pd.read_csv(args.filter_tsne_file)
 
+    def add_cluster_metrics(self):
+        self.add_help_content('cluster 1,2,3...', 'Number of cells with virus umi after filtering.')
+
+        df_cluster_all = self.df_tsne.groupby("cluster").count()
+
+        df_virus = self.df_tsne[self.df_tsne['UMI'] > 0]
+        df_cluster_virus = df_virus.groupby("cluster").count()
+
+        for index, row in df_cluster_virus.iterrows():
+            self.add_metric(
+                name=f'cluster {index}',
+                value=row['barcode'],
+                total=df_cluster_all.loc[index, 'barcode'],
+            )
+
     def run(self):
+        self.add_cluster_metrics()
+
         tsne_cluster = Tsne_plot(self.df_tsne, 'cluster').get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
 

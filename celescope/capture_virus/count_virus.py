@@ -1,10 +1,11 @@
+import json
+
 import pandas as pd
 import pysam
 import numpy as np
 
 import celescope.tools.utils as utils
 from celescope.tools.step import Step,s_common
-from celescope.tools.count import Count
 from celescope.__init__ import HELP_INFO_DICT
 
 
@@ -28,7 +29,6 @@ class Count_virus(Step):
         match_dir_dict = utils.parse_match_dir(args.match_dir)
         self.match_barcode = match_dir_dict['match_barcode']
         self.n_match_barcode = match_dir_dict['n_match_barcode']
-        self.df_tsne = match_dir_dict['df_tsne']
         self.add_metric(
             name=HELP_INFO_DICT['matched_barcode_number']['display'],
             value=self.n_match_barcode,
@@ -38,12 +38,9 @@ class Count_virus(Step):
         # data
         self.total_corrected_umi = 0
         self.count_dic = utils.genDict(dim=3)
-        self.df_umi = pd.DataFrame()
 
         # out
-        self.raw_read_count_file = f'{self.out_prefix}_raw_read_count.csv'
-        self.raw_umi_count_file = f'{self.out_prefix}_raw_UMI_count.csv'
-        self.umi_tsne_file = f'{self.out_prefix}_UMI_tsne.csv'
+        self.raw_read_count_file = f'{self.out_prefix}_raw_read_count.json'
 
 
     @utils.add_log
@@ -60,59 +57,38 @@ class Count_virus(Step):
                 self.count_dic[barcode][ref][umi] += 1
 
     @utils.add_log
-    def correct_umi(self):
+    def add_some_metrics(self):
+        read_count_list = []
         for barcode in self.count_dic:
             for ref in self.count_dic[barcode]:
-                n_corrected_umi, _n_corrected_read = Count.correct_umi(self.count_dic[barcode][ref])
-                self.total_corrected_umi += n_corrected_umi
+                for umi in self.count_dic[barcode][ref]:
+                    read_count_list.append(self.count_dic[barcode][ref][umi])
+        mean_read_count_per_umi = round(float(np.mean(read_count_list)),2)
         self.add_metric(
-            name='Corrected UMI Number',
-            value=self.total_corrected_umi,
-            help_info='number of corrected UMI',
+            name='Mead Read Count per Virus UMI',
+            value=mean_read_count_per_umi,
+            help_info='you can use this value to determine `min_support_read`'
         )
-                
+
+        n_virus_read_cell = len(self.count_dic)
+        self.add_metric(
+            name='Number of Cells with Virus reads',
+            value=n_virus_read_cell,
+            total= self.n_match_barcode,
+            help_info='number of matched cells with raw virus reads'
+        )
 
     @utils.add_log
     def write_count_file(self):
 
-        # write dic to pandas df
-        rows = []
-        for barcode in self.count_dic:
-            for ref in self.count_dic[barcode]:
-                for umi in self.count_dic[barcode][ref]:
-                    read_count = self.count_dic[barcode][ref][umi]
-                    rows.append([barcode, ref, umi, read_count])
+        with open(self.raw_read_count_file, 'w') as fp:
+            json.dump(self.count_dic, fp, indent=4)
 
-        df_read = pd.DataFrame(
-            rows,
-            columns=[
-                "barcode",
-                "ref",
-                "UMI",
-                "read_count"]
-        )
-        df_read.to_csv(self.raw_read_count_file, index=False)
-
-        self.df_umi = df_read.groupby(["barcode", "ref"]).agg({'UMI': 'count'}).reset_index()
-        self.df_umi.to_csv(self.raw_umi_count_file)
-
-    
-    @utils.add_log
-    def write_tsne(self):
-        '''
-        aggregate UMI count and write to csv
-        '''
-        df_sum_umi = self.df_umi.groupby(["barcode"]).agg({'UMI': 'sum'}).reset_index()
-        df_umi_tsne = pd.merge(self.df_tsne, df_sum_umi, on="barcode", how="left")
-        df_umi_tsne.index = df_umi_tsne.barcode
-        df_umi_tsne.drop(columns=["barcode"], inplace=True)
-        df_umi_tsne.to_csv(self.umi_tsne_file)
 
     def run(self):
         self.process_bam()
-        self.correct_umi()
+        self.add_some_metrics()
         self.write_count_file()
-        self.write_tsne()
 
 
 @utils.add_log
