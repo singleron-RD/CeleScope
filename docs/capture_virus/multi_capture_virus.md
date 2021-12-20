@@ -1,3 +1,8 @@
+## # Usage
+
+```
+multi_capture_virus    --mapfile {mapfile}    --virus_genomeDir {virus_genomeDir}     --not_consensus     --allowNoPolyT     --thread 4    --mod shell
+```
 
 
 ## Arguments
@@ -13,6 +18,7 @@
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
+- `capture_virus` Required, matched_dir.
 
 5th column:
 - `dynaseq` Required, background snp file.
@@ -119,7 +125,9 @@ is higher than or equal to this value.
 
 `--min_query_length` Minimum query length.
 
-`--min_support_read` Minimum number of reads supporting a UMI
+`--min_support_reads` Minimum number of reads to support a UMI
 
-`--umi_threshold` method to find virus UMI threshold
+`--umi_threshold_method` method to find virus UMI threshold
+
+`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`
 
