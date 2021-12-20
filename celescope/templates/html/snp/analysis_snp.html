@@ -12,7 +12,7 @@
 <style> {% include "./css/buttons.dataTables.min.css" %}</style>
 
 <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
-    <h2>{{ step_summary.display_title}}   <i class="icon-help-circled" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+    <h2>{{ step_summary.display_title}}   <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
     <div class="box">
 
         {% include "html/utils/help_info.html" %}

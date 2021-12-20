@@ -26,7 +26,7 @@ class Analysis_virus(AnalysisMixin):
         self.df_tsne = pd.read_csv(args.filter_tsne_file)
 
     def add_cluster_metrics(self):
-        self.add_help_content('cluster 1,2,3...', 'Number of cells with virus umi after filtering.')
+        self.add_help_content('cluster 1,2,3...', 'number of cells with virus umi after filtering')
 
         df_cluster_all = self.df_tsne.groupby("cluster").count()
 

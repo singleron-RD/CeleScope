@@ -10,13 +10,20 @@
         <script type="text/javascript">
             
             function toggle1(node){
-                var helpNode = node.parentNode.parentNode.lastElementChild.firstElementChild;
-                if (helpNode.style.display=="inline"){
-                    helpNode.style.display="none";
-                } else {
-                    helpNode.style.display="inline";
+                for (var i = 0; i < node.childNodes.length; i++) {
+                    var child = node.childNodes[i];
+                    if (child.className == "description") {
+                        help_node = child;
+                        if (help_node.style.display=="inline"){
+                            help_node.style.display="none";
+                        } else {
+                            help_node.style.display="inline";
+                        }
+                    }
+                toggle1(child);
                 }
             }
+
 
         </script>
         
