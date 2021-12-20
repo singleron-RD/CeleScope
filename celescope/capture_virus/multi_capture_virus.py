@@ -3,6 +3,20 @@ from celescope.tools.multi import Multi
 
 
 class Multi_capture_virus(Multi):
+    """
+    # Usage
+    
+    ```
+    multi_capture_virus\
+    --mapfile {mapfile}\
+    --virus_genomeDir {virus_genomeDir} \
+    --not_consensus \
+    --allowNoPolyT \
+    --thread 4\
+    --mod shell
+    ```
+    """
+    
 
     def star_virus(self, sample):
         step = 'star_virus'
