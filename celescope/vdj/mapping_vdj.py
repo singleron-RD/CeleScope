@@ -28,8 +28,8 @@ class Mapping_vdj(Step):
     - `{sample}_alignments.txt` The alignment result of each UMI/read.
     """
 
-    def __init__(self, args,display_title=None):
-        Step.__init__(self, args,display_title=display_title)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.read_type = "UMIs"
@@ -123,7 +123,7 @@ class Mapping_vdj(Step):
             df_chain = df_VJ[df_VJ.chain == chain]
             Reads_Mapped_to_chain = df_chain.shape[0]
             self.add_metric(
-                name=f"{self.read_type} Mapped to {chain}", 
+                name=f"{self.read_type} Mapped to {chain}",
                 value=Reads_Mapped_to_chain,
                 total=total_read,
                 help_info=f"{self.read_type} mapped confidently to {chain}"
@@ -207,7 +207,7 @@ class Mapping_vdj(Step):
 def mapping_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
-    with Mapping_vdj(args,display_title="Mapping") as runner:
+    with Mapping_vdj(args, display_title="Mapping") as runner:
         runner.run()
 
 

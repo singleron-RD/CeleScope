@@ -30,8 +30,8 @@ class Count_vdj(Step):
     This file will only be produced when the `match_dir` parameter is provided.
     """
 
-    def __init__(self, args,display_title=None):
-        Step.__init__(self, args,display_title=display_title)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.chains = CHAINS[args.type]
@@ -46,7 +46,7 @@ class Count_vdj(Step):
                 args.match_dir)
             self.match_bool = True
         elif args.matrix_dir and args.matrix_dir.strip() != 'None':
-            self.match_cell_barcodes= utils.get_barcodes_from_matrix_dir(args.matrix_dir)            
+            self.match_cell_barcodes = utils.get_barcodes_from_matrix_dir(args.matrix_dir)
             self.match_bool = True
         if self.match_bool:
             self.match_cell_barcodes = set(self.match_cell_barcodes)
@@ -342,7 +342,7 @@ class Count_vdj(Step):
             title = 'Match Clonetypes'
 
         table_dict = self.get_table_dict(
-            title=title, 
+            title=title,
             table_id='clonetypes',
             df_table=df_table
         )
@@ -364,7 +364,7 @@ class Count_vdj(Step):
 def count_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
-    with Count_vdj(args,display_title="Count") as runner:
+    with Count_vdj(args, display_title="Count") as runner:
         runner.run()
 
 

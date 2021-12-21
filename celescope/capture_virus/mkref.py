@@ -50,7 +50,7 @@ class Mkref_virus(Mkref):
 
 def mkref(args):
     genome_type = 'virus'
-    runner = Mkref_virus(genome_type,args)
+    runner = Mkref_virus(genome_type, args)
     runner.run()
 
 

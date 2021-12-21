@@ -67,7 +67,6 @@ def assemble(args):
         runner.run()
 
 
-
 def get_opts_assemble(parser, sub_program):
     s_common(parser)
     if sub_program:

@@ -27,7 +27,7 @@ class Analysis(AnalysisMixin):
         - `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
     """
 
-    def __init__(self, args,display_title=None):
+    def __init__(self, args, display_title=None):
 
         super().__init__(args, display_title)
 
@@ -65,7 +65,6 @@ class Analysis(AnalysisMixin):
             name='p_val_adj',
             content='Adjusted p-value, based on bonferroni correction using all genes in the dataset'
         )
-
 
     def run(self):
 

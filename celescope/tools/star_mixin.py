@@ -7,6 +7,7 @@ from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step
 
+
 class Star_mixin(Step):
     """
     Mixin class for STAR
@@ -148,5 +149,6 @@ is higher than or equal to this value.""",
     )
     if sub_program:
         parser.add_argument('--fq', help="Required. R2 fastq file.", required=True)
-        parser.add_argument("--consensus_fq", action='store_true', help="A indicator that the input fastq has been consensused.")
+        parser.add_argument("--consensus_fq", action='store_true',
+                            help="A indicator that the input fastq has been consensused.")
         parser = s_common(parser)

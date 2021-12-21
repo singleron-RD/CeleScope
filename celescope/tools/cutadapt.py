@@ -72,7 +72,7 @@ class Cutadapt(Step):
             for remove_str in remove_strs:
                 number = re.sub(remove_str, '', number)
             p_list.append(int(number))
-        
+
         total_reads = p_list[0]
         reads_with_adapters = p_list[1]
         reads_too_short = p_list[2]
@@ -100,7 +100,7 @@ class Cutadapt(Step):
             help_info='reads pass filtering'
         )
         self.add_metric(
-            name='Base Pairs Processed', 
+            name='Base Pairs Processed',
             value=total_base_pairs,
             help_info='total processed base pairs'
         )
@@ -143,10 +143,11 @@ class Cutadapt(Step):
             f.write(cutadapt_log)
         self.format_and_write_stat(cutadapt_log)
 
+
 @utils.add_log
 def cutadapt(args):
     with Cutadapt(args, display_title="Trimming") as runner:
-        runner.run() 
+        runner.run()
 
 
 def get_opts_cutadapt(parser, sub_program):

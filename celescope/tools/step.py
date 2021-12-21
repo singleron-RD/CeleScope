@@ -6,7 +6,7 @@ import numbers
 import os
 import subprocess
 
-import numpy as np 
+import numpy as np
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -23,7 +23,6 @@ def cap_str_except_preposition(my_string):
     return final_words
 
 
-
 def s_common(parser):
     """subparser common arguments
     """
@@ -34,20 +33,23 @@ def s_common(parser):
     parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
     return parser
 
+
 class ExtendEncoder(json.JSONEncoder):
     """
     convert numpy data types to python data types
     json does not recognize NumPy data types
     """
+
     def default(self, obj):
-        if isinstance(obj, (np.int64,np.int32)):
+        if isinstance(obj, (np.int64, np.int32)):
             return int(obj)
-        elif isinstance(obj,(np.float32,np.float64)):
+        elif isinstance(obj, (np.float32, np.float64)):
             return float(obj)
-        elif isinstance(obj,(np.ndarray,)):
+        elif isinstance(obj, (np.ndarray,)):
             return obj.tolist()
         else:
             return json.JSONEncoder.default(self, obj)
+
 
 class Step:
     """
@@ -56,7 +58,6 @@ class Step:
 
     def __init__(self, args, display_title=None):
 
-            
         self.args = args
         self.outdir = args.outdir
         self.sample = args.sample
@@ -140,14 +141,14 @@ class Step:
     def _dump_content(self):
         '''dump content to json file
         '''
-        for slot, path in self._path_dict.items():            
+        for slot, path in self._path_dict.items():
             if self.__content_dict[slot]:
                 with open(path, 'w') as f:
                     json.dump(self.__content_dict[slot], f, indent=4, cls=ExtendEncoder)
 
     @utils.add_log
     def _render_html(self):
-        template = self.env.get_template(f'html/{self.assay}/base.html') 
+        template = self.env.get_template(f'html/{self.assay}/base.html')
         report_html = f"{self.outdir}/../{self.sample}_report.html"
         with io.open(report_html, 'w', encoding='utf8') as f:
             html = template.render(self.__content_dict['data'])
@@ -171,7 +172,7 @@ class Step:
                 metric_dict[f'{name} Fraction'] = fraction
 
         self.__content_dict['metrics'][self._step_summary_name].update(metric_dict)
-    
+
     def add_data(self, **kwargs):
         """
         add data(other than metrics) to self.content_dict['data']
@@ -216,7 +217,7 @@ class Step:
         self._add_content_metric()
         self._write_stat()
         self._dump_content()
-        self._render_html() 
+        self._render_html()
 
     @utils.add_log
     def debug_subprocess_call(self, cmd):
@@ -235,5 +236,3 @@ class Step:
 
     def __exit__(self, *args, **kwargs):
         self._clean_up()
-
-

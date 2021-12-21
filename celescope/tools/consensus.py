@@ -32,7 +32,7 @@ class Consensus(Step):
 
     @utils.add_log
     def run(self):
-        
+
         sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
         n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
             fq=self.fq_tmp_file,
@@ -42,7 +42,7 @@ class Consensus(Step):
         )
 
         self.add_metric(
-            name="UMI Counts", 
+            name="UMI Counts",
             value=n,
             help_info='total UMI from FASTQ files',
         )
@@ -52,11 +52,12 @@ class Consensus(Step):
             help_info='mean of all UMI length'
         )
         self.add_metric(
-            name="Ambiguous Base Counts",   
+            name="Ambiguous Base Counts",
             value=total_ambiguous_base_n,
             total=sum(length_list),
             help_info='number of bases that do not pass consensus threshold'
         )
+
 
 @utils.add_log
 def sort_fastq(fq, fq_tmp_file, outdir):
@@ -188,7 +189,7 @@ def get_read_length(read_list, threshold=0.5):
 def consensus(args):
     if args.not_consensus:
         return
-    with Consensus(args,display_title="Consensus") as runner:
+    with Consensus(args, display_title="Consensus") as runner:
         runner.run()
 
 

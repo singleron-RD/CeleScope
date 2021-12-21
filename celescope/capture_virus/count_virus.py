@@ -4,7 +4,7 @@ import pysam
 import numpy as np
 
 import celescope.tools.utils as utils
-from celescope.tools.step import Step,s_common
+from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_INFO_DICT
 
 
@@ -15,6 +15,7 @@ def get_opts_count_virus(parser, sub_program):
         parser.add_argument('--match_dir', help='matched rna_virus directory', required=True)
         parser.add_argument('--virus_bam', required=True)
         s_common(parser)
+
 
 class Count_virus(Step):
 
@@ -41,7 +42,6 @@ class Count_virus(Step):
         # out
         self.raw_read_count_file = f'{self.out_prefix}_raw_read_count.json'
 
-
     @utils.add_log
     def process_bam(self):
         # process bam
@@ -62,7 +62,7 @@ class Count_virus(Step):
             for ref in self.count_dic[barcode]:
                 for umi in self.count_dic[barcode][ref]:
                     read_count_list.append(self.count_dic[barcode][ref][umi])
-        mean_read_count_per_umi = round(float(np.mean(read_count_list)),2)
+        mean_read_count_per_umi = round(float(np.mean(read_count_list)), 2)
         self.add_metric(
             name='Mead Read Count per Virus UMI',
             value=mean_read_count_per_umi,
@@ -73,7 +73,7 @@ class Count_virus(Step):
         self.add_metric(
             name='Number of Cells with Virus reads',
             value=n_virus_read_cell,
-            total= self.n_match_barcode,
+            total=self.n_match_barcode,
             help_info='number of matched cells with raw virus reads'
         )
 
@@ -82,7 +82,6 @@ class Count_virus(Step):
 
         with open(self.raw_read_count_file, 'w') as fp:
             json.dump(self.count_dic, fp, indent=4)
-
 
     def run(self):
         self.process_bam()
@@ -95,7 +94,3 @@ def count_virus(args):
 
     with Count_virus(args, display_title='Count') as runner:
         runner.run()
-
-
-
-

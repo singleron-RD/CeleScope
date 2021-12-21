@@ -47,13 +47,13 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
         parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory.")
         parser.add_argument("--matrix_dir", help="Match celescope scRNA-Seq matrix directory.")
         parser.add_argument("--tsne_file", help="t-SNE coord file.")
-        
+
         s_common(parser)
 
 
 def count_tag(args):
 
-    with Count_tag(args,display_title="Cells") as runner:
+    with Count_tag(args, display_title="Cells") as runner:
         runner.run()
 
 
@@ -76,8 +76,8 @@ class Count_tag(Step):
 
     """
 
-    def __init__(self, args,display_title=None):
-        Step.__init__(self, args,display_title=display_title)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
         self.read_count_file = args.read_count_file
         self.UMI_min = args.UMI_min
         self.SNR_min = args.SNR_min

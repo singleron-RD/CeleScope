@@ -12,6 +12,7 @@ def analysis_virus(args):
     with Analysis_virus(args, display_title='Analysis') as runner:
         runner.run()
 
+
 def get_opts_analysis_virus(parser, sub_program):
     if sub_program:
         parser.add_argument('--filter_tsne_file', help='filter tsne file', required=True)
@@ -49,10 +50,3 @@ class Analysis_virus(AnalysisMixin):
         tsne_plot.set_color_scale(['LightGrey', 'Orange', 'Red'])
         tsne_virus = tsne_plot.get_plotly_div()
         self.add_data(tsne_feature=tsne_virus)
-
-
-
-
-
-        
-

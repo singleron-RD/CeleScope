@@ -7,7 +7,7 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.tools.count import Count
 from celescope.tools.step import Step, s_common
-import celescope.capture_virus.otsu as otsu 
+import celescope.capture_virus.otsu as otsu
 from celescope.__init__ import HELP_DICT
 
 
@@ -16,13 +16,13 @@ def get_opts_filter_virus(parser, sub_program):
     parser.add_argument('--min_support_reads', help='Minimum number of reads to support a UMI', default=2)
 
     parser.add_argument(
-        "--umi_threshold_method", 
+        "--umi_threshold_method",
         help='method to find virus UMI threshold',
-        choices=['otsu', 'auto', 'hard'], 
+        choices=['otsu', 'auto', 'hard'],
         default='auto'
     )
     parser.add_argument(
-        "--umi_hard_threshold", 
+        "--umi_hard_threshold",
         help='int, use together with `--umi_threshold_method hard`',
     )
     if sub_program:
@@ -30,8 +30,9 @@ def get_opts_filter_virus(parser, sub_program):
         parser.add_argument('--raw_read_count_file', required=True)
         s_common(parser)
 
+
 def filter_virus(args):
-    
+
     with Filter_virus(args, display_title='Filtering') as runner:
         runner.run()
 
@@ -41,7 +42,7 @@ class Filter_virus(Step):
         super().__init__(args, display_title)
         self.umi_threshold_method = args.umi_threshold_method
         self.min_support_reads = int(args.min_support_reads)
-        
+
         # data
         with open(args.raw_read_count_file) as f:
             self.count_dict = json.load(f)
@@ -49,7 +50,7 @@ class Filter_virus(Step):
         self.raw_umi = 0
         self.total_corrected_umi = 0
         self.del_umi = 0
-        self.umi_threshold = 1 # if not set explicitly, use 1 as default
+        self.umi_threshold = 1  # if not set explicitly, use 1 as default
         self.umi_count_dict = defaultdict(int)
         self.umi_array = []
 
@@ -62,7 +63,6 @@ class Filter_virus(Step):
         self.otsu_plot = f'{self.out_prefix}_otsu.png'
         self.raw_umi_count_file = f'{self.out_prefix}_corrected_UMI_count.json'
         self.filter_tsne_file = f'{self.out_prefix}_filtered_UMI_tsne.csv'
-    
 
     @utils.add_log
     def correct_umi(self):
@@ -109,8 +109,7 @@ class Filter_virus(Step):
             total=self.raw_umi,
             help_info='filter UMI according to `min_support_read`',
         )
-        
-    
+
     @utils.add_log
     def set_umi_count_dict(self):
         for barcode in self.count_dict:
@@ -121,12 +120,11 @@ class Filter_virus(Step):
                         umi_count += 1
             self.umi_count_dict[barcode] = umi_count
         if self.debug:
-            print(self.umi_count_dict)   
+            print(self.umi_count_dict)
 
     @utils.add_log
     def set_umi_array(self):
         self.umi_array = list(self.umi_count_dict.values())
-                  
 
     def get_umi_threshold(self):
         if self.umi_threshold_method == 'auto':
@@ -159,7 +157,7 @@ class Filter_virus(Step):
         sorted_umis = sorted(umi_array, reverse=True)
         percentile_99_umi = sorted_umis[cell_99th]
         self.umi_threshold = int(percentile_99_umi / 10)
-    
+
     @utils.add_log
     def hard_threshold(self):
         self.umi_threshold = int(self.args.umi_hard_threshold)
@@ -169,13 +167,12 @@ class Filter_virus(Step):
         for barcode in self.umi_count_dict:
             if self.umi_count_dict[barcode] < self.umi_threshold:
                 self.umi_count_dict[barcode] = 0
-    
+
     @utils.add_log
     def add_umi_write_tsne(self):
         self.df_filter_tsne['UMI'] = pd.Series(self.umi_count_dict)
         self.df_filter_tsne['UMI'].fillna(0, inplace=True)
         self.df_filter_tsne.to_csv(self.filter_tsne_file)
-
 
     def add_some_metrics(self):
         df = self.df_filter_tsne
@@ -189,7 +186,6 @@ class Filter_virus(Step):
             total=cell_total,
         )
 
-
     def run(self):
         self.correct_umi()
         self.filter_read()
@@ -199,5 +195,3 @@ class Filter_virus(Step):
         self.filter_umi()
         self.add_umi_write_tsne()
         self.add_some_metrics()
-
-

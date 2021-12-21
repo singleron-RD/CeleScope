@@ -18,7 +18,7 @@ def get_clonotypes_table(df):
     chains = sorted(set(df['chain'].tolist()))
     res = pd.DataFrame(columns=['barcode'])
     for c in chains:
-        df_c = df[df['chain']==c][['barcode', 'aaSeqCDR3', 'nSeqCDR3']]
+        df_c = df[df['chain'] == c][['barcode', 'aaSeqCDR3', 'nSeqCDR3']]
         df_c = df_c.rename(columns={'aaSeqCDR3': f'{c}_aaSeqCDR3', 'nSeqCDR3': f'{c}_nSeqCDR3'})
         res = pd.merge(res, df_c, on='barcode', how='outer').fillna('NaN')
     group_l = res.columns.tolist()
@@ -48,8 +48,8 @@ class Split_tag(Step):
     - `fastq/` Fastq files of each tag.(Optional)
     """
 
-    def __init__(self, args,display_title=None):
-        Step.__init__(self, args,display_title=display_title)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
         if not (args.split_matrix or args.split_fastq or args.split_vdj):
             return
 
@@ -83,14 +83,13 @@ class Split_tag(Step):
                 self.r1_fastq_files_handle[tag] = open(r1_fastq_file_name, 'w')
 
             self.tag_read_index_dict = defaultdict(set)
-        
+
         if args.split_vdj:
             self.cell_confident_vdj = glob.glob(f'{args.vdj_dir}/*count_vdj/*cell_confident.tsv*')[0]
 
             self.vdj_outdir = f'{args.outdir}/vdj/'
             if not os.path.exists(self.vdj_outdir):
                 os.system(f'mkdir -p {self.vdj_outdir}')
-            
 
     @utils.add_log
     def write_r2_fastq_files(self):
@@ -147,7 +146,6 @@ class Split_tag(Step):
                 clonotypes.to_csv(f'{self.vdj_outdir}/{tag}_{seqtype}_clonotypes.tsv', sep='\t', index=False)
             else:
                 continue
-            
 
     @utils.add_log
     def run(self):
@@ -165,7 +163,6 @@ def split_tag(args):
         runner.run()
 
 
-
 def get_opts_split_tag(parser, sub_program):
     parser.add_argument(
         "--split_fastq",
@@ -178,8 +175,8 @@ def get_opts_split_tag(parser, sub_program):
         action='store_true',
     )
     parser.add_argument(
-        "--split_vdj", 
-        help="If used, will split scRNA-Seq vdj count file according to tag assignment.", 
+        "--split_vdj",
+        help="If used, will split scRNA-Seq vdj count file according to tag assignment.",
         action='store_true',
     )
     parser.add_argument("--vdj_dir", help="Match celescope vdj directory. Required when --split_vdj is specified.")

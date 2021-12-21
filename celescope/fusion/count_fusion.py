@@ -67,7 +67,7 @@ class CountFusion(Step):
                     ):
                         left_bases = read.get_overlap(left, pos)
                         right_bases = read.get_overlap(pos, right)
-                        if left_bases < self.flanking_base or right_bases <  self.flanking_base:
+                        if left_bases < self.flanking_base or right_bases < self.flanking_base:
                             continue
                         attr = read.query_name.split("_")
                         barcode = attr[0]
@@ -140,7 +140,7 @@ def get_opts_count_fusion(parser, sub_program):
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'], required=True)
     parser.add_argument('--fusion_genomeDir', help='Fusion genome directory.', required=True)
     parser.add_argument(
-        "--flanking_base", 
+        "--flanking_base",
         help="Number of bases flanking the fusion position.",
         default=5)
     parser.add_argument(

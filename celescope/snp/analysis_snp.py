@@ -1,7 +1,7 @@
 import configparser
 
 import pandas as pd
-from venn import generate_petal_labels,draw_venn,generate_colors
+from venn import generate_petal_labels, draw_venn, generate_colors
 
 import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin
@@ -61,7 +61,7 @@ class Analysis_snp(AnalysisMixin):
         """
         df = pd.read_csv(self.gt_file, index_col=0)
         df_ncell = df.apply(pd.Series.value_counts, axis=1).fillna(0).astype(int)
-        df_ncell.to_csv(self.ncell_file, index = True)
+        df_ncell.to_csv(self.ncell_file, index=True)
 
     @utils.add_log
     def run_annovar(self):
@@ -107,34 +107,35 @@ class Analysis_snp(AnalysisMixin):
         df_vcf = df_vcf[cols]
         self.variant_table = df_vcf
         self.variant_table.to_csv(self.variant_table_file, index=False)
-    
+
     def get_venn_plot(self):
-        df_top_5 = self.get_df_table().sort_values(by = "ncell_alt",ascending=False).iloc[:5,:]
+        df_top_5 = self.get_df_table().sort_values(by="ncell_alt", ascending=False).iloc[:5, :]
         plot = {}
-        cid_lst = df_top_5.loc[:,"CID"].to_list()
-        vid_lst = df_top_5.loc[:,"VID"].to_list()
-        for cid,vid in zip(cid_lst,vid_lst):
+        cid_lst = df_top_5.loc[:, "CID"].to_list()
+        vid_lst = df_top_5.loc[:, "VID"].to_list()
+        for cid, vid in zip(cid_lst, vid_lst):
             plot[f"VID_{vid}"] = set(cid)
-        share_cid  = list(set.intersection(*map(set,cid_lst)))
+        share_cid = list(set.intersection(*map(set, cid_lst)))
         if share_cid == []:
             share_cid.append("None")
-        #venn plot
+        # venn plot
         set_cid = list(plot.values())
         set_name = list(plot.keys())
         labels = generate_petal_labels(set_cid)
         plot = draw_venn(
-                         petal_labels=labels, 
-                         dataset_labels=set_name,
-                         hint_hidden=False,
-                         colors=generate_colors(n_colors=5), 
-                         figsize=(8, 8),
-                         fontsize=14, 
-                         legend_loc="best",
-                         ax=None
-                         )
+            petal_labels=labels,
+            dataset_labels=set_name,
+            hint_hidden=False,
+            colors=generate_colors(n_colors=5),
+            figsize=(8, 8),
+            fontsize=14,
+            legend_loc="best",
+            ax=None
+        )
         fig = plot.get_figure()
-        fig.savefig(f'{self.outdir}/{self.sample}_variant_top5.jpg',dpi = 600)
-        pd.DataFrame({"top5_variant_shared_cells":share_cid}).to_csv(f'{self.outdir}/{self.sample}_top5_shared_cells.tsv',sep = '\t',index = None)
+        fig.savefig(f'{self.outdir}/{self.sample}_variant_top5.jpg', dpi=600)
+        pd.DataFrame({"top5_variant_shared_cells": share_cid}).to_csv(
+            f'{self.outdir}/{self.sample}_top5_shared_cells.tsv', sep='\t', index=None)
 
     def add_help(self):
         '''
@@ -180,7 +181,6 @@ class Analysis_snp(AnalysisMixin):
             content='COSMIC annotation'
         )
 
-
     def run(self):
         self.write_gt()
         self.write_ncell()
@@ -190,7 +190,7 @@ class Analysis_snp(AnalysisMixin):
         self.add_help()
         table_dict = self.get_table_dict(title='Variant table', table_id='variant', df_table=self.variant_table)
         self.add_data(table_dict=table_dict)
-        #self.get_venn_plot()
+        # self.get_venn_plot()
 
     def read_annovar_config(self):
         '''
@@ -214,4 +214,3 @@ def get_opts_analysis_snp(parser, sub_program):
         s_common(parser)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
         parser.add_argument('--vcf', help='vcf file.', required=True)
-

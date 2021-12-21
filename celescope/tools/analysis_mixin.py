@@ -14,7 +14,7 @@ class AnalysisMixin(Step):
     """
 
     def __init__(self, args, display_title=None):
-        
+
         super().__init__(args, display_title=display_title)
 
         self.match_dir = None
@@ -29,7 +29,6 @@ class AnalysisMixin(Step):
             self.read_format_df_marker(marker_df_file)
         else:
             self.match_dir = args.outdir + "/../"  # use self
-
 
     @utils.add_log
     def seurat(self, matrix_file, save_rds, genomeDir):
@@ -68,12 +67,11 @@ class AnalysisMixin(Step):
         if "avg_logFC" in df_marker.columns:  # seurat 2.3.4
             avg_logfc_col = "avg_logFC"
         df_marker = df_marker.loc[:,
-            ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
-        ]
+                                  ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
+                                  ]
         df_marker["cluster"] = df_marker["cluster"].apply(lambda x: f"cluster {x}")
 
         self.df_marker = df_marker
-
 
     def read_match_dir(self):
         """
@@ -87,5 +85,3 @@ class AnalysisMixin(Step):
             self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
             self.df_marker_file = match_dict['markers']
             self.read_format_df_marker()
-
-

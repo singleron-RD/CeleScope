@@ -41,6 +41,7 @@ def cell_calling(raw_mat, expected_cell_num):
 
     return filtered_bc_indices
 
+
 class Cell_calling():
     def __init__(self, outdir, raw_mat, raw_features_path, raw_barcodes):
         self.raw_mat = raw_mat
@@ -51,10 +52,10 @@ class Cell_calling():
         self.out_feature = f'{outdir}/{FEATURE_FILE_NAME}'
         self.out_barcode = f'{outdir}/{BARCODE_FILE_NAME}'
         utils.check_mkdir(outdir)
-        
+
     def write_slice_matrix(self, filtered_bc_indices):
         mtx_csc = self.raw_mat.tocsc()
-        sliced_mtx = mtx_csc[:,filtered_bc_indices]
+        sliced_mtx = mtx_csc[:, filtered_bc_indices]
         scipy.io.mmwrite(target=self.out_mat, a=sliced_mtx)
 
         barcodes = pd.Series(self.raw_barcodes[filtered_bc_indices])
@@ -74,6 +75,7 @@ def main():
     raw_mat, raw_features_path, raw_barcodes = read_raw_matrix(all_matrix_10X_dir)
     runner = Cell_calling(outdir, raw_mat, raw_features_path, raw_barcodes)
     runner.run()
+
 
 if __name__ == '__main__':
     main()

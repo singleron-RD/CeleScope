@@ -28,7 +28,7 @@ class Multi_citeseq(Multi):
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def analysis_cite(self, sample):
-    
+
         step = 'analysis_cite'
         cmd_line = self.get_cmd_line(step, sample)
         citeseq_mtx = f'{self.outdir_dic[sample]["count_cite"]}/{sample}_citeseq.mtx.gz'
@@ -38,6 +38,7 @@ class Multi_citeseq(Multi):
             f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
+
 
 def main():
     multi = Multi_citeseq(__ASSAY__)

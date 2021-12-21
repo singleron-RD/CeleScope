@@ -5,7 +5,7 @@ from celescope.tools.multi import Multi
 class Multi_capture_virus(Multi):
     """
     # Usage
-    
+
     ```
     multi_capture_virus\
     --mapfile {mapfile}\
@@ -16,7 +16,6 @@ class Multi_capture_virus(Multi):
     --mod shell
     ```
     """
-    
 
     def star_virus(self, sample):
         step = 'star_virus'
@@ -53,7 +52,6 @@ class Multi_capture_virus(Multi):
             f'--raw_read_count_file {raw_read_count_file} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
-
 
     def analysis_virus(self, sample):
         step = 'analysis_virus'

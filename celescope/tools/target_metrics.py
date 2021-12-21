@@ -28,7 +28,7 @@ class Target_metrics(Step):
         # set
         self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
         self.match_barcode = set(self.match_barcode_list)
-        
+
         if args.panel:
             self.gene_list = utils.get_gene_region_from_bed(args.panel)[0]
             self.n_gene = len(self.gene_list)
@@ -36,8 +36,8 @@ class Target_metrics(Step):
             self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
 
         if not self.gene_list:
-            sys.exit("You must provide either --panel or --gene_list!")            
-        
+            sys.exit("You must provide either --panel or --gene_list!")
+
         self.count_dict = utils.genDict(dim=3, valType=int)
 
         self.add_metric(
@@ -112,14 +112,14 @@ class Target_metrics(Step):
             f'{sorted(enriched_reads_per_cell_list)}'
             f'len: {len(enriched_reads_per_cell_list)}'
         )
-        
+
         valid_enriched_reads_per_cell_list = [cell for cell in enriched_reads_per_cell_list if cell > 0]
         n_valid_cell = len(valid_enriched_reads_per_cell_list)
         self.add_metric(
             name="Number of Valid Cells",
             value=n_valid_cell,
             total=self.n_cell,
-        )        
+        )
         self.add_metric(
             name="Enriched Reads",
             value=enriched_reads,
@@ -156,9 +156,10 @@ def target_metrics(args):
 
 def get_opts_target_metrics(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
-    parser.add_argument("--panel", help = HELP_DICT['panel'])
+    parser.add_argument("--panel", help=HELP_DICT['panel'])
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
-        parser.add_argument('--add_RG', help='Add tag read group: RG. RG is the same as CB(cell barcode)', action='store_true')
+        parser.add_argument(
+            '--add_RG', help='Add tag read group: RG. RG is the same as CB(cell barcode)', action='store_true')
         parser = s_common(parser)

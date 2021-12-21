@@ -76,8 +76,6 @@ def mkref(args):
     runner.run()
 
 
-
-
 def get_opts_mkref(parser, sub_program):
     opts(parser, sub_program)
     if sub_program:

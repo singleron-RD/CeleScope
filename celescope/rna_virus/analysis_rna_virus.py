@@ -16,8 +16,7 @@ class Analysis_rna_virus(AnalysisMixin):
         if args.type_marker_tsv and args.type_marker_tsv != 'None':
             self.auto_assign_bool = True
             self.save_rds = True
-    
-    
+
     def run(self):
         self.seurat(self.args.matrix_file, self.args.save_rds, self.args.genomeDir)
         if self.auto_assign_bool:
@@ -29,7 +28,6 @@ class Analysis_rna_virus(AnalysisMixin):
         self.add_data(table_dict=self.table_dict)
 
         self._clean_up()
-
 
     def virus_tsne_list(self):
         """
@@ -49,7 +47,6 @@ def analysis_rna_virus(args):
 
     with Analysis_rna_virus(args) as runner:
         runner.run()
-
 
 
 def get_opts_analysis_rna_virus(parser, sub_program):

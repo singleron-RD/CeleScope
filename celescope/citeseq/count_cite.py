@@ -5,6 +5,7 @@ import celescope.tools.utils as utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
 
+
 class Count_cite(Step):
 
     def __init__(self, args, display_title):
@@ -17,7 +18,6 @@ class Count_cite(Step):
 
         # out
         self.mtx = f'{self.out_prefix}_citeseq.mtx.gz'
-
 
     @utils.add_log
     def run(self):

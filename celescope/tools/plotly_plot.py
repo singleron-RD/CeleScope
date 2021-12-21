@@ -8,11 +8,11 @@ import plotly.express as px
 import celescope.tools.utils as utils
 
 
-PLOTLY_CONFIG =  {
-    "displayModeBar": True, 
-    "staticPlot": False, 
-    "showAxisDragHandles": False, 
-    "modeBarButtons": [["toImage", "resetScale2d"]], 
+PLOTLY_CONFIG = {
+    "displayModeBar": True,
+    "staticPlot": False,
+    "showAxisDragHandles": False,
+    "modeBarButtons": [["toImage", "resetScale2d"]],
     "scrollZoom": False,
     "displaylogo": False
 }
@@ -20,13 +20,13 @@ PLOTLY_CONFIG =  {
 COLORS = px.colors.qualitative.Plotly + px.colors.qualitative.Alphabet
 
 LAYOUT = {
-        "height": 313,
-        "width": 400,
-        "margin": {
-            "l": 45,
-            "r": 35,
-            "b": 30,
-            "t": 30,}
+    "height": 313,
+    "width": 400,
+    "margin": {
+        "l": 45,
+        "r": 35,
+        "b": 30,
+        "t": 30, }
 }
 
 
@@ -38,9 +38,9 @@ class Plotly_plot():
 
     def plotly_plot(self):
         return plotly.offline.plot(
-            self._fig, 
-            include_plotlyjs=True, 
-            output_type='div', 
+            self._fig,
+            include_plotlyjs=True,
+            output_type='div',
             config=PLOTLY_CONFIG
         )
 
@@ -58,7 +58,7 @@ class Tsne_plot(Plotly_plot):
         self.discrete = discrete
         title_feature_name = feature_name[0].upper() + feature_name[1:]
         self.title = f"t-SNE plot Colored by {title_feature_name}"
-        
+
         self._layout = {}
         self._dot_size = 4
         self._df['size'] = self._dot_size
@@ -68,7 +68,7 @@ class Tsne_plot(Plotly_plot):
         self.axes_config = {
             'showgrid': True,
             'gridcolor': '#F5F5F5',
-            'showline': False, 
+            'showline': False,
             'ticks': None,
             'zeroline': True,
             'zerolinecolor': 'black',
@@ -78,7 +78,7 @@ class Tsne_plot(Plotly_plot):
         self.scatter_config = {
             'data_frame': df_tsne,
             'title': self.title,
-            'x': self._str_coord1, 
+            'x': self._str_coord1,
             'y': self._str_coord2,
             'size_max': self._dot_size,
             'hover_data': {
@@ -97,7 +97,7 @@ class Tsne_plot(Plotly_plot):
 
     def set_color_scale(self, color_scale):
         self.scatter_config['color_continuous_scale'] = color_scale
-    
+
     @utils.add_log
     def get_plotly_div(self):
 
@@ -110,7 +110,7 @@ class Tsne_plot(Plotly_plot):
         return self.plotly_plot()
 
     @utils.add_log
-    def discrete_tsne_plot(self):        
+    def discrete_tsne_plot(self):
 
         sum_df = self._df.groupby([self.feature_name]).agg("count").iloc[:, 0]
         percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
@@ -118,7 +118,7 @@ class Tsne_plot(Plotly_plot):
         res_list = []
         for cluster in sorted(self._df[self.feature_name].unique()):
             name = f"{cluster}({percent_df[cluster]}%)"
-            res_dict[cluster]= name
+            res_dict[cluster] = name
             res_list.append(name)
 
         self._df[self.feature_name] = self._df[self.feature_name].map(res_dict)
@@ -126,14 +126,14 @@ class Tsne_plot(Plotly_plot):
         self._fig = px.scatter(
             **self.scatter_config,
             category_orders={self.feature_name: res_list}
-        )                               
+        )
 
     @utils.add_log
     def continuous_tsne_plot(self):
 
         self._fig = px.scatter(
             **self.scatter_config,
-        )   
+        )
 
     def update_fig(self):
         self._fig.update_xaxes(
@@ -145,23 +145,23 @@ class Tsne_plot(Plotly_plot):
             title_text=self._str_coord2,
             **self.axes_config
         )
-        
+
         self._fig.update_layout(
             self._layout,
-            title={ "text":self.title, "x":0.5, "y":0.95, "font":{"size":15} },
-            plot_bgcolor = '#FFFFFF',
+            title={"text": self.title, "x": 0.5, "y": 0.95, "font": {"size": 15}},
+            plot_bgcolor='#FFFFFF',
             hovermode="closest"
         )
 
 
 class Pie_plot(Plotly_plot):
-    
+
     def __init__(self, df_region):
         super().__init__(df_region)
         self.set_fig()
 
     def set_fig(self):
-        layout = {     
+        layout = {
             "height": 300,
             "width": 400,
             "margin": {
@@ -179,59 +179,60 @@ class Pie_plot(Plotly_plot):
         self._fig.update_traces(textposition='none')
         self._fig.update_layout(layout)
 
+
 class Line_plot(Plotly_plot):
 
-    def __init__(self, df_line,feature_name,range=[0,100],section=True):
+    def __init__(self, df_line, feature_name, range=[0, 100], section=True):
         super().__init__(df_line)
         self.df_line = df_line
         self.feature_name = feature_name
         self.range = range
         self.section = section
         self.index = None
-        #随title信息变更index
+        # 随title信息变更index
         if self.feature_name == "Saturation":
             self.index = 0
         elif self.feature_name == "Median gene_Num":
             self.index = 1
-        #更新填入title信息
-        self.title = ['Sequencing Saturation','Median Genes per Cell']
+        # 更新填入title信息
+        self.title = ['Sequencing Saturation', 'Median Genes per Cell']
         self._str_coord1 = "Reads Fraction"
-        self._str_coord2 = ["Sequencing Saturation(%)","Median Genes per Cell"]
+        self._str_coord2 = ["Sequencing Saturation(%)", "Median Genes per Cell"]
 
         self.xaxes_config = {
             'showgrid': True,
             'gridcolor': '#F5F5F5',
-            'linecolor':'black',
-            'showline': True, 
+            'linecolor': 'black',
+            'showline': True,
             'ticks': None,
-            'tickmode':'linear',
-            'tick0':0,
-            'dtick':0.5,
+            'tickmode': 'linear',
+            'tick0': 0,
+            'dtick': 0.5,
         }
-        
+
         if self.section:
             self.yaxes_config = {
                 'showgrid': True,
                 'gridcolor': '#F5F5F5',
-                'linecolor':'black',
-                'showline': True, 
+                'linecolor': 'black',
+                'showline': True,
                 'ticks': None,
-                'rangemode':'tozero',
+                'rangemode': 'tozero',
             }
         else:
             self.yaxes_config = {
                 'showgrid': True,
                 'gridcolor': '#F5F5F5',
-                'linecolor':'black',
-                'showline': True, 
+                'linecolor': 'black',
+                'showline': True,
                 'ticks': None,
-                'range':self.range,#range范围根据需要调节
+                'range': self.range,  # range范围根据需要调节
             }
 
         self.line_config = {
             'data_frame': df_line,
             'title': self.title[self.index],
-            'x': self._str_coord1, 
+            'x': self._str_coord1,
             'y': self._str_coord2[self.index],
         }
 
@@ -242,7 +243,7 @@ class Line_plot(Plotly_plot):
     def line_plot(self):
         self._fig = px.line(
             **self.line_config,
-        )  
+        )
 
     def update_fig(self):
         self._fig.update_xaxes(
@@ -252,13 +253,12 @@ class Line_plot(Plotly_plot):
         self._fig.update_yaxes(
             **self.yaxes_config
         )
-        
+
         self._fig.update_layout(
             LAYOUT,
-            title={"x":0.5, "y":0.95, "font":{"size":15}},
-            yaxis_zeroline = True,
-            showlegend = False,
-            plot_bgcolor = '#FFFFFF',
-            hovermode = "closest"
+            title={"x": 0.5, "y": 0.95, "font": {"size": 15}},
+            yaxis_zeroline=True,
+            showlegend=False,
+            plot_bgcolor='#FFFFFF',
+            hovermode="closest"
         )
-        

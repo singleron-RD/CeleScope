@@ -254,6 +254,7 @@ def get_bed_file_path(panel):
     else:
         return bed_file_path
 
+
 def get_gene_region_from_bed(panel):
     """
     Returns 
@@ -261,13 +262,14 @@ def get_gene_region_from_bed(panel):
     - position_df with 'Chromosome', 'Start', 'End'
     """
     file_path = get_bed_file_path(panel)
-    bed_file_df = pd.read_table(file_path, 
-                                usecols=[0,1,2,3],
-                                names=['Chromosome', 'Start', 'End','Gene'],
-                                sep = "\t")
-    position_df = bed_file_df.loc[:,['Chromosome', 'Start', 'End']]
-    genes = set(bed_file_df.loc[:,'Gene'].to_list())
+    bed_file_df = pd.read_table(file_path,
+                                usecols=[0, 1, 2, 3],
+                                names=['Chromosome', 'Start', 'End', 'Gene'],
+                                sep="\t")
+    position_df = bed_file_df.loc[:, ['Chromosome', 'Start', 'End']]
+    genes = set(bed_file_df.loc[:, 'Gene'].to_list())
     return genes, position_df
+
 
 def read_fasta(fasta_file, equal=False):
     # seq must have equal length
@@ -666,7 +668,7 @@ def otsu_min_support_read(array, otsu_plot):
     hist = array2hist(array)
     thresh = threshold_otsu(hist)
     makePlot(hist, thresh, otsu_plot)
-    threshold = round(10 ** thresh,1)
+    threshold = round(10 ** thresh, 1)
     return threshold
 
 
@@ -699,7 +701,6 @@ class Samtools():
     def index_bam(self):
         """index out_bam"""
         self.samtools_index(self.out_bam)
-
 
     @add_log
     def add_tag(self, gtf):
@@ -753,7 +754,6 @@ class Samtools():
                 for read in original_bam:
                     read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
                     temp_sam.write(read)
-
 
     def temp_sam2bam(self, by=None):
         self.samtools_sort(self.temp_sam_file, self.out_bam, by=by)

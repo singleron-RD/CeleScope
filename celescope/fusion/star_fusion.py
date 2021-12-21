@@ -8,7 +8,6 @@ class Star_fusion(Star_mixin):
 
         args.genomeDir = args.fusion_genomeDir
 
-
     def run(self):
         self.run_star()
 

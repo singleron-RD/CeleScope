@@ -34,7 +34,6 @@ class Variant_calling(Step):
         self.fixed_header_vcf = f'{self.out_prefix}_fixed.vcf'
         self.norm_vcf_file = f'{self.out_prefix}_norm.vcf'
 
-
     @utils.add_log
     def SplitNCigarReads(self):
         cmd = (
@@ -62,7 +61,7 @@ class Variant_calling(Step):
             f'gatk LeftAlignAndTrimVariants '
             f'-R {self.fasta} '
             f'-V {self.fixed_header_vcf} '
-            f'-O {self.norm_vcf_file} ' 
+            f'-O {self.norm_vcf_file} '
             '--split-multi-allelics '
         )
         self.debug_subprocess_call(cmd)
@@ -95,12 +94,12 @@ class Variant_calling(Step):
     def bcftools_norm(self):
         cmd = (
             'bcftools norm '
-            '-m- '  
+            '-m- '
             f'-f {self.fasta} '
             f'{self.raw_vcf_file} '
             '| bcftools norm '
             '-d both '
-            f'-o {self.norm_vcf_file} ' 
+            f'-o {self.norm_vcf_file} '
         )
         self.debug_subprocess_call(cmd)
 
@@ -122,7 +121,7 @@ def variant_calling(args):
 def get_opts_variant_calling(parser, sub_program):
 
     parser.add_argument("--genomeDir", help=HELP_DICT['genomeDir'], required=True)
-    parser.add_argument("--panel", help = HELP_DICT['panel'])
+    parser.add_argument("--panel", help=HELP_DICT['panel'])
     if sub_program:
         parser.add_argument(
             "--bam",

@@ -26,8 +26,8 @@ class FeatureCounts(Step):
     - `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
     """
 
-    def __init__(self, args,display_title=None):
-        Step.__init__(self, args,display_title=display_title)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.gtf = parse_genomeDir_rna(self.args.genomeDir)['gtf']
@@ -66,24 +66,23 @@ class FeatureCounts(Step):
             total = sum(metrics_numbers.values())
 
             self.add_metric(
-                name='Assigned', 
+                name='Assigned',
                 value=metrics_numbers['Assigned'],
                 total=total,
                 help_info='reads that can be successfully assigned without ambiguity'
             )
             self.add_metric(
-                name='Unassigned_NoFeatures', 
+                name='Unassigned_NoFeatures',
                 value=metrics_numbers['Unassigned_NoFeatures'],
                 total=total,
                 help_info='alignments that do not overlap any feature'
             )
             self.add_metric(
-                name='Unassigned_Ambiguity', 
+                name='Unassigned_Ambiguity',
                 value=metrics_numbers['Unassigned_Ambiguity'],
                 total=total,
                 help_info='alignments that overlap two or more features'
-            )         
-
+            )
 
     @utils.add_log
     def run_featureCounts(self):
@@ -101,7 +100,6 @@ class FeatureCounts(Step):
             cmd += (" " + self.featureCounts_param)
         self.debug_subprocess_call(cmd)
 
-
     def run(self):
 
         self.run_featureCounts()
@@ -110,7 +108,7 @@ class FeatureCounts(Step):
             out_bam=self.featureCounts_bam,
             threads=self.thread,
             debug=self.debug
-            )
+        )
         samtools_runner.add_tag(self.gtf)
         samtools_runner.temp_sam2bam(by='coord')
         samtools_runner.samtools_sort(

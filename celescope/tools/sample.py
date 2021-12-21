@@ -47,7 +47,7 @@ class Sample(Step):
 
 @utils.add_log
 def sample(args):
-    
+
     with Sample(args) as runner:
         runner.run()
 

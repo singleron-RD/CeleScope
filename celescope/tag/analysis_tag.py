@@ -12,7 +12,7 @@ class Analysis_tag(AnalysisMixin):
     - Combine scRNA-Seq clustering infromation with tag assignment.
     """
 
-    def __init__(self, args,display_title=None):
+    def __init__(self, args, display_title=None):
         super().__init__(args, display_title)
         self.tsne_tag_file = args.tsne_tag_file
         self.df_tsne_tag = pd.read_csv(self.tsne_tag_file, sep='\t')
@@ -36,5 +36,5 @@ def get_opts_analysis_tag(parser, sub_program):
 
 @utils.add_log
 def analysis_tag(args):
-    with Analysis_tag(args,display_title="Analysis") as runner:
+    with Analysis_tag(args, display_title="Analysis") as runner:
         runner.run()

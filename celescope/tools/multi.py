@@ -49,7 +49,6 @@ class Multi():
 
         self.outdir_dic = {}
 
-
     def common_args(self):
         readme = f'{self.__ASSAY__} multi-samples'
         parser = argparse.ArgumentParser(readme,
@@ -93,8 +92,10 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 ```
 ''',
             required=True)
-        parser.add_argument('--mod', help='Which type of script to generate, `sjm` or `shell`.', choices=['sjm', 'shell'], default='sjm')
-        parser.add_argument('--rm_files', action='store_true', help='Remove redundant fastq and bam files after running.')
+        parser.add_argument('--mod', help='Which type of script to generate, `sjm` or `shell`.',
+                            choices=['sjm', 'shell'], default='sjm')
+        parser.add_argument('--rm_files', action='store_true',
+                            help='Remove redundant fastq and bam files after running.')
         parser.add_argument('--steps_run', help='Steps to run. Multiple Steps are separated by comma.', default='all')
         # sub_program parser do not have
         parser.add_argument('--outdir', help='Output directory.', default="./")

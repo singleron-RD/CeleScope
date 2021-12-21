@@ -13,6 +13,7 @@ import celescope.tools.utils as utils
 
 SAMPLE_COL_INDEX = 2
 
+
 def parse_mapfile(mapfile):
     sample_set = set()
     df_mapfile = pd.read_csv(mapfile, sep='\t', header=None)
@@ -91,8 +92,8 @@ class Mt_summary():
 def main():
     parser = argparse.ArgumentParser(description='plot snp', formatter_class=ArgFormatter)
     parser.add_argument("--mapfile", help="mapfile with VIDs as 5th column", required=True)
-    parser.add_argument("--genomeDir", help=HELP_DICT["genomeDir"], 
-        default='/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92')
+    parser.add_argument("--genomeDir", help=HELP_DICT["genomeDir"],
+                        default='/SGRNJ/Public/Database/genome/homo_sapiens/ensembl_92')
     parser.add_argument("--root_dir", help='input root_dir', default='./')
     parser.add_argument("--outdir", help="output dir", default='mt_summary')
     args = parser.parse_args()
@@ -106,6 +107,7 @@ def main():
             root_dir=args.root_dir,
         )
         runner.run()
+
 
 if __name__ == '__main__':
     main()

@@ -37,6 +37,6 @@ HELP_DICT = {
 HELP_INFO_DICT = {
     'matched_barcode_number': {
         'display': 'Number of Matched Cells',
-        'info':'cell barcode number of matched scRNA-Seq sample',
+        'info': 'cell barcode number of matched scRNA-Seq sample',
     }
 }
