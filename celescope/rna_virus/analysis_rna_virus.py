@@ -7,7 +7,7 @@ from celescope.rna.analysis import get_opts_analysis
 
 class Analysis_rna_virus(AnalysisMixin):
     def __init__(self, args, display_title=None):
-        super().__init__(self, args, display_title)
+        super().__init__(args, display_title)
 
         # set
         self.virus_df = pd.read_csv(args.virus_file, sep="\t")

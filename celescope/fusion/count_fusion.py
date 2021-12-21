@@ -11,7 +11,7 @@ from celescope.tools.step import Step, s_common
 
 class CountFusion(Step):
     def __init__(self, args, display_title=None):
-        super().__init__(self, args, display_title)
+        super().__init__(args, display_title)
 
         self.flanking_base = int(args.flanking_base)
         self.UMI_min = int(args.UMI_min)
