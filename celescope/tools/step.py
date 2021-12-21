@@ -89,7 +89,10 @@ class Step:
         '''add metric to metric_list
         display controls how to display the metric in HTML report.
         '''
+
         name = cap_str_except_preposition(name)
+        if help_info:
+            help_info = help_info.capitalize()
         if not display:
             if isinstance(value, numbers.Number):
                 display = str(format(value, ','))
