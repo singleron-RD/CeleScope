@@ -71,7 +71,7 @@ class Count(Step):
 
         # set
         self.gtf_file = parse_genomeDir_rna(args.genomeDir)['gtf']
-        self.id_name = utils.get_id_name_dict(self.gtf_file)
+        self.gtf_dict = utils.Gtf_dict(self.gtf_file)
         self.downsample_dict = {}
 
         # output files
