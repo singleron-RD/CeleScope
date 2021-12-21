@@ -1,5 +1,4 @@
 import json
-from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -137,14 +136,13 @@ class Filter(Step):
             elif self.umi_threshold_method == 'otsu':
                 umi_threshold = self.otsu_threshold(umi_array)
             elif self.umi_threshold_method == 'hard':
-                umi_threshold = self.hard_threshold(umi_array)
+                umi_threshold = self.hard_threshold()
             
             umi_threshold = max(1, umi_threshold)
             self.umi_threshold_dict[ref] = umi_threshold
             self.add_metric(f'{ref} UMI Threshold', umi_threshold)
 
-    @staticmethod
-    def otsu_threshold(umi_array):
+    def otsu_threshold(self, umi_array):
         array = np.log2(umi_array)
         hist = otsu.array2hist(array)
         thresh = otsu.threshold_otsu(hist)
@@ -152,7 +150,6 @@ class Filter(Step):
 
         return int(2 ** thresh)
 
-    @staticmethod
     def auto_threshold(umi_array):
         """
         threhold = 99 percentile of all cell UMIs / 10
