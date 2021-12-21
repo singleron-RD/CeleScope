@@ -1,7 +1,6 @@
 
 import os
 import re
-import subprocess
 
 from celescope.rna.mkref import parse_genomeDir_rna
 from celescope.tools.step import Step, s_common

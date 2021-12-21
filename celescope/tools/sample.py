@@ -1,6 +1,4 @@
-import os
 
-import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.__init__ import __VERSION__, ASSAY_DICT

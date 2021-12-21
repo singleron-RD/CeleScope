@@ -1,10 +1,5 @@
-import os
-from collections import defaultdict
 
-import numpy as np
 import pandas as pd
-import pysam
-from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 
@@ -99,7 +94,6 @@ class Res_sum(Step):
 
 @utils.add_log
 def res_sum(args):
-    step_name = 'res_sum'
     res_sum_obj = Res_sum(args)
     res_sum_obj.run()
 

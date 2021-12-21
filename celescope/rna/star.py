@@ -1,11 +1,9 @@
-import subprocess
 import re
 import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
-from celescope.tools.step import Step
 from celescope.tools.plotly_plot import Pie_plot
 
 
@@ -70,7 +68,7 @@ class Star(Star_mixin):
                 if re.search(r'of reads mapped to too many loci', line):
                     multi_reads_list.append(line.strip().split()[-1])
                 if re.search(r'Number of input reads', line):
-                    total_reads = int(line.strip().split()[-1])
+                    int(line.strip().split()[-1])
 
         with open(self.picard_region_log, 'r') as picard_log:
             region_dict = {}
@@ -162,7 +160,7 @@ class Star(Star_mixin):
 
     @utils.add_log
     def run(self):
-        self.run_star()
+        super().run()
         self.picard()
         self.add_other_metrics()
 

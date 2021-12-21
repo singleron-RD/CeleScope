@@ -2,7 +2,6 @@ import re
 import subprocess
 from itertools import islice
 
-import pandas as pd
 import pysam
 
 from celescope.tools.step import Step, s_common

@@ -3,13 +3,11 @@ assign cell identity based on SNR and UMI_min
 """
 
 from celescope.__init__ import ROOT_PATH
-from celescope.tools.count import Count_test
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import subprocess
 
 import matplotlib
 

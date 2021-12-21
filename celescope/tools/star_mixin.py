@@ -61,7 +61,7 @@ class Star_mixin(Step):
         self.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    def run_star(self):
+    def run(self):
         self.STAR()
         self.get_star_metrics()
         self.sort_bam()
