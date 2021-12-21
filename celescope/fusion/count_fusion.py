@@ -10,8 +10,9 @@ from celescope.tools.step import Step, s_common
 
 
 class CountFusion(Step):
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        super().__init__(self, args, display_title)
+
         self.flanking_base = int(args.flanking_base)
         self.UMI_min = int(args.UMI_min)
         self.match_dir = args.match_dir
@@ -128,8 +129,8 @@ class CountFusion(Step):
 
 @utils.add_log
 def count_fusion(args):
-    runner = CountFusion(args)
-    runner.run()
+    with CountFusion(args) as runner:
+        runner.run()
 
 
 def get_opts_count_fusion(parser, sub_program):

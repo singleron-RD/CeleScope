@@ -13,9 +13,6 @@ class Star_virus(Star_mixin):
 
         super().__init__(args, add_prefix='virus', display_title=display_title)
 
-    def run(self):
-        super().run()
-
 
 @utils.add_log
 def star_virus(args):

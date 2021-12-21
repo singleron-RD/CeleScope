@@ -6,8 +6,6 @@ import numbers
 import os
 import subprocess
 
-import numpy as np
-
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 import celescope.tools.utils as utils
@@ -32,23 +30,6 @@ def s_common(parser):
     parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
     parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
     return parser
-
-
-class ExtendEncoder(json.JSONEncoder):
-    """
-    convert numpy data types to python data types
-    json does not recognize NumPy data types
-    """
-
-    def default(self, obj):
-        if isinstance(obj, (np.int64, np.int32)):
-            return int(obj)
-        elif isinstance(obj, (np.float32, np.float64)):
-            return float(obj)
-        elif isinstance(obj, (np.ndarray,)):
-            return obj.tolist()
-        else:
-            return json.JSONEncoder.default(self, obj)
 
 
 class Step:
@@ -144,7 +125,7 @@ class Step:
         for slot, path in self._path_dict.items():
             if self.__content_dict[slot]:
                 with open(path, 'w') as f:
-                    json.dump(self.__content_dict[slot], f, indent=4, cls=ExtendEncoder)
+                    json.dump(self.__content_dict[slot], f, indent=4)
 
     @utils.add_log
     def _render_html(self):

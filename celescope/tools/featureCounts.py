@@ -44,7 +44,7 @@ class FeatureCounts(Step):
         metrics_compiled = {}
 
         for metrics_str in metrics_strs:
-            raw_str = metrics_str + '.*?(\d+)'
+            raw_str = re.escape(metrics_str) + r'.*?(\d+)'
             compiled = re.compile(raw_str, flags=re.S)
             metrics_compiled[metrics_str] = compiled
 

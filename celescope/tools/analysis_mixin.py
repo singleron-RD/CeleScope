@@ -5,8 +5,39 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.rna.mkref import parse_genomeDir_rna
-from celescope.tools.step import Step
+from celescope.tools.step import Step, s_common
 
+
+def get_opts_analysis_mixin(parser, sub_program):
+    
+    parser.add_argument('--genomeDir', help='Required. Genome directory.', required=True)
+    parser.add_argument('--save_rds', action='store_true', help='Write rds to disk.')
+    parser.add_argument(
+        '--type_marker_tsv',
+        help="""A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
+```
+cell_type	marker
+Alveolar	"CLDN18,FOLR1,AQP4,PEBP4"
+Endothelial	"CLDN5,FLT1,CDH5,RAMP2"
+Epithelial	"CAPS,TMEM190,PIFO,SNTN"
+Fibroblast	"COL1A1,DCN,COL1A2,C1R"
+B_cell	"CD79A,IGKC,IGLC3,IGHG3"
+Myeloid	"LYZ,MARCO,FCGR3A"
+T_cell	"CD3D,TRBC1,TRBC2,TRAC"
+LUAD	"NKX2-1,NAPSA,EPCAM"
+LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
+```"""
+    )
+    if sub_program:
+        parser.add_argument(
+            '--matrix_file',
+            help='Required. Matrix_10X directory from step count.',
+            required=True,
+        )
+        # do not need all count diretory
+        parser.add_argument("--tsne_file", help="match_dir t-SNE coord file.")
+        parser.add_argument("--df_marker_file", help="match_dir df_marker_file.")
+        parser = s_common(parser)
 
 class AnalysisMixin(Step):
     """
@@ -23,10 +54,10 @@ class AnalysisMixin(Step):
             self.read_match_dir()
         elif hasattr(args, "tsne_file") and args.tsne_file:
             tsne_df_file = args.tsne_file
-            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
-            self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-            marker_df_file = args.marker_file
-            self.read_format_df_marker(marker_df_file)
+            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t", index_col=0)
+            self.df_tsne.index.rename("barcode", inplace=True)
+            self.df_marker_file = args.df_marker_file
+            self.read_format_df_marker()
         else:
             self.match_dir = args.outdir + "/../"  # use self
 
@@ -85,3 +116,6 @@ class AnalysisMixin(Step):
             self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
             self.df_marker_file = match_dict['markers']
             self.read_format_df_marker()
+
+    def run(self):
+        pass
