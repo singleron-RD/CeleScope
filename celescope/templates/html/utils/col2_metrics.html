@@ -1,0 +1,21 @@
+<table style="float: left; margin-left: 0%; margin-right:3%; width: 47%">
+    {% for item in step_summary.metric_list %}
+      {% if loop.index <= (loop.length+1)/2 %}
+      <tr>
+        <td>{{ item.name|e }}</td>
+        <td>{{ item.display|e }}</td>
+      </tr>
+      {% endif %}
+    {% endfor %}
+</table>
+
+<table style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+    {% for item in step_summary.metric_list %}
+      {% if loop.index > (loop.length+1)/2 %}
+      <tr>
+        <td>{{ item.name|e }}</td>
+        <td>{{ item.display|e }}</td>
+      </tr>
+      {% endif %}
+    {% endfor %}
+</table>

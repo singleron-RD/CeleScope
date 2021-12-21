@@ -9,8 +9,6 @@
 
 `--tsne_file` t-SNE coord file.
 
-`--marker_file` Marker file.
-
 `--outdir` Output diretory.
 
 `--assay` Assay name.

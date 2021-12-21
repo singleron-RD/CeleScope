@@ -22,13 +22,13 @@ class Target_metrics(Step):
     - `filtered.bam` BAM file after filtering.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
         self.match_barcode = set(self.match_barcode_list)
-        
+
         if args.panel:
             self.gene_list = utils.get_gene_region_from_bed(args.panel)[0]
             self.n_gene = len(self.gene_list)
@@ -36,8 +36,8 @@ class Target_metrics(Step):
             self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
 
         if not self.gene_list:
-            sys.exit("You must provide either --panel or --gene_list!")            
-        
+            sys.exit("You must provide either --panel or --gene_list!")
+
         self.count_dict = utils.genDict(dim=3, valType=int)
 
         self.add_metric(
@@ -107,20 +107,19 @@ class Target_metrics(Step):
             if barcode in self.match_barcode:
                 enriched_reads_per_cell_list.append(cell_enriched_read)
 
-        if self.debug:
-            self.parse_count_dict_add_metrics.logger.debug(
-                f'enriched_reads_per_cell_list: '
-                f'{sorted(enriched_reads_per_cell_list)}'
-                f'len: {len(enriched_reads_per_cell_list)}'
-            )
-        
+        self.parse_count_dict_add_metrics.logger.debug(
+            f'enriched_reads_per_cell_list: '
+            f'{sorted(enriched_reads_per_cell_list)}'
+            f'len: {len(enriched_reads_per_cell_list)}'
+        )
+
         valid_enriched_reads_per_cell_list = [cell for cell in enriched_reads_per_cell_list if cell > 0]
         n_valid_cell = len(valid_enriched_reads_per_cell_list)
         self.add_metric(
             name="Number of Valid Cells",
             value=n_valid_cell,
             total=self.n_cell,
-        )        
+        )
         self.add_metric(
             name="Enriched Reads",
             value=enriched_reads,
@@ -139,27 +138,28 @@ class Target_metrics(Step):
     def run(self):
         self.read_bam_write_filtered()
         self.parse_count_dict_add_metrics()
-        utils.sort_bam(
+        samtools_runner = utils.Samtools(
             self.out_bam_file,
             self.out_bam_file_sorted,
-            threads=self.thread,
+            self.args.thread,
+            debug=self.debug,
         )
-        utils.index_bam(self.out_bam_file_sorted)
-        self.clean_up()
+        samtools_runner.sort_bam()
+        samtools_runner.index_bam()
 
 
 @utils.add_log
 def target_metrics(args):
-    step_name = "target_metrics"
-    runner = Target_metrics(args, step_name)
-    runner.run()
+    with Target_metrics(args, display_title='Target Enrichment') as runner:
+        runner.run()
 
 
 def get_opts_target_metrics(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
-    parser.add_argument("--panel", help = HELP_DICT['panel'])
+    parser.add_argument("--panel", help=HELP_DICT['panel'])
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
-        parser.add_argument('--add_RG', help='Add tag read group: RG. RG is the same as CB(cell barcode)', action='store_true')
+        parser.add_argument(
+            '--add_RG', help='Add tag read group: RG. RG is the same as CB(cell barcode)', action='store_true')
         parser = s_common(parser)

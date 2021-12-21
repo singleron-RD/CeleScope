@@ -1,0 +1,37 @@
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.21/js/dataTables.jqueryui.min.js"></script>
+
+<link rel="stylesheet" type="text/css" href="code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> 
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/dataTables.jqueryui.min.css"> 
+
+
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>{{ step_summary.display_title}}   <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
+    <div class="box">
+
+        {% include "html/utils/help_info.html" %}
+        
+        {% include "html/utils/col2_metrics.html" %}  
+        
+        <div class="clear" ></div>
+    </div>
+    
+    <div class="box">
+
+        <div style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+
+          {{step_summary.tsne_cluster|safe}}
+        
+        </div>
+      
+        <div style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+
+          {{step_summary.tsne_feature|safe}}
+    
+        </div>
+        
+        <div class="clear" ></div>
+        
+    </div>
+
+</div>

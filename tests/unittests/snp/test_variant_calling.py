@@ -36,4 +36,5 @@ class Test_variant_calling(unittest.TestCase):
         obj.write_VID_file()
         obj.get_UMI()
         obj.write_support_matrix()
-        obj.clean_up()
+        obj._clean_up()
+

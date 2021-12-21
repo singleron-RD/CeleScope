@@ -8,7 +8,6 @@ import celescope.tools.utils as utils
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import subprocess
 
 import matplotlib
 
@@ -46,15 +45,14 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
         parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory.")
         parser.add_argument("--matrix_dir", help="Match celescope scRNA-Seq matrix directory.")
         parser.add_argument("--tsne_file", help="t-SNE coord file.")
-        
+
         s_common(parser)
 
 
 def count_tag(args):
 
-    step_name = "count_tag"
-    runner = Count_tag(args, step_name)
-    runner.run()
+    with Count_tag(args, display_title="Cells") as runner:
+        runner.run()
 
 
 class Count_tag(Step):
@@ -76,8 +74,8 @@ class Count_tag(Step):
 
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
         self.read_count_file = args.read_count_file
         self.UMI_min = args.UMI_min
         self.SNR_min = args.SNR_min
@@ -91,13 +89,13 @@ class Count_tag(Step):
         if args.match_dir:
             match_dict = utils.parse_match_dir(args.match_dir)
             self.match_barcode = match_dict['match_barcode']
-            self.cell_total = match_dict['cell_total']
+            self.n_match_barcode = match_dict['n_match_barcode']
             self.tsne_file = match_dict['tsne_coord']
             self.matrix_dir = match_dict['matrix_dir']
         elif args.matrix_dir:
             df_barcode = pd.read_csv(f'{args.matrix_dir}/barcodes.tsv', header=None)
             self.match_barcode = df_barcode[0].tolist()
-            self.cell_total = len(self.match_barcode)
+            self.n_match_barcode = len(self.match_barcode)
             self.tsne_file = args.tsne_file
             self.matrix_dir = args.matrix_dir
         else:
@@ -208,7 +206,7 @@ class Count_tag(Step):
     @utils.add_log
     def run(self):
 
-        mapped_read = self.df_read_count['read_count'].sum()
+        mapped_read = int(self.df_read_count['read_count'].sum())
 
         # in cell
         df_read_count_in_cell = self.df_read_count[self.df_read_count.index.isin(self.match_barcode)]
@@ -217,6 +215,7 @@ class Count_tag(Step):
             name='Mapped Reads in Cells',
             value=mapped_read_in_cell,
             total=mapped_read,
+            help_info="Mapped reads with scRNA-Seq cell barcode"
         )
 
         # UMI
@@ -246,11 +245,13 @@ class Count_tag(Step):
         self.add_metric(
             name='Median UMI per Cell',
             value=umi_median,
+            help_info="Median UMI per scRNA-Seq cell barcode"
         )
 
         self.add_metric(
             name='Mean UMI per Cell',
             value=umi_mean,
+            help_info="Mean UMI per scRNA-Seq cell barcode"
         )
 
         UMI_min = Count_tag.get_UMI_min(df_UMI_cell, self.UMI_min)
@@ -300,22 +301,20 @@ class Count_tag(Step):
             if tag_name in sr_tag_count:
                 self.add_metric(
                     name=tag_name + ' Cells',
-                    value=sr_tag_count[tag_name],
-                    total=self.cell_total,
+                    value=int(sr_tag_count[tag_name]),
+                    total=self.n_match_barcode,
                 )
                 sr_tag_count.drop(tag_name, inplace=True)
         for tag_name in sorted(sr_tag_count.index):
             self.add_metric(
                 name=tag_name + ' Cells',
-                value=sr_tag_count[tag_name],
-                total=self.cell_total,
+                value=int(sr_tag_count[tag_name]),
+                total=self.n_match_barcode,
             )
 
         # seurat hashtag
         if self.debug:
             self.seurat_hashtag()
-
-        self.clean_up()
 
     @utils.add_log
     def seurat_hashtag(self):
@@ -327,5 +326,4 @@ class Count_tag(Step):
             f'--umi_tag {self.UMI_tag_file} '
             f'--matrix_10X {self.matrix_dir} '
         )
-        Count_tag.seurat_hashtag.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        self.debug_subprocess_call(cmd)

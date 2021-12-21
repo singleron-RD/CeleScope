@@ -5,13 +5,17 @@ import celescope.tools.utils as utils
 from celescope.tools.mkref import parse_genomeDir
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT
+from celescope.tools.step import Step
 
-class StarMixin():
+
+class Star_mixin(Step):
     """
     Mixin class for STAR
     """
 
-    def __init__(self, args, add_prefix=None):
+    def __init__(self, args, add_prefix=None, display_title=None):
+        super().__init__(args, display_title)
+
         self.fq = args.fq
         self.genomeDir = args.genomeDir
         self.out_unmapped = args.out_unmapped
@@ -54,10 +58,10 @@ class StarMixin():
         cmd = ' '.join(cmd)
         if self.STAR_param:
             cmd += (" " + self.STAR_param)
-        StarMixin.STAR.logger.info(cmd)
+        self.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    def run_star(self):
+    def run(self):
         self.STAR()
         self.get_star_metrics()
         self.sort_bam()
@@ -84,6 +88,7 @@ class StarMixin():
             # number amd percent
             unique_reads_list = []
             multi_reads_list = []
+            total_reads = 0
             for line in map_log:
                 if line.strip() == '':
                     continue
@@ -91,10 +96,11 @@ class StarMixin():
                     unique_reads_list.append(line.strip().split()[-1])
                 if re.search(r'of reads mapped to too many loci', line):
                     multi_reads_list.append(line.strip().split()[-1])
+                if re.search(r'Number of input reads', line):
+                    total_reads = int(line.strip().split()[-1])
+
         unique_reads = int(unique_reads_list[0])
-        unique_reads_fraction = float(unique_reads_list[1].strip('%')) / 100
         multi_reads = int(multi_reads_list[0])
-        multi_reads_fraction = float(multi_reads_list[1].strip('%')) / 100
 
         self.add_metric(
             name='Genome',
@@ -103,12 +109,14 @@ class StarMixin():
         self.add_metric(
             name=f'Uniquely Mapped {self.stat_prefix}',
             value=unique_reads,
-            fraction=unique_reads_fraction,
+            total=total_reads,
+            help_info='reads that mapped uniquely to the genome'
         )
         self.add_metric(
             name=f'Multi-Mapped {self.stat_prefix}',
             value=multi_reads,
-            fraction=multi_reads_fraction,
+            total=total_reads,
+            help_info='reads that mapped to multiple locations in the genome'
         )
 
 
@@ -141,5 +149,6 @@ is higher than or equal to this value.""",
     )
     if sub_program:
         parser.add_argument('--fq', help="Required. R2 fastq file.", required=True)
-        parser.add_argument("--consensus_fq", action='store_true', help="A indicator that the input fastq has been consensused.")
+        parser.add_argument("--consensus_fq", action='store_true',
+                            help="A indicator that the input fastq has been consensused.")
         parser = s_common(parser)

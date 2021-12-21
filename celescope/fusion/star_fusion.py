@@ -1,24 +1,18 @@
 import celescope.tools.utils as utils
-from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
-from celescope.tools.step import Step
+from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
 
 
-class StarFusion(Step, StarMixin):
-    def __init__(self, args, step_name):
+class Star_fusion(Star_mixin):
+    def __init__(self, args, display_title=None):
+        super().__init__(self, args, display_title)
+
         args.genomeDir = args.fusion_genomeDir
-        Step.__init__(self, args, step_name)
-        StarMixin.__init__(self, args)
-
-    def run(self):
-        self.run_star()
-        self.clean_up()
 
 
 @utils.add_log
 def star_fusion(args):
-    step_name = "star_fusion"
-    runner = StarFusion(args, step_name)
-    runner.run()
+    with Star_fusion(args) as runner:
+        runner.run()
 
 
 def get_opts_star_fusion(parser, sub_program):

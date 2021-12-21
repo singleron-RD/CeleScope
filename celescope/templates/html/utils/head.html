@@ -1,0 +1,105 @@
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,Chrome=1" />
+        <title>report</title>
+        <style type="text/css"> {% include "./css/fontello-323401c3/css/fontello-embedded.css" %} </style> 
+        <script> {% include "./js/jquery.min.js" %} </script>
+        <script> {% include "./js/plotly-latest.min.js" %} </script>
+
+        
+        <script type="text/javascript">
+            
+            function toggle1(node){
+                for (var i = 0; i < node.childNodes.length; i++) {
+                    var child = node.childNodes[i];
+                    if (child.className == "description") {
+                        help_node = child;
+                        if (help_node.style.display=="inline"){
+                            help_node.style.display="none";
+                        } else {
+                            help_node.style.display="inline";
+                        }
+                    }
+                toggle1(child);
+                }
+            }
+
+
+        </script>
+        
+        <style>
+            .box {
+                margin-top: 2px;
+                margin-bottom: 2px;
+                width: 100%;
+                background-color: rgba(255,255,255,0.5);
+                padding: 15px 14px;
+                border-radius: 5px;
+                border: 1px solid rgba(0,0,0,0.1);
+  
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 1%;
+                border-spacing: 0 2em;
+            }
+
+            th, td {
+                border-bottom: 1px solid #ddd;
+                
+            }
+
+            .box table td:first-child{
+                text-align: left;
+                padding-bottom: 5px;
+            }
+
+            .box table td{
+                text-align: right;
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+
+            .logo_container {
+                height: 50px;
+                width: 150px;
+                position: relative;
+            }
+            .description {
+                margin-top: 5px;
+            }
+            .description p{
+                text-align: left;
+                margin-top: 0px;
+                margin-bottom: 0px;
+                line-height: 28px !important;
+                font-size: 18px !important;
+            }
+            .has_desc:after {
+                position: relative;
+                background: rgba(0,0,0,0.1);
+                color: white;
+                width: 18px;
+                height: 18px;
+                border-radius: 18px;
+                cursor: pointer;
+                float: right;
+                text-align: center;
+                line-height: 20px;
+                content: '?';
+            }
+
+            .clear{ clear:both}
+
+            .js-plotly-plot .plotly .modebar {
+                position: absolute;
+                top: 2px;
+                right: 2px;
+                z-index: 1001;
+                background: rgba(255, 255, 255, 0.7) none repeat scroll 0% 0%;
+            }
+
+        </style>
+</head>

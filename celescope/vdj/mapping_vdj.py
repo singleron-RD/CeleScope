@@ -2,8 +2,6 @@
 vdj mapping
 '''
 
-import subprocess
-
 import pandas as pd
 import pysam
 
@@ -30,8 +28,8 @@ class Mapping_vdj(Step):
     - `{sample}_alignments.txt` The alignment result of each UMI/read.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # set
         self.read_type = "UMIs"
@@ -66,17 +64,22 @@ class Mapping_vdj(Step):
             '-nFeature CDR3 -aaFeature CDR3 '
         )
 
-        Mapping_vdj.run_mixcr.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def mixcr_summary(self, total_read, df_align):
+
+        self.add_help_content(
+            name='',
+            content='If `--not_consensus` argument was used, reads were used instead of UMIs.',
+        )
 
         align_read = df_align.shape[0]
         self.add_metric(
             name=f"{self.read_type} Mapped to Any VDJ Gene",
             value=align_read,
             total=total_read,
+            help_info=f"{self.read_type} Mapped to any germline VDJ gene segments"
         )
 
         # CDR3
@@ -86,6 +89,7 @@ class Mapping_vdj(Step):
             name=f"{self.read_type} with CDR3",
             value=align_read_with_CDR3,
             total=total_read,
+            help_info=f"{self.read_type} with CDR3 sequence"
         )
 
         # correct CDR3
@@ -95,6 +99,7 @@ class Mapping_vdj(Step):
             name=f"{self.read_type} with Correct CDR3",
             value=align_read_with_correct_CDR3,
             total=total_read,
+            help_info=f"{self.read_type} with CDR3 might have stop codon and these UMIs(or Reads) are classified as incorrect"
         )
 
         # VDJ
@@ -110,6 +115,7 @@ class Mapping_vdj(Step):
             name=f"{self.read_type} Mapped Confidently to VJ Gene",
             value=Reads_Mapped_Confidently_to_VJ_Gene,
             total=total_read,
+            help_info=f"{self.read_type} mapped to VJ gene pairs and with correct CDR3"
         )
 
         # chain
@@ -120,6 +126,7 @@ class Mapping_vdj(Step):
                 name=f"{self.read_type} Mapped to {chain}",
                 value=Reads_Mapped_to_chain,
                 total=total_read,
+                help_info=f"{self.read_type} mapped confidently to {chain}"
             )
 
         # unique UMI
@@ -193,16 +200,15 @@ class Mapping_vdj(Step):
         total_read = df_fastq.shape[0]
         df_align = self.get_df_align(df_fastq)
         self.mixcr_summary(total_read, df_align)
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log
 def mapping_vdj(args):
     # TODO
     # add TCR or BCR prefix to distinguish them in html report summary; should improve
-    step_name = f"{args.type}_mapping_vdj"
-    mapping_vdj_obj = Mapping_vdj(args, step_name)
-    mapping_vdj_obj.run()
+    with Mapping_vdj(args, display_title="Mapping") as runner:
+        runner.run()
 
 
 def get_opts_mapping_vdj(parser, sub_program):

@@ -1,14 +1,13 @@
-import subprocess
-
+import re
 import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
-from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
-from celescope.tools.step import Step
+from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
+from celescope.tools.plotly_plot import Pie_plot
 
 
-class Star_rna(Step, StarMixin):
+class Star(Star_mixin):
     """
     Features
     - Align R2 reads to the reference genome with STAR.
@@ -38,9 +37,9 @@ class Star_rna(Step, StarMixin):
     - `{sample}_region.log` Picard CollectRnaSeqMetrics results.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
-        StarMixin.__init__(self, args)
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title=display_title)
+
         # parse
         self.refflat = f"{self.genomeDir}/{self.genome['refflat']}"
 
@@ -49,6 +48,7 @@ class Star_rna(Step, StarMixin):
         self.picard_region_log = f'{self.out_prefix}_region.log'
         self.plot = None
         self.stats = pd.Series()
+        self.df_region = pd.DataFrame()
 
     def add_other_metrics(self):
         """
@@ -56,6 +56,19 @@ class Star_rna(Step, StarMixin):
         add region plot
         if debug, add ribosomal RNA reads percent
         """
+        with open(self.STAR_map_log, 'r') as map_log:
+            # number amd percent
+            unique_reads_list = []
+            multi_reads_list = []
+            for line in map_log:
+                if line.strip() == '':
+                    continue
+                if re.search(r'Uniquely mapped reads', line):
+                    unique_reads_list.append(line.strip().split()[-1])
+                if re.search(r'of reads mapped to too many loci', line):
+                    multi_reads_list.append(line.strip().split()[-1])
+                if re.search(r'Number of input reads', line):
+                    int(line.strip().split()[-1])
 
         with open(self.picard_region_log, 'r') as picard_log:
             region_dict = {}
@@ -78,19 +91,23 @@ class Star_rna(Step, StarMixin):
             name='Base Pairs Mapped to Exonic Regions',
             value=exonic_regions,
             total=total,
+            help_info='bases in primary alignments that align to a coding base or a UTR base for some gene'
         )
         self.add_metric(
             name='Base Pairs Mapped to Intronic Regions',
             value=intronic_regions,
             total=total,
+            help_info='bases in primary alignments that align to an intronic base for some gene, and not a coding or UTR base'
         )
         self.add_metric(
             name='Base Pairs Mapped to Intergenic Regions',
             value=intergenic_regions,
             total=total,
+            help_info='bases in primary alignments that do not align to any gene'
         )
 
         # ribo
+        """
         if self.debug:
             with open(self.ribo_log, 'r') as ribo_log:
                 for line in ribo_log:
@@ -104,11 +121,13 @@ class Star_rna(Step, StarMixin):
                     name=f'{self.stat_prefix} Mapped to rRNA',
                     value=Reads_Mapped_to_rRNA,
                     total=Reads_Total,
+                    help_info='Number of reads or umis that mapped to rRNA'
                 )
+        """
 
-        region_plot = {'region_labels': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
-                       'region_values': [exonic_regions, intronic_regions, intergenic_regions]}
-        self.add_content_item("data", STAR_plot=region_plot)
+        region_plot = {'regions': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
+                       'values': [exonic_regions, intronic_regions, intergenic_regions]}
+        self.df_region = pd.DataFrame(region_plot)
 
     @utils.add_log
     def ribo(self):
@@ -122,8 +141,7 @@ class Star_rna(Step, StarMixin):
             f'overwrite=t '
             f'> {self.ribo_run_log} 2>&1 '
         )
-        Star_rna.ribo.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def picard(self):
@@ -137,24 +155,22 @@ class Star_rna(Step, StarMixin):
             'REF_FLAT=%s' % (self.refflat),
             'STRAND=NONE',
             'VALIDATION_STRINGENCY=SILENT']
-        cmd_str = ' '.join(cmd)
-        Star_rna.picard.logger.info(cmd_str)
-        subprocess.check_call(cmd)
+        cmd = ' '.join(cmd)
+        self.debug_subprocess_call(cmd)
 
     @utils.add_log
     def run(self):
-        self.run_star()
+        super().run()
         self.picard()
-        if self.debug:
-            self.ribo()
         self.add_other_metrics()
-        self.clean_up()
+
+        region_pie = Pie_plot(df_region=self.df_region).get_plotly_div()
+        self.add_data(region_pie=region_pie)
 
 
 def star(args):
-    step_name = "star"
-    runner = Star_rna(args, step_name)
-    runner.run()
+    with Star(args, display_title="Mapping") as runner:
+        runner.run()
 
 
 def get_opts_star(parser, sub_program):

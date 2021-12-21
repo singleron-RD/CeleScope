@@ -271,6 +271,7 @@ def get_bed_file_path(panel):
     else:
         return bed_file_path
 
+
 def get_gene_region_from_bed(panel):
     """
     Returns 
@@ -278,13 +279,14 @@ def get_gene_region_from_bed(panel):
     - position_df with 'Chromosome', 'Start', 'End'
     """
     file_path = get_bed_file_path(panel)
-    bed_file_df = pd.read_table(file_path, 
-                                usecols=[0,1,2,3],
-                                names=['Chromosome', 'Start', 'End','Gene'],
-                                sep = "\t")
-    position_df = bed_file_df.loc[:,['Chromosome', 'Start', 'End']]
-    genes = set(bed_file_df.loc[:,'Gene'].to_list())
+    bed_file_df = pd.read_table(file_path,
+                                usecols=[0, 1, 2, 3],
+                                names=['Chromosome', 'Start', 'End', 'Gene'],
+                                sep="\t")
+    position_df = bed_file_df.loc[:, ['Chromosome', 'Start', 'End']]
+    genes = set(bed_file_df.loc[:, 'Gene'].to_list())
     return genes, position_df
+
 
 def read_fasta(fasta_file, equal=False):
     # seq must have equal length
@@ -519,25 +521,32 @@ def read_barcode_file(match_dir, return_file=False):
         match_barcode_file1 +
         match_barcode_file2 +
         match_barcode_file3)[0]
-    match_barcode, cell_total = read_one_col(match_barcode_file)
+    match_barcode, n_match_barcode = read_one_col(match_barcode_file)
     if return_file:
-        return match_barcode, (cell_total, match_barcode_file)
-    return match_barcode, cell_total
+        return match_barcode, (n_match_barcode, match_barcode_file)
+    return match_barcode, n_match_barcode
 
 
 def get_barcodes_from_matrix_dir(matrix_dir):
     barcodes_file = f'{matrix_dir}/barcodes.tsv'
-    match_barcode, _cell_total = read_one_col(barcodes_file)
+    match_barcode, _n_match_barcode = read_one_col(barcodes_file)
     return match_barcode
 
 
 def parse_match_dir(match_dir):
+    '''
+    return dict
+    keys: 'match_barcode', 'n_match_barcode', 'matrix_dir', 'tsne_coord', 'rds'
+    '''
     match_dict = {}
-    match_barcode, cell_total = read_barcode_file(match_dir)
+    match_barcode, n_match_barcode = read_barcode_file(match_dir)
     match_dict['match_barcode'] = match_barcode
-    match_dict['cell_total'] = cell_total
+    match_dict['n_match_barcode'] = n_match_barcode
     match_dict['matrix_dir'] = glob.glob(f'{match_dir}/*count*/*matrix_10X')[0]
     match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
+    df_tsne = pd.read_csv(match_dict['tsne_coord'], sep='\t', index_col=0)
+    df_tsne.index.rename('barcode', inplace=True)
+    match_dict['df_tsne'] = df_tsne
     match_dict['markers'] = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
     try:
         match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]
@@ -663,6 +672,7 @@ def index_bam(input_bam):
 
 
 def check_mkdir(dir_name):
+    """if dir_name is not exist, make one"""
     if not os.path.exists(dir_name):
         os.system(f"mkdir -p {dir_name}")
 
@@ -675,7 +685,7 @@ def otsu_min_support_read(array, otsu_plot):
     hist = array2hist(array)
     thresh = threshold_otsu(hist)
     makePlot(hist, thresh, otsu_plot)
-    threshold = round(10 ** thresh,1)
+    threshold = round(10 ** thresh, 1)
     return threshold
 
 
@@ -692,14 +702,22 @@ class Samtools():
         cmd = f"samtools sort {in_file} -o {out_file} --threads {self.threads}"
         if by == "name":
             cmd += " -n"
-        if self.debug:
-            self.samtools_sort.logger.debug(cmd)
+        self.samtools_sort.logger.debug(cmd)
         subprocess.check_call(cmd, shell=True)
-        return cmd
+
+    @add_log
+    def samtools_index(self, in_file):
+        cmd = f"samtools index {in_file}"
+        self.samtools_index.logger.debug(cmd)
+        subprocess.check_call(cmd, shell=True)
 
     def sort_bam(self, by='coord'):
         """sort in_bam"""
         self.samtools_sort(self.in_bam, self.out_bam, by=by)
+
+    def index_bam(self):
+        """index out_bam"""
+        self.samtools_index(self.out_bam)
 
     @add_log
     def add_tag(self, gtf_file):
@@ -753,7 +771,6 @@ class Samtools():
                 for read in original_bam:
                     read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
                     temp_sam.write(read)
-
 
     def temp_sam2bam(self, by=None):
         self.samtools_sort(self.temp_sam_file, self.out_bam, by=by)

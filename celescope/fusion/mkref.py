@@ -20,7 +20,7 @@ class Mkref_fusion(Mkref):
 
     - STAR genome index files
     - Genome config file
-    
+
     Usage
     ```
     celescope fusion mkref \\
@@ -30,6 +30,7 @@ class Mkref_fusion(Mkref):
     --genomeSAindexNbases 4
     ```
     """
+
     def __init__(self, genome_type, args):
         Mkref.__init__(self, genome_type, args)
         self.fasta = args.fasta

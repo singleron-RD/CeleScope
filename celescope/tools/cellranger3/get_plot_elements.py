@@ -313,6 +313,6 @@ def plot_barcode_rank(count_file_path):
 
     fig = go.Figure(data=plotly_data, layout=layout)
 
-    chart = pltoff.plot(fig, include_plotlyjs=False, output_type='div', config=config)
+    chart = pltoff.plot(fig, include_plotlyjs=True, output_type='div', config=config)
 
     return chart

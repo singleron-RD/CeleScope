@@ -10,8 +10,9 @@ from celescope.tools.step import Step, s_common
 
 
 class CountFusion(Step):
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        super().__init__(self, args, display_title)
+
         self.flanking_base = int(args.flanking_base)
         self.UMI_min = int(args.UMI_min)
         self.match_dir = args.match_dir
@@ -67,7 +68,7 @@ class CountFusion(Step):
                     ):
                         left_bases = read.get_overlap(left, pos)
                         right_bases = read.get_overlap(pos, right)
-                        if left_bases < self.flanking_base or right_bases <  self.flanking_base:
+                        if left_bases < self.flanking_base or right_bases < self.flanking_base:
                             continue
                         attr = read.query_name.split("_")
                         barcode = attr[0]
@@ -123,14 +124,13 @@ class CountFusion(Step):
 
     def run(self):
         self.count_fusion()
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log
 def count_fusion(args):
-    step_name = "count_fusion"
-    runner = CountFusion(args, step_name)
-    runner.run()
+    with CountFusion(args) as runner:
+        runner.run()
 
 
 def get_opts_count_fusion(parser, sub_program):
@@ -140,7 +140,7 @@ def get_opts_count_fusion(parser, sub_program):
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'], required=True)
     parser.add_argument('--fusion_genomeDir', help='Fusion genome directory.', required=True)
     parser.add_argument(
-        "--flanking_base", 
+        "--flanking_base",
         help="Number of bases flanking the fusion position.",
         default=5)
     parser.add_argument(

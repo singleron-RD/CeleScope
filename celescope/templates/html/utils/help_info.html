@@ -1,0 +1,13 @@
+<div class="description" style="display: none;">
+
+    {% for item in step_summary.help_content %}
+        <p><b>{{ item.name|e }}</b> {{ item.content }}</p>
+    {% endfor %}
+
+    {% for item in step_summary.metric_list %} 
+        {% if item.help_info %}
+            <p><b>{{ item.name|e }} : </b> {{ item.help_info }}</p>
+        {% endif %}  
+    {% endfor %}
+
+</div>

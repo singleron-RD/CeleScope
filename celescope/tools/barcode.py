@@ -67,6 +67,7 @@ def get_scope_bc(chemistry):
 def ord2chr(q, offset=33):
     return chr(int(q) + offset)
 
+
 def qual_int(char, offset=33):
     return ord(char) - offset
 
@@ -199,6 +200,7 @@ def parse_chemistry(chemistry):
 
     return pattern_dict, barcode_set_list, barcode_mismatch_list, linker_set_list, linker_mismatch_list
 
+
 class Chemistry():
     """
     Auto detect chemistry from R1-read
@@ -215,10 +217,11 @@ class Chemistry():
         self.fq1_list = fq1.split(',')
         self.n_read = 10000
 
-        self.pattern_dict_v2, *_, self.linker_1_v2_set_list, self.linker_1_v2_mismatch_list = parse_chemistry('scopeV2.1.1')
-        self.pattern_dict_v2, *_, self.linker_4_v2_set_list, self.linker_4_v2_mismatch_list = parse_chemistry('scopeV2.2.1')
+        self.pattern_dict_v2, * \
+            _, self.linker_1_v2_set_list, self.linker_1_v2_mismatch_list = parse_chemistry('scopeV2.1.1')
+        self.pattern_dict_v2, * \
+            _, self.linker_4_v2_set_list, self.linker_4_v2_mismatch_list = parse_chemistry('scopeV2.2.1')
         self.pattern_dict_v3, *_, self.linker_v3_set_list, self.linker_v3_mismatch_list = parse_chemistry('scopeV3.0.1')
-
 
     @utils.add_log
     def check_chemistry(self):
@@ -231,7 +234,6 @@ class Chemistry():
         if len(set(chemistry_list)) != 1:
             Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
         return chemistry_list
-
 
     def seq_chemistry(self, seq):
         """
@@ -276,9 +278,8 @@ class Chemistry():
             [linker_v3], self.linker_v3_set_list, self.linker_v3_mismatch_list)
         if bool_valid:
             return "scopeV3.0.1"
-        
-        return    
 
+        return
 
     @utils.add_log
     def get_chemistry(self, fq1):
@@ -294,7 +295,7 @@ class Chemistry():
         # if it is 0, then no other linker types
         if results["scopeV2.2.1"] != 0:
             results["scopeV2.2.1"] += results["scopeV2.1.1"]
-        sorted_counts = sorted(results.items(), key=lambda x:x[1], reverse=True)
+        sorted_counts = sorted(results.items(), key=lambda x: x[1], reverse=True)
         self.get_chemistry.logger.info(sorted_counts)
 
         chemistry, read_counts = sorted_counts[0][0], sorted_counts[0][1]
@@ -307,7 +308,7 @@ class Chemistry():
                 'Auto chemistry detection failed! '
                 'If the sample is from Singleron, ask the technical staff you are connecting with for the chemistry used. '
                 'You need to use `--chemistry scopeV1` for scopeV1, and `--chemistry auto` should be fine for scopeV2 and V3 '
-                )
+            )
         Chemistry.get_chemistry.logger.info(f'chemistry: {chemistry}')
         return chemistry
 
@@ -329,8 +330,8 @@ class Barcode(Step):
     the read name is `{barcode}_{UMI}_{read ID}`.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
@@ -431,13 +432,13 @@ class Barcode(Step):
             C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
 
             if bool_whitelist:
-                barcode_set_list, barcode_mismatch_list = parse_whitelist_file(whitelist_file, 
-                n_mismatch=1, n_repeat=len(pattern_dict['C']))
+                barcode_set_list, barcode_mismatch_list = parse_whitelist_file(whitelist_file,
+                                                                               n_mismatch=1, n_repeat=len(pattern_dict['C']))
             if bool_L:
-                linker_set_list, linker_mismatch_list = parse_linker_file(linker_file)                
+                linker_set_list, linker_mismatch_list = parse_linker_file(linker_file)
 
             with pysam.FastxFile(self.fq1_list[i], persist=False) as fq1, \
-                pysam.FastxFile(self.fq2_list[i], persist=False) as fq2:
+                    pysam.FastxFile(self.fq2_list[i], persist=False) as fq2:
                 for entry1, entry2 in zip(fq1, fq2):
                     header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
                     header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
@@ -525,36 +526,41 @@ class Barcode(Step):
         BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
             30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
         BarcodesQ30 = round(BarcodesQ30, 2)
+        BarcodesQ30_display = f'{BarcodesQ30}%'
         UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= ord2chr(
             30)]) / float(sum(self.umi_qual_Counter.values())) * 100
         UMIsQ30 = round(UMIsQ30, 2)
+        UMIsQ30_display = f'{UMIsQ30}%'
 
         self.add_metric(
             name='Raw Reads',
             value=self.total_num,
+            help_info='total reads from FASTQ files'
         )
         self.add_metric(
             name='Valid Reads',
             value=self.clean_num,
             total=self.total_num,
+            help_info='reads pass filtering(filtered: reads without poly T, reads without linker, reads without correct barcode or low quality reads)'
         )
         self.add_metric(
             name='Q30 of Barcodes',
-            value=f'{BarcodesQ30}%',
+            value=BarcodesQ30,
+            display=BarcodesQ30_display,
+            help_info='percent of barcode base pairs with quality scores over Q30',
         )
         self.add_metric(
             name='Q30 of UMIs',
-            value=f'{UMIsQ30}%',
+            value=UMIsQ30,
+            display=UMIsQ30_display,
+            help_info='percent of UMI base pairs with quality scores over Q30',
         )
-
-        self.clean_up()
 
 
 @utils.add_log
 def barcode(args):
-    step_name = "barcode"
-    barcode_obj = Barcode(args, step_name)
-    barcode_obj.run()
+    with Barcode(args, display_title='Demultiplexing') as runner:
+        runner.run()
 
 
 def get_opts_barcode(parser, sub_program=True):

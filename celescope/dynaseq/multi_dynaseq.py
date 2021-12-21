@@ -26,7 +26,6 @@ class Multi_dynaseq(Multi):
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
-
     def replacement(self, sample):
         step = 'replacement'
         bam = f'{self.outdir_dic[sample]["conversion"]}/{sample}.PosTag.bam'
@@ -37,7 +36,6 @@ class Multi_dynaseq(Multi):
             f'--bg {self.col5_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
-    
 
     def replace_tsne(self, sample):
         step = 'replace_tsne'
@@ -58,6 +56,6 @@ def main():
     multi = Multi_dynaseq(__ASSAY__)
     multi.run()
 
+
 if __name__ == '__main__':
     main()
-

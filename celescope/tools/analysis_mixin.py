@@ -5,27 +5,59 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.rna.mkref import parse_genomeDir_rna
-from celescope.tools.step import Step
+from celescope.tools.step import Step, s_common
 
 
-class AnalysisMixin():
+def get_opts_analysis_mixin(parser, sub_program):
+    
+    parser.add_argument('--genomeDir', help='Required. Genome directory.', required=True)
+    parser.add_argument('--save_rds', action='store_true', help='Write rds to disk.')
+    parser.add_argument(
+        '--type_marker_tsv',
+        help="""A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
+```
+cell_type	marker
+Alveolar	"CLDN18,FOLR1,AQP4,PEBP4"
+Endothelial	"CLDN5,FLT1,CDH5,RAMP2"
+Epithelial	"CAPS,TMEM190,PIFO,SNTN"
+Fibroblast	"COL1A1,DCN,COL1A2,C1R"
+B_cell	"CD79A,IGKC,IGLC3,IGHG3"
+Myeloid	"LYZ,MARCO,FCGR3A"
+T_cell	"CD3D,TRBC1,TRBC2,TRAC"
+LUAD	"NKX2-1,NAPSA,EPCAM"
+LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
+```"""
+    )
+    if sub_program:
+        parser.add_argument(
+            '--matrix_file',
+            help='Required. Matrix_10X directory from step count.',
+            required=True,
+        )
+        # do not need all count diretory
+        parser.add_argument("--tsne_file", help="match_dir t-SNE coord file.")
+        parser.add_argument("--df_marker_file", help="match_dir df_marker_file.")
+        parser = s_common(parser)
+
+class AnalysisMixin(Step):
     """
     mixin class for analysis
-    child class must inherite Step class
     """
 
-    def __init__(self, args):
-        self.args = args
+    def __init__(self, args, display_title=None):
+
+        super().__init__(args, display_title=display_title)
+
         self.match_dir = None
         if hasattr(args, "match_dir") and args.match_dir:
             self.match_dir = args.match_dir
             self.read_match_dir()
         elif hasattr(args, "tsne_file") and args.tsne_file:
             tsne_df_file = args.tsne_file
-            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-            marker_df_file = args.marker_file
-            self.marker_df = pd.read_csv(marker_df_file, sep="\t")
+            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t", index_col=0)
+            self.df_tsne.index.rename("barcode", inplace=True)
+            self.df_marker_file = args.df_marker_file
+            self.read_format_df_marker()
         else:
             self.match_dir = args.outdir + "/../"  # use self
 
@@ -59,61 +91,18 @@ class AnalysisMixin():
         self.auto_assign.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    @staticmethod
-    def get_cluster_tsne(colname, tsne_df, show_colname=True):
-        """
-        tSNE_1	tSNE_2	cluster Gene_Counts
-        return data list
-        """
+    def read_format_df_marker(self):
 
-        sum_df = tsne_df.groupby([colname]).agg("count").iloc[:, 0]
-        percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-        res = []
-        for cluster in sorted(tsne_df[colname].unique()):
-            sub_df = tsne_df[tsne_df[colname] == cluster]
-            if show_colname:
-                name = f"{colname} {cluster}({percent_df[cluster]}%)"
-            else:
-                name = f"{cluster}({percent_df[cluster]}%)"
-            tSNE_1 = list(sub_df.tSNE_1)
-            tSNE_2 = list(sub_df.tSNE_2)
-            res.append({"name": name, "tSNE_1": tSNE_1, "tSNE_2": tSNE_2})
-        return res
-
-    @staticmethod
-    def get_table_dict(marker_table):
-        table_dict = Step.get_table(
-            title='Marker Genes by Cluster',
-            table_id='marker_gene_table',
-            df_table=marker_table,
-        )
-        return table_dict
-
-    def get_marker_table(self):
-        """
-        return html code
-        """
-
+        df_marker = pd.read_csv(self.df_marker_file, sep="\t")
         avg_logfc_col = "avg_log2FC"  # seurat 4
-        if "avg_logFC" in self.marker_df.columns:  # seurat 2.3.4
+        if "avg_logFC" in df_marker.columns:  # seurat 2.3.4
             avg_logfc_col = "avg_logFC"
-        marker_df = self.marker_df.loc[:,
-                                       ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
-                                       ]
-        marker_df["cluster"] = marker_df["cluster"].apply(lambda x: f"cluster {x}")
+        df_marker = df_marker.loc[:,
+                                  ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
+                                  ]
+        df_marker["cluster"] = df_marker["cluster"].apply(lambda x: f"cluster {x}")
 
-        return marker_df
-
-    def get_gene_tsne(self):
-        """
-        return data dic
-        """
-        tsne_df = self.tsne_df
-        tSNE_1 = list(tsne_df.tSNE_1)
-        tSNE_2 = list(tsne_df.tSNE_2)
-        Gene_Counts = list(tsne_df.Gene_Counts)
-        res = {"tSNE_1": tSNE_1, "tSNE_2": tSNE_2, "Gene_Counts": Gene_Counts}
-        return res
+        self.df_marker = df_marker
 
     def read_match_dir(self):
         """
@@ -123,14 +112,10 @@ class AnalysisMixin():
         if self.match_dir:
             match_dict = utils.parse_match_dir(self.match_dir)
             tsne_df_file = match_dict['tsne_coord']
-            self.tsne_df = pd.read_csv(tsne_df_file, sep="\t")
-            self.tsne_df.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-            marker_df_file = match_dict['markers']
-            self.marker_df = pd.read_csv(marker_df_file, sep="\t")
+            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
+            self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
+            self.df_marker_file = match_dict['markers']
+            self.read_format_df_marker()
 
-    def run_analysis(self):
-        self.read_match_dir()
-        self.cluster_tsne = self.get_cluster_tsne(colname='cluster', tsne_df=self.tsne_df)
-        self.gene_tsne = self.get_gene_tsne()
-        marker_table = self.get_marker_table()
-        self.table_dict = self.get_table_dict(marker_table)
+    def run(self):
+        pass

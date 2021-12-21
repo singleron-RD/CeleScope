@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "1.6.1"
+__VERSION__ = "1.7.0b0"
 __version__ = __VERSION__
 
 ASSAY_DICT = {
@@ -9,7 +9,6 @@ ASSAY_DICT = {
     'capture_virus': "Single Cell Capture Virus",
     'fusion': "Single Cell Fusion Gene",
     'vdj': "Single-cell vdj",
-    'mut': 'Single Cell Insertion and Deletion',
     'hla': 'Single Cell HLA',
     'capture_rna': 'Single Cell Capture RNA',
     'snp': 'Single-cell variant',
@@ -33,4 +32,11 @@ HELP_DICT = {
     'outdir': 'Output directory.',
     'matrix_dir': 'Match celescope scRNA-Seq matrix directory.',
     'panel': 'The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.',
+}
+
+HELP_INFO_DICT = {
+    'matched_barcode_number': {
+        'display': 'Number of Matched Cells',
+        'info': 'cell barcode number of matched scRNA-Seq sample',
+    }
 }

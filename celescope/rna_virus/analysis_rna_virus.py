@@ -1,15 +1,13 @@
 import pandas as pd
 
 import celescope.tools.utils as utils
-from celescope.tools.step import Step
 from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.rna.analysis import get_opts_analysis
 
 
-class Analysis_rna_virus(Step, AnalysisMixin):
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
-        AnalysisMixin.__init__(self, args)
+class Analysis_rna_virus(AnalysisMixin):
+    def __init__(self, args, display_title=None):
+        super().__init__(self, args, display_title)
 
         # set
         self.virus_df = pd.read_csv(args.virus_file, sep="\t")
@@ -18,26 +16,24 @@ class Analysis_rna_virus(Step, AnalysisMixin):
         if args.type_marker_tsv and args.type_marker_tsv != 'None':
             self.auto_assign_bool = True
             self.save_rds = True
-    
-    
+
     def run(self):
         self.seurat(self.args.matrix_file, self.args.save_rds, self.args.genomeDir)
         if self.auto_assign_bool:
             self.auto_assign(self.type_marker_tsv)
-        self.run_analysis()
+        self.get_analysis_data()
         virus_tsne = self.virus_tsne_list()
-        self.add_data_item(cluster_tsne=self.cluster_tsne)
-        self.add_data_item(virus_tsne=virus_tsne)
-        self.add_data_item(table_dict=self.table_dict)
+        self.add_data(cluster_tsne=self.cluster_tsne)
+        self.add_data(virus_tsne=virus_tsne)
+        self.add_data(table_dict=self.table_dict)
 
-        self.clean_up()
-
+        self._clean_up()
 
     def virus_tsne_list(self):
         """
         return data dic
         """
-        df = pd.merge(self.tsne_df, self.virus_df, on="barcode", how="left")
+        df = pd.merge(self.df_tsne, self.virus_df, on="barcode", how="left")
         df["UMI"] = df["UMI"].fillna(0)
         tSNE_1 = list(df.tSNE_1)
         tSNE_2 = list(df.tSNE_2)
@@ -49,9 +45,8 @@ class Analysis_rna_virus(Step, AnalysisMixin):
 @utils.add_log
 def analysis_rna_virus(args):
 
-    step_name = "analysis_rna_virus"
-    runner = Analysis_rna_virus(args, step_name)
-    runner.run()
+    with Analysis_rna_virus(args) as runner:
+        runner.run()
 
 
 def get_opts_analysis_rna_virus(parser, sub_program):
