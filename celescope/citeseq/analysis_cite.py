@@ -1,31 +1,41 @@
-import os
+import subprocess
 
-from celescope.tools.utils import parse_match_dir
+import celescope.tools.utils as utils
+from celescope.tools.step import Step, s_common
+from celescope.__init__ import HELP_DICT, ROOT_PATH
 
-CITESEQ_DIR = os.path.dirname(__file__)
 
 
 def get_opts_analysis_cite(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help='output dir', required=True)
-        parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument('--match_dir', help='match_dir', required=True)
+        parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
         parser.add_argument('--citeseq_mtx', help='citeseq matrix .gz file', required=True)
-        parser.add_argument('--assay', help='assay', required=True)
-
+        s_common(parser)
+ 
 
 def analysis_cite(args):
+    with Analysis_cite(args, display_title='Analysis') as runner:
+        runner.run()
 
-    if not os.path.exists(args.outdir):
-        os.system('mkdir -p %s' % args.outdir)
 
-    rds = parse_match_dir(args.match_dir)['rds']
-    app = CITESEQ_DIR + "/analysis_cite.R"
-    cmd = (
-        f'Rscript {app} '
-        f'--rds {rds} '
-        f'--citeseq_mtx {args.citeseq_mtx} '
-        f'--outdir {args.outdir} '
-        f'--sample {args.sample} '
-    )
-    os.system(cmd)
+class Analysis_cite(Step):
+    def __init__(self, args, display_title):
+        super().__init__(args, display_title)
+
+        # data
+        self.tsne_dict = utils.parse_match_dir(args.match_dir)
+
+
+    def run(self):
+
+
+        rds = self.tsne_dict['rds']
+        app = ROOT_PATH + "/citeseq/analysis_cite.R"
+        cmd = (
+            f'Rscript {app} '
+            f'--rds {rds} '
+            f'--citeseq_mtx {self.args.citeseq_mtx} '
+            f'--outdir {self.args.outdir} '
+            f'--sample {self.args.sample} '
+        )
+        self.debug_subprocess_call(cmd)
