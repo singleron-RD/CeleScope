@@ -5,7 +5,7 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
-from celescope.tools.step import Step 
+from celescope.tools.step import Step
 from celescope.tools.plotly_plot import Pie_plot
 
 
@@ -62,7 +62,6 @@ class Star(Star_mixin):
             # number amd percent
             unique_reads_list = []
             multi_reads_list = []
-            total_reads = 0
             for line in map_log:
                 if line.strip() == '':
                     continue
@@ -131,7 +130,6 @@ class Star(Star_mixin):
         region_plot = {'regions': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                        'values': [exonic_regions, intronic_regions, intergenic_regions]}
         self.df_region = pd.DataFrame(region_plot)
-        
 
     @utils.add_log
     def ribo(self):
@@ -173,8 +171,9 @@ class Star(Star_mixin):
 
 
 def star(args):
-    with Star(args,display_title="Mapping") as runner:
+    with Star(args, display_title="Mapping") as runner:
         runner.run()
+
 
 def get_opts_star(parser, sub_program):
     get_opts_star_mixin(parser, sub_program)

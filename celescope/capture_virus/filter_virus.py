@@ -8,7 +8,6 @@ import celescope.tools.utils as utils
 from celescope.tools.count import Count
 from celescope.tools.step import Step, s_common
 import celescope.capture_virus.otsu as otsu 
-from celescope.tools.plotly_plot import Tsne_plot
 from celescope.__init__ import HELP_DICT
 
 

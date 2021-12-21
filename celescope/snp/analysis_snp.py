@@ -5,7 +5,7 @@ from venn import generate_petal_labels,draw_venn,generate_colors
 
 import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin
-from celescope.tools.step import Step, s_common
+from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT, ROOT_PATH
 
 

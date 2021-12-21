@@ -1,6 +1,5 @@
 import celescope.tools.utils as utils
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
-from celescope.tools.step import Step
 
 
 class Star_fusion(Star_mixin):
@@ -16,7 +15,7 @@ class Star_fusion(Star_mixin):
 
 @utils.add_log
 def star_fusion(args):
-    with StarFusion(args) as runner:
+    with Star_fusion(args) as runner:
         runner.run()
 
 

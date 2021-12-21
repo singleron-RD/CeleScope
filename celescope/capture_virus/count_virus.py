@@ -1,6 +1,5 @@
 import json
 
-import pandas as pd
 import pysam
 import numpy as np
 

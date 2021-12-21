@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from celescope.tag.count_tag import Count_tag
 
 import celescope.tools.utils as utils
 from celescope.__init__ import HELP_DICT

@@ -5,7 +5,6 @@ import os
 import sys
 import subprocess
 import pandas as pd
-from celescope.dynaseq.replace_tsne import Replace_tsne
 import pysam
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils

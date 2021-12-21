@@ -31,8 +31,8 @@ def tracer(fq, outdir):
 
 
 class Assemble_TCR(Step):
-    def __init__(self, args, step):
-        Step.__init__(self, args, step)
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title)
         self.fastq_dir = args.fastq_dir
 
     @add_log
@@ -63,9 +63,9 @@ class Assemble_TCR(Step):
 
 
 def assemble(args):
-    step_name = "assemble"
-    runner = Assemble_TCR(args)
-    runner.run()
+    with Assemble_TCR(args) as runner:
+        runner.run()
+
 
 
 def get_opts_assemble(parser, sub_program):

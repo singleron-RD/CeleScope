@@ -1,8 +1,4 @@
 import pandas as pd
-import math
-import plotly
-import plotly.express as px
-from collections import defaultdict
 
 import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin

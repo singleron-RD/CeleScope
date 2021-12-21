@@ -1,15 +1,13 @@
 import pandas as pd
 
 import celescope.tools.utils as utils
-from celescope.tools.step import Step
 from celescope.tools.analysis_mixin import AnalysisMixin
 from celescope.rna.analysis import get_opts_analysis
 
 
 class Analysis_rna_virus(AnalysisMixin):
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
-        AnalysisMixin.__init__(self, args)
+    def __init__(self, args, display_title=None):
+        super().__init__(self, args, display_title)
 
         # set
         self.virus_df = pd.read_csv(args.virus_file, sep="\t")
@@ -49,9 +47,9 @@ class Analysis_rna_virus(AnalysisMixin):
 @utils.add_log
 def analysis_rna_virus(args):
 
-    step_name = "analysis_rna_virus"
-    runner = Analysis_rna_virus(args)
-    runner.run()
+    with Analysis_rna_virus(args) as runner:
+        runner.run()
+
 
 
 def get_opts_analysis_rna_virus(parser, sub_program):

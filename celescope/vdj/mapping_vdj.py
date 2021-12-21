@@ -2,10 +2,7 @@
 vdj mapping
 '''
 
-import subprocess
-
 import pandas as pd
-from celescope.tag.mapping_tag import Mapping_tag
 import pysam
 
 import celescope.tools.utils as utils

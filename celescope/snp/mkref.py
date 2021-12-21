@@ -72,8 +72,9 @@ class Mkref_snp(Mkref):
 
 def mkref(args):
     genome_type = 'snp'
-    with Mkref_snp(genome_type,args) as runner:
-        runner.run()
+    runner = Mkref_snp(genome_type, args)
+    runner.run()
+
 
 
 

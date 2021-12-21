@@ -21,7 +21,6 @@ class Count_cite(Step):
 
     @utils.add_log
     def run(self):
-        stats = pd.Series()
         mapped_read = self.df_read_count['read_count'].sum()
 
         # in cell

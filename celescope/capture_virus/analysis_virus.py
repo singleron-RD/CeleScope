@@ -1,7 +1,6 @@
 import pandas as pd
-import plotly.express as px
 
-from celescope.tools.step import Step, s_common
+from celescope.tools.step import s_common
 from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools.analysis_mixin import AnalysisMixin
 import celescope.tools.utils as utils
