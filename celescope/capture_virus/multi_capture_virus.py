@@ -34,10 +34,10 @@ class Multi_capture_virus(Multi):
     def count_virus(self, sample):
         step = 'count_virus'
         cmd_line = self.get_cmd_line(step, sample)
-        virus_bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        capture_bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
         cmd = (
             f'{cmd_line} '
-            f'--virus_bam {virus_bam} '
+            f'--capture_bam {capture_bam} '
             f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
