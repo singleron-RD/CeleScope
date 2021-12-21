@@ -65,7 +65,7 @@ class Count_bam(Step):
                     read_count_list.append(self.count_dict[barcode][ref][umi])
         mean_read_count_per_umi = round(float(np.mean(read_count_list)), 2)
         self.add_metric(
-            name=f'Mead Read Count per UMI',
+            name='Mead Read Count per UMI',
             value=mean_read_count_per_umi,
             help_info='you can use this value to determine `min_support_read`'
         )

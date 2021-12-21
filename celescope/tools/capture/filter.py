@@ -24,6 +24,7 @@ def get_opts_filter(parser, sub_program):
     parser.add_argument(
         "--umi_hard_threshold",
         help='int, use together with `--umi_threshold_method hard`',
+        default=1,
     )
     if sub_program:
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
@@ -44,9 +45,10 @@ class Filter(Step):
         self.raw_umi = 0
         self.total_corrected_umi = 0
         self.del_umi = 0
-        self.umi_threshold = 1  # if not set explicitly, use 1 as default
-        self.umi_count_dict = defaultdict(int)
-        self.umi_array = []
+        self.umi_threshold_dict = {}  # if not set explicitly, use 1 as default
+
+        self.barcode_ref_umi_dict = utils.genDict(dim=2)
+        self.ref_barcode_umi_dict = utils.genDict(dim=2)
 
         match_dir_dict = utils.parse_match_dir(args.match_dir)
         self.df_tsne = match_dir_dict['df_tsne']
@@ -104,75 +106,88 @@ class Filter(Step):
             help_info='filter UMI according to `min_support_read`',
         )
 
+        if self.debug:
+            print(self.count_dict)
+
     @utils.add_log
-    def set_umi_count_dict(self):
+    def set_barcode_ref_umi_dict(self):
+
         for barcode in self.count_dict:
-            umi_count = 0
             for ref in self.count_dict[barcode]:
                 for umi in self.count_dict[barcode][ref]:
                     if self.count_dict[barcode][ref][umi] > 0:
-                        umi_count += 1
-            self.umi_count_dict[barcode] = umi_count
+                        self.barcode_ref_umi_dict[barcode][ref] += 1
         if self.debug:
-            print(self.umi_count_dict)
+            print(self.barcode_ref_umi_dict)
 
     @utils.add_log
-    def set_umi_array(self):
-        self.umi_array = list(self.umi_count_dict.values())
+    def set_ref_barcode_umi_dict(self):
+
+        for barcode in self.barcode_ref_umi_dict:
+            for ref in self.barcode_ref_umi_dict[barcode]:
+                self.ref_barcode_umi_dict[ref][barcode] = self.barcode_ref_umi_dict[barcode][ref]
 
     def get_umi_threshold(self):
-        if self.umi_threshold_method == 'auto':
-            self.auto_threshold()
-        elif self.umi_threshold_method == 'otsu':
-            self.otsu_threshold()
-        elif self.umi_threshold_method == 'hard':
-            self.hard_threshold()
-
         self.add_metric('UMI Threshold Method', self.umi_threshold_method)
-        self.add_metric('UMI Threshold', self.umi_threshold)
 
-    @utils.add_log
-    def otsu_threshold(self):
-        array = np.log2(self.umi_array)
+        for ref in self.ref_barcode_umi_dict:
+            umi_array = list(self.ref_barcode_umi_dict[ref].values())
+            if self.umi_threshold_method == 'auto':
+                umi_threshold = self.auto_threshold(umi_array)
+            elif self.umi_threshold_method == 'otsu':
+                umi_threshold = self.otsu_threshold(umi_array)
+            elif self.umi_threshold_method == 'hard':
+                umi_threshold = self.hard_threshold(umi_array)
+            
+            self.umi_threshold_dict[ref] = umi_threshold
+            self.add_metric(f'{ref} UMI Threshold', umi_threshold)
+
+    @staticmethod
+    def otsu_threshold(umi_array):
+        array = np.log2(umi_array)
         hist = otsu.array2hist(array)
         thresh = otsu.threshold_otsu(hist)
         otsu.makePlot(hist, thresh, self.otsu_plot)
 
-        self.umi_threshold = int(2 ** thresh)
+        return int(2 ** thresh)
 
-    @utils.add_log
-    def auto_threshold(self):
+    @staticmethod
+    def auto_threshold(umi_array):
         """
         threhold = 99 percentile of all cell UMIs / 10
         """
-        umi_array = self.umi_array
 
         cell_99th = len(umi_array) // 100
         sorted_umis = sorted(umi_array, reverse=True)
         percentile_99_umi = sorted_umis[cell_99th]
-        self.umi_threshold = int(percentile_99_umi / 10)
+        return int(percentile_99_umi / 10)
 
-    @utils.add_log
     def hard_threshold(self):
-        self.umi_threshold = int(self.args.umi_hard_threshold)
+        return int(self.args.umi_hard_threshold)
 
     @utils.add_log
     def filter_umi(self):
-        for barcode in self.umi_count_dict:
-            if self.umi_count_dict[barcode] < self.umi_threshold:
-                self.umi_count_dict[barcode] = 0
+        for ref in self.ref_barcode_umi_dict:
+            for barcode in self.ref_barcode_umi_dict[ref]:
+                if self.ref_barcode_umi_dict[ref][barcode] < self.umi_threshold_dict[ref]:
+                    self.ref_barcode_umi_dict[ref][barcode] = 0
 
     @utils.add_log
     def add_umi_write_tsne(self):
-        self.df_filter_tsne['UMI'] = pd.Series(self.umi_count_dict)
-        self.df_filter_tsne['UMI'].fillna(0, inplace=True)
+        for ref in self.umi_threshold_dict:
+            self.df_filter_tsne[ref] = pd.Series(self.ref_barcode_umi_dict[ref])
+            self.df_filter_tsne[ref].fillna(0, inplace=True)
+
+        refs = list(self.umi_threshold_dict.keys()) 
+        self.df_filter_tsne['sum_UMI'] = self.df_filter_tsne[refs].sum(axis=1)
         self.df_filter_tsne.to_csv(self.filter_tsne_file)
+
 
     def add_some_metrics(self):
         df = self.df_filter_tsne
 
         cell_total = len(df)
-        df_positive = df[df['UMI'] > 0]
+        df_positive = df[df['sum_UMI'] > 0]
         n_cell_positive = len(df_positive)
         self.add_metric(
             name='Number of Positive Cells after Filtering',
@@ -183,8 +198,8 @@ class Filter(Step):
     def run(self):
         self.correct_umi()
         self.filter_read()
-        self.set_umi_count_dict()
-        self.set_umi_array()
+        self.set_barcode_ref_umi_dict()
+        self.set_ref_barcode_umi_dict()
         self.get_umi_threshold()
         self.filter_umi()
         self.add_umi_write_tsne()

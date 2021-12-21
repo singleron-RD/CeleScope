@@ -2,7 +2,6 @@ import pysam
 
 import pandas as pd
 
-import celescope.tools.utils as utils
 from celescope.tools.capture.count_bam import Count_bam, get_opts_count_bam
 from celescope.fusion.mkref import parse_genomeDir_fusion
 
