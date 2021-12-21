@@ -21,7 +21,7 @@ class Count_cite(Step):
 
     @utils.add_log
     def run(self):
-        mapped_read = self.df_read_count['read_count'].sum()
+        mapped_read = int(self.df_read_count['read_count'].sum())
 
         # in cell
         df_read_count_in_cell = self.df_read_count[self.df_read_count.index.isin(self.match_barcode)]
@@ -58,11 +58,11 @@ class Count_cite(Step):
         mean_umi = round(np.mean(UMIs), 2)
         self.add_metric(
             name='Median UMI per Cell',
-            value=median_umi,
+            value=float(median_umi),
         )
         self.add_metric(
             name='Mean UMI per Cell',
-            value=mean_umi,
+            value=float(mean_umi),
         )
 
 

@@ -139,6 +139,7 @@ class Filter(Step):
             elif self.umi_threshold_method == 'hard':
                 umi_threshold = self.hard_threshold(umi_array)
             
+            umi_threshold = max(1, umi_threshold)
             self.umi_threshold_dict[ref] = umi_threshold
             self.add_metric(f'{ref} UMI Threshold', umi_threshold)
 
