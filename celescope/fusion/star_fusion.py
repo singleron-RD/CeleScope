@@ -4,9 +4,8 @@ from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
 
 class Star_fusion(Star_mixin):
     def __init__(self, args, display_title=None):
-        super().__init__(self, args, display_title)
-
         args.genomeDir = args.fusion_genomeDir
+        super().__init__(args, display_title)
 
 
 @utils.add_log
