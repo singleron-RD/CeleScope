@@ -12,22 +12,22 @@ class Count_fusion(Count_bam):
         super().__init__(args, display_title)
 
         self.flanking_base = int(args.flanking_base)
-        self.fusion_genomeDir = args.fusion_genomeDir
-        self.fusion_pos_file = parse_genomeDir_fusion(self.fusion_genomeDir)['fusion_pos']
-        self.read_pos_file()
+        fusion_pos_file = parse_genomeDir_fusion(args.fusion_genomeDir)['fusion_pos']
+        self.pos_dict = self.read_pos_file(fusion_pos_file)
         self.fusion_bam = f'{self.out_prefix}_raw_fusion.bam'
  
-
-    def read_pos_file(self):
+    @staticmethod
+    def read_pos_file(fusion_pos_file):
         """
         pos_dic
             key: sequence name in fusion.fasta
             value: end postion of the first gene(1-based).
         """
-        self.pos_dict = {}
-        df = pd.read_csv(self.fusion_pos_file, sep="\t")
+        pos_dict = {}
+        df = pd.read_csv(fusion_pos_file, sep="\t")
         for name, pos in zip(df.iloc[:, 0], df.iloc[:, 1]):
-            self.pos_dict[name] = pos
+            pos_dict[name] = pos
+        return pos_dict
 
     def process_bam(self):
         """
