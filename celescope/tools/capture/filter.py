@@ -63,11 +63,12 @@ class Filter(Step):
     def correct_umi(self):
         for barcode in self.count_dict:
             for ref in self.count_dict[barcode]:
+                self.raw_umi += len(self.count_dict[barcode][ref])
                 n_corrected_umi, _n_corrected_read = Count.correct_umi(self.count_dict[barcode][ref])
                 if self.debug:
                     print(f'{barcode} {ref} {n_corrected_umi}')
                 self.total_corrected_umi += n_corrected_umi
-                self.raw_umi += len(self.count_dict[barcode][ref])
+
 
         self.add_metric(
             name='Number of Raw UMI',
