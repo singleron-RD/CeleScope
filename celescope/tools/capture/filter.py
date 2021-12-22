@@ -150,7 +150,7 @@ class Filter(Step):
 
         return int(2 ** thresh)
 
-    def auto_threshold(umi_array):
+    def auto_threshold(self, umi_array):
         """
         threhold = 99 percentile of all cell UMIs / 10
         """
