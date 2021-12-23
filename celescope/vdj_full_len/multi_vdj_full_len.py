@@ -1,7 +1,6 @@
 from celescope.tools.multi import Multi
 from celescope.vdj_full_len.__init__ import __ASSAY__
 
-
 class Multi_vdj_full_len(Multi):
 
     def convert(self, sample):
@@ -42,11 +41,21 @@ class Multi_vdj_full_len(Multi):
             f'--html {html}'
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
-        
+
+    def mapping(self,sample):
+        step = 'mapping'
+        cmd_line = self.get_cmd_line(step,sample)
+        match_dir = f'{self.col4_dict[sample]}'
+        cmd=(
+            f'{cmd_line} '
+            f'--match_dir {match_dir} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)
 
 def main():
     multi = Multi_vdj_full_len(__ASSAY__)
     multi.run()
+    
 
 if __name__ == '__main__':
     main()
