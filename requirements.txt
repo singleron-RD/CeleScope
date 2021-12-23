@@ -12,3 +12,4 @@ matplotlib==3.3.0
 biopython
 cython
 beautifulsoup4
+xlwt

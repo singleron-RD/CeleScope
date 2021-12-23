@@ -15,3 +15,4 @@ bioconda::gatk4
 bioconda::bioconductor-dropletutils
 bioconda::bowtie2
 bioconda::seqkit
+conda-forge::r-argparse
