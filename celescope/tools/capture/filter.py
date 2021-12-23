@@ -8,6 +8,7 @@ from celescope.tools.count import Count
 from celescope.tools.step import Step, s_common
 import celescope.tools.capture.otsu as otsu
 from celescope.__init__ import HELP_DICT
+from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
 
 
 def get_opts_filter(parser, sub_program):
@@ -178,7 +179,7 @@ class Filter(Step):
             self.df_filter_tsne[ref].fillna(0, inplace=True)
 
         refs = list(self.umi_threshold_dict.keys()) 
-        self.df_filter_tsne['sum_UMI'] = self.df_filter_tsne[refs].sum(axis=1)
+        self.df_filter_tsne[SUM_UMI_COLNAME] = self.df_filter_tsne[refs].sum(axis=1)
         self.df_filter_tsne.to_csv(self.filter_tsne_file)
 
 
@@ -186,7 +187,7 @@ class Filter(Step):
         df = self.df_filter_tsne
 
         cell_total = len(df)
-        df_positive = df[df['sum_UMI'] > 0]
+        df_positive = df[df[SUM_UMI_COLNAME] > 0]
         n_cell_positive = len(df_positive)
         self.add_metric(
             name='Number of Positive Cells after Filtering',

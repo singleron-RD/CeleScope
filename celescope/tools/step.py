@@ -86,13 +86,18 @@ class Step:
         self.__stat_file = f'{self.outdir}/stat.txt'
 
     def add_metric(self, name, value, total=None, help_info=None, display=None):
-        '''add metric to metric_list
-        display controls how to display the metric in HTML report.
+        '''
+        add metric to metric_list
+        
+        Args
+            display: controls how to display the metric in HTML report.
         '''
 
         name = cap_str_except_preposition(name)
         if help_info:
-            help_info = help_info.capitalize()
+            help_info = help_info[0].upper() + help_info[1:]
+            if help_info[-1] != '.':
+                help_info += '.'
         if not display:
             if isinstance(value, numbers.Number):
                 display = str(format(value, ','))

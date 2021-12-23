@@ -3,6 +3,7 @@ import pandas as pd
 from celescope.tools.step import s_common
 from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
 
 
 
@@ -23,7 +24,7 @@ class Analysis(AnalysisMixin):
 
         df_cluster_all = self.df_tsne.groupby("cluster").count()
 
-        df_positive = self.df_tsne[self.df_tsne['sum_UMI'] > 0]
+        df_positive = self.df_tsne[self.df_tsne[SUM_UMI_COLNAME] > 0]
         df_cluster_positive = df_positive.groupby("cluster").count()
 
         for index, row in df_cluster_positive.iterrows():
@@ -39,7 +40,7 @@ class Analysis(AnalysisMixin):
         tsne_cluster = Tsne_plot(self.df_tsne, 'cluster').get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
 
-        tsne_plot = Tsne_plot(self.df_tsne, 'sum_UMI', discrete=False)
+        tsne_plot = Tsne_plot(self.df_tsne, SUM_UMI_COLNAME, discrete=False)
         tsne_plot.set_color_scale(['LightGrey', 'Orange', 'Red'])
         tsne_feature = tsne_plot.get_plotly_div()
         self.add_data(tsne_feature=tsne_feature)
