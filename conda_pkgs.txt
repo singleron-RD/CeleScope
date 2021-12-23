@@ -12,3 +12,4 @@ bioconda::bioconductor-dropletutils
 bioconda::bcftools==1.9
 bioconda::gatk4
 bioconda::trust4
+conda-forge::r-argparse
