@@ -30,13 +30,17 @@ rds <- NormalizeData(rds, normalization.method = "CLR", margin = 2, assay = "ADT
 
 DefaultAssay(rds) <- "ADT"
 
-pdf.out = str_glue('{outdir}/{sample}_CITESeq_featurePlot.pdf')
+pdf.feature = str_glue('{outdir}/{sample}_CITESeq_featurePlot.pdf')
 tags = rownames(rds@assays$ADT@data)
 n_tags = length(tags)
 
-pdf(pdf.out, height=n_tags, width=12)
-
+pdf(pdf.feature, height=n_tags, width=12)
 p = FeaturePlot(rds, rownames(rds@assays$ADT@data), ncol=4, pt.size=0.2)
 print(p)
+dev.off()
 
+pdf.vln = str_glue('{outdir}/{sample}_CITESeq_vlnPlot.pdf')
+pdf(pdf.vln, height=n_tags, width=18)
+p = VlnPlot(rds, rownames(rds@assays$ADT@data), ncol=4, pt.size=0.2)
+print(p)
 dev.off()
