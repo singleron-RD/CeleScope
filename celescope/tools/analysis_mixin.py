@@ -4,7 +4,7 @@ import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
-from celescope.rna.mkref import parse_genomeDir_rna
+from celescope.rna.mkref import Mkref
 from celescope.tools.step import Step, s_common
 
 
@@ -64,7 +64,7 @@ class AnalysisMixin(Step):
     @utils.add_log
     def seurat(self, matrix_file, save_rds, genomeDir):
         app = ROOT_PATH + "/tools/run_analysis.R"
-        genome = parse_genomeDir_rna(genomeDir)
+        genome = Mkref.parse_genomeDir(genomeDir)
         mt_gene_list = genome['mt_gene_list']
         cmd = (
             f'Rscript {app} '

@@ -3,7 +3,7 @@ import pysam
 import pandas as pd
 
 from celescope.tools.capture.count_bam import Count_bam, get_opts_count_bam
-from celescope.fusion.mkref import parse_genomeDir_fusion
+from celescope.fusion.mkref import Mkref
 
 
 
@@ -12,7 +12,7 @@ class Count_fusion(Count_bam):
         super().__init__(args, display_title)
 
         self.flanking_base = int(args.flanking_base)
-        fusion_pos_file = parse_genomeDir_fusion(args.fusion_genomeDir)['fusion_pos']
+        fusion_pos_file = Mkref.parse_genomeDir(args.fusion_genomeDir)['fusion_pos']
         self.pos_dict = self.read_pos_file(fusion_pos_file)
         self.fusion_bam = f'{self.out_prefix}_raw_fusion.bam'
  

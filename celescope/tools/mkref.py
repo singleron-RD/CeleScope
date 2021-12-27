@@ -1,48 +1,94 @@
-import abc
+import os
 import configparser
+import subprocess
+import sys
 
+import celescope.tools.utils as utils
 from celescope.tools.__init__ import GENOME_CONFIG
+from celescope.__init__ import HELP_DICT
 
 
-def parse_genomeDir(genomeDir, entrys=None):
-    config_file = f'{genomeDir}/{GENOME_CONFIG}'
-    config = configparser.ConfigParser()
-    config.read_file(open(config_file))
-    genome = config['genome']
-    # add path
-    if entrys:
-        for entry in entrys:
-            if entry in genome and genome[entry] != 'None':
-                genome[entry] = f'{genomeDir}/{genome[entry]}'
-            else:
-                genome[entry] = "None"
-    return genome
 
 
 class Mkref():
 
-    def __init__(self, genome_type, args):
-        self.genomeDir = args.genomeDir
+    def __init__(self, genome_type, args, files=(), non_files=()):
         self.thread = args.thread
-        self.genome_name = args.genome_name
-        self.dry_run = args.dry_run
         self.genome_type = genome_type
+        self.dry_run = args.dry_run
+        self.files = ('fasta',) + files
+        self.non_files = ('genome_name',) + non_files
+
+        for entry in self.files + self.non_files:
+            value = str(getattr(args, entry))
+            setattr(self, entry, value)
 
         # out file
-        self.config_file = f'{self.genomeDir}/{GENOME_CONFIG}'
+        self.config_file = GENOME_CONFIG
 
-    @abc.abstractmethod
     def run(self):
-        return
+        if self.dry_run:
+            sys.exit(0)
 
-    @abc.abstractmethod
-    def write_config(self):
-        return
+    @utils.add_log
+    def build_star_index(self):
+        cmd = (
+            f'STAR \\\n'
+            f'--runMode genomeGenerate \\\n'
+            f'--runThreadN {self.thread} \\\n'
+            f'--genomeDir ./ \\\n'
+            f'--genomeFastaFiles {self.fasta} \\\n'
+            f'--genomeSAindexNbases {self.genomeSAindexNbases} \\\n'
+        )
+        self.build_star_index.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+
+    @utils.add_log
+    def _write_config(self):
+        config = configparser.ConfigParser()
+        config['genome'] = {}
+        genome = config['genome']
+        genome['genome_type'] = self.genome_type
+
+        for entry in self.files + self.non_files:
+            value = getattr(self, entry)
+            print(f'{entry} : {value}')
+            genome[entry] = value
+
+        with open(self.config_file, 'w') as config_handle:
+            config.write(config_handle)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self._write_config()
+
+    @staticmethod
+    def parse_genomeDir(genomeDir, files=()):
+        """
+        Parse genomeDir and return a dict.
+        """
+        files = ('fasta',) + files
+
+        config_file = f'{genomeDir}/{GENOME_CONFIG}'
+        config = configparser.ConfigParser()
+        config.read_file(open(config_file))
+        genome = config['genome']
+
+        for entry in files:
+            file_path = genome[entry]
+            # relative path
+            if not file_path.startswith('/'):
+                file_path = f'{genomeDir}/{file_path}'
+            genome[entry] = file_path                
+
+        return genome
 
 
-def get_opts_mkref(parser, sub_program):
+def super_opts(parser, sub_program):
     if sub_program:
-        parser.add_argument("--genomeDir", help="Default='./'. Output directory.", default='./')
         parser.add_argument("--thread", help="Default=6. Threads to use.", default=6)
         parser.add_argument("--genome_name", help="Required, genome name. ", required=True)
         parser.add_argument("--dry_run", help="Only write config file and exit.", action='store_true')
+        parser.add_argument("--fasta", help=HELP_DICT['fasta'], required=True)

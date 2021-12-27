@@ -2,7 +2,7 @@ import re
 import subprocess
 
 import celescope.tools.utils as utils
-from celescope.tools.mkref import parse_genomeDir
+from celescope.rna.mkref import Mkref
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step
@@ -26,7 +26,7 @@ class Star_mixin(Step):
         self.consensus_fq = args.consensus_fq
 
         # parse
-        self.genome = parse_genomeDir(self.genomeDir)
+        self.genome = Mkref.parse_genomeDir(self.genomeDir)
         self.stat_prefix = 'Reads'
         if self.consensus_fq:
             self.stat_prefix = 'UMIs'

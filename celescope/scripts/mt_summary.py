@@ -8,7 +8,7 @@ from plotnine import ggplot, aes, geom_line
 
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT, ROOT_PATH
-from celescope.rna.mkref import parse_genomeDir_rna
+from celescope.rna.mkref import Mkref
 import celescope.tools.utils as utils
 
 SAMPLE_COL_INDEX = 2
@@ -33,7 +33,7 @@ class Mt_summary():
 
         # set
         match_dir = f'{root_dir}/{sample}'
-        self.mt_gene_list_file = parse_genomeDir_rna(genomeDir)['mt_gene_list']
+        self.mt_gene_list_file = Mkref.parse_genomeDir(genomeDir)['mt_gene_list']
         _barcodes, self.ncell = utils.read_barcode_file(match_dir)
         self.bam = None
         try:

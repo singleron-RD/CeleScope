@@ -28,7 +28,7 @@ HELP_DICT = {
     'genomeDir': 'Required. Genome directory after running `mkref`.',
     'thread': 'Thread to use.',
     'debug': 'If this argument is used, celescope may output addtional file for debugging.',
-    'fasta': 'Required. Genome fasta file. Use relative path to `genomeDir`.',
+    'fasta': 'Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.',
     'outdir': 'Output directory.',
     'matrix_dir': 'Match celescope scRNA-Seq matrix directory.',
     'panel': 'The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.',
