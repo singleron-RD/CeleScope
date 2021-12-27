@@ -1,4 +1,3 @@
-import configparser
 import subprocess
 
 import celescope.tools.utils as utils
@@ -54,6 +53,7 @@ class Mkref_rna(Mkref):
         self.build_refflat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
+    @staticmethod
     def parse_genomeDir(genomeDir):
         super().parse_genomeDir(genomeDir, files=('gtf', 'mt_gene_list'))
 

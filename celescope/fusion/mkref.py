@@ -1,7 +1,4 @@
-import configparser
-import subprocess
 
-import celescope.tools.utils as utils
 from celescope.tools.mkref import Mkref, super_opts
 
 class Mkref_fusion(Mkref):

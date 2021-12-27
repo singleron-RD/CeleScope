@@ -1,4 +1,3 @@
-import os
 import configparser
 import subprocess
 import sys

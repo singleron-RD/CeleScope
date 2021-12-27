@@ -1,11 +1,8 @@
-import configparser
 import os
 import subprocess
 
 import celescope.tools.utils as utils
 from celescope.tools.mkref import Mkref, super_opts
-from celescope.__init__ import HELP_DICT
-
 
 class Mkref_snp(Mkref):
     """
