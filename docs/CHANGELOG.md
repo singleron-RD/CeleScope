@@ -1,6 +1,16 @@
-## [Unreleased] 
+## [1.7.0] - 2021-12-28
+ ### `capture_virus`
+  - Add documents.
+  - Add UMI filtering options - 'auto'.
+  - Add UMI correction.
+  - Extract the filtering process into a separate step.
+  - Remove the `otsu` choice from `--min_support_read`.
+
  ### `tag`
   - Remove `--marker_file` argument from `analysis_tag`.
+ 
+  ### General improvments
+  - Optimize the display of t-SNE plots in HTML reports. 
 
 ## [1.6.1] - 2021-12-01
  ### `snp`
