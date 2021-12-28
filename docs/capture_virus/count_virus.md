@@ -1,11 +1,17 @@
+## Features
+
+- Count raw virus reads
+
+## Output
+- {sample_raw_read_count.json} : barcode - UMI - raw_reads_count
 
 
 ## Arguments
 `--min_query_length` Minimum query length.
 
-`--match_dir` matched rna_virus directory
+`--match_dir` Match celescope scRNA-Seq directory.
 
-`--virus_bam` None
+`--capture_bam` None
 
 `--outdir` Output diretory.
 

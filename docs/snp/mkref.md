@@ -17,13 +17,11 @@ celescope snp mkref \
 
 
 ## Arguments
-`--genomeDir` Default='./'. Output directory.
-
 `--thread` Default=6. Threads to use.
 
 `--genome_name` Required, genome name.
 
 `--dry_run` Only write config file and exit.
 
-`--fasta` Required. Genome fasta file. Use relative path to `genomeDir`.
+`--fasta` Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.
 

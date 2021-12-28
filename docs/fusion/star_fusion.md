@@ -1,7 +1,7 @@
 
 
 ## Arguments
-`--genomeDir` Required. Genome directory after running `mkref`.
+`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.

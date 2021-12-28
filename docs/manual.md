@@ -33,6 +33,14 @@ Currently, CeleScope includes the follwing pipelines:
 - [count](tools/count.md)
 - [analysis](rna/analysis.md)
 - [multi_rna](rna/multi_rna.md)
+## Single Cell Capture Virus
+- [mkref](capture_virus/mkref.md)
+- [consensus](tools/consensus.md)
+- [star_virus](rna_virus/star_virus.md)
+- [count_virus](capture_virus/count_virus.md)
+- [filter_virus](capture_virus/filter_virus.md)
+- [analysis_virus](capture_virus/analysis_virus.md)
+- [multi_capture_virus](capture_virus/multi_capture_virus.md)
 ## Single-cell vdj
 - [consensus](tools/consensus.md)
 - [mapping_vdj](vdj/mapping_vdj.md)

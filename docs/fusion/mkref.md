@@ -17,15 +17,13 @@ celescope fusion mkref \
 
 
 ## Arguments
-`--genomeDir` Default='./'. Output directory.
-
 `--thread` Default=6. Threads to use.
 
 `--genome_name` Required, genome name.
 
 `--dry_run` Only write config file and exit.
 
-`--fasta` Fusion fasta file.
+`--fasta` Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.
 
 `--fusion_pos` fusion position file. A two column tab-delimited text file with header.
 "pos" is the end postion of the first gene(1-based).

@@ -1,3 +1,21 @@
+## Usage
+1. Make a virus genomeDir using `celescope capture_virus mkref`
+
+2. Generate shell scripts
+```
+multi_capture_virus \
+--mapfile {mapfile} \
+--virus_genomeDir {virus_genomeDir} \
+--not_consensus \
+--allowNoPolyT \
+--thread 4 \
+--mod shell
+```
+
+3. Run shell scripts
+```
+sh ./shell/{sample}.sh
+```
 
 
 ## Arguments
@@ -13,6 +31,7 @@
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
+- `capture_virus` Required, matched_dir.
 
 5th column:
 - `dynaseq` Required, background snp file.
@@ -102,7 +121,7 @@ at least {overlap} bases match between adapter and read.
 
 `--min_consensus_read` Minimum number of reads to support a base.
 
-`--genomeDir` Required. Genome directory after running `mkref`.
+`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
@@ -115,11 +134,13 @@ is higher than or equal to this value.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--virus_genomeDir` virus genome dir
+`--virus_genomeDir` Virus genome dir.
 
 `--min_query_length` Minimum query length.
 
-`--min_support_read` Minimum number of reads supporting a UMI
+`--min_support_reads` Minimum number of reads to support a UMI
 
-`--umi_threshold` method to find virus UMI threshold
+`--umi_threshold_method` method to find UMI threshold
+
+`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`
 

@@ -21,6 +21,10 @@ LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
 
 `--matrix_file` Required. Matrix_10X directory from step count.
 
+`--tsne_file` match_dir t-SNE coord file.
+
+`--df_marker_file` match_dir df_marker_file.
+
 `--outdir` Output diretory.
 
 `--assay` Assay name.

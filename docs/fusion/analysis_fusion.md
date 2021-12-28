@@ -1,13 +1,9 @@
 
 
 ## Arguments
-`--min_query_length` Minimum query length.
+`--fusion_genomeDir` Fusion genome directory.
 
-`--min_support_read` Minimum number of reads supporting a UMI
-
-`--match_dir` matched rna_virus directory
-
-`--virus_bam` None
+`--filter_tsne_file` filter tsne file
 
 `--outdir` Output diretory.
 

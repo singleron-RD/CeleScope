@@ -23,6 +23,7 @@ multi_fusion\
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
+- `capture_virus` Required, matched_dir.
 
 5th column:
 - `dynaseq` Required, background snp file.
@@ -106,7 +107,7 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
-`--genomeDir` Required. Genome directory after running `mkref`.
+`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
@@ -119,9 +120,15 @@ is higher than or equal to this value.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--fusion_genomeDir` Fusion genome directory.
-
 `--flanking_base` Number of bases flanking the fusion position.
 
-`--UMI_min` Minimum number of fusion UMI to consider a cell as a cell with fusion event.
+`--min_query_length` Minimum query length.
+
+`--min_support_reads` Minimum number of reads to support a UMI
+
+`--umi_threshold_method` method to find UMI threshold
+
+`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`
+
+`--fusion_genomeDir` Fusion genome directory.
 

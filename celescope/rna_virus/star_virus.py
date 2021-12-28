@@ -24,4 +24,4 @@ def star_virus(args):
 
 def get_opts_star_virus(parser, sub_program):
     get_opts_star_mixin(parser, sub_program)
-    parser.add_argument('--virus_genomeDir', help='virus genome dir', required=True)
+    parser.add_argument('--virus_genomeDir', help='Virus genome dir.', required=True)

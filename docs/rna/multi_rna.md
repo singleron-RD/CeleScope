@@ -24,6 +24,7 @@ intronic regions.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
+- `capture_virus` Required, matched_dir.
 
 5th column:
 - `dynaseq` Required, background snp file.
@@ -124,7 +125,7 @@ is higher than or equal to this value.
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
-`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.
+`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`
 
 `--genomeDir` Required. Genome directory.
 
