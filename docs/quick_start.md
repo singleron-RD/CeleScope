@@ -7,6 +7,7 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 - tag
 - dynaseq
 - snp
+- capture_virus
 
 Run `multi_{assay} -h` for help.
 
@@ -91,6 +92,7 @@ Note that the `./shell/{sample}.sh` must be run under the working directory(You 
 - [multi_tag.md](./tag/multi_tag.md)
 - [multi_dynaseq.md](./dynaseq/multi_dynaseq.md)
 - [multi_snp.md](./snp/multi_snp.md)
+- [multi_capture_virus.md](./capture_virus/multi_capture_virus.md)
 
 ## Test data
 https://github.com/singleron-RD/celescope_test_script
