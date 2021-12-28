@@ -1,7 +1,7 @@
 import argparse
 
 import celescope.tools.utils as utils
-from celescope.__init__ import __VERSION__, ASSAY_DICT
+from celescope.__init__ import __VERSION__, ASSAY_LIST
 
 
 class ArgFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
@@ -15,8 +15,8 @@ def main():
     parser.add_argument('-v', '--version', action='version', version=__VERSION__)
     subparsers = parser.add_subparsers()
 
-    for assay in ASSAY_DICT:
-        text = ASSAY_DICT[assay]
+    for assay in ASSAY_LIST:
+        text = utils.get_assay_text(assay)
         subparser_1st = subparsers.add_parser(assay, description=text)
         # add 2ed subparser
         subparser_2ed = subparser_1st.add_subparsers()

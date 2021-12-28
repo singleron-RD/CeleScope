@@ -4,7 +4,7 @@ import os
 
 import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
-from celescope.__init__ import ASSAY_DICT, RELEASED_ASSAYS
+from celescope.__init__ import ASSAY_LIST, RELEASED_ASSAYS
 
 PRE_PROCESSING_STEPS = ('sample', 'barcode', 'cutadapt')
 DOCS_DIR = f'docs/'
@@ -108,7 +108,8 @@ class Docs():
 
     def run(self):
         if self.release_bool:
-            self.manual_lines.append(f'## {ASSAY_DICT[self.assay]}\n')            
+            assay_text = utils.get_assay_text(self.assay)
+            self.manual_lines.append(f'## {assay_text}\n')            
 
         for step in self.steps:
             self.write_step_doc(step)
@@ -148,7 +149,7 @@ def main():
 
     remove_old_assays()
     
-    for assay in ASSAY_DICT:
+    for assay in ASSAY_LIST:
         docs_obj = Docs(assay)
         docs_obj.run()
 

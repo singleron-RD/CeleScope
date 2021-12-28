@@ -775,3 +775,10 @@ def read_CID(CID_file):
     df_index = pd.read_csv(CID_file, sep='\t', index_col=0).reset_index()
     df_valid = df_index[df_index['valid'] == True]
     return df_index, df_valid
+
+
+def get_assay_text(assay):
+    """
+    add sinlge cell prefix
+    """
+    return 'Single-cell ' + assay

@@ -1,7 +1,7 @@
 
 
 import celescope.tools.utils as utils
-from celescope.__init__ import __VERSION__, ASSAY_DICT
+from celescope.__init__ import __VERSION__
 from celescope.tools.__init__ import __PATTERN_DICT__
 from celescope.tools.barcode import Chemistry
 from celescope.tools.step import Step, s_common
@@ -10,7 +10,7 @@ from celescope.tools.step import Step, s_common
 class Sample(Step):
     def __init__(self, args):
         Step.__init__(self, args)
-        self.assay_description = ASSAY_DICT[self.assay]
+        self.assay_description = utils.get_assay_text(self.assay)
         self.version = __VERSION__
         self.chemistry = args.chemistry
 
