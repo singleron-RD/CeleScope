@@ -8,7 +8,6 @@ from plotnine import ggplot, aes, geom_line
 
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT, ROOT_PATH
-from celescope.rna.mkref import Mkref_rna
 import celescope.tools.utils as utils
 
 SAMPLE_COL_INDEX = 2
