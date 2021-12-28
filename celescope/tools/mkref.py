@@ -22,6 +22,8 @@ class Mkref():
             value = str(getattr(args, entry))
             setattr(self, entry, value)
 
+        self.config_dict = {}
+
         # out file
         self.config_file = GENOME_CONFIG
 
@@ -43,16 +45,21 @@ class Mkref():
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
-    def _write_config(self):
-        config = configparser.ConfigParser()
-        config['genome'] = {}
-        genome = config['genome']
-        genome['genome_type'] = self.genome_type
+    def set_config_dict(self):
+        """
+        if some files are not in input arguments, set them in overwrite set_config_dict function
+        """
+        self.config_dict['genome_type'] = self.genome_type
 
         for entry in self.files + self.non_files:
             value = getattr(self, entry)
             print(f'{entry} : {value}')
-            genome[entry] = value
+            self.config_dict[entry] = value
+
+    @utils.add_log
+    def _write_config(self):
+        config = configparser.ConfigParser()
+        config['genome'] = self.config_dict
 
         with open(self.config_file, 'w') as config_handle:
             config.write(config_handle)
@@ -61,7 +68,23 @@ class Mkref():
         return self
 
     def __exit__(self, *args, **kwargs):
+        self.set_config_dict()
         self._write_config()
+
+    @staticmethod
+    def get_file_path(raw_file_path, genomeDir):
+        """
+        if raw_file_path is not absolute path, add genomeDir
+
+        >>> raw_file_path = '/root/Homo_sapiens.GRCh38.92.chr.gtf'
+        >>> Mkref.get_file_path(raw_file_path, 'fake')
+        '/root/Homo_sapiens.GRCh38.92.chr.gtf'
+        """
+        file_path = raw_file_path
+        if not file_path.startswith('/'):
+            file_path = f'{genomeDir}/{file_path}'
+
+        return file_path            
 
     @staticmethod
     def parse_genomeDir(genomeDir, files=()):
@@ -76,11 +99,9 @@ class Mkref():
         genome = config['genome']
 
         for entry in files:
-            file_path = genome[entry]
-            # relative path
-            if not file_path.startswith('/'):
-                file_path = f'{genomeDir}/{file_path}'
-            genome[entry] = file_path                
+            if entry not in genome:
+                raise ValueError(f'{entry} not in {config_file}')
+            genome[entry] = Mkref.get_file_path(genome[entry], genomeDir)        
 
         return genome
 

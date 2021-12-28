@@ -65,7 +65,6 @@ multi_snp\
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
-- `capture_virus` Required, matched_dir.
 
 5th column:
 - `dynaseq` Required, background snp file.
@@ -174,7 +173,9 @@ is higher than or equal to this value.
 
 `--genomeDir` Required. Genome directory after running `mkref`.
 
-`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
+`--min_support_read` Minimum number of reads support a variant. If `auto`(default), otsu method will be used to determine this value.
+
+`--panel` The prefix of bed file, such as `lung_1`.
 
 `--annovar_config` ANNOVAR config file.
 

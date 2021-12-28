@@ -2,7 +2,7 @@ import plotnine as p9
 
 from celescope.tools.capture.analysis import Analysis, get_opts_analysis
 from celescope.fusion.count_fusion import Count_fusion
-from celescope.fusion.mkref import Mkref
+from celescope.fusion.mkref import Mkref_fusion
 
 def analysis_fusion(args):
 
@@ -19,7 +19,7 @@ class Analysis_fusion(Analysis):
     def __init__(self, args, display_title='Analysis'):
         super().__init__(args, display_title)
 
-        fusion_pos_file = Mkref.parse_genomeDir(args.fusion_genomeDir)['fusion_pos']
+        fusion_pos_file =  Mkref_fusion.parse_genomeDir(args.fusion_genomeDir)['fusion_pos']
         self.pos_dict = Count_fusion.read_pos_file(fusion_pos_file)
 
         self.p9_theme = {    

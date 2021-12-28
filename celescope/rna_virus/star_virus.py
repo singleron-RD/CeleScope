@@ -1,5 +1,6 @@
 import celescope.tools.utils as utils
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
+from celescope.capture_virus.mkref import Mkref_virus
 
 
 class Star_virus(Star_mixin):
@@ -12,6 +13,7 @@ class Star_virus(Star_mixin):
         args.genomeDir = args.virus_genomeDir
 
         super().__init__(args, add_prefix='virus', display_title=display_title)
+        self.genome = Mkref_virus.parse_genomeDir(self.genomeDir)
 
 
 @utils.add_log

@@ -21,7 +21,7 @@ from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
 from celescope.tools.cellranger3 import get_plot_elements
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
-from celescope.rna.mkref import Mkref
+from celescope.rna.mkref import Mkref_rna
 from celescope.tools.plotly_plot import Line_plot
 
 TOOLS_DIR = os.path.dirname(__file__)
@@ -70,7 +70,7 @@ class Count(Step):
         self.bam = args.bam
 
         # set
-        self.gtf_file = Mkref.parse_genomeDir(args.genomeDir)['gtf']
+        self.gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
         self.gtf_dict = utils.Gtf_dict(self.gtf_file)
         self.downsample_dict = {}
 

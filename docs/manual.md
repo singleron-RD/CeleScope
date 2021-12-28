@@ -15,6 +15,8 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope snp` for Single cell variant data generated with FocuSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, variant calling, variant filtering and variant annotation.
 
+- `celescope capture_virus` for Single cell Epstein-Barr virus(EBV) data generated with FocuSCOPE<sup>TM</sup> Single Cell mRNA × EBV Library  kits. It performs preprocessing, genome alignment, UMI counting, filtering and analysis.
+
 
 ## [Quick start](quick_start.md)
 

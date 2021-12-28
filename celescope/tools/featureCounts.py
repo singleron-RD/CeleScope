@@ -2,7 +2,7 @@
 import os
 import re
 
-from celescope.rna.mkref import Mkref
+from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 
@@ -29,7 +29,7 @@ class FeatureCounts(Step):
         Step.__init__(self, args, display_title=display_title)
 
         # set
-        self.gtf = Mkref.parse_genomeDir(self.args.genomeDir)['gtf']
+        self.gtf = Mkref_rna.parse_genomeDir(self.args.genomeDir)['gtf']
         self.featureCounts_param = args.featureCounts_param
 
         # out files

@@ -21,7 +21,6 @@ multi_vdj \
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
-- `capture_virus` Required, matched_dir.
 
 5th column:
 - `dynaseq` Required, background snp file.

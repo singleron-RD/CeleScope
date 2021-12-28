@@ -5,6 +5,7 @@ import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
 from celescope.tools.plotly_plot import Pie_plot
+from celescope.rna.mkref import Mkref_rna
 
 
 class Star(Star_mixin):
@@ -41,7 +42,8 @@ class Star(Star_mixin):
         super().__init__(args, display_title=display_title)
 
         # parse
-        self.refflat = f"{self.genomeDir}/{self.genome['refflat']}"
+        self.genome = Mkref_rna.parse_genomeDir(args.genomeDir)
+        self.refflat = self.genome['refflat']
 
         self.ribo_log = f'{self.out_prefix}_ribo_log.txt'
         self.ribo_run_log = f'{self.out_prefix}_ribo_run.log'

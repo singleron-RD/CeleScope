@@ -1,13 +1,3 @@
-## Features
-- Generate multi-sample scripts.
-
-## Usage
-```
-multi_fusion\
---mapfile ./fusion.mapfile\
---fusion_genomeDir {fusion_genomeDir}\  
---mod shell
-```
 
 
 ## Arguments
@@ -51,8 +41,6 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 `--steps_run` Steps to run. Multiple Steps are separated by comma.
 
 `--outdir` Output directory.
-
-`--thread` Thread to use.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
@@ -106,22 +94,15 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
-`--genomeDir` Required. Genome directory after running `mkref`.
+`--indel_genomeDir` insertion or deletion STAR indexed genome directory
 
-`--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
-is higher than or equal to this value.
+`--thread` STAR thread
 
-`--out_unmapped` Output unmapped reads.
+`--outFilterMatchNmin` STAR outFilterMatchNmin
 
-`--STAR_param` Other STAR parameters.
+`--mut_file` mutation file
 
-`--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
+`--match_dir` match scRNA-Seq dir
 
-`--starMem` Default `30`. Maximum memory that STAR can use.
-
-`--fusion_genomeDir` Fusion genome directory.
-
-`--flanking_base` Number of bases flanking the fusion position.
-
-`--UMI_min` Minimum number of fusion UMI to consider a cell as a cell with fusion event.
+`--shift_base` None
 

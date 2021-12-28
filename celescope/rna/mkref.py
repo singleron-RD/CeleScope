@@ -27,6 +27,10 @@ class Mkref_rna(Mkref):
     ```
     """
 
+    def __init__(self, genome_type, args, files=(), non_files=()):
+        super().__init__(genome_type, args, files, non_files)
+        self.refflat = f'{self.genome_name}.refFlat'
+
     @utils.add_log
     def build_star_index(self):
         cmd = (
@@ -53,9 +57,14 @@ class Mkref_rna(Mkref):
         self.build_refflat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
+    def set_config_dict(self):
+        super().set_config_dict()
+        self.config_dict['refflat'] = self.refflat
+
     @staticmethod
     def parse_genomeDir(genomeDir):
-        super().parse_genomeDir(genomeDir, files=('gtf', 'mt_gene_list'))
+        return Mkref.parse_genomeDir(genomeDir, files=('gtf', 'refflat', 'mt_gene_list'))
+
 
     @utils.add_log
     def run(self):
@@ -66,6 +75,7 @@ class Mkref_rna(Mkref):
 
 def mkref(args):
     genome_type = 'rna'
+    # files do not contain refflat because refflat is not input argument
     with Mkref_rna(genome_type, args, files=('gtf', 'mt_gene_list'), non_files=('genomeSAindexNbases',)) as runner:
         runner.run()
 
