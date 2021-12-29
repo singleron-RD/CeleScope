@@ -30,7 +30,7 @@ matrix_name = Seurat::Read10X(matrix_file, gene.column=2)
 # out files
 tsne.out = stringr::str_glue('{outdir}/{sample}_tsne_coord.tsv')
 marker.out = stringr::str_glue('{outdir}/{sample}_markers.tsv')
-mito.out = paste(outdir,"stat.txt",sep="/")
+mito.out = paste(outdir,"mito.txt",sep="/")
 rds.out = paste0(outdir,'/',sample,'.rds')
 
 # create seurat obj
@@ -57,9 +57,9 @@ for (percent in percent_list){
   cell_percent = sum(meta$percent.mito > percent) / total_cell
   mito_df = mito_df %>% dplyr::add_row(mito_percent=percent,cell_percent=cell_percent)
 }
-paste0(round(mito_df$cell_percent * 100,2),"%")
-mito_df$cell_percent = paste0(round(mito_df$cell_percent * 100,2),"%")
-mito_df$mito_percent = paste0("Fraction of cells have mito gene percent>",round(mito_df$mito_percent * 100,2),"%")
+
+mito_df$cell_percent = round(mito_df$cell_percent * 100,2)
+mito_df$mito_percent = paste0("Fraction of cells have mito gene percent>",round(mito_df$mito_percent * 100,2))
 write_delim(mito_df, mito.out, col_names=F, delim=":")
 
 

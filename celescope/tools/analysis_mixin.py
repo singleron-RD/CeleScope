@@ -61,6 +61,10 @@ class AnalysisMixin(Step):
         else:
             self.match_dir = args.outdir + "/../"  # use self
 
+        # out
+        self.rds = f'{self.out_prefix}.rds'
+        self.mito_metric_file = f'{self.outdir}/mito.txt'
+
     @utils.add_log
     def seurat(self, matrix_file, save_rds, genomeDir):
         app = ROOT_PATH + "/tools/run_analysis.R"
@@ -78,12 +82,26 @@ class AnalysisMixin(Step):
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
+    def add_mito_metric(self):
+        with open(self.mito_metric_file, 'r') as f:
+            for line in f:
+                tmp = line.split(':')
+                if tmp:
+                    name, value = tmp[:2]
+                    value = float(value)
+                    self.add_metric(
+                        name=name,
+                        value=value,
+                        display=f'{value}%'
+                    )
+
+
+    @utils.add_log
     def auto_assign(self, type_marker_tsv):
-        rds = f'{self.outdir}/{self.sample}.rds'
         app = ROOT_PATH + "/tools/auto_assign.R"
         cmd = (
             f'Rscript {app} '
-            f'--rds {rds} '
+            f'--rds {self.rds} '
             f'--type_marker_tsv {type_marker_tsv} '
             f'--outdir {self.outdir} '
             f'--sample {self.sample} '

@@ -68,6 +68,8 @@ class Analysis(AnalysisMixin):
     def run(self):
 
         self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
+
+        self.add_mito_metric()
         if self.auto_assign_bool:
             self.auto_assign(self.type_marker_tsv)
 
