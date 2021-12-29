@@ -59,7 +59,7 @@ for (percent in percent_list){
 }
 
 mito_df$cell_percent = round(mito_df$cell_percent * 100,2)
-mito_df$mito_percent = paste0("Fraction of cells have mito gene percent>",round(mito_df$mito_percent * 100,2))
+mito_df$mito_percent = paste0("Fraction of cells have mito gene percent>",round(mito_df$mito_percent * 100,2), '%')
 write_delim(mito_df, mito.out, col_names=F, delim=":")
 
 
