@@ -1,4 +1,5 @@
 import subprocess
+import unittest
 from collections import defaultdict
 from itertools import groupby
 
@@ -19,8 +20,11 @@ class Consensus(Step):
     - `{sample}_consensus.fq` Consensus fastq.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title=display_title)
+
+        # set
+        self.min_consensus_read = int(self.args.min_consensus_read)
 
         # out files
         self.fq_tmp_file = f'{self.out_prefix}_sorted.fq.tmp'
@@ -28,31 +32,31 @@ class Consensus(Step):
 
     @utils.add_log
     def run(self):
-        if self.args.not_consensus:
-            Consensus.run.logger.warning("Will not perform UMI consensus!")
-            return
 
         sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
         n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
             fq=self.fq_tmp_file,
             outfile=self.consensus_fq,
-            threshold=self.args.threshold
+            threshold=self.args.threshold,
+            min_consensus_read=self.min_consensus_read,
         )
 
         self.add_metric(
             name="UMI Counts",
             value=n,
+            help_info='total UMI from FASTQ files',
         )
         self.add_metric(
             name="Mean UMI Length",
             value=round(np.mean(length_list), 2),
+            help_info='mean of all UMI length'
         )
         self.add_metric(
             name="Ambiguous Base Counts",
             value=total_ambiguous_base_n,
             total=sum(length_list),
+            help_info='number of bases that do not pass consensus threshold'
         )
-        self.clean_up()
 
 
 @utils.add_log
@@ -66,7 +70,7 @@ def sort_fastq(fq, fq_tmp_file, outdir):
 
 
 @utils.add_log
-def sorted_dumb_consensus(fq, outfile, threshold):
+def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read):
     '''
     consensus read in name-sorted fastq
     output (barcode,umi) consensus fastq
@@ -87,7 +91,11 @@ def sorted_dumb_consensus(fq, outfile, threshold):
             for read in g:
                 read_list.append([read.sequence, read.quality])
             consensus_seq, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(
-                read_list, threshold=threshold, ambiguous="N")
+                read_list,
+                threshold=threshold,
+                min_consensus_read=min_consensus_read,
+                ambiguous="N"
+            )
             n_umi += 1
             prefix = "_".join([barcode, umi])
             read_name = f'{prefix}_{n_umi}'
@@ -101,13 +109,15 @@ def sorted_dumb_consensus(fq, outfile, threshold):
     return n_umi, total_ambiguous_base_n, length_list
 
 
-def dumb_consensus(read_list, threshold=0.5, ambiguous='N', default_qual='F'):
+def dumb_consensus(read_list, threshold=0.5, min_consensus_read=1, ambiguous='N', default_qual='F'):
     '''
     This is similar to biopython dumb_consensus.
     It will just go through the sequence residue by residue and count up the number of each type
     of residue (ie. A or G or T or C for DNA) in all sequences in the
-    alignment. If the percentage of the most common residue type is
-    greater then the passed threshold, then we will add that residue type,
+    alignment. If 
+    1. the percentage of the most common residue type > threshold;
+    2. most common residue reads >= min_consensus_read;
+    then we will add that residue type,
     otherwise an ambiguous character will be added.
     elements of read_list: [entry.sequence,entry.quality]
     '''
@@ -135,7 +145,7 @@ def dumb_consensus(read_list, threshold=0.5, ambiguous='N', default_qual='F'):
 
         consensus_atom = ambiguous
         for atom in atom_dict:
-            if atom_dict[atom] >= num_atoms * threshold:
+            if atom_dict[atom] > num_atoms * threshold and atom_dict[atom] >= min_consensus_read:
                 consensus_atom = atom
                 break
         if consensus_atom == ambiguous:
@@ -177,15 +187,36 @@ def get_read_length(read_list, threshold=0.5):
 
 @utils.add_log
 def consensus(args):
-
-    step_name = "consensus"
-    consensus_obj = Consensus(args, step_name)
-    consensus_obj.run()
+    if args.not_consensus:
+        return
+    with Consensus(args, display_title="Consensus") as runner:
+        runner.run()
 
 
 def get_opts_consensus(parser, sub_program):
     parser.add_argument("--threshold", help='Default 0.5. Valid base threshold. ', type=float, default=0.5)
     parser.add_argument("--not_consensus", help="Skip the consensus step. ", action='store_true')
+    parser.add_argument("--min_consensus_read", help="Minimum number of reads to support a base. ", default=1)
     if sub_program:
         parser.add_argument("--fq", help="Required. Fastq file.", required=True)
         s_common(parser)
+
+
+class Consensus_unittest(unittest.TestCase):
+
+    def test_get_read_length(self):
+        read_list = [['AAAA', 'FFFF'], ['TTT', 'FFF'], ['CCC', 'FFF'], ['GGGGGGG', 'FFFFFFF']]
+        assert get_read_length(read_list, 0.5) == 4
+
+    def test_dumb_consensus(self):
+        read_list = [('AAAA', 'FFFF'), ('TTT', 'FF;'), ('CCCC', 'FFFF'), ('GGGAGGG', 'FFFFFFF')]
+        consensus_seq, _consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(read_list, 0.5)
+        self.assertEqual(consensus_seq, 'NNNA')
+
+        read_list = [('AAAA', 'FFFF'), ('TTT', 'FF;'), ('CCC', 'FFF'), ('GGGGGGG', 'FFFFFFF')]
+        consensus_seq, _consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(read_list, 0.5)
+        self.assertEqual(consensus_seq, 'NNNN')
+
+
+if __name__ == '__main__':
+    unittest.main()

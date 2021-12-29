@@ -1,9 +1,112 @@
-# Change Log
+## [1.7.0] - 2021-12-28
+ ### `capture_virus`
+  - Add documents.
+  - Add UMI filtering options - 'auto'.
+  - Add UMI correction.
+  - Extract the filtering process into a separate step.
+  - Remove the `otsu` choice from `--min_support_read`.
 
-## [unreleased] - 2021-06-09
+ ### `tag`
+  - Remove `--marker_file` argument from `analysis_tag`.
+ 
+  ### General improvments
+  - Optimize the display of t-SNE plots in HTML reports. 
+
+## [1.6.1] - 2021-12-01
+ ### `snp`
+  - Increase `max-depth` from 1M to 100M to avoid calculation errors at very deep sites.
+
+ ### General improvments
+  - Fix a bug that `featureCounts` didn't output name sorted bam file.
+  - Fix a bug that `Median Enriched Reads per Valid Cell` in `target_metrics` used all cell number as denominator, not valid cell number.
+  - Fix a problem that the Q30 metrics in the html report showed too much precision.
+
+## [1.6.0] - 2021-11-29
+
+ ### `snp` 
+   - Improve the speed and memory usage.
+   - Format the output files to avoid redundant information.
+   - Fix an issue that the number of cells of each genotypes were not calculated correctly.
+   - Remove `CID` and `VID` in all the output files.   
+
+ ### General improvments
+  - Improve the speed of `add_tag`.
+  - Remove support for deprecated cell-calling method `inflection`.
+
+## [1.5.2] - 2021-11-02
+ ### General improvments
+ - Add auto-detection for chemistry `scopeV3.0.1`.
+ - Remove support for deprecated chemistry `scopeV2.0.0` and `scopeV2.1.0`.
+
+## [1.5.1] - 2021-10-28
+ ### `snp`
+ - Add `--panel` option.
+ - Add output files.
+ - Improve the speed of `variant_calling`.
+
+
+ ### `fusion`
+ - Fix a bug where `celescope.fusion.count_fusion` do not recognize fusion reads correctly.
+
+ ### `dynascope`
+ - Fix some bugs (#62).
+
+ ### General improvments
+  - Use local css instead of urls to avoid connection issues.
+
+
+## [1.5.0] - 2021-09-09
+ ### Added
+
+ - Add `--split_vdj` in `celescope.tag.split_tag` to split vdj library according to tag assignment.
+ - Add Docs for `snp`.
+
+ ### Changed
+
+ - `snp.variant_calling` change `--do-not-fix-overhangs` from `false` to `true` to avoid omitting variants in the overhang region.
+
+ ### Fixed
+
+ - Fix a memory leak in `snp.variant_calling`.
+
+ ### Removed
+
+## [1.4.0] - 2021-08-24
+
+ ### Added
+
+ - Add `min_consensus_read` argument to `celescope.tools.consensus`. If 
+    1. the percentage of the most common residue type > threshold;
+    2. most common residue reads >= min_consensus_read;
+    
+then we will add that residue type, otherwise an ambiguous character will be added.
+
+ ### Changed
+ - By default, use otsu method to calculate `min_support_read` for `capture_virus`.
+
+ - By default, use otsu method to calculate `min_support_read` for `snp`.
+
+ - Improved the code of `celescope.snp.variant_calling` to reduce memory usage and speed up analysis.
+
+ - Add serveral arguments in `vdj` and `tag` to support WDL workflow.
+
+ ### Fixed
+
+ - Fix a bug in `celescope.tag.count_tag` when there is no `Undetermined` cells.
+
+ - Fix a bug in `celescope.snp.variant_calling` when there are multiple variants at the same loci in a cell.
+
+ ### Removed
+
+## [1.3.2] - 2021-07-09
 ### Added
 
+- Add `dynascope` assay.
+- Add `celescope tag split_tag`. 
+
 ### Changed
+- Change fastq file pattern of mapfile: Remove * before library_id.
+- `celescope.tools.count_capture_virus`: Change `min_support_read` from 1 to 2.
 
 ### Fixed
 - `celescope.tools.count` will report an error when there are multiple gtf or refFlat file under `genomeDir`.

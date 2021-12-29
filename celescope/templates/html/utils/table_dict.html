@@ -1,0 +1,29 @@
+{% if step_summary.table_dict is defined %}
+
+    <script> {% include "./js/jquery.dataTables.min.js" %} </script>
+    <script> {% include "./js/dataTables.jqueryui.min.js" %} </script>
+
+    <script> {% include "./js/jszip.min.js" %} </script>
+    <script> {% include "./js/dataTables.buttons.min.js" %} </script>
+    <script> {% include "./js/buttons.flash.min.js" %} </script>
+    <script> {% include "./js/buttons.html5.min.js" %} </script>
+    <script> {% include "./js/buttons.print.min.js" %} </script>
+
+    <style> {% include "./css/jquery-ui.css" %}</style>
+    <style> {% include "./css/dataTables.jqueryui.min.css" %}</style>
+    <style> {% include "./css/buttons.dataTables.min.css" %}</style>
+
+    {% if step_summary.table_dict.id == "marker_genes" %}
+        {% include "./html/utils/table_script/rna.html" %}
+    {% elif step_summary.table_dict.id == "clonetypes" %}
+        {% include "./html/utils/table_script/vdj.html" %}
+    {% elif step_summary.table_dict.id == "variant" %}
+        {% include "./html/utils/table_script/snp.html" %}
+    {% endif %}
+
+    <h3>{{step_summary.table_dict['title']}}</h3>
+    <div style=" margin-left: 3%; margin-right:3%;">
+        {{step_summary.table_dict['table'] | safe}}
+    </div>
+
+{% endif %}

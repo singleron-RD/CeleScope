@@ -25,6 +25,8 @@ For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
 
 `--match_dir` Match celescope scRNA-Seq directory.
 
+`--matrix_dir` Match celescope scRNA-Seq matrix directory.
+
 `--outdir` Output diretory.
 
 `--assay` Assay name.

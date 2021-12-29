@@ -1,13 +1,17 @@
 
 
 ## Arguments
-`--outdir` output dir
-
-`--sample` sample name
-
-`--match_dir` match_dir
+`--match_dir` Match celescope scRNA-Seq directory.
 
 `--citeseq_mtx` citeseq matrix .gz file
 
-`--assay` assay
+`--outdir` Output diretory.
+
+`--assay` Assay name.
+
+`--sample` Sample name.
+
+`--thread` Thread to use.
+
+`--debug` If this argument is used, celescope may output addtional file for debugging.
 

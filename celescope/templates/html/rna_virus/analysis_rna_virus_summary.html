@@ -31,7 +31,7 @@
 </script>
 
 <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
-    <h2>Analysis   <i class="fa fa-question-circle" onClick="toggle1(this)" style="cursor:pointer;"></i></h2>
+    <h2>Analysis   <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
     <div class="box">
         <div class="description" style="display: none;">
             <p><b>Top Marker Genes by Cluster</b> : differential expression analysis based on the non-parameteric Wilcoxon rank sum test.</p>
@@ -133,17 +133,17 @@
             }
             Plotly.newPlot('virus_tsne', data, layout, config);
         </script>       
-      </div>
-
-      <hr />
-
-        <h3>Top Marker Genes by Cluster</h3>
-        <div style=" margin-left: 3%; margin-right:3%;">
-            {{marker_gene_table | safe}}
-        </div>
-        
-
-
-      <div class="clear" ></div>
     </div>
-  </div>
+
+    <hr />
+
+    {% if table_dict is defined %}
+    <h3>{{table_dict['title']}}</h3>
+    <div style=" margin-left: 3%; margin-right:3%;">
+        {{table_dict['table'] | safe}}
+    </div>
+    {% endif %}
+
+    <div class="clear" ></div>
+    </div>
+</div>

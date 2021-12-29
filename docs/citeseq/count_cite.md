@@ -1,13 +1,17 @@
 
 
 ## Arguments
-`--match_dir` matched scRNA-Seq CeleScope directory path
-
-`--outdir` output dir
-
-`--sample` sample name
-
-`--assay` assay
+`--match_dir` Match celescope scRNA-Seq directory.
 
 `--read_count_file` tag read count file
+
+`--outdir` Output diretory.
+
+`--assay` Assay name.
+
+`--sample` Sample name.
+
+`--thread` Thread to use.
+
+`--debug` If this argument is used, celescope may output addtional file for debugging.
 

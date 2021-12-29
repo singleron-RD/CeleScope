@@ -1,15 +1,43 @@
 
 
 ## Arguments
-`--mod` mod, sjm or shell
+`--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
 
-`--mapfile` tsv file, 4 columns:
-                1st col: LibName;
-                2nd col: DataDir;
-                3rd col: SampleName;
-                4th col: optional;
+1st column: Fastq file prefix.  
+2nd column: Fastq file directory path.  
+3rd column: Sample name, which is the prefix of all output files.  
+4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
-`--rm_files` remove redundant fq.gz and bam after running
+- `rna` Optional, forced cell number.
+- `vdj` Optional, matched_dir.
+- `tag` Required, matched_dir.
+- `dynaseq` Optional, forced cell number.
+- `snp` Required, matched_dir.
+- `capture_virus` Required, matched_dir.
+
+5th column:
+- `dynaseq` Required, background snp file.
+
+Example
+
+Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
+```
+$cat ./my.mapfile
+fastq_prefix1	fastq_dir1	sample1
+fastq_prefix2	fastq_dir2	sample1
+fastq_prefix3	fastq_dir1	sample2
+
+$ls fastq_dir1
+fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
+fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
+
+$ls fastq_dir2
+fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
+```
+
+`--mod` Which type of script to generate, `sjm` or `shell`.
+
+`--rm_files` Remove redundant fastq and bam files after running.
 
 `--steps_run` Steps to run. Multiple Steps are separated by comma.
 
@@ -72,21 +100,39 @@ at least {overlap} bases match between adapter and read.
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
-`--out_unmapped` Output unmapped reads
+`--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Other STAR parameters
+`--STAR_param` Other STAR parameters.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--virus_genomeDir` virus genome dir
+`--virus_genomeDir` Virus genome dir.
 
 `--gtf_type` Specify feature type in GTF annotation
 
-`--genomeDir` Required. Genome directory.
+`--featureCounts_param` Other featureCounts parameters
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
-`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto`, `cellranger3` and `inflection`.
+`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`
+
+`--genomeDir` Required. Genome directory.
+
+`--save_rds` Write rds to disk.
+
+`--type_marker_tsv` A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
+```
+cell_type	marker
+Alveolar	"CLDN18,FOLR1,AQP4,PEBP4"
+Endothelial	"CLDN5,FLT1,CDH5,RAMP2"
+Epithelial	"CAPS,TMEM190,PIFO,SNTN"
+Fibroblast	"COL1A1,DCN,COL1A2,C1R"
+B_cell	"CD79A,IGKC,IGLC3,IGHG3"
+Myeloid	"LYZ,MARCO,FCGR3A"
+T_cell	"CD3D,TRBC1,TRBC2,TRAC"
+LUAD	"NKX2-1,NAPSA,EPCAM"
+LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
+```
 

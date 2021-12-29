@@ -1,0 +1,24 @@
+<script> {% include "./js/jquery.dataTables.min.js" %} </script>
+<script> {% include "./js/dataTables.jqueryui.min.js" %} </script>
+
+<script> {% include "./js/jszip.min.js" %} </script>
+<script> {% include "./js/dataTables.buttons.min.js" %} </script>
+<script> {% include "./js/buttons.flash.min.js" %} </script>
+<script> {% include "./js/buttons.html5.min.js" %} </script>
+<script> {% include "./js/buttons.print.min.js" %} </script>
+
+<style> {% include "./css/jquery-ui.css" %}</style>
+<style> {% include "./css/dataTables.jqueryui.min.css" %}</style>
+<style> {% include "./css/buttons.dataTables.min.css" %}</style>
+
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>{{ step_summary.display_title}}   <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
+    <div class="box">
+
+        {% include "html/utils/help_info.html" %}
+    
+        {% include "html/utils/table_dict.html" %}
+
+    <div class="clear" ></div>
+    </div>
+</div>

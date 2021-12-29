@@ -1,51 +1,53 @@
-import os
 
-import pandas as pd
 
 import celescope.tools.utils as utils
-from celescope.__init__ import __VERSION__, ASSAY_DICT
+from celescope.__init__ import __VERSION__
 from celescope.tools.__init__ import __PATTERN_DICT__
 from celescope.tools.barcode import Chemistry
 from celescope.tools.step import Step, s_common
 
 
+class Sample(Step):
+    def __init__(self, args):
+        Step.__init__(self, args)
+        self.assay_description = utils.get_assay_text(self.assay)
+        self.version = __VERSION__
+        self.chemistry = args.chemistry
+
+    @utils.add_log
+    def run(self):
+        if self.chemistry == 'auto':
+            fq1 = self.args.fq1
+            ch = Chemistry(fq1)
+            chemistry = ch.check_chemistry()
+            chemistry = ",".join(set(chemistry))
+        else:
+            chemistry = self.chemistry
+
+        self.add_metric(
+            name='Sample ID',
+            value=self.sample,
+        )
+        self.add_metric(
+            name='Assay',
+            value=self.assay_description,
+        )
+        self.add_metric(
+            name='Chemistry',
+            value=chemistry,
+            help_info='Chemistry of the input fastqs',
+        )
+        self.add_metric(
+            name='Software Version',
+            value=self.version,
+        )
+
+
 @utils.add_log
 def sample(args):
 
-    step_name = "sample"
-    step = Step(args, step_name)
-
-    sample_name = args.sample
-    assay = args.assay
-    assay_description = ASSAY_DICT[assay]
-    version = __VERSION__
-    outdir = args.outdir
-    chemistry = args.chemistry
-
-    # get chemistry
-    if chemistry == 'auto':
-        fq1 = args.fq1
-        ch = Chemistry(fq1)
-        chemistry = ch.check_chemistry()
-        chemistry = ",".join(set(chemistry))
-    else:
-        chemistry = args.chemistry
-
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % outdir)
-
-    stat = pd.DataFrame({
-        "item": ["Sample ID", "Assay", "Chemistry", "Software Version"],
-        "count": [sample_name, assay_description, chemistry, version],
-    },
-        columns=["item", "count"]
-    )
-    stat_file = outdir + "/stat.txt"
-    stat.to_csv(stat_file, sep=":", header=None, index=False)
-
-    step.clean_up()
-
-    return chemistry
+    with Sample(args) as runner:
+        runner.run()
 
 
 def get_opts_sample(parser, sub_program):

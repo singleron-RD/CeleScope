@@ -1,32 +1,27 @@
 import celescope.tools.utils as utils
-from celescope.tools.star_mixin import StarMixin, get_opts_star_mixin
-from celescope.tools.step import Step
+from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
+from celescope.capture_virus.mkref import Mkref_virus
 
 
-class StarVirus(Step, StarMixin):
+class Star_virus(Star_mixin):
     """
     star virus class
     """
 
-    def __init__(self, args, step_name):
-        # add genomeDir
+    def __init__(self, args, display_title=None):
+        # before init
         args.genomeDir = args.virus_genomeDir
 
-        Step.__init__(self, args, step_name)
-        StarMixin.__init__(self, args, add_prefix='virus')
-
-    def run(self):
-        self.run_star()
-        self.clean_up()
+        super().__init__(args, add_prefix='virus', display_title=display_title)
+        self.genome = Mkref_virus.parse_genomeDir(self.genomeDir)
 
 
 @utils.add_log
 def star_virus(args):
-    step_name = "star_virus"
-    runner = StarVirus(args, step_name)
-    runner.run()
+    with Star_virus(args, display_title='Mapping') as runner:
+        runner.run()
 
 
 def get_opts_star_virus(parser, sub_program):
     get_opts_star_mixin(parser, sub_program)
-    parser.add_argument('--virus_genomeDir', help='virus genome dir', required=True)
+    parser.add_argument('--virus_genomeDir', help='Virus genome dir.', required=True)

@@ -1,5 +1,5 @@
 import setuptools
-from celescope.__init__ import __VERSION__, ASSAY_DICT
+from celescope.__init__ import __VERSION__, ASSAY_LIST
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -8,7 +8,7 @@ with open('requirements.txt') as fp:
     install_requires = fp.read()
 
 entrys = ['celescope=celescope.celescope:main',]
-for assay in ASSAY_DICT:
+for assay in ASSAY_LIST:
     entrys.append(f'multi_{assay}=celescope.{assay}.multi_{assay}:main')
 entry_dict = {
         'console_scripts': entrys,

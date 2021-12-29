@@ -9,7 +9,6 @@ import os
 import re
 import resource
 import subprocess
-import sys
 import time
 from collections import Counter, defaultdict
 from datetime import timedelta
@@ -18,10 +17,10 @@ from functools import wraps
 import numpy as np
 import pandas as pd
 import pysam
-import xopen
 
 import celescope.tools
 from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.__init__ import ROOT_PATH
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
 
@@ -38,10 +37,7 @@ def add_log(func):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
 
-    fileHandler = logging.FileHandler("./celescope_log.txt")
-    fileHandler.setFormatter(logFormatter)
-    logger.addHandler(fileHandler)
-    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler = logging.StreamHandler()
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
 
@@ -186,146 +182,109 @@ def generic_open(file_name, *args, **kwargs):
     return file_obj
 
 
-@add_log
-def get_id_name_dict(gtf_file):
-    """
-    get gene_id:gene_name from gtf file
-        - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
-        - one gene_id with multiple gene_name: error.
-        - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
+class Gtf_dict(dict):
+    '''
 
-    Returns:
-        {gene_id: gene_name} dict
-    """
+    key: gene_id
+    value: gene_name
+    '''
 
-    gene_id_pattern = re.compile(r'gene_id "(\S+)";')
-    gene_name_pattern = re.compile(r'gene_name "(\S+)"')
-    id_name = {}
-    c = Counter()
-    with generic_open(gtf_file) as f:
-        for line in f:
-            if not line.strip():
-                continue
-            if line.startswith('#'):
-                continue
-            tabs = line.split('\t')
-            gtf_type, attributes = tabs[2], tabs[-1]
-            if gtf_type == 'gene':
-                gene_id = gene_id_pattern.findall(attributes)[-1]
-                gene_names = gene_name_pattern.findall(attributes)
-                if not gene_names:
-                    gene_name = gene_id
-                else:
-                    gene_name = gene_names[-1]
-                c[gene_name] += 1
-                if c[gene_name] > 1:
-                    if gene_id in id_name:
-                        assert id_name[gene_id] == gene_name, (
-                            'one gene_id with multiple gene_name '
-                            f'gene_id: {gene_id}, '
-                            f'gene_name this line: {gene_name}'
-                            f'gene_name previous line: {id_name[gene_id]}'
-                        )
-                        get_id_name_dict.logger.warning(
-                            'duplicated (gene_id, gene_name)'
-                            f'gene_id: {gene_id}, '
-                            f'gene_name {gene_name}'
-                        )
-                        c[gene_name] -= 1
-                    else:
-                        gene_name = f'{gene_name}_{c[gene_name]}'
-                id_name[gene_id] = gene_name
-    return id_name
+    def __init__(self, gtf_file):
+        super().__init__()
+        self.gtf_file = gtf_file
+        self.load_gtf()
 
 
-@add_log
-def process_read(
-        read2_file, pattern_dict, barcode_dict, linker_dict,
-        barcode_length, linker_length):
+    @add_log
+    def load_gtf(self):
+        """
+        get gene_id:gene_name from gtf file
+            - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
+            - one gene_id with multiple gene_name: error.
+            - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
 
-    # if valid, return (True)
-    metrics = defaultdict(int)
-    res_dict = genDict(dim=3)
-    read2 = xopen.xopen(read2_file, "rt")
-    while True:
-        line1 = read2.readline()
-        line2 = read2.readline()
-        read2.readline()
-        line4 = read2.readline()
-        if not line4:
-            break
-        metrics['Total Reads'] += 1
-        attr = str(line1).strip("@").split("_")
-        barcode = str(attr[0])
-        umi = str(attr[1])
-        seq = line2.strip()
-        if linker_length != 0:
-            seq_linker = seq_ranges(seq, pattern_dict['L'])
-            if len(seq_linker) < linker_length:
-                metrics['Reads Unmapped too Short'] += 1
-                continue
-        if barcode_dict:
-            seq_barcode = seq_ranges(seq, pattern_dict['C'])
-            if barcode_length != len(seq_barcode):
-                miss_length = barcode_length - len(seq_barcode)
-                if miss_length > 2:
-                    metrics['Reads Unmapped too Short'] += 1
+        Returns:
+            {gene_id: gene_name} dict
+        """
+
+        gene_id_pattern = re.compile(r'gene_id "(\S+)";')
+        gene_name_pattern = re.compile(r'gene_name "(\S+)"')
+        id_name = {}
+        c = Counter()
+        with generic_open(self.gtf_file) as f:
+            for line in f:
+                if not line.strip():
                     continue
-                seq_barcode = seq_barcode + "A" * miss_length
+                if line.startswith('#'):
+                    continue
+                tabs = line.split('\t')
+                gtf_type, attributes = tabs[2], tabs[-1]
+                if gtf_type == 'gene':
+                    gene_id = gene_id_pattern.findall(attributes)[-1]
+                    gene_names = gene_name_pattern.findall(attributes)
+                    if not gene_names:
+                        gene_name = gene_id
+                    else:
+                        gene_name = gene_names[-1]
+                    c[gene_name] += 1
+                    if c[gene_name] > 1:
+                        if gene_id in id_name:
+                            assert id_name[gene_id] == gene_name, (
+                                'one gene_id with multiple gene_name '
+                                f'gene_id: {gene_id}, '
+                                f'gene_name this line: {gene_name}'
+                                f'gene_name previous line: {id_name[gene_id]}'
+                            )
+                            self.load_gtf.logger.warning(
+                                'duplicated (gene_id, gene_name)'
+                                f'gene_id: {gene_id}, '
+                                f'gene_name {gene_name}'
+                            )
+                            c[gene_name] -= 1
+                        else:
+                            gene_name = f'{gene_name}_{c[gene_name]}'
+                    id_name[gene_id] = gene_name
+        self.update(id_name)
 
-        # check linker
-        if linker_length != 0:
-            valid_linker = False
-            for linker_name in linker_dict:
-                if hamming_correct(linker_dict[linker_name], seq_linker):
-                    valid_linker = True
-                    break
-        else:
-            valid_linker = True
-
-        if not valid_linker:
-            metrics['Reads Unmapped Invalid Linker'] += 1
-            continue
-
-        # check barcode
-        valid_barcode = False
-        for barcode_name in barcode_dict:
-            if hamming_correct(barcode_dict[barcode_name], seq_barcode):
-                res_dict[barcode][barcode_name][umi] += 1
-                valid_barcode = True
-                break
-
-        if not valid_barcode:
-            metrics['Reads Unmapped Invalid Barcode'] += 1
-            continue
-
-        # mapped
-        metrics['Reads Mapped'] += 1
-        if metrics['Reads Mapped'] % 1000000 == 0:
-            process_read.logger.info(str(metrics['Reads Mapped']) + " reads done.")
-
-    return res_dict, metrics
-
-
-def seq_ranges_exception(seq, pattern_dict):
-    # get subseq with intervals in arr and concatenate
-    length = len(seq)
-    for x in pattern_dict:
-        if length < x[1]:
-            raise Exception(f'invalid seq range {x[0]}:{x[1]} in read')
-    return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
-
-
-def seq_ranges(seq, pattern_dict):
-    # get subseq with intervals in arr and concatenate
-    return ''.join([seq[x[0]:x[1]]for x in pattern_dict])
+    def __getitem__(self, key):
+        '''if key not exist, return key'''
+        return dict.get(self, key, key)
 
 
 def read_one_col(file):
+    """
+    Read file with one column. Strip each line.
+    Returns col_list, line number
+    """
     df = pd.read_csv(file, header=None)
     col1 = list(df.iloc[:, 0])
+    col1 = [item.strip() for item in col1]
     num = len(col1)
     return col1, num
+
+
+def get_bed_file_path(panel):
+    bed_file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
+    if not os.path.exists(bed_file_path):
+        return None
+    else:
+        return bed_file_path
+
+
+def get_gene_region_from_bed(panel):
+    """
+    Returns 
+    - genes
+    - position_df with 'Chromosome', 'Start', 'End'
+    """
+    file_path = get_bed_file_path(panel)
+    bed_file_df = pd.read_table(file_path,
+                                usecols=[0, 1, 2, 3],
+                                names=['Chromosome', 'Start', 'End', 'Gene'],
+                                sep="\t")
+    position_df = bed_file_df.loc[:, ['Chromosome', 'Start', 'End']]
+    genes = set(bed_file_df.loc[:, 'Gene'].to_list())
+    return genes, position_df
 
 
 def read_fasta(fasta_file, equal=False):
@@ -476,6 +435,9 @@ def report_prepare(outdir, **kwargs):
 
 
 def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
+    """
+    Read cols and infos into pandas df
+    """
     vcf = pysam.VariantFile(vcf_file)
     df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
     rec_dict = {}
@@ -496,6 +458,7 @@ def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
         '''
 
         df = df.append(pd.Series(rec_dict), ignore_index=True)
+    vcf.close()
     return df
 
 
@@ -557,19 +520,32 @@ def read_barcode_file(match_dir, return_file=False):
         match_barcode_file1 +
         match_barcode_file2 +
         match_barcode_file3)[0]
-    match_barcode, cell_total = read_one_col(match_barcode_file)
+    match_barcode, n_match_barcode = read_one_col(match_barcode_file)
     if return_file:
-        return match_barcode, (cell_total, match_barcode_file)
-    return match_barcode, cell_total
+        return match_barcode, (n_match_barcode, match_barcode_file)
+    return match_barcode, n_match_barcode
+
+
+def get_barcodes_from_matrix_dir(matrix_dir):
+    barcodes_file = f'{matrix_dir}/barcodes.tsv'
+    match_barcode, _n_match_barcode = read_one_col(barcodes_file)
+    return match_barcode
 
 
 def parse_match_dir(match_dir):
+    '''
+    return dict
+    keys: 'match_barcode', 'n_match_barcode', 'matrix_dir', 'tsne_coord', 'rds'
+    '''
     match_dict = {}
-    match_barcode, cell_total = read_barcode_file(match_dir)
+    match_barcode, n_match_barcode = read_barcode_file(match_dir)
     match_dict['match_barcode'] = match_barcode
-    match_dict['cell_total'] = cell_total
+    match_dict['n_match_barcode'] = n_match_barcode
     match_dict['matrix_dir'] = glob.glob(f'{match_dir}/*count*/*matrix_10X')[0]
     match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
+    df_tsne = pd.read_csv(match_dict['tsne_coord'], sep='\t', index_col=0)
+    df_tsne.index.rename('barcode', inplace=True)
+    match_dict['df_tsne'] = df_tsne
     match_dict['markers'] = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
     try:
         match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]
@@ -692,3 +668,117 @@ def sort_bam(input_bam, output_bam, threads=1):
 def index_bam(input_bam):
     cmd = f"samtools index {input_bam}"
     subprocess.check_call(cmd, shell=True)
+
+
+def check_mkdir(dir_name):
+    """if dir_name is not exist, make one"""
+    if not os.path.exists(dir_name):
+        os.system(f"mkdir -p {dir_name}")
+
+
+class Samtools():
+    def __init__(self, in_bam, out_bam, threads=1, debug=False):
+        self.in_bam = in_bam
+        self.out_bam = out_bam
+        self.threads = threads
+        self.temp_sam_file = f"{self.out_bam}_sam.temp"
+        self.debug = debug
+
+    @add_log
+    def samtools_sort(self, in_file, out_file, by='coord'):
+        cmd = f"samtools sort {in_file} -o {out_file} --threads {self.threads}"
+        if by == "name":
+            cmd += " -n"
+        self.samtools_sort.logger.debug(cmd)
+        subprocess.check_call(cmd, shell=True)
+
+    @add_log
+    def samtools_index(self, in_file):
+        cmd = f"samtools index {in_file}"
+        self.samtools_index.logger.debug(cmd)
+        subprocess.check_call(cmd, shell=True)
+
+    def sort_bam(self, by='coord'):
+        """sort in_bam"""
+        self.samtools_sort(self.in_bam, self.out_bam, by=by)
+
+    def index_bam(self):
+        """index out_bam"""
+        self.samtools_index(self.out_bam)
+
+    @add_log
+    def add_tag(self, gtf_file):
+        """
+        - CB cell barcode
+        - UB UMI
+        - GN gene name
+        - GX gene id
+        """
+        gtf_dict = Gtf_dict(gtf_file)
+
+        with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
+            header = original_bam.header
+            with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
+                for read in original_bam:
+                    attr = read.query_name.split('_')
+                    barcode = attr[0]
+                    umi = attr[1]
+                    read.set_tag(tag='CB', value=barcode, value_type='Z')
+                    read.set_tag(tag='UB', value=umi, value_type='Z')
+                    # assign to some gene
+                    if read.has_tag('XT'):
+                        gene_id = read.get_tag('XT')
+                        # if multi-mapping reads are included in original bam,
+                        # there are multiple gene_ids
+                        if ',' in gene_id:
+                            gene_name = [gtf_dict[i] for i in gene_id.split(',')]
+                            gene_name = ','.join(gene_name)
+                        else:
+                            gene_name = gtf_dict[gene_id]
+                        read.set_tag(tag='GN', value=gene_name, value_type='Z')
+                        read.set_tag(tag='GX', value=gene_id, value_type='Z')
+                    temp_sam.write(read)
+
+    @add_log
+    def add_RG(self, barcodes):
+        """
+        barcodes list
+        """
+
+        with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
+            header = original_bam.header.to_dict()
+            header['RG'] = []
+            for index, barcode in enumerate(barcodes):
+                header['RG'].append({
+                    'ID': barcode,
+                    'SM': index + 1,
+                })
+
+            with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
+                for read in original_bam:
+                    read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
+                    temp_sam.write(read)
+
+    def temp_sam2bam(self, by=None):
+        self.samtools_sort(self.temp_sam_file, self.out_bam, by=by)
+        self.rm_temp_sam()
+
+    def rm_temp_sam(self):
+        cmd = f"rm {self.temp_sam_file}"
+        subprocess.check_call(cmd, shell=True)
+
+
+def read_CID(CID_file):
+    """
+    return df_index, df_valid
+    """
+    df_index = pd.read_csv(CID_file, sep='\t', index_col=0).reset_index()
+    df_valid = df_index[df_index['valid'] == True]
+    return df_index, df_valid
+
+
+def get_assay_text(assay):
+    """
+    add sinlge cell prefix
+    """
+    return 'Single-cell ' + assay

@@ -118,9 +118,6 @@ def segment_log_plot_by_length(y_data, x_start, x_end):
     this_segment_len = 0.0
     segment_idx = [x_start]
 
-    np.seterr(divide = 'ignore')
-    np.seterr(invalid='ignore')
-
     for i in range(x_start, x_end):
         last_i = max(x_start, i-1)
         dx = (np.log(i) - np.log(last_i)) / log_max_x
@@ -320,6 +317,6 @@ def plot_barcode_rank(count_file_path):
 
     fig = go.Figure(data=plotly_data, layout=layout)
 
-    chart = pltoff.plot(fig, include_plotlyjs=False, output_type='div', config=config)
+    chart = pltoff.plot(fig, include_plotlyjs=True, output_type='div', config=config)
 
     return chart

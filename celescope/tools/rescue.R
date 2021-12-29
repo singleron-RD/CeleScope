@@ -18,9 +18,8 @@ threshold = as.numeric(argv$threshold)
 
 mtx = Seurat::Read10X(matrix_dir)
 bcrank = barcodeRanks(mtx, lower=threshold/2)
-uniq <- !duplicated(bcrank$rank)
-inflection = as.numeric(bcrank$inflection)
-knee = as.numeric(bcrank$knee)
+inflection = as.numeric(bcrank@metadata$inflection)
+knee = as.numeric(bcrank@metadata$knee)
 
 origin.cell = sum(bcrank$total >= threshold)
 inflection.cell = sum(bcrank$total >= inflection)
@@ -35,6 +34,7 @@ df = tibble(
     knee=as.character(knee),
     rescued_cell=as.character(rescued.cell)
 )
+print(df)
 df.out = stringr::str_glue('{outdir}/{sample}_rescue.tsv')
 write_tsv(df, df.out)
 

@@ -1,0 +1,13 @@
+Tag Assignment Algorithm
+
+There are three states for each cell:
+    - Undetermined: cells that have not been stained with any tag.
+    - Multiplet: cells that are not Undetermined and stained with more than one tag.
+    - Singlet: cells that are neither Undetermined nor Multiplet.
+
+Undetermined cells: cells with tag UMI count < UMI_min. UMI_min is calculated as the maximum of (5 percentile of UMI counts of all cells, median of UMI counts of all cells / 10, 1)
+
+Multiplet cells: cells with SNR(signal-to-noise-ratio) < SNR_min. SNR_min is calculated with the following algorithm:
+    1. Calulate SNR of all cells. SNR = maximum tag UMI count / second maximum tag UMI count.
+    2. If median of all cells SNR is infinite, set SNR_min = 10.
+    3. If not, SNR_min is calculated as the maximum of (median of all cells SNR * 0.1, 2)

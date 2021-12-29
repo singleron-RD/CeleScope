@@ -10,6 +10,7 @@ test_data/
 
 # tests
 celescope/tests/test_legacy.py
+nohup.out
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,0 +1,13 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+  <h2>{{ step_summary.display_title}}    <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
+  <div class="box">
+    {% include "html/utils/help_info.html" %}
+    {% include "html/utils/col1_metrics.html" %}
+    <div id="myDivPie" style="float: left; margin-left: 3%; margin-right:0%; margin-top: 2%;width: 47%">
+      {{ step_summary.region_pie |safe }}
+    </div>
+    <div class="clear" ></div>
+
+  </div>
+</div>
+

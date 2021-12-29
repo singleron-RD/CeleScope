@@ -5,8 +5,9 @@ __STEPS__ = [
     'cutadapt',
     'consensus',
     "star_virus",
-    "count_capture_virus",
-    "analysis_capture_virus",
+    "count_virus",
+    "filter_virus",
+    "analysis_virus",
 ]
 __ASSAY__ = 'capture_virus'
 

@@ -1,15 +1,61 @@
+## Usage
+1. Make a virus genomeDir using `celescope capture_virus mkref`
+
+2. Generate shell scripts
+```
+multi_capture_virus \
+--mapfile {mapfile} \
+--virus_genomeDir {virus_genomeDir} \
+--not_consensus \
+--allowNoPolyT \
+--thread 4 \
+--mod shell
+```
+
+3. Run shell scripts
+```
+sh ./shell/{sample}.sh
+```
 
 
 ## Arguments
-`--mod` mod, sjm or shell
+`--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
 
-`--mapfile` tsv file, 4 columns:
-                1st col: LibName;
-                2nd col: DataDir;
-                3rd col: SampleName;
-                4th col: optional;
+1st column: Fastq file prefix.  
+2nd column: Fastq file directory path.  
+3rd column: Sample name, which is the prefix of all output files.  
+4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
-`--rm_files` remove redundant fq.gz and bam after running
+- `rna` Optional, forced cell number.
+- `vdj` Optional, matched_dir.
+- `tag` Required, matched_dir.
+- `dynaseq` Optional, forced cell number.
+- `snp` Required, matched_dir.
+- `capture_virus` Required, matched_dir.
+
+5th column:
+- `dynaseq` Required, background snp file.
+
+Example
+
+Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
+```
+$cat ./my.mapfile
+fastq_prefix1	fastq_dir1	sample1
+fastq_prefix2	fastq_dir2	sample1
+fastq_prefix3	fastq_dir1	sample2
+
+$ls fastq_dir1
+fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
+fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
+
+$ls fastq_dir2
+fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
+```
+
+`--mod` Which type of script to generate, `sjm` or `shell`.
+
+`--rm_files` Remove redundant fastq and bam files after running.
 
 `--steps_run` Steps to run. Multiple Steps are separated by comma.
 
@@ -73,22 +119,28 @@ at least {overlap} bases match between adapter and read.
 
 `--not_consensus` Skip the consensus step.
 
-`--genomeDir` Required. Genome directory.
+`--min_consensus_read` Minimum number of reads to support a base.
+
+`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
-`--out_unmapped` Output unmapped reads
+`--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Other STAR parameters
+`--STAR_param` Other STAR parameters.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--virus_genomeDir` virus genome dir
+`--virus_genomeDir` Virus genome dir.
 
-`--min_query_length` minimum query length
+`--min_query_length` Minimum query length.
 
-`--umi_threshold` method to find virus UMI threshold
+`--min_support_reads` Minimum number of reads to support a UMI
+
+`--umi_threshold_method` method to find UMI threshold
+
+`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`
 

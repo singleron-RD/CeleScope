@@ -2,39 +2,39 @@ import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.tools.analysis_mixin import AnalysisMixin
-from celescope.tools.step import Step, s_common
+from celescope.tools.step import s_common
+from celescope.tools.plotly_plot import Tsne_plot
 
 
-class Analysis_tag(Step, AnalysisMixin):
+class Analysis_tag(AnalysisMixin):
     """
     Features
     - Combine scRNA-Seq clustering infromation with tag assignment.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
-        AnalysisMixin.__init__(self, args)
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title)
+        self.tsne_tag_file = args.tsne_tag_file
+        self.df_tsne_tag = pd.read_csv(self.tsne_tag_file, sep='\t')
 
     def run(self):
-        self.run_analysis()
-        tsne_tag_df = pd.read_csv(self.args.tsne_tag_file, sep="\t", index_col=0)
-        feature_tsne = self.get_cluster_tsne(colname='tag', tsne_df=tsne_tag_df, show_colname=False)
-        self.add_data_item(cluster_tsne=self.cluster_tsne)
-        self.add_data_item(feature_tsne=feature_tsne)
-        self.add_data_item(table_dict=self.table_dict)
 
-        self.clean_up()
+        tsne_cluster = Tsne_plot(self.df_tsne, 'cluster').get_plotly_div()
+        self.add_data(tsne_cluster=tsne_cluster)
+
+        tsne_tag = Tsne_plot(self.df_tsne_tag, 'tag').get_plotly_div()
+        self.add_data(tsne_tag=tsne_tag)
 
 
 def get_opts_analysis_tag(parser, sub_program):
     if sub_program:
         parser.add_argument('--tsne_tag_file', help='`{sample}_tsne_tag.tsv` from count_tag. ', required=True)
-        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory. ", required=True)
+        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory. ")
+        parser.add_argument("--tsne_file", help="t-SNE coord file.")
         parser = s_common(parser)
 
 
 @utils.add_log
 def analysis_tag(args):
-    step_name = 'analysis_tag'
-    ana = Analysis_tag(args, step_name)
-    ana.run()
+    with Analysis_tag(args, display_title="Analysis") as runner:
+        runner.run()

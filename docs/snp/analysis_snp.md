@@ -1,7 +1,14 @@
+## Features
+- Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+
+## Output
+- `{sample}_gt.csv` genotypes of variants of each cell. Row is variant, column is cell.
+- `{sample}_variant_ncell.csv` Number of cells with each genotype.
+- `{sample}_variant_table.csv` Annotated `{sample}_variant_ncell.csv`.
 
 
 ## Arguments
-`--annovar_config` annovar soft config file
+`--annovar_config` ANNOVAR config file.
 
 `--outdir` Output diretory.
 
@@ -13,11 +20,7 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--match_dir` match_dir
+`--match_dir` Match celescope scRNA-Seq directory.
 
-`--vcf` vcf file
-
-`--CID_file` CID_file
-
-`--variant_count_file` variant count file
+`--vcf` vcf file.
 

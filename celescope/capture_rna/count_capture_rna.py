@@ -30,7 +30,7 @@ class Count_capture_rna(Count):
                         probe_gene_count_dict[probe]['total'][barcode][umi] += 1
                         if seg.has_tag('XT'):
                             geneID = seg.get_tag('XT')
-                            geneName = self.id_name[geneID]
+                            geneName = self.gtf_dict[geneID]
                             probe_gene_count_dict[probe][geneName][barcode][umi] += 1
                         else:
                             probe_gene_count_dict[probe]['None'][barcode][umi] += 1
@@ -98,25 +98,24 @@ class Count_capture_rna(Count):
 
         # downsampling
         cell_bc = set(cell_bc)
-        saturation, res_dict = self.downsample(df_cell)
+        _saturation, res_dict = self.downsample(df_cell)
 
         # summary
-        self.get_summary(saturation, CB_describe, CB_total_Genes,
+        self.get_summary(CB_describe, CB_total_Genes,
                          CB_reads_count, reads_mapped_to_transcriptome)
 
         self.report_prepare()
 
         self.add_content_item('metric', downsample_summary=res_dict)
-        self.clean_up()
+        self._clean_up()
 
 
 @utils.add_log
 def count_capture_rna(args):
     # TODO!
     # need barcode_capture_rna
-    step_name = "count_capture_rna"
-    runner = Count_capture_rna(args, step_name)
-    runner.run()
+    with Count_capture_rna(args) as runner:
+        runner.run()
 
 
 def get_opts_count_capture_rna(parser, sub_program):

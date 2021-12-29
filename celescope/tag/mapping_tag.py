@@ -6,6 +6,7 @@ import pandas as pd
 import pysam
 
 import celescope.tools.utils as utils
+import celescope.tools.barcode as Barcode
 from celescope.tools.barcode import parse_pattern
 from celescope.tools.step import Step, s_common
 
@@ -51,9 +52,8 @@ with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1,
 
 @utils.add_log
 def mapping_tag(args):
-    step_name = "mapping_tag"
-    runner = Mapping_tag(args, step_name)
-    runner.run()
+    with Mapping_tag(args, display_title="Mapping") as runner:
+        runner.run()
 
 
 class Mapping_tag(Step):
@@ -71,8 +71,8 @@ class Mapping_tag(Step):
         `read_count` read count per UMI  
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # read args
         self.fq = args.fq
@@ -123,12 +123,12 @@ class Mapping_tag(Step):
                 seq = record.sequence
 
                 if self.linker_length != 0:
-                    seq_linker = utils.seq_ranges(seq, self.pattern_dict['L'])
+                    seq_linker = Barcode.get_seq_str(seq, self.pattern_dict['L'])
                     if len(seq_linker) < self.linker_length:
                         reads_unmapped_too_short += 1
                         continue
                 if self.barcode_dict:
-                    seq_barcode = utils.seq_ranges(seq, self.pattern_dict['C'])
+                    seq_barcode = Barcode.get_seq_str(seq, self.pattern_dict['C'])
                     if self.barcode_length != len(seq_barcode):
                         miss_length = self.barcode_length - len(seq_barcode)
                         if miss_length > 2:
@@ -188,24 +188,27 @@ class Mapping_tag(Step):
             name='Reads Mapped',
             value=reads_mapped,
             total=total_reads,
+            help_info="R2 reads that successfully mapped to linker and tag-barcode"
         )
         self.add_metric(
             name='Reads Unmapped too Short',
             value=reads_unmapped_too_short,
             total=total_reads,
+            help_info="Unmapped R2 reads because read length < linker length + tag-barcode length"
         )
         self.add_metric(
             name='Reads Unmapped Invalid Linker',
             value=reads_unmapped_invalid_iinker,
             total=total_reads,
+            help_info="Unmapped R2 reads because of too many mismatches in linker sequence"
         )
         self.add_metric(
             name='Reads Unmapped Invalid Barcode',
             value=reads_unmapped_invalid_barcode,
             total=total_reads,
+            help_info="Unmapped R2 reads because of too many mismatches in tag-barcode sequence"
         )
 
     @utils.add_log
     def run(self):
         self.process_read()
-        self.clean_up()

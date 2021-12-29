@@ -5,106 +5,96 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 - rna
 - vdj
 - tag
+- dynaseq
+- snp
+- capture_virus
 
 Run `multi_{assay} -h` for help.
 
+Note: `multi_rna` works for both single-cell RNA-Seq(scRNA-seq) and single-nucleus RNA-seq(snRNA-seq). The default settings are fine for scRNA-seq, but for snRNA-seq, you need to add `--gtf_type gene` to include reads mapped to intronic regions.
 
 ## Usage Example
 
-- Single-cell rna
+Take single-cell rna as an example:
 
-	```
-	conda activate celescope
-	multi_rna\
- 	--mapfile ./rna.mapfile\
- 	--genomeDir /SGRNJ/Public/Database/genome/homo_mus\
- 	--thread 8\
- 	--mod shell
- 	```
-`--mapfile` Required. Mapfile path.
+1. Make a rna genomeDir
 
-`--genomeDir` Required. Required. Genome directory.
+### Homo sapiens
 
-`--thread` The recommended setting is 8, and the maximum should not exceed 20.
+```
+mkdir hs_ensembl_99
+cd hs_ensembl_99
+
+wget ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+wget ftp://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz
+
+gunzip Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+gunzip Homo_sapiens.GRCh38.99.gtf.gz
+
+conda activate celescope
+celescope rna mkref \
+ --genome_name Homo_sapiens_ensembl_99 \
+ --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \
+ --gtf Homo_sapiens.GRCh38.99.gtf
+```
+
+### Mus musculus
+
+```
+mkdir mmu_ensembl_99
+cd mmu_ensembl_99
+
+wget ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
+wget ftp://ftp.ensembl.org/pub/release-99/gtf/mus_musculus/Mus_musculus.GRCm38.99.gtf.gz
+
+gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz 
+gunzip Mus_musculus.GRCm38.99.gtf.gz
+
+conda activate celescope
+celescope rna mkref \
+ --genome_name Mus_musculus_ensembl_99 \
+ --fasta Mus_musculus.GRCm38.dna.primary_assembly.fa \
+ --gtf Mus_musculus.GRCm38.99.gtf
+```
+
+2. Generate scripts for each sample
+
+Under your working directory, write a shell script `run.sh` as
+
+```
+conda activate celescope
+multi_rna\
+	--mapfile ./rna.mapfile\
+	--genomeDir /SGRNJ/Public/Database/genome/homo_mus\
+	--thread 8\
+	--mod shell
+```
+`--mapfile` Required. Check [multi_rna.md](./rna/multi_rna.md) for how to write the mapfile.
+
+`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
+
+`--thread` Threads to use. The recommended setting is 8, and the maximum should not exceed 20.
 
 `--mod` Create `sjm`(simple job manager https://github.com/StanfordBioinformatics/SJM) or `shell` scripts. 
 
-Scripts above will generate a `shell` directory containing `{sample}.sh` files.
+After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will be generated.
 
-You can start your analysis by running:
+3. Start the analysis by running:
 ```
 sh ./shell/{sample}.sh
 ```
+Note that the `./shell/{sample}.sh` must be run under the working directory(You shouldn't run them under the `shell` directory)
 
-- Single cell vdj
+## Usage
 
-```
-conda activate celescope
-multi_vdj \
- --mapfile ./vdj.mapfile \
- --type TCR \
- --thread 8 \
- --mod shell
-```  
+- [multi_rna.md](./rna/multi_rna.md)
+- [multi_vdj.md](./vdj/multi_vdj.md)
+- [multi_tag.md](./tag/multi_tag.md)
+- [multi_dynaseq.md](./dynaseq/multi_dynaseq.md)
+- [multi_snp.md](./snp/multi_snp.md)
+- [multi_capture_virus.md](./capture_virus/multi_capture_virus.md)
 
-`--type` Required. TCR or BCR. 
-
-- Single cell tag
-
-```
-conda activate celescope
-multi_tag \
- --mapfile ./tag.mapfile\
- --barcode_fasta ./smk_barcode.fa\
- --fq_pattern L25C45\
- --mod shell
-```  
-
-`--barcode_fasta` Required. Tag barcode fasta file.
-```
->tag_0
-GGGCGTCTGTGACCGCGTGATACTGCATTGTAGACCGCCCAACTC
->tag_1
-TTCCTCCAGAGGAGACCGAGCCGGTCAATTCAGGAGAACGTCCGG
->tag_2
-AGGGCTAGGCGTGTCATTTGGCGAGGTCCTGAGGTCATGGAGCCA
->tag_3
-CACTGGTCATCGACACTGGGAACCTGAGGTGAGTTCGCGCGCAAG
-```  
-
-`--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases. 
-
-`L` linker(common sequences)  
-`C` tag barcode  
-
-## How to write mapfile
-
-Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
-
-1st column: Fastq file prefix.  
-2nd column: Fastq file directory path.  
-3rd column: Sample name, which is the prefix of all output files.  
-4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
-- `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
-- `tag` Required, matched_dir.
-
-### Example
-
-Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
-```
-$cat ./my.mapfile
-fastq_prefix1	fastq_dir1	sample1
-fastq_prefix2	fastq_dir2	sample1
-fastq_prefix3	fastq_dir1	sample2
-
-$ls fastq_dir1
-fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
-fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
-
-$ls fastq_dir2
-fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
-```
-
+## Test data
+https://github.com/singleron-RD/celescope_test_script
 
  

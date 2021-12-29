@@ -1,11 +1,10 @@
 library(Seurat) # v4.0
 library(tidyverse)
 library(argparser)
-library(hdf5r)
-library(rhdf5)
 
 # CONSTANTS
 DIMS = 20
+GENE_COUNTS_COLNAME = "Gene_Counts"
 
 argv <- arg_parser('')
 argv <- add_argument(argv,"--matrix_file", help="cell 10X matrix dir")
@@ -107,7 +106,7 @@ names(dic) = rownames(rds@meta.data)
 df.tsne$cluster = as.numeric(dic[rownames(df.tsne)])
 rds@meta.data$seurat_clusters = as.numeric(dic[rownames(df.tsne)])
 df.gene = meta[,"nFeature_RNA",drop=F]
-colnames(df.gene) = "Gene_Counts"
+colnames(df.gene) = GENE_COUNTS_COLNAME
 df.all = cbind(df.tsne,df.gene)
 write.table(df.all,tsne.out,sep="\t",col.names=NA,quote = F)
 

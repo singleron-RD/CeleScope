@@ -1,0 +1,73 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>{{step_summary.display_title}}    <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
+    <div class="box">
+        {% include "html/utils/help_info.html" %}
+        {% include "html/utils/col1_metrics.html" %}
+
+        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
+            <script>
+                var index1 = [];
+                for (var i = 0; i < {{ step_summary.CB_num }}; i++) {
+                    index1.push(i + 1)
+                }
+
+                var index2 = [];
+                for (var i = 0; i < {{ step_summary.UB_num }}; i++) {
+                    index2.push(i + 1 + {{ step_summary.CB_num }})
+                }
+
+                var trace0 = {
+                    x: index1,
+                    y: {{ step_summary.Cells }},
+                    mode: 'lines',
+                    name: 'Cells',
+                    line: {
+                        color: '#337bb6',
+                        width: 3
+                    }
+                };
+                var trace1 = {
+                    x: index2,
+                    y: {{ step_summary.Background }},
+                    mode: 'lines',
+                    name: 'Background',
+                    line: {
+                        color: '#D3D3D3',
+                        width: 3
+                    }
+                };
+                var data = [ trace0, trace1 ];
+                var layout = {
+                    height: 313,
+                    width: 470,
+                    margin: {
+                        l: 50,
+                        r: 0,
+                        b: 30,
+                        t: 30,
+                    },
+                    title: 'Cells', 
+                    xaxis: {
+                        title: 'Barcodes',
+                        type: 'log'
+                    },
+                    yaxis: {
+                        title: 'UMI counts',
+                        type: 'log'
+                    },
+                }
+            var config = { 
+                modeBarButtonsToRemove: ["zoom2d", "pan2d", "select2d", "lasso2d", "zoomIn2d", "zoomOut2d", 
+                                        "hoverCompareCartesian", "toggleSpikelines", "toImage", "autoScale2d" ], 
+                displaylogo: false, 
+                showTips: true ,
+                responsive: true,}
+                Plotly.newPlot('myDivUMI', data, layout, config);
+            </script>       
+        </div>
+
+        {% include "html/utils/table_dict.html" %}
+
+        <div class="clear" ></div>
+    </div>
+  </div>

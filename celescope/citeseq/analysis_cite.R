@@ -17,16 +17,30 @@ rds = argv$rds
 
 rds = readRDS(rds)
 rds.adt <- read.csv(citeseq_mtx, sep = "\t", header = TRUE, row.names = 1)
-rds.citeseq <- rds.adt
-rownames(rds.citeseq) <- paste0("CITE_", rownames(rds.adt))
-rds <- SetAssayData(rds, assay.type = "CITE", slot = "raw.data", new.data = rds.citeseq)
-rds <- NormalizeData(rds, assay.type = "CITE", normalization.method = "genesCLR")
-rds <- ScaleData(rds, assay.type = "CITE", display.progress = FALSE)
-proteins = rownames(rds@assay$CITE@raw.data)
-n_proteins = length(proteins)
+adt_assay <- CreateAssayObject(counts = rds.adt)
+rds[["ADT"]] <- adt_assay
 
-pdf.out = str_glue('{outdir}/{sample}_CITESeq_featurePlot.pdf')
-pdf(pdf.out, height=n_proteins, width=6)
-print(FeaturePlot(rds, features.plot = proteins, min.cutoff = "q05", max.cutoff = "q95", 
-    nCol = 3, cols.use = c("lightgrey", "blue"), pt.size = 0.5))
+# Normalize ADT data,
+DefaultAssay(rds) <- "ADT"
+rds <- NormalizeData(rds, normalization.method = "CLR", margin = 2)
+DefaultAssay(rds) <- "RNA"
+
+# Note that the following command is an alternative but returns the same result
+rds <- NormalizeData(rds, normalization.method = "CLR", margin = 2, assay = "ADT")
+
+DefaultAssay(rds) <- "ADT"
+
+pdf.feature = str_glue('{outdir}/{sample}_CITESeq_featurePlot.pdf')
+tags = rownames(rds@assays$ADT@data)
+n_tags = length(tags)
+
+pdf(pdf.feature, height=n_tags, width=12)
+p = FeaturePlot(rds, rownames(rds@assays$ADT@data), ncol=4, pt.size=0.2)
+print(p)
+dev.off()
+
+pdf.vln = str_glue('{outdir}/{sample}_CITESeq_vlnPlot.pdf')
+pdf(pdf.vln, height=n_tags, width=18)
+p = VlnPlot(rds, rownames(rds@assays$ADT@data), ncol=4, pt.size=0.2)
+print(p)
 dev.off()
