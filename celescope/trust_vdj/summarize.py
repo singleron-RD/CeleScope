@@ -303,14 +303,17 @@ class Summarize(Step):
 
         # reads summary
         read_count = 0
+        read_count_all = 0
         umi_dict = defaultdict(set)
         umi_count = defaultdict()
         with pysam.FastxFile(self.fq2) as fq:
             for read in fq:
-                read_count+=1
+                read_count_all+=1
                 cb = read.name.split('_')[0]
                 umi = read.name.split('_')[1]
                 umi_dict[cb].add(umi)
+                if cb in cell_barcodes:
+                    read_count+=1
         for cb in umi_dict:
             umi_count[cb] = len(umi_dict[cb])
         df_umi = pd.DataFrame.from_dict(umi_count, orient='index', columns=['UMI'])
@@ -327,20 +330,26 @@ class Summarize(Step):
 
         summarize_summary.append({
             'item': 'Mean Read Pairs per Cell',
-            'count': int(read_count/total_cells_all),
+            'count': int(read_count/total_cells),
             'total_count': np.nan
         })
-        with pysam.FastaFile(self.assembled_fa) as fa:
-            summarize_summary.append({
-                'item': 'Mean Used Read Pairs per Cell',
-                'count': int(fa.nreferences/total_cells_all), 
-                'total_count': np.nan
-            })
-            summarize_summary.append({
-                'item': 'Fraction of Reads in Cells',
-                'count': fa.nreferences,
-                'total_count': read_count
-            })
+
+        used_read = 0
+        with pysam.FastxFile(self.assembled_fa) as fa:
+            for read in fa:
+                bc = read.name.split('_')[0]
+                if bc in cell_barcodes:
+                    used_read += 1
+        summarize_summary.append({
+            'item': 'Mean Used Read Pairs per Cell',
+            'count': int(used_read/total_cells), 
+            'total_count': np.nan
+        })
+        summarize_summary.append({
+            'item': 'Fraction of Reads in Cells',
+            'count': used_read,
+            'total_count': read_count_all
+        })
         
         for c in self.chains:
             temp_df = df_for_clono_pro[df_for_clono_pro['chain']==c]
