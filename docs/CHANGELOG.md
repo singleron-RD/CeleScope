@@ -1,12 +1,3 @@
-## [unreleased] - 2021-09-14
- ### Added
-
- ### Changed
-
- ### Fixed
-
- ### Removed
-
 ## [1.6.0] - 2022-01-04
  ### Added
  - 04.summarize/{sample}_chain_filtered_contig.csv Keep the 2 contigs with the highest UMI.
