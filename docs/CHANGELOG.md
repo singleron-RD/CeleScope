@@ -7,6 +7,21 @@
 
  ### Removed
 
+## [1.6.0] - 2022-01-04
+ ### Added
+ - 04.summarize/{sample}_chain_filtered_contig.csv Keep the 2 contigs with the highest UMI.
+ - 04.summarize/{sample}_chain_filtered_contig.fasta Keep the 2 contigs with the highest UMI.
+ - 04.summarize/{sample}_one_chain_contig.csv Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI.
+ - 04.summarize/{sample}_one_chain_contig.fasta Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI.
+
+ ### Changed
+ - Keep temp directory
+ ### Fixed
+ - Fix a bug where `Fraction of Reads in Cells` Number of reads with correct cell-associated barcodes.
+
+ ### Removed
+
+
 ## [1.5.1] - 2021-09-14
  ### Added
 
