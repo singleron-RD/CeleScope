@@ -6,7 +6,7 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.tools.count import Count
 from celescope.tools.step import Step, s_common
-import celescope.tools.capture.otsu as otsu
+from celescope.tools.capture.otsu import Otsu
 from celescope.__init__ import HELP_DICT
 from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
 
@@ -24,7 +24,6 @@ def get_opts_filter(parser, sub_program):
     parser.add_argument(
         "--umi_hard_threshold",
         help='int, use together with `--umi_threshold_method hard`',
-        default=1,
     )
     if sub_program:
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
@@ -145,12 +144,10 @@ class Filter(Step):
             self.add_metric(f'{ref} UMI Threshold', umi_threshold)
 
     def otsu_threshold(self, umi_array):
-        array = np.log2(umi_array)
-        hist = otsu.array2hist(array)
-        thresh = otsu.threshold_otsu(hist)
-        otsu.makePlot(hist, thresh, self.otsu_plot)
+        otsu_runner = Otsu(umi_array, self.otsu_plot)
+        threshold = otsu_runner.run()
 
-        return int(2 ** thresh)
+        return threshold
 
     def auto_threshold(self, umi_array):
         """
