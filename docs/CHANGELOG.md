@@ -1,3 +1,13 @@
+## [1.7.1] - 2022-01-04
+ ### `vdj_full_length`
+  - Split assemble step into three steps: annotation, match, summarize
+  - Add mapping step with sc-RNA.
+  - Synchronize some functions with celescope1.7.0.
+ 
+  ### General improvments
+  - Optimize the result of TCR/BCR assemble in HTML report.
+  - Format optimization in HTML report.
+
 ## [1.7.0] - 2021-12-28
  ### `capture_virus`
   - Add documents.
