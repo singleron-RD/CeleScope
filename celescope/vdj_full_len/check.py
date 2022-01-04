@@ -5,6 +5,20 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 '''
+    # def check(self, sample):
+    #     step = 'check'
+    #     cmd_line = self.get_cmd_line(step, sample)
+    #     rep = f'{self.outdir_dic[sample]["assemble"]}/stat.txt'
+    #     rep_bc = f'{self.outdir_dic[sample]["barcode"]}/stat.txt'
+    #     html = f'{sample}/{sample}_report.html'
+    #     cmd = (
+    #         f'{cmd_line} '
+    #         f'--rep {rep} '
+    #         f'--rep_bc {rep_bc} '
+    #         f'--html {html}'
+    #     )
+    #     self.process_cmd(cmd, step, sample, m=5, x=1)
+    
 The warning metrics of samples' analysis result are marked in red in the report
 '''
 
