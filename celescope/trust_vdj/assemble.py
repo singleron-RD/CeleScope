@@ -456,7 +456,7 @@ class Assemble(Step):
     def run(self):
         self.get_match_fastq()
         self.process()
-        os.system(f'rm -rf {self.temp_dir}')
+        # os.system(f'rm -rf {self.temp_dir}')
         self.clean_up()
 
 @utils.add_log
