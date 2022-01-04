@@ -20,13 +20,13 @@ def run_mapping(rds, contig, sample, outdir, assign):
     subprocess.check_call(cmd, shell=True)
 
 class Mapping(Step):
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         self.match_dir = args.match_dir
         self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
         self.assign_file =  glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-        self.contig = glob.glob(f'{self.outdir}/../03.assemble/match/match_contigs.csv')[0]
+        self.contig = glob.glob(f'{self.outdir}/../05.match/match_contigs.csv')[0]
 
     @utils.add_log
     def process(self):
@@ -36,9 +36,9 @@ class Mapping(Step):
         self.process()
 
 def mapping(args):
-    step_name = 'mapping'
-    mapping_obj = Mapping(args, step_name)
-    mapping_obj.run()
+
+    with Mapping(args, display_title="Mapping") as runner:
+        runner.run()
 
     
 def get_opts_mapping(parser, sub_program):
