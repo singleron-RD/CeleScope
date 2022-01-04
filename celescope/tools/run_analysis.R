@@ -1,6 +1,7 @@
 library(Seurat) # v4.0
 library(tidyverse)
 library(argparser)
+library(RhpcBLASctlF)
 
 # CONSTANTS
 DIMS = 20
@@ -12,6 +13,7 @@ argv <- add_argument(argv,"--outdir", help="outdir")
 argv <- add_argument(argv,"--sample", help="sample")
 argv <- add_argument(argv,"--mt_gene_list", help="write rds to disk")
 argv <- add_argument(argv,"--save_rds", help="write rds to disk")
+argv <- add_argument(argv,"--numcores", help="use core numbers")
 argv <- parse_args(argv)
 
 #args
@@ -20,6 +22,7 @@ mt_gene_list = argv$mt_gene_list
 outdir = argv$outdir
 sample = argv$sample
 save_rds = argv$save_rds
+numCores = argv$numcores
 resolution = 0.6
 res_str = paste0('res.', resolution)
 
@@ -70,6 +73,8 @@ rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = nfeatures
 
 use.genes <- rds@assays$RNA@var.features
 rds <- ScaleData(rds, vars.to.regress = c("nCount_RNA", "percent.mito"), features = use.genes)
+#threads num
+RhpcBLASctl::blas_set_num_threads(numCores)
 rds <- RunPCA(object = rds, features = use.genes, do.print = FALSE)
 rds <- FindNeighbors(rds, dims = 1:DIMS, force.recalc = TRUE, reduction = "pca")
 rds <- FindClusters(rds, resolution = resolution)

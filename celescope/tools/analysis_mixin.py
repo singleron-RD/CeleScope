@@ -37,6 +37,7 @@ LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
         # do not need all count diretory
         parser.add_argument("--tsne_file", help="match_dir t-SNE coord file.")
         parser.add_argument("--df_marker_file", help="match_dir df_marker_file.")
+        parser.add_argument("--num_cores", help="use core numbers")
         parser = s_common(parser)
 
 class AnalysisMixin(Step):
@@ -47,6 +48,7 @@ class AnalysisMixin(Step):
     def __init__(self, args, display_title=None):
 
         super().__init__(args, display_title=display_title)
+        self.num_cores = args.num_cores
 
         self.match_dir = None
         if hasattr(args, "match_dir") and args.match_dir:
@@ -66,7 +68,7 @@ class AnalysisMixin(Step):
         self.mito_metric_file = f'{self.outdir}/mito.txt'
 
     @utils.add_log
-    def seurat(self, matrix_file, save_rds, genomeDir):
+    def seurat(self, matrix_file, save_rds,num_cores,genomeDir):
         app = ROOT_PATH + "/tools/run_analysis.R"
         genome = Mkref_rna.parse_genomeDir(genomeDir)
         mt_gene_list = genome['mt_gene_list']
@@ -77,6 +79,7 @@ class AnalysisMixin(Step):
             f'--matrix_file {matrix_file} '
             f'--mt_gene_list {mt_gene_list} '
             f'--save_rds {save_rds}'
+            f'--numcores {num_cores}'
         )
         self.seurat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
