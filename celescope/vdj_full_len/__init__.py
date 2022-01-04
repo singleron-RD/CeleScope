@@ -1,7 +1,7 @@
 import glob
 import os
 
-__STEPS__ = ['sample', 'barcode', 'convert', 'assemble','check', 'mapping']
+__STEPS__ = ['sample', 'barcode', 'convert', 'assemble', 'annotation', 'match', 'summarize', 'mapping'] 
 __ASSAY__ = 'vdj_full_len'
 
 soft_version = ['3.0.2', '3.1.0', '4.0.0', '6.0.0']
