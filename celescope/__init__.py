@@ -21,6 +21,7 @@ ROOT_PATH = os.path.dirname(__file__)
 
 RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus']
 
+# argument help
 HELP_DICT = {
     'match_dir': 'Match celescope scRNA-Seq directory.',
     'gene_list': 'Required. Gene list file, one gene symbol per line. Only results of these genes are reported.',
@@ -35,6 +36,7 @@ HELP_DICT = {
     'threshold_method': 'One of [otsu, auto, hard, none].'
 }
 
+# report metrics help
 HELP_INFO_DICT = {
     'matched_barcode_number': {
         'display': 'Number of Matched Cells',
