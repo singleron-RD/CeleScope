@@ -6,7 +6,7 @@ import pandas as pd
 import celescope.tools.utils as utils
 from celescope.tools.count import Count
 from celescope.tools.step import Step, s_common
-from celescope.tools.capture.otsu import Otsu
+from celescope.tools.capture.threshold import Threshold
 from celescope.__init__ import HELP_DICT
 from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
 
@@ -35,6 +35,7 @@ class Filter(Step):
     def __init__(self, args, display_title='Filtering'):
         super().__init__(args, display_title)
         self.umi_threshold_method = args.umi_threshold_method
+        self.umi_hard_threshold = args.umi_hard_threshold
         self.min_support_reads = int(args.min_support_reads)
 
         # data
@@ -55,7 +56,6 @@ class Filter(Step):
         self.df_filter_tsne = self.df_tsne.copy()
 
         # out
-        self.otsu_plot = f'{self.out_prefix}_otsu.png'
         self.raw_umi_count_file = f'{self.out_prefix}_corrected_UMI_count.json'
         self.filter_tsne_file = f'{self.out_prefix}_filtered_UMI_tsne.csv'
 
@@ -132,35 +132,19 @@ class Filter(Step):
 
         for ref in self.ref_barcode_umi_dict:
             umi_array = list(self.ref_barcode_umi_dict[ref].values())
-            if self.umi_threshold_method == 'auto':
-                umi_threshold = self.auto_threshold(umi_array)
-            elif self.umi_threshold_method == 'otsu':
-                umi_threshold = self.otsu_threshold(umi_array)
-            elif self.umi_threshold_method == 'hard':
-                umi_threshold = self.hard_threshold()
+            otsu_plot_path = f'{self.out_prefix}_{ref}_otsu.png'
+            runner = Threshold(
+                umi_array, 
+                threshold_method=self.umi_threshold_method, 
+                otsu_plot_path=otsu_plot_path,
+                hard_threshold=self.umi_hard_threshold
+            )
+            umi_threshold = runner.run()
             
             umi_threshold = max(1, umi_threshold)
             self.umi_threshold_dict[ref] = umi_threshold
             self.add_metric(f'{ref} UMI Threshold', umi_threshold)
 
-    def otsu_threshold(self, umi_array):
-        otsu_runner = Otsu(umi_array, self.otsu_plot)
-        threshold = otsu_runner.run()
-
-        return threshold
-
-    def auto_threshold(self, umi_array):
-        """
-        threhold = 99 percentile of all cell UMIs / 10
-        """
-
-        cell_99th = len(umi_array) // 100
-        sorted_umis = sorted(umi_array, reverse=True)
-        percentile_99_umi = sorted_umis[cell_99th]
-        return int(percentile_99_umi / 10)
-
-    def hard_threshold(self):
-        return int(self.args.umi_hard_threshold)
 
     @utils.add_log
     def filter_umi(self):

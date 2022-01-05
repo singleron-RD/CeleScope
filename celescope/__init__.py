@@ -31,7 +31,8 @@ HELP_DICT = {
     'outdir': 'Output directory.',
     'matrix_dir': 'Match celescope scRNA-Seq matrix directory.',
     'panel': 'The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.',
-    'virus_genomeDir': 'Required. Virus genome directory after running `celescope capture_virus mkref`.'
+    'virus_genomeDir': 'Required. Virus genome directory after running `celescope capture_virus mkref`.',
+    'threshold_method': 'One of [otsu, auto, hard, none].'
 }
 
 HELP_INFO_DICT = {

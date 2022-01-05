@@ -97,9 +97,19 @@ class Multi_snp(Multi):
         )
         self.process_cmd(cmd, step, sample, m=8, x=1)
 
+    def filter_snp(self, sample):
+        step ='filter_snp'
+        vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_norm.vcf'
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--vcf {vcf} '
+        )
+        self.process_cmd(cmd, step, sample, m=1, x=1)
+
     def analysis_snp(self, sample):
         step = 'analysis_snp'
-        vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_norm.vcf'
+        vcf = f'{self.outdir_dic[sample]["filter_snp"]}/{sample}_filtered.vcf'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
