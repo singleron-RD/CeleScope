@@ -45,8 +45,9 @@ class Assemble(Step):
         self.run_assemble()
 
 def assemble(args):
-    with Assemble(args) as runner:
-        runner.run()
+    assemble_obj = Assemble(args)
+    assemble_obj.run()
+
 
 def get_opts_assemble(parser, sub_program):
     parser.add_argument('--species', help='species',

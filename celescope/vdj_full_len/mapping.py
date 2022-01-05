@@ -36,9 +36,9 @@ class Mapping(Step):
         self.process()
 
 def mapping(args):
-
-    with Mapping(args, display_title="Mapping") as runner:
-        runner.run()
+    step_name = 'mapping'
+    mapping_obj = Mapping(args, step_name)
+    mapping_obj.run()
 
     
 def get_opts_mapping(parser, sub_program):
