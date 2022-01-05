@@ -4,12 +4,19 @@
         {% include "html/utils/help_info.html" %}
         {% include "html/utils/col1_metrics.html" %}
 
-        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+        <div id="myDivUMI" style="float: left; margin-left: 3%; margin-right:0%; width: 47%">
             {{ step_summary.chart|safe }}
         </div>
 
-        {% include "html/utils/table_dict.html" %}
+        <!-- {% include "html/utils/table_dict.html" %} -->
 
         <div class="clear" ></div>
     </div>
-  </div>
+</div>
+
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    {% include "html/utils/table_dict.html" %}
+
+    <div class="clear" ></div>
+    
+</div>
