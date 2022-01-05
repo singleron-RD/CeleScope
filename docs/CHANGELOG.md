@@ -1,3 +1,12 @@
+## [Unreleased] - 2021-01-05
+
+ ### `snp`
+  - Add a fitering step: `celescope snp filter_snp` with arguments `--threshold_method`. Choices can be one of 
+    - `auto` : Default method. Using a method similar to cell calling method.
+    - `otsu` : Counts are first log transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method).
+    - `hard` : Using user provided UMI threshold.
+    - `none` : Do not perform filtering.
+
 ## [1.7.0] - 2021-12-28
  ### `capture_virus`
   - Add documents.
