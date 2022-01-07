@@ -34,10 +34,10 @@ class Mapping(Step):
         self.contig = glob.glob(f'{self.outdir}/../05.match/match_contigs.csv')[0]
 
         if self.seqtype == 'TCR':
-            self.Celltype = {'T_cells','NKT_cells','T cells','NK T cells'}
+            self.Celltype = {'T_cells','NKT_cells','T cells','NK T cells','Tcells'}
             self._name = "Tcells"
         elif self.seqtype == 'BCR':
-            self.Celltype = {'Plasma_cells','B_cells','Mature_B_cell', 'Plasma cells', 'B cells'}
+            self.Celltype = {'Plasma_cells','B_cells','Mature_B_cell', 'Plasma cells', 'B cells','Bcells'}
             self._name = "Bcells"
 
     @utils.add_log
