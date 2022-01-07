@@ -11,6 +11,7 @@ ASSAY_LIST = [
     'dynaseq',
     'snp',
     'capture_virus',
+    'fusion',
     'hla',
     'capture_rna',
     'citeseq',
