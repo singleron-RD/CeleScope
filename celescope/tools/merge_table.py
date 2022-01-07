@@ -21,7 +21,8 @@ def append_sample_data(sample, sample_data_dict, all_data_dict, steps):
             if metric_list:
                 metric_dict = {'sample': sample}
                 for metric in metric_list:
-                    metric_dict[metric['name']] = metric['display']
+                    name = metric['name'].replace(' ', '_')
+                    metric_dict[name] = metric['display']
 
                 all_data_dict[step].append(pd.Series(metric_dict))
 
