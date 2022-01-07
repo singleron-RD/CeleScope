@@ -27,7 +27,7 @@ class Mkref_fusion(Mkref):
 
     @staticmethod
     def parse_genomeDir(genomeDir):
-        super().parse_genomeDir(genomeDir, files=('fusion_pos',))
+        return Mkref.parse_genomeDir(genomeDir, files=('fusion_pos',))
 
 
 
