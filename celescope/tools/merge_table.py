@@ -31,14 +31,18 @@ def merge_report():
             if summary not in data_dic.keys():
                 continue
 
-            # add title
             if sample == samples[0]:
-                result_dict[summary].append(
-                    '\t'.join([str(x[0]).replace(' ', '_') for x in data_dic[summary]])
-                )
-            result_dict[summary].append(
-                '\t'.join([str(x[1]).replace(' ', '') for x in data_dic[summary]])
-            )
+                temp=[]
+                for i in range(len(data_dic[summary]['metric_list'])):
+                    temp.append((data_dic[summary]['metric_list'][i]['name']))
+                result_dict[summary].append('\t'.join(str(x).replace(' ', '_') for x in temp))
+                
+            temp=[]
+            for j in range(len(data_dic[summary]['metric_list'])):
+                temp.append((data_dic[summary]['metric_list'][j]['display']))
+            result_dict[summary].append('\t'.join(str(x).replace(' ', '_') for x in temp))
+            
+            
 
     with open('./merge.xls', 'w') as fh:
         for summary in result_dict.keys():
