@@ -25,12 +25,13 @@ class Mapping(Step):
         
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir
+
         try:
             self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
-            self.assign_file =  glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-        except IndexError as e:
-            print("rds file and type file do not exist" + "\n" + repr(e))
-            raise
+            self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
+        except:
+            pass
+  
         self.contig = glob.glob(f'{self.outdir}/../05.match/match_contigs.csv')[0]
 
         if self.seqtype == 'TCR':
@@ -42,6 +43,7 @@ class Mapping(Step):
 
     @utils.add_log
     def process(self):
+
         run_mapping(self.rds,self.contig,self.sample,self.outdir,self.assign_file)
         meta = pd.read_csv(glob.glob(f'{self.outdir}/{self.sample}_meta.csv')[0])
         metaTB = meta[meta['CellTypes'].isin(self.Celltype)]
@@ -76,14 +78,18 @@ class Mapping(Step):
             help_info=f"{self._name} with at least one productive chain successfully mapped to transcriptome."
             )
 
-    def run(self):    
-        self.process()
-        self._write_stat()
+    def run(self):
+        if self.rds and self.assign_file:
+            self.process()
+            self._write_stat()
+        else:
+            print("rds file and type file do not exist" + "\n" )
 
 def mapping(args):
     step_name = 'mapping'
     mapping_obj = Mapping(args, step_name)
     mapping_obj.run()
+
 
     
 def get_opts_mapping(parser, sub_program):
