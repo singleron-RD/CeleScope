@@ -26,12 +26,13 @@ class Mapping(Step):
 
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir
+
         try:
             self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
-            self.assign_file =  glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-        except IndexError as e:
-            print("rds file and type file do not exist" + "\n" + repr(e))
-            raise
+            self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
+        except:
+            pass
+  
         self.contig = glob.glob(f'{self.outdir}/../04.summarize/{self.sample}_filtered_contig.csv')[0]
         self.summary = []
 
@@ -80,8 +81,11 @@ class Mapping(Step):
         sum_df = pd.DataFrame(self.summary, columns=['item', 'count', 'total_count'])
         utils.gen_stat(sum_df, stat_file) 
     
-    def run(self):    
-        self.process()
+    def run(self):
+        if self.rds and self.assign_file:
+            self.process()
+        else:
+            print("rds file and type file do not exist" + "\n" )
 
 
 def mapping(args):
