@@ -133,7 +133,7 @@ class Threshold():
             threshold = auto.run()
         elif self.threshold_method == 'hard':
             if self.hard_threshold:
-                threshold = hard_threshold
+                threshold = int(self.hard_threshold)
             else:
                 raise Exception('hard_threshold must be set')
         else:
