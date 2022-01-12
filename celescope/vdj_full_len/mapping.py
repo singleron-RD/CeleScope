@@ -79,10 +79,11 @@ class Mapping(Step):
             )
 
     def run(self):
-        if self.rds and self.assign_file:
-            self.process()
-            self._write_stat()
-        else:
+        try:
+            if self.rds and self.assign_file:
+                self.process()
+                self._write_stat()
+        except AttributeError:
             print("rds file and type file do not exist" + "\n" )
 
 def mapping(args):
