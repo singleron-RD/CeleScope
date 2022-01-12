@@ -22,7 +22,7 @@ class Cutadapt(Step):
     """
 
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
+        super().__init__(args, display_title=display_title)
 
         # set
         self.adapter_args = self.read_adapter_fasta(args.adapter_fasta)

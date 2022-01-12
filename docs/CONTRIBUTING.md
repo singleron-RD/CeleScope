@@ -5,7 +5,6 @@ Create pull requests to `dev` branch
 Before pull requests, you should lint your code with the following command:
 ```
 pip install pylint
-# lint
 # W1618 (no-absolute-import)
 # E1101 (no-member)
 # W1633 (round-builtin)
@@ -13,16 +12,28 @@ pip install pylint
 # W0105 (String statement has no effect)
 # W0511 TODO!
 # E1130 bad operand type for unary ~: _isnan (invalid-unary-operand-type)
-# W0212 Access to a protected member _option_string_actions of a client class (protected-access)
-pylint --disable=all --enable=E,W --disable=W1618,E1101,W1633,W1619,W0105,W0511,E1130,W0212 --jobs=8 celescope
+# W0212 protected-access
+# W0221 arguments-differ
+pylint --disable=all --enable=E,W --disable=W1618,E1101,W1633,W1619,W0105,W0511,E1130,W0212,W0221 --jobs=2 celescope
 ```
 Your code should be rated at 10(i.e. no error or warning). 
 
-## Write a new step
+## Add a new assay
+
+1. Add the assay in `celescope.__init__.ASSAY_LIST` . If the assay is ready to be released, add it to `RELEASED_ASSAYS`.
+2. Create a submodule under celescope with the exact assay name.
+3. Add new steps under this submodule(folder).
+
+## Add a new step for an assay
 When you add a new step, you need to
-  - Create a step class which inherit from `celescope.tools.step.Step`. 
-  - Create a function with the same name of the module. The main function `celescope` uses this function to run each step.
+
+  - Create a class which inherit from `celescope.tools.step.Step`. 
+
+  - Create a function with the same name as the module(file name). The main function `celescope` uses this function to run each step.
+
   - Create a parser function with the name `get_opts_{module_name}`. `celescope` command line interface uses this function. The `sub_program` argument in this function hides all the arguments that you do not want to show in the `multi_{assay}` interface.
+
+  - If a HTML report is needed, you need to add `{assay}/base.html` in `celescope/templates`. Take a look at `celescope/rna/base.html`. 
 
 For example, in `celescope.tools.cutadapt`:
 
@@ -43,8 +54,8 @@ class Cutadapt(Step):
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
     """
 
-    def __init__(self, args, step_name):
-        Step.__init__(self, args, step_name)
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title=display_title)
         {some init code}
 
     @utils.add_log
@@ -54,9 +65,8 @@ class Cutadapt(Step):
 
 @utils.add_log
 def cutadapt(args):
-    step_name = "cutadapt"
-    cutadapt_obj = Cutadapt(args)
-    cutadapt_obj.run()
+    with Cutadapt(args, display_title="Trimming") as runner:
+        runner.run()
 
 
 def get_opts_cutadapt(parser, sub_program):
@@ -74,19 +84,39 @@ def get_opts_cutadapt(parser, sub_program):
     return parser
 ```
 
+## Reusable steps
+All the steps under `celescope/tools` are reusable. For example, all the assays uses the `sample`, `barcode` and `cutadapt` . You don't need to copy the code into each assay. Just put them in  `celescope.{assay}.__init__.__STEPS__`
+
+celescope/rna/__init__.py
+```
+__STEPS__ = [
+    'mkref',
+    'sample',
+    'barcode',
+    'cutadapt',
+    'star',
+    "featureCounts",
+    "count",
+    'analysis']
+__ASSAY__ = 'rna'
+```
+
 ## Docs
-There is a python script at the root of this repo `generate_docs.py` to generate documents for each released step. The generated docs are in the `docs` folder. It will collect:
+Under CeleScope root direcotry, run
+
+`python scripts/generate_docs.py`
+
+This will generate documents for each step. The generated docs are in the `docs` folder. It will collect:
+
 - Docstring of the step class. The Docstring should have sections named `Features` and `Output`.
 - Help infomation in `get_opts_{module_name}`
   
-Released assays will be added to `manual.md`.
+Released assays will be added to `manual.md`. 
 
-Under CeleScope root direcotry, run
-`python scripts/generate_docs.py`
 
 ## Tests
 If you add new steps, you need to create a small data for integration tests. 
  - To run sample tests, See https://github.com/singleron-RD/celescope_test_script
- - You can use `scripts/extract_read.py` to extract reads assigned to some cells.
 
-Then you need to create your own test based on this example.
+Then you need to create your own test based on this example. 
+ - You can use `scripts/extract_read.py` to extract reads assigned to some cells. This script may help to create test data.

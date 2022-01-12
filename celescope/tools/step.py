@@ -38,6 +38,9 @@ class Step:
     """
 
     def __init__(self, args, display_title=None):
+        '''
+        display_title controls the section title in HTML report
+        '''
 
         self.args = args
         self.outdir = args.outdir
