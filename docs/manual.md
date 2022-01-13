@@ -61,6 +61,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [featureCounts](tools/featureCounts.md)
 - [target_metrics](tools/target_metrics.md)
 - [variant_calling](snp/variant_calling.md)
+- [filter_snp](snp/filter_snp.md)
 - [analysis_snp](snp/analysis_snp.md)
 - [multi_snp](snp/multi_snp.md)
 ## Single-cell capture_virus

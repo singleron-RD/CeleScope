@@ -176,5 +176,9 @@ is higher than or equal to this value.
 
 `--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
 
+`--threshold_method` One of [otsu, auto, hard, none].
+
+`--hard_threshold` int, use together with `--threshold_method hard`
+
 `--annovar_config` ANNOVAR config file.
 
