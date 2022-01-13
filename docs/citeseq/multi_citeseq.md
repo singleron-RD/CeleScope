@@ -140,6 +140,7 @@ CCGTTCGACTTGGTG
 CGCAAGACACTCCAC
 >CLindex_TAG_16
 CTGCAACAAGGTCGC
+```
 
 `--linker_fasta` Optional. If provided, it will check the mismatches between linker sequence in R2 reads 
 with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1, the read is classified as invalid.
