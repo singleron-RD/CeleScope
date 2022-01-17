@@ -39,7 +39,8 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`.
 
 `--outdir` Output directory.
 
@@ -58,7 +59,7 @@ same time.
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
-- `T`: poly T
+- `T`: poly T.
 
 `--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
@@ -99,7 +100,7 @@ at least {overlap} bases match between adapter and read.
 
 `--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases.         
 `L` linker(common sequences)  
-`C` tag barcode
+`C` tag barcode.
 
 `--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 

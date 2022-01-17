@@ -12,17 +12,17 @@
 
 
 ## Arguments
-`--bg_cov` background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format
+`--bg_cov` background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format.
 
-`--bam` bam file from conversion step
+`--bam` bam file from conversion step.
 
-`--bg` background snp file, csv or vcf format
+`--bg` background snp file, csv or vcf format.
 
-`--cell_keep` filter cell
+`--cell_keep` filter cell.
 
-`--min_cell` a gene expressed in at least cells, default 10
+`--min_cell` a gene expressed in at least cells, default 10.
 
-`--min_gene` at least gene num in a cell, default 10
+`--min_gene` at least gene num in a cell, default 10.
 
 `--outdir` Output diretory.
 

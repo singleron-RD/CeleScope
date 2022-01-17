@@ -3,7 +3,7 @@
 ## Arguments
 `--match_dir` Match celescope scRNA-Seq directory.
 
-`--citeseq_mtx` citeseq matrix .gz file
+`--citeseq_mtx` citeseq matrix .gz file.
 
 `--outdir` Output diretory.
 

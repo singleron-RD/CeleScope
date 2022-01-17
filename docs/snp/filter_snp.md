@@ -3,9 +3,9 @@
 ## Arguments
 `--threshold_method` One of [otsu, auto, hard, none].
 
-`--hard_threshold` int, use together with `--threshold_method hard`
+`--hard_threshold` int, use together with `--threshold_method hard`.
 
-`--vcf` norm vcf file
+`--vcf` norm vcf file.
 
 `--outdir` Output diretory.
 

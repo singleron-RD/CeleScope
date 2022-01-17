@@ -28,5 +28,5 @@ is higher than or equal to this value.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fusion_genomeDir` fusion gene STAR index genome directory
+`--fusion_genomeDir` fusion gene STAR index genome directory.
 

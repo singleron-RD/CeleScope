@@ -3,7 +3,7 @@
 ## Arguments
 `--fusion_genomeDir` Fusion genome directory.
 
-`--filter_tsne_file` filter tsne file
+`--filter_tsne_file` filter tsne file.
 
 `--outdir` Output diretory.
 

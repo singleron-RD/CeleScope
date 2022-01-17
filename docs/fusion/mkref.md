@@ -32,7 +32,7 @@ name	pos
 PML_3	183  
 PML_4	254  
 PML_5	326  
-PML_6	204
+PML_6	204.
 
-`--genomeSAindexNbases` STAR genomeSAindexNbases
+`--genomeSAindexNbases` STAR genomeSAindexNbases.
 

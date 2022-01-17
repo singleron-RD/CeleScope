@@ -10,6 +10,7 @@
 - If you are using CeleScope version < v1.5.2, then you need to use `--chemistry customized` and provide 3 additional arguments: (pattern, whitelist, linker).
 ```
 multi_rna \
+ --chemistry customized \
  --pattern C9L16C9L16C9L1U12T18 \
  --whitelist celescope/data/chemistry/scopeV3.0.1/bclist \
  --linker celescope/data/chemistry/scopeV3.0.1/linker_4types \

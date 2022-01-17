@@ -8,15 +8,15 @@
 
 
 ## Arguments
-`--tsne` tsne file from analysis step
+`--tsne` tsne file from analysis step.
 
-`--mat` matrix replacement file, from replacement step
+`--mat` matrix replacement file, from replacement step.
 
-`--rep` cell replacement file, from replacement step
+`--rep` cell replacement file, from replacement step.
 
-`--mincell` turn-over in at least cells, default 5
+`--mincell` turn-over in at least cells, default 5.
 
-`--topgene` show top N genes,default 10
+`--topgene` show top N genes,default 10.
 
 `--outdir` Output diretory.
 

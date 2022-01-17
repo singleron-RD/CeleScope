@@ -15,7 +15,7 @@ most VJ_pair UMI reads is kept.
 
 
 ## Arguments
-`--type` TCR or BCR
+`--type` TCR or BCR.
 
 `--species` Default `hs`. `hs`(human) or `mmu`(mouse).
 

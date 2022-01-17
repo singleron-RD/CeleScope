@@ -57,7 +57,8 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`.
 
 `--outdir` Output directory.
 
@@ -76,7 +77,7 @@ same time.
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
-- `T`: poly T
+- `T`: poly T.
 
 `--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
@@ -138,9 +139,9 @@ is higher than or equal to this value.
 
 `--min_query_length` Minimum query length.
 
-`--min_support_reads` Minimum number of reads to support a UMI
+`--min_support_reads` Minimum number of reads to support a UMI.
 
-`--umi_threshold_method` method to find UMI threshold
+`--umi_threshold_method` method to find UMI threshold.
 
-`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`
+`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
 

@@ -50,7 +50,8 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`.
 
 `--outdir` Output directory.
 
@@ -69,7 +70,7 @@ same time.
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
-- `T`: poly T
+- `T`: poly T.
 
 `--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
@@ -119,13 +120,13 @@ is higher than or equal to this value.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--gtf_type` Specify feature type in GTF annotation
+`--gtf_type` Specify feature type in GTF annotation.
 
-`--featureCounts_param` Other featureCounts parameters
+`--featureCounts_param` Other featureCounts parameters.
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
-`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`
+`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`.
 
 `--genomeDir` Required. Genome directory.
 

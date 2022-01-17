@@ -14,11 +14,11 @@
 
 `--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
 
-`--bam` Input bam file
+`--bam` Input bam file.
 
 `--match_dir` Match celescope scRNA-Seq directory.
 
-`--add_RG` Add tag read group: RG. RG is the same as CB(cell barcode)
+`--add_RG` Add tag read group: RG. RG is the same as CB(cell barcode).
 
 `--outdir` Output diretory.
 

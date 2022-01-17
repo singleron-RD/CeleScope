@@ -15,11 +15,11 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
 
 
 ## Arguments
-`--gtf_type` Specify feature type in GTF annotation
+`--gtf_type` Specify feature type in GTF annotation.
 
 `--genomeDir` Required. Genome directory.
 
-`--featureCounts_param` Other featureCounts parameters
+`--featureCounts_param` Other featureCounts parameters.
 
 `--input` Required. BAM file path.
 

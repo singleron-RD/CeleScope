@@ -14,7 +14,7 @@
 ## Arguments
 `--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases.         
 `L` linker(common sequences)  
-`C` tag barcode
+`C` tag barcode.
 
 `--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 

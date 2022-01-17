@@ -18,6 +18,9 @@ def get_argument_docs_from_parser(parser):
             help_msg = parser._option_string_actions[argument].help
             if help_msg:
                 help_msg = help_msg.strip()
+                # if end with code segment, do not add dot
+                if help_msg[-1] != '.' and help_msg[-3:] != "```":
+                    help_msg += '.'
             argument_docs += (f'`{argument}` {help_msg}\n\n')
     argument_docs = "## Arguments\n" + argument_docs
     return argument_docs

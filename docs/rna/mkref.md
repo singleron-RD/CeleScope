@@ -34,5 +34,5 @@ refflat = Homo_sapiens_ensembl_99.refFlat
 It is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.
 
-`--genomeSAindexNbases` STAR genomeSAindexNbases
+`--genomeSAindexNbases` STAR genomeSAindexNbases.
 

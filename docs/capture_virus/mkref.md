@@ -33,5 +33,5 @@ genomesaindexnbases = 7
 
 `--fasta` Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.
 
-`--genomeSAindexNbases` STAR genomeSAindexNbases
+`--genomeSAindexNbases` STAR genomeSAindexNbases.
 

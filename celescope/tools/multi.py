@@ -96,7 +96,12 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
                             choices=['sjm', 'shell'], default='sjm')
         parser.add_argument('--rm_files', action='store_true',
                             help='Remove redundant fastq and bam files after running.')
-        parser.add_argument('--steps_run', help='Steps to run. Multiple Steps are separated by comma.', default='all')
+        parser.add_argument('--steps_run', 
+            help='''
+Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`
+''', 
+            default='all')
         # sub_program parser do not have
         parser.add_argument('--outdir', help='Output directory.', default="./")
         parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)

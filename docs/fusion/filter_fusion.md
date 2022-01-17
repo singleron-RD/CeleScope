@@ -1,11 +1,11 @@
 
 
 ## Arguments
-`--min_support_reads` Minimum number of reads to support a UMI
+`--min_support_reads` Minimum number of reads to support a UMI.
 
-`--umi_threshold_method` method to find UMI threshold
+`--umi_threshold_method` method to find UMI threshold.
 
-`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`
+`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
 
 `--match_dir` Match celescope scRNA-Seq directory.
 
