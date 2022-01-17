@@ -74,14 +74,15 @@ class Mkref():
     @staticmethod
     def get_file_path(raw_file_path, genomeDir):
         """
-        if raw_file_path is not absolute path, add genomeDir
+        if raw_file_path is not absolute path and not None,
+        add genomeDir
 
         >>> raw_file_path = '/root/Homo_sapiens.GRCh38.92.chr.gtf'
         >>> Mkref.get_file_path(raw_file_path, 'fake')
         '/root/Homo_sapiens.GRCh38.92.chr.gtf'
         """
         file_path = raw_file_path
-        if not file_path.startswith('/'):
+        if file_path and not file_path.startswith('/') and file_path != "None":
             file_path = f'{genomeDir}/{file_path}'
 
         return file_path            
