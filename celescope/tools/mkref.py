@@ -7,8 +7,6 @@ from celescope.tools.__init__ import GENOME_CONFIG
 from celescope.__init__ import HELP_DICT
 
 
-
-
 class Mkref():
 
     def __init__(self, genome_type, args, files=(), non_files=()):
@@ -80,6 +78,10 @@ class Mkref():
         >>> raw_file_path = '/root/Homo_sapiens.GRCh38.92.chr.gtf'
         >>> Mkref.get_file_path(raw_file_path, 'fake')
         '/root/Homo_sapiens.GRCh38.92.chr.gtf'
+
+        >>> raw_file_path = 'None'
+        >>> Mkref.get_file_path(raw_file_path, 'fake')
+        'None'
         """
         file_path = raw_file_path
         if file_path and not file_path.startswith('/') and file_path != "None":
