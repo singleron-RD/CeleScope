@@ -1,11 +1,14 @@
-## [Unreleased] - 2021-01-05
+## [1.7.1] - 2021-01-17
+
+ ### `rna`
+ - Fix a bug with mt_gene_list (#92)
 
  ### `snp`
   - Add a fitering step: `celescope snp filter_snp` with arguments `--threshold_method`. Choices can be one of 
     - `auto` : Default method. Using a method similar to cell calling method.
     - `otsu` : Counts are first log transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method).
     - `hard` : Using user provided UMI threshold.
-    - `none` : Do not perform filtering.
+    - `none` : Do not perform filtering. 
 
 ## [1.7.0] - 2021-12-28
  ### `capture_virus`
