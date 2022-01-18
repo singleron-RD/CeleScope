@@ -187,31 +187,36 @@ class Summarize(Step):
             'total_count': np.nan
         })
 
-        df_for_clono_pro['chain_cdr3aa'] = df_for_clono_pro[['chain', 'cdr3']].apply(':'.join, axis=1)   
+        df_for_clono_pro['chain_cdr3aa'] = df_for_clono_pro[['chain', 'cdr3']].apply(':'.join, axis=1)
+        df_for_clono_pro['chain_cdr3nt'] = df_for_clono_pro[['chain', 'cdr3_nt']].apply(':'.join, axis=1)
 
         cbs = set(df_for_clono_pro['barcode'].tolist())
         clonotypes = open(f'{self.outdir}/clonotypes.csv', 'w')
-        clonotypes.write('barcode\tcdr3s_aa\n')
+        clonotypes.write('barcode\tcdr3s_aa\tcdr3s_nt\n')
         for cb in cbs:
             temp = df_for_clono_pro[df_for_clono_pro['barcode']==cb]
             temp = temp.sort_values(by='chain', ascending=True)
             chain_list = temp['chain_cdr3aa'].tolist()
             chain_str = ';'.join(chain_list)
-            clonotypes.write(f'{cb}\t{chain_str}\n')
+            ntchain_list = temp['chain_cdr3nt'].tolist()
+            ntchain_str = ';'.join(ntchain_list)
+            clonotypes.write(f'{cb}\t{chain_str}\t{ntchain_str}\n')
         clonotypes.close() 
 
         df_clonotypes = pd.read_csv(f'{self.outdir}/clonotypes.csv', sep='\t', index_col=None)
+        df_dict = df_clonotypes[["cdr3s_nt", "cdr3s_aa"]].set_index("cdr3s_nt").to_dict(orient='dict')['cdr3s_aa']
         contig_with_clonotype = copy.deepcopy(df_clonotypes)
 
-        df_clonotypes = df_clonotypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
+        df_clonotypes = df_clonotypes.groupby('cdr3s_nt', as_index=False).agg({'barcode': 'count'})
         df_clonotypes = df_clonotypes.rename(columns={'barcode': 'frequency'})
         sum_f = df_clonotypes['frequency'].sum()
         df_clonotypes['proportion'] = df_clonotypes['frequency'].apply(lambda x: x/sum_f)
         df_clonotypes = df_clonotypes.sort_values(by='frequency', ascending=False)
         df_clonotypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonotypes.shape[0]+1)]
-        df_clonotypes = df_clonotypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
+        df_clonotypes['cdr3s_aa'] = df_clonotypes['cdr3s_nt'].apply(lambda x:df_dict[x])
+        df_clonotypes = df_clonotypes.reindex(columns=['clonotype_id', 'frequency', 'proportion', 'cdr3s_aa', 'cdr3s_nt'])
         df_clonotypes.to_csv(f'{self.outdir}/clonotypes.csv', sep=',', index=False) 
-        used_for_merge = df_clonotypes[['cdr3s_aa','clonotype_id']]
+        used_for_merge = df_clonotypes[['cdr3s_nt','clonotype_id']]
 
         df_clonotypes['ClonotypeID'] = df_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
         df_clonotypes['Frequency'] = df_clonotypes['frequency']
@@ -223,7 +228,7 @@ class Summarize(Step):
         self.add_data_item(table_dict=table_dict)
 
         # add clonotype_id in contig.csv file
-        df_merge = pd.merge(used_for_merge, contig_with_clonotype, on='cdr3s_aa', how='outer')
+        df_merge = pd.merge(used_for_merge, contig_with_clonotype, on='cdr3s_nt', how='outer')
         df_merge = df_merge[['barcode','clonotype_id']]
         df_merge['barcode'] = df_merge['barcode'].apply(lambda x: reversed_compl(x))
         df_revcompl = pd.merge(df_merge, df_revcompl, on='barcode',how='outer')
