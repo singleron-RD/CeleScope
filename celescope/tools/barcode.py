@@ -370,11 +370,11 @@ class Barcode(Step):
             suffix = ""
         self.out_fq2 = f'{self.out_prefix}_2.fq{suffix}'
         if self.nopolyT:
-            self.nopolyT_1 = f'{self.out_prefix}/noPolyT_1.fq'
-            self.nopolyT_2 = f'{self.out_prefix}/noPolyT_2.fq'
+            self.nopolyT_1 = f'{self.out_prefix}_noPolyT_1.fq'
+            self.nopolyT_2 = f'{self.out_prefix}_noPolyT_2.fq'
         if self.noLinker:
-            self.noLinker_1 = f'{self.out_prefix}/noLinker_1.fq'
-            self.noLinker_2 = f'{self.out_prefix}/noLinker_2.fq'
+            self.noLinker_1 = f'{self.out_prefix}_noLinker_1.fq'
+            self.noLinker_2 = f'{self.out_prefix}_noLinker_2.fq'
 
     @utils.add_log
     def run(self):
