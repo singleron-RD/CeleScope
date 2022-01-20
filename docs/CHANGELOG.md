@@ -1,3 +1,13 @@
+## [1.6.1] - 2022-01-20
+ ### Added
+ - Optimize code.
+ - Add functional module.
+ ### Fixed
+ - Clonotypes are generally distinguished by the nucleotide sequence of the rearranged TCR,BCR.
+ ### Changed
+ - Skip mapping step when rds file does not existed.
+ - Put scripts, tools, reference files into relative path.
+
 ## [1.6.0] - 2022-01-07
  ### Added
  - 04.summarize/{sample}_chain_filtered_contig.csv Keep the 2 contigs with the highest UMI.
