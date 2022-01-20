@@ -6,8 +6,7 @@ import celescope
 import os
 import subprocess
 import glob
-
-TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
+from celescope.trust_vdj.__init__ import TOOLS_DIR
 
 def run_mapping(rds, contig, sample, outdir, assign):
     cmd = (
@@ -82,9 +81,11 @@ class Mapping(Step):
         utils.gen_stat(sum_df, stat_file) 
     
     def run(self):
-        if self.rds and self.assign_file:
+        try:
+            assert self.rds and self.assign_file
             self.process()
-        else:
+
+        except AssertionError:
             print("rds file and type file do not exist" + "\n" )
 
 
