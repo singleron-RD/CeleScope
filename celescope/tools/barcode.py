@@ -362,6 +362,7 @@ class Barcode(Step):
         self.allowNoLinker = args.allowNoLinker
         self.nopolyT = args.nopolyT  # true == output nopolyT reads
         self.noLinker = args.noLinker
+        self.output_R1 = args.output_R1
 
         # out file
         if args.gzip:
@@ -369,6 +370,7 @@ class Barcode(Step):
         else:
             suffix = ""
         self.out_fq2 = f'{self.out_prefix}_2.fq{suffix}'
+        self.out_fq1 = f'{self.out_prefix}_1.fq{suffix}'
         if self.nopolyT:
             self.nopolyT_1 = f'{self.out_prefix}_noPolyT_1.fq'
             self.nopolyT_2 = f'{self.out_prefix}_noPolyT_2.fq'
@@ -392,8 +394,10 @@ class Barcode(Step):
                 filter
                 write valid R2 read to file
         """
-
+        if self.output_R1:
+            out_fq1 = xopen(self.out_fq1, 'w')
         out_fq2 = xopen(self.out_fq2, 'w')
+
 
         if self.nopolyT:
             fh1_without_polyT = xopen(self.nopolyT_1, 'w')
@@ -502,6 +506,9 @@ class Barcode(Step):
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
                     out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                    if self.output_R1:
+                        out_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')
+                        
             self.run.logger.info(self.fq1_list[i] + ' finished.')
         out_fq2.close()
 
@@ -627,6 +634,11 @@ lowQual will be regarded as low-quality bases.',
     parser.add_argument(
         '--gzip',
         help="Output gzipped fastq files.",
+        action='store_true'
+    )
+    parser.add_argument(
+        '--output_R1',
+        help="Output valid R1 reads.",
         action='store_true'
     )
     if sub_program:
