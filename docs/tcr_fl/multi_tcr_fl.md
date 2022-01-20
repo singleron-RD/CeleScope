@@ -71,6 +71,8 @@ same time.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 
+`--output_R1` Output valid R1 reads.
+
 `--gzip` Output gzipped fastq files.
 
 `--adapter_fasta` Addtional adapter fasta file.

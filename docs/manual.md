@@ -17,8 +17,9 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope capture_virus` for Single cell Epstein-Barr virus(EBV) data generated with FocuSCOPE<sup>TM</sup> Single Cell mRNA × EBV Library  kits. It performs preprocessing, genome alignment, UMI counting, filtering and analysis.
 
-
 ## [Quick start](quick_start.md)
+
+## [Chemistry](chemistry.md)
 
 ## [Change log](CHANGELOG.md)
 

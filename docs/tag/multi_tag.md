@@ -8,6 +8,7 @@ multi_tag \
     --mapfile ./tag.mapfile\
     --barcode_fasta ./tag_barcode.fasta\
     --fq_pattern L25C15\
+    --split_matrix\
     --mod shell
 ```
 
@@ -88,6 +89,8 @@ same time.
 `--allowNoPolyT` Allow valid reads without polyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
+
+`--output_R1` Output valid R1 reads.
 
 `--gzip` Output gzipped fastq files.
 

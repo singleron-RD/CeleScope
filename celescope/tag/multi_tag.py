@@ -14,6 +14,7 @@ class Multi_tag(Multi):
         --mapfile ./tag.mapfile\\
         --barcode_fasta ./tag_barcode.fasta\\
         --fq_pattern L25C15\\
+        --split_matrix\\
         --mod shell
     ```
 

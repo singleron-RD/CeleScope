@@ -45,6 +45,8 @@ same time.
 
 `--gzip` Output gzipped fastq files.
 
+`--output_R1` Output valid R1 reads.
+
 `--fq1` R1 fastq file. Multiple files are separated by comma.
 
 `--fq2` R2 fastq file. Multiple files are separated by comma.
