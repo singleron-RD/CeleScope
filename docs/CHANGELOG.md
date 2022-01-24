@@ -1,3 +1,7 @@
+## [Unreleased] - 2022-01-24
+ ### `vdj`
+ - "Cell with Barcode Match, TRA and TRB": When calculating the percentage, the denominator is `Cell with Barcode Match`. The denominator used previously was `Estimated Mumber of Cells`.
+
 ## [1.7.1] - 2021-01-17
 
  ### `rna`

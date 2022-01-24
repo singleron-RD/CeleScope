@@ -204,8 +204,9 @@ class Count_vdj(Step):
                 self.add_metric(
                     name="Cell with Barcode Match, TRA and TRB",
                     value=match_cell_with_TRA_and_TRB,
-                    total=total_cell_number,
-                    help_info=f"cell with matched barcode and with as least {self.args.iUMI} UMI mapped to each chain"
+                    total=cell_with_match_barcode_number,
+                    help_info=f"cell with matched barcode and with as least {self.args.iUMI} UMI mapped to each chain. \
+When calculating the percentage, the denominator is `Cell with Barcode Match`"
                 )
 
         # BCR
