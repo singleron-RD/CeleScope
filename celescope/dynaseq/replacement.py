@@ -144,7 +144,7 @@ class Replacement(Step):
             for rec in bcf_in.fetch():
                 try:
                     chrom, pos = rec.chrom, rec.pos
-                    chr_pos = chrom+'_'+str(pos)
+                    chr_pos = chrom+'_'+str(pos-1)
                     outdict[chr_pos] = 1
                 except (ValueError, KeyError):
                     continue
