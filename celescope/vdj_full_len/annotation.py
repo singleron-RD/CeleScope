@@ -42,6 +42,21 @@ class Annotation(Step):
         self.filter_contig = f'{self.outs}/filtered_contig_annotations.csv'
         self.filter_fa = f'{self.outs}/filtered_contig.fasta'
         self.barcode_dic = args.barcode_dic
+
+    @staticmethod
+    def Cell_spanning_pair(df, seqtype):
+        if seqtype == "BCR":
+            fl_pro_pair_df = df[(df['full_length'] == True) & (df['productive'] == True)]
+            df_chain_heavy = fl_pro_pair_df[ (fl_pro_pair_df['chain'] == 'IGH') ] 
+            df_chain_light = fl_pro_pair_df[ (fl_pro_pair_df['chain'] == 'IGL')|(fl_pro_pair_df['chain'] =='IGK')]
+            df_chain_heavy = df_chain_heavy.drop_duplicates(['barcode'])
+            df_chain_light = df_chain_light.drop_duplicates(['barcode'])
+            fl_pro_pair_df = pd.merge(df_chain_heavy, df_chain_light, on = 'barcode', how = 'inner')
+        else:
+            fl_pro_pair_df = pd.DataFrame(df[(df['full_length'] == True) & (
+                df['productive'] == True)].drop_duplicates(['barcode', 'chain']).barcode.value_counts())
+            fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode'] >= 2]
+        return fl_pro_pair_df
     
     @utils.add_log
     def run(self):
@@ -90,9 +105,7 @@ class Annotation(Step):
 
         # V(D)J Annotation summary
         df = filter_contig
-        fl_pro_pair_df = pd.DataFrame(df[(df['full_length'] == True) & (
-            df['productive'] == True)].drop_duplicates(['barcode', 'chain']).barcode.value_counts())
-        fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode'] >= 2]
+        fl_pro_pair_df = self.Cell_spanning_pair(df, self.seqtype)
         cell_nums = len(set(df['barcode'].tolist()))
         self.add_metric(
             name='Cells With Productive V-J Spanning Pair',

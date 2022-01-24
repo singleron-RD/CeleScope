@@ -4,6 +4,7 @@ from Bio.Seq import Seq
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
+from celescope.vdj_full_len.annotation import Annotation
 
 def reversed_compl(seq):
     return str(Seq(seq).reverse_complement())
@@ -81,9 +82,7 @@ class Match(Step):
         )
 
         df = df_match
-        fl_pro_pair_df = pd.DataFrame(df[(df['full_length'] == True) & (
-            df['productive'] == True)].drop_duplicates(['barcode', 'chain']).barcode.value_counts())
-        fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode'] >= 2]
+        fl_pro_pair_df = Annotation.Cell_spanning_pair(df, self.seqtype)
         cell_nums = len(set(df['barcode'].tolist()))
         self.add_metric(
             name='Cells With Productive V-J Spanning Pair',
