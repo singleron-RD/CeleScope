@@ -20,6 +20,21 @@ def run_mapping(rds, contig, sample, outdir, assign):
     subprocess.check_call(cmd, shell=True)
 
 class Mapping(Step):
+    """
+    Features
+
+    - Assembled T/B cells Mapping with SC-RNA barcodes.
+
+    Output
+    - `{sample}_assign.png' Auto-assigned umap plot in scRNA-Seq library.
+
+    - `{sample}_cluster_umap.png` Cluster umap plot in scRNA-Seq library.
+
+    - `{sample}_umapplot.png` Umap plot of assembled and un-assembled barcodes in scRNA-Seq library.
+
+    - `{sample}_distribution.txt` Number of assembled barcodes in every clusters in scRNA-Seq library.
+
+    """
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
         

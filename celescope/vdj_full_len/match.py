@@ -16,11 +16,11 @@ class Match(Step):
     - V(D)J results match SC-RNA infomation.
 
     Output
-    - `match_contigs.csv' 
+    - `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
 
-    - `match_contig.fasta` 
-
-    - `match_contigs.csv`
+    - `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
+    
+    - `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
 
     """
     def __init__(self, args, display_title=None):

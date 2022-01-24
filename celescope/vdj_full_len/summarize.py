@@ -21,17 +21,17 @@ class Summarize(Step):
     - Summarize contig and clonetypes infomation.
 
     Output
-    - `filtered_contig_annotations.csv' annotations of each high-confidence, cellular contig.
+    - `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
 
-    - `filtered_contig.fasta` The clone type of VDJ cell barcode, each cell occupies one line.
+    - `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
 
-    - `clonotypes.csv` The count and percentage of each clonetypes of VDJ cell barcode.
+    - `clonotypes.csv` High-level descriptions of each clonotype.
 
-    - `match_contigs.csv` filtered_contig_annotations.csv matched with scRNA-seq.
+    - `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
 
-    - `match_contig.fasta` filtered_contig.fasta matched with scRNA-seq.
+    - `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
     
-    - `match_clonotypes.csv` clonetypes result matched with scRNA-seq
+    - `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
 
     """
 

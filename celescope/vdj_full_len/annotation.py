@@ -15,11 +15,11 @@ class Annotation(Step):
     - V(D)J annotation infomation.
 
     Output
-    - `filtered_contig_annotations.csv' 
+    - `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
 
-    - `filtered_contig.fasta`
+    - `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
 
-    - `clonotypes.csv` 
+    - `clonotypes.csv` High-level descriptions of each clonotype.
 
     """
 
