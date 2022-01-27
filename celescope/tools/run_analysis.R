@@ -51,6 +51,8 @@ percent.mito <- Matrix::colSums(rds@assays$RNA@counts[mito.genes,,drop=FALSE])/M
 rds <- AddMetaData(object = rds, metadata = percent.mito, col.name = "percent.mito")
 meta = rds@meta.data
 total_cell = dim(meta)[1]
+dim_use = min(total_cell - 1, DIMS)
+print(str_glue("dimension use: {dim_use}"))
 percent_list = c(0.05,0.1,0.15,0.2,0.5)
 mito_df = dplyr::tibble(mito_percent=numeric(),cell_percent=numeric())
 for (percent in percent_list){
@@ -70,14 +72,21 @@ rds <- FindVariableFeatures(rds, selection.method = "vst", nfeatures = nfeatures
 
 use.genes <- rds@assays$RNA@var.features
 rds <- ScaleData(rds, vars.to.regress = c("nCount_RNA", "percent.mito"), features = use.genes)
-rds <- RunPCA(object = rds, features = use.genes, do.print = FALSE)
-rds <- FindNeighbors(rds, dims = 1:DIMS, force.recalc = TRUE, reduction = "pca")
+rds <- RunPCA(object = rds, features = use.genes, do.print = FALSE, npcs=dim_use)
+if (total_cell < 91) {
+  perplexity = floor((total_cell - 1) / 3)
+} else {
+  perplexity = 30
+}
+print(str_glue("perplexity: {perplexity}"))
+rds <- FindNeighbors(rds, dims = 1:dim_use, force.recalc = TRUE, reduction = "pca")
 rds <- FindClusters(rds, resolution = resolution)
 
 # tsne and umap
-rds <- RunTSNE(rds, dims = 1:DIMS, do.fast = TRUE, check_duplicates = FALSE)
-rds = RunUMAP(rds, dims=1:DIMS)
-
+rds <- RunTSNE(rds, dims = 1:dim_use, do.fast = TRUE, check_duplicates = FALSE, perplexity=perplexity)
+if (total_cell >= 91) {
+  rds = RunUMAP(rds, dims=1:dim_use)
+}
 
 tryCatch({
   rds.markers <- FindAllMarkers(object = rds, features = use.genes)
