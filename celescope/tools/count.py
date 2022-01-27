@@ -211,26 +211,22 @@ class Count(Step):
     @utils.add_log
     def force_cell(self, df_sum):
         force_cell_num = int(self.force_cell_num)
-        cell_range = int(force_cell_num * 0.1)
-        cell_low = force_cell_num - cell_range
-        cell_high = force_cell_num + cell_range
 
         df_barcode_count = df_sum.groupby(
             ['UMI']).size().reset_index(
             name='barcode_counts')
         sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
         sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
+        num_points = sorted_df.shape[0]
         for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_low:
+            if sorted_df.iloc[i, :]["barcode_cumsum"] >= force_cell_num:
                 index_low = i - 1
-                break
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_high:
                 index_high = i
                 break
-        df_sub = sorted_df.iloc[index_low:index_high + 1, :]
-        threshold = df_sub.iloc[np.argmax(
-            np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
+        df_sub = sorted_df.iloc[index_low: index_high + 1, :]
+        distance = abs(df_sub["barcode_cumsum"] - force_cell_num)
+        actual_index = np.argmin(distance)
+        threshold = df_sub.iloc[actual_index, :]['UMI']
         cell_bc = Count.get_cell_bc(df_sum, threshold, col='UMI')
         return cell_bc, threshold
 
