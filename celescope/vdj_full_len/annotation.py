@@ -53,9 +53,12 @@ class Annotation(Step):
             df_chain_light = df_chain_light.drop_duplicates(['barcode'])
             fl_pro_pair_df = pd.merge(df_chain_heavy, df_chain_light, on = 'barcode', how = 'inner')
         else:
-            fl_pro_pair_df = pd.DataFrame(df[(df['full_length'] == True) & (
-                df['productive'] == True)].drop_duplicates(['barcode', 'chain']).barcode.value_counts())
-            fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df['barcode'] >= 2]
+            fl_pro_pair_df = df[(df['full_length'] == True) & (df['productive'] == True)]
+            df_TRA = fl_pro_pair_df[ (fl_pro_pair_df['chain'] == 'TRA') ]
+            df_TRB = fl_pro_pair_df[ (fl_pro_pair_df['chain'] == 'TRB') ]
+            df_TRA = df_TRA.drop_duplicates(['barcode'])
+            df_TRB = df_TRB.drop_duplicates(['barcode'])
+            fl_pro_pair_df = pd.merge(df_TRA, df_TRB, on = 'barcode', how = 'inner')
         return fl_pro_pair_df
     
     @utils.add_log
