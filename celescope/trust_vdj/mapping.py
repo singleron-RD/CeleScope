@@ -87,6 +87,9 @@ class Mapping(Step):
 
         except AssertionError:
             print("rds file and type file do not exist" + "\n" )
+        
+        except ZeroDivisionError:
+            print(f"Not found auto-assigned {self._name} in matched sc-RNA")
 
 
 def mapping(args):
