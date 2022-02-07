@@ -93,9 +93,10 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 ''',
             required=True)
         parser.add_argument('--mod', help='Which type of script to generate, `sjm` or `shell`.',
-                            choices=['sjm', 'shell'], default='sjm')
+            choices=['sjm', 'shell'], default='sjm')
+        parser.add_argument('--queue', help='Only works if the `--mod` selects `sjm`.')
         parser.add_argument('--rm_files', action='store_true',
-                            help='Remove redundant fastq and bam files after running.')
+            help='Remove redundant fastq and bam files after running.')
         parser.add_argument('--steps_run', 
             help='''
 Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
@@ -192,10 +193,13 @@ use `--steps_run barcode,cutadapt`
     def generate_cmd(self, cmd, step, sample, m=1, x=1):
         if sample:
             sample = "_" + sample
+        sched_options = f'sched_options -w n -cwd -V -l vf={m}g,p={x}'
+        if self.args.queue:
+            sched_options += f' -q {self.args.queue} '
         self.sjm_cmd += f'''
 job_begin
     name {step}{sample}
-    sched_options -w n -cwd -V -l vf={m}g,p={x}
+    {sched_options}
     cmd source activate {self.__CONDA__}; {cmd}
 job_end
 '''
