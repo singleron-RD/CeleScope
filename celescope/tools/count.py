@@ -218,7 +218,7 @@ class Count(Step):
         sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
         sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
         num_points = sorted_df.shape[0]
-        for i in range(sorted_df.shape[0]):
+        for i in range(num_points):
             if sorted_df.iloc[i, :]["barcode_cumsum"] >= force_cell_num:
                 index_low = i - 1
                 index_high = i
