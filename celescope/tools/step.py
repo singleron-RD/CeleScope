@@ -25,7 +25,6 @@ def s_common(parser):
     """subparser common arguments
     """
     parser.add_argument('--outdir', help='Output diretory.', required=True)
-    parser.add_argument('--assay', help='Assay name.', required=True)
     parser.add_argument('--sample', help='Sample name.', required=True)
     parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
     parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
@@ -45,7 +44,7 @@ class Step:
         self.args = args
         self.outdir = args.outdir
         self.sample = args.sample
-        self.assay = args.assay
+        self.assay = args.subparser_assay
         self.thread = int(args.thread)
         self.debug = args.debug
         self.out_prefix = f'{self.outdir}/{self.sample}'

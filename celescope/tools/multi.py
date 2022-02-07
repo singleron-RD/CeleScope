@@ -229,7 +229,6 @@ job_end
             f'{self.__APP__} {self.__ASSAY__} {step} '
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
             f'--thread {self.args.thread} '
         )
         cmd_line = step_prefix
