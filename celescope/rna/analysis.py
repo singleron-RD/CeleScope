@@ -35,8 +35,10 @@ class Analysis(AnalysisMixin):
         self.type_marker_tsv = args.type_marker_tsv
         self.auto_assign_bool = False
         self.save_rds = args.save_rds
+        self.save_h5ad = args.save_h5ad
         self.outdir = args.outdir
         self.sample = args.sample
+        self.mt_gene_list = args.mt_gene_list
         if args.type_marker_tsv and args.type_marker_tsv != 'None':
             self.auto_assign_bool = True
             self.save_rds = True
@@ -67,7 +69,9 @@ class Analysis(AnalysisMixin):
 
     def run(self):
 
-        self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
+        #self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
+        #replace
+        self.scanpy(self.matrix_file,self.outdir,self.sample,self.mt_gene_list,self.save_h5ad)
 
         self.add_mito_metric()
         if self.auto_assign_bool:

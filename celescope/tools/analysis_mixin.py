@@ -1,17 +1,21 @@
 import subprocess
-
+import scanpy as sc
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import celescope.tools.utils as utils
 from celescope.__init__ import ROOT_PATH
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
-
+from celescope.tools.run_analysis import Scanpy
 
 def get_opts_analysis_mixin(parser, sub_program):
     
     parser.add_argument('--genomeDir', help='Required. Genome directory.', required=True)
     parser.add_argument('--save_rds', action='store_true', help='Write rds to disk.')
+    parser.add_argument('--save_h5ad',help='write file to disk')
     parser.add_argument(
         '--type_marker_tsv',
         help="""A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
@@ -37,6 +41,9 @@ LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
         # do not need all count diretory
         parser.add_argument("--tsne_file", help="match_dir t-SNE coord file.")
         parser.add_argument("--df_marker_file", help="match_dir df_marker_file.")
+        parser.add_argument('--mt_gene_list',help='mito gene list')
+        parser.add_argument('--outdir',help='outdir',required=True)
+        parser.add_argument('--sample',help='sample name',required=True)
         parser = s_common(parser)
 
 class AnalysisMixin(Step):
@@ -80,6 +87,11 @@ class AnalysisMixin(Step):
         )
         self.seurat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
+    
+    @utils.add_log
+    def scanpy(self,matrix_file,outdir,sample,mt_gene_list,save_h5ad):
+        scanpy_obj = Scanpy(matrix_file=matrix_file,outdir=outdir,sample=sample,mt_gene_list=mt_gene_list,save_h5ad=save_h5ad)
+        scanpy_obj.run()
 
     @utils.add_log
     def add_mito_metric(self):
