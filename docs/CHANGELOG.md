@@ -2,6 +2,10 @@
  ### `vdj`
  - "Cell with Barcode Match, TRA and TRB": When calculating the percentage, the denominator is `Cell with Barcode Match`. The denominator used previously was `Estimated Mumber of Cells`.
 
+ ### `capture_virus` and `fusion`
+ - Make UMI correction optional. If you do not want to perform UMI correction, use `--not_correct_UMI`.
+ - Add a filtering step to filter UMI with supporting reads less then read_threshold. 
+
 ## [1.7.1] - 2021-01-17
 
  ### `rna`

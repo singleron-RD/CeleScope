@@ -12,6 +12,11 @@ class Otsu():
     Return 1 if len(array) < OTSU_MIN_LEN
     """
     def __init__(self, array, log_base=10):
+        
+        self.len_bool = True
+        if len(array) < OTSU_MIN_LEN:
+            self.len_bool = False
+
         self.log_base = log_base
         if log_base == 2:
             self.array = np.log2(array)
@@ -64,6 +69,8 @@ class Otsu():
         self.counts, self.bins = np.histogram(self.array, bins=np.arange(0, max(self.array)+binWidth, binWidth))
 
     def make_plot(self, plot_path):
+        if not self.len_bool:
+            return
         plt.hist(x=self.bins[:-1], bins=self.bins, weights=self.counts)
         plt.axvline(self.threshold, color='r')
         plt.xlabel(f'log{self.log_base} observed read/UMI counts')
@@ -75,7 +82,7 @@ class Otsu():
         """
         return threshold
         """
-        if len(self.array) < OTSU_MIN_LEN:
+        if self.len_bool:
             return 1
         self._array2hist()
         self._threshold_otsu()
