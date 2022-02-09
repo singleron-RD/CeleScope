@@ -65,7 +65,7 @@ class Filter(Step):
 
         # out
         self.corrected_read_count_file = f'{self.out_prefix}_corrected_read_count.json'
-        self.filter_read_count_file = f'{self.out_prefix}_filter_read_count.json'
+        self.filter_read_count_file = f'{self.out_prefix}_filtered_read_count.json'
         self.filter_tsne_file = f'{self.out_prefix}_filtered_UMI_tsne.csv'
 
     @utils.add_log
@@ -173,7 +173,7 @@ class Filter(Step):
 
         for ref in self.ref_barcode_umi_dict:
             umi_array = list(self.ref_barcode_umi_dict[ref].values())
-            otsu_plot_path = f'{self.out_prefix}_{ref}_otsu.png'
+            otsu_plot_path = f'{self.out_prefix}_{ref}_UMI_otsu.png'
             runner = Threshold(
                 umi_array, 
                 threshold_method=self.args.umi_threshold_method, 
@@ -224,6 +224,7 @@ class Filter(Step):
 
         self.get_read_threshold()
         self.filter_read()
+        self.write_filter_read_json()
 
         self.set_barcode_ref_umi_dict()
         self.set_ref_barcode_umi_dict()
