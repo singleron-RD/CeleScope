@@ -8,11 +8,7 @@ from celescope.tools import utils
 
 class Scanpy():
     def __init__(self,matrix_file,outdir,sample,mt_gene_list=None,save_h5ad=False) -> None:
-        
-        DIMS = 20
-        RESOLUTION = 0.6
-        N_FEATURES = 20000
-        
+
         self.matrix_file = matrix_file
         self.outdir = outdir
         self.sample = sample
@@ -40,7 +36,7 @@ class Scanpy():
             qc_vars=['mt'], 
             percent_top=pct_top,
             layer=layer,
-            use_raw=False
+            use_raw=False,
             log1p=False, 
             inplace=True
         )
@@ -308,7 +304,7 @@ class Scanpy():
 
         #tsne_coord.tsv
         df_tsne = adata.obsm.to_df()[['X_tsne1','X_tsne2']]
-        df_tsne['cluster']=adata.obs.louvain
+        df_tsne['cluster']=adata.obs.cluster
         df_tsne['Gene_Counts']=adata.obs.n_genes_by_counts
         tsne_name_dict={'X_tsne1':'tSNE_1','X_tsne2':'tSNE_2'}
         df_tsne = df_tsne.rename(tsne_name_dict,axis='columns')
