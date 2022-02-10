@@ -236,6 +236,22 @@ class Scanpy():
 
         return adata
 
+    def cluster(self,adata,*args,**kwargs):
+        """
+        Wrapper function for sc.tl.rank_genes_groups,for 
+        """
+        sc.tl.rank_genes_groups(
+            adata,
+            "cluster",
+            reference='rest',
+            pts=True,
+            method="wilcoxon",
+            use_raw=False,
+            layer="normalised"
+        )
+
+        return adata
+
     def run(self):
         adata = sc.read_10x_mtx(
                     self.matrix_file,  
@@ -277,9 +293,7 @@ class Scanpy():
         adata = self.tsne(adata)
         adata = self.umap(adata)
         adata = self.leiden(adata)
-
-        sc.tl.rank_genes_groups(adata,'leiden',use_highly_variable=True,method='wilcoxon',
-                                corr_method='bonferroni',n_genes=None,pts=True)
+        adata = self.cluster(adata)
 
         #report
         #markers.tsv
