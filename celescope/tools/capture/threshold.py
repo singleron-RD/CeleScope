@@ -19,7 +19,7 @@ class Otsu():
     def __init__(self, array, log_base=10, otsu_plot_path=None,):
         
         self.len_bool = True
-        array = [item for item in array if not math.isclose(item, 0.0, rel_tol=1e-5)]
+        array = [x for x in array if x > 0 ]
         if len(array) < OTSU_MIN_LEN:
             self.len_bool = False
 
@@ -105,7 +105,7 @@ class Auto():
     threshold = top 1% cell count / 10
     """
     def __init__(self, array):
-        self.array = array
+        self.array = [x for x in array if x > 0 ]
     
     def run(self):
         array = self.array
