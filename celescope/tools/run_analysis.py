@@ -19,6 +19,223 @@ class Scanpy():
         self.mt_gene_list = mt_gene_list
         self.save_h5ad = save_h5ad
     
+    def filter(self,adata, min_genes=200, max_genes=5000, pct_counts_mito=50, *args, **kwargs):
+        """
+        Wrapper function for sc.pp.filter_cells() and sc.pp.filter_genes(), mainly
+        for supporting arbitrary filtering
+        """
+        layer = 'counts' if 'counts' in adata.layers.keys() else None
+        pct_top = []
+
+        sc.pp.filter_cells(adata, min_genes=min_genes, inplace=True, copy=False)
+        sc.pp.filter_cells(adata, max_genes=max_genes, inplace=True, copy=False)
+        # sc.pp.filter_cells(adata, min_counts=0, inplace=True, copy=False)
+        # sc.pp.filter_cells(adata, max_counts=30000, inplace=True, copy=False)
+        sc.pp.filter_genes(adata, min_cells=5, inplace=True, copy=False)
+
+        sc.pp.calculate_qc_metrics(
+            adata,
+            expr_type='counts',
+            var_type='genes',
+            qc_vars=['mt'], 
+            percent_top=pct_top,
+            layer=layer,
+            use_raw=False
+            log1p=False, 
+            inplace=True
+        )
+
+        if 'mt' in adata.var:
+            adata = adata[adata.obs['pct_counts_mt'] < pct_counts_mito, :]
+
+        return adata
+
+    def normalize(self,adata, *args, **kwargs):
+        """
+        Wrapper function for sc.pp.normalize_per_cell() and sc.pp.log1p(), mainly
+        for supporting different ways of saving raw data.
+        """
+        adata.layers['filtered'] = adata.X
+        sc.pp.normalize_total(
+            adata,
+            target_sum=1e4,
+            exclude_highly_expressed=False,
+            max_fraction=0.05,
+            key_added=None,
+            layer=None,
+            layer_norm=None,
+            inplace=True,
+            copy=False,
+        )
+        sc.pp.log1p(
+            adata,
+            base=None,
+            copy=False,
+            chunked=None,
+            chunk_size=None,
+            layer=None,
+            obsm=None
+        )
+
+        return adata
+
+    def hvg(self,adata, *args, **kwargs):
+        """
+        Wrapper function for sc.highly_variable_genes()
+        """
+        sc.pp.highly_variable_genes(
+            adata,
+            layer=None,
+            n_top_genes=None,
+            min_disp=0.5,
+            max_disp=np.inf,
+            min_mean=0.0125,
+            max_mean=3,
+            span=0.3,
+            n_bins=20,
+            flavor='seurat',
+            subset=False,
+            inplace=True,
+            batch_key=None,
+            check_values=True
+        )
+
+        return adata
+
+    def scale(self,adata, *args, **kwargs):
+        """
+        Wrapper function for sc.pp.scale
+        """
+        adata.layers['normalised'] = adata.X
+        sc.pp.scale(
+            adata,
+            zero_center=True,
+            max_value=10,
+            copy=False,
+            layer=None,
+            obsm=None
+        )
+
+        return adata
+
+    def pca(self,adata, *args, **kwargs):
+        """
+        Wrapper function for sc.pp.pca
+        """
+        sc.pp.pca(
+            adata,
+            n_comps=50,
+            zero_center=True,
+            svd_solver='auto',
+            random_state=0,
+            return_info=False,
+            use_highly_variable=True,
+            dtype='float32',
+            copy=False,
+            chunked=False,
+            chunk_size=None
+        )
+
+        return adata
+
+    def harmony(self,adata, *args, **kwargs):
+        """
+        Wrapper function for sc.external.pp.harmony_integrate
+        """
+        sc.external.pp.harmony_integrate(
+            adata,
+            key='Sample ID',
+            basis='X_pca',
+            adjusted_basis='X_pca',
+        )
+
+        return adata
+
+    def neighbors(self,adata, *args, **kwargs):
+        """
+        Wrapper function for sc.pp.neighbors(), for supporting multiple n_neighbors
+        """
+        sc.pp.neighbors(
+            adata,
+            n_neighbors=15,
+            n_pcs=25,
+            use_rep=None,
+            knn=True,
+            random_state=0,
+            method='umap',
+            metric='euclidean',
+            key_added=None,
+            copy=False
+        )
+
+        return adata
+
+    def tsne(self,adata, *args, **kwargs):
+        """
+        Wrapper function for sc.tl.tsne, for supporting named slot of tsne embeddings
+        """
+        sc.tl.tsne(
+            adata,
+            n_pcs=50,
+            use_rep=None,
+            perplexity=30,
+            early_exaggeration=12,
+            learning_rate=1000,
+            random_state=0,
+            use_fast_tsne=False,
+            n_jobs=None,
+            copy=False,
+            metric='euclidean'
+        )
+
+        return adata
+
+    def umap(self,adata, *args, **kwargs):
+        """
+        Wrapper function for sc.tl.umap, for supporting named slot of umap embeddings
+        """
+        sc.tl.umap(
+            adata,
+            min_dist=0.5,
+            spread=1.0,
+            n_components=2,
+            maxiter=None,
+            alpha=1.0,
+            gamma=1.0,
+            negative_sample_rate=5,
+            init_pos='spectral',
+            random_state=0,
+            a=None,
+            b=None,
+            copy=False,
+            method='umap',
+            neighbors_key=None
+        )
+
+        return adata
+
+    def leiden(self,adata, resolution=1, *args, **kwargs):
+        """
+        Wrapper function for sc.tl.leiden, for supporting multiple resolutions.
+        """
+        sc.tl.leiden(
+            adata,
+            resolution=resolution,
+            restrict_to=None,
+            random_state=0,
+            key_added='cluster',
+            adjacency=None,
+            directed=True,
+            use_weights=True,
+            n_iterations=-1,
+            partition_type=None,
+            neighbors_key=None,
+            obsp=None,
+            copy=False
+        )
+
+        return adata
+
     def run(self):
         adata = sc.read_10x_mtx(
                     self.matrix_file,  
@@ -32,10 +249,9 @@ class Scanpy():
             mito_genes = list(set(mt).intersection(set(all_genes)))
             adata.var['mt'] =adata.var_names.map(lambda x:True if x in mito_genes else False)
         else:
-
             adata.var['mt'] = adata.var_names.str.startswith('MT-')
 
-        sc.pp.calculate_qc_metrics(adata, qc_vars=['mt'], percent_top=None, log1p=False, inplace=True)
+        adata = self.filter(adata)
 
         #stat.txt
         total_cell = len(adata.obs)
@@ -51,18 +267,18 @@ class Scanpy():
         mito_df.to_csv(f'{self.outdir}/stat.txt',sep=':',index=None,header=False)
 
         #analysis
-        sc.pp.normalize_total(adata,target_sum=1e4)
-        sc.pp.log1p(adata)
-        sc.pp.highly_variable_genes(adata,n_top_genes=N_FEATURES,min_mean=0.1,max_mean=8,min_disp=0.5)
-        adata = adata[:, adata.var.highly_variable]
-        sc.pp.regress_out(adata, ['total_counts', 'pct_counts_mt'])
-        sc.pp.scale(adata, max_value=10)  #50?
-        sc.tl.pca(adata, svd_solver='arpack',use_highly_variable=True)
-        sc.pp.neighbors(adata,n_neighbors=15,n_pcs=DIMS)
-        sc.tl.louvain(adata,resolution=RESOLUTION)
-        sc.tl.tsne(adata,n_pcs=DIMS,learning_rate=1000) #learning_rate is 200 in seurat 
-        sc.tl.umap(adata,min_dist=0.3)
-        sc.tl.rank_genes_groups(adata,'louvain',use_highly_variable=True,method='wilcoxon',
+        adata = self.normalize(adata)
+        adata = self.hvg(adata)
+        adata = self.scale(adata)
+        adata = self.pca(adata)
+        #if batch_remove:
+        #    adata = self.harmony(adata)
+        adata = self.neighbors(adata)
+        adata = self.tsne(adata)
+        adata = self.umap(adata)
+        adata = self.leiden(adata)
+
+        sc.tl.rank_genes_groups(adata,'leiden',use_highly_variable=True,method='wilcoxon',
                                 corr_method='bonferroni',n_genes=None,pts=True)
 
         #report

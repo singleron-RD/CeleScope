@@ -15,7 +15,7 @@ def get_opts_analysis_mixin(parser, sub_program):
     
     parser.add_argument('--genomeDir', help='Required. Genome directory.', required=True)
     parser.add_argument('--save_rds', action='store_true', help='Write rds to disk.')
-    parser.add_argument('--save_h5ad',help='write file to disk')
+    parser.add_argument('--save_h5ad',action='store_true', help='write file to disk')
     parser.add_argument(
         '--type_marker_tsv',
         help="""A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
