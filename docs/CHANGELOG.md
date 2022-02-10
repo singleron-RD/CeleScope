@@ -1,10 +1,22 @@
-## [Unreleased] - 2022-01-24
+
+## [Unreleased] 
+ ### `rna`
+ - Use `scanpy` instead of `seurat` for data analysis.
+
+## [1.7.2] - 2021-02-10
+
  ### `vdj`
  - "Cell with Barcode Match, TRA and TRB": When calculating the percentage, the denominator is `Cell with Barcode Match`. The denominator used previously was `Estimated Mumber of Cells`.
 
  ### `capture_virus` and `fusion`
  - Make UMI correction optional. If you do not want to perform UMI correction, use `--not_correct_UMI`.
  - Add a filtering step to filter UMI with supporting reads less then read_threshold. 
+
+ ### `dyanseq`
+ - modify vcf base [#96](https://github.com/singleron-RD/CeleScope/pull/96).
+
+ ### General improvments
+ - Remove the redundant `--assay` parameter.
 
 ## [1.7.1] - 2021-01-17
 
