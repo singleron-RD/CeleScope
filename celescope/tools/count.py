@@ -118,9 +118,11 @@ class Count(Step):
 
         df_line = self.line_data()
 
-        line_saturation = Line_plot(df_line, "Saturation", section=False).get_plotly_div()
+        line_saturation = Line_plot(self.df_line,title="Sequencing Saturation",x_title="Reads Fraction",
+                                    y_title="Sequencing Saturation(%)",section=False).get_plotly_div()
         self.add_data(line_saturation=line_saturation)
-        line_median = Line_plot(df_line, "Median gene_Num").get_plotly_div()
+        line_median = Line_plot(self.df_line,title="Median Genes per Cell",x_title="Reads Fraction",
+                                y_title="Median Genes per Cell").get_plotly_div()
         self.add_data(line_median=line_median)
 
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.marked_count_file))
