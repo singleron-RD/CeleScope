@@ -116,12 +116,12 @@ class Count(Step):
         self.get_summary(CB_describe, CB_total_Genes,
                          CB_reads_count, reads_mapped_to_transcriptome)
 
-        self.df_line = self.line_data()
+        df_line = self.line_data()
 
-        line_saturation = Line_plot(df_line=self.df_line,title="Sequencing Saturation",x_title="Reads Fraction",
-                                    y_title="Sequencing Saturation(%)",range=[0,100],section=False).get_plotly_div()
+        line_saturation = Line_plot(df_line=df_line,title="Sequencing Saturation",x_title="Reads Fraction",
+                                    y_title="Sequencing Saturation(%)",y_range=[0,100],section=False).get_plotly_div()
         self.add_data(line_saturation=line_saturation)
-        line_median = Line_plot(df_line=self.df_line,title="Median Genes per Cell",x_title="Reads Fraction",
+        line_median = Line_plot(df_line=df_line,title="Median Genes per Cell",x_title="Reads Fraction",
                                 y_title="Median Genes per Cell").get_plotly_div()
         self.add_data(line_median=line_median)
 

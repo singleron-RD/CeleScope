@@ -179,13 +179,13 @@ class Pie_plot(Plotly_plot):
 
 class Line_plot(Plotly_plot):
 
-    def __init__(self, df_line,title=None,x_title=None,y_title=None,range=None,section=True,):
+    def __init__(self, df_line,title=None,x_title=None,y_title=None,y_range=None,section=True,):
         super().__init__(df_line)
         self.df_line = df_line
         self.title = title
         self.x_title = x_title
         self.y_title = y_title
-        self.range = range
+        self.y_range = y_range
         self.section = section
 
         self.xaxes_config = {
@@ -215,7 +215,7 @@ class Line_plot(Plotly_plot):
                 'linecolor':'black',
                 'showline': True, 
                 'ticks': None,
-                'range':self.range,
+                'range':self.y_range,
             }
 
         self.line_config = {
