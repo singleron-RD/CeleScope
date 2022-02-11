@@ -2,6 +2,7 @@
 ## [Unreleased] 
  ### `rna`
  - Use `scanpy` instead of `seurat` for data analysis.
+ - TODO: add read_saturation to downsample file.
 
 ## [1.7.2] - 2021-02-10
 
