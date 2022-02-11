@@ -17,6 +17,7 @@
 
  ### General improvments
  - Remove the redundant `--assay` parameter.
+ - Add the `--queue` argument for `sjm` job submission.
 
 ## [1.7.1] - 2021-01-17
 
