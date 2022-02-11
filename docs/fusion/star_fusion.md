@@ -20,8 +20,6 @@ is higher than or equal to this value.
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.

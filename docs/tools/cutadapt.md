@@ -33,8 +33,6 @@ at least {overlap} bases match between adapter and read.
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.

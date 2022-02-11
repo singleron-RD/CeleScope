@@ -38,8 +38,6 @@ CeleScope >=1.2.0 does not output this file.
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.

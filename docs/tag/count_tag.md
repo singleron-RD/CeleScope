@@ -38,8 +38,6 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.

@@ -62,8 +62,6 @@ with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1,
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.

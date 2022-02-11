@@ -37,6 +37,8 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--mod` Which type of script to generate, `sjm` or `shell`.
 
+`--queue` Only works if the `--mod` selects `sjm`.
+
 `--rm_files` Remove redundant fastq and bam files after running.
 
 `--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
@@ -99,8 +101,6 @@ at least {overlap} bases match between adapter and read.
 `--nCell` select top N cell.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

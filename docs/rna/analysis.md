@@ -45,8 +45,6 @@ LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.
