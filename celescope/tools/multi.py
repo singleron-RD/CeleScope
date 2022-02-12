@@ -5,10 +5,10 @@ import os
 from collections import defaultdict
 
 import celescope
+import celescope.tools.preflight as pre
 import celescope.tools.utils as utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
-
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
 
@@ -376,6 +376,8 @@ job_end
                     f.write(self.shell_dict[sample])
 
     def run(self):
+        self.args = self.parser.parse_args()
+        pre.run_preflight(outdir=self.args.outdir)
         self.prepare()
         self.run_steps()
         self.end()
