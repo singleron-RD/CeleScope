@@ -28,9 +28,9 @@ refflat = Homo_sapiens_ensembl_99.refFlat
 
 `--fasta` Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.
 
-`--gtf` Required. Genome gtf file. Must be relative file path to genomeDir.
+`--gtf` Required. Genome gtf file. Use absolute path or relative path to `genomeDir`.
 
-`--mt_gene_list` Mitochondria gene list file. Must be relative file path to genomeDir.
+`--mt_gene_list` Mitochondria gene list file. Use absolute path or relative path to `genomeDir`.
 It is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.
 
