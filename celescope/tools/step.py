@@ -8,7 +8,7 @@ import subprocess
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 
 

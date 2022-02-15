@@ -13,3 +13,7 @@ cython
 pytest
 venn
 pyranges
+scanpy==1.7.2
+statsmodels==0.12.1
+leidenalg==0.7.0
+igraph==0.9.9

@@ -1,4 +1,4 @@
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT, ROOT_PATH
 

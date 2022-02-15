@@ -39,7 +39,7 @@ For example, in `celescope.tools.cutadapt`:
 
 ```
 from celescope.tools.step import Step, s_common
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 class Cutadapt(Step):

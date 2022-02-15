@@ -1,6 +1,6 @@
 import argparse
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import __VERSION__, ASSAY_LIST
 
 

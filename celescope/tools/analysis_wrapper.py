@@ -16,12 +16,9 @@ MITO_VAR = 'mito'
 NORMALIZED_LAYER = 'normalised'
 FILTERED_LAYER = 'filtered'
 
-MIN_GENES = 200
-MAX_GENES = 5000
-MIN_CELLS = 5
 RESOLUTION = 1.2
 N_PCS = 25
-
+PVAL_CUTOFF = 0.05
 
 
 def get_opts_analysis(parser, sub_program):
@@ -59,21 +56,11 @@ class Scanpy_wrapper(Step):
         self.mt_gene_list = Mkref_rna.parse_genomeDir(args.genomeDir)['mt_gene_list']
 
         # out
-        self.marker_file = f'{self.out_prefix}_marker.tsv'
-        self.tsne_file = f'{self.out_prefix}_tsne.tsv'
+        self.df_marker_file = f'{self.out_prefix}_markers.tsv'
+        self.df_tsne_file = f'{self.out_prefix}_tsne_coord.tsv'
         self.h5ad_file = f'{self.out_prefix}.h5ad'
 
-
-    @utils.add_log
-    def filter(self):
-        """
-        sc.pp.filter_cells() and sc.pp.filter_genes()
-        """
-
-        sc.pp.filter_cells(self.adata, min_genes=MIN_GENES,  max_genes=MAX_GENES, inplace=True, copy=False)
-        sc.pp.filter_genes(self.adata, min_cells=MIN_CELLS, inplace=True, copy=False)
-        self.adata.layers[FILTERED_LAYER] = self.adata.X
-    
+   
     @utils.add_log
     def calculate_qc_metrics(self):
 
@@ -86,6 +73,7 @@ class Scanpy_wrapper(Step):
         sc.pp.calculate_qc_metrics(
             self.adata,
             qc_vars=[MITO_VAR], 
+            percent_top=None,
             use_raw=False,
             log1p=False, 
             inplace=True
@@ -98,7 +86,7 @@ class Scanpy_wrapper(Step):
         total_cell = len(self.adata.obs)
         percent_list = [5,10,15,20,50]
         mito_dict = {
-            key: sum(self.adata.obs['pct_counts_mt'] > key) / total_cell             
+            key: sum(self.adata.obs[f'pct_counts_{MITO_VAR}'] > key) / total_cell             
             for key in percent_list
         }
 
@@ -206,11 +194,6 @@ class Scanpy_wrapper(Step):
         sc.tl.tsne(
             self.adata,
             n_pcs=N_PCS,
-            use_rep=None,
-            perplexity=30,
-            early_exaggeration=12,
-            learning_rate=1000,
-            random_state=0,
             n_jobs=self.thread,
             copy=False,
         )
@@ -277,14 +260,14 @@ class Scanpy_wrapper(Step):
 
     @utils.add_log
     def write_markers(self):
-        df_markers = sc.get.rank_genes_groups_df(self.adata,group=None)
+        df_markers = sc.get.rank_genes_groups_df(self.adata, group=None, pval_cutoff=PVAL_CUTOFF)
         df_markers = df_markers[df_markers['logfoldchanges'].notna()]
         markers_name_dict={'group':'cluster','names':'gene','logfoldchanges':'avg_log2FC',
                            'pvals':'p_val','pvalse_adj':'p_val_adj',
                            'pct_nz_group':'pct.1','pct_nz_reference':'pct.2'}
         df_markers = df_markers.rename(markers_name_dict,axis='columns')
         df_markers['cluster'] = df_markers['cluster'].map(lambda x : int(x)+1)
-        df_markers.to_csv(self.marker_file, index=None, sep='\t')
+        df_markers.to_csv(self.df_marker_file, index=None, sep='\t')
 
     @utils.add_log
     def write_tsne(self):
@@ -294,7 +277,7 @@ class Scanpy_wrapper(Step):
         tsne_name_dict={'X_tsne1':'tSNE_1','X_tsne2':'tSNE_2'}
         df_tsne = df_tsne.rename(tsne_name_dict,axis='columns')
         df_tsne['cluster'] = df_tsne['cluster'].map(lambda x:int(x)+1)
-        df_tsne.to_csv(self.tsne_file, sep='\t')
+        df_tsne.to_csv(self.df_tsne_file, sep='\t')
 
     @utils.add_log
     def write_h5ad(self):
@@ -304,9 +287,8 @@ class Scanpy_wrapper(Step):
     @utils.add_log
     def run(self):
 
-        self.filter()
         self.calculate_qc_metrics()
-        self.add_mito_metric()
+        self.write_mito_stats()
         self.normalize()
         self.hvg()
         self.scale()
@@ -321,16 +303,42 @@ class Scanpy_wrapper(Step):
         self.write_tsne()
         self.write_h5ad()
 
-    def read_match_dir(self):
-        """
-        if match_dir is not self, should read match_dir at init
-        if it is self, read at run_analysis - need to run seurat first
-        """
-        if self.match_dir:
-            match_dict = utils.parse_match_dir(self.match_dir)
-            tsne_df_file = match_dict['tsne_coord']
-            self.df_tsne = pd.read_csv(tsne_df_file, sep="\t")
-            self.df_tsne.rename(columns={"Unnamed: 0": "barcode"}, inplace=True)
-            self.df_marker_file = match_dict['markers']
-            self.read_format_df_marker()
+class Report_runner(Step):
 
+    def __init__(self, args, display_title=None):
+    
+        super().__init__(args, display_title=display_title)
+
+    def add_marker_help(self):
+        self.add_help_content(
+            name='Marker Genes by Cluster',
+            content='differential expression analysis based on the non-parameteric Wilcoxon rank sum test'
+        )
+        self.add_help_content(
+            name='avg_log2FC',
+            content='log fold-change of the average expression between the cluster and the rest of the sample'
+        )
+        self.add_help_content(
+            name='pct.1',
+            content='The percentage of cells where the gene is detected in the cluster'
+        )
+        self.add_help_content(
+            name='pct.2',
+            content='The percentage of cells where the gene is detected in the rest of the sample'
+        )
+        self.add_help_content(
+            name='p_val_adj',
+            content='Adjusted p-value, based on bonferroni correction using all genes in the dataset'
+        )
+
+    @staticmethod
+    def read_match_dir(match_dir):
+        """
+        return df_tsne, df_marker
+        """
+        match_dict = utils.parse_match_dir(match_dir)
+        df_tsne_file = match_dict['tsne_coord']
+        df_tsne = pd.read_csv(df_tsne_file, sep="\t")
+        df_marker_file = match_dict['markers']
+        df_marker = pd.read_csv(df_marker_file, sep="\t")
+        return df_tsne, df_marker

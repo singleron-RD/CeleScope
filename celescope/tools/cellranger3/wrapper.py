@@ -12,7 +12,7 @@ import scipy.io
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
                                       MATRIX_FILE_NAME)
 from celescope.tools.cellranger3.cell_calling_3 import find_nonambient_barcodes
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 EXPECTED_CELL_NUM = 3000

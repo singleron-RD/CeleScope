@@ -15,7 +15,7 @@ import pysam
 from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
                                       MATRIX_FILE_NAME)
 from celescope.tools.cellranger3 import get_plot_elements

@@ -4,7 +4,7 @@ assign cell identity based on SNR and UMI_min
 
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.step import Step, s_common
-import celescope.tools.utils as utils
+from celescope.tools import utils
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

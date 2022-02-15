@@ -2,7 +2,7 @@ import json
 
 import pandas as pd
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.count import Count
 from celescope.tools.step import Step, s_common
 from celescope.tools.capture.threshold import Threshold

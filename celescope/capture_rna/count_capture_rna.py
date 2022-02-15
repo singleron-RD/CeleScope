@@ -5,7 +5,7 @@ from itertools import groupby
 import pandas as pd
 import pysam
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.count import Count, get_opts_count
 
 

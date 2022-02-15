@@ -2,7 +2,7 @@ import configparser
 import subprocess
 import sys
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.__init__ import GENOME_CONFIG
 from celescope.__init__ import HELP_DICT
 
@@ -103,7 +103,7 @@ class Mkref():
         config_file = f'{genomeDir}/{GENOME_CONFIG}'
         config = configparser.ConfigParser()
         config.read_file(open(config_file))
-        genome = config['genome']
+        genome = dict(config['genome'])
 
         for entry in files:
             if entry not in genome:

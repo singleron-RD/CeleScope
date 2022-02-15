@@ -1,12 +1,12 @@
 import pandas as pd
 
-import celescope.tools.utils as utils
-from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools import utils
+from celescope.tools.step import Step
 from celescope.tools.step import s_common
 from celescope.tools.plotly_plot import Tsne_plot
 
 
-class Analysis_tag(AnalysisMixin):
+class Analysis_tag(Step):
     """
     Features
     - Combine scRNA-Seq clustering infromation with tag assignment.

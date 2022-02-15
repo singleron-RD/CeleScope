@@ -4,7 +4,7 @@ import os
 from collections import defaultdict
 
 import pandas as pd
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 @utils.add_log

@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
 from celescope.tools.plotly_plot import Pie_plot

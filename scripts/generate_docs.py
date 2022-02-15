@@ -2,7 +2,7 @@ import argparse
 import inspect
 import os
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import ASSAY_LIST, RELEASED_ASSAYS
 

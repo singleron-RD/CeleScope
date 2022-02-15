@@ -1,5 +1,5 @@
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
