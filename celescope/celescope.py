@@ -35,7 +35,12 @@ def main():
             parser_step.set_defaults(func=func)
 
     args = parser.parse_args()
-    args.func(args)
+    if len(args.__dict__) <= 1:
+        # No arguments or subcommands were given.
+        parser.print_help()
+        parser.exit()
+    else:
+        args.func(args)
 
 
 if __name__ == '__main__':
