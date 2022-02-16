@@ -9,7 +9,6 @@ from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
-from celescope.tools.run_analysis import Scanpy
 
 
 MITO_VAR = 'mito'
@@ -262,9 +261,15 @@ class Scanpy_wrapper(Step):
     def write_markers(self):
         df_markers = sc.get.rank_genes_groups_df(self.adata, group=None, pval_cutoff=PVAL_CUTOFF)
         df_markers = df_markers[df_markers['logfoldchanges'].notna()]
-        markers_name_dict={'group':'cluster','names':'gene','logfoldchanges':'avg_log2FC',
-                           'pvals':'p_val','pvalse_adj':'p_val_adj',
-                           'pct_nz_group':'pct.1','pct_nz_reference':'pct.2'}
+        markers_name_dict = {
+            'group':'cluster',
+            'names':'gene',
+            'logfoldchanges':'avg_log2FC',
+            'pvals':'p_val',
+            'pvalse_adj':'p_val_adj',
+            'pct_nz_group':'pct.1',
+            'pct_nz_reference':'pct.2'
+         }
         df_markers = df_markers.rename(markers_name_dict,axis='columns')
         df_markers['cluster'] = df_markers['cluster'].map(lambda x : int(x)+1)
         df_markers.to_csv(self.df_marker_file, index=None, sep='\t')
@@ -274,7 +279,7 @@ class Scanpy_wrapper(Step):
         df_tsne = self.adata.obsm.to_df()[['X_tsne1','X_tsne2']]
         df_tsne['cluster']=self.adata.obs.cluster
         df_tsne['Gene_Counts']=self.adata.obs.n_genes_by_counts
-        tsne_name_dict={'X_tsne1':'tSNE_1','X_tsne2':'tSNE_2'}
+        tsne_name_dict={'X_tsne1':'tSNE_1', 'X_tsne2':'tSNE_2'}
         df_tsne = df_tsne.rename(tsne_name_dict,axis='columns')
         df_tsne['cluster'] = df_tsne['cluster'].map(lambda x:int(x)+1)
         df_tsne.to_csv(self.df_tsne_file, sep='\t')
