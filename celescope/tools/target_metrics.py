@@ -26,7 +26,7 @@ class Target_metrics(Step):
         Step.__init__(self, args, display_title=display_title)
 
         # set
-        self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
+        self.match_barcode_list, self.n_cell = utils.get_barcode_from_match_dir(args.match_dir)
         self.match_barcode = set(self.match_barcode_list)
 
         if args.panel:

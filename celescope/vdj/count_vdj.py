@@ -41,12 +41,11 @@ class Count_vdj(Step):
                 self.cols.append("_".join([seq, chain]))
 
         self.match_bool = False
-        if args.match_dir and args.match_dir.strip() != 'None':
-            self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
-                args.match_dir)
+        if utils.check_arg_not_none(self.args, 'match_dir'):
+            self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_match_dir(args.match_dir)
             self.match_bool = True
-        elif args.matrix_dir and args.matrix_dir.strip() != 'None':
-            self.match_cell_barcodes = utils.get_barcodes_from_matrix_dir(args.matrix_dir)
+        elif utils.check_arg_not_none(self.args, 'matrix_dir'):
+            self.match_cell_barcodes = utils.get_barcode_from_matrix_dir(args.matrix_dir)
             self.match_bool = True
         if self.match_bool:
             self.match_cell_barcodes = set(self.match_cell_barcodes)

@@ -33,7 +33,7 @@ class Mt_summary():
         # set
         match_dir = f'{root_dir}/{sample}'
         self.mt_gene_list_file = Mkref.parse_genomeDir(genomeDir)['mt_gene_list']
-        _barcodes, self.ncell = utils.read_barcode_file(match_dir)
+        _barcodes, self.ncell = utils.get_barcode_from_match_dir(match_dir)
         self.bam = None
         try:
             self.bam = glob.glob(

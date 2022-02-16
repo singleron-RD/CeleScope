@@ -2,7 +2,7 @@
 assign cell identity based on SNR and UMI_min
 """
 
-from celescope.__init__ import ROOT_PATH
+from celescope.__init__ import ROOT_PATH, HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 import pandas as pd
@@ -42,9 +42,9 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
     )
     if sub_program:
         parser.add_argument("--read_count_file", help="Tag read count file.", required=True)
-        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory.")
-        parser.add_argument("--matrix_dir", help="Match celescope scRNA-Seq matrix directory.")
-        parser.add_argument("--tsne_file", help="t-SNE coord file.")
+        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
+        parser.add_argument("--matrix_dir", help=HELP_DICT['matrix_dir'])
+        parser.add_argument("--tsne_file", help=HELP_DICT['tsne_file'])
 
         s_common(parser)
 
@@ -86,16 +86,14 @@ class Count_tag(Step):
         # read
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)
 
-        if args.match_dir:
+        if utils.check_arg_not_none(args, 'match_dir'):
             match_dict = utils.parse_match_dir(args.match_dir)
             self.match_barcode = match_dict['match_barcode']
             self.n_match_barcode = match_dict['n_match_barcode']
             self.tsne_file = match_dict['tsne_coord']
             self.matrix_dir = match_dict['matrix_dir']
-        elif args.matrix_dir:
-            df_barcode = pd.read_csv(f'{args.matrix_dir}/barcodes.tsv', header=None)
-            self.match_barcode = df_barcode[0].tolist()
-            self.n_match_barcode = len(self.match_barcode)
+        elif utils.check_arg_not_none(args, 'matrix_dir'):
+            self.match_barcode, self.n_match_barcode = utils.get_barcode_from_matrix_dir(args.matrix_dir)
             self.tsne_file = args.tsne_file
             self.matrix_dir = args.matrix_dir
         else:

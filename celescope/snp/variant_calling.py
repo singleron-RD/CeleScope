@@ -19,7 +19,7 @@ class Variant_calling(Step):
         Step.__init__(self, args)
 
         # set
-        self.barcodes, _num = utils.read_barcode_file(args.match_dir)
+        self.barcodes, _num = utils.get_barcode_from_match_dir(args.match_dir)
         self.fasta = Mkref_rna.parse_genomeDir(args.genomeDir)['fasta']
         self.df_vcf = None
         self.panel = args.panel

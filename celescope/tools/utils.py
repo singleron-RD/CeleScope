@@ -508,7 +508,7 @@ def parse_annovar(annovar_file):
 
 
 @add_log
-def read_barcode_file(match_dir):
+def get_barcode_from_match_dir(match_dir):
     '''
     multi version compatible
     '''
@@ -535,21 +535,24 @@ def read_barcode_file(match_dir):
         sys.exit(1)
 
     match_barcode_file = match_list[0]
-    read_barcode_file.logger.info(f"Barcode file:{match_barcode_file}")
+    get_barcode_from_match_dir.logger.info(f"Barcode file:{match_barcode_file}")
     match_barcode, n_match_barcode = read_one_col(match_barcode_file)
     return match_barcode, n_match_barcode
 
 
-def get_barcodes_from_matrix_dir(matrix_dir):
-    barcodes_file = f'{matrix_dir}/barcodes.tsv'
-    match_barcode, _n_match_barcode = read_one_col(barcodes_file)
-    return match_barcode
+def get_barcode_from_matrix_dir(matrix_dir):
+    """
+
+    """
+    match_barcode_file = f'{matrix_dir}/{BARCODE_FILE_NAME[0]}'
+    match_barcode, n_match_barcode = read_one_col(barcodes_file)
+    return match_barcode, n_match_barcode
 
 @add_log
 def parse_match_dir(match_dir):
     '''
     return dict
-    keys: 'match_barcode', 'n_match_barcode', 'matrix_dir', 'tsne_coord', 'rds'
+    keys: 'match_barcode', 'n_match_barcode', 'matrix_dir', 'tsne_coord'
     '''
     match_dict = {}
 
@@ -557,7 +560,7 @@ def parse_match_dir(match_dir):
         'matrix_dir': f'{match_dir}/*count*/*matrix_10X',
         'tsne_coord': f'{match_dir}/*analysis*/*tsne_coord.tsv',
         'markers': f'{match_dir}/*analysis*/*markers.tsv',
-        'rds': f'{match_dir}/*analysis/*.rds',
+
     }
 
     for file_name in pattern_dict:
@@ -568,7 +571,7 @@ def parse_match_dir(match_dir):
             match_dict[file_name] = match_file[0]
 
     try:
-        match_barcode, n_match_barcode = read_barcode_file(match_dir)
+        match_barcode, n_match_barcode = get_barcode_from_match_dir(match_dir)
     except FileNotFoundError as e:
         parse_match_dir.logger.warning(e)
     else:
@@ -806,3 +809,19 @@ def get_assay_text(assay):
     add sinlge cell prefix
     """
     return 'Single-cell ' + assay
+
+
+def check_arg_not_none(args, arg_name):
+    """
+    check if args.arg_name is not None
+    Args:
+        args: argparser args
+        arg_name: argparser arg name
+    Return:
+        bool
+    """
+    arg_value = getattr(args, arg_name)
+    if arg_value and arg_value.strip() != 'None':
+        return True
+    else:
+        return False

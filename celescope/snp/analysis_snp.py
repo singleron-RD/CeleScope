@@ -25,7 +25,6 @@ class Analysis_snp(Step):
         super().__init__(args, display_title)
         self.vcf_file = args.vcf
         self.annovar_config = args.annovar_config
-        self.match_dir = args.match_dir
 
         # parse
         self.annovar_section = self.read_annovar_config()

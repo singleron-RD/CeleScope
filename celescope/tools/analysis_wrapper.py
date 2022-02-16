@@ -282,7 +282,7 @@ class Scanpy_wrapper(Step):
 
     @utils.add_log
     def run(self):
-        """
+
         self.calculate_qc_metrics()
         self.write_mito_stats()
         self.normalize()
@@ -299,7 +299,7 @@ class Scanpy_wrapper(Step):
         self.write_markers()
         self.write_tsne()
         self.write_h5ad()
-        """
+
 
     def get_df(self):
         """
@@ -314,8 +314,8 @@ class Scanpy_wrapper(Step):
 def get_opts_analysis_match(parser, sub_program):
     if sub_program:
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
-        parser.add_argument("--tsne_file", help="match_dir t-SNE coord file. Not required when `--match_dir` is provided.")
-        parser.add_argument("--df_marker_file", help="match_dir df_marker_file. Not required when `--match_dir` is provided.")
+        parser.add_argument("--tsne_file", help=HELP_DICT['tsne_file'])
+        parser.add_argument("--df_marker_file", help=HELP_DICT['df_marker_file'])
 
         parser = s_common(parser)
 
@@ -361,7 +361,7 @@ class Report_runner(Step):
         """
         return df_tsne, df_marker
         """
-        if getattr(self.args, 'match_dir'):
+        if utils.check_arg_not_none(self.args, 'match_dir'):
             df_tsne_file, df_marker_file = self.get_df_file(self.args.match_dir)
         else:
             df_tsne_file = self.args.tsne_file
