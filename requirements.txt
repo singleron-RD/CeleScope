@@ -1,5 +1,5 @@
 cutadapt==1.17
-pysam==0.16.0.1
+pysam==0.18.0
 scipy==1.5.0
 numpy==1.19.5
 jinja2>=2.10
@@ -13,7 +13,7 @@ cython
 pytest
 venn
 pyranges
-scanpy==1.7.2
+scanpy==1.8.2
 statsmodels==0.12.1
 leidenalg==0.7.0
 igraph==0.9.9
