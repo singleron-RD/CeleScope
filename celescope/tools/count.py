@@ -294,8 +294,8 @@ class Count(Step):
 
         barcodes = df_UMI.index.levels[1].to_series()
         genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME}', index=False, sep='\t', header=False)
-        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t', header=False)
-        mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME}', mtx)
+        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME[0]}', index=False, sep='\t', header=False)
+        mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME[0]}', mtx)
 
     @utils.add_log
     def cell_summary(self, df, cell_bc):

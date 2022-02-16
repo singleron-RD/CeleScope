@@ -1,4 +1,6 @@
 
+from pathlib import PurePath
+
 from celescope.tools import analysis_wrapper
 from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools import utils
@@ -41,8 +43,8 @@ class Analysis(Step):
 
         report_runner = analysis_wrapper.Report_runner(self.args, display_title=self.display_title)
         report_runner.add_marker_help()
-        match_dir = self.outdir + '/../'
-        df_tsne, df_marker = report_runner.read_match_dir(match_dir)
+
+        df_tsne, df_marker = scanpy_wrapper.get_df()
 
         tsne_cluster = Tsne_plot(df_tsne, 'cluster').get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)

@@ -32,15 +32,6 @@ def get_opts_analysis(parser, sub_program):
         parser = s_common(parser)
 
 
-def get_opts_analysis_match(parser, sub_program):
-    if sub_program:
-        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
-        parser.add_argument("--tsne_file", help="match_dir t-SNE coord file. Not required when `--match_dir` is provided.")
-        parser.add_argument("--df_marker_file", help="match_dir df_marker_file. Not required when `--match_dir` is provided.")
-
-        parser = s_common(parser)
-
-
 class Scanpy_wrapper(Step):
 
     def __init__(self, args, display_title=None):
@@ -291,7 +282,7 @@ class Scanpy_wrapper(Step):
 
     @utils.add_log
     def run(self):
-
+        """
         self.calculate_qc_metrics()
         self.write_mito_stats()
         self.normalize()
@@ -304,9 +295,29 @@ class Scanpy_wrapper(Step):
         self.leiden()
         self.cluster()
 
+
         self.write_markers()
         self.write_tsne()
         self.write_h5ad()
+        """
+
+    def get_df(self):
+        """
+        return df_tsne, df_marker
+        """
+        df_tsne = pd.read_csv(self.df_tsne_file, sep="\t")
+        df_marker = pd.read_csv(self.df_marker_file, sep="\t")
+        return df_tsne, df_marker
+
+
+
+def get_opts_analysis_match(parser, sub_program):
+    if sub_program:
+        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
+        parser.add_argument("--tsne_file", help="match_dir t-SNE coord file. Not required when `--match_dir` is provided.")
+        parser.add_argument("--df_marker_file", help="match_dir df_marker_file. Not required when `--match_dir` is provided.")
+
+        parser = s_common(parser)
 
 class Report_runner(Step):
 
@@ -337,13 +348,25 @@ class Report_runner(Step):
         )
 
     @staticmethod
-    def read_match_dir(match_dir):
+    def get_df_file(match_dir):
         """
-        return df_tsne, df_marker
+        return df_tsne_file, df_marker_file
         """
         match_dict = utils.parse_match_dir(match_dir)
         df_tsne_file = match_dict['tsne_coord']
-        df_tsne = pd.read_csv(df_tsne_file, sep="\t")
         df_marker_file = match_dict['markers']
+        return df_tsne_file, df_marker_file
+
+    def get_df(self):
+        """
+        return df_tsne, df_marker
+        """
+        if getattr(self.args, 'match_dir'):
+            df_tsne_file, df_marker_file = self.get_df_file(self.args.match_dir)
+        else:
+            df_tsne_file = self.args.tsne_file
+            df_marker_file = self.args.df_marker_file
+        df_tsne = pd.read_csv(df_tsne_file, sep="\t")
         df_marker = pd.read_csv(df_marker_file, sep="\t")
         return df_tsne, df_marker
+

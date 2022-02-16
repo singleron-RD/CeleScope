@@ -13,9 +13,10 @@ __PATTERN_DICT__ = {
 
 
 # count
-MATRIX_FILE_NAME = 'matrix.mtx'
-FEATURE_FILE_NAME = 'genes.tsv'
-BARCODE_FILE_NAME = 'barcodes.tsv'
+MATRIX_DIR_SUFFIX = ['matrix_10X']
+MATRIX_FILE_NAME = ['matrix.mtx']
+FEATURE_FILE_NAME = ['genes.tsv']
+BARCODE_FILE_NAME = ['barcodes.tsv']
 
 # mkref
 GENOME_CONFIG = 'celescope_genome.config'
