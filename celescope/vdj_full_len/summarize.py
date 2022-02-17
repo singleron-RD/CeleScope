@@ -53,6 +53,8 @@ class Summarize(Step):
             self.chains = ['IGH', 'IGL', 'IGK']
             self.pair = ['IGH_IGL', 'IGH_IGK']
 
+        self.not_split_R2 = args.not_split_R2
+
 
     @utils.add_log
     def run(self):
@@ -74,6 +76,9 @@ class Summarize(Step):
         sum_dict = sum_dict.T.to_dict()
         total_reads = int(sum_dict[0]["Number of Read Pairs"].replace(',', ''))
 
+        _index = 200
+        if self.not_split_R2:
+            _index = 100
 
         if self.seqtype == "TCR":
             cell_nums = len(set(self.filter_contig['barcode'].tolist()))
@@ -85,7 +90,7 @@ class Summarize(Step):
             self.add_metric(
                 name='Reads Mapped to Any V(D)J Gene',
                 value=int(
-                    total_reads * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/200)),
+                    total_reads * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/_index)),
                 total=read_count,
                 help_info="Reads mapped to any TCR or BCR genes."
             )
@@ -93,7 +98,7 @@ class Summarize(Step):
                 self.add_metric(
                     name=f'Reads Mapped to {c}',
                     value=int(
-                        total_reads * (float(sum_dict[0][f'Reads Mapped to {c}'].strip('%'))/200)),
+                        total_reads * (float(sum_dict[0][f'Reads Mapped to {c}'].strip('%'))/_index)),
                     total=read_count,
                     help_info=f"Reads mapped to {c} chain. For BCR, this should be one of [IGH, IGL, IGK]"
                 )
@@ -101,7 +106,7 @@ class Summarize(Step):
             self.add_metric(
                 name='Fraction Reads in Cells',
                 value=int(
-                    total_reads * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/200)),
+                    total_reads * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/_index)),
                 total=read_count,
                 help_info="Number of reads with cell-associated barcodes divided by the number of reads with valid barcodes"
             )
@@ -131,7 +136,7 @@ class Summarize(Step):
             self.add_metric(
                 name='Reads Mapped to Any V(D)J Gene',
                 value=int(
-                    total_reads * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/200)),
+                    total_reads * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/_index)),
                 total=read_count,
                 help_info="Reads mapped to any IGH, IGL or IGK genes"
             )
@@ -139,7 +144,7 @@ class Summarize(Step):
                 self.add_metric(
                     name=f'Reads Mapped to {c}',
                     value=int(
-                        total_reads * (float(sum_dict[0][f'Reads Mapped to {c}'].strip('%'))/200)),
+                        total_reads * (float(sum_dict[0][f'Reads Mapped to {c}'].strip('%'))/_index)),
                     total=read_count,
                     help_info=f"Reads mapped to {c} chain. For BCR, this should be one of [TRA, TRB]"
                 )
@@ -147,7 +152,7 @@ class Summarize(Step):
             self.add_metric(
                 name='Fraction Reads in Cells',
                 value=int(
-                    total_reads * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/200)),
+                    total_reads * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/_index)),
                 total=read_count,
                 help_info="Number of reads with cell-associated barcodes divided by the number of reads with valid barcodes"
             )
@@ -214,6 +219,7 @@ def summarize(args):
         runner.run()
 
 def get_opts_summarize(parser, sub_program):
+    parser.add_argument('--not_split_R2', help='whether split r2',action='store_true')
     parser.add_argument('--seqtype', help='TCR or BCR',
                         choices=['TCR', 'BCR'], required=True)
     if sub_program:
