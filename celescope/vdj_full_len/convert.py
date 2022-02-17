@@ -1,5 +1,6 @@
 import pandas as pd
 import pysam
+import os
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from xopen import xopen
@@ -69,6 +70,7 @@ class Convert(Step):
         
         # input
         self.fq2 = args.fq2
+        self.not_split_R2 = args.not_split_R2
         
         # output
         self.out_fq1_file = f'{self.outdir}/{self.sample}_S1_L001_R1_001.fastq.gz'
@@ -98,11 +100,15 @@ class Convert(Step):
             qual = entry.quality
             new_seq1, new_qual1, new_seq2_1, new_qual2_1, new_seq2_2, new_qual2_2 = convert_seq(barcode, umi, barcode_dict, barcodes_10X, seq, qual)
             
-            out_fq1.write(fastq_line(f'{name}_1', new_seq1, new_qual1))
-            out_fq2.write(fastq_line(f'{name}_1', new_seq2_1, new_qual2_1))
-            out_fq1.write(fastq_line(f'{name}_2', new_seq1, new_qual1))
-            out_fq2.write(fastq_line(f'{name}_2', new_seq2_2, new_qual2_2))
-            
+            if not self.not_split_R2:
+                out_fq1.write(fastq_line(f'{name}_1', new_seq1, new_qual1))
+                out_fq1.write(fastq_line(f'{name}_2', new_seq1, new_qual1))
+                out_fq2.write(fastq_line(f'{name}_1', new_seq2_1, new_qual2_1))
+                out_fq2.write(fastq_line(f'{name}_2', new_seq2_2, new_qual2_2))
+            else:
+                out_fq1.write(fastq_line(name, new_seq1, new_qual1))
+                out_fq2.write(fastq_line(name, seq, qual))
+
         out_fq1.close()
         out_fq2.close()
         barcodes_10X.close()
@@ -124,6 +130,7 @@ def convert(args):
     convert_obj.run()
     
 def get_opts_convert(parser, sub_program):
+    parser.add_argument('--not_split_R2', help='whether split r2',action='store_true')
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fq2', help='R2 read file', required=True)
