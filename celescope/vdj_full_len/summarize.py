@@ -7,6 +7,7 @@ from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools import step
 from celescope.tools.cellranger3 import get_plot_elements
+from celescope.tools.plotly_plot import Bar_plot
 from celescope.tools.step import Step, s_common
 
 
@@ -211,6 +212,11 @@ class Summarize(Step):
             df_table=raw_clonotypes[['ClonotypeID', 'CDR3_aa', 'Frequency', 'Proportion']]
         )
         self.add_data(table_dict=table_dict)
+
+        raw_clonotypes['ClonotypeID'] = raw_clonotypes['ClonotypeID'].apply(lambda x:int(x))
+        raw_clonotypes.sort_values(by=['ClonotypeID'], inplace=True)
+        Barplot = Bar_plot(df_bar=raw_clonotypes).get_plotly_div()
+        self.add_data(Barplot=Barplot)
 
 
 def summarize(args):
