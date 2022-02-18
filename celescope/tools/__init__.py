@@ -13,7 +13,8 @@ __PATTERN_DICT__ = {
 
 
 # count
-MATRIX_DIR_SUFFIX = ['matrix_10X']
+RAW_MATRIX_DIR_SUFFIX = ['raw_feature_bc_matrix', 'all_matrix']
+FILTERED_MATRIX_DIR_SUFFIX = ['filtered_feature_bc_matrix', 'matrix_10X']
 MATRIX_FILE_NAME = ['matrix.mtx']
 FEATURE_FILE_NAME = ['genes.tsv']
 BARCODE_FILE_NAME = ['barcodes.tsv']

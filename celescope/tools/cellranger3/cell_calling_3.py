@@ -226,7 +226,7 @@ def cell_calling_3(all_matrix_10X_dir, expected_cell_num):
     raw_mat_path = os.path.join(all_matrix_10X_dir, MATRIX_FILE_NAME[0])
     raw_mat = scipy.io.mmread(raw_mat_path)  # scipy.sparse.coo.coo_matrix
 
-    raw_features_path = os.path.join(all_matrix_10X_dir, FEATURE_FILE_NAME)
+    raw_features_path = os.path.join(all_matrix_10X_dir, FEATURE_FILE_NAME[0])
     raw_features_df = pd.read_csv(raw_features_path, sep='\t', error_bad_lines=False, names=['id', 'name', 'type'])
     raw_features_df['id'].tolist()
     raw_features_df['name'].tolist()

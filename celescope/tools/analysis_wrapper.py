@@ -13,7 +13,6 @@ from celescope.tools.step import Step, s_common
 
 MITO_VAR = 'mito'
 NORMALIZED_LAYER = 'normalised'
-FILTERED_LAYER = 'filtered'
 
 RESOLUTION = 1.2
 N_PCS = 25
@@ -57,6 +56,9 @@ class Scanpy_wrapper(Step):
         if self.mt_gene_list:
             mito_genes, _ = utils.read_one_col(self.mt_gene_list)
             self.adata.var[MITO_VAR] = self.adata.var_names.map(lambda x:True if x in mito_genes else False)
+            # if not astype(bool), it will be type object and raise an error
+            # https://github.com/theislab/anndata/issues/504
+            self.adata.var[MITO_VAR] = self.adata.var[MITO_VAR].astype(bool)
         else:
             self.adata.var[MITO_VAR] = self.adata.var_names.str.upper().str.startswith('MT-')
 
@@ -89,7 +91,6 @@ class Scanpy_wrapper(Step):
     @utils.add_log
     def normalize(self):
         """
-        add `filtered` layer
         sc.pp.normalize_per_cell() and sc.pp.log1p()
         """
 

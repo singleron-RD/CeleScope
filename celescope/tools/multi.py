@@ -5,6 +5,7 @@ import os
 from collections import defaultdict
 
 import celescope
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 from celescope.tools import utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
@@ -314,7 +315,7 @@ job_end
 
     def analysis(self, sample):
         step = 'analysis'
-        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix_10X'
+        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

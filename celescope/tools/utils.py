@@ -20,7 +20,7 @@ import pandas as pd
 import pysam
 
 import celescope.tools
-from celescope.tools.__init__ import __PATTERN_DICT__, MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
+from celescope.tools.__init__ import __PATTERN_DICT__, FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
 from celescope.__init__ import ROOT_PATH
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
@@ -513,7 +513,7 @@ def get_barcode_from_match_dir(match_dir):
     multi version compatible
     '''
     barcode_file_pattern_list = []
-    for matrix_dir_suffix in MATRIX_DIR_SUFFIX:
+    for matrix_dir_suffix in FILTERED_MATRIX_DIR_SUFFIX:
         for barcode_file_name in BARCODE_FILE_NAME:
             barcode_file_pattern_list.append(f"{match_dir}/*count/*{matrix_dir_suffix}/{barcode_file_name}")
 

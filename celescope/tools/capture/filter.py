@@ -8,6 +8,7 @@ from celescope.tools.step import Step, s_common
 from celescope.tools.capture.threshold import Threshold
 from celescope.__init__ import HELP_DICT
 from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
+from celescope.tools.analysis_wrapper import Report_runner
 
 
 def get_opts_filter(parser, sub_program):
@@ -49,10 +50,9 @@ class Filter(Step):
         self.barcode_ref_umi_dict = utils.genDict(dim=2)
         self.ref_barcode_umi_dict = utils.genDict(dim=2)
 
-        match_dir_dict = utils.parse_match_dir(args.match_dir)
-        self.df_tsne = match_dir_dict['df_tsne']
-
-        self.df_filter_tsne = self.df_tsne.copy()
+        report_runner = Report_runner(args)
+        df_tsne, _df_marker = report_runner.get_df()
+        self.df_filter_tsne = df_tsne.copy()
 
         # out
         self.raw_umi_count_file = f'{self.out_prefix}_corrected_UMI_count.json'

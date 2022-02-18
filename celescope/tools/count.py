@@ -17,7 +17,7 @@ from scipy.sparse import coo_matrix
 
 from celescope.tools import utils
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
-                                      MATRIX_FILE_NAME)
+    MATRIX_FILE_NAME, FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
 from celescope.tools.cellranger3 import get_plot_elements
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
@@ -77,8 +77,8 @@ class Count(Step):
         # output files
         self.count_detail_file = f'{self.outdir}/{self.sample}_count_detail.txt'
         self.marked_count_file = f'{self.outdir}/{self.sample}_counts.txt'
-        self.raw_matrix_10X_dir = f'{self.outdir}/{self.sample}_all_matrix'
-        self.cell_matrix_10X_dir = f'{self.outdir}/{self.sample}_matrix_10X'
+        self.raw_matrix_dir = f'{self.outdir}/{self.sample}_{RAW_MATRIX_DIR_SUFFIX[0]}'
+        self.cell_matrix_dir = f'{self.outdir}/{self.sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
         self.downsample_file = f'{self.outdir}/{self.sample}_downsample.txt'
 
     def line_data(self):
@@ -94,7 +94,7 @@ class Count(Step):
         df_sum = Count.get_df_sum(df)
 
         # export all matrix
-        self.write_matrix_10X(df, self.raw_matrix_10X_dir)
+        self.write_matrix_10X(df, self.raw_matrix_dir)
 
         # call cells
         cell_bc, _threshold = self.cell_calling(df_sum)
@@ -104,7 +104,7 @@ class Count(Step):
 
         # export cell matrix
         df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
-        self.write_matrix_10X(df_cell, self.cell_matrix_10X_dir)
+        self.write_matrix_10X(df_cell, self.cell_matrix_dir)
         (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
             df, cell_bc)
 
@@ -254,7 +254,7 @@ class Count(Step):
 
     @utils.add_log
     def cellranger3_cell(self, df_sum):
-        cell_bc, initial_cell_num = cell_calling_3(self.raw_matrix_10X_dir, self.expected_cell_num)
+        cell_bc, initial_cell_num = cell_calling_3(self.raw_matrix_dir, self.expected_cell_num)
         threshold = Count.find_threshold(df_sum, initial_cell_num)
         return cell_bc, threshold
 
@@ -293,7 +293,7 @@ class Count(Step):
         genes.columns = ['gene_id', 'gene_name']
 
         barcodes = df_UMI.index.levels[1].to_series()
-        genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME}', index=False, sep='\t', header=False)
+        genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME[0]}', index=False, sep='\t', header=False)
         barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME[0]}', index=False, sep='\t', header=False)
         mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME[0]}', mtx)
 
