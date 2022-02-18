@@ -4,6 +4,13 @@
  - Use `scanpy` instead of `seurat` for data analysis.
  - TODO: add read_saturation to downsample file.
 
+ ### General improvments
+ - Move `sjm.job` from `./log/` to `./sjm/`
+ - Change file suffix
+    - raw_matrix: `all_matrix` -> `raw_feature_bc_matrix`
+    - fitered_matrix: `matrix_10X`-> `filtered_feature_bc_matrix`
+
+
 ## [1.7.2] - 2021-02-10
 
  ### `vdj`
