@@ -25,8 +25,6 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.

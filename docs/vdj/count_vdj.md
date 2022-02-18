@@ -29,8 +29,6 @@ For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.

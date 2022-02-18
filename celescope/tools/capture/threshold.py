@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
 
+import celescope.tools.utils as utils
+
 matplotlib.use('Agg')
 
 # minimum array length to use otsu method
@@ -9,9 +11,16 @@ OTSU_MIN_LEN = 50
 
 class Otsu():
     """
+    remove all zero in array
     Return 1 if len(array) < OTSU_MIN_LEN
     """
-    def __init__(self, array, log_base=10):
+    def __init__(self, array, log_base=10, otsu_plot_path=None,):
+        
+        self.len_bool = True
+        array = [x for x in array if x > 0 ]
+        if len(array) < OTSU_MIN_LEN:
+            self.len_bool = False
+
         self.log_base = log_base
         if log_base == 2:
             self.array = np.log2(array)
@@ -23,6 +32,7 @@ class Otsu():
         self.threshold = 1
         self.counts = None
         self.bins = None
+        self.otsu_plot_path = otsu_plot_path
 
 
     def _threshold_otsu(self):
@@ -63,22 +73,26 @@ class Otsu():
     def _array2hist(self, binWidth=0.2):
         self.counts, self.bins = np.histogram(self.array, bins=np.arange(0, max(self.array)+binWidth, binWidth))
 
-    def make_plot(self, plot_path):
+    @utils.add_log
+    def _make_plot(self):
+        if not self.otsu_plot_path:
+            return 
         plt.hist(x=self.bins[:-1], bins=self.bins, weights=self.counts)
         plt.axvline(self.threshold, color='r')
         plt.xlabel(f'log{self.log_base} observed read/UMI counts')
         plt.ylabel('Frequency')
-        plt.savefig(plot_path)
+        plt.savefig(self.otsu_plot_path)
         plt.close()
 
     def run(self):
         """
         return threshold
         """
-        if len(self.array) < OTSU_MIN_LEN:
+        if not self.len_bool:
             return 1
         self._array2hist()
         self._threshold_otsu()
+        self._make_plot()
         return_threshold = int(self.log_base ** self.threshold)
 
         return return_threshold
@@ -89,7 +103,7 @@ class Auto():
     threshold = top 1% cell count / 10
     """
     def __init__(self, array):
-        self.array = array
+        self.array = [x for x in array if x > 0 ]
     
     def run(self):
         array = self.array
@@ -124,10 +138,8 @@ class Threshold():
         if not self.array:
             return 1
         if self.threshold_method == 'otsu':
-            otsu = Otsu(self.array)
+            otsu = Otsu(self.array, otsu_plot_path=self.otsu_plot_path)
             threshold = otsu.run()
-            if self.otsu_plot_path:
-                otsu.make_plot(self.otsu_plot_path)
         elif self.threshold_method == 'auto':
             auto = Auto(self.array)
             threshold = auto.run()

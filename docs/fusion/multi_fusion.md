@@ -47,6 +47,8 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--mod` Which type of script to generate, `sjm` or `shell`.
 
+`--queue` Only works if the `--mod` selects `sjm`.
+
 `--rm_files` Remove redundant fastq and bam files after running.
 
 `--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
@@ -127,9 +129,13 @@ is higher than or equal to this value.
 
 `--min_query_length` Minimum query length.
 
-`--min_support_reads` Minimum number of reads to support a UMI.
+`--not_correct_UMI` Perform UMI correction.
 
-`--umi_threshold_method` method to find UMI threshold.
+`--read_threshold_method` method to find read threshold. UMIs with `support reads` < `read threshold` are filtered.
+
+`--read_hard_threshold` int, use together with `--read_threshold_method hard`.
+
+`--umi_threshold_method` method to find UMI threshold. Cell barcode with `UMI` < `UMI threshold` are considered negative.
 
 `--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
 

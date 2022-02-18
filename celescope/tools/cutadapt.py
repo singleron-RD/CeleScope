@@ -129,6 +129,7 @@ class Cutadapt(Step):
             f'--overlap {self.args.overlap} '
             f'-l {self.args.insert} '
             f'-o {self.out_fq2} '
+            f'{self.args.cutadapt_param} '
             f'{self.args.fq} '
         )
         self.run.logger.info(cmd)
@@ -181,6 +182,7 @@ at least {overlap} bases match between adapter and read. """,
         help="Default `150`. Read2 insert length.",
         default=150
     )
+    parser.add_argument('--cutadapt_param', help='Other cutadapt parameters. For example, --cutadapt_param "-g AAA" ', default="")
     if sub_program:
         parser.add_argument('--fq', help='Required. R2 reads from step Barcode.', required=True)
         parser = s_common(parser)
