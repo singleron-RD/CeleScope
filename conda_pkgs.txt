@@ -1,4 +1,4 @@
-conda-forge::python=3.9
+conda-forge::python=3.7
 bioconda::star=2.6.1b
 bioconda::picard=2.18.17
 bioconda::ucsc-gtftogenepred=377
