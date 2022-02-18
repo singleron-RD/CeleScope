@@ -44,8 +44,16 @@ def add_log(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if args and hasattr(args[0], 'debug') and args[0].debug:
+        class_object = args[0]
+
+        if args and check_arg_not_none(class_object, 'debug'):
             logger.setLevel(10)  # debug
+
+        if args and check_arg_not_none(class_object, 'outdir') and check_arg_not_none(class_object, 'sample'):
+            log_file_path = os.path.join(class_object.outdir, f'../{class_object.sample}_celescope_log.txt')
+            fileHandler = logging.FileHandler(log_file_path)
+            fileHandler.setFormatter(logFormatter)
+            logger.addHandler(fileHandler)
 
         logger.info('start...')
         start = time.time()
@@ -820,7 +828,7 @@ def check_arg_not_none(args, arg_name):
     Return:
         bool
     """
-    arg_value = getattr(args, arg_name)
+    arg_value = getattr(args, arg_name, None)
     if arg_value and arg_value.strip() != 'None':
         return True
     else:
