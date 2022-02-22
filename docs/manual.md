@@ -1,5 +1,5 @@
 ## Introduction
-CeleScope is a collection of bioinfomatics analysis pipelines developed at Singleron to process single cell sequencing data generated with Singleron products. These pipelines take paired-end FASTQ files as input and generate output files which can be used for downstream data analysis as well as a summary of QC criteria.
+CeleScope is a collection of bioinfomatics analysis pipelines to process single cell sequencing data generated with Singleron products. These pipelines take paired-end FASTQ files as input and generate output files which can be used for downstream data analysis as well as a summary of QC criteria.
 
 Each pipeline consists of several steps and they all have two identical pre-processing steps: `barcode` and `cutadapt`. `barcode`step is used for barcode demupltiplexing, correction and read filtering. `cutadapt` step calls [Cutadapt](https://cutadapt.readthedocs.io/en/stable/) for read trimming.
 
@@ -17,11 +17,15 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope capture_virus` for Single cell Epstein-Barr virus(EBV) data generated with FocuSCOPE<sup>TM</sup> Single Cell mRNA × EBV Library  kits. It performs preprocessing, genome alignment, UMI counting, filtering and analysis.
 
+## [Installation](installation.md)
+
 ## [Quick start](quick_start.md)
 
 ## [Chemistry](chemistry.md)
 
 ## [Change log](CHANGELOG.md)
+
+## [Test scripts and data](https://github.com/singleron-RD/celescope_test_script)
 
 ## Pre-processing
 
