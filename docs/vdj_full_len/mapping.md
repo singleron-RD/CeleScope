@@ -1,6 +1,6 @@
 ## Features
 
-- V(D)J MAPPING with SC-RNA infomation.
+- Assembled T/B cells Mapping with SC-RNA barcodes.
 
 ## Output
 - `{sample}_assign.png' Auto-assigned umap plot in scRNA-Seq library.

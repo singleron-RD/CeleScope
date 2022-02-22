@@ -13,3 +13,5 @@
 
 `--fq2` R2 read file
 
+`--not_split_R2` Whether to split the read2
+

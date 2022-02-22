@@ -1,3 +1,8 @@
+## [1.7.2] - 2022-02-22
+ ### `vdj_full_length`
+  - Add --not_split_R2 option.
+  - Add top 10 clonotypes barplot in HTML report
+
 ## [1.7.1] - 2022-01-06
  ### `vdj_full_length`
   - Split assemble step into three steps: annotation, match, summarize
