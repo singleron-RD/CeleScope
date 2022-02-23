@@ -1,6 +1,6 @@
 # Introduction
 
-This pipeline is currently mainly for TCR full-length assembly. The whole process includes 4 steps: sample, barcode, convert, assemble. The sample and barcode steps are the same as the previous process. For related information, please refer to the description of CeleScope. Here we mainly explain the steps of convert and assemble.
+This pipeline is currently mainly for TCR/BCR full-length assembly. The whole process includes 4 steps: sample, barcode, convert, assemble. The sample and barcode steps are the same as the previous process. For related information, please refer to the description of CeleScope. Here we mainly explain the steps of convert and assemble.
 
 ## Convert
 
@@ -52,39 +52,9 @@ The assembly results are analyzed by cellranger and output in `{sample}/03.assem
 - `{sample}/03.assemble/{sample}` Cellranger outs directory.
 - `{sample}/03.assemble/{sample}_vdj_10X.sh` Cellranger run command.
 
-# Example
+# USAGE
 
-Test path: 
-
-`/SGRNJ03/randd/zhouxin/data/cellranger/`
-
-Conda environment: 
-
-`full_len_VDJ`
-
-Run command: 
-
-```
-$ cat run.sh 
-multi_vdj10X \
-        --mapfile /SGRNJ03/randd/zhouxin/data/20210424.mapfile \
-        --outdir ./ \
-        --chemistry customized \
-        --whitelist /SGRNJ02/RandD4/RD2019016/20200426/bclist_Reverse \
-        --pattern U8C8L16C8L16C8L16 \
-        --linker /SGRNJ02/RandD4/RD2019016/20200426/linker2 \
-        --allowNoLinker --species mmu --thread 8 \
-        --mod shell --soft 3.1.0 --seqtype TCR
-```
-
-```
-$ cat shell/test1.sh 
-set -eo pipefail
-celescope vdj10X sample --outdir .//test1/00.sample --sample test1 --assay vdj10X --thread 8 --chemistry customized  --fq1 /SGRNJ03/randd/zhouxin/data/test_data/test1_1.fq 
-celescope vdj10X barcode --outdir .//test1/01.barcode --sample test1 --assay vdj10X --thread 8 --chemistry customized --pattern U8C8L16C8L16C8L16 --whitelist /SGRNJ02/RandD4/RD2019016/20200426/bclist_Reverse --linker /SGRNJ02/RandD4/RD2019016/20200426/linker2 --lowNum 2 --allowNoLinker  --fq1 /SGRNJ03/randd/zhouxin/data/test_data/test1_1.fq --fq2 /SGRNJ03/randd/zhouxin/data/test_data/test1_2.fq 
-celescope vdj10X convert --outdir .//test1/02.convert --sample test1 --assay vdj10X --thread 8 --method read2  --fq2 .//test1/01.barcode/test1_2.fq 
-celescope vdj10X assemble --outdir .//test1/03.assemble --sample test1 --assay vdj10X --thread 8 --species mmu --soft 3.1.0 --mem 10 --seqtype TCR  --fqs_dir .//test1/02.convert --match_dir /SGRNJ03/randd/RD20040201_SCOPEv2_TCR/20210401_5/NJU_Pt_2_GOT/ --barcode_dic .//test1/02.convert/barcode_correspond.txt
-```
+- [multi_vdj_full_len.md](./vdj_full_len/usage.md)
 
 
 

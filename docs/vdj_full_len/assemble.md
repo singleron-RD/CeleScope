@@ -1,3 +1,9 @@
+## Features
+
+- TCR/BCR Assemble.
+
+## Output
+- `{sample}/outs/` Recording assemble results.
 
 
 ## Arguments

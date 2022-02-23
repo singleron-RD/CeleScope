@@ -8,7 +8,13 @@ from celescope.vdj_full_len.__init__ import ref_dict, soft_dict
 
 class Assemble(Step):
     """
-    run CellRanger 
+    Features
+
+    - TCR/BCR Assemble.
+
+    Output
+    - `03.assemble/{sample}/outs/` Recording assemble results.
+
     """
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)

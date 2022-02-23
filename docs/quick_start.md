@@ -93,6 +93,7 @@ Note that the `./shell/{sample}.sh` must be run under the working directory(You 
 - [multi_dynaseq.md](./dynaseq/multi_dynaseq.md)
 - [multi_snp.md](./snp/multi_snp.md)
 - [multi_capture_virus.md](./capture_virus/multi_capture_virus.md)
+- [multi_vdj_full_len.md](./vdj_full_len/usage.md)
 
 ## Test data
 https://github.com/singleron-RD/celescope_test_script

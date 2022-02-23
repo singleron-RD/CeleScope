@@ -86,5 +86,7 @@ same time.
 
 `--remove_3rd_chain` remove IGK or IGL according to umis when a cell has 3 chains at the same time.
 
+`--not_split_R2` whether split r2
+
 `--seqtype` TCR or BCR
 

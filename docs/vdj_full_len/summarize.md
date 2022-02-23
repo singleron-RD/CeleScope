@@ -17,6 +17,8 @@
 
 
 ## Arguments
+`--not_split_R2` whether split r2
+
 `--seqtype` TCR or BCR
 
 `--outdir` Output diretory.
