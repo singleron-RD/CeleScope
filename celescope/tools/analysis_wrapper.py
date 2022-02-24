@@ -49,7 +49,7 @@ class Scanpy_wrapper(Step):
         self.adata = sc.read_10x_mtx(
             args.matrix_file,  
             var_names='gene_symbols',
-            cache=True)
+        )
         self.mt_gene_list = Mkref_rna.parse_genomeDir(args.genomeDir)['mt_gene_list']
 
         # out
