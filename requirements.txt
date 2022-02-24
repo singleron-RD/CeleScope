@@ -17,3 +17,4 @@ scanpy==1.7.2
 statsmodels
 leidenalg
 igraph
+pandas==1.2.5
