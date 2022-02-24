@@ -19,6 +19,14 @@ N_PCS = 25
 PVAL_CUTOFF = 0.05
 
 
+def read_tsne(tsne_file):
+    df = pd.read_csv(tsne_file, sep='\t')
+    # compatible with old version
+    if 'Unnamed: 0' in df.columns:
+        df.rename(columns={'Unnamed: 0': 'barcode'}, inplace=True)
+        df = df.set_index('barcode')
+    return df
+
 def get_opts_analysis(parser, sub_program):
     
     parser.add_argument('--genomeDir', help=HELP_DICT['genomeDir'], required=True)
@@ -306,10 +314,9 @@ class Scanpy_wrapper(Step):
         """
         return df_tsne, df_marker
         """
-        df_tsne = pd.read_csv(self.df_tsne_file, sep="\t")
+        df_tsne = read_tsne(self.df_tsne_file)
         df_marker = pd.read_csv(self.df_marker_file, sep="\t")
         return df_tsne, df_marker
-
 
 
 def get_opts_analysis_match(parser, sub_program):
@@ -367,7 +374,7 @@ class Report_runner(Step):
         else:
             df_tsne_file = self.args.tsne_file
             df_marker_file = self.args.df_marker_file
-        df_tsne = pd.read_csv(df_tsne_file, sep="\t")
+        df_tsne = read_tsne(df_tsne_file)
         df_marker = pd.read_csv(df_marker_file, sep="\t")
         return df_tsne, df_marker
 
