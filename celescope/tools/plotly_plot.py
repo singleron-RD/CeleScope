@@ -3,7 +3,7 @@ from collections import defaultdict
 import plotly
 import plotly.express as px
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 PLOTLY_CONFIG = {

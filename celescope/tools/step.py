@@ -8,7 +8,7 @@ import subprocess
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 
 
@@ -48,6 +48,7 @@ class Step:
         self.thread = int(args.thread)
         self.debug = args.debug
         self.out_prefix = f'{self.outdir}/{self.sample}'
+        self.display_title = display_title
 
         # important! make outdir before path_dict because path_dict use relative path.
         utils.check_mkdir(self.outdir)

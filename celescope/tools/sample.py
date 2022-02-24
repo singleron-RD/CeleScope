@@ -1,6 +1,6 @@
 
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import __VERSION__
 from celescope.tools.__init__ import __PATTERN_DICT__
 from celescope.tools.barcode import Chemistry

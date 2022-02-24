@@ -8,7 +8,7 @@ from itertools import combinations, product
 import pysam
 from xopen import xopen
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.__init__ import __PATTERN_DICT__
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.step import Step, s_common

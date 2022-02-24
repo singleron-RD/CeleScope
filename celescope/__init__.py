@@ -34,7 +34,10 @@ HELP_DICT = {
     'matrix_dir': 'Match celescope scRNA-Seq matrix directory.',
     'panel': 'The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.',
     'virus_genomeDir': 'Required. Virus genome directory after running `celescope capture_virus mkref`.',
-    'threshold_method': 'One of [otsu, auto, hard, none].'
+    'threshold_method': 'One of [otsu, auto, hard, none].',
+    'tsne_file': 'match_dir t-SNE coord file. Do not required when `--match_dir` is provided.',
+    'df_marker_file': 'match_dir df_marker_file. Not required when `--match_dir` is provided.',
+    
 }
 
 # report metrics help

@@ -5,7 +5,7 @@ map read2 to barcode_fasta
 import pandas as pd
 import pysam
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 import celescope.tools.barcode as Barcode
 from celescope.tools.barcode import parse_pattern
 from celescope.tools.step import Step, s_common

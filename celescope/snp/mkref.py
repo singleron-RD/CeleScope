@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.mkref import Mkref, super_opts
 
 class Mkref_snp(Mkref):

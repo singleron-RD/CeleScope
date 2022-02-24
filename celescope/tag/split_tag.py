@@ -8,7 +8,7 @@ from collections import defaultdict
 import pysam
 import pandas as pd
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
 from celescope.tools.cellranger3.wrapper import Cell_calling, read_raw_matrix

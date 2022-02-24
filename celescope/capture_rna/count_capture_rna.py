@@ -5,7 +5,7 @@ from itertools import groupby
 import pandas as pd
 import pysam
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.count import Count, get_opts_count
 
 
@@ -82,7 +82,7 @@ class Count_capture_rna(Count):
         df_sum = Count.get_df_sum(df)
 
         # export all matrix
-        self.write_matrix_10X(df, self.raw_matrix_10X_dir)
+        self.write_matrix_10X(df, self.raw_matrix_dir)
 
         # call cells
         cell_bc, _threshold = self.cell_calling(df_sum)
@@ -92,7 +92,7 @@ class Count_capture_rna(Count):
 
         # export cell matrix
         df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
-        self.write_matrix_10X(df_cell, self.cell_matrix_10X_dir)
+        self.write_matrix_10X(df_cell, self.cell_matrix_dir)
         (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
             df, cell_bc)
 

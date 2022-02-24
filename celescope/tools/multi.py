@@ -5,7 +5,8 @@ import os
 from collections import defaultdict
 
 import celescope
-import celescope.tools.utils as utils
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
+from celescope.tools import utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
 
@@ -42,6 +43,8 @@ class Multi():
         self.col4_dict = {}
         self.col5_dict = {}
         self.logdir = None
+        self.sjmdir = None
+        self.sjm_file = None
 
         self.sjm_cmd = ''
         self.sjm_order = ''
@@ -164,6 +167,7 @@ use `--steps_run barcode,cutadapt`
     def prepare(self):
         """
         parse_mapfile, make log dir, init script variables, init outdir_dic
+        make sjm dir, sjm file
         """
         self.args = self.parser.parse_args()
 
@@ -172,15 +176,18 @@ use `--steps_run barcode,cutadapt`
         if self.args.steps_run != 'all':
             self.steps_run = self.args.steps_run.strip().split(',')
 
+        self.sjm_dir = f'{self.args.outdir}/sjm/'
+        self.sjm_file = f'{self.sjm_dir}/sjm.job'
+
         self.logdir = self.args.outdir + '/log'
         self.sjm_cmd = f'log_dir {self.logdir}\n'
 
         # parse_mapfile
         self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(self.args.mapfile, self.col4_default)
 
-        # mk log dir
-        if self.args.mod == 'sjm':
-            os.system('mkdir -p %s' % (self.logdir))
+        # mk dir
+        utils.check_mkdir(self.logdir)
+        utils.check_mkdir(self.sjm_dir)
 
         for sample in self.fq_dict:
             self.outdir_dic[sample] = {}
@@ -314,7 +321,7 @@ job_end
 
     def analysis(self, sample):
         step = 'analysis'
-        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix_10X'
+        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
@@ -366,7 +373,7 @@ job_end
     def end(self):
         if self.args.mod == 'sjm':
             self.merge_report()
-            with open(self.logdir + '/sjm.job', 'w') as fh:
+            with open(self.sjm_file, 'w') as fh:
                 fh.write(self.sjm_cmd + '\n')
                 fh.write(self.sjm_order)
         if self.args.mod == 'shell':

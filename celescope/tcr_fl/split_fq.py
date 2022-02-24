@@ -5,7 +5,7 @@ import pandas as pd
 import pysam
 
 from celescope.tcr_fl.barcode_index import Barcode_index
-from celescope.tools.utils import add_log, genDict, read_barcode_file
+from celescope.tools.utils import add_log, genDict, get_barcode_from_match_dir
 
 
 @add_log
@@ -63,7 +63,7 @@ def split_fq(args):
     match_dir = args.match_dir
 
     if match_dir and match_dir != 'None':
-        barcodes, _nCell = read_barcode_file(args.match_dir)
+        barcodes, _nCell = get_barcode_from_match_dir(args.match_dir)
     else:
         barcodes = ''
     fq_outdir = f'{args.outdir}/fastq'

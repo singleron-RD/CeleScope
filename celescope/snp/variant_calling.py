@@ -1,5 +1,5 @@
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
@@ -19,7 +19,7 @@ class Variant_calling(Step):
         Step.__init__(self, args)
 
         # set
-        self.barcodes, _num = utils.read_barcode_file(args.match_dir)
+        self.barcodes, _num = utils.get_barcode_from_match_dir(args.match_dir)
         self.fasta = Mkref_rna.parse_genomeDir(args.genomeDir)['fasta']
         self.df_vcf = None
         self.panel = args.panel

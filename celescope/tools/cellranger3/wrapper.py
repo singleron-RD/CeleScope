@@ -12,7 +12,7 @@ import scipy.io
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
                                       MATRIX_FILE_NAME)
 from celescope.tools.cellranger3.cell_calling_3 import find_nonambient_barcodes
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 EXPECTED_CELL_NUM = 3000
@@ -21,12 +21,12 @@ EXPECTED_CELL_NUM = 3000
 @utils.add_log
 def read_raw_matrix(all_matrix_10X_dir):
 
-    raw_mat_path = os.path.join(all_matrix_10X_dir, MATRIX_FILE_NAME)
+    raw_mat_path = os.path.join(all_matrix_10X_dir, MATRIX_FILE_NAME[0])
     raw_mat = scipy.io.mmread(raw_mat_path)  # scipy.sparse.coo.coo_matrix
 
-    raw_features_path = os.path.join(all_matrix_10X_dir, FEATURE_FILE_NAME)
+    raw_features_path = os.path.join(all_matrix_10X_dir, FEATURE_FILE_NAME[0])
 
-    raw_barcodes_path = os.path.join(all_matrix_10X_dir, BARCODE_FILE_NAME)
+    raw_barcodes_path = os.path.join(all_matrix_10X_dir, BARCODE_FILE_NAME[0])
     raw_barcodes_df = pd.read_csv(raw_barcodes_path, sep='\t', error_bad_lines=False, names=['barcode'])
     raw_barcodes = np.array(raw_barcodes_df['barcode'].tolist())
 
@@ -48,9 +48,9 @@ class Cell_calling():
         self.raw_features_path = raw_features_path
         self.raw_barcodes = raw_barcodes
         self.expected_cell_num = EXPECTED_CELL_NUM
-        self.out_mat = f'{outdir}/{MATRIX_FILE_NAME}'
-        self.out_feature = f'{outdir}/{FEATURE_FILE_NAME}'
-        self.out_barcode = f'{outdir}/{BARCODE_FILE_NAME}'
+        self.out_mat = f'{outdir}/{MATRIX_FILE_NAME[0]}'
+        self.out_feature = f'{outdir}/{FEATURE_FILE_NAME[0]}'
+        self.out_barcode = f'{outdir}/{BARCODE_FILE_NAME[0]}'
         utils.check_mkdir(outdir)
 
     def write_slice_matrix(self, filtered_bc_indices):

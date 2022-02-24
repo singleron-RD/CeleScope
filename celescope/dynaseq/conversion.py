@@ -7,7 +7,7 @@ import subprocess
 import numpy as np
 import pandas as pd
 from celescope.tools.step import Step, s_common
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 class Conversion(Step):

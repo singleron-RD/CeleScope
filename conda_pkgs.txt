@@ -1,10 +1,9 @@
-conda-forge::python=3.6.7
+conda-forge::python=3.7
 bioconda::star=2.6.1b
 bioconda::picard=2.18.17
 bioconda::ucsc-gtftogenepred=377
 bioconda::subread=2.0.1
 bioconda::samtools=1.12
-conda-forge::r-seurat=4.0.1
 conda-forge::r-argparser
 conda-forge::r-tidyverse
 conda-forge::r-deldir=1.0_6

@@ -2,7 +2,7 @@ import pandas as pd
 
 from celescope.tools.step import s_common
 from celescope.tools.plotly_plot import Tsne_plot
-from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools.step import Step
 from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
 
 
@@ -13,7 +13,7 @@ def get_opts_analysis(parser, sub_program):
         s_common(parser)
 
 
-class Analysis(AnalysisMixin):
+class Analysis(Step):
 
     def __init__(self, args, display_title='Analysis'):
         super().__init__(args, display_title)
