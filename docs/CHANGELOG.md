@@ -4,6 +4,9 @@
  - Use `scanpy` instead of `seurat` for data analysis.
  - TODO: add read_saturation to downsample file.
 
+ ### `snp`,`capture_virus` and `fusion`
+ - When calculating `otsu` threshold, use `math.ceil` instead of `int`.
+
 ## [1.7.2] - 2021-02-10
 
  ### `vdj`

@@ -1,3 +1,5 @@
+import math
+
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
@@ -93,7 +95,7 @@ class Otsu():
         self._array2hist()
         self._threshold_otsu()
         self._make_plot()
-        return_threshold = int(self.log_base ** self.threshold)
+        return_threshold = math.ceil(self.log_base ** self.threshold)
 
         return return_threshold
 
