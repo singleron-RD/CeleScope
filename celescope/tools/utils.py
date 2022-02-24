@@ -44,16 +44,6 @@ def add_log(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        class_object = args[0]
-
-        if args and check_arg_not_none(class_object, 'debug'):
-            logger.setLevel(10)  # debug
-
-        if args and check_arg_not_none(class_object, 'outdir') and check_arg_not_none(class_object, 'sample'):
-            log_file_path = os.path.join(class_object.outdir, f'../{class_object.sample}_celescope_log.txt')
-            fileHandler = logging.FileHandler(log_file_path)
-            fileHandler.setFormatter(logFormatter)
-            logger.addHandler(fileHandler)
 
         logger.info('start...')
         start = time.time()
