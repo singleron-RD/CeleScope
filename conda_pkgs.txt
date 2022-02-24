@@ -11,4 +11,4 @@ conda-forge::r-vcfr
 imperial-college-research-computing::mixcr=3.0.3
 bioconda::bcftools=1.12
 bioconda::gatk4
-
+conda-forge::gcc
