@@ -5,6 +5,26 @@ from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NA
 
 class Multi_dynaseq(Multi):
 
+    """
+    Usage
+    ```
+        multi_dynaseq\\
+        --mapfile ./rna.mapfile\\
+        --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
+        --STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 --outSAMattributes MD"\\
+        --strand /SGRNJ03/Public/Database/genome/gene.strandedness.csv
+    ```
+
+    You need to generate strandness-file from gtf file. 
+    The format is "geneID,strand", eg:
+    ```
+    ENSG00000223972,+
+    ENSG00000227232,-
+    ENSG00000278267,-
+    ```
+    """
+
+
     def conversion(self, sample):
         step = 'conversion'
         bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam'
