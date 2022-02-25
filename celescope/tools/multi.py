@@ -4,6 +4,8 @@ import itertools
 import os
 from collections import defaultdict
 
+import pandas as pd
+
 import celescope
 from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 from celescope.tools import utils
@@ -11,6 +13,91 @@ from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
+SAMPLE_TSV_REQUIRED_COLS = ['fastq_prefix', 'fastq_dir', 'sample_name']
+
+
+def get_read(fastq_prefix, fastq_dir, read='1'):
+    read1_list = [f'_{read}', f'R{read}', f'R{read}_001']
+    fq_list = ['fq', 'fastq']
+    suffix_list = ["", ".gz"]
+    read_pattern_list = [
+        f'{fastq_dir}/{fastq_prefix}*{read}.{fq_str}{suffix}'
+        for read in read1_list
+        for fq_str in fq_list
+        for suffix in suffix_list
+    ]
+    fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
+    fq_list = (non_empty for non_empty in fq_list if non_empty)
+    fq_list = sorted(list(itertools.chain(*fq_list)))
+    if len(fq_list) == 0:
+        print("Allowed R1 patterns:")
+        for pattern in read_pattern_list:
+            print(pattern)
+        raise Exception(
+            '\n'
+            f'Invalid Read{read} path! \n'
+            f'fastq_prefix: {fastq_prefix}\n'
+            f'fastq_dir: {fastq_dir}\n'
+        )
+    return fq_list
+
+
+def get_fq(fastq_prefix, fastq_dir):
+    """
+    one (fastq_prefix, fastq_dir) combination can have multiple fq1 and fq2
+    return fq1_list, fq2_list
+    """
+    fq1_list = get_read(fastq_prefix, fastq_dir, read='1')
+    fq2_list = get_read(fastq_prefix, fastq_dir, read='2')
+    if len(fq1_list) != len(fq2_list):
+        raise Exception("Read1 and Read2 fastq number do not match!")
+
+    return fq1_list, fq2_list
+
+
+def get_fq_multiple(fastq_prefix_multiple, fastq_dir):
+    fq1_list, fq2_list = [] , []
+    fastq_prefix_list = fastq_prefix_multiple.split(',')
+    for fastq_prefix in fastq_prefix_list:
+        fastq_prefix = fastq_prefix.strip()
+        fq1_list_tmp, fq2_list_tmp = get_fq(fastq_prefix, fastq_dir)
+        fq1_list.extend(fq1_list_tmp)
+        fq2_list.extend(fq2_list_tmp)
+
+    fq1_str = ','.join(fq1_list)
+    fq2_str = ','.join(fq2_list)
+    
+    return fq1_str, fq2_str
+
+@utils.add_log
+def parse_sample_tsv(sample_tsv):
+    """
+    Args:
+        sample_tsv: sample tsv file with header.
+    Returns:
+        sample_dict:
+        {'sample1':
+            {'fastq_prefix': 'rna',
+            'fastq_dir': '/celescope_test_data/rna/fastqs',
+            'force_cell_num': 1000.0
+        },
+    """
+    df = pd.read_csv(sample_tsv, sep='\t', header=0)
+
+    for col in SAMPLE_TSV_REQUIRED_COLS:
+        if not col in df.columns:
+            raise Exception(f'{col} header is missing in mapfile! Required colnames: {required_cols}')
+
+    df = df.set_index('sample_name')
+    sample_dict = df.to_dict('index')
+
+    # add_fastq_path_to_dict
+    for sample_name in sample_dict:
+        fq1_str, fq2_str = get_fq_multiple(sample_dict[sample_name]['fastq_prefix'], sample_dict[sample_name]['fastq_dir'])
+        sample_dict[sample_name]['fq1'] = fq1_str
+        sample_dict[sample_name]['fq2'] = fq2_str
+
+    return sample_dict
 
 
 class Multi():
@@ -35,13 +122,11 @@ class Multi():
 
         # set
         self.args = None
-        self.col4_default = None
         self.last_step = ''
         self.fq_suffix = ""
         self.steps_run = self.__STEPS__
-        self.fq_dict = {}
-        self.col4_dict = {}
-        self.col5_dict = {}
+        self.sample_dict = {}
+
         self.logdir = None
         self.sjmdir = None
         self.sjm_file = None
@@ -58,33 +143,29 @@ class Multi():
                                          formatter_class=ArgFormatter,
                                          conflict_handler='resolve')
         parser.add_argument(
-            '--mapfile',
+            '--sample_tsv',
             help='''
-Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
+Sample_tsv is a tab-delimited text file with header. Each line of mapfile represents paired-end fastq files. It contains at least 3 columns:
+- `fastq_prefix`: Fastq file name prefix. Multiple fastq name prefix are separated by comma.
+- `fastq_dir`: Fastq file directory path.
+- `sample_name`: Unique name of the sample. It is the prefix of all output files corresponds to this sample.
 
-1st column: Fastq file prefix.  
-2nd column: Fastq file directory path.  
-3rd column: Sample name, which is the prefix of all output files.  
-4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
+Additional columns:
+- `matched_dir`: The single cell rna directory after running CeleScope is called `matched_dir`. 
+This column in required in `tag`, 'snp` and `capture_virus`, and optional in `vdj`.
 
-- `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
-- `tag` Required, matched_dir.
-- `dynaseq` Optional, forced cell number.
-- `snp` Required, matched_dir.
-- `capture_virus` Required, matched_dir.
+- `force_cell`: Force celescope to use this number of cells. 
+- `background_snp`: Background snp file. It is required in `dynaseq`. 
 
-5th column:
-- `dynaseq` Required, background snp file.
 
 Example
 
-Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
+Sample1 has 2 paired-end fastq files located in fastq_dir1. Sample2 has 1 paired-end fastq file located in fastq_dir2.
 ```
 $cat ./my.mapfile
-fastq_prefix1	fastq_dir1	sample1
-fastq_prefix2	fastq_dir2	sample1
-fastq_prefix3	fastq_dir1	sample2
+sample_name fastq_prefix    fastq_dir
+sample1 fastq_prefix1, fastq_prefix3	fastq_dir1
+sample2 fastq_prefix2	fastq_dir2
 
 $ls fastq_dir1
 fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
@@ -119,50 +200,7 @@ use `--steps_run barcode,cutadapt`
             func_opts = getattr(step_module, f"get_opts_{step}")
             func_opts(self.parser, sub_program=False)
 
-    @staticmethod
-    @utils.add_log
-    def parse_mapfile(mapfile, default_val):
-        fq_dict = defaultdict(list)
-        col4_dict = {}
-        col5_dict = {}
-        with open(mapfile) as fh:
-            for line in fh:
-                line = line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                line_split = line.split()
-                library_id, library_path, sample_name = line_split[:3]
-                if len(line_split) >= 4:
-                    col4 = line_split[3]
-                else:
-                    col4 = default_val
-                fq1, fq2 = get_fq(library_id, library_path)
 
-                if sample_name in fq_dict:
-                    fq_dict[sample_name][0].append(fq1)
-                    fq_dict[sample_name][1].append(fq2)
-                else:
-                    fq_dict[sample_name] = [[fq1], [fq2]]
-                    col4_dict[sample_name] = col4
-                if len(line_split) == 5:
-                    col5_dict[sample_name] = line_split[4]
-
-        for sample_name in fq_dict:
-            fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
-            fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
-
-        if not fq_dict:
-            raise Exception('empty mapfile!')
-        return fq_dict, col4_dict, col5_dict
-
-    def link_data(self):
-        raw_dir = f'{self.args.outdir}/data_give/rawdata'
-        os.system('mkdir -p %s' % (raw_dir))
-        with open(raw_dir + '/ln.sh', 'w') as fh:
-            fh.write('cd %s\n' % (raw_dir))
-            for s, arr in self.fq_dict.items():
-                fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
-                fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
 
     def prepare(self):
         """
@@ -183,13 +221,13 @@ use `--steps_run barcode,cutadapt`
         self.sjm_cmd = f'log_dir {self.logdir}\n'
 
         # parse_mapfile
-        self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(self.args.mapfile, self.col4_default)
+        self.sample_dict = parse_sample_tsv(self.args.sample_tsv)
 
         # mk dir
         utils.check_mkdir(self.logdir)
         utils.check_mkdir(self.sjm_dir)
 
-        for sample in self.fq_dict:
+        for sample in self.sample_dict:
             self.outdir_dic[sample] = {}
             index = 0
             for step in self.__STEPS__:
@@ -218,6 +256,13 @@ job_end
             self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
         self.last_step = step
 
+
+    def add_arguments_from_sample_tsv(self):
+        """
+        Add arguments from sample_tsv except SAMPLE_TSV_REQUIRED_COLUMNS
+        """
+        pass
+
     def parse_step_args(self, step):
         step_module = utils.find_step_module(self.__ASSAY__, step)
         func_opts = getattr(step_module, f"get_opts_{step}")
@@ -242,38 +287,40 @@ job_end
         if self.args.debug:
             cmd_line += " --debug "
         for arg in args_dict:
-            if args_dict[arg] is False:
-                continue
-            if args_dict[arg] is True:
-                cmd_line += f'--{arg} '
+            # override all args value with value in sample_tsv
+            print(arg)
+            if arg in self.sample_dict[sample]:
+                value = self.sample_dict[sample][arg]
+                cmd_line += f'--{arg} {value} '
             else:
-                if args_dict[arg]:
-                    matches = [' ', '-']
-                    arg_string = str(args_dict[arg])
-                    if any(char in arg_string for char in matches):  # need quote
-                        cmd_line += f'--{arg} "{arg_string}" '
-                    else:
-                        cmd_line += f'--{arg} {arg_string} '
+                if args_dict[arg] is False:
+                    continue
+                if args_dict[arg] is True:
+                    cmd_line += f'--{arg} '
+                else:
+                    if args_dict[arg]:
+                        matches = [' ', '-']
+                        arg_string = str(args_dict[arg])
+                        if any(char in arg_string for char in matches):  # need quote
+                            cmd_line += f'--{arg} "{arg_string}" '
+                        else:
+                            cmd_line += f'--{arg} {arg_string} '
 
         return cmd_line
 
     def sample(self, sample):
         step = "sample"
-        arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--fq1 {arr[0]} '
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def barcode(self, sample):
         step = "barcode"
-        arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--fq1 {arr[0]} --fq2 {arr[1]} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
@@ -314,7 +361,6 @@ job_end
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
-            f'--force_cell_num {self.col4_dict[sample]} '
         )
 
         self.process_cmd(cmd, step, sample, m=10, x=1)
@@ -342,7 +388,7 @@ job_end
         return outfile
 
     def run_steps(self):
-        for sample in self.fq_dict:
+        for sample in self.sample_dict:
             self.last_step = ''
             for step in self.steps_run:
                 if step in self.steps_not_run:
@@ -388,37 +434,3 @@ job_end
         self.end()
 
 
-def get_read(library_id, library_path, read='1'):
-    read1_list = [f'_{read}', f'R{read}', f'R{read}_001']
-    fq_list = ['fq', 'fastq']
-    suffix_list = ["", ".gz"]
-    read_pattern_list = [
-        f'{library_path}/{library_id}*{read}.{fq_str}{suffix}'
-        for read in read1_list
-        for fq_str in fq_list
-        for suffix in suffix_list
-    ]
-    fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
-    fq_list = (non_empty for non_empty in fq_list if non_empty)
-    fq_list = sorted(list(itertools.chain(*fq_list)))
-    if len(fq_list) == 0:
-        print("Allowed R1 patterns:")
-        for pattern in read_pattern_list:
-            print(pattern)
-        raise Exception(
-            '\n'
-            f'Invalid Read{read} path! \n'
-            f'library_id: {library_id}\n'
-            f'library_path: {library_path}\n'
-        )
-    return fq_list
-
-
-def get_fq(library_id, library_path):
-    fq1_list = get_read(library_id, library_path, read='1')
-    fq2_list = get_read(library_id, library_path, read='2')
-    if len(fq1_list) != len(fq2_list):
-        raise Exception("Read1 and Read2 fastq number do not match!")
-    fq1 = ",".join(fq1_list)
-    fq2 = ",".join(fq2_list)
-    return fq1, fq2
