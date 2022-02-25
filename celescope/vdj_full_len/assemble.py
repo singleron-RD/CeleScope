@@ -27,15 +27,21 @@ class Assemble(Step):
         self.fqs_dir = args.fqs_dir
 
         self.cwd_path = os.getcwd()
+        self.ref_path = ref_dict[self.soft][self.species]
+        self.soft_path = soft_dict[self.soft]
+        
+        # for customers
+        if args.ref_path and args.soft_path:
+            self.ref_path = args.ref_path
+            self.soft_path = args.soft_path
 
     @utils.add_log
     def run_assemble(self):
-        ref_path = ref_dict[self.soft][self.species]
-        soft_path = soft_dict[self.soft]
+
         cmd = (
-            f'{soft_path} vdj '
+            f'{self.soft_path} vdj '
             f'--id={self.sample} '
-            f'--reference={ref_path} '
+            f'--reference={self.ref_path} '
             f'--fastqs={self.cwd_path}/{self.fqs_dir} '
             f'--sample={self.sample} '
             f'--localcores={self.thread} '
@@ -61,6 +67,8 @@ def get_opts_assemble(parser, sub_program):
     parser.add_argument('--soft', help='cellranger version', choices=['3.0.2', '3.1.0', '4.0.0', '6.0.0'],
                         default='4.0.0')
     parser.add_argument('--mem', help='memory (G)', default=10)
+    parser.add_argument('--ref_path', help='reference path for cellranger')
+    parser.add_argument('--soft_path', help='soft path for cellranger')
     if sub_program:
         s_common(parser)
         parser.add_argument('--fqs_dir', help='fastq dir', required=True)
