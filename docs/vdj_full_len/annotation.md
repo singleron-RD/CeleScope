@@ -3,7 +3,7 @@
 - V(D)J annotation infomation.
 
 ## Output
-- `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
+- `filtered_contig_annotations.csv` High-level annotations of each high-confidence, cellular contig.
 
 - `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
 
