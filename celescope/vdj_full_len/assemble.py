@@ -27,6 +27,7 @@ class Assemble(Step):
         self.fqs_dir = args.fqs_dir
 
         self.cwd_path = os.getcwd()
+
         self.ref_path = ref_dict[self.soft][self.species]
         self.soft_path = soft_dict[self.soft]
         
@@ -63,7 +64,7 @@ def assemble(args):
 
 def get_opts_assemble(parser, sub_program):
     parser.add_argument('--species', help='species',
-                        choices=['hs', 'mmu'], required=True)
+                        choices=['hs', 'mmu'], default='hs')
     parser.add_argument('--soft', help='cellranger version', choices=['3.0.2', '3.1.0', '4.0.0', '6.0.0'],
                         default='4.0.0')
     parser.add_argument('--mem', help='memory (G)', default=10)
