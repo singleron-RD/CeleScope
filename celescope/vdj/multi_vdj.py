@@ -36,7 +36,6 @@ class Multi_vdj(Multi):
         )
         cmd = (
             f'{cmd_line} '
-            f'--match_dir {self.col4_dict[sample]} '
             f'--UMI_count_filter_file {UMI_count_filter_file} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
