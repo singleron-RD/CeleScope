@@ -4,6 +4,7 @@ import itertools
 import os
 from collections import defaultdict
 
+import numpy as np
 import pandas as pd
 
 import celescope
@@ -83,6 +84,7 @@ def parse_sample_tsv(sample_tsv):
         },
     """
     df = pd.read_csv(sample_tsv, sep='\t', header=0)
+    df.fillna('None', inplace=True)
 
     for col in SAMPLE_TSV_REQUIRED_COLS:
         if not col in df.columns:
@@ -263,20 +265,37 @@ job_end
         """
         pass
 
-    def parse_step_args(self, step):
+    def get_args_from_multi_cli(self, step):
+        """
+        Get arguments from multi_{assay}
+        """
         step_module = utils.find_step_module(self.__ASSAY__, step)
         func_opts = getattr(step_module, f"get_opts_{step}")
         step_parser = argparse.ArgumentParser(step_module)
         func_opts(step_parser, sub_program=False)
-        args = step_parser.parse_known_args()
-        return args
+        known_args, unknown_args = step_parser.parse_known_args()
+        return known_args, unknown_args
+
+    def get_all_step_args(self, step):
+        """
+        Get all arguments from step cli
+        """
+        step_module = utils.find_step_module(self.__ASSAY__, step)
+        func_opts = getattr(step_module, f"get_opts_{step}")
+        step_parser = argparse.ArgumentParser(step_module)
+        func_opts(step_parser, sub_program=True)
+        all_step_args = [action.dest for action in step_parser._actions]
+        if 'help' in all_step_args:
+            all_step_args.remove('help')
+
+        return all_step_args
 
     def get_cmd_line(self, step, sample):
-        """ get cmd line without input
+        """ get cmd line 
             return str
         """
-        args = self.parse_step_args(step)
-        args_dict = args[0].__dict__
+        known_args, _unknown_args = self.get_args_from_multi_cli(step)
+        args_dict = known_args.__dict__
         step_prefix = (
             f'{self.__APP__} {self.__ASSAY__} {step} '
             f'--outdir {self.outdir_dic[sample][step]} '
@@ -286,12 +305,19 @@ job_end
         cmd_line = step_prefix
         if self.args.debug:
             cmd_line += " --debug "
-        for arg in args_dict:
-            # override all args value with value in sample_tsv
-            print(arg)
+
+        # override all args value with value in sample_tsv
+        all_step_args = self.get_all_step_args(step)
+        for arg in all_step_args:
             if arg in self.sample_dict[sample]:
                 value = self.sample_dict[sample][arg]
-                cmd_line += f'--{arg} {value} '
+                if value != 'None':
+                    cmd_line += f'--{arg} {value} '
+
+        for arg in args_dict:
+            # If in sample_tsv, override it
+            if arg in self.sample_dict[sample]:
+                print(f"WARNING: Command line argument `{arg}` of sample `{sample}` will be overrided by the value in sample_tsv")
             else:
                 if args_dict[arg] is False:
                     continue

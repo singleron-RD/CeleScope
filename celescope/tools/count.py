@@ -64,9 +64,11 @@ class Count(Step):
 
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
-        self.force_cell_num = args.force_cell_num
+        self.force_cell_num = None
+        if utils.check_arg_not_none(args, 'force_cell_num'):
+            self.force_cell_num = int(float(args.force_cell_num))
         self.cell_calling_method = args.cell_calling_method
-        self.expected_cell_num = int(args.expected_cell_num)
+        self.expected_cell_num = int(float(args.expected_cell_num))
         self.bam = args.bam
 
         # set
@@ -202,7 +204,7 @@ class Count(Step):
     def cell_calling(self, df_sum):
         cell_calling_method = self.cell_calling_method
 
-        if (self.force_cell_num is not None) and (self.force_cell_num != 'None'):
+        if utils.check_arg_not_none(self.args, 'force_cell_num'):
             cell_bc, UMI_threshold = self.force_cell(df_sum)
         elif cell_calling_method == 'auto':
             cell_bc, UMI_threshold = self.auto_cell(df_sum)
