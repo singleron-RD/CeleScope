@@ -142,3 +142,4 @@ def get_opts_convert(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fq2', help='R2 read file', required=True)
+    return parser
