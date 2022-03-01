@@ -3,9 +3,10 @@ import pysam
 import os
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
+from celescope.vdj_full_len.__init__ import ref_dict, soft_dict
 from xopen import xopen
 
-BARCODES_10X_FILE = "/SGRNJ/Database/script/soft/cellranger/cellranger-3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes/737K-august-2016.txt"
+# BARCODES_10X_FILE = "/SGRNJ/Database/script/soft/cellranger/cellranger-3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes/737K-august-2016.txt"
 UMI_10X_LEN = 10
 TSO = "TTTCTTATATGGG"
 SEQ_LEN = 150
@@ -77,11 +78,14 @@ class Convert(Step):
         self.out_fq1_file = f'{self.outdir}/{self.sample}_S1_L001_R1_001.fastq.gz'
         self.out_fq2_file = f'{self.outdir}/{self.sample}_S1_L001_R2_001.fastq.gz'
         self.barcode_correspondence_file = f'{self.outdir}/barcode_correspond.txt'
+        self.BARCODES_10X_FILE = os.path.dirname(soft_dict[args.soft]) + "/lib/python/cellranger/barcodes/737K-august-2016.txt"
+        if args.soft_path:
+            self.BARCODES_10X_FILE = os.path.dirname(args.soft_path) + "/lib/python/cellranger/barcodes/737K-august-2016.txt"
              
     @utils.add_log
     def run_convert(self):
         # read file
-        barcodes_10X = open(BARCODES_10X_FILE, 'r')
+        barcodes_10X = open(self.BARCODES_10X_FILE, 'r')
         fq_file = pysam.FastxFile(self.fq2)
         
         # open out file
@@ -132,6 +136,9 @@ def convert(args):
     
 def get_opts_convert(parser, sub_program):
     parser.add_argument('--not_split_R2', help='whether split r2',action='store_true')
+    parser.add_argument('--soft_path', help='soft path for cellranger')
+    parser.add_argument('--soft', help='cellranger version', choices=['3.0.2', '3.1.0', '4.0.0', '6.0.0'],
+                        default='4.0.0')
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fq2', help='R2 read file', required=True)
