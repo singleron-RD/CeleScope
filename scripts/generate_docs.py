@@ -93,6 +93,7 @@ class Docs():
 
         # order: step
         self.output_file_doc_dict = OrderedDict()
+        self.feature_doc_dict = OrderedDict()
 
         assay_dir = f'docs/{assay}'
         if not os.path.exists(assay_dir):
@@ -119,6 +120,15 @@ class Docs():
             argument_docs = get_argument_docs_from_parser(parser)
         return argument_docs
 
+    def get_multi_feature_doc(self):
+        multi_feature_doc = "## Features\n"
+        for step in self.feature_doc_dict:
+            multi_feature_doc += f"### {step}\n"
+            multi_feature_doc += self.feature_doc_dict[step]
+            multi_feature_doc += '\n'
+
+        return multi_feature_doc
+
     def get_multi_output_doc(self):
         multi_output_doc = "## Output files\n"
         for step in self.output_file_doc_dict:
@@ -140,11 +150,14 @@ class Docs():
         class_docs, doc_dict = get_class_docs(step_module)
         if 'output' in doc_dict:
             self.output_file_doc_dict[step] = doc_dict['output']
+        if 'features' in doc_dict:
+            self.feature_doc_dict[step] = doc_dict['features']
         argument_docs = self.get_argument_docs(step, step_module)
 
         with open(self.out_md_dict[step], 'w') as out_file:
             out_file.write(class_docs)
             if step.startswith("multi"):
+                out_file.write(self.get_multi_feature_doc())
                 out_file.write(self.get_multi_output_doc())
             out_file.write(argument_docs)
 

@@ -14,10 +14,15 @@ from celescope.tools.step import Step, s_common
 class Consensus(Step):
     """
     ## Features
-    - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI).
+    - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and 
+    count up the number of each type of residue (ie. A or G or T or C for DNA) in all sequences in the
+    alignment. If the following conditions are met, the consensus sequence will be the most common residue in the alignment:
+    1. the percentage of the most common residue type > threshold(default: 0.5);
+    2. most common residue reads >= min_consensus_read;
+    otherwise an ambiguous character(N) will be added.
 
     ## Output
-    - `{sample}_consensus.fq` Consensus fastq.
+    - `{sample}_consensus.fq` Fastq file after consensus.
     """
 
     def __init__(self, args, display_title=None):

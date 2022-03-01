@@ -9,6 +9,46 @@
 
 If Single nuclei RNA-Seq is used, you need to add `--gtf_type gene` to include reads mapped to 
 intronic regions.
+## Features
+### mkref
+- Create a genome reference directory.
+
+
+### barcode
+
+- Demultiplex barcodes.
+- Filter invalid R1 reads, which includes:
+    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+    - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+
+### cutadapt
+- Trim adapters in R2 reads with cutadapt. Default adapters includes:
+    - polyT=A{18}, 18 A bases. 
+    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+
+### star
+- Align R2 reads to the reference genome with STAR.
+- Collect Metrics with Picard.
+
+
+### featureCounts
+- Assigning uniquely mapped reads to genomic features with FeatureCounts.
+
+### count
+- Cell-calling: Distinguish cell barcodes from background barcodes. 
+- Generate expression matrix.
+
+### analysis
+- Cell clustering with Seurat.
+
+- Calculate the marker gene of each cluster.
+
+- Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
+
+
 ## Output files
 ### mkref
 

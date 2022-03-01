@@ -49,6 +49,65 @@ multi_snp\
     --panel lung_1\
     --annovar_config annovar.config\
 ```
+## Features
+### mkref
+- Create dictionary file and fasta index for gatk SplitNCigarReads.
+(https://gatk.broadinstitute.org/hc/en-us/articles/360035531652-FASTA-Reference-genome-format) 
+Need to run `celescope rna mkref` first
+
+
+### barcode
+
+- Demultiplex barcodes.
+- Filter invalid R1 reads, which includes:
+    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+    - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+
+### cutadapt
+- Trim adapters in R2 reads with cutadapt. Default adapters includes:
+    - polyT=A{18}, 18 A bases. 
+    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+
+### consensus
+- Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and 
+count up the number of each type of residue (ie. A or G or T or C for DNA) in all sequences in the
+alignment. If the following conditions are met, the consensus sequence will be the most common residue in the alignment:
+1. the percentage of the most common residue type > threshold(default: 0.5);
+2. most common residue reads >= min_consensus_read;
+otherwise an ambiguous character(N) will be added.
+
+
+### star
+- Align R2 reads to the reference genome with STAR.
+- Collect Metrics with Picard.
+
+
+### featureCounts
+- Assigning uniquely mapped reads to genomic features with FeatureCounts.
+
+### target_metrics
+- Filter bam file
+    - Filter reads that are not cell-associated.
+    - Filter reads that are not mapped to target genes. 
+
+- Collect enrichment metrics.
+
+
+### variant_calling
+- Perform variant calling at single cell level.
+
+
+### filter_snp
+- Filter out `ref` and `alt` alleles that do not have enough reads to support.
+
+
+### analysis_snp
+- Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+
+
 ## Output files
 ### mkref
 - fasta index
@@ -65,7 +124,7 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
 
 ### consensus
-- `{sample}_consensus.fq` Consensus fastq.
+- `{sample}_consensus.fq` Fastq file after consensus.
 
 ### star
 - `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
