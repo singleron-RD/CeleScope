@@ -11,8 +11,6 @@
 
 - `{sample}_match_clonetypes.tsv` When summarize clonetypes, only consider barcodes in the match scRNA-Seq library. 
 This file will only be produced when the `match_dir` parameter is provided.
-
-
 ## Arguments
 `--type` Required. `TCR` or `BCR`.
 

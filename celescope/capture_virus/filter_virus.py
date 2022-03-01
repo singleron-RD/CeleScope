@@ -15,13 +15,13 @@ def filter_virus(args):
 class Filter_virus(Filter):
     """
 
-    Features
+    ## Features
     - Filter background virus UMIs base on a UMI threshold.
     There are three methods to determine the UMI threshold:
         - 'auto' : Using a method similar to cell calling method.
         - 'otsu' : UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
         - 'hard' : Using User provided UMI threshold.
 
-    Output
+    ## Output
     - {sample}_filtered_UMI_tsne.csv : Filtered virus UMI counts of each cell barcode.
     """

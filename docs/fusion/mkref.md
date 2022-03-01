@@ -14,8 +14,6 @@ celescope fusion mkref \
 --fusion_pos fusion_pos.txt \
 --genomeSAindexNbases 4
 ```
-
-
 ## Arguments
 `--thread` Default=6. Threads to use.
 

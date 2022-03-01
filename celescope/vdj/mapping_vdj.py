@@ -12,10 +12,10 @@ from celescope.vdj.__init__ import CHAINS
 
 class Mapping_vdj(Step):
     """
-    Features
+    ## Features
     - Align R2 reads to IGMT(http://www.imgt.org/) database sequences with mixcr.
 
-    Output
+    ## Output
     - `{sample}_consensus.fasta` Fasta file after UMI consensus.
 
     - `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.

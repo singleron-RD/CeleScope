@@ -11,11 +11,11 @@ from celescope.tools import utils
 
 class Replace_tsne(Step):
     """
-    Features
+    ## Features
     - Replace rate in each cluster
     - Top replace genes in each cluster
 
-    Output
+    ## Output
     - `{sample}.rep_in_tsne.txt` Replace rate in each cluster.
     - `{sample}.rep_in_tsne_top10` Top 10 replace genes in each cluster.
     """

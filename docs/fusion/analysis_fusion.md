@@ -1,5 +1,3 @@
-
-
 ## Arguments
 `--fusion_genomeDir` Fusion genome directory.
 

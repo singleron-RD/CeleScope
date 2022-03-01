@@ -6,7 +6,7 @@ from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NA
 class Multi_dynaseq(Multi):
 
     """
-    Usage
+    ## Usage
     ```
         multi_dynaseq\\
         --mapfile ./rna.mapfile\\

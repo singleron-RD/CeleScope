@@ -1,4 +1,122 @@
+## Usage
+```
+    multi_dynaseq\
+    --mapfile ./rna.mapfile\
+    --genomeDir /SGRNJ/Public/Database/genome/homo_mus\
+    --STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 --outSAMattributes MD"\
+    --strand /SGRNJ03/Public/Database/genome/gene.strandedness.csv
+```
 
+You need to generate strandness-file from gtf file. 
+The format is "geneID,strand", eg:
+```
+ENSG00000223972,+
+ENSG00000227232,-
+ENSG00000278267,-
+```
+## Output files
+### barcode
+
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### star
+- `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
+
+- `{sample}_SJ.out.tab` SJ.out.tab contains high confidence collapsed splice junctions in tab-delimited format.
+
+- `{sample}_Log.out` Main log with a lot of detailed information about the run. 
+This is most useful for troubleshooting and debugging.
+
+- `{sample}_Log.progress.out` Report job progress statistics, such as the number of processed reads, 
+% of mapped reads etc. It is updated in 1 minute intervals.
+
+- `{sample}_Log.Log.final.out` Summary mapping statistics after mapping job is complete, 
+very useful for quality control. The statistics are calculated for each read (single- or paired-end) and 
+then summed or averaged over all reads. Note that STAR counts a paired-end read as one read, 
+(unlike the samtools agstat/idxstats, which count each mate separately). 
+Most of the information is collected about the UNIQUE mappers 
+(unlike samtools agstat/idxstats which does not separate unique or multi-mappers). 
+Each splicing is counted in the numbers of splices, which would correspond to 
+summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
+i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
+
+- `{sample}_region.log` Picard CollectRnaSeqMetrics results.
+
+### featureCounts
+- `{sample}` Numbers of reads assigned to features (or meta-features).
+- `{sample}_summary` Stat info for the overall summrization results, including number of 
+successfully assigned reads and number of reads that failed to be assigned due to 
+various reasons (these reasons are included in the stat info).
+- `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
+sorted by coordinates；BAM file contains tags as following(Software Version>=1.1.8):
+    - CB cell barcode
+    - UB UMI
+    - GN gene name
+    - GX gene id
+- `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
+
+### count
+- `{sample}_all_matrix` The expression matrix of all detected barcodes. 
+    Can be read in by calling the `Seurat::Read10X` function.
+- `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. 
+Can be read in by calling the `Seurat::Read10X` function.
+- `{sample}_matrix.tsv.gz` The expression matrix of the barcode that is identified to be the cell, separated by tabs. 
+CeleScope >=1.2.0 does not output this file.
+- `{sample}_count_detail.txt.gz` 4 columns: 
+    - barcode  
+    - gene ID  
+    - UMI count  
+    - read_count  
+- `{sample}_counts.txt` 6 columns:
+    - Barcode: barcode sequence
+    - readcount: read count of each barcode
+    - UMI2: UMI count (with reads per UMI >= 2) for each barcode
+    - UMI: UMI count for each barcode
+    - geneID: gene count for each barcode
+    - mark: cell barcode or backgound barcode.
+        `CB` cell  
+        `UB` background  
+- `{sample}_downsample.txt` 3 columns：
+    - percent: percentage of sampled reads
+    - median_geneNum: median gene number per cell
+    - saturation: sequencing saturation
+- `barcode_filter_magnitude.pdf` Barcode-UMI plot.
+
+### analysis
+- `markers.tsv` Marker genes of each cluster.
+
+- `tsne_coord.tsv` t-SNE coordinates and clustering information.
+
+- `{sample}/06.analsis/{sample}_auto_assign/` This result will only be obtained when `--type_marker_tsv` 
+parameter is provided. The result contains 3 files:
+    - `{sample}_auto_cluster_type.tsv` The cell type of each cluster; if cell_type is "NA", 
+it means that the given marker is not enough to identify the cluster.
+    - `{sample}_png/{cluster}_pctdiff.png` Percentage of marker gene expression in this cluster - percentage in all other clusters.
+    - `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
+
+### conversion
+- `{sample}.PosTag.bam` Bam file with conversion info.
+- `{sample}.PosTag.csv` SNP info in csv format.
+
+### substitution
+- `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
+
+### replacement
+- `{sample}.TC_matrix.rds` New and old info for each barcode/gene/umi.
+- `{sample}.new_matrix.tsv.gz` New RNA matrix.
+- `{sample}.old_matrix.tsv.gz` Old RNA matrix.
+- `{sample}.fraction_of_newRNA_per_cell.txt` Fraction of new RNA of each cell.
+- `{sample}.fraction_of_newRNA_per_gene.txt` Fraction of new RNA of each gene.
+- `{sample}.fraction_of_newRNA_matrix.txt` Fraction of new RNA of each cell and gene.
+
+### replace_tsne
+- `{sample}.rep_in_tsne.txt` Replace rate in each cluster.
+- `{sample}.rep_in_tsne_top10` Top 10 replace genes in each cluster.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -102,6 +220,8 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
+
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
@@ -121,23 +241,7 @@ is higher than or equal to this value.
 
 `--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`.
 
-`--genomeDir` Required. Genome directory.
-
-`--save_rds` Write rds to disk.
-
-`--type_marker_tsv` A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
-```
-cell_type	marker
-Alveolar	"CLDN18,FOLR1,AQP4,PEBP4"
-Endothelial	"CLDN5,FLT1,CDH5,RAMP2"
-Epithelial	"CAPS,TMEM190,PIFO,SNTN"
-Fibroblast	"COL1A1,DCN,COL1A2,C1R"
-B_cell	"CD79A,IGKC,IGLC3,IGHG3"
-Myeloid	"LYZ,MARCO,FCGR3A"
-T_cell	"CD3D,TRBC1,TRBC2,TRAC"
-LUAD	"NKX2-1,NAPSA,EPCAM"
-LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
-```
+`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
 `--strand` gene strand file, the format is "geneID,+/-".
 

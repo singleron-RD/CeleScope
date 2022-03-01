@@ -4,10 +4,10 @@ from celescope.tools.multi import Multi
 
 class Multi_fusion(Multi):
     """
-    Features
+    ## Features
     - Generate multi-sample scripts.
 
-    Usage
+    ## Usage
     ```
     multi_fusion\\
     --mapfile ./fusion.mapfile\\

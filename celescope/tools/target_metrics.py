@@ -11,14 +11,14 @@ from celescope.__init__ import HELP_DICT
 
 class Target_metrics(Step):
     """
-    Features
+    ## Features
     - Filter bam file
         - Filter reads that are not cell-associated.
         - Filter reads that are not mapped to target genes. 
 
     - Collect enrichment metrics.
 
-    Output
+    ## Output
     - `filtered.bam` BAM file after filtering.
     """
 

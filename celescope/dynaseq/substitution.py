@@ -13,10 +13,10 @@ from celescope.tools import utils
 
 class Substitution(Step):
     """
-    Features
+    ## Features
     - Computes the overall conversion rates in reads and plots a barplot.
 
-    Output
+    ## Output
     - `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
     """
 

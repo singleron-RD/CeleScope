@@ -12,11 +12,11 @@ ADAPTER = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
 
 class Cutadapt(Step):
     """
-    Features
+    ## Features
     - Trim adapters in R2 reads with cutadapt. Default adapters includes:
         - polyT=A{18}, 18 A bases. 
         - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
-    Output
+    ## Output
     - `cutadapt.log` Cutadapt output log file.
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
     """

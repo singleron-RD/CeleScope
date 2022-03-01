@@ -27,8 +27,6 @@ CeleScope >=1.2.0 does not output this file.
     - median_geneNum: median gene number per cell
     - saturation: sequencing saturation
 - `barcode_filter_magnitude.pdf` Barcode-UMI plot.
-
-
 ## Arguments
 `--genomeDir` Required. Genome directory.
 

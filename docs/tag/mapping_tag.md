@@ -9,8 +9,6 @@
     `tag_name`  tag name in barcode_fasta  
     `UMI`   UMI sequence  
     `read_count` read count per UMI  
-
-
 ## Arguments
 `--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases.         
 `L` linker(common sequences)  

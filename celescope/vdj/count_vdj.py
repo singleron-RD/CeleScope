@@ -15,11 +15,11 @@ SEQUENCES_HEADER = ["aaSeqCDR3", "nSeqCDR3"]
 
 class Count_vdj(Step):
     """
-    Features
+    ## Features
     - Cell-calling based on barcode-UMI rank.    
     - Summarize clonetypes infomation.
 
-    Output
+    ## Output
     - `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, each chain occupies one line.
 
     - `{sample}_cell_confident_count.tsv` The clone type of VDJ cell barcode, each cell occupies one line.

@@ -9,8 +9,6 @@
 - `{sample}.fraction_of_newRNA_per_cell.txt` Fraction of new RNA of each cell.
 - `{sample}.fraction_of_newRNA_per_gene.txt` Fraction of new RNA of each gene.
 - `{sample}.fraction_of_newRNA_matrix.txt` Fraction of new RNA of each cell and gene.
-
-
 ## Arguments
 `--bg_cov` background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format.
 

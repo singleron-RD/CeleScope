@@ -24,8 +24,6 @@ summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated 
 i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
 
 - `{sample}_region.log` Picard CollectRnaSeqMetrics results.
-
-
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 

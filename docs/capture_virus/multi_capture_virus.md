@@ -16,7 +16,30 @@ multi_capture_virus \
 ```
 sh ./shell/{sample}.sh
 ```
+## Output files
+### mkref
 
+- STAR genome index files
+- Genome config file
+
+
+### barcode
+
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### consensus
+- `{sample}_consensus.fq` Consensus fastq.
+
+### count_virus
+- {sample_raw_read_count.json} : barcode - UMI - raw_reads_count
+
+### filter_virus
+- {sample}_filtered_UMI_tsne.csv : Filtered virus UMI counts of each cell barcode.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -119,6 +142,8 @@ To reduce the number of falsely trimmed bases, the alignment algorithm requires 
 at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
+
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
 `--threshold` Default 0.5. Valid base threshold.
 

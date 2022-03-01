@@ -17,8 +17,6 @@ fasta = Homo_sapiens.GRCh38.dna.primary_assembly.fa
 gtf = Homo_sapiens.GRCh38.99.gtf
 refflat = Homo_sapiens_ensembl_99.refFlat
 ```
-
-
 ## Arguments
 `--thread` Default=6. Threads to use.
 

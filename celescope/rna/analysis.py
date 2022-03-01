@@ -9,14 +9,14 @@ from celescope.tools.step import Step
 
 class Analysis(Step):
     """
-    Features
+    ## Features
     - Cell clustering with Seurat.
 
     - Calculate the marker gene of each cluster.
 
     - Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
 
-    Output
+    ## Output
     - `markers.tsv` Marker genes of each cluster.
 
     - `tsne_coord.tsv` t-SNE coordinates and clustering information.

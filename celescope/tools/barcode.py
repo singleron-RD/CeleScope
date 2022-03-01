@@ -315,7 +315,7 @@ class Chemistry():
 
 class Barcode(Step):
     """
-    Features
+    ## Features
 
     - Demultiplex barcodes.
     - Filter invalid R1 reads, which includes:
@@ -324,7 +324,7 @@ class Barcode(Step):
         - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
         - Low quality reads: low sequencing quality in barcode and UMI regions.
 
-    Output
+    ## Output
 
     - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
     the read name is `{barcode}_{UMI}_{read ID}`.

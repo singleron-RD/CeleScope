@@ -1,5 +1,3 @@
-
-
 ## Arguments
 `--not_correct_UMI` Perform UMI correction.
 

@@ -7,8 +7,6 @@ There are three methods to determine the UMI threshold:
 
 ## Output
 - {sample}_filtered_UMI_tsne.csv : Filtered virus UMI counts of each cell barcode.
-
-
 ## Arguments
 `--not_correct_UMI` Perform UMI correction.
 

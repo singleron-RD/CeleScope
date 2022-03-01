@@ -4,7 +4,7 @@ from celescope.tools.multi import Multi
 
 class Multi_capture_virus(Multi):
     """
-    Usage
+    ## Usage
     1. Make a virus genomeDir using `celescope capture_virus mkref`
 
     2. Generate shell scripts

@@ -1,5 +1,3 @@
-
-
 ## Arguments
 `--outdir` output dir.
 

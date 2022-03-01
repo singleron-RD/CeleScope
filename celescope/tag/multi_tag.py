@@ -7,7 +7,7 @@ class Multi_tag(Multi):
     `multi_tag` is used to analyze Single-cell Multiplexing data generated with CLindex<sup>TM</sup> Sample Multiplexing kits. 
     Before running `multi_tag`, you need to run scRNA-Seq data with CeleScope first.
 
-    Usage
+    ## Usage
 
     ```
     multi_tag \\

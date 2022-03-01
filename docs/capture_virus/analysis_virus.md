@@ -1,5 +1,3 @@
-
-
 ## Arguments
 `--filter_tsne_file` filter tsne file.
 

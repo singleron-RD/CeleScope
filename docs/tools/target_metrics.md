@@ -7,8 +7,6 @@
 
 ## Output
 - `filtered.bam` BAM file after filtering.
-
-
 ## Arguments
 `--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
 

@@ -6,16 +6,16 @@ from celescope.tools.mkref import Mkref, super_opts
 
 class Mkref_snp(Mkref):
     """
-    Features
+    ## Features
     - Create dictionary file and fasta index for gatk SplitNCigarReads.
     (https://gatk.broadinstitute.org/hc/en-us/articles/360035531652-FASTA-Reference-genome-format) 
     Need to run `celescope rna mkref` first
 
-    Output
+    ## Output
     - fasta index
     - gatk dictionary file
 
-    Usage
+    ## Usage
     ```
     # run celescope rna mkref first
     celescope snp mkref \\

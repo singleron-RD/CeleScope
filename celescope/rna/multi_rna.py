@@ -4,7 +4,7 @@ from celescope.tools.multi import Multi
 
 class Multi_rna(Multi):
     """
-    Usage
+    ## Usage
     ```
         multi_rna\\
         --mapfile ./rna.mapfile\\

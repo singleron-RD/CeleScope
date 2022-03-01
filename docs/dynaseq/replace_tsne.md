@@ -5,8 +5,6 @@
 ## Output
 - `{sample}.rep_in_tsne.txt` Replace rate in each cluster.
 - `{sample}.rep_in_tsne_top10` Top 10 replace genes in each cluster.
-
-
 ## Arguments
 `--tsne` tsne file from analysis step.
 

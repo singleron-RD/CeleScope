@@ -13,10 +13,10 @@ from celescope.tools.step import Step, s_common
 
 class Consensus(Step):
     """
-    Features
+    ## Features
     - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI).
 
-    Output
+    ## Output
     - `{sample}_consensus.fq` Consensus fastq.
     """
 

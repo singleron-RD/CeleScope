@@ -4,7 +4,7 @@ from celescope.tools.multi import Multi
 
 class Multi_snp(Multi):
     """
-    Usage
+    ## Usage
 
     ### Make a snp reference genomeDir
 

@@ -10,7 +10,7 @@ from celescope.__init__ import HELP_DICT
 
 class Analysis_tag(Step):
     """
-    Features
+    ## Features
     - Combine scRNA-Seq clustering infromation with tag assignment.
     """
 

@@ -9,9 +9,9 @@ from celescope.tools import utils
 
 class FeatureCounts(Step):
     """
-    Features
+    ## Features
     - Assigning uniquely mapped reads to genomic features with FeatureCounts.
-    Output
+    ## Output
     - `{sample}` Numbers of reads assigned to features (or meta-features).
     - `{sample}_summary` Stat info for the overall summrization results, including number of 
     successfully assigned reads and number of reads that failed to be assigned due to 

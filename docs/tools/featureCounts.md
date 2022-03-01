@@ -12,8 +12,6 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
     - GN gene name
     - GX gene id
 - `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
-
-
 ## Arguments
 `--gtf_type` Specify feature type in GTF annotation.
 

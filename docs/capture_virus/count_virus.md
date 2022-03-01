@@ -4,8 +4,6 @@
 
 ## Output
 - {sample_raw_read_count.json} : barcode - UMI - raw_reads_count
-
-
 ## Arguments
 `--min_query_length` Minimum query length.
 

@@ -84,10 +84,10 @@ def mapping_tag(args):
 
 class Mapping_tag(Step):
     """
-    Features
+    ## Features
     - Align R2 reads to the tag barcode fasta.
 
-    Output
+    ## Output
 
     - `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
 

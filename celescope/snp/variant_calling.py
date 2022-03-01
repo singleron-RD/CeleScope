@@ -7,10 +7,10 @@ from celescope.rna.mkref import Mkref_rna
 
 class Variant_calling(Step):
     """
-    Features
+    ## Features
     - Perform variant calling at single cell level.
 
-    Output
+    ## Output
 
     - `{sample}_norm.vcf` Normalized vcf file.
     """

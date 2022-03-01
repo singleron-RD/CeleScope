@@ -1,5 +1,3 @@
-
-
 ## Arguments
 `--outdir` Output diretory.
 

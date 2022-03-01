@@ -3,8 +3,6 @@
 
 ## Output
 - `{sample}_consensus.fq` Consensus fastq.
-
-
 ## Arguments
 `--threshold` Default 0.5. Valid base threshold.
 

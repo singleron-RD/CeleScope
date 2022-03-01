@@ -40,10 +40,10 @@ def get_clonotypes_table(df):
 
 class Split_tag(Step):
     """
-    Features
+    ## Features
     - Split scRNA-Seq fastq according to tag assignment.
 
-    Output
+    ## Output
     - `matrix/` Matrix files of each tag.(Optional)
     - `fastq/` Fastq files of each tag.(Optional)
     """

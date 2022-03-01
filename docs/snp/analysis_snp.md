@@ -5,8 +5,6 @@
 - `{sample}_gt.csv` genotypes of variants of each cell. Row is variant, column is cell.
 - `{sample}_variant_ncell.csv` Number of cells with each genotype.
 - `{sample}_variant_table.csv` Annotated `{sample}_variant_ncell.csv`.
-
-
 ## Arguments
 `--annovar_config` ANNOVAR config file.
 

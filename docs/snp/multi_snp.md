@@ -50,7 +50,71 @@ multi_snp\
     --annovar_config annovar.config\
     --min_support_read 1
 ```
+## Output files
+### mkref
+- fasta index
+- gatk dictionary file
 
+
+### barcode
+
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### consensus
+- `{sample}_consensus.fq` Consensus fastq.
+
+### star
+- `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
+
+- `{sample}_SJ.out.tab` SJ.out.tab contains high confidence collapsed splice junctions in tab-delimited format.
+
+- `{sample}_Log.out` Main log with a lot of detailed information about the run. 
+This is most useful for troubleshooting and debugging.
+
+- `{sample}_Log.progress.out` Report job progress statistics, such as the number of processed reads, 
+% of mapped reads etc. It is updated in 1 minute intervals.
+
+- `{sample}_Log.Log.final.out` Summary mapping statistics after mapping job is complete, 
+very useful for quality control. The statistics are calculated for each read (single- or paired-end) and 
+then summed or averaged over all reads. Note that STAR counts a paired-end read as one read, 
+(unlike the samtools agstat/idxstats, which count each mate separately). 
+Most of the information is collected about the UNIQUE mappers 
+(unlike samtools agstat/idxstats which does not separate unique or multi-mappers). 
+Each splicing is counted in the numbers of splices, which would correspond to 
+summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
+i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
+
+- `{sample}_region.log` Picard CollectRnaSeqMetrics results.
+
+### featureCounts
+- `{sample}` Numbers of reads assigned to features (or meta-features).
+- `{sample}_summary` Stat info for the overall summrization results, including number of 
+successfully assigned reads and number of reads that failed to be assigned due to 
+various reasons (these reasons are included in the stat info).
+- `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
+sorted by coordinates；BAM file contains tags as following(Software Version>=1.1.8):
+    - CB cell barcode
+    - UB UMI
+    - GN gene name
+    - GX gene id
+- `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
+
+### target_metrics
+- `filtered.bam` BAM file after filtering.
+
+### variant_calling
+
+- `{sample}_norm.vcf` Normalized vcf file.
+
+### analysis_snp
+- `{sample}_gt.csv` genotypes of variants of each cell. Row is variant, column is cell.
+- `{sample}_variant_ncell.csv` Number of cells with each genotype.
+- `{sample}_variant_table.csv` Annotated `{sample}_variant_ncell.csv`.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -153,6 +217,8 @@ To reduce the number of falsely trimmed bases, the alignment algorithm requires 
 at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
+
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
 `--threshold` Default 0.5. Valid base threshold.
 

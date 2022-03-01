@@ -4,8 +4,6 @@
 ## Output
 
 - `{sample}_norm.vcf` Normalized vcf file.
-
-
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 

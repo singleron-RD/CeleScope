@@ -31,10 +31,10 @@ np.random.seed(0)
 
 class Count(Step):
     """
-    Features
+    ## Features
     - Cell-calling: Distinguish cell barcodes from background barcodes. 
     - Generate expression matrix.
-    Output
+    ## Output
     - `{sample}_all_matrix` The expression matrix of all detected barcodes. 
         Can be read in by calling the `Seurat::Read10X` function.
     - `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. 

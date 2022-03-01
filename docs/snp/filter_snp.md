@@ -1,5 +1,3 @@
-
-
 ## Arguments
 `--threshold_method` One of [otsu, auto, hard, none].
 

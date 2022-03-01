@@ -11,7 +11,40 @@ multi_tag \
     --split_matrix\
     --mod shell
 ```
+## Output files
+### barcode
 
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### mapping_tag
+
+- `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
+
+    `barcode` cell barcode  
+    `tag_name`  tag name in barcode_fasta  
+    `UMI`   UMI sequence  
+    `read_count` read count per UMI  
+
+### count_tag
+
+- `{sample}_umi_tag.tsv` 
+
+    `first column` cell barcode  
+    `last column`  assigned tag  
+    `columns between first and last` UMI count for each tag 
+
+- `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
+
+- `{sample}_cluster_count.tsv` cell barcode number assigned to *undeterminded*, *multiplet* and *each tag*
+
+### split_tag
+- `matrix/` Matrix files of each tag.(Optional)
+- `fastq/` Fastq files of each tag.(Optional)
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -114,6 +147,8 @@ To reduce the number of falsely trimmed bases, the alignment algorithm requires 
 at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
+
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
 `--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases.         
 `L` linker(common sequences)  

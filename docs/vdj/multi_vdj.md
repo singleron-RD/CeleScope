@@ -6,7 +6,40 @@ multi_vdj \
     --thread 8 \
     --mod shell
 ``` 
+## Output files
+### barcode
 
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### consensus
+- `{sample}_consensus.fq` Consensus fastq.
+
+### mapping_vdj
+- `{sample}_consensus.fasta` Fasta file after UMI consensus.
+
+- `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.
+
+- `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
+most VJ_pair UMI reads is kept.
+
+- `{sample}_align.txt` Result report.
+
+- `{sample}_alignments.txt` The alignment result of each UMI/read.
+
+### count_vdj
+- `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, each chain occupies one line.
+
+- `{sample}_cell_confident_count.tsv` The clone type of VDJ cell barcode, each cell occupies one line.
+
+- `{sample}_clonetypes.tsv` The count and percentage of each clonetypes of VDJ cell barcode.
+
+- `{sample}_match_clonetypes.tsv` When summarize clonetypes, only consider barcodes in the match scRNA-Seq library. 
+This file will only be produced when the `match_dir` parameter is provided.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -109,6 +142,8 @@ To reduce the number of falsely trimmed bases, the alignment algorithm requires 
 at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
+
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
 `--threshold` Default 0.5. Valid base threshold.
 
