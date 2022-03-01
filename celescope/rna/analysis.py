@@ -1,6 +1,4 @@
 
-from pathlib import PurePath
-
 from celescope.tools import analysis_wrapper
 from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools import utils
