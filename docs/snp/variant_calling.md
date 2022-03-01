@@ -7,7 +7,7 @@
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
-`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
+`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
 
 `--bam` Input BAM file from step `target_metrics`.
 

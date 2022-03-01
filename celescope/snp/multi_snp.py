@@ -37,9 +37,9 @@ class Multi_snp(Multi):
     multi_snp\\
         --mapfile ./test1.mapfile\\
         --genomeDir {genomeDir after running celescope snp mkref}\\
-        --thread 10\\
+        --thread 4\\
         --mod shell\\
-        --gene_list gene_list.tsv\\
+        --panel lung_1\\
         --annovar_config annovar.config\\
         --not_consensus
     ```
@@ -50,11 +50,10 @@ class Multi_snp(Multi):
     multi_snp\\
         --mapfile ./test1.mapfile\\
         --genomeDir {genomeDir after running celescope snp mkref}\\
-        --thread 10\\
+        --thread 4\\
         --mod shell\\
-        --gene_list gene_list.tsv\\
+        --panel lung_1\\
         --annovar_config annovar.config\\
-        --min_support_read 1
     ```
 
     """

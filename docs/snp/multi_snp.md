@@ -31,9 +31,9 @@ There are two ways to run `multi_snp`
 multi_snp\
     --mapfile ./test1.mapfile\
     --genomeDir {genomeDir after running celescope snp mkref}\
-    --thread 10\
+    --thread 4\
     --mod shell\
-    --gene_list gene_list.tsv\
+    --panel lung_1\
     --annovar_config annovar.config\
     --not_consensus
 ```
@@ -44,11 +44,10 @@ multi_snp\
 multi_snp\
     --mapfile ./test1.mapfile\
     --genomeDir {genomeDir after running celescope snp mkref}\
-    --thread 10\
+    --thread 4\
     --mod shell\
-    --gene_list gene_list.tsv\
+    --panel lung_1\
     --annovar_config annovar.config\
-    --min_support_read 1
 ```
 ## Output files
 ### mkref
@@ -105,7 +104,7 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
 - `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
 
 ### target_metrics
-- `filtered.bam` BAM file after filtering. Keep reads that are cell-associated and mapped to target genes.
+- `filtered.bam` BAM file after filtering. Reads that are not cell-associated or not mapped to target genes are filtered.
 
 ### variant_calling
 - `{sample}_raw.vcf` Variants are called with bcftools default settings.
@@ -245,11 +244,11 @@ is higher than or equal to this value.
 
 `--featureCounts_param` Other featureCounts parameters.
 
-`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
+`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
 
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
-`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
+`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
 
 `--threshold_method` One of [otsu, auto, hard, none].
 
