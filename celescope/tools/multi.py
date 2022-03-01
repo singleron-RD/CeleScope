@@ -152,13 +152,16 @@ Sample_tsv is a tab-delimited text file with header. Each line of mapfile repres
 - `fastq_dir`: Fastq file directory path.
 - `sample_name`: Unique name of the sample. It is the prefix of all output files corresponds to this sample.
 
-Additional columns:
+Additional required columns:
 - `matched_dir`: The single cell rna directory after running CeleScope is called `matched_dir`. 
 This column in required in `tag`, `snp` and `capture_virus`, and optional in `vdj`.
-
-- `force_cell`: Force celescope to use this number of cells. 
 - `background_snp`: Background snp file. It is required in `dynaseq`. 
 
+Additional optional columns:
+Any availabel arguments in `multi_{assay}` can be used in this file. 
+- `expected_cell_num` Expected cell number.
+- `force_cell_num`: Force celescope to use this number of cells. 
+...
 
 Example
 
