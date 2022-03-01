@@ -86,16 +86,10 @@ class Count_tag(Step):
         # read
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)
 
-        if utils.check_arg_not_none(args, 'match_dir'):
-            match_dict = utils.parse_match_dir(args.match_dir)
-            self.match_barcode = match_dict['match_barcode']
-            self.n_match_barcode = match_dict['n_match_barcode']
-            self.tsne_file = match_dict['tsne_coord']
-            self.matrix_dir = match_dict['matrix_dir']
-        elif utils.check_arg_not_none(args, 'matrix_dir'):
-            self.match_barcode, self.n_match_barcode = utils.get_barcode_from_matrix_dir(args.matrix_dir)
-            self.tsne_file = args.tsne_file
-            self.matrix_dir = args.matrix_dir
+        if utils.check_arg_not_none(self.args, 'match_dir'):
+            self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_match_dir(args.match_dir)
+        elif utils.check_arg_not_none(self.args, 'matrix_dir'):
+            self.match_cell_barcodes = utils.get_barcode_from_matrix_dir(args.matrix_dir)
         else:
             raise ValueError("--match_dir or --matrix_dir is required.")
 
@@ -207,7 +201,7 @@ class Count_tag(Step):
         mapped_read = int(self.df_read_count['read_count'].sum())
 
         # in cell
-        df_read_count_in_cell = self.df_read_count[self.df_read_count.index.isin(self.match_barcode)]
+        df_read_count_in_cell = self.df_read_count[self.df_read_count.index.isin(self.match_cell_barcodes)]
         mapped_read_in_cell = int(df_read_count_in_cell['read_count'].sum())
         self.add_metric(
             name='Mapped Reads in Cells',
@@ -223,7 +217,7 @@ class Count_tag(Step):
         df_UMI_in_cell = df_UMI_in_cell.reset_index()
         df_UMI_in_cell = df_UMI_in_cell.pivot(
             index='barcode', columns=tag_name, values='UMI')
-        df_cell = pd.DataFrame(index=self.match_barcode)
+        df_cell = pd.DataFrame(index=self.match_cell_barcodes)
         df_UMI_cell = pd.merge(
             df_cell,
             df_UMI_in_cell,
