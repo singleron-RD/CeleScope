@@ -45,9 +45,13 @@ alignment. If the following conditions are met, the consensus sequence will be t
 otherwise an ambiguous character(N) will be added.
 
 
+### star_virus
+- Map reads to the viral genome using STAR.
+
+
 ### count_virus
 
-- Count raw virus reads
+- Taking the bam file as input, count the number of UMIs and reads mapped to the viral genome.
 
 
 ### filter_virus
@@ -76,6 +80,9 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 
 ### consensus
 - `{sample}_consensus.fq` Fastq file after consensus.
+
+### star_virus
+- `{sample}_virus_Aligned.sortedByCoord.out.bam` : Aligned BAM sorted by coordinate.
 
 ### count_virus
 - {sample_raw_read_count.json} : barcode - UMI - raw_reads_count

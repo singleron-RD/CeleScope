@@ -543,7 +543,7 @@ def get_barcode_from_matrix_dir(matrix_dir):
 
     """
     match_barcode_file = f'{matrix_dir}/{BARCODE_FILE_NAME[0]}'
-    match_barcode, n_match_barcode = read_one_col(barcodes_file)
+    match_barcode, n_match_barcode = read_one_col(match_barcode_file)
     return match_barcode, n_match_barcode
 
 @add_log

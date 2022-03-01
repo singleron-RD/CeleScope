@@ -43,7 +43,7 @@ class Multi():
         self.col4_dict = {}
         self.col5_dict = {}
         self.logdir = None
-        self.sjmdir = None
+        self.sjm_dir = None
         self.sjm_file = None
 
         self.sjm_cmd = ''

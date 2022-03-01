@@ -5,7 +5,11 @@ from celescope.capture_virus.mkref import Mkref_virus
 
 class Star_virus(Star_mixin):
     """
-    star virus class
+    ## Features
+    - Map reads to the viral genome using STAR.
+
+    ## Output
+    - `{sample}_virus_Aligned.sortedByCoord.out.bam` : Aligned BAM sorted by coordinate.
     """
 
     def __init__(self, args, display_title=None):

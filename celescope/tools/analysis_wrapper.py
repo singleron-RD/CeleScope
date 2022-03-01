@@ -1,8 +1,5 @@
-import subprocess
 import scanpy as sc
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from celescope.tools import utils

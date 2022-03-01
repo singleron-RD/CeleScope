@@ -1,3 +1,8 @@
+## Features
+- Map reads to the viral genome using STAR.
+
+## Output
+- `{sample}_virus_Aligned.sortedByCoord.out.bam` : Aligned BAM sorted by coordinate.
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
