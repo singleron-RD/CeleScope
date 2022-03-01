@@ -154,7 +154,7 @@ Sample_tsv is a tab-delimited text file with header. Each line of mapfile repres
 
 Additional columns:
 - `matched_dir`: The single cell rna directory after running CeleScope is called `matched_dir`. 
-This column in required in `tag`, 'snp` and `capture_virus`, and optional in `vdj`.
+This column in required in `tag`, `snp` and `capture_virus`, and optional in `vdj`.
 
 - `force_cell`: Force celescope to use this number of cells. 
 - `background_snp`: Background snp file. It is required in `dynaseq`. 
@@ -164,7 +164,7 @@ Example
 
 Sample1 has 2 paired-end fastq files located in fastq_dir1. Sample2 has 1 paired-end fastq file located in fastq_dir2.
 ```
-$cat ./my.mapfile
+$cat ./sample.tsv
 sample_name fastq_prefix    fastq_dir
 sample1 fastq_prefix1, fastq_prefix3	fastq_dir1
 sample2 fastq_prefix2	fastq_dir2
