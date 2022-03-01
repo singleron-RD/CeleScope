@@ -11,8 +11,8 @@ class Variant_calling(Step):
     - Perform variant calling at single cell level.
 
     ## Output
-
-    - `{sample}_norm.vcf` Normalized vcf file.
+    - `{sample}_raw.vcf` Variants are called with bcftools default settings.
+    - `{sample}_norm.vcf` Indels are left-aligned and normalized. See https://samtools.github.io/bcftools/bcftools.html#norm for more details.
     """
 
     def __init__(self, args):

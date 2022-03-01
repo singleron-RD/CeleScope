@@ -6,7 +6,7 @@
 - Collect enrichment metrics.
 
 ## Output
-- `filtered.bam` BAM file after filtering.
+- `filtered.bam` BAM file after filtering. Keep reads that are cell-associated and mapped to target genes.
 ## Arguments
 `--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
 

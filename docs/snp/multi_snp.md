@@ -105,16 +105,20 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
 - `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
 
 ### target_metrics
-- `filtered.bam` BAM file after filtering.
+- `filtered.bam` BAM file after filtering. Keep reads that are cell-associated and mapped to target genes.
 
 ### variant_calling
+- `{sample}_raw.vcf` Variants are called with bcftools default settings.
+- `{sample}_norm.vcf` Indels are left-aligned and normalized. See https://samtools.github.io/bcftools/bcftools.html#norm for more details.
 
-- `{sample}_norm.vcf` Normalized vcf file.
+### filter_snp
+- `{sample}_test1_filtered.vcf` VCF file after filtering. Alleles read counts that do not have enough reads to support are set to zero. 
+Genotypes are changed accordingly.
 
 ### analysis_snp
-- `{sample}_gt.csv` genotypes of variants of each cell. Row is variant, column is cell.
+- `{sample}_gt.csv` Genotypes of variants of each cell. Rows are variants and columns are cells.
 - `{sample}_variant_ncell.csv` Number of cells with each genotype.
-- `{sample}_variant_table.csv` Annotated `{sample}_variant_ncell.csv`.
+- `{sample}_variant_table.csv` `{sample}_variant_ncell.csv` annotated with COSMIC(https://cancer.sanger.ac.uk/cosmic).
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.

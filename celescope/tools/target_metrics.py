@@ -19,7 +19,7 @@ class Target_metrics(Step):
     - Collect enrichment metrics.
 
     ## Output
-    - `filtered.bam` BAM file after filtering.
+    - `filtered.bam` BAM file after filtering. Keep reads that are cell-associated and mapped to target genes.
     """
 
     def __init__(self, args, display_title=None):
