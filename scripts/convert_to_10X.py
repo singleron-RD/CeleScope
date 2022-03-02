@@ -62,8 +62,8 @@ def run_convert(BARCODES_10X_FILE, fq2, outdir):
     barcodes_10X = open(BARCODES_10X_FILE, 'r')
     fq_file = pysam.FastxFile(fq2)
 
-    out_fq1 = xopen(f'{outdir}/{sample_prefix}_1.fastq.gz', 'w')
-    out_fq2 = xopen(f'{outdir}/{sample_prefix}_2.fastq.gz', 'w')   
+    out_fq1 = xopen(f'{outdir}/{sample_prefix}_S1_L001_R1_001.fastq.gz', 'w')
+    out_fq2 = xopen(f'{outdir}/{sample_prefix}_S1_L001_R2_001.fastq.gz', 'w')   
     barcode_dict = {}
 
     for entry in fq_file:
