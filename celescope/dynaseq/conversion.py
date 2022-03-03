@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
-
+from celescope.__init__ import HELP_DICT
 
 class Conversion(Step):
     """
@@ -21,15 +21,16 @@ class Conversion(Step):
     - `{sample}.PosTag.csv` SNP info in csv format.
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args,display_title=None):
+        
+        super().__init__(args,display_title)
+
+        self.display_title = display_title
         # input files
         self.ifile = os.path.join(args.outdir, args.sample+'.bam')
-        self.sample = args.sample
         self.strandednessfile = args.strand
         self.inbam = args.bam
-        self.bcfile = args.cell
-        self.outdir = args.outdir
+        self.bcfile = args.cell 
         self.thread = args.thread
 
         # output files
@@ -251,15 +252,15 @@ class Conversion(Step):
 @utils.add_log
 def conversion(args):
 
-    with Conversion(args) as runner:
+    with Conversion(args,display_title='Conversion') as runner:
         runner.run()
 
 
 def get_opts_conversion(parser, sub_program):
-    parser.add_argument('--strand', help='gene strand file, the format is "geneID,+/-"', required=True)
+    parser.add_argument('--strand', help=HELP_DICT['strand'], required=True)
     if sub_program:
         parser.add_argument(
-            "--bam", help='featureCount bam(sortedByCoord), must have "MD" tag, set in star step', required=True)
-        parser.add_argument("--cell", help='barcode cell list', required=True)
+            "--bam", help=HELP_DICT['bam_for_conversion'], required=True)
+        parser.add_argument("--cell", help=HELP_DICT['cell'], required=True)
         parser = s_common(parser)
     return parser
