@@ -150,6 +150,8 @@ class Threshold():
                 threshold = int(self.hard_threshold)
             else:
                 raise Exception('hard_threshold must be set')
+        elif self.threshold_method == 'none':
+            threshold = 1
         else:
             raise ValueError(f'Unknown threshold method: {self.threshold_method}')
 

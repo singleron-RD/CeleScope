@@ -12,12 +12,12 @@ from celescope.tools.analysis_wrapper import Report_runner
 
 
 def get_opts_filter(parser, sub_program):
-    parser.add_argument('--not_correct_UMI', help='Perform UMI correction.', action='store_true')
+    parser.add_argument('--not_correct_UMI', help='Do not perform UMI correction.', action='store_true')
 
     parser.add_argument(
         "--read_threshold_method",
         help='method to find read threshold. UMIs with `support reads` < `read threshold` are filtered.',
-        choices=['otsu', 'auto', 'hard'],
+        choices=['otsu', 'auto', 'hard', 'none'],
         default='otsu'
     )
     parser.add_argument(
@@ -28,7 +28,7 @@ def get_opts_filter(parser, sub_program):
     parser.add_argument(
         "--umi_threshold_method",
         help='method to find UMI threshold. Cell barcode with `UMI` < `UMI threshold` are considered negative.',
-        choices=['otsu', 'auto', 'hard'],
+        choices=['otsu', 'auto', 'hard', 'none'],
         default='auto'
     )
     parser.add_argument(
