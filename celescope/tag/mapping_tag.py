@@ -14,11 +14,11 @@ from celescope.tools.step import Step, s_common
 def get_opts_mapping_tag(parser, sub_program):
     parser.add_argument(
         "--fq_pattern",
-        help="""Required. R2 read pattern. The number after the letter represents the number of bases.         
+        help="""R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
 `L` linker(common sequences)  
 `C` tag barcode  
 """,
-        required=True
+        default='L25C15'
     )
     parser.add_argument(
         "--barcode_fasta",
