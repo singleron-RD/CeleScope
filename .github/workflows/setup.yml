@@ -8,9 +8,7 @@ on:
       - dev
   pull_request:
     branches:
-      - main
-      - master
-      - dev
+      - '**'
 
 jobs:
   setup_and_lint:
