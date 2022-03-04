@@ -1,6 +1,5 @@
 
 from celescope.tools.mkref import Mkref, super_opts
-from celescope.__init__ import HELP_DICT
 
 class Mkref_fusion(Mkref):
     """
@@ -41,5 +40,17 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     super_opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--fusion_pos",help=HELP_DICT['fusion_pos'],required=True,)
-        parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)
+        parser.add_argument(
+            "--fusion_pos",
+            help="""
+fusion position file. A two column tab-delimited text file with header.
+"pos" is the end postion of the first gene(1-based).
+e.g.  
+name\tpos  
+PML_3\t183  
+PML_4\t254  
+PML_5\t326  
+PML_6\t204   
+""",
+            required=True,)
+        parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=14)

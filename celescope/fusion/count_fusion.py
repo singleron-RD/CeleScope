@@ -4,7 +4,7 @@ import pandas as pd
 
 from celescope.tools.capture.count_bam import Count_bam, get_opts_count_bam
 from celescope.fusion.mkref import Mkref_fusion
-from celescope.__init__ import HELP_DICT
+
 
 
 class Count_fusion(Count_bam):
@@ -66,7 +66,10 @@ def count_fusion(args):
 
 
 def get_opts_count_fusion(parser, sub_program):
-    parser.add_argument('--fusion_genomeDir', help=HELP_DICT['fusion_genomeDir'], required=True)
-    parser.add_argument("--flanking_base",help=HELP_DICT['flanking_base'],default=5)
+    parser.add_argument('--fusion_genomeDir', help='Fusion genome directory.', required=True)
+    parser.add_argument(
+        "--flanking_base",
+        help="Number of bases flanking the fusion position.",
+        default=5)
     get_opts_count_bam(parser, sub_program)
 

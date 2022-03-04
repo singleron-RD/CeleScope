@@ -166,23 +166,23 @@ def split_tag(args):
 def get_opts_split_tag(parser, sub_program):
     parser.add_argument(
         "--split_fastq",
-        help=HELP_DICT['split_fastq'],
+        help="If used, will split scRNA-Seq fastq file according to tag assignment.",
         action='store_true',
     )
     parser.add_argument(
         "--split_matrix",
-        help=HELP_DICT['split_matrix'],
+        help="If used, will split scRNA-Seq matrix file according to tag assignment.",
         action='store_true',
     )
     parser.add_argument(
         "--split_vdj",
-        help=HELP_DICT['split_vdj'],
+        help="If used, will split scRNA-Seq vdj count file according to tag assignment.",
         action='store_true',
     )
-    parser.add_argument("--vdj_dir", help=HELP_DICT['vdj_dir'])
+    parser.add_argument("--vdj_dir", help="Match celescope vdj directory. Required when --split_vdj is specified.")
     if sub_program:
-        parser.add_argument("--umi_tag_file", help=HELP_DICT['umi_tag_file'], required=True)
+        parser.add_argument("--umi_tag_file", help="UMI tag file.", required=True)
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
-        parser.add_argument("--matrix_dir", help=HELP_DICT['matrix_dir'])
-        parser.add_argument("--R1_read", help=HELP_DICT['R1_read'])
+        parser.add_argument("--matrix_dir", help="Match celescope scRNA-Seq matrix directory.")
+        parser.add_argument("--R1_read", help='R1 read path.')
         s_common(parser)

@@ -45,6 +45,7 @@ class Multi_capture_virus(Multi):
         cmd = (
             f'{cmd_line} '
             f'--capture_bam {capture_bam} '
+            f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
@@ -54,6 +55,7 @@ class Multi_capture_virus(Multi):
         raw_read_count_file = f'{self.outdir_dic[sample]["count_virus"]}/{sample}_raw_read_count.json'
         cmd = (
             f'{cmd_line} '
+            f'--match_dir {self.col4_dict[sample]} '
             f'--raw_read_count_file {raw_read_count_file} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)

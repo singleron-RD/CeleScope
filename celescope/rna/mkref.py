@@ -2,7 +2,7 @@ import subprocess
 
 from celescope.tools import utils
 from celescope.tools.mkref import Mkref, super_opts
-from celescope.__init__ import HELP_DICT
+
 
 class Mkref_rna(Mkref):
     """
@@ -83,6 +83,16 @@ def mkref(args):
 def get_opts_mkref(parser, sub_program):
     super_opts(parser, sub_program)
     if sub_program:
-        parser.add_argument("--gtf",help=HELP_DICT['gtf'],required=True)
-        parser.add_argument("--mt_gene_list",help=HELP_DICT['mt_gene_list'],default="None")
-        parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)
+        parser.add_argument(
+            "--gtf",
+            help="Required. Genome gtf file. Use absolute path or relative path to `genomeDir`.",
+            required=True
+        )
+        parser.add_argument(
+            "--mt_gene_list",
+            help="""Mitochondria gene list file. Use absolute path or relative path to `genomeDir`.
+It is a plain text file with one gene per line. 
+If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
+            default="None"
+        )
+        parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=14)

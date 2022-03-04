@@ -7,7 +7,7 @@ import plotly
 import plotly.graph_objects as go
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
-from celescope.__init__ import HELP_DICT
+
 
 class Replace_tsne(Step):
     """
@@ -20,10 +20,11 @@ class Replace_tsne(Step):
     - `{sample}.rep_in_tsne_top10` Top 10 replace genes in each cluster.
     """
 
-    def __init__(self, args , display_title=None):
-        super().__init__(args,display_title)
-        display_title = display_title
+    def __init__(self, args):
+        Step.__init__(self, args)
+
         # input files
+        self.sample = args.sample
         self.tsnefile = args.tsne
         self.matfile = args.mat
         self.repfile = args.rep
@@ -164,10 +165,10 @@ def replace_tsne(args):
 
 def get_opts_replace_tsne(parser, sub_program):
     if sub_program:
-        parser.add_argument('--tsne', help=HELP_DICT['tsne_for_replace_tsne']'tsne file from analysis step', required=True)
-        parser.add_argument('--mat', help=HELP_DICT['mat_for_replace_tsne'], required=True)
-        parser.add_argument('--rep', help=HELP_DICT['rep_for_replace_tsne'], required=True)
-        parser.add_argument('--mincell', type=int, default=5, help=HELP_DICT['mincell_for_replace_tsne'])
-        parser.add_argument('--topgene', type=int, default=10, help=HELP_DICT['topgene_for_replace_tsne'])
+        parser.add_argument('--tsne', help='tsne file from analysis step', required=True)
+        parser.add_argument('--mat', help='matrix replacement file, from replacement step', required=True)
+        parser.add_argument('--rep', help='cell replacement file, from replacement step', required=True)
+        parser.add_argument('--mincell', type=int, default=5, help='turn-over in at least cells, default 5')
+        parser.add_argument('--topgene', type=int, default=10, help='show top N genes,default 10')
         parser = s_common(parser)
     return parser

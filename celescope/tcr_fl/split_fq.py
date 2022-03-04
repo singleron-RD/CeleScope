@@ -6,7 +6,7 @@ import pysam
 
 from celescope.tcr_fl.barcode_index import Barcode_index
 from celescope.tools.utils import add_log, genDict, get_barcode_from_match_dir
-from celescope.__init__ import HELP_DICT
+
 
 @add_log
 def get_nCell_barcodes(fq, nCell):
@@ -76,9 +76,10 @@ def split_fq(args):
 
 def get_opts_split_fq(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help=HELP_DICT['-outdir'], required=True)
+        parser.add_argument('--outdir', help='output dir', required=True)
         parser.add_argument('--sample', help='sample name', required=True)
-        parser.add_argument("--fq", required=True,help=HELP_DICT['fq'])
+        parser.add_argument("--fq", required=True)
         parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
+    parser.add_argument(
+        "--match_dir", help="match scRNA-Seq dir")
     parser.add_argument("--nCell", help="select top N cell")

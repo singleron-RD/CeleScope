@@ -11,6 +11,7 @@ class Multi_capture_rna(Multi):
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
+            f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
 

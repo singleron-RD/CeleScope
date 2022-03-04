@@ -6,7 +6,7 @@ from celescope.__init__ import HELP_DICT, ROOT_PATH
 def get_opts_analysis_cite(parser, sub_program):
     if sub_program:
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
-        parser.add_argument('--citeseq_mtx', help=HELP_DICT['citeseq_mtx'], required=True)
+        parser.add_argument('--citeseq_mtx', help='citeseq matrix .gz file', required=True)
         s_common(parser)
 
 

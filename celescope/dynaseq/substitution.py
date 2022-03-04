@@ -9,7 +9,7 @@ import plotly
 import plotly.graph_objects as go
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
-from celescope.__init__ import HELP_DICT
+
 
 class Substitution(Step):
     """
@@ -20,11 +20,13 @@ class Substitution(Step):
     - `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
     """
 
-    def __init__(self, args, display_title):
-        super().__init__(args, display_title)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # input files
+        self.sample = args.sample
         self.bam_file = args.bam
+        self.outdir = args.outdir
 
         # output files
         self.outstat = os.path.join(self.outdir, self.sample+'.substitution.txt')
@@ -194,12 +196,12 @@ class Substitution(Step):
 @utils.add_log
 def substitution(args):
 
-    with Substitution(args,display_title='Substitution') as runner:
+    with Substitution(args) as runner:
         runner.run()
 
 
 def get_opts_substitution(parser, sub_program):
     if sub_program:
-        parser.add_argument('--bam', help=HELP_DICT['bam_for_replacement'], required=True)
+        parser.add_argument('--bam', help='bam file from conversion step', required=True)
         parser = s_common(parser)
     return parser

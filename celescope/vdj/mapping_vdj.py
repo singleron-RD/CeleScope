@@ -2,14 +2,12 @@
 vdj mapping
 '''
 
-from tkinter.tix import InputOnly
 import pandas as pd
 import pysam
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
-from celescope.__init__ import HELP_DICT
 
 
 class Mapping_vdj(Step):
@@ -214,14 +212,18 @@ def mapping_vdj(args):
 
 
 def get_opts_mapping_vdj(parser, sub_program):
-    parser.add_argument("--type", help=HELP_DICT['type'], required=True)
+    parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument(
         '--species',
         choices=['hs', 'mmu'],
-        help=HELP_DICT['species'],
+        help='Default `hs`. `hs`(human) or `mmu`(mouse). ',
         default='hs'
     )
-    parser.add_argument("--not_consensus", action='store_true', help=HELP_DICT['not_consensus'])
+    parser.add_argument("--not_consensus", action='store_true', help="Input fastq is not consensused.")
     if sub_program:
-        parser.add_argument("--fq",help=HELP_DICT['fq'],required=True,)
+        parser.add_argument(
+            "--fq",
+            help="Required. Input fastq file.",
+            required=True,
+        )
         parser = s_common(parser)

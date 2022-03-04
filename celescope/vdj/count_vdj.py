@@ -369,8 +369,13 @@ def count_vdj(args):
 
 
 def get_opts_count_vdj(parser, sub_program):
-    parser.add_argument("--type", help=HELP_DICT['type'], required=True)
-    parser.add_argument('--UMI_min',help=HELP_DICT['UMI_min'],default="auto")
+    parser.add_argument(
+        "--type", help="Required. `TCR` or `BCR`. ", required=True)
+    parser.add_argument(
+        '--UMI_min',
+        help='Default `auto`. Minimum UMI number to filter. The barcode with UMI>=UMI_min is considered to be cell.',
+        default="auto"
+    )
     parser.add_argument(
         '--iUMI',
         help="""Default `1`. Minimum number of UMI of identical receptor type and CDR3. 
@@ -379,7 +384,8 @@ For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""",
         default=1
     )
     if sub_program:
-        parser.add_argument("--UMI_count_filter_file",help=HELP_DICT['UMI_count_filter_file'], required=True)
+        parser.add_argument("--UMI_count_filter_file",
+                            help="Required. File from step mapping_vdj.", required=True)
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
         parser.add_argument("--matrix_dir", help=HELP_DICT['matrix_dir'])
         parser = s_common(parser)

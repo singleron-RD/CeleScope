@@ -54,6 +54,7 @@ class Multi_dynaseq(Multi):
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
+            f'--bg {self.col5_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=10, x=1)
 

@@ -1,10 +1,9 @@
-import imp
 import pandas as pd
 
 from celescope.tools import utils
 from celescope.tools.step import Step
 from celescope.rna.analysis import get_opts_analysis
-from celescope.__init__ import HELP_DICT
+
 
 class Analysis_rna_virus(Step):
     def __init__(self, args, display_title=None):
@@ -53,4 +52,7 @@ def analysis_rna_virus(args):
 def get_opts_analysis_rna_virus(parser, sub_program):
     get_opts_analysis(parser, sub_program)
     if sub_program:
-        parser.add_argument('--virus_file',help=HELP_DICT['virus_file'],required=True)
+        parser.add_argument(
+            '--virus_file',
+            help='virus UMI count file',
+            required=True)

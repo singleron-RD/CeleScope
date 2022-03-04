@@ -8,7 +8,6 @@ import pandas as pd
 import pysam
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
-from celescope.__init__ import HELP_DICT
 
 toolsdir = os.path.dirname(__file__)
 
@@ -28,10 +27,12 @@ class Replacement(Step):
     - `{sample}.fraction_of_newRNA_matrix.txt` Fraction of new RNA of each cell and gene.
     """
 
-    def __init__(self, args, display_title=None):
-        super().__init__(args, display_title)
+    def __init__(self, args):
+        Step.__init__(self, args)
 
         # input files
+        self.outdir = args.outdir
+        self.sample = args.sample
         self.bam_file = args.bam
         self.snp_file = args.bg
         self.bg_cov = args.bg_cov
@@ -314,17 +315,18 @@ class Replacement(Step):
 @utils.add_log
 def replacement(args):
 
-    with Replacement(args,display_title='Replacement') as runner:
+    with Replacement(args) as runner:
         runner.run()
 
 
 def get_opts_replacement(parser, sub_program):
-    parser.add_argument('--bg_cov', type=int, default=1,help=HELP_DICT['bg_cov_for_replacement'])
+    parser.add_argument('--bg_cov', type=int, default=1,
+                        help='background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format')
     if sub_program:
-        parser.add_argument('--bam', help=HELP_DICT['bam_for_replacement'], required=True)
-        parser.add_argument('--bg', help=HELP_DICT['bg_for_replacement'], required=True)
-        parser.add_argument('--cell_keep', type=int, default=100000, help=HELP_DICT['cell_keep_for_replacement'])
-        parser.add_argument('--min_cell', type=int, default=10, help=HELP_DICT['min_cell_for_replacement'])
-        parser.add_argument('--min_gene', type=int, default=10, help=HELP_DICT['min_gene_for_replacement'])
+        parser.add_argument('--bam', help='bam file from conversion step', required=True)
+        parser.add_argument('--bg', help='background snp file, csv or vcf format', required=True)
+        parser.add_argument('--cell_keep', type=int, default=100000, help='filter cell')
+        parser.add_argument('--min_cell', type=int, default=10, help='a gene expressed in at least cells, default 10')
+        parser.add_argument('--min_gene', type=int, default=10, help='at least gene num in a cell, default 10')
         parser = s_common(parser)
     return parser
