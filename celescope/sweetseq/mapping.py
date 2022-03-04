@@ -1,17 +1,15 @@
-"""
-map read2 to barcode_fasta
-"""
+import json
 
-import pandas as pd
 import pysam
 
+from celescope.tools.count import Count
 from celescope.tools import utils
 import celescope.tools.barcode as Barcode
 from celescope.tools.barcode import parse_pattern
 from celescope.tools.step import Step, s_common
 
 
-def get_opts_mapping_tag(parser, sub_program):
+def get_opts_mapping(parser, sub_program):
     parser.add_argument(
         "--fq_pattern",
         help="""R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
@@ -21,47 +19,11 @@ def get_opts_mapping_tag(parser, sub_program):
         default='L25C15'
     )
     parser.add_argument(
-        "--barcode_fasta",
-        help="""Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
+        "--tag_barcode_fasta",
+        help="""Required. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
 It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
 If no such tag exists, the read is classified as invalid.
-
-You can find the barcode fasta file under `celescope/data/Clindex`
-```
->CLindex_TAG_1
-CGTGTTAGGGCCGAT
->CLindex_TAG_2
-GAGTGGTTGCGCCAT
->CLindex_TAG_3
-AAGTTGCCAAGGGCC
->CLindex_TAG_4
-TAAGAGCCCGGCAAG
->CLindex_TAG_5
-TGACCTGCTTCACGC
->CLindex_TAG_6
-GAGACCCGTGGAATC
->CLindex_TAG_7
-GTTATGCGACCGCGA
->CLindex_TAG_8
-ATACGCAGGGTCCGA
->CLindex_TAG_9
-AGCGGCATTTGGGAC
->CLindex_TAG_10
-TCGCCAGCCAAGTCT
->CLindex_TAG_11
-ACCAATGGCGCATGG
->CLindex_TAG_12
-TCCTCCTAGCAACCC
->CLindex_TAG_13
-GGCCGATACTTCAGC
->CLindex_TAG_14
-CCGTTCGACTTGGTG
->CLindex_TAG_15
-CGCAAGACACTCCAC
->CLindex_TAG_16
-CTGCAACAAGGTCGC
-```
 """,
         required=True,
     )
@@ -77,24 +39,18 @@ with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1,
 
 
 @utils.add_log
-def mapping_tag(args):
-    with Mapping_tag(args, display_title="Mapping") as runner:
+def mapping(args):
+    with Mapping(args, display_title="Mapping") as runner:
         runner.run()
 
 
-class Mapping_tag(Step):
+class Mapping(Step):
     """
     ## Features
-    - Align R2 reads to the tag barcode fasta.
+    - Map R2 reads to the tag barcode.
 
     ## Output
-
-    - `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
-
-        `barcode` cell barcode  
-        `tag_name`  tag name in barcode_fasta  
-        `UMI`   UMI sequence  
-        `read_count` read count per UMI  
+    - raw_read_count.json: TODO
     """
 
     def __init__(self, args, display_title=None):
@@ -104,10 +60,12 @@ class Mapping_tag(Step):
         self.fq = args.fq
         self.fq_pattern = args.fq_pattern
         self.linker_fasta = args.linker_fasta
-        self.barcode_fasta = args.barcode_fasta
+        self.tag_barcode_fasta = args.tag_barcode_fasta
 
         # process
-        self.barcode_dict, self.barcode_length = utils.read_fasta(self.barcode_fasta, equal=True)
+        self.barcode_dict, self.barcode_length = utils.read_fasta(self.tag_barcode_fasta, equal=True)
+        if len(self.barcode_dict) > 1:
+            raise ValueError("More than one barcode in tag_barcode_fasta.")
         if self.linker_fasta and self.linker_fasta != 'None':
             self.linker_dict, self.linker_length = utils.read_fasta(self.linker_fasta, equal=True)
         else:
@@ -115,34 +73,39 @@ class Mapping_tag(Step):
         self.pattern_dict = parse_pattern(self.fq_pattern)
 
         # check barcode length
-        barcode1 = self.pattern_dict["C"][0]
+        barcode_start, barcode_end = self.pattern_dict["C"][0]
         # end - start
-        pattern_barcode_length = barcode1[1] - barcode1[0]
+        pattern_barcode_length = barcode_end - barcode_start
         if pattern_barcode_length != self.barcode_length:
             raise Exception(
                 f'''barcode fasta length {self.barcode_length} 
                 != pattern barcode length {pattern_barcode_length}'''
             )
 
-        self.res_dic = utils.genDict()
+        self.read_count_dict = utils.genDict(dim=3)
         self.res_sum_dic = utils.genDict(dim=2)
         self.match_barcode = []
 
-        # out files
-        self.read_count_file = f'{self.outdir}/{self.sample}_read_count.tsv'
-        self.UMI_count_file = f'{self.outdir}/{self.sample}_UMI_count.tsv'
-        self.stat_file = f'{self.outdir}/stat.txt'
+        # metrics
+        self.total_reads = 0
+        self.reads_unmapped_too_short = 0
+        self.reads_unmapped_invalid_iinker = 0
+        self.reads_unmapped_invalid_barcode = 0
+        self.reads_mapped = 0
+        self.raw_umi = 0
+        self.total_corrected_umi = 0
 
-    def process_read(self):
-        total_reads = 0
-        reads_unmapped_too_short = 0
-        reads_unmapped_invalid_iinker = 0
-        reads_unmapped_invalid_barcode = 0
-        reads_mapped = 0
+        # out files
+        self.raw_read_count_file = f'{self.out_prefix}_raw_read_count.json'
+        self.corrected_read_count_file = f'{self.out_prefix}_corrected_read_count.json'
+        self.UMI_count_file = f'{self.out_prefix}_UMI_count.csv'
+
+
+    def map_read(self):
 
         with pysam.FastxFile(self.fq) as infile:
             for record in infile:
-                total_reads += 1
+                self.total_reads += 1
                 attr = str(record.name).strip("@").split("_")
                 barcode = str(attr[0])
                 umi = str(attr[1])
@@ -151,14 +114,14 @@ class Mapping_tag(Step):
                 if self.linker_length != 0:
                     seq_linker = Barcode.get_seq_str(seq, self.pattern_dict['L'])
                     if len(seq_linker) < self.linker_length:
-                        reads_unmapped_too_short += 1
+                        self.reads_unmapped_too_short += 1
                         continue
                 if self.barcode_dict:
                     seq_barcode = Barcode.get_seq_str(seq, self.pattern_dict['C'])
                     if self.barcode_length != len(seq_barcode):
                         miss_length = self.barcode_length - len(seq_barcode)
                         if miss_length > 2:
-                            reads_unmapped_too_short += 1
+                            self.reads_unmapped_too_short += 1
                             continue
                         seq_barcode = seq_barcode + "A" * miss_length
 
@@ -173,68 +136,97 @@ class Mapping_tag(Step):
                     valid_linker = True
 
                 if not valid_linker:
-                    reads_unmapped_invalid_iinker += 1
+                    self.reads_unmapped_invalid_iinker += 1
                     continue
 
                 # check barcode
                 valid_barcode = False
                 for barcode_name in self.barcode_dict:
                     if utils.hamming_correct(self.barcode_dict[barcode_name], seq_barcode):
-                        self.res_dic[barcode][barcode_name][umi] += 1
+                        self.read_count_dict[barcode][barcode_name][umi] += 1
                         valid_barcode = True
                         break
 
                 if not valid_barcode:
-                    reads_unmapped_invalid_barcode += 1
+                    self.reads_unmapped_invalid_barcode += 1
                     continue
 
                 # mapped
-                reads_mapped += 1
+                self.reads_mapped += 1
 
-        # write dic to pandas df
-        rows = []
-        for barcode in self.res_dic:
-            for tag_name in self.res_dic[barcode]:
-                for umi in self.res_dic[barcode][tag_name]:
-                    rows.append([barcode, tag_name, umi,
-                                 self.res_dic[barcode][tag_name][umi]])
-        df_read_count = pd.DataFrame(rows)
-        df_read_count.rename(
-            columns={
-                0: "barcode",
-                1: "tag_name",
-                2: "UMI",
-                3: "read_count"
-            }, inplace=True)
-        df_read_count.to_csv(
-            self.read_count_file, sep="\t", index=False)
-
+    def add_map_metrics(self):
+    
         # add metrics
         self.add_metric(
             name='Reads Mapped',
-            value=reads_mapped,
-            total=total_reads,
+            value=self.reads_mapped,
+            total=self.total_reads,
             help_info="R2 reads that successfully mapped to linker and tag-barcode"
         )
         self.add_metric(
             name='Reads Unmapped too Short',
-            value=reads_unmapped_too_short,
-            total=total_reads,
+            value=self.reads_unmapped_too_short,
+            total=self.total_reads,
             help_info="Unmapped R2 reads because read length < linker length + tag-barcode length"
         )
         self.add_metric(
             name='Reads Unmapped Invalid Linker',
-            value=reads_unmapped_invalid_iinker,
-            total=total_reads,
+            value=self.reads_unmapped_invalid_iinker,
+            total=self.total_reads,
             help_info="Unmapped R2 reads because of too many mismatches in linker sequence"
         )
         self.add_metric(
             name='Reads Unmapped Invalid Barcode',
-            value=reads_unmapped_invalid_barcode,
-            total=total_reads,
+            value=self.reads_unmapped_invalid_barcode,
+            total=self.total_reads,
             help_info="Unmapped R2 reads because of too many mismatches in tag-barcode sequence"
         )
 
+
+    def write_raw_read_count_file(self):
+        with open(self.raw_read_count_file, 'w') as fp:
+            json.dump(self.read_count_dict, fp, indent=4)
+
+    def correct_umi(self):
+        for barcode in self.count_dict:
+            for ref in self.count_dict[barcode]:
+                self.raw_umi += len(self.count_dict[barcode][ref])
+                n_corrected_umi, _n_corrected_read = Count.correct_umi(self.count_dict[barcode][ref])
+                if self.debug:
+                    print(f'{barcode} {ref} {n_corrected_umi}')
+                self.total_corrected_umi += n_corrected_umi
+
+    def add_correct_umi_metrics(self):
+        self.add_metric(
+            name='Number of Raw UMI',
+            value=self.raw_umi,
+            help_info='number of total raw UMI',
+        )
+
+        self.add_metric(
+            name='Number of Corrected UMI',
+            value=self.total_corrected_umi,
+            total=self.raw_umi,
+            help_info='correct sequencing errors in the UMI sequences ',
+        )
+
+    def write_corrected_read_count_file(self):
+        with open(self.corrected_read_count_file, 'w') as fp:
+            json.dump(self.read_count_dict, fp, indent=4)
+
+    def write_UMI_count_file(self):
+        pass
+
+        
     @utils.add_log
     def run(self):
-        self.process_read()
+        self.map_read()
+        self.write_raw_read_count_file()
+        self.add_map_metrics()
+        '''
+        if not self.args.not_correct_umi:
+            self.correct_umi()
+            self.write_corrected_read_count_file()
+            self.add_correct_umi_metrics()
+        self.write_tsne_UMI_file()
+        '''

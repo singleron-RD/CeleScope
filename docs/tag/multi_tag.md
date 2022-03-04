@@ -181,7 +181,7 @@ at least {overlap} bases match between adapter and read.
 
 `--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
-`--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases.         
+`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
 `L` linker(common sequences)  
 `C` tag barcode.
 

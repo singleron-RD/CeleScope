@@ -24,6 +24,19 @@ def read_tsne(tsne_file):
         df = df.set_index('barcode')
     return df
 
+def format_df_marker(df_marker):
+
+    avg_logfc_col = "avg_log2FC"  # seurat 4
+    if "avg_logFC" in df_marker.columns:  # seurat 2.3.4
+        avg_logfc_col = "avg_logFC"
+    df_marker = df_marker.loc[:,
+                                ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
+                                ]
+    df_marker["cluster"] = df_marker["cluster"].apply(lambda x: f"cluster {x}")
+    df_marker = df_marker[df_marker["p_val_adj"] < PVAL_CUTOFF]
+
+    return df_marker
+
 def get_opts_analysis(parser, sub_program):
     
     parser.add_argument('--genomeDir', help=HELP_DICT['genomeDir'], required=True)
@@ -313,6 +326,7 @@ class Scanpy_wrapper(Step):
         """
         df_tsne = read_tsne(self.df_tsne_file)
         df_marker = pd.read_csv(self.df_marker_file, sep="\t")
+        df_marker = format_df_marker(df_marker)
         return df_tsne, df_marker
 
 
@@ -373,6 +387,7 @@ class Report_runner(Step):
             df_marker_file = self.args.df_marker_file
         df_tsne = read_tsne(df_tsne_file)
         df_marker = pd.read_csv(df_marker_file, sep="\t")
+        df_marker = format_df_marker(df_marker)
         return df_tsne, df_marker
 
     def run(self):
