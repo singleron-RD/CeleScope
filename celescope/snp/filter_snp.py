@@ -107,12 +107,9 @@ def filter_snp(args):
 
 def get_opts_filter_snp(parser, sub_program):
     parser.add_argument('--threshold_method', default='auto', choices=['otsu', 'auto', 'hard', 'none'], help=HELP_DICT['threshold_method'])
-    parser.add_argument(
-        "--hard_threshold",
-        help='int, use together with `--threshold_method hard`',
-    )
+    parser.add_argument("--hard_threshold",help=HELP_DICT['hard_threshold'],)
     if sub_program:
-        parser.add_argument("--vcf", help="norm vcf file")
+        parser.add_argument("--vcf", help=HELP_DICT['vcf'])
         s_common(parser)
 
 

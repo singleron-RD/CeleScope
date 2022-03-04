@@ -15,8 +15,7 @@ class Multi_tcr_fl(Multi):
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
             f'--fq {fq} '
-            f'--nCell {self.nCell} '
-            f'--match_dir {self.col4_dict[sample]} '
+            f'--nCell {self.args.nCell} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
@@ -31,7 +30,7 @@ class Multi_tcr_fl(Multi):
             f'--sample {sample} '
             f'--assay {self.__ASSAY__} '
             f'--fastq_dir {fastq_dir} '
-            f'--thread {self.thread} '
+            f'--thread {self.args.thread} '
         )
         self.process_cmd(cmd, step, sample, m=4 * int(self.args.thread), x=self.args.thread)
 

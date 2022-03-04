@@ -23,7 +23,6 @@ class Multi_citeseq(Multi):
         cmd = (
             f'{cmd_line} '
             f'--read_count_file {read_count_file} '
-            f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
@@ -35,7 +34,6 @@ class Multi_citeseq(Multi):
         cmd = (
             f'{cmd_line} '
             f'--citeseq_mtx {citeseq_mtx} '
-            f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
