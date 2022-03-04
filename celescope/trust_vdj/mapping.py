@@ -85,7 +85,7 @@ class Mapping(Step):
             assert self.rds and self.assign_file
             self.process()
 
-        except AssertionError:
+        except AssertionError and AttributeError:
             print("rds file and type file do not exist" + "\n" )
         
         except ZeroDivisionError:
