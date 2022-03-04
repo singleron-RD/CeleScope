@@ -85,8 +85,6 @@ If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
     'species':'Default `hs`. `hs`(human) or `mmu`(mouse). ',
     'fq':'Required. Input fastq file.',
     'not_consensus':'Input fastq is not consensused.',
-    '':'',
-
 }
 
 # report metrics help

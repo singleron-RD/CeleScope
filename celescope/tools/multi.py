@@ -258,29 +258,6 @@ job_begin
 job_end
 '''
 
-    def get_rule_args(self,step,sample):
-        cmd_line = self.get_cmd_line(step, sample)
-        cmd_list = re.split(r'[\s]\s*',cmd_line)[3:]
-        _ = [cmd.strip("--") for cmd in cmd_list]
-        cmd_dict = {key:value for key,value in zip(_[::2],_[1::2])}
-        return cmd_dict
-
-    def generate_rule(self,step,sample,input=None,output=None,log=None,params=None,conda=None,cache=False,weapper=None):
-        self.args = self.parser.parse_args()
-        cmd_dict = self.get_rule_args(step,sample)
-        input = cmd_dict[]
-        output = cmd_dict[f'{self.args.outdir}']
-        rule_cmd = f'''
-        rule {step}:
-            input:'{input}'
-            output:'{output}'
-            shell:'{cmd_line}'
-        '''
-        pass
-
-    def rule_sample(self):
-        pass
-
     def process_cmd(self, cmd, step, sample, m=1, x=1):
         self.generate_cmd(cmd, step, sample, m=m, x=x)
         self.shell_dict[sample] += cmd + '\n'
