@@ -8,6 +8,7 @@ conda-forge::r-argparser
 conda-forge::r-tidyverse
 conda-forge::r-deldir=1.0_6
 conda-forge::r-vcfr
+conda-forge::r-reshape2
 imperial-college-research-computing::mixcr=3.0.3
 bioconda::bcftools=1.12
 bioconda::gatk4
