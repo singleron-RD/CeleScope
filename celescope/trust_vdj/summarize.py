@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import pysam
 import copy
+import os
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
@@ -53,35 +54,77 @@ class Summarize(Step):
     
     @staticmethod
     def filter_cell(df, seqtype, filterbc_rep, trust_rep, min_read_count):
-        if seqtype == 'BCR':
-            igh = df[df['chain']=='IGH']
-            temp = df[(df['chain']=='IGK') | (df['chain']=='IGL')]
-            temp = temp.sort_values(by='umis', ascending=False)
-            temp = temp.drop_duplicates(['barcode'])
-            df_for_clono = pd.concat([igh, temp], ignore_index=True)
-            df_for_clono = df_for_clono.sort_values(by='umis', ascending=False)
-            df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
-        else:
-            df_for_clono = df[(df['chain']=='TRA') | (df['chain']=='TRB')]
-            df_for_clono = df_for_clono.sort_values(by='umis', ascending=False)
-            df_for_clono = df_for_clono.drop_duplicates(['barcode', 'chain'])
 
+        df.sort_values(by='umis', ascending=False, inplace=True)
+        if seqtype == 'BCR':
+            df_chain_heavy = df[df['chain']=='IGH']
+            df_chain_light = df[(df['chain']=='IGK') | (df['chain']=='IGL')]
+            df_chain_heavy = df_chain_heavy.drop_duplicates(['barcode'])
+            df_chain_light = df_chain_light.drop_duplicates(['barcode'])
+            df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
+        else:
+            df_TRA = df[df['chain'] == 'TRA']
+            df_TRB = df[df['chain'] == 'TRB']
+            df_TRA = df_TRA.drop_duplicates(['barcode'])
+            df_TRB = df_TRB.drop_duplicates(['barcode'])
+            df_for_clono = pd.concat([df_TRA, df_TRB], ignore_index=True)
+        
+        """
+        Filter barcode by filtered barcode report.
+        Each cell has at least one chain.
+        CDR3 germline similarity > 90.
+        Keep cell type called T/B in barcode report.
+        If cell A's two chains CDR3s are identical to another cell B, 
+        and A's chain abundance is significantly lower than B's (--diffuseFrac), filter A.
+        """
         filterbc_rep = filterbc_rep.rename(columns = {'#barcode':'barcode'})
         filterbc = filterbc_rep[(filterbc_rep['chain1']!='*') | (filterbc_rep['chain2']!='*')]
+        
+        filterbc_chain1 = [i if i !='*' else 0 for i in list(filterbc['chain1'])]
+        filterbc_chain2 = [i if i !='*' else 0 for i in list(filterbc['chain2'])]
+        filterbc_chain1 = [i if i !='*' else 0 for i in filterbc_chain1]
+        filterbc_chain2 = [i if i !='*' else 0 for i in filterbc_chain2]
+        filterbc_chain1 = [float(i.split(',')[-2]) if i !=0 else i for i in filterbc_chain1]
+        filterbc_chain2 = [float(i.split(',')[-2]) if i !=0 else i for i in filterbc_chain2]
+        _bc_list, _filtered_list = filterbc['barcode'].tolist(), []
+        for i in range(len(_bc_list)):
+            if filterbc_chain1[i] <= 90 or filterbc_chain2[i] <= 90:
+                _filtered_list.append(_bc_list[i])
+        filterbc = filterbc[~filterbc['barcode'].isin(_filtered_list)]
         filterbc = set(filterbc['barcode'].tolist())
 
+        # By filtered trust report 
+        """
+        Filter trust report:the nonfunctional CDR3, or CDR3 sequences containing "N" in the nucleotide sequence.
+        Filter cell by read count of CDR3 from filtered trust report (default:4).
+        Keep CDR3aa start with C.
+        Keep CDR3aa length >= 5.
+        Keep no stop codon in CDR3aa.
+        Keep read count of CDR3 >= 4(default).
+        Contig's umi < 3 and read count < 2 considered to be noise
+        """
         trust_rep = trust_rep[trust_rep['cid_full_length'] >= 1]
         trust_rep = trust_rep[trust_rep['CDR3aa'] != 'out_of_frame']
         trust_rep = trust_rep.rename(columns = {'cid':'barcode', '#count':'count'})
         trust_rep['barcode'] = trust_rep['barcode'].apply(lambda x:x.split('_')[0])
+        #
+        cdr3_list = list(trust_rep['CDR3aa'])
+        cdr3_list = [i for i in cdr3_list if i.startswith('C')]
+        cdr3_list = [i for i in cdr3_list if len(i)>=5]
+        cdr3_list = [i for i in cdr3_list if 'UAG' or 'UAA' or 'UGA' not in i]
+        trust_rep = trust_rep[trust_rep['CDR3aa'].isin(cdr3_list)]
         trust_rep = trust_rep.sort_values(by = 'count', ascending = False)
         if min_read_count == "auto":
-            trust_rep = trust_rep[trust_rep['count'] >= 4]
-        else:
-            min_read_count = int(min_read_count)
-            trust_rep = trust_rep[trust_rep['count'] >= min_read_count]
+            if seqtype == 'BCR':
+                min_read_count = 8
+            else:
+                min_read_count = 0
+        min_read_count = int(min_read_count)
+        trust_rep = trust_rep[trust_rep['count'] > min_read_count]
         trust_rep_bc = set(trust_rep['barcode'].tolist())
 
+        df_for_clono = df_for_clono[df_for_clono['umis']>=3]
+        df_for_clono = df_for_clono[df_for_clono['reads']>=2]
         df_for_clono = df_for_clono[df_for_clono['barcode'].isin(filterbc)]
         df_for_clono = df_for_clono[df_for_clono['barcode'].isin(trust_rep_bc)]
 
@@ -246,12 +289,13 @@ class Summarize(Step):
         df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
         df['productive'] = df['cdr3'].apply(lambda x: False if x=='None' else True)
     
-        '''
-        filter cell by cell type from trust barcode filtered report
-        filter cell by read count from trust report 
-        '''
         filterbc_rep = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/barcoderepfl.tsv',sep='\t')
-        trust_rep = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/report.out', sep='\t')
+        report_out = f'{self.outdir}/../03.assemble/assemble/report.out'
+        filtered_report_out = f'{self.outdir}/../03.assemble/assemble/trust_filter_report.out'
+        _cmd = f''' awk '$4!~"_" && $4!~"?"' {report_out} > {filtered_report_out} '''
+        os.system(_cmd)
+
+        trust_rep = pd.read_csv(filtered_report_out, sep='\t')
         df_for_clono = self.filter_cell(df, self.seqtype, filterbc_rep, trust_rep, self.min_read_count)
 
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
