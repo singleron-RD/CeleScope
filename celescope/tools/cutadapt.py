@@ -1,6 +1,5 @@
 import re
 import subprocess
-from itertools import islice
 
 import pysam
 
@@ -31,7 +30,7 @@ def read_cutadapt_log(cutadapt_log):
     metrics_dict = {}
     remove_strs = [r',', r' bp', r'\(.*\)']
 
-    for line_index, line in enumerate(cutadapt_log.split('\n')):
+    for _line_index, line in enumerate(cutadapt_log.split('\n')):
         line = line.strip()
         if not line:
             continue
