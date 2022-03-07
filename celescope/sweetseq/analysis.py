@@ -1,6 +1,7 @@
 import json
 
 import pandas as pd
+import numpy as np
 
 from celescope.tools import analysis_wrapper
 from celescope.tools.plotly_plot import Tsne_plot
@@ -57,13 +58,14 @@ class Analysis(Step):
         for ref in self.ref_barcode_umi_dict:
             self.df_tsne_umi[ref] = pd.Series(self.ref_barcode_umi_dict[ref])
             self.df_tsne_umi[ref].fillna(0, inplace=True)
+            self.df_tsne_umi[ref + '_log2'] = np.log2(self.df_tsne_umi[ref] + 1)
 
         self.df_tsne_umi.to_csv(self.tsne_umi_file)
 
         if len(self.ref_barcode_umi_dict) > 1:
             raise ValueError("Error: More than one barcode in tag_barcode_fasta. Currently, Multiple barcodes are not supported to display in HTML report.")
         else:
-            self.ref_name = list(self.ref_barcode_umi_dict.keys())[0]
+            self.ref_name = list(self.ref_barcode_umi_dict.keys())[0] + '_log2'
 
    
     def add_html_data(self):
@@ -71,7 +73,7 @@ class Analysis(Step):
         self.add_data(tsne_cluster=tsne_cluster)
 
         tsne_plot = Tsne_plot(self.df_tsne_umi, self.ref_name, discrete=False)
-        #tsne_plot.set_color_scale(['LightGrey', 'Orange', 'Red'])
+        # tsne_plot.set_color_scale(['LightGrey', 'Red'])
         tsne_umi = tsne_plot.get_plotly_div()
         self.add_data(tsne_umi=tsne_umi)
 
