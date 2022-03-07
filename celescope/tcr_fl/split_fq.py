@@ -76,7 +76,7 @@ def split_fq(args):
 
 def get_opts_split_fq(parser, sub_program):
     if sub_program:
-        parser.add_argument('--outdir', help=HELP_DICT['-outdir'], required=True)
+        parser.add_argument('--outdir', help=HELP_DICT['outdir'], required=True)
         parser.add_argument('--sample', help='sample name', required=True)
         parser.add_argument("--fq", required=True,help=HELP_DICT['fq'])
         parser.add_argument('--assay', help='assay', required=True)
