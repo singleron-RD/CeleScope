@@ -331,6 +331,9 @@ class Scanpy_wrapper(Step):
 
 
 def get_opts_analysis_match(parser, sub_program):
+    """
+    Do not perform analysis. Only read data from scRNA-seq match_dir.
+    """
     if sub_program:
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
         parser.add_argument("--tsne_file", help=HELP_DICT['tsne_file'])
@@ -382,9 +385,11 @@ class Report_runner(Step):
         """
         if utils.check_arg_not_none(self.args, 'match_dir'):
             df_tsne_file, df_marker_file = self.get_df_file(self.args.match_dir)
-        else:
+        elif utils.check_arg_not_none(self.args, 'tsne_file'):
             df_tsne_file = self.args.tsne_file
             df_marker_file = self.args.df_marker_file
+        else:
+            raise ValueError('match_dir or tsne_file must be specified')
         df_tsne = read_tsne(df_tsne_file)
         df_marker = pd.read_csv(df_marker_file, sep="\t")
         df_marker = format_df_marker(df_marker)
