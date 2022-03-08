@@ -63,7 +63,7 @@ class Multi_capture_virus(Multi):
     def analysis_virus(self, sample):
         step = 'analysis_virus'
         cmd_line = self.get_cmd_line(step, sample)
-        filter_umi_file = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_UMI_tsne.csv'
+        filter_umi_file = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_UMI.csv'
         cmd = (
             f'{cmd_line} '
             f'--match_dir {self.col4_dict[sample]} '

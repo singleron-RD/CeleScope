@@ -1,26 +1,4 @@
-## Usage
-1. Make a virus genomeDir using `celescope capture_virus mkref`
-
-2. Generate shell scripts
-```
-multi_capture_virus \
---mapfile {mapfile} \
---virus_genomeDir {virus_genomeDir} \
---not_consensus \
---allowNoPolyT \
---thread 4 \
---mod shell
-```
-
-3. Run shell scripts
-```
-sh ./shell/{sample}.sh
-```
 ## Features
-### mkref
-- Create a virus genome reference directory.
-
-
 ### barcode
 
 - Demultiplex barcodes.
@@ -36,40 +14,15 @@ sh ./shell/{sample}.sh
     - polyT=A{18}, 18 A bases. 
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
-### consensus
-- Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and 
-count up the number of each type of residue (ie. A or G or T or C for DNA) in all sequences in the
-alignment. If the following conditions are met, the consensus sequence will be the most common residue in the alignment:
-1. the percentage of the most common residue type > threshold(default: 0.5);
-2. most common residue reads >= min_consensus_read;
-otherwise an ambiguous character(N) will be added.
+### mapping
+- Map R2 reads to the tag barcode.
 
 
-### star_virus
-- Map reads to the viral genome using STAR.
+### analysis
 
-
-### count_virus
-
-- Taking the bam file as input, count the number of UMIs and reads mapped to the viral genome.
-
-
-### filter_virus
-- Correct single-base errors in UMIs due to sequencing, amplification, etc.
-- Filter background UMIs base on a UMI threshold.
-There are three methods to determine the UMI threshold:
-    - 'auto' : Using a method similar to cell calling method.
-    - 'otsu' : UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
-    - 'hard' : Using User provided UMI threshold.
 
 
 ## Output files
-### mkref
-
-- STAR genome index files
-- Genome config file
-
-
 ### barcode
 
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
@@ -79,19 +32,10 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `cutadapt.log` Cutadapt output log file.
 - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
 
-### consensus
-- `{sample}_consensus.fq` Fastq file after consensus.
+### mapping
+- raw_read_count.json: TODO
 
-### star_virus
-- `{sample}_virus_Aligned.sortedByCoord.out.bam` : Aligned BAM sorted by coordinate.
-
-### count_virus
-- {sample_raw_read_count.json} : barcode - UMI - raw_reads_count
-
-### filter_virus
-- `{sample}_corrected_read_count.json` Read counts after UMI correction.
-- `{sample}_filtered_read_count.json` Filtered read counts.
-- `{sample}_filtered_UMI.csv` Filtered UMI counts.
+### analysis
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -197,36 +141,15 @@ at least {overlap} bases match between adapter and read.
 
 `--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
-`--threshold` Default 0.5. Valid base threshold.
+`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
+`L` linker(common sequences)  
+`C` tag barcode.
 
-`--not_consensus` Skip the consensus step.
+`--tag_barcode_fasta` Required. It will check the mismatches between tag barcode 
+sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
+It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
+If no such tag exists, the read is classified as invalid.
 
-`--min_consensus_read` Minimum number of reads to support a base.
-
-`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
-
-`--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
-is higher than or equal to this value.
-
-`--out_unmapped` Output unmapped reads.
-
-`--STAR_param` Other STAR parameters.
-
-`--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
-
-`--starMem` Default `30`. Maximum memory that STAR can use.
-
-`--virus_genomeDir` Virus genome dir.
-
-`--min_query_length` Minimum query length.
-
-`--not_correct_UMI` Do not perform UMI correction.
-
-`--read_threshold_method` method to find read threshold. UMIs with `support reads` < `read threshold` are filtered.
-
-`--read_hard_threshold` int, use together with `--read_threshold_method hard`.
-
-`--umi_threshold_method` method to find UMI threshold. Cell barcode with `UMI` < `UMI threshold` are considered negative.
-
-`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
+`--linker_fasta` Optional. If provided, it will check the mismatches between linker sequence in R2 reads 
+with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1, the read is classified as invalid.
 
