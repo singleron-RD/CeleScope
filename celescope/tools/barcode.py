@@ -258,14 +258,14 @@ class Chemistry():
 
         """
 
-        if seq[65:69] == "TTTT":
-            return "scopeV2.0.1"
-
         linker_v2 = get_seq_str(seq, self.pattern_dict_v2["L"])
         bool_valid, _, _ = check_seq_mismatch(
             [linker_v2], self.linker_1_v2_set_list, self.linker_1_v2_mismatch_list)
         if bool_valid:
-            return "scopeV2.1.1"
+            if seq[65:69] == "TTTT":
+                return "scopeV2.0.1"
+            else:
+                return "scopeV2.1.1"
 
         bool_valid, _, _ = check_seq_mismatch(
             [linker_v2], self.linker_4_v2_set_list, self.linker_4_v2_mismatch_list)
