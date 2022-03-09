@@ -8,7 +8,7 @@ from celescope.tools.step import Step, s_common
 from celescope.tools.capture.threshold import Threshold
 from celescope.__init__ import HELP_DICT
 from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
-from celescope.tools.analysis_wrapper import Report_runner
+
 
 
 def get_opts_filter(parser, sub_program):
@@ -43,6 +43,21 @@ def get_opts_filter(parser, sub_program):
 
 
 class Filter(Step):
+    """    
+    ## Features
+    - Correct single-base errors in UMIs due to sequencing, amplification, etc.
+    - Filter background UMIs base on a UMI threshold.
+    There are three methods to determine the UMI threshold:
+        - 'auto' : Using a method similar to cell calling method.
+        - 'otsu' : UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
+        - 'hard' : Using User provided UMI threshold.
+
+    ## Output
+    - `{sample}_corrected_read_count.json` Read counts after UMI correction.
+    - `{sample}_filtered_read_count.json` Filtered read counts.
+    - `{sample}_filtered_UMI.csv` Filtered UMI counts.
+
+    """
     def __init__(self, args, display_title='Filtering'):
         super().__init__(args, display_title)
 
@@ -59,14 +74,14 @@ class Filter(Step):
         self.barcode_ref_umi_dict = utils.genDict(dim=2)
         self.ref_barcode_umi_dict = utils.genDict(dim=2)
 
-        report_runner = Report_runner(args)
-        df_tsne, _df_marker = report_runner.get_df()
-        self.df_filter_tsne = df_tsne.copy()
+        match_dir_dict = utils.parse_match_dir(args.match_dir)
+        self.match_barcode = match_dir_dict['match_barcode']
+        self.df_filter_umi = pd.DataFrame(index=list(self.match_barcode)).rename_axis('barcode')
 
         # out
         self.corrected_read_count_file = f'{self.out_prefix}_corrected_read_count.json'
         self.filter_read_count_file = f'{self.out_prefix}_filtered_read_count.json'
-        self.filter_tsne_file = f'{self.out_prefix}_filtered_UMI_tsne.csv'
+        self.filter_umi_file = f'{self.out_prefix}_filtered_UMI.csv'
 
     @utils.add_log
     def correct_umi(self):
@@ -195,18 +210,18 @@ class Filter(Step):
                     self.ref_barcode_umi_dict[ref][barcode] = 0
 
     @utils.add_log
-    def add_umi_write_tsne(self):
+    def add_umi_write_csv(self):
         for ref in self.umi_threshold_dict:
-            self.df_filter_tsne[ref] = pd.Series(self.ref_barcode_umi_dict[ref])
-            self.df_filter_tsne[ref].fillna(0, inplace=True)
+            self.df_filter_umi[ref] = pd.Series(self.ref_barcode_umi_dict[ref])
+            self.df_filter_umi[ref].fillna(0, inplace=True)
 
         refs = list(self.umi_threshold_dict.keys()) 
-        self.df_filter_tsne[SUM_UMI_COLNAME] = self.df_filter_tsne[refs].sum(axis=1)
-        self.df_filter_tsne.to_csv(self.filter_tsne_file)
+        self.df_filter_umi[SUM_UMI_COLNAME] = self.df_filter_umi[refs].sum(axis=1)
+        self.df_filter_umi.to_csv(self.filter_umi_file)
 
 
     def add_some_metrics(self):
-        df = self.df_filter_tsne
+        df = self.df_filter_umi
 
         cell_total = len(df)
         df_positive = df[df[SUM_UMI_COLNAME] > 0]
@@ -231,5 +246,5 @@ class Filter(Step):
         self.get_umi_threshold()
         self.filter_umi()
 
-        self.add_umi_write_tsne()
+        self.add_umi_write_csv()
         self.add_some_metrics()

@@ -509,6 +509,9 @@ def parse_annovar(annovar_file):
 def get_barcode_from_match_dir(match_dir):
     '''
     multi version compatible
+    Returns:
+        match_barcode: list
+        no_match_barcode: int
     '''
     barcode_file_pattern_list = []
     for matrix_dir_suffix in FILTERED_MATRIX_DIR_SUFFIX:

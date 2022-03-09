@@ -28,6 +28,15 @@ multi_fusion\
     - polyT=A{18}, 18 A bases. 
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
+### filter_fusion
+- Correct single-base errors in UMIs due to sequencing, amplification, etc.
+- Filter background UMIs base on a UMI threshold.
+There are three methods to determine the UMI threshold:
+    - 'auto' : Using a method similar to cell calling method.
+    - 'otsu' : UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
+    - 'hard' : Using User provided UMI threshold.
+
+
 ### multi_fusion
 - Generate multi-sample scripts.
 
@@ -47,6 +56,11 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 ### cutadapt
 - `cutadapt.log` Cutadapt output log file.
 - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### filter_fusion
+- `{sample}_corrected_read_count.json` Read counts after UMI correction.
+- `{sample}_filtered_read_count.json` Filtered read counts.
+- `{sample}_filtered_UMI.csv` Filtered UMI counts.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -169,7 +183,7 @@ is higher than or equal to this value.
 
 `--min_query_length` Minimum query length.
 
-`--not_correct_UMI` Perform UMI correction.
+`--not_correct_UMI` Do not perform UMI correction.
 
 `--read_threshold_method` method to find read threshold. UMIs with `support reads` < `read threshold` are filtered.
 
