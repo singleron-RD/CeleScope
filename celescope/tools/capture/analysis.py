@@ -18,11 +18,17 @@ class Analysis(Step):
 
     def __init__(self, args, display_title='Analysis'):
         super().__init__(args, display_title)
-        df_filter_umi = pd.read_csv(args.filter_umi_file)
+        self.df_filter_umi = pd.read_csv(args.filter_umi_file, index_col=0)
 
-        report_runner = analysis_wrapper.Report_runner(args)
+        # out
+        self.df_tsne_file = f'{self.out_prefix}_UMI_tsne.csv'
+
+    def add_tsne_info(self):
+
+        report_runner = analysis_wrapper.Report_runner(self.args)
         df_tsne, _df_marker = report_runner.get_df()
-        self.df_tsne = pd.merge(df_tsne, df_filter_umi, left_index=True, right_index=True)
+        self.df_tsne = pd.merge(df_tsne, self.df_filter_umi, left_index=True, right_index=True)
+        self.df_tsne.to_csv(self.df_tsne_file)
 
     def add_cluster_metrics(self):
         self.add_help_content('cluster 1,2,3...', 'number of positive cells in each cluster after filtering')
@@ -35,11 +41,12 @@ class Analysis(Step):
         for index, row in df_cluster_positive.iterrows():
             self.add_metric(
                 name=f'cluster {index}',
-                value=int(row['barcode']),
-                total=int(df_cluster_all.loc[index, 'barcode']),
+                value=int(row['tSNE_1']),
+                total=int(df_cluster_all.loc[index, 'tSNE_1']),
             )
 
     def run(self):
+        self.add_tsne_info()
         self.add_cluster_metrics()
 
         tsne_cluster = Tsne_plot(self.df_tsne, 'cluster').get_plotly_div()
