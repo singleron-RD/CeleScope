@@ -16,7 +16,8 @@ ASSAY_LIST = [
     'capture_rna',
     'citeseq',
     'tcr_fl',
-    'sweetseq'
+    'sweetseq',
+    'trust_vdj',
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

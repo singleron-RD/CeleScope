@@ -59,8 +59,12 @@ def get_scope_bc(chemistry):
 
     if chemistry == 'scopeV1':
         return None, None
-    linker_f = glob.glob(f'{ROOT_PATH}/data/chemistry/{chemistry}/linker*')[0]
-    whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/bclist'
+    elif chemistry in ['flv', 'flv_rna']:
+        linker_f = glob.glob(f'{ROOT_PATH}/data/chemistry/{chemistry}/*linker_4types')[0]
+        whitelist_f = glob.glob(f'{ROOT_PATH}/data/chemistry/{chemistry}/*bclist')[0]
+    else:
+        linker_f = glob.glob(f'{ROOT_PATH}/data/chemistry/{chemistry}/linker*')[0]
+        whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/bclist'
     return linker_f, whitelist_f
 
 
