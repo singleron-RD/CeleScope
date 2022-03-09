@@ -1,6 +1,7 @@
 from celescope.trust_vdj.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
 
+
 class Multi_trust_vdj(Multi):
 
     def assemble(self, sample):
@@ -39,9 +40,11 @@ class Multi_trust_vdj(Multi):
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
+
 def main():
     multi = Multi_trust_vdj(__ASSAY__)
     multi.run()
+
 
 if __name__ == '__main__':
     main()

@@ -324,6 +324,7 @@ def assemble(args):
     with Assemble(args, display_title="Match and Mapping") as runner:
         runner.run()
 
+
 def get_opts_assemble(parser, sub_program):
     if sub_program:
         parser = s_common(parser)

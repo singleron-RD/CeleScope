@@ -23,6 +23,7 @@ def VDJ_mapping(thread, species, index_prefix, outdir, sample, fq1, fq2, barcode
     VDJ_mapping.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
+
 @utils.add_log
 def get_trust_report(filedir, sample):
     cmd = (
@@ -33,6 +34,7 @@ def get_trust_report(filedir, sample):
     get_trust_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
+
 @utils.add_log
 def get_bc_report(filedir, sample):
     cmd = (
@@ -42,6 +44,7 @@ def get_bc_report(filedir, sample):
     )
     get_bc_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
+
 
 @utils.add_log
 def get_bcfilter_report(filedir, sample):
@@ -68,6 +71,7 @@ def trust_assemble(thread, species, outdir, sample, trimLevel=1):
     )
     trust_assemble.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
+
 
 @utils.add_log
 def get_full_len_assembly(filedir, sample):

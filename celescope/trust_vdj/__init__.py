@@ -1,6 +1,7 @@
 import os
 import celescope.tools
 
+
 __STEPS__ = ['sample', 'barcode', 'cutadapt', 'assemble', 'summarize', 'mapping_annotation']
 __ASSAY__ = 'trust_vdj'
 
