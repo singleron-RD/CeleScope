@@ -186,13 +186,13 @@ def get_vj_annot(df, chains, pairs):
         Result.append({
             'name': f'Cells With V-J Spanning {c} Contig',
             'value': len(set(df[(df['full_length']==True)&(df['chain']==c)].barcode.tolist())),
-            'count': cell_nums,
+            'total': cell_nums,
             'help_info': f"Fraction of cell-associated barcodes with at least one contig spanning the 5' end of the V region to the 3' end of the J region for {c}"
         })
         Result.append({
             'name': f'Cells With Productive {c} Contig',
             'value': len(set(df[(df['full_length']==True)&(df['productive']==True)&(df['chain']==c)].barcode.tolist())),
-            'count': cell_nums,
+            'total': cell_nums,
             'help_info': "Fraction of cell-associated barcodes with productive IGL chain. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region"
         })
 
