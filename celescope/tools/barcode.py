@@ -6,15 +6,16 @@ from collections import Counter, defaultdict
 from itertools import combinations, product
 
 import pysam
+import pandas as pd
 from xopen import xopen
 
 from celescope.tools import utils
-from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.tools.__init__ import __PATTERN_DICT__,DEGENERATE_BASES
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.step import Step, s_common
 
 MIN_T = 10
-
+BP={key:val.split("/") for key,val in DEGENERATE_BASES.items()}
 
 def get_seq_str(seq, sub_pattern_dict):
     """get subseq with intervals in arr and concatenate"""
@@ -201,6 +202,71 @@ def parse_chemistry(chemistry):
     return pattern_dict, barcode_set_list, barcode_mismatch_list, linker_set_list, linker_mismatch_list
 
 
+def get_probe_mismatch(seq):
+    """
+    this is probe function
+    """
+    seq_set=set()
+    mismatch_dict={}
+    seq = seq.upper()
+    seq_list = [[x] for x in list(seq)]
+    _locs = {}
+    for key,_ in BP.items():
+        loc = [each.start() for each in re.finditer(key, seq)]
+        for x in loc:
+            _locs[x] = key
+    for key,val in _locs.items():
+        seq_list[key] = BP[val]  
+    for pos in product(*seq_list):
+        seq_set.add(''.join(pos))
+    for mismatch_seq in seq_set:
+        mismatch_dict[mismatch_seq]=seq
+    return mismatch_dict
+
+
+def get_probe_all_mismatch(seq_list):
+    """
+    this is probe function
+    """
+    mismatch_dict={}
+    correct_set=set()
+    for seq in seq_list:
+        seq = seq.upper()
+        seq=seq.strip()
+        if seq.startswith('>'):
+            continue
+        correct_set.add(seq)
+        mismatch_dict.update(get_probe_mismatch(seq))
+    return correct_set,mismatch_dict
+
+
+@utils.add_log
+def creat_probe_file(probefile):
+    probe_list,_ = utils.read_one_col(probefile)
+    probe_list[1::2] = [x.upper() for x in probe_list[1::2]]
+    probe_dict = dict(zip(probe_list[1::2],probe_list[::2]))
+    _,probe_mismatch_dict = get_probe_all_mismatch(probe_list)
+    _probe = pd.DataFrame([probe_mismatch_dict])
+    df = _probe.T
+    df.columns = ['probe']
+    df['seq'] = df.index
+    df.reset_index(inplace=True)
+    df.drop(labels='index',axis=1,inplace=True)
+    df.probe=df.probe.map(probe_dict)
+    s = df.groupby('probe').cumcount().add(1).astype(str)
+    df['probe'] += ('_' + s).replace('_1', '')
+    with open("./probe.fasta","w") as f:
+        for i in range(df.shape[0]):
+            f.write('%s\n%s\n' % (df.probe[i],df.seq[i]))
+    return "./probe.fasta"
+
+
+def read_fasta(fasta):
+    with pysam.FastxFile(fasta) as fh:
+        fasta_dict = {record.name:record.sequence for record in fh}
+    return fasta_dict
+
+
 class Chemistry():
     """
     Auto detect chemistry from R1-read
@@ -363,6 +429,8 @@ class Barcode(Step):
         self.nopolyT = args.nopolyT  # true == output nopolyT reads
         self.noLinker = args.noLinker
         self.output_R1 = args.output_R1
+        self.probefile=args.probe_file
+        self.ampfile=args.amp_file
 
         # out file
         if args.gzip:
@@ -435,6 +503,26 @@ class Barcode(Step):
             bool_whitelist = (whitelist_file is not None) and whitelist_file != "None"
             C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
 
+            #QC
+            bool_probe=False
+            if self.probefile:
+                probefile=creat_probe_file(self.probefile)
+                bool_probe = True
+                count_dic = utils.genDict(dim=3)
+                valid_count_dic = utils.genDict(dim=2)
+                probe_dic = read_fasta(probefile)
+                reads_without_probe = 0
+
+            bool_amp=False
+            ampfile=self.ampfile
+            if ampfile and ampfile != 'None':
+                bool_amp=True
+                count_amp_dic=utils.genDict(dim=3)
+                valid_count_amp_dic=utils.genDict(dim=2)
+                amp_dic=read_fasta(ampfile)
+                reads_without_amp = 0           
+            #
+
             if bool_whitelist:
                 barcode_set_list, barcode_mismatch_list = parse_whitelist_file(whitelist_file,
                                                                                n_mismatch=1, n_repeat=len(pattern_dict['C']))
@@ -501,6 +589,37 @@ class Barcode(Step):
 
                     umi = get_seq_str(seq1, pattern_dict['U'])
 
+                    #QC
+                    if bool_probe:
+                        # valid count
+                        valid_count_dic[cb][umi] += 1
+
+                        # output probe UMi and read count
+                        find_probe = False
+                        for probe_name in probe_dic:
+                            probe_seq = probe_dic[probe_name]
+                            probe_seq = probe_seq.upper()
+                            if seq1.find(probe_seq) != -1:
+                                count_dic[probe_name][cb][umi] += 1
+                                find_probe = True
+                                break
+                        if not find_probe:
+                            reads_without_probe += 1
+
+                    if bool_amp:
+                        valid_count_amp_dic[cb][umi] += 1
+
+                        find_amp=False
+                        for amp_name in amp_dic:
+                            amp_seq=amp_dic[amp_name]
+                            if seq2[0:18].find(amp_seq) != -1:
+                                count_amp_dic[amp_name][cb][umi] += 1
+                                find_amp=True
+                                break
+                        if not find_amp:
+                            reads_without_amp += 1
+                    #
+
                     self.clean_num += 1
                     self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
@@ -528,6 +647,77 @@ class Barcode(Step):
         if self.clean_num == 0:
             raise Exception(
                 'no valid reads found! please check the --chemistry parameter.')
+
+        #QC
+        if bool_probe:
+            # total probe summary
+            total_umi = 0
+            total_valid_read = 0
+            for cb in valid_count_dic:
+                total_umi += len(valid_count_dic[cb])
+                total_valid_read += sum(valid_count_dic[cb].values())
+            Barcode.run.logger.info("total umi:"+str(total_umi))
+            Barcode.run.logger.info("total valid read:"+str(total_valid_read))
+            Barcode.run.logger.info("reads without probe:"+str(reads_without_probe))
+
+            # probe summary
+            count_list = []
+            for probe_name in probe_dic:
+                UMI_count = 0
+                read_count = 0
+                if probe_name in count_dic:
+                    for cb in count_dic[probe_name]:
+                        UMI_count += len(count_dic[probe_name][cb])
+                        read_count += sum(count_dic[probe_name][cb].values())
+                count_list.append(
+                    {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
+            df_count = pd.DataFrame(count_list, columns=[
+                                "probe_name", "read_count", "UMI_count"])
+            def format_percent(x):
+                x = str(round(x*100, 2))+"%"
+                return x
+            df_count["read_fraction"] = (
+                df_count["read_count"]/total_valid_read).apply(format_percent)
+            df_count["UMI_fraction"] = (
+                df_count["UMI_count"]/total_umi).apply(format_percent)
+            df_count.sort_values(by="UMI_count", inplace=True, ascending=False)
+            df_count_file = self.outdir + '/' + self.sample + '_probe_count.tsv'
+            df_count.to_csv(df_count_file, sep="\t", index=False)
+        
+        if bool_amp:
+            total_amp_umi = 0
+            total_valid_amp_read = 0
+            for cb in valid_count_amp_dic:
+                total_amp_umi += len(valid_count_amp_dic[cb])
+                total_valid_amp_read += sum(valid_count_amp_dic[cb].values())
+            Barcode.run.logger.info("total amp umi:"+str(total_amp_umi))
+            Barcode.run.logger.info("total valid amp read:"+str(total_valid_amp_read))
+            Barcode.run.logger.info("reads without amp:"+str(reads_without_amp))
+
+            # probe summary
+            count_amp_list = []
+            for amp_name in amp_dic:
+                UMI_count = 0
+                read_count = 0
+                if amp_name in count_amp_dic:
+                    for cb in count_amp_dic[amp_name]:
+                        UMI_count += len(count_amp_dic[amp_name][cb])
+                        read_count += sum(count_amp_dic[amp_name][cb].values())
+                count_amp_list.append(
+                    {"amp_name": amp_name, "UMI_count": UMI_count, "read_count": read_count})
+            df_amp_count = pd.DataFrame(count_amp_list, columns=[
+                                "amp_name", "read_count", "UMI_count"])
+            def format_percent(x):
+                x = str(round(x*100, 2))+"%"
+                return x
+            df_amp_count["read_fraction"] = (
+                df_amp_count["read_count"]/total_valid_amp_read).apply(format_percent)
+            df_amp_count["UMI_fraction"] = (
+                df_amp_count["UMI_count"]/total_amp_umi).apply(format_percent)
+            df_amp_count.sort_values(by="UMI_count", inplace=True, ascending=False)
+            df_amp_count_file = self.outdir + '/' + self.sample + '_amp_count.tsv'
+            df_amp_count.to_csv(df_amp_count_file, sep="\t", index=False)    
+        #
 
         # stat
         BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
@@ -640,6 +830,12 @@ lowQual will be regarded as low-quality bases.',
         '--output_R1',
         help="Output valid R1 reads.",
         action='store_true'
+    )
+    parser.add_argument(
+        '--probe_file', help="probe fasta file"
+    )
+    parser.add_argument(
+        '--amp_file', help="amplification fasta file"
     )
     if sub_program:
         parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
