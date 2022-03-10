@@ -90,7 +90,7 @@ def parse_sample_tsv(sample_tsv):
 
     for col in SAMPLE_TSV_REQUIRED_COLS:
         if not col in df.columns:
-            raise Exception(f'{col} header is missing in mapfile! Required colnames: {required_cols}')
+            raise Exception(f'{col} header is missing in mapfile! Required colnames: {col}')
 
     df = df.set_index('sample_name')
     sample_dict = df.to_dict('index')

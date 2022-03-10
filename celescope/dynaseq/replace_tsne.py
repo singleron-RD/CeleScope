@@ -164,7 +164,7 @@ def replace_tsne(args):
 
 def get_opts_replace_tsne(parser, sub_program):
     if sub_program:
-        parser.add_argument('--tsne', help=HELP_DICT['tsne_for_replace_tsne']'tsne file from analysis step', required=True)
+        parser.add_argument('--tsne', help=HELP_DICT['tsne_for_replace_tsne'], required=True)
         parser.add_argument('--mat', help=HELP_DICT['mat_for_replace_tsne'], required=True)
         parser.add_argument('--rep', help=HELP_DICT['rep_for_replace_tsne'], required=True)
         parser.add_argument('--mincell', type=int, default=5, help=HELP_DICT['mincell_for_replace_tsne'])
