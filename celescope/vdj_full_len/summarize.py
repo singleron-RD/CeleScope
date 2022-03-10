@@ -44,8 +44,15 @@ class Summarize(Step):
         self.all_bam = f'{self.outdir}/../03.assemble/{self.sample}/outs/all_contig.bam'
         self.annotation = f'{self.outdir}/../04.annotation'
         self.match = f'{self.outdir}/../05.match'
-        self.filter_contig = pd.read_csv(f'{self.outdir}/../04.annotation/filtered_contig_annotations.csv')
+        self.productive = f'{self.outdir}/productive'
+
+        self.filter_contig = pd.read_csv(f'{self.annotation}/filtered_contig_annotations.csv')
+        self.match_contig = pd.read_csv(f'{self.match}/match_contigs.csv')
+        self.filter_contig_fasta = f'{self.annotation}/filtered_contig.fasta'
+        self.match_contig_fasta = f'{self.match}/match_contig.fasta'
+
         self.clonotable = f'{self.outdir}/../03.assemble/{self.sample}/outs/clonotypes.csv'
+        # self.clonotable = f'{self.outdir}/../05.match/match_clonotypes.csv'
 
         if self.seqtype == 'TCR':
             self.chains = ['TRA', 'TRB']
@@ -55,11 +62,37 @@ class Summarize(Step):
             self.pair = ['IGH_IGL', 'IGH_IGK']
 
         self.not_split_R2 = args.not_split_R2
+    
+    @staticmethod
+    def get_productive_fasta(in_fasta, out_fasta, productive_contig_id):
+        handle_file = open(out_fasta, 'w')
+        with pysam.FastxFile(in_fasta, 'r') as f:
+            for read in f:
+                if read.name in productive_contig_id:
+                    handle_file.write(">" + read.name + "\n" + read.sequence + "\n")
+        handle_file.close()  
 
+    @staticmethod
+    def get_productive_result(filter_contig, match_contig, filter_contig_fasta, match_contig_fasta, outdir):
+        productive_contig = filter_contig[filter_contig['productive'] == True]
+        productive_match_contig = match_contig[match_contig['productive'] == True]
+        productive_contig.to_csv(f'{outdir}/productive_contig_annotations.csv', sep=',', index=False)
+        productive_match_contig.to_csv(f'{outdir}/productive_match_contig_annotations.csv', sep=',', index=False)
+
+        productive_contig_id = set(productive_contig['contig_id'])
+        productive_fasta = f'{outdir}/productive_contig.fasta'
+        producitve_match_fasta = f'{outdir}/productive_match_contig.fasta'
+        Summarize.get_productive_fasta(filter_contig_fasta, productive_fasta, productive_contig_id)
+        Summarize.get_productive_fasta(match_contig_fasta, producitve_match_fasta, productive_contig_id)
+
+    @utils.add_log
+    def run_productive(self):
+        os.system(f"mkdir -p {self.productive}")
+        self.get_productive_result(self.filter_contig, self.match_contig, self.filter_contig_fasta, self.match_contig_fasta, self.productive)
 
     @utils.add_log
     def run(self):
-
+        self.run_productive()
         # copy file
         os.system(f'cp {self.annotation}/* {self.outdir}')
         os.system(f'cp {self.match}/* {self.outdir}')
@@ -206,6 +239,9 @@ class Summarize(Step):
             lambda x: f'{round(x*100, 2)}%')
         raw_clonotypes['CDR3_aa'] = raw_clonotypes['cdr3s_aa'].apply(
             lambda x: x.replace(';', '<br>'))
+        # for match clonotypes
+        # for i in range(1, raw_clonotypes.shape[0]+1):
+        #    raw_clonotypes['ClonotypeID'][i-1] = i
         table_dict = self.get_table_dict(
             title=title,
             table_id='clonetypes',
