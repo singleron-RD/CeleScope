@@ -28,6 +28,17 @@ TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)
 np.random.seed(0)
 
+# downsample.csv
+READ_FRACTION = 'read_fraction'
+MEDIAN_GENE_NUMBER = 'median_gene_number'
+READ_SATURATION = 'read_saturation'
+UMI_SATURATION = 'umi_saturation'
+
+# Plot axis title in HTML
+X_TITLE = 'Read Fraction'
+SATURATION_Y_TITLE = 'Sequencing Saturation(%)'
+MEDIAN_GENE_Y_TITLE = 'Median Genes per Cell'
+
 
 class Count(Step):
     """
@@ -36,9 +47,7 @@ class Count(Step):
     - Generate expression matrix.
     ## Output
     - `{sample}_all_matrix` The expression matrix of all detected barcodes. 
-        Can be read in by calling the `Seurat::Read10X` function.
     - `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. 
-    Can be read in by calling the `Seurat::Read10X` function.
     - `{sample}_matrix.tsv.gz` The expression matrix of the barcode that is identified to be the cell, separated by tabs. 
     CeleScope >=1.2.0 does not output this file.
     - `{sample}_count_detail.txt.gz` 4 columns: 
@@ -55,11 +64,7 @@ class Count(Step):
         - mark: cell barcode or backgound barcode.
             `CB` cell  
             `UB` background  
-    - `{sample}_downsample.txt` 3 columns：
-        - percent: percentage of sampled reads
-        - median_geneNum: median gene number per cell
-        - saturation: sequencing saturation
-    - `barcode_filter_magnitude.pdf` Barcode-UMI plot.
+    - `{sample}_downsample.tsv` Subset a fraction of reads and calculate median gene number and sequencing saturation.
     """
 
     def __init__(self, args, display_title=None):
@@ -79,12 +84,17 @@ class Count(Step):
         self.marked_count_file = f'{self.outdir}/{self.sample}_counts.txt'
         self.raw_matrix_dir = f'{self.outdir}/{self.sample}_{RAW_MATRIX_DIR_SUFFIX[0]}'
         self.cell_matrix_dir = f'{self.outdir}/{self.sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
-        self.downsample_file = f'{self.outdir}/{self.sample}_downsample.txt'
+        self.downsample_file = f'{self.outdir}/{self.sample}_downsample.tsv'
 
-    def line_data(self):
-        columns = ['Reads Fraction', 'Median Genes per Cell', 'Sequencing Saturation(%)']
-        data = pd.read_csv(self.downsample_file, sep="\t", names=columns, header=0)
-        return data
+    def get_df_line(self):
+        df_line = pd.read_csv(self.downsample_file, sep="\t", header=0)
+        df_line.rename(columns={
+            READ_FRACTION: X_TITLE,
+            MEDIAN_GENE_NUMBER: MEDIAN_GENE_Y_TITLE,
+            UMI_SATURATION: SATURATION_Y_TITLE,
+        }, inplace=True)
+
+        return df_line
 
     def run(self):
         self.bam2table()
@@ -116,13 +126,13 @@ class Count(Step):
         self.get_summary(CB_describe, CB_total_Genes,
                          CB_reads_count, reads_mapped_to_transcriptome)
 
-        df_line = self.line_data()
+        df_line = self.get_df_line()
 
-        line_saturation = Line_plot(df_line=df_line,title="Sequencing Saturation",x_title="Reads Fraction",
-                                    y_title="Sequencing Saturation(%)",y_range=[0,100],section=False).get_plotly_div()
+        line_saturation = Line_plot(df_line=df_line,title="Sequencing Saturation",x_title=X_TITLE,
+                                    y_title=SATURATION_Y_TITLE, y_range=[0,100], section=False).get_plotly_div()
         self.add_data(line_saturation=line_saturation)
-        line_median = Line_plot(df_line=df_line,title="Median Genes per Cell",x_title="Reads Fraction",
-                                y_title="Median Genes per Cell").get_plotly_div()
+        line_median = Line_plot(df_line=df_line,title="Median Genes per Cell", x_title=X_TITLE,
+                                y_title=MEDIAN_GENE_Y_TITLE).get_plotly_div()
         self.add_data(line_median=line_median)
 
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.marked_count_file))
@@ -379,6 +389,7 @@ class Count(Step):
         umi_saturation = 1 - n_deduped_reads / n_umis
         read_saturation = 1 - n_deduped_reads / n_reads
         Currently the html report shows umi_saturation.
+
         n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads.
         n_umis = Total number of (confidently mapped, valid cell-barcode, valid UMI) UMIs.
         n_reads = Total number of (confidently mapped, valid cell-barcode, valid UMI) reads.
@@ -414,23 +425,22 @@ class Count(Step):
 
         format_str = "%.2f\t%.2f\t%.2f\n"
         downsample_dict = {
-            "fraction": [],
-            "umi_saturation": [],
-            "read_saturation": [],
-            "median_gene": []
+            READ_FRACTION: [0],
+            UMI_SATURATION: [0],
+            READ_SATURATION: [0],
+            MEDIAN_GENE_NUMBER: [0],
         }
-        with open(self.downsample_file, 'w') as fh:
-            fh.write('percent\tmedian_geneNum\tsaturation\n')
-            fh.write(format_str % (0, 0, 0))
-            for fraction in np.arange(0.1, 1.1, 0.1):
-                umi_saturation, read_saturation, geneNum_median = Count.sub_sample(
-                    fraction, df_cell, cell_read_index)
-                fh.write(format_str % (fraction, geneNum_median, umi_saturation))
-                downsample_dict["fraction"].append(round(fraction, 1))
-                downsample_dict["umi_saturation"].append(round(umi_saturation, 2))
-                downsample_dict["read_saturation"].append(round(read_saturation, 2))
-                downsample_dict["median_gene"].append(geneNum_median)
 
+        for fraction in np.arange(0.1, 1.1, 0.1):
+            umi_saturation, read_saturation, geneNum_median = Count.sub_sample(
+                fraction, df_cell, cell_read_index)
+            downsample_dict[READ_FRACTION].append(round(fraction,1))
+            downsample_dict[UMI_SATURATION].append(round(umi_saturation, 2))
+            downsample_dict[READ_SATURATION].append(round(read_saturation, 2))
+            downsample_dict[MEDIAN_GENE_NUMBER].append(geneNum_median)
+
+        df_downsample = pd.DataFrame(downsample_dict, columns=[READ_FRACTION, MEDIAN_GENE_NUMBER, UMI_SATURATION, READ_SATURATION])
+        df_downsample.to_csv(self.downsample_file, index=False, sep='\t')
         self.downsample_dict = downsample_dict
 
 
