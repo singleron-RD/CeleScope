@@ -8,19 +8,17 @@ import celescope.tools.utils as utils
 
 matplotlib.use('Agg')
 
-# minimum array length to use otsu method
-OTSU_MIN_LEN = 50
 
 class Otsu():
     """
     remove all zero in array
-    Return 1 if len(array) < OTSU_MIN_LEN
+    Return 1 if len(array) < otsu_min_len
     """
-    def __init__(self, array, log_base=10, otsu_plot_path=None,):
+    def __init__(self, array, log_base=10, otsu_min_len = 50, otsu_plot_path=None,):
         
         self.len_bool = True
         array = [x for x in array if x > 0 ]
-        if len(array) < OTSU_MIN_LEN:
+        if len(array) < otsu_min_len:
             self.len_bool = False
 
         self.log_base = log_base
@@ -127,11 +125,13 @@ class Threshold():
         otsu_plot_path: str
         hard_threshold: int
     """
-    def __init__(self, array, threshold_method='auto', otsu_plot_path=None, hard_threshold=None):
+    def __init__(self, array, threshold_method='auto', otsu_plot_path=None, hard_threshold=None, **kwargs):
         self.array = [x for x in array if x > 0 ]
         self.threshold_method = threshold_method
         self.otsu_plot_path = otsu_plot_path
         self.hard_threshold = hard_threshold
+
+        self.kwargs = kwargs
     
     def run(self):
         """
@@ -140,7 +140,7 @@ class Threshold():
         if not self.array:
             return 1
         if self.threshold_method == 'otsu':
-            otsu = Otsu(self.array, otsu_plot_path=self.otsu_plot_path)
+            otsu = Otsu(self.array, otsu_plot_path=self.otsu_plot_path, **self.kwargs)
             threshold = otsu.run()
         elif self.threshold_method == 'auto':
             auto = Auto(self.array)
