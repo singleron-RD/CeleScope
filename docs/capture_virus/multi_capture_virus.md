@@ -216,7 +216,7 @@ is higher than or equal to this value.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--virus_genomeDir` Virus genome dir.
+`--virus_genomeDir` Virus genome directory.
 
 `--min_query_length` Minimum query length.
 

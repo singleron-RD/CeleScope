@@ -29,5 +29,5 @@ is higher than or equal to this value.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--virus_genomeDir` Virus genome dir.
+`--virus_genomeDir` Virus genome directory.
 
