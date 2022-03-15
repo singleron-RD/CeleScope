@@ -25,6 +25,7 @@ class Assemble(Step):
         self.soft = args.soft
         self.thread = args.thread
         self.fqs_dir = args.fqs_dir
+        self.other_param = args.other_param
 
         self.cwd_path = os.getcwd()
 
@@ -48,6 +49,10 @@ class Assemble(Step):
             f'--localcores={self.thread} '
             f'--localmem={self.mem} '
         )
+
+        if self.other_param:
+            cmd += (self.other_param)
+
         Assemble.run_assemble.logger.info(cmd)
         with open(f'{self.outdir}/{self.sample}_vdj_10X.sh', 'w') as f:
             f.write(cmd)
@@ -70,6 +75,7 @@ def get_opts_assemble(parser, sub_program):
     parser.add_argument('--mem', help='memory (G)', default=10)
     parser.add_argument('--ref_path', help='reference path for cellranger')
     parser.add_argument('--soft_path', help='soft path for cellranger')
+    parser.add_argument('--other_param', help='Other cellranger parameters.', default="")
     if sub_program:
         s_common(parser)
         parser.add_argument('--fqs_dir', help='fastq dir', required=True)
