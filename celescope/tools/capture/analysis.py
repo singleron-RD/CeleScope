@@ -1,6 +1,5 @@
 import pandas as pd
 
-from celescope.tools.step import s_common
 from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools.step import Step
 from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
@@ -21,6 +20,7 @@ class Analysis(Step):
         self.df_filter_umi = pd.read_csv(args.filter_umi_file, index_col=0)
 
         # out
+        self.df_tsne = None
         self.df_tsne_file = f'{self.out_prefix}_UMI_tsne.csv'
 
     def add_tsne_info(self):

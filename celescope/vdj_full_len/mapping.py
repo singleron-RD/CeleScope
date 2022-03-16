@@ -44,7 +44,7 @@ class Mapping(Step):
         try:
             self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
             self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-        except:
+        except IndexError:
             pass
   
         self.contig = glob.glob(f'{self.outdir}/../05.match/match_contigs.csv')[0]

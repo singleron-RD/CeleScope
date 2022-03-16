@@ -3,7 +3,7 @@ import pysam
 import os
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.vdj_full_len.__init__ import ref_dict, soft_dict
+from celescope.vdj_full_len.__init__ import soft_dict
 from xopen import xopen
 
 # BARCODES_10X_FILE = "/SGRNJ/Database/script/soft/cellranger/cellranger-3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes/737K-august-2016.txt"
