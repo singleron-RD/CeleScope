@@ -10,7 +10,8 @@ This pipeline is currently mainly for TCR/BCR full-length assembly. The whole pr
 - [mapping](vdj_full_len/mapping.md)
 
 # USAGE
-- [multi_vdj_full_len.md](./vdj_full_len/usage.md)
+- [multi_vdj_full_len](./vdj_full_len/usage.md)
+- [multi_vdj_full_len for users](./vdj_full_len/usage_for_users.md)
 
 # Output Document
 ## Summarize
