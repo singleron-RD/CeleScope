@@ -1,5 +1,3 @@
-
-
 ## Arguments
 `--fusion_genomeDir` Fusion genome directory.
 
@@ -12,8 +10,6 @@
 `--capture_bam` None
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

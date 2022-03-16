@@ -1,5 +1,3 @@
-
-
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
@@ -20,13 +18,11 @@ is higher than or equal to this value.
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fusion_genomeDir` fusion gene STAR index genome directory
+`--fusion_genomeDir` fusion gene STAR index genome directory.
 

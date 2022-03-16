@@ -3,7 +3,7 @@ from collections import defaultdict
 import plotly
 import plotly.express as px
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 PLOTLY_CONFIG = {
@@ -198,61 +198,52 @@ class Pie_plot(Plotly_plot):
         self._fig.update_traces(textposition='none')
         self._fig.update_layout(layout)
 
-
 class Line_plot(Plotly_plot):
 
-    def __init__(self, df_line, feature_name, axis_range=(0, 100), section=True):
+    def __init__(self, df_line,title=None,x_title=None,y_title=None,y_range=None,section=True,):
         super().__init__(df_line)
         self.df_line = df_line
-        self.feature_name = feature_name
-        self.axis_range = axis_range
+        self.title = title
+        self.x_title = x_title
+        self.y_title = y_title
+        self.y_range = y_range
         self.section = section
-        self.index = None
-        # 随title信息变更index
-        if self.feature_name == "Saturation":
-            self.index = 0
-        elif self.feature_name == "Median gene_Num":
-            self.index = 1
-        # 更新填入title信息
-        self.title = ['Sequencing Saturation', 'Median Genes per Cell']
-        self._str_coord1 = "Reads Fraction"
-        self._str_coord2 = ["Sequencing Saturation(%)", "Median Genes per Cell"]
 
         self.xaxes_config = {
             'showgrid': True,
             'gridcolor': '#F5F5F5',
-            'linecolor': 'black',
-            'showline': True,
+            'linecolor':'black',
+            'showline': True, 
             'ticks': None,
-            'tickmode': 'linear',
-            'tick0': 0,
-            'dtick': 0.5,
+            'tickmode':'linear',
+            'tick0':0,
+            'dtick':0.5,
         }
-
+        
         if self.section:
             self.yaxes_config = {
                 'showgrid': True,
                 'gridcolor': '#F5F5F5',
-                'linecolor': 'black',
-                'showline': True,
+                'linecolor':'black',
+                'showline': True, 
                 'ticks': None,
-                'rangemode': 'tozero',
+                'rangemode':'tozero',
             }
         else:
             self.yaxes_config = {
                 'showgrid': True,
                 'gridcolor': '#F5F5F5',
-                'linecolor': 'black',
-                'showline': True,
+                'linecolor':'black',
+                'showline': True, 
                 'ticks': None,
-                'range': list(self.axis_range),  # range范围根据需要调节
+                'range':self.y_range,
             }
 
         self.line_config = {
             'data_frame': df_line,
-            'title': self.title[self.index],
-            'x': self._str_coord1,
-            'y': self._str_coord2[self.index],
+            'title': self.title,
+            'x': self.x_title, 
+            'y': self.y_title,
         }
 
         self.line_plot()
@@ -262,7 +253,7 @@ class Line_plot(Plotly_plot):
     def line_plot(self):
         self._fig = px.line(
             **self.line_config,
-        )
+        )  
 
     def update_fig(self):
         self._fig.update_xaxes(
@@ -272,12 +263,12 @@ class Line_plot(Plotly_plot):
         self._fig.update_yaxes(
             **self.yaxes_config
         )
-
+        
         self._fig.update_layout(
             LAYOUT,
-            title={"x": 0.5, "y": 0.95, "font": {"size": 15}},
-            yaxis_zeroline=True,
-            showlegend=False,
-            plot_bgcolor='#FFFFFF',
-            hovermode="closest"
+            title={"x":0.5, "y":0.95, "font":{"size":15}},
+            yaxis_zeroline = True,
+            showlegend = False,
+            plot_bgcolor = '#FFFFFF',
+            hovermode = "closest"
         )

@@ -8,11 +8,11 @@ DIR = '/SGRNJ03/randd/zhouxin/software/TRUST4/'
 
 class Res_sum(Step):
     """
-    Features
+    ## Features
 
     - Calculate clonetypes.
 
-    Output
+    ## Output
     - `06.res_sum/clonetypes.tsv` Record each clonetype and its frequent.
     - `06.res_sum/all_{type}.csv` Containing detailed information for each barcode.
     """

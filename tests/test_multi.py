@@ -6,7 +6,7 @@ import os
 import subprocess
 from concurrent import futures
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 ASSAYS = [
     'fusion',

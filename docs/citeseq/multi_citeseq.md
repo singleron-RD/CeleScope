@@ -1,4 +1,41 @@
+## Features
+### barcode
 
+- Demultiplex barcodes.
+- Filter invalid R1 reads, which includes:
+    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+    - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+
+### cutadapt
+- Trim adapters in R2 reads with cutadapt. Default adapters includes:
+    - polyT=A{18}, 18 A bases. 
+    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+
+### mapping_tag
+- Align R2 reads to the tag barcode fasta.
+
+
+## Output files
+### barcode
+
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### mapping_tag
+
+- `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
+
+    `barcode` cell barcode  
+    `tag_name`  tag name in barcode_fasta  
+    `UMI`   UMI sequence  
+    `read_count` read count per UMI  
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -37,9 +74,12 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--mod` Which type of script to generate, `sjm` or `shell`.
 
+`--queue` Only works if the `--mod` selects `sjm`.
+
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`.
 
 `--outdir` Output directory.
 
@@ -58,7 +98,7 @@ same time.
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
-- `T`: poly T
+- `T`: poly T.
 
 `--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
@@ -75,6 +115,8 @@ same time.
 `--allowNoPolyT` Allow valid reads without polyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
+
+`--output_R1` Output valid R1 reads.
 
 `--gzip` Output gzipped fastq files.
 
@@ -97,23 +139,51 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
-`--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases.         
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
+
+`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
 `L` linker(common sequences)  
-`C` tag barcode
+`C` tag barcode.
 
 `--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
 It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
 If no such tag exists, the read is classified as invalid.
+
+You can find the barcode fasta file under `celescope/data/Clindex`
 ```
->tag_0
-GGGCGTCTGTGACCGCGTGATACTGCATTGTAGACCGCCCAACTC
->tag_1
-TTCCTCCAGAGGAGACCGAGCCGGTCAATTCAGGAGAACGTCCGG
->tag_2
-AGGGCTAGGCGTGTCATTTGGCGAGGTCCTGAGGTCATGGAGCCA
->tag_3
-CACTGGTCATCGACACTGGGAACCTGAGGTGAGTTCGCGCGCAAG
+>CLindex_TAG_1
+CGTGTTAGGGCCGAT
+>CLindex_TAG_2
+GAGTGGTTGCGCCAT
+>CLindex_TAG_3
+AAGTTGCCAAGGGCC
+>CLindex_TAG_4
+TAAGAGCCCGGCAAG
+>CLindex_TAG_5
+TGACCTGCTTCACGC
+>CLindex_TAG_6
+GAGACCCGTGGAATC
+>CLindex_TAG_7
+GTTATGCGACCGCGA
+>CLindex_TAG_8
+ATACGCAGGGTCCGA
+>CLindex_TAG_9
+AGCGGCATTTGGGAC
+>CLindex_TAG_10
+TCGCCAGCCAAGTCT
+>CLindex_TAG_11
+ACCAATGGCGCATGG
+>CLindex_TAG_12
+TCCTCCTAGCAACCC
+>CLindex_TAG_13
+GGCCGATACTTCAGC
+>CLindex_TAG_14
+CCGTTCGACTTGGTG
+>CLindex_TAG_15
+CGCAAGACACTCCAC
+>CLindex_TAG_16
+CTGCAACAAGGTCGC
 ```
 
 `--linker_fasta` Optional. If provided, it will check the mismatches between linker sequence in R2 reads 

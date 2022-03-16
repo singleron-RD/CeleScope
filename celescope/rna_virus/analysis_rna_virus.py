@@ -1,11 +1,11 @@
 import pandas as pd
 
-import celescope.tools.utils as utils
-from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools import utils
+from celescope.tools.step import Step
 from celescope.rna.analysis import get_opts_analysis
 
 
-class Analysis_rna_virus(AnalysisMixin):
+class Analysis_rna_virus(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title)
 

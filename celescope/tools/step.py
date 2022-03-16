@@ -8,7 +8,7 @@ import subprocess
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 
 
@@ -25,7 +25,6 @@ def s_common(parser):
     """subparser common arguments
     """
     parser.add_argument('--outdir', help='Output diretory.', required=True)
-    parser.add_argument('--assay', help='Assay name.', required=True)
     parser.add_argument('--sample', help='Sample name.', required=True)
     parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
     parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
@@ -38,14 +37,18 @@ class Step:
     """
 
     def __init__(self, args, display_title=None):
+        '''
+        display_title controls the section title in HTML report
+        '''
 
         self.args = args
         self.outdir = args.outdir
         self.sample = args.sample
-        self.assay = args.assay
+        self.assay = args.subparser_assay
         self.thread = int(args.thread)
         self.debug = args.debug
         self.out_prefix = f'{self.outdir}/{self.sample}'
+        self.display_title = display_title
 
         # important! make outdir before path_dict because path_dict use relative path.
         utils.check_mkdir(self.outdir)

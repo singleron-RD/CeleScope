@@ -22,8 +22,6 @@ fasta = EBV_genome.fasta
 genome_name = EBV
 genomesaindexnbases = 7
 ```
-
-
 ## Arguments
 `--thread` Default=6. Threads to use.
 
@@ -33,5 +31,5 @@ genomesaindexnbases = 7
 
 `--fasta` Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.
 
-`--genomeSAindexNbases` STAR genomeSAindexNbases
+`--genomeSAindexNbases` STAR genomeSAindexNbases.
 

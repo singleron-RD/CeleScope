@@ -31,9 +31,9 @@ There are two ways to run `multi_snp`
 multi_snp\
     --mapfile ./test1.mapfile\
     --genomeDir {genomeDir after running celescope snp mkref}\
-    --thread 10\
+    --thread 4\
     --mod shell\
-    --gene_list gene_list.tsv\
+    --panel lung_1\
     --annovar_config annovar.config\
     --not_consensus
 ```
@@ -44,13 +44,139 @@ multi_snp\
 multi_snp\
     --mapfile ./test1.mapfile\
     --genomeDir {genomeDir after running celescope snp mkref}\
-    --thread 10\
+    --thread 4\
     --mod shell\
-    --gene_list gene_list.tsv\
+    --panel lung_1\
     --annovar_config annovar.config\
-    --min_support_read 1
 ```
+## Features
+### mkref
+- Create dictionary file and fasta index for gatk SplitNCigarReads.
+(https://gatk.broadinstitute.org/hc/en-us/articles/360035531652-FASTA-Reference-genome-format) 
+Need to run `celescope rna mkref` first
 
+
+### barcode
+
+- Demultiplex barcodes.
+- Filter invalid R1 reads, which includes:
+    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+    - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+
+### cutadapt
+- Trim adapters in R2 reads with cutadapt. Default adapters includes:
+    - polyT=A{18}, 18 A bases. 
+    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+
+### consensus
+- Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and 
+count up the number of each type of residue (ie. A or G or T or C for DNA) in all sequences in the
+alignment. If the following conditions are met, the consensus sequence will be the most common residue in the alignment:
+1. the percentage of the most common residue type > threshold(default: 0.5);
+2. most common residue reads >= min_consensus_read;
+otherwise an ambiguous character(N) will be added.
+
+
+### star
+- Align R2 reads to the reference genome with STAR.
+- Collect Metrics with Picard.
+
+
+### featureCounts
+- Assigning uniquely mapped reads to genomic features with FeatureCounts.
+
+### target_metrics
+- Filter bam file
+    - Filter reads that are not cell-associated.
+    - Filter reads that are not mapped to target genes. 
+
+- Collect enrichment metrics.
+
+
+### variant_calling
+- Perform variant calling at single cell level.
+
+
+### filter_snp
+- Filter out `ref` and `alt` alleles that do not have enough reads to support.
+
+
+### analysis_snp
+- Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+
+
+## Output files
+### mkref
+- fasta index
+- gatk dictionary file
+
+
+### barcode
+
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### consensus
+- `{sample}_consensus.fq` Fastq file after consensus.
+
+### star
+- `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
+
+- `{sample}_SJ.out.tab` SJ.out.tab contains high confidence collapsed splice junctions in tab-delimited format.
+
+- `{sample}_Log.out` Main log with a lot of detailed information about the run. 
+This is most useful for troubleshooting and debugging.
+
+- `{sample}_Log.progress.out` Report job progress statistics, such as the number of processed reads, 
+% of mapped reads etc. It is updated in 1 minute intervals.
+
+- `{sample}_Log.Log.final.out` Summary mapping statistics after mapping job is complete, 
+very useful for quality control. The statistics are calculated for each read (single- or paired-end) and 
+then summed or averaged over all reads. Note that STAR counts a paired-end read as one read, 
+(unlike the samtools agstat/idxstats, which count each mate separately). 
+Most of the information is collected about the UNIQUE mappers 
+(unlike samtools agstat/idxstats which does not separate unique or multi-mappers). 
+Each splicing is counted in the numbers of splices, which would correspond to 
+summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
+i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
+
+- `{sample}_region.log` Picard CollectRnaSeqMetrics results.
+
+### featureCounts
+- `{sample}` Numbers of reads assigned to features (or meta-features).
+- `{sample}_summary` Stat info for the overall summrization results, including number of 
+successfully assigned reads and number of reads that failed to be assigned due to 
+various reasons (these reasons are included in the stat info).
+- `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
+sorted by coordinates；BAM file contains tags as following(Software Version>=1.1.8):
+    - CB cell barcode
+    - UB UMI
+    - GN gene name
+    - GX gene id
+- `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
+
+### target_metrics
+- `filtered.bam` BAM file after filtering. Reads that are not cell-associated or not mapped to target genes are filtered.
+
+### variant_calling
+- `{sample}_raw.vcf` Variants are called with bcftools default settings.
+- `{sample}_norm.vcf` Indels are left-aligned and normalized. See https://samtools.github.io/bcftools/bcftools.html#norm for more details.
+
+### filter_snp
+- `{sample}_test1_filtered.vcf` VCF file after filtering. Alleles read counts that do not have enough reads to support are set to zero. 
+Genotypes are changed accordingly.
+
+### analysis_snp
+- `{sample}_gt.csv` Genotypes of variants of each cell. Rows are variants and columns are cells.
+- `{sample}_variant_ncell.csv` Number of cells with each genotype.
+- `{sample}_variant_table.csv` `{sample}_variant_ncell.csv` annotated with COSMIC(https://cancer.sanger.ac.uk/cosmic).
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -89,9 +215,12 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--mod` Which type of script to generate, `sjm` or `shell`.
 
+`--queue` Only works if the `--mod` selects `sjm`.
+
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`.
 
 `--outdir` Output directory.
 
@@ -110,7 +239,7 @@ same time.
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
-- `T`: poly T
+- `T`: poly T.
 
 `--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
@@ -127,6 +256,8 @@ same time.
 `--allowNoPolyT` Allow valid reads without polyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
+
+`--output_R1` Output valid R1 reads.
 
 `--gzip` Output gzipped fastq files.
 
@@ -149,6 +280,8 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
+
 `--threshold` Default 0.5. Valid base threshold.
 
 `--not_consensus` Skip the consensus step.
@@ -166,15 +299,19 @@ is higher than or equal to this value.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--gtf_type` Specify feature type in GTF annotation
+`--gtf_type` Specify feature type in GTF annotation.
 
-`--featureCounts_param` Other featureCounts parameters
+`--featureCounts_param` Other featureCounts parameters.
 
-`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
+`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
 
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
-`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
+`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
+
+`--threshold_method` One of [otsu, auto, hard, none].
+
+`--hard_threshold` int, use together with `--threshold_method hard`.
 
 `--annovar_config` ANNOVAR config file.
 

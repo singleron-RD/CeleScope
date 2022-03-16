@@ -1,7 +1,7 @@
 import re
 import subprocess
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.mkref import Mkref
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT

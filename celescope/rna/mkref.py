@@ -1,15 +1,15 @@
 import subprocess
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.mkref import Mkref, super_opts
 
 
 class Mkref_rna(Mkref):
     """
-    Features
+    ## Features
     - Create a genome reference directory.
 
-    Output
+    ## Output
 
     - STAR genome index files
 
@@ -85,12 +85,12 @@ def get_opts_mkref(parser, sub_program):
     if sub_program:
         parser.add_argument(
             "--gtf",
-            help="Required. Genome gtf file. Must be relative file path to genomeDir.",
+            help="Required. Genome gtf file. Use absolute path or relative path to `genomeDir`.",
             required=True
         )
         parser.add_argument(
             "--mt_gene_list",
-            help="""Mitochondria gene list file. Must be relative file path to genomeDir.
+            help="""Mitochondria gene list file. Use absolute path or relative path to `genomeDir`.
 It is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
             default="None"

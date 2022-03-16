@@ -6,7 +6,7 @@ import pandas as pd
 import pysam
 
 import celescope
-from celescope.tools.utils import add_log, read_barcode_file
+from celescope.tools.utils import add_log, get_barcode_from_match_dir
 
 
 @add_log
@@ -182,7 +182,7 @@ def mapping_hla(args):
     match_dir = args.match_dir
 
     # process args
-    barcodes, _nCell = read_barcode_file(match_dir)
+    barcodes, _nCell = get_barcode_from_match_dir(match_dir)
 
     # check dir
     if not os.path.exists(outdir):

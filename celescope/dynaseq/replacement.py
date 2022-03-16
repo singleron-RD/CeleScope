@@ -7,18 +7,18 @@ import subprocess
 import pandas as pd
 import pysam
 from celescope.tools.step import Step, s_common
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 toolsdir = os.path.dirname(__file__)
 
 
 class Replacement(Step):
     """
-    Features
+    ## Features
     - Computes the replacement rates in each cell and gene.
     - Boxplots for rates distribution.
 
-    Output
+    ## Output
     - `{sample}.TC_matrix.rds` New and old info for each barcode/gene/umi.
     - `{sample}.new_matrix.tsv.gz` New RNA matrix.
     - `{sample}.old_matrix.tsv.gz` Old RNA matrix.
@@ -144,7 +144,7 @@ class Replacement(Step):
             for rec in bcf_in.fetch():
                 try:
                     chrom, pos = rec.chrom, rec.pos
-                    chr_pos = chrom+'_'+str(pos)
+                    chr_pos = chrom+'_'+str(pos-1)
                     outdict[chr_pos] = 1
                 except (ValueError, KeyError):
                     continue

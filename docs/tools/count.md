@@ -27,18 +27,14 @@ CeleScope >=1.2.0 does not output this file.
     - median_geneNum: median gene number per cell
     - saturation: sequencing saturation
 - `barcode_filter_magnitude.pdf` Barcode-UMI plot.
-
-
 ## Arguments
 `--genomeDir` Required. Genome directory.
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
-`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`
+`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

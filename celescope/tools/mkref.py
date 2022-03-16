@@ -2,11 +2,9 @@ import configparser
 import subprocess
 import sys
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.__init__ import GENOME_CONFIG
 from celescope.__init__ import HELP_DICT
-
-
 
 
 class Mkref():
@@ -74,12 +72,21 @@ class Mkref():
     @staticmethod
     def get_file_path(raw_file_path, genomeDir):
         """
-        if raw_file_path is not absolute path, add genomeDir
+        if raw_file_path is not absolute path and not None,
+        add genomeDir
+        if 'NONE'(str), return None
 
         >>> raw_file_path = '/root/Homo_sapiens.GRCh38.92.chr.gtf'
         >>> Mkref.get_file_path(raw_file_path, 'fake')
         '/root/Homo_sapiens.GRCh38.92.chr.gtf'
+
+        >>> raw_file_path = 'None'
+        >>> Mkref.get_file_path(raw_file_path, 'fake')
+        'None'
         """
+        if (not raw_file_path) or (raw_file_path == 'None'):
+            return None
+
         file_path = raw_file_path
         if not file_path.startswith('/'):
             file_path = f'{genomeDir}/{file_path}'
@@ -96,7 +103,7 @@ class Mkref():
         config_file = f'{genomeDir}/{GENOME_CONFIG}'
         config = configparser.ConfigParser()
         config.read_file(open(config_file))
-        genome = config['genome']
+        genome = dict(config['genome'])
 
         for entry in files:
             if entry not in genome:

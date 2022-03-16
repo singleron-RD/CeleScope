@@ -15,9 +15,9 @@ import pysam
 from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
-                                      MATRIX_FILE_NAME)
+    MATRIX_FILE_NAME, FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
 from celescope.tools.cellranger3 import get_plot_elements
 from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
@@ -31,10 +31,10 @@ np.random.seed(0)
 
 class Count(Step):
     """
-    Features
+    ## Features
     - Cell-calling: Distinguish cell barcodes from background barcodes. 
     - Generate expression matrix.
-    Output
+    ## Output
     - `{sample}_all_matrix` The expression matrix of all detected barcodes. 
         Can be read in by calling the `Seurat::Read10X` function.
     - `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. 
@@ -77,8 +77,8 @@ class Count(Step):
         # output files
         self.count_detail_file = f'{self.outdir}/{self.sample}_count_detail.txt'
         self.marked_count_file = f'{self.outdir}/{self.sample}_counts.txt'
-        self.raw_matrix_10X_dir = f'{self.outdir}/{self.sample}_all_matrix'
-        self.cell_matrix_10X_dir = f'{self.outdir}/{self.sample}_matrix_10X'
+        self.raw_matrix_dir = f'{self.outdir}/{self.sample}_{RAW_MATRIX_DIR_SUFFIX[0]}'
+        self.cell_matrix_dir = f'{self.outdir}/{self.sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
         self.downsample_file = f'{self.outdir}/{self.sample}_downsample.txt'
 
     def line_data(self):
@@ -94,7 +94,7 @@ class Count(Step):
         df_sum = Count.get_df_sum(df)
 
         # export all matrix
-        self.write_matrix_10X(df, self.raw_matrix_10X_dir)
+        self.write_matrix_10X(df, self.raw_matrix_dir)
 
         # call cells
         cell_bc, _threshold = self.cell_calling(df_sum)
@@ -104,7 +104,7 @@ class Count(Step):
 
         # export cell matrix
         df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
-        self.write_matrix_10X(df_cell, self.cell_matrix_10X_dir)
+        self.write_matrix_10X(df_cell, self.cell_matrix_dir)
         (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
             df, cell_bc)
 
@@ -118,9 +118,11 @@ class Count(Step):
 
         df_line = self.line_data()
 
-        line_saturation = Line_plot(df_line, "Saturation", section=False).get_plotly_div()
+        line_saturation = Line_plot(df_line=df_line,title="Sequencing Saturation",x_title="Reads Fraction",
+                                    y_title="Sequencing Saturation(%)",y_range=[0,100],section=False).get_plotly_div()
         self.add_data(line_saturation=line_saturation)
-        line_median = Line_plot(df_line, "Median gene_Num").get_plotly_div()
+        line_median = Line_plot(df_line=df_line,title="Median Genes per Cell",x_title="Reads Fraction",
+                                y_title="Median Genes per Cell").get_plotly_div()
         self.add_data(line_median=line_median)
 
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.marked_count_file))
@@ -211,26 +213,22 @@ class Count(Step):
     @utils.add_log
     def force_cell(self, df_sum):
         force_cell_num = int(self.force_cell_num)
-        cell_range = int(force_cell_num * 0.1)
-        cell_low = force_cell_num - cell_range
-        cell_high = force_cell_num + cell_range
 
         df_barcode_count = df_sum.groupby(
             ['UMI']).size().reset_index(
             name='barcode_counts')
         sorted_df = df_barcode_count.sort_values("UMI", ascending=False)
         sorted_df["barcode_cumsum"] = sorted_df["barcode_counts"].cumsum()
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_low:
+        num_points = sorted_df.shape[0]
+        for i in range(num_points):
+            if sorted_df.iloc[i, :]["barcode_cumsum"] >= force_cell_num:
                 index_low = i - 1
-                break
-        for i in range(sorted_df.shape[0]):
-            if sorted_df.iloc[i, :]["barcode_cumsum"] >= cell_high:
                 index_high = i
                 break
-        df_sub = sorted_df.iloc[index_low:index_high + 1, :]
-        threshold = df_sub.iloc[np.argmax(
-            np.diff(df_sub["barcode_cumsum"])), :]["UMI"]
+        df_sub = sorted_df.iloc[index_low: index_high + 1, :]
+        distance = abs(df_sub["barcode_cumsum"] - force_cell_num)
+        actual_index = np.argmin(distance)
+        threshold = df_sub.iloc[actual_index, :]['UMI']
         cell_bc = Count.get_cell_bc(df_sum, threshold, col='UMI')
         return cell_bc, threshold
 
@@ -258,7 +256,7 @@ class Count(Step):
 
     @utils.add_log
     def cellranger3_cell(self, df_sum):
-        cell_bc, initial_cell_num = cell_calling_3(self.raw_matrix_10X_dir, self.expected_cell_num)
+        cell_bc, initial_cell_num = cell_calling_3(self.raw_matrix_dir, self.expected_cell_num)
         threshold = Count.find_threshold(df_sum, initial_cell_num)
         return cell_bc, threshold
 
@@ -297,9 +295,9 @@ class Count(Step):
         genes.columns = ['gene_id', 'gene_name']
 
         barcodes = df_UMI.index.levels[1].to_series()
-        genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME}', index=False, sep='\t', header=False)
-        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t', header=False)
-        mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME}', mtx)
+        genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME[0]}', index=False, sep='\t', header=False)
+        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME[0]}', index=False, sep='\t', header=False)
+        mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME[0]}', mtx)
 
     @utils.add_log
     def cell_summary(self, df, cell_bc):
@@ -415,7 +413,7 @@ class Count(Step):
         np.random.shuffle(cell_read_index)
 
         format_str = "%.2f\t%.2f\t%.2f\n"
-        res_dict = {
+        downsample_dict = {
             "fraction": [],
             "umi_saturation": [],
             "read_saturation": [],
@@ -428,12 +426,12 @@ class Count(Step):
                 umi_saturation, read_saturation, geneNum_median = Count.sub_sample(
                     fraction, df_cell, cell_read_index)
                 fh.write(format_str % (fraction, geneNum_median, umi_saturation))
-                res_dict["fraction"].append(round(fraction, 1))
-                res_dict["umi_saturation"].append(round(umi_saturation, 2))
-                res_dict["read_saturation"].append(round(read_saturation, 2))
-                res_dict["median_gene"].append(geneNum_median)
+                downsample_dict["fraction"].append(round(fraction, 1))
+                downsample_dict["umi_saturation"].append(round(umi_saturation, 2))
+                downsample_dict["read_saturation"].append(round(read_saturation, 2))
+                downsample_dict["median_gene"].append(geneNum_median)
 
-        self.downsample_dict = res_dict
+        self.downsample_dict = downsample_dict
 
 
 @utils.add_log

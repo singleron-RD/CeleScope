@@ -14,8 +14,6 @@ celescope fusion mkref \
 --fusion_pos fusion_pos.txt \
 --genomeSAindexNbases 4
 ```
-
-
 ## Arguments
 `--thread` Default=6. Threads to use.
 
@@ -32,7 +30,7 @@ name	pos
 PML_3	183  
 PML_4	254  
 PML_5	326  
-PML_6	204
+PML_6	204.
 
-`--genomeSAindexNbases` STAR genomeSAindexNbases
+`--genomeSAindexNbases` STAR genomeSAindexNbases.
 

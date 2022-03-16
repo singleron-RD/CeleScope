@@ -1,19 +1,20 @@
 
-from celescope.tools.analysis_mixin import AnalysisMixin, get_opts_analysis_mixin
+from celescope.tools import analysis_wrapper
 from celescope.tools.plotly_plot import Tsne_plot
-import celescope.tools.utils as utils
+from celescope.tools import utils
+from celescope.tools.step import Step
 
 
-class Analysis(AnalysisMixin):
+class Analysis(Step):
     """
-    Features
+    ## Features
     - Cell clustering with Seurat.
 
     - Calculate the marker gene of each cluster.
 
     - Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
 
-    Output
+    ## Output
     - `markers.tsv` Marker genes of each cluster.
 
     - `tsne_coord.tsv` t-SNE coordinates and clustering information.
@@ -30,61 +31,29 @@ class Analysis(AnalysisMixin):
 
         super().__init__(args, display_title)
 
-        self.matrix_file = args.matrix_file
-        self.genomeDir = args.genomeDir
-        self.type_marker_tsv = args.type_marker_tsv
-        self.auto_assign_bool = False
-        self.save_rds = args.save_rds
-        self.outdir = args.outdir
-        self.sample = args.sample
-        if args.type_marker_tsv and args.type_marker_tsv != 'None':
-            self.auto_assign_bool = True
-            self.save_rds = True
-
+        self.display_title = display_title
         self._table_id = 'marker_genes'
-
-    def add_help(self):
-        self.add_help_content(
-            name='Marker Genes by Cluster',
-            content='differential expression analysis based on the non-parameteric Wilcoxon rank sum test'
-        )
-        self.add_help_content(
-            name='avg_log2FC',
-            content='log fold-change of the average expression between the cluster and the rest of the sample'
-        )
-        self.add_help_content(
-            name='pct.1',
-            content='The percentage of cells where the gene is detected in the cluster'
-        )
-        self.add_help_content(
-            name='pct.2',
-            content='The percentage of cells where the gene is detected in the rest of the sample'
-        )
-        self.add_help_content(
-            name='p_val_adj',
-            content='Adjusted p-value, based on bonferroni correction using all genes in the dataset'
-        )
 
     def run(self):
 
-        self.seurat(self.matrix_file, self.save_rds, self.genomeDir)
-        if self.auto_assign_bool:
-            self.auto_assign(self.type_marker_tsv)
+        scanpy_wrapper = analysis_wrapper.Scanpy_wrapper(self.args, display_title=self.display_title)
+        scanpy_wrapper.run()
 
-        self.add_help()
+        report_runner = analysis_wrapper.Report_runner(self.args, display_title=self.display_title)
+        report_runner.add_marker_help()
 
-        self.read_match_dir()
+        df_tsne, df_marker = scanpy_wrapper.get_df()
 
-        tsne_cluster = Tsne_plot(self.df_tsne, 'cluster').get_plotly_div()
+        tsne_cluster = Tsne_plot(df_tsne, 'cluster').get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
 
-        tsne_gene = Tsne_plot(self.df_tsne, 'Gene_Counts', discrete=False).get_plotly_div()
+        tsne_gene = Tsne_plot(df_tsne, 'Gene_Counts', discrete=False).get_plotly_div()
         self.add_data(tsne_gene=tsne_gene)
 
         table_dict = self.get_table_dict(
             title='Marker Genes by Cluster',
             table_id=self._table_id,
-            df_table=self.df_marker,
+            df_table=df_marker,
         )
         self.add_data(table_dict=table_dict)
 
@@ -96,4 +65,4 @@ def analysis(args):
 
 
 def get_opts_analysis(parser, sub_program):
-    get_opts_analysis_mixin(parser, sub_program)
+    analysis_wrapper.get_opts_analysis(parser, sub_program)

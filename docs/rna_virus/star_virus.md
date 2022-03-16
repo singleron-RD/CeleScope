@@ -1,5 +1,8 @@
+## Features
+- Map reads to the viral genome using STAR.
 
-
+## Output
+- `{sample}_virus_Aligned.sortedByCoord.out.bam` : Aligned BAM sorted by coordinate.
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope rna mkref`.
 
@@ -20,13 +23,11 @@ is higher than or equal to this value.
 
 `--outdir` Output diretory.
 
-`--assay` Assay name.
-
 `--sample` Sample name.
 
 `--thread` Thread to use.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--virus_genomeDir` Virus genome dir.
+`--virus_genomeDir` Virus genome directory.
 

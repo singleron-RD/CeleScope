@@ -3,15 +3,15 @@ from celescope.tools.mkref import Mkref, super_opts
 
 class Mkref_virus(Mkref):
     """
-    Features
+    ## Features
     - Create a virus genome reference directory.
 
-    Output
+    ## Output
 
     - STAR genome index files
     - Genome config file
 
-    Usage
+    ## Usage
     ```
     celescope capture_virus mkref \\
         --genome_name EBV \\

@@ -1,5 +1,5 @@
 ## Introduction
-CeleScope is a collection of bioinfomatics analysis pipelines developed at Singleron to process single cell sequencing data generated with Singleron products. These pipelines take paired-end FASTQ files as input and generate output files which can be used for downstream data analysis as well as a summary of QC criteria.
+CeleScope is a collection of bioinfomatics analysis pipelines to process single cell sequencing data generated with Singleron products. These pipelines take paired-end FASTQ files as input and generate output files which can be used for downstream data analysis as well as a summary of QC criteria.
 
 Each pipeline consists of several steps and they all have two identical pre-processing steps: `barcode` and `cutadapt`. `barcode`step is used for barcode demupltiplexing, correction and read filtering. `cutadapt` step calls [Cutadapt](https://cutadapt.readthedocs.io/en/stable/) for read trimming.
 
@@ -19,10 +19,15 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope VDJ_full_length` This pipeline is currently mainly for TCR/BCR full-length assembly.
 
+## [Installation](installation.md)
 
 ## [Quick start](quick_start.md)
 
+## [Chemistry](chemistry.md)
+
 ## [Change log](CHANGELOG.md)
+
+## [Test scripts and data](https://github.com/singleron-RD/celescope_test_script)
 
 ## Pre-processing
 
@@ -63,6 +68,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [featureCounts](tools/featureCounts.md)
 - [target_metrics](tools/target_metrics.md)
 - [variant_calling](snp/variant_calling.md)
+- [filter_snp](snp/filter_snp.md)
 - [analysis_snp](snp/analysis_snp.md)
 - [multi_snp](snp/multi_snp.md)
 ## Single-cell capture_virus

@@ -9,6 +9,7 @@ import os
 import re
 import resource
 import subprocess
+import sys
 import time
 from collections import Counter, defaultdict
 from datetime import timedelta
@@ -19,7 +20,7 @@ import pandas as pd
 import pysam
 
 import celescope.tools
-from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.tools.__init__ import __PATTERN_DICT__, FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
 from celescope.__init__ import ROOT_PATH
 
 tools_dir = os.path.dirname(celescope.tools.__file__)
@@ -43,8 +44,6 @@ def add_log(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        if args and hasattr(args[0], 'debug') and args[0].debug:
-            logger.setLevel(10)  # debug
 
         logger.info('start...')
         start = time.time()
@@ -506,51 +505,80 @@ def parse_annovar(annovar_file):
     return df
 
 
-def read_barcode_file(match_dir, return_file=False):
+@add_log
+def get_barcode_from_match_dir(match_dir):
     '''
     multi version compatible
+    Returns:
+        match_barcode: list
+        no_match_barcode: int
     '''
-    match_barcode_file1 = glob.glob(
-        f"{match_dir}/*count*/*_cellbarcode.tsv")
-    match_barcode_file2 = glob.glob(
-        f"{match_dir}/*count*/*matrix_10X/*_cellbarcode.tsv")
-    match_barcode_file3 = glob.glob(
-        f"{match_dir}/*count*/*matrix_10X/*barcodes.tsv")
-    match_barcode_file = (
-        match_barcode_file1 +
-        match_barcode_file2 +
-        match_barcode_file3)[0]
+    barcode_file_pattern_list = []
+    for matrix_dir_suffix in FILTERED_MATRIX_DIR_SUFFIX:
+        for barcode_file_name in BARCODE_FILE_NAME:
+            barcode_file_pattern_list.append(f"{match_dir}/*count/*{matrix_dir_suffix}/{barcode_file_name}")
+
+    match_list = []
+    for barcode_file_pattern in barcode_file_pattern_list:
+        match_pattern = glob.glob(barcode_file_pattern)
+        if match_pattern:
+            match_list.append(match_pattern[0])
+
+    if len(match_list) == 0:
+        raise FileNotFoundError(
+            f"No barcode file found in {match_dir}\n"
+            f"Allowed barcode file pattern: {barcode_file_pattern_list}"
+        )
+
+    if len(match_list) > 1:
+        print("ERROR: Multiple Barcode file found!")
+        print(f"Barcode file found: {match_list}")
+        sys.exit(1)
+
+    match_barcode_file = match_list[0]
+    get_barcode_from_match_dir.logger.info(f"Barcode file:{match_barcode_file}")
     match_barcode, n_match_barcode = read_one_col(match_barcode_file)
-    if return_file:
-        return match_barcode, (n_match_barcode, match_barcode_file)
     return match_barcode, n_match_barcode
 
 
-def get_barcodes_from_matrix_dir(matrix_dir):
-    barcodes_file = f'{matrix_dir}/barcodes.tsv'
-    match_barcode, _n_match_barcode = read_one_col(barcodes_file)
-    return match_barcode
+def get_barcode_from_matrix_dir(matrix_dir):
+    """
 
+    """
+    match_barcode_file = f'{matrix_dir}/{BARCODE_FILE_NAME[0]}'
+    match_barcode, n_match_barcode = read_one_col(match_barcode_file)
+    return match_barcode, n_match_barcode
 
+@add_log
 def parse_match_dir(match_dir):
     '''
     return dict
-    keys: 'match_barcode', 'n_match_barcode', 'matrix_dir', 'tsne_coord', 'rds'
+    keys: 'match_barcode', 'n_match_barcode', 'matrix_dir', 'tsne_coord'
     '''
     match_dict = {}
-    match_barcode, n_match_barcode = read_barcode_file(match_dir)
-    match_dict['match_barcode'] = match_barcode
-    match_dict['n_match_barcode'] = n_match_barcode
-    match_dict['matrix_dir'] = glob.glob(f'{match_dir}/*count*/*matrix_10X')[0]
-    match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
-    df_tsne = pd.read_csv(match_dict['tsne_coord'], sep='\t', index_col=0)
-    df_tsne.index.rename('barcode', inplace=True)
-    match_dict['df_tsne'] = df_tsne
-    match_dict['markers'] = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
+
+    pattern_dict = {
+        'matrix_dir': f'{match_dir}/*count*/*matrix_10X',
+        'tsne_coord': f'{match_dir}/*analysis*/*tsne_coord.tsv',
+        'markers': f'{match_dir}/*analysis*/*markers.tsv',
+
+    }
+
+    for file_name in pattern_dict:
+        match_file = glob.glob(pattern_dict[file_name])
+        if not match_file:
+            parse_match_dir.logger.warning(f"No {file_name} found in {match_dir}")
+        else:
+            match_dict[file_name] = match_file[0]
+
     try:
-        match_dict['rds'] = glob.glob(f'{match_dir}/*analysis/*.rds')[0]
-    except IndexError:
-        match_dict['rds'] = None
+        match_barcode, n_match_barcode = get_barcode_from_match_dir(match_dir)
+    except FileNotFoundError as e:
+        parse_match_dir.logger.warning(e)
+    else:
+        match_dict['match_barcode'] = match_barcode
+        match_dict['n_match_barcode'] = n_match_barcode
+
     return match_dict
 
 
@@ -782,3 +810,19 @@ def get_assay_text(assay):
     add sinlge cell prefix
     """
     return 'Single-cell ' + assay
+
+
+def check_arg_not_none(args, arg_name):
+    """
+    check if args.arg_name is not None
+    Args:
+        args: argparser args
+        arg_name: argparser arg name
+    Return:
+        bool
+    """
+    arg_value = getattr(args, arg_name, None)
+    if arg_value and arg_value.strip() != 'None':
+        return True
+    else:
+        return False

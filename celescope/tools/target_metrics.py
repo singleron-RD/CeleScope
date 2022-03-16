@@ -4,29 +4,29 @@ import pysam
 import sys
 import subprocess
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
 
 
 class Target_metrics(Step):
     """
-    Features
+    ## Features
     - Filter bam file
         - Filter reads that are not cell-associated.
         - Filter reads that are not mapped to target genes. 
 
     - Collect enrichment metrics.
 
-    Output
-    - `filtered.bam` BAM file after filtering.
+    ## Output
+    - `filtered.bam` BAM file after filtering. Reads that are not cell-associated or not mapped to target genes are filtered.
     """
 
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
         # set
-        self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
+        self.match_barcode_list, self.n_cell = utils.get_barcode_from_match_dir(args.match_dir)
         self.match_barcode = set(self.match_barcode_list)
 
         if args.panel:

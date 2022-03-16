@@ -14,8 +14,6 @@ celescope snp mkref \
  --genome_name Homo_sapiens_ensembl_99 \
  --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa
 ```
-
-
 ## Arguments
 `--thread` Default=6. Threads to use.
 
