@@ -2,7 +2,7 @@
 
 1. Clone repo
 ```
-git clone -b convert_10X git@github.com:singleron-RD/CeleScope.git
+git clone -b convert_10X https://github.com/singleron-RD/CeleScope.git
 ```
 
 2. Create conda environment and install conda packages
