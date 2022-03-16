@@ -49,7 +49,7 @@ class Match(Step):
             self.match_bool = False
         if self.match_bool:
             try:
-                self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
+                self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_match_dir(
                     args.match_dir)
             except IndexError as e:
                 print(

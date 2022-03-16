@@ -12,5 +12,6 @@ conda-forge::r-reshape2
 imperial-college-research-computing::mixcr=3.0.3
 bioconda::bcftools=1.12
 bioconda::gatk4
+conda-forge::r-seurat=4.0.1
 conda-forge::gcc
 conda-forge::r-argparse
