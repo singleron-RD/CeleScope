@@ -3,19 +3,21 @@
 - TCR/BCR Assemble.
 
 ## Output
-- `{sample}/outs/` Recording assemble results.
-
-
+- `03.assemble/{sample}/outs/` Recording assemble results.
 ## Arguments
-`--species` species
+`--species` species.
 
-`--soft` cellranger version
+`--soft` cellranger version.
 
-`--mem` memory (G)
+`--mem` memory (G).
+
+`--ref_path` reference path for cellranger.
+
+`--soft_path` soft path for cellranger.
+
+`--other_param` Other cellranger parameters.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 
@@ -23,5 +25,5 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fqs_dir` fastq dir
+`--fqs_dir` fastq dir.
 

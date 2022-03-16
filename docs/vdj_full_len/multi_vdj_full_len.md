@@ -1,4 +1,119 @@
+## Installation
 
+1. Clone repo
+```
+git clone -b convert_10X git@github.com:singleron-RD/CeleScope.git
+```
+
+2. Create conda environment and install conda packages
+```
+cd CeleScope
+conda create -n convert_10X -y --file conda_pkgs.txt
+```
+
+Alternatively, you can use [mamba](https://github.com/mamba-org/mamba) to improve speed.
+```
+conda install mamba
+mamba create -n convert_10X -y --file conda_pkgs.txt
+```
+
+3. Install celescope
+
+Make sure you have activated the conda environment before running `pip install Celescope`. 
+```
+conda activate convert_10X
+pip install .
+```
+
+4. Download and unpack cellranger soft and reference file.
+```
+wget -O cellranger-6.1.2.tar.gz "https://cf.10xgenomics.com/releases/cell-vdj/cellranger-6.1.2.tar.gz?Expires=1646072261&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC12ZGovY2VsbHJhbmdlci02LjEuMi50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2NDYwNzIyNjF9fX1dfQ__&Signature=Z-2m906CV5Rb1snIAga-QDSXYSZ8cNqCj1EECGP4uloU3qH~uCMH42MHf4TNnDL2zAsKA7cXsCsQYz0A9yJdNh7dfRT8ohpuAzASFx5Pj-bkqfw4p2tql55IIaPN0zqxyUuyZ9sfKl5qTQX82LoVolRpiBUL8dF9nr~bA2P1gJZ~xg1QssS7icR5MmTzvKKS5NYkezG8vWaTiEdXU0nuKI2ciZSX5GOMeIRW-YYR7mJwHmBbTVxe0o-uBuUtqor0Y98jdIv8Z~dwMjujRjrEShdCGNixTSonGzeS2~9CXqWquCJIOolqFFkcFHgXkD7ZWNfSXWbTxuF57rCsub98pA__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA"
+
+Reference: human and mouse
+wget https://cf.10xgenomics.com/supp/cell-vdj/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0.tar.gz
+wget https://cf.10xgenomics.com/supp/cell-vdj/refdata-cellranger-vdj-GRCm38-alts-ensembl-5.0.0.tar.gz
+
+tar -xzvf cellranger-6.1.2.tar.gz
+tar -xzvf refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0.tar.gz
+tar -xzvf refdata-cellranger-vdj-GRCm38-alts-ensembl-5.0.0.tar.gz
+```
+
+## Usage
+
+```
+conda activate convert_10X
+multi_vdj_full_len \
+    --mapfile ./test.mapfile \
+    --chemistry flv \
+    --mem 10 \
+    --thread 8 \
+    --allowNoLinker \
+    --seqtype TCR \
+    --ref_path "/SGRNJ/Database/script/soft/cellranger/vdj_ref/6.0.0/hs/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0" \
+    --soft_path "/SGRNJ03/randd/cjj/soft/cellranger/cellranger-6.1.2/cellranger" 
+```
+## Features
+### barcode
+
+- Demultiplex barcodes.
+- Filter invalid R1 reads, which includes:
+    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+    - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+
+### assemble
+
+- TCR/BCR Assemble.
+
+
+### annotation
+
+- V(D)J annotation infomation.
+
+
+### match
+
+- V(D)J results match SC-RNA infomation.
+
+
+### mapping
+
+- Assembled T/B cells Mapping with SC-RNA barcodes.
+
+
+## Output files
+### barcode
+
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### assemble
+- `03.assemble/{sample}/outs/` Recording assemble results.
+
+### annotation
+- `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
+
+- `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
+
+- `clonotypes.csv` High-level descriptions of each clonotype.
+
+### match
+- `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
+
+- `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
+
+- `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
+
+### mapping
+- `{sample}_assign.png' Auto-assigned umap plot in scRNA-Seq library.
+
+- `{sample}_cluster_umap.png` Cluster umap plot in scRNA-Seq library.
+
+- `{sample}_umapplot.png` Umap plot of assembled and un-assembled barcodes in scRNA-Seq library.
+
+- `{sample}_distribution.txt` Number of assembled barcodes in every clusters in scRNA-Seq library.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -14,6 +129,7 @@
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
+- `vdj_full_len` Required, matched_dir.
 
 5th column:
 - `dynaseq` Required, background snp file.
@@ -37,9 +153,12 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--mod` Which type of script to generate, `sjm` or `shell`.
 
+`--queue` Only works if the `--mod` selects `sjm`.
+
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`.
 
 `--outdir` Output directory.
 
@@ -58,7 +177,7 @@ same time.
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
-- `T`: poly T
+- `T`: poly T.
 
 `--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
@@ -78,15 +197,23 @@ same time.
 
 `--gzip` Output gzipped fastq files.
 
-`--species` species
+`--output_R1` Output valid R1 reads.
 
-`--mem` memory (G)
+`--species` species.
 
-`--soft` cellranger version
+`--mem` memory (G).
+
+`--ref_path` reference path for cellranger.
+
+`--soft_path` soft path for cellranger.
+
+`--other_param` Other cellranger parameters.
+
+`--soft` cellranger version.
 
 `--remove_3rd_chain` remove IGK or IGL according to umis when a cell has 3 chains at the same time.
 
-`--not_split_R2` whether split r2
+`--not_split_R2` whether split r2.
 
-`--seqtype` TCR or BCR
+`--seqtype` TCR or BCR.
 

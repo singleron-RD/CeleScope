@@ -148,6 +148,8 @@ class Docs():
         self.relative_md_path[step] = f'{folder}/{step}.md'
 
         class_docs, doc_dict = get_class_docs(step_module)
+        if step == 'multi_full_len_vdj':
+            print(class_docs)
         if 'output' in doc_dict:
             self.output_file_doc_dict[step] = doc_dict['output']
         if 'features' in doc_dict:

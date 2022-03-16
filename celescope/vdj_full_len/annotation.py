@@ -10,11 +10,11 @@ def reversed_compl(seq):
 
 class Annotation(Step):
     """
-    Features
+    ## Features
 
     - V(D)J annotation infomation.
 
-    Output
+    ## Output
     - `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
 
     - `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.

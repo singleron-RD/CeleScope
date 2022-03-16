@@ -21,11 +21,11 @@ def run_mapping(rds, contig, sample, outdir, assign):
 
 class Mapping(Step):
     """
-    Features
+    ## Features
 
     - Assembled T/B cells Mapping with SC-RNA barcodes.
 
-    Output
+    ## Output
     - `{sample}_assign.png' Auto-assigned umap plot in scRNA-Seq library.
 
     - `{sample}_cluster_umap.png` Cluster umap plot in scRNA-Seq library.

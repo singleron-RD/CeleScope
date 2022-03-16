@@ -11,11 +11,11 @@ def reversed_compl(seq):
 
 class Match(Step):
     """
-    Features
+    ## Features
 
     - V(D)J results match SC-RNA infomation.
 
-    Output
+    ## Output
     - `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
 
     - `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
