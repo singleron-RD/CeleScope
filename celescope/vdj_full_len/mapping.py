@@ -99,7 +99,8 @@ class Mapping(Step):
                 self.process()
                 self._write_stat()
         except AttributeError:
-            print("rds file and type file do not exist" + "\n" )
+            pass
+            # print("rds file and type file do not exist" + "\n" )
 
 def mapping(args):
     step_name = 'mapping'
