@@ -1,4 +1,3 @@
-from distutils.log import error
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 import numpy as np
@@ -141,7 +140,7 @@ class Check(Step):
                     new_tag1 = sp.new_tag("font", color = 'black')
                     new_tag1.string =  warnings_help[i.b.string.strip().strip(':')]
                     i.b.next_sibling.string.replace_with(new_tag1)
-            except Exception:
+            except StopIteration:
                 pass
         
         with open(f'{self.outdir}/{self.sample}_report.html','w',encoding='utf-8') as fp:
