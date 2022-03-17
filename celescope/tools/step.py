@@ -88,7 +88,7 @@ class Step:
         # out file
         self.__stat_file = f'{self.outdir}/stat.txt'
 
-    def add_metric(self, name, value, total=None, help_info=None, display=None):
+    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True):
         '''
         add metric to metric_list
         
@@ -118,6 +118,7 @@ class Step:
                 "fraction": fraction,
                 "display": display,
                 "help_info": help_info,
+                "show": show,
             }
         )
 

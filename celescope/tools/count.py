@@ -434,10 +434,25 @@ class Count(Step):
         for fraction in np.arange(0.1, 1.1, 0.1):
             umi_saturation, read_saturation, geneNum_median = Count.sub_sample(
                 fraction, df_cell, cell_read_index)
-            downsample_dict[READ_FRACTION].append(round(fraction,1))
-            downsample_dict[UMI_SATURATION].append(round(umi_saturation, 2))
-            downsample_dict[READ_SATURATION].append(round(read_saturation, 2))
+            fraction = round(fraction,1)
+            umi_saturation = round(umi_saturation, 2)
+            read_saturation = round(read_saturation, 2)
+            downsample_dict[READ_FRACTION].append(fraction)
+            downsample_dict[UMI_SATURATION].append(umi_saturation)
+            downsample_dict[READ_SATURATION].append(read_saturation)
             downsample_dict[MEDIAN_GENE_NUMBER].append(geneNum_median)
+        
+            self.add_metric(
+                name=f'Read Fraction {fraction} read_saturation',
+                value=read_saturation,
+                show=False,
+            )
+
+            self.add_metric(
+                name=f'Read Fraction {fraction} umi_saturation',
+                value=umi_saturation,
+                show=False,
+            )
 
         df_downsample = pd.DataFrame(downsample_dict, columns=[READ_FRACTION, MEDIAN_GENE_NUMBER, UMI_SATURATION, READ_SATURATION])
         df_downsample.to_csv(self.downsample_file, index=False, sep='\t')
