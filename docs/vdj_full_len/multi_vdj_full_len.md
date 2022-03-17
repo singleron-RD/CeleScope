@@ -107,7 +107,7 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
 
 ### mapping
-- `{sample}_assign.png' Auto-assigned umap plot in scRNA-Seq library.
+- `{sample}_assign.png` Auto-assigned umap plot in scRNA-Seq library.
 
 - `{sample}_cluster_umap.png` Cluster umap plot in scRNA-Seq library.
 
