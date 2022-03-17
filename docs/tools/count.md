@@ -2,12 +2,9 @@
 - Cell-calling: Distinguish cell barcodes from background barcodes. 
 - Generate expression matrix.
 ## Output
-- `{sample}_all_matrix` The expression matrix of all detected barcodes. 
-    Can be read in by calling the `Seurat::Read10X` function.
-- `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. 
-Can be read in by calling the `Seurat::Read10X` function.
-- `{sample}_matrix.tsv.gz` The expression matrix of the barcode that is identified to be the cell, separated by tabs. 
-CeleScope >=1.2.0 does not output this file.
+- `{sample}_raw_feature_bc_matrix` The expression matrix of all detected barcodes in [Matrix Market Exchange Formats](
+    https://math.nist.gov/MatrixMarket/formats.html). 
+- `{sample}_filtered_feature_bc_matrix` The expression matrix of cell barcodes in Matrix Market Exchange Formats. 
 - `{sample}_count_detail.txt.gz` 4 columns: 
     - barcode  
     - gene ID  
@@ -16,17 +13,13 @@ CeleScope >=1.2.0 does not output this file.
 - `{sample}_counts.txt` 6 columns:
     - Barcode: barcode sequence
     - readcount: read count of each barcode
-    - UMI2: UMI count (with reads per UMI >= 2) for each barcode
+    - UMI2: read count with reads per UMI >= 2 for each barcode
     - UMI: UMI count for each barcode
     - geneID: gene count for each barcode
     - mark: cell barcode or backgound barcode.
         `CB` cell  
         `UB` background  
-- `{sample}_downsample.txt` 3 columns：
-    - percent: percentage of sampled reads
-    - median_geneNum: median gene number per cell
-    - saturation: sequencing saturation
-- `barcode_filter_magnitude.pdf` Barcode-UMI plot.
+- `{sample}_downsample.tsv` Subset a fraction of reads and calculate median gene number and sequencing saturation.
 ## Arguments
 `--genomeDir` Required. Genome directory.
 
@@ -44,5 +37,5 @@ CeleScope >=1.2.0 does not output this file.
 
 `--bam` Required. BAM file from featureCounts.
 
-`--force_cell_num` Default `None`. Force the cell number within (value * 0.9, value * 1.1).
+`--force_cell_num` Default `None`. Force the cell number to be this number.
 

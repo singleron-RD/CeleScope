@@ -46,10 +46,9 @@ class Count(Step):
     - Cell-calling: Distinguish cell barcodes from background barcodes. 
     - Generate expression matrix.
     ## Output
-    - `{sample}_all_matrix` The expression matrix of all detected barcodes. 
-    - `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. 
-    - `{sample}_matrix.tsv.gz` The expression matrix of the barcode that is identified to be the cell, separated by tabs. 
-    CeleScope >=1.2.0 does not output this file.
+    - `{sample}_raw_feature_bc_matrix` The expression matrix of all detected barcodes in [Matrix Market Exchange Formats](
+        https://math.nist.gov/MatrixMarket/formats.html). 
+    - `{sample}_filtered_feature_bc_matrix` The expression matrix of cell barcodes in Matrix Market Exchange Formats. 
     - `{sample}_count_detail.txt.gz` 4 columns: 
         - barcode  
         - gene ID  
@@ -58,7 +57,7 @@ class Count(Step):
     - `{sample}_counts.txt` 6 columns:
         - Barcode: barcode sequence
         - readcount: read count of each barcode
-        - UMI2: UMI count (with reads per UMI >= 2) for each barcode
+        - UMI2: read count with reads per UMI >= 2 for each barcode
         - UMI: UMI count for each barcode
         - geneID: gene count for each barcode
         - mark: cell barcode or backgound barcode.
@@ -479,7 +478,7 @@ def get_opts_count(parser, sub_program):
         parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
         parser.add_argument(
             '--force_cell_num',
-            help='Default `None`. Force the cell number within (value * 0.9, value * 1.1). ',
+            help='Default `None`. Force the cell number to be this number. ',
         )
 
 
