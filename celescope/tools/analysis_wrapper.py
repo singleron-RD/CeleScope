@@ -276,7 +276,7 @@ class Scanpy_wrapper(Step):
             'names':'gene',
             'logfoldchanges':'avg_log2FC',
             'pvals':'p_val',
-            'pvalse_adj':'p_val_adj',
+            'pvals_adj':'p_val_adj',
             'pct_nz_group':'pct.1',
             'pct_nz_reference':'pct.2'
          }
