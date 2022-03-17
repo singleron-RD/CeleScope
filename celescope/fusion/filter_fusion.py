@@ -28,4 +28,3 @@ class Filter_fusion(Filter):
     - `{sample}_filtered_UMI.csv` Filtered UMI counts.
 
     """
-    pass

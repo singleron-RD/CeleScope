@@ -15,7 +15,6 @@ ASSAY_LIST = [
     'hla',
     'capture_rna',
     'citeseq',
-    'tcr_fl',
     'sweetseq'
 ]
 
