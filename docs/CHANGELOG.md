@@ -1,15 +1,18 @@
 
 ## [Unreleased] 
+
+## [1.8.0] - 2021-03-17
  ### `rna`
- - Use `scanpy` instead of `seurat` for data analysis.
- - TODO: add read_saturation to downsample file.
+ - Replace `Seurat` with `scanpy`.
+ - Add read_saturation to downsample file.
 
  ### `snp`,`capture_virus` and `fusion`
  - When calculating `otsu` threshold, use `math.ceil` instead of `int`.
  
  ### General improvments
- - Move `sjm.job` from `./log/` to `./sjm/`
- - Change file suffix
+ - Fix an issue where the conditions for detecting scopeV2.0.1 are too loose. (#108)
+ - Move `sjm.job` from `./log/` to `./sjm/`.
+ - Change output file suffix.
     - raw_matrix: `all_matrix` -> `raw_feature_bc_matrix`
     - fitered_matrix: `matrix_10X`-> `filtered_feature_bc_matrix`
 
