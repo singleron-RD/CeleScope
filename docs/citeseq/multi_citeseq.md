@@ -51,6 +51,7 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
+- `vdj_full_len` Required, matched_dir.
 
 5th column:
 - `dynaseq` Required, background snp file.

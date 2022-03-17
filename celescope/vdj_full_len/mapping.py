@@ -26,7 +26,7 @@ class Mapping(Step):
     - Assembled T/B cells Mapping with SC-RNA barcodes.
 
     ## Output
-    - `{sample}_assign.png' Auto-assigned umap plot in scRNA-Seq library.
+    - `{sample}_assign.png` Auto-assigned umap plot in scRNA-Seq library.
 
     - `{sample}_cluster_umap.png` Cluster umap plot in scRNA-Seq library.
 
