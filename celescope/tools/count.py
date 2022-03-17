@@ -422,7 +422,6 @@ class Count(Step):
         cell_read_index = np.array(df_cell.index.repeat(df_cell['count']), dtype='int32')
         np.random.shuffle(cell_read_index)
 
-        format_str = "%.2f\t%.2f\t%.2f\n"
         downsample_dict = {
             READ_FRACTION: [0],
             UMI_SATURATION: [0],
