@@ -232,11 +232,11 @@ class Summarize(Step):
                 else:
                     continue
         two_chains_contig = df_filter_contig[df_filter_contig['contig_id'].isin(chain_filter_set)]
-        two_chains_contig.to_csv(f'{outdir}/{sample}_chain_filtered_contig.csv', sep=',', index=False)
+        two_chains_contig.to_csv(f'{outdir}/{sample}_two_chain_contig.csv', sep=',', index=False)
         
         #fasta
         filter_contig_set = set(df_filter_contig['contig_id'].tolist())
-        two_chains_fasta = f'{outdir}/{sample}_chain_filtered_contig.fasta'
+        two_chains_fasta = f'{outdir}/{sample}_two_chain_contig.fasta'
         two_chains_fasta = open(two_chains_fasta,'w')
         filter_contig_fasta = f'{outdir}/{sample}_filtered_contig.fasta'
         with pysam.FastxFile(filter_contig_fasta) as fa:
