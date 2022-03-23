@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np 
-import celescope
 import subprocess
 import glob
-import os
 from Bio.Seq import Seq
 from celescope.trust_vdj.summarize import Summarize
 from celescope.tools import utils
@@ -37,7 +35,7 @@ class Mapping_annotation(Step):
         try:
             self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
             self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-        except:
+        except IndexError:
             pass
   
         self.contig = glob.glob(f'{self.outdir}/../04.summarize/{self.sample}_filtered_contig.csv')[0]
@@ -79,8 +77,8 @@ class Mapping_annotation(Step):
     def annotation_process(self):
         df_for_clono = self.parse_contig()
         annotation_summary = tr.get_vj_annot(df_for_clono, self.chains, self.paired_groups)
-        for sum in annotation_summary:
-            self.add_metric(sum['name'], sum['value'], sum.get('total'), sum.get('help_info'))
+        for anno in annotation_summary:
+            self.add_metric(anno['name'], anno['value'], anno.get('total'), anno.get('help_info'))
 
         df_clonotypes = self.parse_clonotype(self.outdir)
         title = 'Clonetypes'
@@ -91,7 +89,7 @@ class Mapping_annotation(Step):
         )
         self.add_data(table_dict=table_dict)
 
-        df_clonotypes['ClonotypeID'] = df_clonotypes['ClonotypeID'].apply(lambda x:int(x))
+        df_clonotypes['ClonotypeID'] = df_clonotypes['ClonotypeID'].astype("int")
         df_clonotypes.sort_values(by=['ClonotypeID'], inplace=True)
         Barplot = Bar_plot(df_bar=df_clonotypes).get_plotly_div()
         self.add_data(Barplot=Barplot)

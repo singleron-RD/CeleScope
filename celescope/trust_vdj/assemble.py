@@ -2,7 +2,6 @@ import glob
 import os
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
-import numpy as np
 import pandas as pd
 import pysam
 from Bio.Seq import Seq
@@ -10,7 +9,7 @@ from Bio.Seq import Seq
 from celescope.trust_vdj import trust_utils as tr
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.trust_vdj.__init__ import CHAIN, INDEX, TOOLS_DIR
+from celescope.trust_vdj.__init__ import CHAIN
 
 
 class Assemble(Step):
@@ -218,7 +217,7 @@ class Assemble(Step):
 
         fl = pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq')
         df, read_dict = self._umi_cutoff(fl,self.UMI_min,self.assemble_out)
-        idx, idx_len = self.split_df(df, read_dict, self.temp_dir)
+        _, idx_len = self.split_df(df, read_dict, self.temp_dir)
 
         threads = [self.thread] * idx_len
         temp_dirs = [self.temp_dir] * idx_len
@@ -280,7 +279,7 @@ class Assemble(Step):
     def gen_report(self, matched_cbs):
         tr.get_trust_report(self.assemble_out,self.sample)
         tr.get_bc_report(self.assemble_out, self.sample)
-        tr.get_bcfilter_report(self.assemble_out, self.sample)
+        tr.get_bcfilter_report(self.assemble_out)
 
         self.add_metric(
             name="Matched Barcodes with scRNA-seq",

@@ -1,7 +1,6 @@
 from collections import defaultdict
 from collections import Counter
 import pandas as pd
-import numpy as np
 import pysam
 import copy
 import os
@@ -10,7 +9,6 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.trust_vdj.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.cellranger3 import get_plot_elements
-from celescope.trust_vdj import trust_utils as tr
 
 
 class Summarize(Step):
@@ -133,12 +131,12 @@ class Summarize(Step):
     def init_contig(df, cell_barcodes):
         # all contig.csv
         df_all_contig = copy.deepcopy(df)
-        df_all_contig['barcode'] = df_all_contig['barcode'].apply(lambda x: Summarize.reversed_compl(x))
+        df_all_contig['barcode'] = df_all_contig['barcode'].apply(Summarize.reversed_compl)
         df_all_contig['contig_id'] = df_all_contig['contig_id'].apply(lambda x: Summarize.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
         # filter contig.csv
         df_filter_contig = copy.deepcopy(df)
         df_filter_contig = df_filter_contig[df_filter_contig['barcode'].isin(cell_barcodes)]
-        df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(lambda x: Summarize.reversed_compl(x))
+        df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(Summarize.reversed_compl)
         df_filter_contig['contig_id'] = df_filter_contig['contig_id'].apply(lambda x: Summarize.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
 
         return df_all_contig, df_filter_contig
@@ -199,7 +197,7 @@ class Summarize(Step):
         # add clonotype_id in contig.csv file
         df_merge = pd.merge(used_for_merge, contig_with_clonotype, on='cdr3s_nt', how='outer')
         df_merge = df_merge[['barcode','clonotype_id']]
-        df_merge['barcode'] = df_merge['barcode'].apply(lambda x: Summarize.reversed_compl(x))
+        df_merge['barcode'] = df_merge['barcode'].apply(Summarize.reversed_compl)
         df_all_contig = pd.merge(df_merge, df_all_contig, on='barcode',how='outer')
         df_filter_contig = pd.merge(df_merge, df_filter_contig, on='barcode',how='outer')
         df_all_contig.fillna('None',inplace = True)
@@ -308,20 +306,20 @@ class Summarize(Step):
         self.filter_fasta(cell_barcodes, all_contig_fasta, filter_contig_fasta)
 
         df_all_contig, df_filter_contig = self.init_contig(df, cell_barcodes)
-        df_clonotypes, contig_with_clonotype, used_for_merge = self.parse_clonotypes(df_for_clono_pro,self.outdir)
+        _, contig_with_clonotype, used_for_merge = self.parse_clonotypes(df_for_clono_pro,self.outdir)
 
         # add clonotype_id in contig.csv file
         df_filter_contig = self.add_clonotypes(used_for_merge, contig_with_clonotype, df_all_contig, df_filter_contig, self.outdir, self.sample)
 
         # keep chains with two highest umi contigs 
-        two_chains_contig, two_chains_fasta = self.keep_two_chains(df_filter_contig, self.outdir, self.sample)
+        two_chains_contig, _ = self.keep_two_chains(df_filter_contig, self.outdir, self.sample)
         # keep one chain, IGH+IGK/IGL TRA+TRB pair
         self.keep_one_pair(self.seqtype, two_chains_contig, self.outdir, self.sample)
 
         return df_for_clono, df_for_clono_pro, cell_barcodes, total_cells
 
     @utils.add_log
-    def gen_summary(self, df_for_clono, df_for_clono_pro, cell_barcodes, total_cells):
+    def gen_summary(self, _, df_for_clono_pro, cell_barcodes, total_cells):
         read_count = 0
         read_count_all = 0
         umi_dict = defaultdict(set)

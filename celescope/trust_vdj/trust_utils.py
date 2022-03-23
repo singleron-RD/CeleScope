@@ -3,7 +3,7 @@ import pandas as pd
 import pysam
 
 from celescope.tools import utils
-from celescope.trust_vdj.__init__ import CHAIN, INDEX, TOOLS_DIR
+from celescope.trust_vdj.__init__ import INDEX, TOOLS_DIR
 
 
 @utils.add_log
@@ -47,7 +47,7 @@ def get_bc_report(filedir, sample):
 
 
 @utils.add_log
-def get_bcfilter_report(filedir, sample):
+def get_bcfilter_report(filedir):
     cmd = (
         f'python {TOOLS_DIR}/barcoderep-filter.py '
         f'-b {filedir}/barcoderep.tsv > '
