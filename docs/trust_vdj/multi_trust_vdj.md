@@ -29,7 +29,15 @@ pip install .
 
 ```
 conda activate TRUST_dev
-    multi_trust_vdj         --mapfile ./test.mapfile         --outdir ./         --chemistry flv         --allowNoLinker         --species GRCm38         --thread 8         --seqtype BCR     
+    multi_trust_vdj \
+    --mapfile ./test.mapfile \
+    --outdir ./ \
+    --chemistry flv \
+    --allowNoLinker \
+    --species GRCm38 \
+    --thread 8 \
+    --seqtype BCR \
+```
 ## Features
 ### barcode
 

@@ -340,7 +340,7 @@ class Summarize(Step):
         df_umi = df_umi.reindex(columns=['barcode', 'UMI'])
         df_umi = df_umi.sort_values(by='UMI', ascending=False)
         df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cell_barcodes else 'UB')
-        df_umi['barcode'] = df_umi['barcode'].apply(lambda x: self.reversed_compl(x))
+        df_umi['barcode'] = df_umi['barcode'].apply(self.reversed_compl)
         df_umi.to_csv(f'{self.outdir}/count.txt', sep='\t', index=False)
         self.add_data(chart=get_plot_elements.plot_barcode_rank(f'{self.outdir}/count.txt'))
 
