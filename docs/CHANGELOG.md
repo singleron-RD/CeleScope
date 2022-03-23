@@ -12,6 +12,19 @@
  - Change file suffix
     - raw_matrix: `all_matrix` -> `raw_feature_bc_matrix`
     - fitered_matrix: `matrix_10X`-> `filtered_feature_bc_matrix`
+    
+ ### `vdj_trust4` Optimize filter conditions and Synchronize code
+ - Filter barcode by filtered barcode report.
+ - Keep at least one chain for each cell.
+ - Keep cell type which is determined to be T/B by trust in barcode report.
+ - If cell A's two chains CDR3s are identical to another cell B, and A's chain abundance is significantly lower than B's (--diffuseFrac), filter A.
+ - Filter trust report:the nonfunctional CDR3, or CDR3 sequences containing "N" in the nucleotide sequence.
+ - Filter cell by read count of CDR3 from filtered trust report (default:8 for BCR, 1 for TCR).
+ - Keep CDR3aa start with C, Keep CDR3aa length >= 5, Keep no stop codon in CDR3aa.
+ - Contig's umi < 3 and read count < 2 considered to be noise.
+ - Keep CDR3 germline similarity > 90.
+ - Add clonotypes barplot in html report.
+ - Synchronize code with the latest celescope.
 
 
 ## [1.7.2] - 2021-02-10

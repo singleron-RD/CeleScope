@@ -13,3 +13,6 @@ imperial-college-research-computing::mixcr=3.0.3
 bioconda::bcftools=1.12
 bioconda::gatk4
 conda-forge::gcc
+bioconda::trust4
+conda-forge::r-argparse
+conda-forge::r-seurat=4.0.1
