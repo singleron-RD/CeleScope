@@ -3,7 +3,49 @@ from celescope.tools.multi import Multi
 
 
 class Multi_trust_vdj(Multi):
+    """
 
+    ## Installation
+
+    1. Clone repo
+    ```
+    git clone -b TRUST_dev git@github.com:singleron-RD/CeleScope.git
+    ```
+
+    2. Create conda environment and install conda packages
+    ```
+    cd CeleScope
+    conda create -n TRUST_dev -y --file conda_pkgs.txt
+    ```
+
+    Alternatively, you can use [mamba](https://github.com/mamba-org/mamba) to improve speed.
+    ```
+    conda install mamba
+    mamba create -n TRUST_dev -y --file conda_pkgs.txt
+    ```
+
+    3. Install celescope
+
+    Make sure you have activated the conda environment before running `pip install Celescope`. 
+    ```
+    conda activate TRUST_dev
+    pip install .
+    ```
+
+    ## Usage
+    
+    ```
+    conda activate TRUST_dev
+        multi_trust_vdj \
+        --mapfile ./test.mapfile \
+        --outdir ./ \
+        --chemistry flv \
+        --allowNoLinker \
+        --species GRCm38 \
+        --thread 8 \
+        --seqtype BCR \
+    """
+    
     def assemble(self, sample):
         step = 'assemble'
         cmd_line = self.get_cmd_line(step, sample)

@@ -15,11 +15,11 @@ from celescope.trust_vdj.__init__ import CHAIN, INDEX, TOOLS_DIR
 
 class Assemble(Step):
     """
-    Features
+    ## Features
 
     - Assemble TCR/BCR seq data.
 
-    Output
+    ## Output
     - `03.assemble/match/{sample}_matched_R1.fq` New R1 reads matched with scRNA-seq
     - `03.assemble/match/{sample}_matched_R1.fq` New R2 reads matched with scRNA-seq
 
