@@ -96,7 +96,7 @@ class Analysis_snp(Step):
 
     def get_variant_table(self):
 
-        df_vcf = utils.parse_vcf(self.vcf_file, infos=[])
+        df_vcf = utils.parse_vcf_to_df(self.vcf_file, infos=[])
         df_annovar = utils.parse_annovar(self.multianno_file)
         df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
         df_ncell = pd.read_csv(self.ncell_file)

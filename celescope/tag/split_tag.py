@@ -10,6 +10,7 @@ import pandas as pd
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 from celescope.__init__ import HELP_DICT
 from celescope.tools.cellranger3.wrapper import Cell_calling, read_raw_matrix
 
@@ -60,13 +61,13 @@ class Split_tag(Step):
 
         if args.split_matrix:
             self.matrix_outdir = f'{args.outdir}/matrix/'
-            if args.match_dir:
-                matrix_10X_dir = glob.glob(f'{args.match_dir}/05.count/*_matrix_10X*')[0]
-            elif args.matrix_dir:
-                matrix_10X_dir = args.matrix_dir
+            if utils.check_arg_not_none(args, 'match_dir'):
+                matrix_dir = utils.get_matrix_dir_from_match_dir(args.match_dir)
+            elif utils.check_arg_not_none(args, 'matrix_dir'):
+                matrix_dir = args.matrix_dir
             else:
                 raise ValueError("--match_dir or --matrix_dir is required.")
-            self.raw_mat, self.raw_features_path, self.raw_barcodes = read_raw_matrix(matrix_10X_dir)
+            self.raw_mat, self.raw_features_path, self.raw_barcodes = read_raw_matrix(matrix_dir)
 
         if args.split_fastq:
             self.rna_fq_file = glob.glob(f'{args.match_dir}/*barcode/*_2.fq*')[0]
@@ -125,7 +126,7 @@ class Split_tag(Step):
     @utils.add_log
     def split_matrix(self):
         for tag in self.tag_barcode_dict:
-            outdir = f'{self.matrix_outdir}/{tag}_matrix_10X/'
+            outdir = f'{self.matrix_outdir}/{tag}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/'
             runner = Cell_calling(outdir, self.raw_mat, self.raw_features_path, self.raw_barcodes)
             tag_barcodes = list(self.tag_barcode_dict[tag])
             raw_barcodes = list(runner.raw_barcodes)

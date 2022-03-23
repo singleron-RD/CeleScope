@@ -5,7 +5,8 @@ from collections import defaultdict
 import pandas as pd
 import pysam
 
-from celescope.tools.utils import add_log, s_common
+from celescope.tools.utils import add_log
+from celescope.tools.step import s_common
 
 
 def genDict(dim=3):
