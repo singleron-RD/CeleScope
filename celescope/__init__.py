@@ -17,7 +17,8 @@ ASSAY_LIST = [
     'citeseq',
     'tcr_fl',
     'sweetseq',
-    'vdj_full_len'
+    'vdj_full_len',
+    'convert10X'
 ]
 
 ROOT_PATH = os.path.dirname(__file__)
