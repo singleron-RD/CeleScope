@@ -12,7 +12,7 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 from celescope.__init__ import HELP_DICT
-from celescope.tools.cellranger3.wrapper import Cell_calling, read_raw_matrix
+from celescope.tools.emptydrop_cr.wrapper import Cell_calling, read_raw_matrix
 
 
 def get_clonotypes_table(df):

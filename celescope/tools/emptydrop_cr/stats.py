@@ -152,11 +152,11 @@ def determine_max_filtered_bcs(recovered_cells):
 def init_barcode_filter_result():
     return {
         'filtered_bcs': 0,
-        'filtered_bcs_lb': 0,
-        'filtered_bcs_ub': 0,
-        'max_filtered_bcs': 0,
+        #'filtered_bcs_lb': 0,
+        #'filtered_bcs_ub': 0,
+        #'max_filtered_bcs': 0,
         'filtered_bcs_var': 0,
-        'filtered_bcs_cv': 0,
+        #'filtered_bcs_cv': 0,
     }
 
 
@@ -166,9 +166,9 @@ def summarize_bootstrapped_top_n(top_n_boot):
     top_n_bcs_var = np.var(top_n_boot)
     result = {}
     result['filtered_bcs_var'] = top_n_bcs_var
-#     result['filtered_bcs_cv'] = tk_stats.robust_divide(top_n_bcs_sd, top_n_bcs_mean)
-    result['filtered_bcs_lb'] = round(sp_stats.norm.ppf(0.025, top_n_bcs_mean, top_n_bcs_sd))
-    result['filtered_bcs_ub'] = round(sp_stats.norm.ppf(0.975, top_n_bcs_mean, top_n_bcs_sd))
+    # comment these two lines out to avoid `ValueError: cannot convert float NaN to integer` when analyze data with low number of barcode
+    #result['filtered_bcs_lb'] = round(sp_stats.norm.ppf(0.025, top_n_bcs_mean, top_n_bcs_sd))
+    #result['filtered_bcs_ub'] = round(sp_stats.norm.ppf(0.975, top_n_bcs_mean, top_n_bcs_sd))
     result['filtered_bcs'] = int(round(top_n_bcs_mean))
     return result
 

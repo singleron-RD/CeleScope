@@ -37,6 +37,7 @@ HELP_DICT = {
     'threshold_method': 'One of [otsu, auto, hard, none].',
     'tsne_file': 'match_dir t-SNE coord file. Do not required when `--match_dir` is provided.',
     'df_marker_file': 'match_dir df_marker_file. Not required when `--match_dir` is provided.',
+    'cell_calling_method': 'Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`]',
     
 }
 

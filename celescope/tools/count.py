@@ -16,10 +16,11 @@ from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
 
 from celescope.tools import utils
+from celescope.__init__ import HELP_DICT
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
     MATRIX_FILE_NAME, FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
-from celescope.tools.cellranger3 import get_plot_elements
-from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
+from celescope.tools.emptydrop_cr import get_plot_elements
+from celescope.tools.emptydrop_cr.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.plotly_plot import Line_plot
@@ -215,8 +216,8 @@ class Count(Step):
             cell_bc, UMI_threshold = self.force_cell(df_sum)
         elif cell_calling_method == 'auto':
             cell_bc, UMI_threshold = self.auto_cell(df_sum)
-        elif cell_calling_method == 'cellranger3':
-            cell_bc, UMI_threshold = self.cellranger3_cell(df_sum)
+        elif cell_calling_method == 'EmptyDrops_CR':
+            cell_bc, UMI_threshold = self.emptydrop_cr_cell(df_sum)
         return cell_bc, UMI_threshold
 
     @utils.add_log
@@ -264,7 +265,7 @@ class Count(Step):
         return cell_bc, threshold
 
     @utils.add_log
-    def cellranger3_cell(self, df_sum):
+    def emptydrop_cr_cell(self, df_sum):
         cell_bc, initial_cell_num = cell_calling_3(self.raw_matrix_dir, self.expected_cell_num)
         threshold = Count.find_threshold(df_sum, initial_cell_num)
         return cell_bc, threshold
@@ -326,7 +327,7 @@ class Count(Step):
         self.add_metric(
             name='Estimated Number of Cells',
             value=estimated_cells,
-            help_info='the number of barcodes considered as cell-associated'
+            help_info=f'the number of barcodes considered as cell-associated. The cell calling method used for this sample is {self.cell_calling_method}.'
         )
 
         fraction_reads_in_cells = round(float(CB_reads_count) / reads_mapped_to_transcriptome * 100, 2)
@@ -468,9 +469,9 @@ def get_opts_count(parser, sub_program):
     parser.add_argument('--expected_cell_num', help='Default `3000`. Expected cell number.', default=3000)
     parser.add_argument(
         '--cell_calling_method',
-        help='Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`',
-        choices=['auto', 'cellranger3'],
-        default='auto',
+        help=HELP_DICT['cell_calling_method'],
+        choices=['auto', 'EmptyDrops_CR'],
+        default='EmptyDrops_CR',
     )
     if sub_program:
         parser = s_common(parser)

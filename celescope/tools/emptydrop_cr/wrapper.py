@@ -1,5 +1,5 @@
 """
-cellranger3 cell-calling on raw matrix
+emptydrop_cr cell-calling on raw matrix
 """
 
 import os
@@ -11,7 +11,7 @@ import scipy.io
 
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
                                       MATRIX_FILE_NAME)
-from celescope.tools.cellranger3.cell_calling_3 import find_nonambient_barcodes
+from celescope.tools.emptydrop_cr.cell_calling_3 import find_nonambient_barcodes
 from celescope.tools import utils
 
 
@@ -27,7 +27,7 @@ def read_raw_matrix(all_matrix_10X_dir):
     raw_features_path = os.path.join(all_matrix_10X_dir, FEATURE_FILE_NAME[0])
 
     raw_barcodes_path = os.path.join(all_matrix_10X_dir, BARCODE_FILE_NAME[0])
-    raw_barcodes_df = pd.read_csv(raw_barcodes_path, sep='\t', error_bad_lines=False, names=['barcode'])
+    raw_barcodes_df = pd.read_csv(raw_barcodes_path, sep='\t', on_bad_lines='skip', names=['barcode'])
     raw_barcodes = np.array(raw_barcodes_df['barcode'].tolist())
 
     return raw_mat, raw_features_path, raw_barcodes

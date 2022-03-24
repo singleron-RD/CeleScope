@@ -7,8 +7,8 @@ import numpy.ma as ma
 import pandas as pd
 import scipy.io
 
-import celescope.tools.cellranger3.sgt as cr_sgt  # # modified sgt.py
-import celescope.tools.cellranger3.stats as cr_stats  # # modified stats.py
+import celescope.tools.emptydrop_cr.sgt as cr_sgt  # # modified sgt.py
+import celescope.tools.emptydrop_cr.stats as cr_stats  # # modified stats.py
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
                                       MATRIX_FILE_NAME)
 
@@ -227,13 +227,13 @@ def cell_calling_3(all_matrix_10X_dir, expected_cell_num):
     raw_mat = scipy.io.mmread(raw_mat_path)  # scipy.sparse.coo.coo_matrix
 
     raw_features_path = os.path.join(all_matrix_10X_dir, FEATURE_FILE_NAME[0])
-    raw_features_df = pd.read_csv(raw_features_path, sep='\t', error_bad_lines=False, names=['id', 'name', 'type'])
+    raw_features_df = pd.read_csv(raw_features_path, sep='\t', on_bad_lines='skip', names=['id', 'name', 'type'])
     raw_features_df['id'].tolist()
     raw_features_df['name'].tolist()
     raw_features_df['type'].tolist()
 
     raw_barcodes_path = os.path.join(all_matrix_10X_dir, BARCODE_FILE_NAME[0])
-    raw_barcodes_df = pd.read_csv(raw_barcodes_path, sep='\t', error_bad_lines=False, names=['barcode'])
+    raw_barcodes_df = pd.read_csv(raw_barcodes_path, sep='\t', on_bad_lines='skip', names=['barcode'])
     raw_barcodes = np.array(raw_barcodes_df['barcode'].tolist())
 
     # Run cell calling
