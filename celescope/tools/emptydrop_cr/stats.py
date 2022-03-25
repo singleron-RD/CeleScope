@@ -162,7 +162,7 @@ def init_barcode_filter_result():
 
 def summarize_bootstrapped_top_n(top_n_boot):
     top_n_bcs_mean = np.mean(top_n_boot)
-    top_n_bcs_sd = np.std(top_n_boot)
+    #top_n_bcs_sd = np.std(top_n_boot)
     top_n_bcs_var = np.var(top_n_boot)
     result = {}
     result['filtered_bcs_var'] = top_n_bcs_var
