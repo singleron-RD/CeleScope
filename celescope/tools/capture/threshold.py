@@ -100,10 +100,11 @@ class Otsu():
 
 class Auto():
     """
-    threshold = top 1% cell count / 10
+    threshold = top 1% cell count / coef
     """
-    def __init__(self, array):
+    def __init__(self, array, coef=3):
         self.array = [x for x in array if x > 0 ]
+        self.coef = coef
     
     def run(self):
         array = self.array
@@ -112,7 +113,7 @@ class Auto():
         n_cell_1_percentile = len(array) // 100
         sorted_counts = sorted(array, reverse=True)
         count_cell_1_percentile = sorted_counts[n_cell_1_percentile]
-        threshold = int(count_cell_1_percentile / 10)
+        threshold = int(count_cell_1_percentile / self.coef)
 
         return threshold
 
