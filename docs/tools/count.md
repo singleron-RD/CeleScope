@@ -25,7 +25,7 @@
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
-`--cell_calling_method` Default `EmptyDrops_CR`. Cell calling methods. Choose from `auto` and `EmptyDrops_CR`.
+`--cell_calling_method` Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`].
 
 `--outdir` Output diretory.
 
