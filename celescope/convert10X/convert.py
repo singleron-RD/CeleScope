@@ -58,9 +58,9 @@ class Convert(Step):
     ## Output        
     - `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
 
-    - `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads.
+    - `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads in 10X format.
 
-    - `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads.
+    - `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads in 10X format.
     """
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)

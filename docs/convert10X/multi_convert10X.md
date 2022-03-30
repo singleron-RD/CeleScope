@@ -26,12 +26,26 @@ pip install .
 ```
 
 ## Usage
-
+For rna data, create run.sh file as shown below:
 ```
 conda activate convert_10X
 multi_convert10X \
-    --mapfile  rna.mapfile \
+    --mapfile  test.mapfile \
     --chemistry flv_rna \
+```
+For vdj data, create run.sh file as shown below:
+```
+conda activate convert_10X
+multi_convert10X \
+    --mapfile  test.mapfile \
+    --chemistry flv \
+```
+Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
+1st column: Fastq file prefix.
+2nd column: Fastq file directory path.
+3rd column: Sample name, which is the prefix of all output files.
+```
+rna     /SGRNJ03/randd/cjj/celedev/TESTDATA/testcele/celescope_test_data/rna/fastqs/    test1
 ```
 ## Features
 ### barcode
@@ -58,9 +72,9 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 ### convert
 - `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
 
-- `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads.
+- `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads in 10X format.
 
-- `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads.
+- `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads in 10X format.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.

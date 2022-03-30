@@ -33,12 +33,26 @@ class Multi_convert10X(Multi):
     ```
 
     ## Usage
-    
+    For rna data, create run.sh file as shown below:
     ```
     conda activate convert_10X
     multi_convert10X \\
-        --mapfile  rna.mapfile \\
+        --mapfile  test.mapfile \\
         --chemistry flv_rna \\
+    ```
+    For vdj data, create run.sh file as shown below:
+    ```
+    conda activate convert_10X
+    multi_convert10X \\
+        --mapfile  test.mapfile \\
+        --chemistry flv \\
+    ```
+    Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
+    1st column: Fastq file prefix.
+    2nd column: Fastq file directory path.
+    3rd column: Sample name, which is the prefix of all output files.
+    ```
+    rna     /SGRNJ03/randd/cjj/celedev/TESTDATA/testcele/celescope_test_data/rna/fastqs/    test1
     ```
     """
 
