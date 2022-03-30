@@ -1,10 +1,8 @@
-from ast import Store
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 import pysam
 import subprocess
 from Bio.Seq import Seq
-from celescope.trust_vdj import trust_utils as tr
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.trust_vdj.__init__ import CHAIN
