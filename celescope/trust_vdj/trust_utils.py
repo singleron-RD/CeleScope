@@ -6,8 +6,15 @@ from celescope.tools import utils
 from celescope.trust_vdj.__init__ import INDEX, TOOLS_DIR
 
 
+"""
+trust goes through the following steps:
+			0: start from beginning (candidate read extraction)
+			1: start from assembly
+			2: start from annotation
+			3: start from generating the report table
+"""
 @utils.add_log
-def VDJ_mapping(thread, species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange):
+def extract_candidate_reads(thread, species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange):
     cmd = (
         f'fastq-extractor -t {thread} '
         f'-f {INDEX}/{species}/{index_prefix}.fa '
@@ -20,7 +27,7 @@ def VDJ_mapping(thread, species, index_prefix, outdir, sample, fq1, fq2, barcode
         f'--barcode {fq1} '
         f'--UMI {fq1} '
         )
-    VDJ_mapping.logger.info(cmd)
+    extract_candidate_reads.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
 

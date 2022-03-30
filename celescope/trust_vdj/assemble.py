@@ -34,9 +34,7 @@ class Assemble(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
-        self.outdir = args.outdir
         self.fq2 = args.fq2
-        self.sample = args.sample
         self.species = args.species
         self.seqtype = args.seqtype
         self.barcodeRange = args.barcodeRange
@@ -76,42 +74,42 @@ class Assemble(Step):
         utils.check_mkdir(temp_dir)
 
     @staticmethod
-    def _umi_cutoff(fl, UMI_min, assemble_out) :
+    # UMI cut-off filter for candidate_reads
+    def umi_cutoff(candidate_reads, UMI_min, assemble_out) :
         read_count_dict = defaultdict(int)
-        umi_count_dict = defaultdict(set)
-        read_dict = defaultdict(list)
-        for read in fl:
+        umi_dict = defaultdict(set)
+        read_barcode_dict = defaultdict(list)
+        for read in candidate_reads:
             attrs = read.name.split('_')
-            cb = attrs[0]
-            umi = attrs[1]
-            read_count_dict[cb]+=1
-            umi_count_dict[cb].add(umi)
-            read_dict[cb].append(read)
+            cb, umi = attrs[0], attrs[1]
+            read_count_dict[cb] += 1
+            umi_dict[cb].add(umi)
+            read_barcode_dict[cb].append(read)
         barcode_list = list(read_count_dict.keys())
-        read_count_list = [read_count_dict[i] for i in barcode_list]
-        umi_count_list = [len(umi_count_dict[i]) for i in barcode_list]
-        df = pd.DataFrame({'barcode': barcode_list, 
-                            'read_count': read_count_list, 
-                            'UMI': umi_count_list})
-        df = df.sort_values(by='UMI', ascending=False)
+
+        df_count = pd.DataFrame({'barcode': list(read_count_dict.keys()), 
+                            'read_count': [read_count_dict[i] for i in barcode_list], 
+                            'UMI': [len(umi_dict[i]) for i in barcode_list]})
+
+        df_count.sort_values(by='UMI', ascending=False, inplace=True)
         if UMI_min == "auto":
             RANK = 20
-            rank_UMI = df.iloc[RANK, :]["UMI"]
+            rank_UMI = df_count.iloc[RANK, :]["UMI"]
             UMI_min = int(rank_UMI / 10)
         UMI_min = int(UMI_min)
-        df["mark"] = df["UMI"].apply(
+        df_count["mark"] = df_count["UMI"].apply(
             lambda x: "CB" if (x >= UMI_min) else "UB")
-        df.to_csv(f'{assemble_out}/count.txt', sep='\t', index=False)
+        df_count.to_csv(f'{assemble_out}/count.txt', sep='\t', index=False)
 
-        return df, read_dict
+        return df_count, read_barcode_dict
 
     @staticmethod
-    # used for Multithreaded assembly
-    def split_df(df, read_dict, temp_dir):
-        df_to_split = df[df['mark']=='CB']
-        df_to_split = df_to_split.sort_values(by='UMI', ascending=False)
-        cell_cbs = df_to_split['barcode'].tolist()
-        umi_count_l = df_to_split['UMI'].tolist()
+    # split candidate reads file for Multithreaded assembly
+    def split_candidate_reads(df_count, read_barcode_dict, temp_dir):
+        df_count_cb = df_count[df_count['mark']=='CB']
+        df_count_cb.sort_values(by='UMI', ascending=False, inplace = True)
+        cell_cbs = df_count_cb['barcode'].tolist()
+        umi_count_l = df_count_cb['UMI'].tolist()
         sum_umi = sum(umi_count_l)
         threshold = int(sum_umi/4)
         umi_num = 0
@@ -128,41 +126,41 @@ class Assemble(Step):
         idx.append(len(cell_cbs))
         for i in range(len(idx)-1):
             temp_cbs = cell_cbs[idx[i]:idx[i+1]]
-            _fq_file = open(f'{temp_dir}/temp_{i}.fq', 'w')
-            cb_fa = open(f'{temp_dir}/temp_{i}_bc.fa', 'w')
-            umi_fa = open(f'{temp_dir}/temp_{i}_umi.fa', 'w')
-            for c in temp_cbs:
-                for read in read_dict[c]:
+            toassemble_fq = open(f'{temp_dir}/temp_{i}.fq', 'w')
+            toassemble_bc = open(f'{temp_dir}/temp_{i}_bc.fa', 'w')
+            toassemble_umi = open(f'{temp_dir}/temp_{i}_umi.fa', 'w')
+            for tmp in temp_cbs:
+                for read in read_barcode_dict[tmp]:
                     name = read.name
                     umi = name.split('_')[1]
-                    _fq_file.write(str(read)+'\n')
-                    cb_fa.write(f'>{name}\n{c}\n')
-                    umi_fa.write(f'>{name}\n{umi}\n')
-            _fq_file.close()
-            cb_fa.close()
-            umi_fa.close()
+                    toassemble_fq.write(str(read)+'\n')
+                    toassemble_bc.write(f'>{name}\n{tmp}\n')
+                    toassemble_umi.write(f'>{name}\n{umi}\n')
+            toassemble_fq.close()
+            toassemble_bc.close()
+            toassemble_umi.close()
         
         return idx, len(idx)
     
     @staticmethod
     def Multi_Executor(threads, temp_dirs, temp_species, temp_samples, idx_len):
-        ass,annot,gfl,mk_csv = [], [], [], []
+        assmble_res, annot_res, full_len_res, contig_res = [], [], [], []
 
         with ProcessPoolExecutor(idx_len-1) as pool:
             for res in pool.map(tr.trust_assemble, threads, temp_species, temp_dirs, temp_samples):
-                ass.append(res)
+                assmble_res.append(res)
 
         with ProcessPoolExecutor(idx_len-1) as pool:
             for res in pool.map(tr.annotate, temp_samples, threads, temp_dirs, temp_species):
-                annot.append(res) 
+                annot_res.append(res) 
 
         with ProcessPoolExecutor(idx_len-1) as pool:
             for res in pool.map(tr.get_full_len_assembly, temp_dirs, temp_samples):
-                gfl.append(res)
+                full_len_res.append(res)
 
         with ProcessPoolExecutor(idx_len-1) as pool:
             for res in pool.map(tr.fa_to_csv, temp_dirs, temp_samples):
-                mk_csv.append(res)
+                contig_res.append(res)
 
     @utils.add_log
     def out_match_fastq(self):
@@ -198,7 +196,7 @@ class Assemble(Step):
     def VDJ_process(self):
         cb_range = self.barcodeRange.split(' ')
         umi_range = self.umiRange.split(' ')
-
+        # candidate read extraction
         map_res = []
         map_index_prefix = ['bcrtcr'] + self.chains
         _map_len = len(map_index_prefix)
@@ -212,18 +210,18 @@ class Assemble(Step):
         map_umi_range = [umi_range] * _map_len
 
         with ProcessPoolExecutor(_map_len) as pool:
-            for res in pool.map(tr.VDJ_mapping, map_threads, map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range):
+            for res in pool.map(tr.extract_candidate_reads, map_threads, map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range):
                 map_res.append(res)
 
-        fl = pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq')
-        df, read_dict = self._umi_cutoff(fl,self.UMI_min,self.assemble_out)
-        _, idx_len = self.split_df(df, read_dict, self.temp_dir)
+        candidate_reads = pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq')
+        df_count, read_barcode_dict = self.umi_cutoff(candidate_reads, self.UMI_min, self.assemble_out)
+        _, idx_len = self.split_candidate_reads(df_count, read_barcode_dict, self.temp_dir)
 
         threads = [self.thread] * idx_len
         temp_dirs = [self.temp_dir] * idx_len
         temp_species = [self.species] * idx_len
         temp_samples = [f'temp_{i}' for i in range(idx_len-1)]
-        # multithread-run
+        # multithread-run for assembly and annotation
         self.Multi_Executor(threads, temp_dirs, temp_species, temp_samples, idx_len)
 
     @utils.add_log
