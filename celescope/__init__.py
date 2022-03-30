@@ -18,6 +18,7 @@ ASSAY_LIST = [
     'tcr_fl',
     'sweetseq',
     'trust_vdj',
+    'raw_trust'
 ]
 
 ROOT_PATH = os.path.dirname(__file__)
