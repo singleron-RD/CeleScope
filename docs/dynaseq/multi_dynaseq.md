@@ -275,7 +275,7 @@ is higher than or equal to this value.
 
 `--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Other STAR parameters.
+`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
@@ -283,13 +283,13 @@ is higher than or equal to this value.
 
 `--gtf_type` Specify feature type in GTF annotation.
 
-`--featureCounts_param` Other featureCounts parameters.
+`--featureCounts_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
 `--cell_calling_method` Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`].
 
-`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
+`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
 `--strand` gene strand file, the format is "geneID,+/-".
 

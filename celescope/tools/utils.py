@@ -110,6 +110,7 @@ class Gtf_dict(dict):
             - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
             - one gene_id with multiple gene_name: error.
             - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
+            - no gene_name: gene_id will be used as gene_name.
 
         Returns:
             {gene_id: gene_name} dict

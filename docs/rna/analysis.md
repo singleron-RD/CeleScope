@@ -17,7 +17,7 @@ it means that the given marker is not enough to identify the cluster.
     - `{sample}_png/{cluster}_pctdiff.png` Percentage of marker gene expression in this cluster - percentage in all other clusters.
     - `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
 ## Arguments
-`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
+`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
 `--matrix_file` Required. Matrix_10X directory from step count.
 

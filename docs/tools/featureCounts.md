@@ -15,9 +15,9 @@ sorted by coordinates；BAM file contains tags as following(Software Version>=1.
 ## Arguments
 `--gtf_type` Specify feature type in GTF annotation.
 
-`--genomeDir` Required. Genome directory.
+`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
-`--featureCounts_param` Other featureCounts parameters.
+`--featureCounts_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
 `--input` Required. BAM file path.
 

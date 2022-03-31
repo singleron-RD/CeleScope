@@ -5,6 +5,7 @@ import re
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
+from celescope.__init__ import HELP_DICT
 
 
 class FeatureCounts(Step):
@@ -130,8 +131,8 @@ def get_opts_featureCounts(parser, sub_program):
         help='Specify feature type in GTF annotation',
         default='exon'
     )
-    parser.add_argument('--genomeDir', help='Required. Genome directory.')
-    parser.add_argument('--featureCounts_param', help='Other featureCounts parameters', default="")
+    parser.add_argument('--genomeDir', help=HELP_DICT['genomeDir'])
+    parser.add_argument('--featureCounts_param', help=HELP_DICT['additional_param'], default="")
 
     if sub_program:
         parser.add_argument('--input', help='Required. BAM file path.', required=True)

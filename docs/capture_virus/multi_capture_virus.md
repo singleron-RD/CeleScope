@@ -203,14 +203,14 @@ at least {overlap} bases match between adapter and read.
 
 `--min_consensus_read` Minimum number of reads to support a base.
 
-`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
+`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
 `--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Other STAR parameters.
+`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 

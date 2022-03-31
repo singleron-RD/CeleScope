@@ -26,7 +26,7 @@ RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus']
 HELP_DICT = {
     'match_dir': 'Match celescope scRNA-Seq directory.',
     'gene_list': 'Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`',
-    'genomeDir': 'Required. Genome directory after running `celescope rna mkref`.',
+    'genomeDir': 'Required. Genome directory after running `celescope {assay} mkref`.',
     'thread': 'Thread to use.',
     'debug': 'If this argument is used, celescope may output addtional file for debugging.',
     'fasta': 'Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.',
@@ -38,6 +38,7 @@ HELP_DICT = {
     'tsne_file': 'match_dir t-SNE coord file. Do not required when `--match_dir` is provided.',
     'df_marker_file': 'match_dir df_marker_file. Not required when `--match_dir` is provided.',
     'cell_calling_method': 'Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`]',
+    'additional_param': 'Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.',
     
 }
 

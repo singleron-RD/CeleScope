@@ -253,7 +253,7 @@ class Scanpy_wrapper(Step):
         )
 
     @utils.add_log
-    def cluster(self):
+    def find_marker_genes(self):
         """
         Wrapper function for sc.tl.rank_genes_groups
         """
@@ -312,8 +312,7 @@ class Scanpy_wrapper(Step):
         self.tsne()
         self.umap()
         self.leiden()
-        self.cluster()
-
+        self.find_marker_genes()
 
         self.write_markers()
         self.write_tsne()
