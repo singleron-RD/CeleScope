@@ -179,12 +179,12 @@ use `--steps_run barcode,cutadapt`
         if self.args.mod == 'sjm':
 
             self.sjm_dir = f'{self.args.outdir}/sjm/'
-            self.sjm_file = f'{self.sjm_dir}/sjm.job'
             utils.check_mkdir(self.sjm_dir)
+            self.logdir = self.args.outdir + '/log'
             utils.check_mkdir(self.logdir)
 
-        self.logdir = self.args.outdir + '/log'
-        self.sjm_cmd = f'log_dir {self.logdir}\n'
+            self.sjm_file = f'{self.sjm_dir}/sjm.job'
+            self.sjm_cmd = f'log_dir {self.logdir}\n'
 
         # parse_mapfile
         self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(self.args.mapfile, self.col4_default)
