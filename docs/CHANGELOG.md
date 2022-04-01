@@ -1,3 +1,12 @@
+## [1.8.0b0] - 2022-04-01
+ ### `raw_trust`
+ - Not split candidate reads for assembly.
+ - raw_trust assay follows official process.
+ - Add a new option `--match_previous_assemble` to decide whether extract match reads with sc-RNA before assemble.
+ - Add filter rules: CDR3aa start with C, CDR3aa length>=5, No stop codon in CDR3aa, Filter low abundance contigs in barcode(umi-cutoff, read-count-cutoff).
+ - Filter the nonfunctional CDR3.
+ - Add clonotypes barplot in html report.
+
 
 ## [Unreleased] 
  ### `rna`
