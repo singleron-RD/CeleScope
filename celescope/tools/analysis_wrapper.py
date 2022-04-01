@@ -269,6 +269,9 @@ class Scanpy_wrapper(Step):
 
     @utils.add_log
     def write_markers(self):
+        '''
+        write only p_val_adj < PVAL_CUTOFF to avoid too many markers
+        '''
         df_markers = sc.get.rank_genes_groups_df(self.adata, group=None, pval_cutoff=PVAL_CUTOFF)
         df_markers = df_markers[df_markers['logfoldchanges'].notna()]
         markers_name_dict = {
@@ -282,6 +285,7 @@ class Scanpy_wrapper(Step):
          }
         df_markers = df_markers.rename(markers_name_dict,axis='columns')
         df_markers['cluster'] = df_markers['cluster'].map(lambda x : int(x)+1)
+        df_markers = df_markers.loc[df_markers['p_val_adj'] < PVAL_CUTOFF, ]
         df_markers.to_csv(self.df_marker_file, index=None, sep='\t')
 
     @utils.add_log

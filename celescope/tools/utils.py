@@ -7,6 +7,7 @@ import re
 import resource
 import subprocess
 import time
+import unittest
 from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps
@@ -92,9 +93,11 @@ def generic_open(file_name, *args, **kwargs):
 
 class Gtf_dict(dict):
     '''
-
     key: gene_id
     value: gene_name
+    If the key does not exist, return key. This is to avoid the error:
+        The gtf file contains one exon lines with a gene_id, but do not contain a gene line with the same gene_id. FeatureCounts 
+        work correctly under this condition, but the gene_id will not appear in the Gtf_dict.
     '''
 
     def __init__(self, gtf_file):
@@ -616,3 +619,20 @@ def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'C
         df = df.append(pd.Series(rec_dict), ignore_index=True)
     vcf.close()
     return df
+
+
+class Test_utils(unittest.TestCase):
+    def test_gtf_dict(self):
+        import tempfile
+        fp = tempfile.NamedTemporaryFile(suffix='.gtf')
+        fp.write(b'1\tprocessed_transcript\tgene\t11869\t14409\t.\t+\t.\tgene_id "gene_id_with_gene_name"; gene_name "gene_name";\n')
+        fp.write(b'1\tprocessed_transcript\tgene\t11869\t14409\t.\t+\t.\tgene_id "gene_id_without_gene_name"; \n')
+        fp.seek(0)
+        gtf_dict = Gtf_dict(fp.name)
+        self.assertEqual(gtf_dict['gene_id_with_gene_name'], 'gene_name')
+        self.assertEqual(gtf_dict['gene_id_without_gene_name'], 'gene_id_without_gene_name')
+        self.assertEqual(gtf_dict['gene_id_not_exist'], 'gene_id_not_exist')
+        fp.close()
+
+if __name__ == '__main__':
+    unittest.main()

@@ -175,19 +175,19 @@ use `--steps_run barcode,cutadapt`
             self.fq_suffix = ".gz"
         if self.args.steps_run != 'all':
             self.steps_run = self.args.steps_run.strip().split(',')
+        
+        if self.args.mod == 'sjm':
 
-        self.sjm_dir = f'{self.args.outdir}/sjm/'
-        self.sjm_file = f'{self.sjm_dir}/sjm.job'
+            self.sjm_dir = f'{self.args.outdir}/sjm/'
+            self.sjm_file = f'{self.sjm_dir}/sjm.job'
+            utils.check_mkdir(self.sjm_dir)
+            utils.check_mkdir(self.logdir)
 
         self.logdir = self.args.outdir + '/log'
         self.sjm_cmd = f'log_dir {self.logdir}\n'
 
         # parse_mapfile
         self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(self.args.mapfile, self.col4_default)
-
-        # mk dir
-        utils.check_mkdir(self.logdir)
-        utils.check_mkdir(self.sjm_dir)
 
         for sample in self.fq_dict:
             self.outdir_dic[sample] = {}
