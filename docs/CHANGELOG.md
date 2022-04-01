@@ -1,7 +1,7 @@
 
 ## [Unreleased] 
 
-## [1.9.0] - 2021-03-24
+## [1.9.0] 
  ### `rna` and `dynaseq`
  - Rename the cell-calling method from `cellranger3` to `EmptyDrops_CR`. Make `EmptyDrops_CR` the default method.
 
@@ -10,7 +10,7 @@
  - Fix an issue where the matrix suffix `filtered_feature_bc_matrix` introduced in v1.8.0 is not recognized when parsing match_dir.
 
 ## [1.8.0] - 2021-03-17
- ### `rna`
+ ### `rna` and `dynaseq`
  - Replace `Seurat` with `scanpy`.
  - Add read_saturation to downsample file.
 
