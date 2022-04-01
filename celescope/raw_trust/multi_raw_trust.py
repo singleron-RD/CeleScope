@@ -9,7 +9,7 @@ class Multi_raw_trust(Multi):
 
     1. Clone repo
     ```
-    git clone -b TRUST_dev git@github.com:singleron-RD/CeleScope.git
+    git clone -b TRUST_dev https://github.com/singleron-RD/CeleScope.git
     ```
 
     2. Create conda environment and install conda packages
@@ -36,13 +36,13 @@ class Multi_raw_trust(Multi):
     
     ```
     conda activate TRUST_dev
-        multi_trust_vdj \\
+        multi_raw_trust \\
         --mapfile ./test.mapfile \\
         --outdir ./ \\
         --chemistry flv \\
         --allowNoLinker \\
         --species GRCm38 \\
-        --thread 8 \\
+        --thread 10 \\
         --seqtype BCR \\
         --match_previous_assemble
     ```

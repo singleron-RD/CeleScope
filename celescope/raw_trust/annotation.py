@@ -147,9 +147,9 @@ class Annotation(Step):
         mappedmeta = meta[meta['Class']=='T/BCR']
         mappedmetaTB = mappedmeta[mappedmeta['CellTypes'].isin(self.Celltype)]
         
-        Transcriptome_cell_number = meta.shape[0]
+        # Transcriptome_cell_number = meta.shape[0]
         TB_cell_number = metaTB.shape[0]
-        Mapped_Transcriptome_cell_number = mappedmeta.shape[0]
+        # Mapped_Transcriptome_cell_number = mappedmeta.shape[0]
         Mapped_TB_cell_number = mappedmetaTB.shape[0]
         mapping_summary=[]
 
