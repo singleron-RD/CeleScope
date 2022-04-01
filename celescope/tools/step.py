@@ -94,6 +94,7 @@ class Step:
         
         Args
             display: controls how to display the metric in HTML report.
+            show: whether to add to .data.json, show the metric in HTML report and stat.txt.
         '''
 
         name = cap_str_except_preposition(name)
@@ -125,11 +126,12 @@ class Step:
     def _write_stat(self):
         with open(self.__stat_file, 'w') as writer:
             for metric in self.__metric_list:
-                name = metric['name']
-                display = metric['display']
+                if metric['show']:
+                    name = metric['name']
+                    display = metric['display']
 
-                line = f'{name}: {display}'
-                writer.write(line + '\n')
+                    line = f'{name}: {display}'
+                    writer.write(line + '\n')
 
     def _dump_content(self):
         '''dump content to json file
@@ -150,7 +152,11 @@ class Step:
     def _add_content_data(self):
         step_summary = {}
         step_summary['display_title'] = self._display_title
-        step_summary['metric_list'] = self.__metric_list
+        metric_list = []
+        for metric in self.__metric_list:
+            if metric['show']:
+                metric_list.append(metric)
+        step_summary['metric_list'] = metric_list
         step_summary['help_content'] = self.__help_content
         self.__content_dict['data'][self._step_summary_name].update(step_summary)
 
@@ -219,6 +225,12 @@ class Step:
         '''
         self.debug_subprocess_call.logger.debug(cmd)
         subprocess.check_call(cmd, shell=True)
+
+    def get_metric_list(self):
+        return self.__metric_list
+
+    def set_metric_list(self, metric_list):
+        self.__metric_list = metric_list
 
     @abc.abstractmethod
     def run(self):

@@ -1,9 +1,13 @@
 
 ## [Unreleased] 
 
-## [1.9.0] 
+## [1.9.0] - 2021-04-01
  ### `rna` and `dynaseq`
  - Rename the cell-calling method from `cellranger3` to `EmptyDrops_CR`. Make `EmptyDrops_CR` the default method.
+ - Fix an issue that mitochondrial percent is not added to metrics.
+
+ ### `snp`,`capture_virus` and `fusion`
+ - When calculating the `auto` threshold, the default coefficient changes from 10 to 3. This will make the filtering more stringent.
 
 ## [1.8.1] - 2021-03-23
  ### General improvments

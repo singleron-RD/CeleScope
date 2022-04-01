@@ -7,13 +7,14 @@ from celescope.__init__ import HELP_DICT
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
 
-
+# markers adjust p_value
+PVAL_CUTOFF = 0.05
+# scanpy mitochonrial variable name
 MITO_VAR = 'mito'
 NORMALIZED_LAYER = 'normalised'
-
 RESOLUTION = 1.2
 N_PCS = 25
-PVAL_CUTOFF = 0.05
+MITO_GENE_PERCENT_LIST = [5, 10, 15, 20, 50]
 
 
 def read_tsne(tsne_file):
@@ -91,20 +92,19 @@ class Scanpy_wrapper(Step):
 
     @utils.add_log
     def write_mito_stats(self):
- 
-        #stat.txt
-        total_cell = len(self.adata.obs)
-        percent_list = [5,10,15,20,50]
-        mito_dict = {
-            key: sum(self.adata.obs[f'pct_counts_{MITO_VAR}'] > key) / total_cell             
-            for key in percent_list
-        }
 
-        for percent in percent_list:
+        mt_pct_var = f'pct_counts_{MITO_VAR}'
+        total_cell_number = self.adata.n_obs
+
+        for mito_gene_percent in MITO_GENE_PERCENT_LIST:
+            cell_number = sum(self.adata.obs[mt_pct_var] > mito_gene_percent)
+            fraction = round(cell_number / total_cell_number * 100, 2)
             self.add_metric(
-                name=f'Fraction of cells have mito gene percent>{percent}%',
-                value=round(mito_dict[percent], 2),
+                name=f'Fraction of cells have mito gene percent>{mito_gene_percent}%',
+                value=f'{fraction}%',
+                show=False,
             )
+
 
     @utils.add_log
     def normalize(self):
