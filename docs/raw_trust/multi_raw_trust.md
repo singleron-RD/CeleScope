@@ -37,6 +37,7 @@ conda activate TRUST_dev
     --species GRCm38 \
     --thread 8 \
     --seqtype BCR \
+    --match_previous_assemble
 ```
 ## Features
 ### barcode

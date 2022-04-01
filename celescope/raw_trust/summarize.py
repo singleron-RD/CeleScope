@@ -95,6 +95,24 @@ class Summarize(Step):
     @staticmethod
     def _parse_seqtype(seqtype):
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
+    
+    # filter productive barcode by umi and reads
+    @staticmethod
+    def filter_barcode(barcode_count):
+        barcode_count.sort_values('umis', ascending=True, inplace = True)
+        RANK = barcode_count.shape[0]//5
+        rank_UMI = barcode_count.iloc[RANK, :]["umis"]
+        UMI_min = int(rank_UMI)
+        
+        barcode_count.sort_values('reads', ascending=True, inplace = True)
+        RANK = barcode_count.shape[0]//5
+        rank_read = barcode_count.iloc[RANK, :]["reads"]
+        UMI_read = int(rank_read)
+
+        barcode_count = barcode_count[barcode_count['umis']>=UMI_min]
+        barcode_count = barcode_count[barcode_count['reads']>=UMI_read]
+
+        return barcode_count
 
     @utils.add_log
     def gen_all_contig_file(self):
@@ -145,7 +163,7 @@ class Summarize(Step):
         Keep CDR3aa start with C.
         Keep CDR3aa length >= 5.
         Keep no stop codon in CDR3aa.
-        Contig's umi < 3 and read count < 2 considered to be noise
+        Filter low abundance contigs in barcode.
         """
         filter_report = filter_report[filter_report['cid_full_length'] >= 1]
         filter_report.rename(columns = {'cid':'barcode', '#count':'count'}, inplace=True)
@@ -156,13 +174,18 @@ class Summarize(Step):
         cdr3_list = [i for i in cdr3_list if 'UAG' or 'UAA' or 'UGA' not in i]
         filter_report = filter_report[filter_report['CDR3aa'].isin(cdr3_list)]
 
-        df_filter = df_filter[df_filter['umis']>=3]
-        df_filter = df_filter[df_filter['reads']>=2]
+        # df_filter = df_filter[df_filter['umis']>=3]
+        # df_filter = df_filter[df_filter['reads']>=2]
         df_filter = df_filter[df_filter['barcode'].isin(set(filter_report['barcode']))]
         df_filter = df_filter[df_filter['barcode'].isin(set(barcode_filter_report['barcode']))]
 
         # record file IGH+IGK/IGL for BCR, TRA+TRB for TCR
         df_chain_pair = df_filter[df_filter['productive']==True]
+        barcode_count = df_chain_pair.groupby(['barcode']).agg({'umis': 'mean','reads': 'mean'}).reset_index()
+        filter_barcode_count = Summarize.filter_barcode(barcode_count)
+
+        df_chain_pair = df_chain_pair[df_chain_pair['barcode'].isin(filter_barcode_count.barcode)]
+
         # df_chain_pair.to_csv(f'{self.outdir}/{self.sample}_chain_pair.csv', sep=',', index=False)
         productive_barcodes = set(df_chain_pair['barcode'])
 

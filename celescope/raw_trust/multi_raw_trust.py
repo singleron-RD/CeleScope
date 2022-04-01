@@ -44,6 +44,7 @@ class Multi_raw_trust(Multi):
         --species GRCm38 \\
         --thread 8 \\
         --seqtype BCR \\
+        --match_previous_assemble
     ```
     """
     def assemble(self, sample):

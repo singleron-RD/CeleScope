@@ -153,16 +153,17 @@ class Annotation(Step):
         Mapped_TB_cell_number = mappedmetaTB.shape[0]
         mapping_summary=[]
 
-        mapping_summary.append({
-            'item': 'Cell Number in Matched transcriptome',
-            'count': Transcriptome_cell_number,
-            'total_count': np.nan
-        })
-        mapping_summary.append({
-            'item': 'Cell Number Successfully Mapped to transcriptome',
-            'count': Mapped_Transcriptome_cell_number,
-            'total_count': Transcriptome_cell_number
-        })
+        # mapping_summary.append({
+        #     'item': 'Cell Number in Matched transcriptome',
+        #     'count': Transcriptome_cell_number,
+        #     'total_count': np.nan
+        # })
+        # mapping_summary.append({
+        #     'item': 'Cell Number Successfully Mapped to transcriptome',
+        #     'count': Mapped_Transcriptome_cell_number,
+        #     'total_count': Transcriptome_cell_number
+        # })
+        
         mapping_summary.append({
             'item': f'{self._name} Number in Matched transcriptome',
             'count': TB_cell_number,
@@ -174,8 +175,8 @@ class Annotation(Step):
             'total_count': TB_cell_number
         })
 
-        stat_file = self.outdir + '/Mapping.txt'
-        sum_df = pd.DataFrame(self.summary, columns=['item', 'count', 'total_count'])
+        stat_file = self.outdir + '/mapping.txt'
+        sum_df = pd.DataFrame(mapping_summary, columns=['item', 'count', 'total_count'])
         utils.gen_stat(sum_df, stat_file) 
 
     def run(self):
