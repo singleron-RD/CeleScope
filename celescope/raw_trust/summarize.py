@@ -98,7 +98,7 @@ class Summarize(Step):
     
     # filter productive barcode by umi and reads
     @staticmethod
-    def filter_barcode(barcode_count):
+    def cut_off(barcode_count):
         barcode_count.sort_values('umis', ascending=True, inplace = True)
         RANK = barcode_count.shape[0]//5
         rank_UMI = barcode_count.iloc[RANK, :]["umis"]
@@ -182,7 +182,7 @@ class Summarize(Step):
         # record file IGH+IGK/IGL for BCR, TRA+TRB for TCR
         df_chain_pair = df_filter[df_filter['productive']==True]
         barcode_count = df_chain_pair.groupby(['barcode']).agg({'umis': 'mean','reads': 'mean'}).reset_index()
-        filter_barcode_count = Summarize.filter_barcode(barcode_count)
+        filter_barcode_count = Summarize.cut_off(barcode_count)
 
         df_chain_pair = df_chain_pair[df_chain_pair['barcode'].isin(filter_barcode_count.barcode)]
 
