@@ -102,7 +102,6 @@ class Scanpy_wrapper(Step):
             self.add_metric(
                 name=f'Fraction of cells have mito gene percent>{mito_gene_percent}%',
                 value=f'{fraction}%',
-                show=False,
             )
 
 

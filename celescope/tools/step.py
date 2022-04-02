@@ -93,8 +93,10 @@ class Step:
         add metric to metric_list
         
         Args
-            display: controls how to display the metric in HTML report.
-            show: whether to add to .data.json, show the metric in HTML report and stat.txt.
+            total: int or float, used to calculate fraction
+            help_info: str, help info for metric in html report
+            display: str, controls how to display the metric in HTML report.
+            show: bool, whether to add to `.data.json` and `stat.txt`. `.data.json` is used for HTML report. `stat.txt` is used in house.
         '''
 
         name = cap_str_except_preposition(name)
