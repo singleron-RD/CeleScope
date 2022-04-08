@@ -252,6 +252,15 @@ class Summarize(Step):
 
     @utils.add_log
     def gen_clonotypes_file(self, df_chain_pair, productive_barcodes):
+        """ Generate clonotypes.csv file.
+
+        Args:
+            df_chain_pair: filtered contig info.
+            productive_barcodes: productive barcode set in filtered contig file.
+        Returns:
+            contig_with_clonotype: dataframe records barcode, cdr3s_aa, cdr3s_nt info.
+            used_for_merge: datafram records cdr3s_nt, clonotype_id info.
+        """
         df_chain_pair['chain_cdr3aa'] = df_chain_pair[['chain', 'cdr3']].apply(':'.join, axis=1)
         df_chain_pair['chain_cdr3nt'] = df_chain_pair[['chain', 'cdr3_nt']].apply(':'.join, axis=1)
 
@@ -286,7 +295,14 @@ class Summarize(Step):
 
     @utils.add_log
     def add_clonotypes_for_contig(self, used_for_merge, contig_with_clonotype, df_all_contig, df_filter_contig):
-        # add clonotype_id in contig.csv file
+        """ Add clonotype_id in contig.csv file.
+        
+        Args:
+            contig_with_clonotype: dataframe records barcode, cdr3s_aa, cdr3s_nt info.
+            used_for_merge: datafram records cdr3s_nt, clonotype_id info.
+            df_all_contig: all contig info.
+            df_filter_contig: filtered contig info.
+        """
         df_merge = pd.merge(used_for_merge, contig_with_clonotype, on='cdr3s_nt', how='outer')
         df_merge = df_merge[['barcode','clonotype_id']]
         df_merge['barcode'] = df_merge['barcode'].apply(Summarize.reversed_compl)
@@ -301,6 +317,14 @@ class Summarize(Step):
     
     @utils.add_log
     def gen_summary(self, df_chain_pair, productive_barcodes):
+        """ Generate summary metrics for html.
+        Including: Estimated Number of Cells, Mean Read Pairs per Cell, Mean Used Read Pairs per Cell,
+            Fraction of Reads in Cells, Median UMIs per Cell, Barcode rank plot
+
+        Args:
+            df_chain_pair: filtered contig info
+            productive_barcodes: productive barcode set in filtered contig.
+        """
         total_cell_num = len(productive_barcodes)
         read_count = 0
         read_count_all = 0
