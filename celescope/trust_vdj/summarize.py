@@ -314,7 +314,7 @@ class Summarize(Step):
         os.system(_cmd)
 
         trust_rep = pd.read_csv(filtered_report_out, sep='\t')
-        df_for_clono = self.filter_cell(df, self.seqtype, filterbc_rep, trust_rep, self.min_read_count)
+        df_for_clono = self.filter_cell(df, self.seqtype, filterbc_rep, trust_rep)
         
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
