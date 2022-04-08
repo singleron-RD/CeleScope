@@ -17,6 +17,15 @@ trust goes through the following steps:
 """
 @utils.add_log
 def extract_candidate_reads(thread, species, index_prefix, outdir, sample, fq1, fq2):
+    """ Extract candiate reads for assemble.
+    Args: 
+        thread: number of used thread.
+        species: hg38, hg19 or GRCm38.
+        index_prefix: TRA, TRB or IGH, IGL, IGK.
+        outdir: output directory.
+        fq1: fq file including barcode and umi info.
+        fq2: fq file including sequence and quality info.
+    """
     cmd = (
         f'fastq-extractor -t {thread} '
         f'-f {INDEX}/{species}/{index_prefix}.fa '
@@ -35,6 +44,17 @@ def extract_candidate_reads(thread, species, index_prefix, outdir, sample, fq1, 
 
 @utils.add_log
 def run_trust4(thread, fq2, fq1, IMGT_ref, fasta_ref, sample, outdir):
+    """ Assemble candiate reads.
+    Args: 
+        thread: number of used thread.
+        fq1: fq file including barcode and umi info.
+        fq2: fq file including sequence and quality info.
+        IMGT_ref: IMGT reference gene sequences.
+        fasta_ref: V,J,C gene annotation database.
+        outdir: output directory.
+        sample: sample name.
+    """
+
     cmd = (
         f'run-trust4 -t {thread} '
         f'-u {fq2} '
@@ -50,9 +70,17 @@ def run_trust4(thread, fq2, fq1, IMGT_ref, fasta_ref, sample, outdir):
 
 
 @utils.add_log
-# If cell A's two chains CDR3s are identical to another cell B, 
-# and A's chain abundance is significantly lower than B's (--diffuseFrac), filter A.
 def get_barcode_filter_report(outdir, sample):
+    """ Filter barcode report.
+
+    If cell A's two chains CDR3s are identical to another cell B,
+    and A's chain abundance is significantly lower than B's (--diffuseFrac), filter A.
+
+    Args: 
+        outdir: output directory.
+        sample: sample name.
+    """
+
     cmd = (
         f'python {TOOLS_DIR}/barcoderep-filter.py '
         f'-b {outdir}/{sample}_barcode_report.tsv > '
@@ -63,8 +91,16 @@ def get_barcode_filter_report(outdir, sample):
 
 
 @utils.add_log
-# Filter trust report:the nonfunctional CDR3, or CDR3 sequences containing "N" in the nucleotide sequence.
 def get_filter_report(outdir, sample):
+    """ Filter trust report.
+    
+    Filter the nonfunctional CDR3, or CDR3 sequences containing "N" in the nucleotide sequence.
+
+    Args: 
+        outdir: output directory.
+        sample: sample name.
+    """
+    
     cmd = (f''' awk '$4!~"_" && $4!~"?"' {outdir}/{sample}_report.tsv > {outdir}/{sample}_filter_report.tsv ''')
     get_filter_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
@@ -72,6 +108,15 @@ def get_filter_report(outdir, sample):
 
 @utils.add_log
 def get_full_len_assembly(outdir, sample):
+    """ Get full length assembled contig.
+
+    get full length result from annotation of the consensus assembly in fasta format.
+
+    Args: 
+        outdir: output directory.
+        sample: sample name.
+    """
+
     cmd = (
         f'perl {TOOLS_DIR}/GetFullLengthAssembly.pl '
         f'{outdir}/{sample}_annot.fa > '
@@ -117,19 +162,33 @@ class Assemble(Step):
 
     @staticmethod
     def reversed_compl(seq):
+        """ Return reverse complementation sequence."""
         return str(Seq(seq).reverse_complement())
 
     @staticmethod
     def _get_chain_type(seqtype):
+        """ Return ['TRA', 'TRB'] for TCR, ['IGH', 'IGL', 'IGK'] for BCR."""
         return CHAIN[seqtype]
     
     @staticmethod
     def _get_match_barcode(match_dir):
+        """ Return matched barcodes set for match scRNA-seq dir."""
         match_barcodes, _ = utils.get_barcode_from_match_dir(match_dir) 
         return match_barcodes
 
     @utils.add_log
     def gen_fq(self):
+        """ Generate fq1 and fq2 file.
+        
+        fq1 file including barcode and umi info.
+        fq2 file including sequence and quality info.
+
+        Returns:
+            matched_cbs: set of matched barcodes with scRNA-seq.
+            matched_read_count: read count for matched barcode with scRNA-seq.
+            read_count: read count for all barcode.
+        """
+
         out_fq1 = open(self.fq1, 'w')
         out_fq2 = open(self.fq2, 'w')
         read_dict = defaultdict(list)
@@ -171,6 +230,7 @@ class Assemble(Step):
 
     @utils.add_log
     def get_VDJmapping_reads(self):
+        """ Get total and each chain type candiates read."""
         map_res = []
         map_index_prefix = self.chains
         _map_len = len(map_index_prefix)
