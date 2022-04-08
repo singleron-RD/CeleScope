@@ -180,16 +180,16 @@ class Summarize(Step):
         df_filter = df_filter[df_filter['barcode'].isin(set(barcode_filter_report['barcode']))]
 
         # record file IGH+IGK/IGL for BCR, TRA+TRB for TCR
-        df_chain_pair = df_filter[df_filter['productive']==True]
-        barcode_count = df_chain_pair.groupby(['barcode']).agg({'umis': 'mean','reads': 'mean'}).reset_index()
+        barcode_count = df_filter.groupby(['barcode']).agg({'umis': 'mean','reads': 'mean'}).reset_index()
         filter_barcode_count = Summarize.cut_off(barcode_count)
 
-        df_chain_pair = df_chain_pair[df_chain_pair['barcode'].isin(filter_barcode_count.barcode)]
+        df_filter = df_filter[df_filter['barcode'].isin(filter_barcode_count.barcode)]
 
         # df_chain_pair.to_csv(f'{self.outdir}/{self.sample}_chain_pair.csv', sep=',', index=False)
-        productive_barcodes = set(df_chain_pair['barcode'])
+        df_filter_pro = df_filter[df_filter['productive']==True]
+        productive_barcodes = set(df_filter_pro['barcode'])
 
-        return df_chain_pair, productive_barcodes
+        return df_filter, productive_barcodes
 
     @utils.add_log
     def gen_filter_fasta(self, productive_barcodes):

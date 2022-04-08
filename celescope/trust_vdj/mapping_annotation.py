@@ -129,8 +129,8 @@ class Mapping_annotation(Step):
             'total_count': TB_cell_number
         })
 
-        stat_file = self.outdir + '/Mapping.txt'
-        sum_df = pd.DataFrame(self.summary, columns=['item', 'count', 'total_count'])
+        stat_file = self.outdir + '/mapping.txt'
+        sum_df = pd.DataFrame(mapping_summary, columns=['item', 'count', 'total_count'])
         utils.gen_stat(sum_df, stat_file) 
     
     def run(self):

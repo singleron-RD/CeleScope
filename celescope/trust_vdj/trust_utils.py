@@ -114,11 +114,15 @@ def fa_to_csv(outdir, sample):
     assign_file = f'{outdir}/{sample}_assign.out'
     # reads assignment 
     assignment = pd.read_csv(assign_file, sep='\t', header=None)
-    assignment['read_barcode'] = assignment[0].apply(lambda x: x.split('_')[0])
-    assignment['contig_barcode'] = assignment[1].apply(lambda x: x.split('_')[0])
-    assignment['match_barcode'] = assignment[['read_barcode', 'contig_barcode']].apply(lambda x: x['read_barcode']==x['contig_barcode'], axis=1)
-    assignment = assignment[assignment['match_barcode']==True]
-    assignment['umi'] = assignment[0].apply(lambda x: x.split('_')[1])
+    # assignment['read_barcode'] = assignment[0].apply(lambda x: x.split('_')[0])
+    # assignment['contig_barcode'] = assignment[1].apply(lambda x: x.split('_')[0])
+    # assignment['match_barcode'] = assignment[['read_barcode', 'contig_barcode']].apply(lambda x: x['read_barcode']==x['contig_barcode'], axis=1)
+    # assignment = assignment[assignment['match_barcode']==True]
+    # assignment['umi'] = assignment[0].apply(lambda x: x.split('_')[1])
+    assignment = assignment.rename(columns={0:'read_name',1:'contig_id'})
+    assignment['umi'] = assignment['read_name'].apply(lambda x:x.split('_')[1])
+    read_count_dict = assignment.groupby('contig_id')['read_name'].apply(lambda x:len(set(x))).to_dict()
+    umi_count_dict = assignment.groupby('contig_id')['umi'].apply(lambda x:len(set(x))).to_dict()
     # write contig csv
     contigs = open(f'{outdir}/{sample}_contig.csv', 'w')
     # contigs.write('barcode\tis_cell\tcontig_id\thigh_confidence\tlength\tchain\tv_gene\td_gene\tj_gene\tc_gene\tfull_length\tproductive\tcdr3\tcdr3_nt\treads\tumis\traw_clonotype_id\traw_consensus_id\n')
@@ -141,9 +145,11 @@ def fa_to_csv(outdir, sample):
             cdr3 = attrs[8].split('=')[1]
             cdr3_aa = 'None'
             productive = 'False'
-            temp = assignment[assignment[1]==name]
-            reads = str(len(temp[0].tolist()))
-            umis = str(len(set(temp['umi'].tolist())))
+            # temp = assignment[assignment[1]==name]
+            # reads = str(len(temp[0].tolist()))
+            # umis = str(len(set(temp['umi'].tolist())))
+            reads = str(read_count_dict.get(name, 0))
+            umis = str(umi_count_dict.get(name, 0))
             #raw_consensus_id = 'None'
             #raw_clonotype_id = 'None'
 

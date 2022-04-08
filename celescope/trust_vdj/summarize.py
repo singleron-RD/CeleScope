@@ -75,20 +75,20 @@ class Summarize(Step):
         and A's chain abundance is significantly lower than B's (--diffuseFrac), filter A.
         """
         filterbc_rep = filterbc_rep.rename(columns = {'#barcode':'barcode'})
-        filterbc = filterbc_rep[(filterbc_rep['chain1']!='*') | (filterbc_rep['chain2']!='*')]
+        # filterbc = filterbc_rep[(filterbc_rep['chain1']!='*') | (filterbc_rep['chain2']!='*')]
         
-        filterbc_chain1 = [i if i !='*' else 0 for i in list(filterbc['chain1'])]
-        filterbc_chain2 = [i if i !='*' else 0 for i in list(filterbc['chain2'])]
-        filterbc_chain1 = [i if i !='*' else 0 for i in filterbc_chain1]
-        filterbc_chain2 = [i if i !='*' else 0 for i in filterbc_chain2]
-        filterbc_chain1 = [float(i.split(',')[-2]) if i !=0 else i for i in filterbc_chain1]
-        filterbc_chain2 = [float(i.split(',')[-2]) if i !=0 else i for i in filterbc_chain2]
-        _bc_list, _filtered_list = filterbc['barcode'].tolist(), []
-        for i in range(len(_bc_list)):
-            if filterbc_chain1[i] <= 90 or filterbc_chain2[i] <= 90:
-                _filtered_list.append(_bc_list[i])
-        filterbc = filterbc[~filterbc['barcode'].isin(_filtered_list)]
-        filterbc = set(filterbc['barcode'].tolist())
+        # filterbc_chain1 = [i if i !='*' else 0 for i in list(filterbc['chain1'])]
+        # filterbc_chain2 = [i if i !='*' else 0 for i in list(filterbc['chain2'])]
+        # filterbc_chain1 = [i if i !='*' else 0 for i in filterbc_chain1]
+        # filterbc_chain2 = [i if i !='*' else 0 for i in filterbc_chain2]
+        # filterbc_chain1 = [float(i.split(',')[-2]) if i !=0 else i for i in filterbc_chain1]
+        # filterbc_chain2 = [float(i.split(',')[-2]) if i !=0 else i for i in filterbc_chain2]
+        # _bc_list, _filtered_list = filterbc['barcode'].tolist(), []
+        # for i in range(len(_bc_list)):
+        #     if filterbc_chain1[i] <= 90 or filterbc_chain2[i] <= 90:
+        #         _filtered_list.append(_bc_list[i])
+        # filterbc = filterbc[~filterbc['barcode'].isin(_filtered_list)]
+        filterbc = set(filterbc_rep['barcode'].tolist())
 
         # By filtered trust report 
         """
@@ -110,20 +110,41 @@ class Summarize(Step):
         cdr3_list = [i for i in cdr3_list if len(i)>=5]
         cdr3_list = [i for i in cdr3_list if 'UAG' or 'UAA' or 'UGA' not in i]
         trust_rep = trust_rep[trust_rep['CDR3aa'].isin(cdr3_list)]
-        trust_rep = trust_rep.sort_values(by = 'count', ascending = False)
-        if min_read_count == "auto":
-            if seqtype == 'BCR':
-                min_read_count = 8
-            else:
-                min_read_count = 0
-        min_read_count = int(min_read_count)
-        trust_rep = trust_rep[trust_rep['count'] > min_read_count]
+
+        # trust_rep = trust_rep.sort_values(by = 'count', ascending = False)
+        # if min_read_count == "auto":
+        #     if seqtype == 'BCR':
+        #         min_read_count = 8
+        #     else:
+        #         min_read_count = 0
+        # min_read_count = int(min_read_count)
+        # trust_rep = trust_rep[trust_rep['count'] > min_read_count]
+
+
         trust_rep_bc = set(trust_rep['barcode'].tolist())
 
-        df_for_clono = df_for_clono[df_for_clono['umis']>=3]
-        df_for_clono = df_for_clono[df_for_clono['reads']>=2]
+        # df_for_clono = df_for_clono[df_for_clono['umis']>=3]
+        # df_for_clono = df_for_clono[df_for_clono['reads']>=2]
         df_for_clono = df_for_clono[df_for_clono['barcode'].isin(filterbc)]
         df_for_clono = df_for_clono[df_for_clono['barcode'].isin(trust_rep_bc)]
+
+        barcode_count = df_for_clono.groupby(['barcode']).agg({'umis': 'mean','reads': 'mean'}).reset_index()
+
+        barcode_count.sort_values('umis', ascending=True, inplace = True)
+        RANK = barcode_count.shape[0]//5
+        rank_UMI = barcode_count.iloc[RANK, :]["umis"]
+        UMI_min = int(rank_UMI)
+        
+        barcode_count.sort_values('reads', ascending=True, inplace = True)
+        RANK = barcode_count.shape[0]//5
+        rank_read = barcode_count.iloc[RANK, :]["reads"]
+        UMI_read = int(rank_read)
+
+        barcode_count = barcode_count[barcode_count['umis']>=UMI_min]
+        barcode_count = barcode_count[barcode_count['reads']>=UMI_read]
+
+        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(barcode_count.barcode)]
+
 
         return df_for_clono
 
