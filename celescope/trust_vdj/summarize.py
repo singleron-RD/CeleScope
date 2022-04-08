@@ -50,7 +50,7 @@ class Summarize(Step):
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
 
     @staticmethod
-    def filter_cell(df, seqtype, filterbc_rep, trust_rep, min_read_count):
+    def filter_cell(df, seqtype, filterbc_rep, trust_rep):
 
         df.sort_values(by='umis', ascending=False, inplace=True)
         if seqtype == 'BCR':
