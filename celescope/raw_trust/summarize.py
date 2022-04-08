@@ -11,7 +11,16 @@ from celescope.tools.cellranger3 import get_plot_elements
 
 @utils.add_log
 def gen_contig_csv(outdir, sample, full_len_assembly, assign_out):
+    """ Generate contig file in 10X format.
     
+    Genrate contig file from full length annotated fasta file.
+
+    Args:
+        outdir: output directory.
+        sample: sample name.
+        full_len_assembly: full length annotated fasta file.
+        assign_out: read assignment results.
+    """
     # reads assignment 
     assignment = pd.read_csv(assign_out, sep='\t', header=None)
     # assignment['read_barcode'] = assignment[0].apply(lambda x: x.split('_')[0])
@@ -90,15 +99,24 @@ class Summarize(Step):
 
     @staticmethod
     def reversed_compl(seq):
+        """ Return reverse complementation sequence."""
         return str(Seq(seq).reverse_complement())
     
     @staticmethod
     def _parse_seqtype(seqtype):
+        """ Return 'TRA_TRB' for TCR or 'IGH_IGL', 'IGH_IGK' for BCR."""
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
     
-    # filter productive barcode by umi and reads
     @staticmethod
     def cut_off(barcode_count):
+        """ barcode cut-off by umi and reads.
+        
+        Args:
+            barcode_count: umi and read count info for each barcode.
+        
+        Returns:
+            barcode_count: filtered barcode_count dataframe.
+        """
         barcode_count.sort_values('umis', ascending=True, inplace = True)
         RANK = barcode_count.shape[0]//5
         rank_UMI = barcode_count.iloc[RANK, :]["umis"]
@@ -116,6 +134,7 @@ class Summarize(Step):
 
     @utils.add_log
     def gen_all_contig_file(self):
+        """ Generate sequence info of all assembled contigs in fasta format."""
         all_fa = open(f'{self.outdir}/{self.sample}_all_contig.fasta','w')
         with pysam.FastxFile(self.full_len_assembly) as fa:
             for read in fa: 
@@ -129,6 +148,7 @@ class Summarize(Step):
     
     @utils.add_log
     def parse_contig_file(self):
+        """ Return formatted contig file."""
         df = pd.read_csv(f'{self.outdir}/{self.sample}_contig.csv', sep='\t', header=None)
         df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis']
         df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
@@ -140,6 +160,22 @@ class Summarize(Step):
 
     @staticmethod
     def filter_cell(df, seqtype, filter_report, barcode_filter_report):
+        """ Filter barcode in contig file.
+        Keep CDR3aa start with C.
+        Keep CDR3aa length >= 5.
+        Keep no stop codon in CDR3aa.
+        Filter low abundance contigs in barcode.
+
+        Args:
+            df: contig file.
+            seqtype: BCR or TCR.
+            filter_report: filtered trust report file.
+            barcode_filter_report: filtered barcode report file.
+        
+        Returns:
+            df_filter: filtered contig info.
+            productive_barcodes: productive barcode set in filtered contig file.
+        """
         filter_report = pd.read_csv(filter_report, sep='\t')
         barcode_filter_report = pd.read_csv(barcode_filter_report, sep='\t')
 
@@ -159,12 +195,6 @@ class Summarize(Step):
         
         barcode_filter_report.rename(columns = {'#barcode':'barcode'}, inplace=True)
 
-        """
-        Keep CDR3aa start with C.
-        Keep CDR3aa length >= 5.
-        Keep no stop codon in CDR3aa.
-        Filter low abundance contigs in barcode.
-        """
         filter_report = filter_report[filter_report['cid_full_length'] >= 1]
         filter_report.rename(columns = {'cid':'barcode', '#count':'count'}, inplace=True)
         filter_report['barcode'] = filter_report['barcode'].apply(lambda x:x.split('_')[0])
@@ -193,6 +223,7 @@ class Summarize(Step):
 
     @utils.add_log
     def gen_filter_fasta(self, productive_barcodes):
+        """ Generate filtered contig fasta file."""
         all_contig_fa = f'{self.outdir}/{self.sample}_all_contig.fasta'
         out_filter_fa = open(f'{self.outdir}/{self.sample}_filtered_contig.fasta','w')
         with pysam.FastxFile(all_contig_fa) as fa:
@@ -206,6 +237,7 @@ class Summarize(Step):
     
     @staticmethod
     def reverse_contig(df, productive_barcodes):
+        """ Return dataframe of all contig and filtered contig that including reverse complementation barcode info."""
         # all contig.csv
         df_all_contig = copy.deepcopy(df)
         df_all_contig['barcode'] = df_all_contig['barcode'].apply(Summarize.reversed_compl)
