@@ -1,5 +1,5 @@
 # General
-## valid reads
+## Valid reads
 
 As you can see from https://github.com/singleron-RD/CeleScope/blob/master/docs/tools/barcode.md,  valid reads are based on R1 reads. The reads are filtered in the following order: 
 
@@ -22,7 +22,7 @@ If `no polyT reads number` is very high, use `--allowNoPolyT`. This may be cause
 
 PS: If the default parameters are used, low quality reads are not filtered. So `low qual reads number` will always be zero.
 
-## chemistry
+## Chemistry
 
 ### The correspondence between chemistry and kits
 
@@ -104,7 +104,7 @@ You can find the saturation calculated in both ways in {sample}/.metrics.json
 
 # Clindex
 
-## tag assignment
+## Tag assignment
 
 [tag assignment algorithm](https://github.com/singleron-RD/CeleScope/blob/master/methods/tag_algorithm.txt)
 
@@ -113,7 +113,7 @@ You can control the value of UMI_min and SNR_min by changing the arguments in `c
 
 The value of `UMI_min` and `SNR_min` is currently displayed in the log file of `celescope tag count_tag` and will be added to the report in subsequent releases.
 
-## split matrix
+## Split matrix
 If you want to split the expression matrix of match scRNA-Seq library，you need to add `--split_matrix`  in the `multi_tag`, e.g.
 ```
 multi_tag \
