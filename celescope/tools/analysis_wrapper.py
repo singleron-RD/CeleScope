@@ -293,10 +293,10 @@ class Scanpy_wrapper(Step):
         df_markers.to_csv(self.df_marker_raw_file, index=None, sep='\t')
 
         df_markers_filter = df_markers.loc[df_markers['avg_log2FC'] > 0].sort_values(MARKER_SORT_BY, ascending=False).groupby('cluster').head(50)
-        ddf_markers_filter = df_markers_filter.round({
-            'avg_log2FC':2,
-            'pct.1':2,
-            'pct.2':2,
+        df_markers_filter = df_markers_filter.round({
+            'avg_log2FC':3,
+            'pct.1':3,
+            'pct.2':3,
         })
         df_markers_filter.to_csv(self.df_marker_file, index=None, sep='\t')
 
