@@ -7,3 +7,5 @@ __ASSAY__ = 'snp'
 IMPORT_DICT = {
     'star': 'celescope.rna'
 }
+
+PANEL = {'lung_1', 'blood_1'}

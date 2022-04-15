@@ -200,7 +200,8 @@ class Step:
         try:
             return self.__content_dict[slot][step_name + '_summary'][key]
         except KeyError:
-            raise KeyError(f'{key} not found in {step_name}_summary.{slot}')
+            self.get_slot_key.logger.warning(f'{key} not found in {step_name}_summary.{slot}')
+            raise
 
 
     def get_table_dict(self, title, table_id, df_table):
