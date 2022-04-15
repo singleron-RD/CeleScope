@@ -4,29 +4,6 @@ from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
 
-def get_bed_file_path(panel):
-    bed_file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
-    if not os.path.exists(bed_file_path):
-        raise FileNotFoundError(f'{bed_file_path} does not exist.')
-    else:
-        return bed_file_path
-
-
-def get_gene_region_from_bed(panel):
-    """
-    Returns 
-    - genes
-    - position_df with 'Chromosome', 'Start', 'End'
-    """
-    file_path = get_bed_file_path(panel)
-    bed_file_df = pd.read_table(file_path,
-                                usecols=[0, 1, 2, 3],
-                                names=['Chromosome', 'Start', 'End', 'Gene'],
-                                sep="\t")
-    position_df = bed_file_df.loc[:, ['Chromosome', 'Start', 'End']]
-    genes = set(bed_file_df.loc[:, 'Gene'].to_list())
-    return genes, position_df
-
 
 class Variant_calling(Step):
     """
@@ -45,8 +22,8 @@ class Variant_calling(Step):
         self.barcodes, _num = utils.get_barcode_from_match_dir(args.match_dir)
         self.fasta = Mkref_rna.parse_genomeDir(args.genomeDir)['fasta']
         self.df_vcf = None
-        if args.panel:
-            self.bed = get_bed_file_path(args.panel)
+        self.panel = args.panel
+        self.bed = utils.get_bed_file_path(self.panel)
 
         # out
         self.splitN_bam = f'{self.out_prefix}_splitN.bam'

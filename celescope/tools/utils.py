@@ -175,6 +175,29 @@ def read_one_col(file):
     return col1, num
 
 
+def get_bed_file_path(panel):
+    bed_file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
+    if not os.path.exists(bed_file_path):
+        return None
+    else:
+        return bed_file_path
+
+
+def get_gene_region_from_bed(panel):
+    """
+    Returns 
+    - genes
+    - position_df with 'Chromosome', 'Start', 'End'
+    """
+    file_path = get_bed_file_path(panel)
+    bed_file_df = pd.read_table(file_path,
+                                usecols=[0, 1, 2, 3],
+                                names=['Chromosome', 'Start', 'End', 'Gene'],
+                                sep="\t")
+    position_df = bed_file_df.loc[:, ['Chromosome', 'Start', 'End']]
+    genes = set(bed_file_df.loc[:, 'Gene'].to_list())
+    return genes, position_df
+
 
 def read_fasta(fasta_file, equal=False):
     # seq must have equal length
