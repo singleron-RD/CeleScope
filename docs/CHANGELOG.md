@@ -1,3 +1,11 @@
+## [1.8.1] - 2022-04-15
+ ### `vdj_full_length`
+  - Add new assay `convert10X`.
+  - Add productive directory in result which includes productive contig info.
+  - Fix a bug when calculating some metrics associated with read count when using not_split_R2 option.
+  - Optimize and re-write partial codes.
+
+
 ## [1.7.2] - 2022-02-22
  ### `vdj_full_length`
   - Add --not_split_R2 option.
