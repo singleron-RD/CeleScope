@@ -193,10 +193,15 @@ class Step:
             }
         )
 
+    @utils.add_log
     def get_slot_key(self, slot, step_name, key):
         '''read slot from json file
         '''
-        return self.__content_dict[slot][step_name + '_summary'][key]
+        try:
+            return self.__content_dict[slot][step_name + '_summary'][key]
+        except KeyError:
+            raise KeyError(f'{key} not found in {step_name}_summary.{slot}')
+
 
     def get_table_dict(self, title, table_id, df_table):
         """

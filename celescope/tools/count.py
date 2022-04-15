@@ -345,7 +345,7 @@ class Count(Step):
                 key='Valid Reads',
             )
         except KeyError:
-            self.get_summary.logger.warning('barcode_summary not found. Will not output `Mean Reads per Cell`')
+            self.get_summary.logger.warning('Will not output `Mean Reads per Cell`')
         else:
             mean_reads_per_cell = int(valid_read_number / estimated_cells)
             self.add_metric(
@@ -375,12 +375,19 @@ class Count(Step):
             help_info='the median number of genes detected per cell-associated barcode'
         )
 
-        saturation = round(self.downsample_dict['umi_saturation'][-1], 2)
+        umi_saturation = round(self.downsample_dict['umi_saturation'][-1], 2)
+        read_saturation = round(self.downsample_dict['read_saturation'][-1], 2)
         self.add_metric(
             name='Saturation',
-            value=saturation,
-            display=f'{saturation}%',
-            help_info='the fraction of UMI originating from an already-observed UMI'
+            value=umi_saturation,
+            display=f'{umi_saturation}%',
+            help_info=(
+                'the fraction of UMI originating from an already-observed UMI. '
+                'There is a difference in how CeleScope and CellRanger calculate saturation. '
+                'CeleScope shows umi_saturation in the report, while CellRanger shows read_saturation in the report. '
+                'For details, see <a href="https://github.com/singleron-RD/CeleScope/blob/dev/docs/details.md#saturation">here</a>. '
+                f'read_saturation: {read_saturation}%'
+            )
         )
 
     @staticmethod
