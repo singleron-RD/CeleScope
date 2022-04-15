@@ -1,25 +1,16 @@
 import pandas as pd
 from celescope.tools import utils
-from celescope.tools.step import Step, s_common
+from celescope.tools.step import s_common
+from celescope.vdj_full_len.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
 import celescope
 import os
-import subprocess
 import glob
+
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
-def run_mapping(rds, contig, sample, outdir, assign):
-    cmd = (
-        f'Rscript {TOOLS_DIR}/VDJmapping.R '
-        f'--rds {rds} '
-        f'--VDJ {contig} '
-        f'--sample {sample} '
-        f'--outdir {outdir} '
-        f'--assign_file {assign}'
-    )
-    subprocess.check_call(cmd, shell=True)
 
-class Mapping(Step):
+class Mapping(VDJ_Mixin):
     """
     ## Features
 
@@ -36,7 +27,7 @@ class Mapping(Step):
 
     """
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
+        super().__init__(args, display_title=display_title)
         
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir
@@ -59,7 +50,7 @@ class Mapping(Step):
     @utils.add_log
     def process(self):
 
-        run_mapping(self.rds,self.contig,self.sample,self.outdir,self.assign_file)
+        self.run_mapping(self.rds,self.contig,self.sample,self.outdir,self.assign_file)
         meta = pd.read_csv(glob.glob(f'{self.outdir}/{self.sample}_meta.csv')[0])
         metaTB = meta[meta['CellTypes'].isin(self.Celltype)]
         mappedmeta = meta[meta['Class']=='T/BCR']
@@ -108,10 +99,9 @@ def mapping(args):
     mapping_obj.run()
 
 
-    
 def get_opts_mapping(parser, sub_program):
-    parser.add_argument('--seqtype', help='TCR or BCR',
-                        choices=['TCR', 'BCR'], required=True)
+    get_opts_VDJ_Mixin(parser)
+    parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help='scRNA-seq match directory', required=True)
