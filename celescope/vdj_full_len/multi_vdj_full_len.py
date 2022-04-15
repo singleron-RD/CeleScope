@@ -85,10 +85,10 @@ class Multi_vdj_full_len(Multi):
     def annotation(self,sample):
         step = 'annotation'
         cmd_line = self.get_cmd_line(step, sample)
-        barcode_dic = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
+        barcode_dict = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
         cmd=(
             f'{cmd_line} '
-            f'--barcode_dic {barcode_dic} '
+            f'--barcode_dict {barcode_dict} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
@@ -96,11 +96,11 @@ class Multi_vdj_full_len(Multi):
     def match(self,sample):
         step = 'match'
         cmd_line = self.get_cmd_line(step, sample)
-        barcode_dic = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
+        barcode_dict = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
         match_dir = f'{self.col4_dict[sample]}'
         cmd = (
             f'{cmd_line} '
-            f'--barcode_dic {barcode_dic} '
+            f'--barcode_dict {barcode_dict} '
             f'--match_dir {match_dir} '
         )
         self.process_cmd(cmd, step, sample, m=8, x= self.args.thread)
@@ -109,10 +109,10 @@ class Multi_vdj_full_len(Multi):
     def summarize(self, sample):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
-        barcode_dic = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
+        barcode_dict = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
         cmd=(
             f'{cmd_line} '
-            f'--barcode_dic {barcode_dic} '
+            f'--barcode_dict {barcode_dict} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
     
