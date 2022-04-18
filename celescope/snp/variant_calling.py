@@ -3,7 +3,7 @@ from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
-
+from celescope.snp.__init__ import PANEL
 
 class Variant_calling(Step):
     """
@@ -122,7 +122,7 @@ def variant_calling(args):
 def get_opts_variant_calling(parser, sub_program):
 
     parser.add_argument("--genomeDir", help=HELP_DICT['genomeDir'], required=True)
-    parser.add_argument("--panel", help=HELP_DICT['panel'])
+    parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
     if sub_program:
         parser.add_argument(
             "--bam",

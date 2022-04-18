@@ -1,5 +1,7 @@
 
 ## [Unreleased] 
+ ### `snp`
+ - Add panel `blood_1`.
 
 ## [1.9.0] - 2021-04-01
  ### `rna` and `dynaseq`

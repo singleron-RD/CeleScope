@@ -7,6 +7,7 @@ import subprocess
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
+from celescope.snp.__init__ import PANEL
 
 
 class Target_metrics(Step):
@@ -156,7 +157,7 @@ def target_metrics(args):
 
 def get_opts_target_metrics(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
-    parser.add_argument("--panel", help=HELP_DICT['panel'])
+    parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
