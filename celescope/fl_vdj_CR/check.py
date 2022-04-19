@@ -2,7 +2,7 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 import numpy as np
 import pandas as pd
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 
 '''
     # def check(self, sample):

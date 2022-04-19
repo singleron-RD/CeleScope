@@ -50,7 +50,8 @@ class Mapping(VDJ_Mixin):
     @utils.add_log
     def process(self):
 
-        self.run_mapping(self.rds,self.contig,self.sample,self.outdir,self.assign_file)
+        self.run_mapping(
+            TOOLS_DIR, self.rds, self.contig, self.sample, self.outdir, self.assign_file)
         meta = pd.read_csv(glob.glob(f'{self.outdir}/{self.sample}_meta.csv')[0])
         metaTB = meta[meta['CellTypes'].isin(self.Celltype)]
         mappedmeta = meta[meta['Class']=='T/BCR']

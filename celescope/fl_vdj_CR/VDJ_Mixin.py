@@ -48,8 +48,8 @@ class VDJ_Mixin(Step):
         """
         try:
             ref_path = glob.glob(f'/SGRNJ/Database/script/soft/cellranger/vdj_ref/{soft}/{species}/refdata*')
-        except IndexError:
-            raise NotFoundPath
+        except IndexError as e:
+            raise NotFoundPath from e
         
         ref_path = [i for i in ref_path if os.path.isdir(i)][0]
         return ref_path
@@ -64,8 +64,8 @@ class VDJ_Mixin(Step):
         """
         try:
             soft_path = glob.glob(f'/SGRNJ/Database/script/soft/cellranger/cellranger-{soft}/cellranger')[0]
-        except IndexError:
-            raise NotFoundPath
+        except IndexError as e:
+            raise NotFoundPath from e
         
         return soft_path
     
@@ -183,7 +183,7 @@ class VDJ_Mixin(Step):
         os.chdir(self.outdir)
         subprocess.check_call(cmd, shell=True)
 
-    utils.add_log
+    @utils.add_log
     def run_mapping(TOOLS_DIR, rds, contig, sample, outdir, assign):
         cmd = (
             f'Rscript {TOOLS_DIR}/VDJmapping.R '
