@@ -4,11 +4,15 @@ import pysam
 import pandas as pd
 import abc
 import subprocess
+import celescope
 from Bio.Seq import Seq
 from xopen import xopen
 
 from celescope.tools.step import Step
 from celescope.tools import utils
+
+
+TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
 
 class NotFoundPath(Exception):
@@ -184,14 +188,14 @@ class VDJ_Mixin(Step):
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
-    def run_mapping(TOOLS_DIR, rds, contig, sample, outdir, assign):
+    def run_mapping(self):
         cmd = (
             f'Rscript {TOOLS_DIR}/VDJmapping.R '
-            f'--rds {rds} '
-            f'--VDJ {contig} '
-            f'--sample {sample} '
-            f'--outdir {outdir} '
-            f'--assign_file {assign}'
+            f'--rds {self.rds} '
+            f'--VDJ {self.contig} '
+            f'--sample {self.sample} '
+            f'--outdir {self.outdir} '
+            f'--assign_file {self.assign}'
         )
         subprocess.check_call(cmd, shell=True)
 

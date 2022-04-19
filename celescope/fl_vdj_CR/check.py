@@ -1,3 +1,4 @@
+"""
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 import numpy as np
@@ -164,3 +165,5 @@ def get_opts_check(parser, sub_program):
         parser.add_argument('--rep', help = 'assemble report file', required = True)
         parser.add_argument('--rep_bc', help = 'barcode report file', required = True)
         parser.add_argument('--html', help = 'html report file', required = True)
+
+"""

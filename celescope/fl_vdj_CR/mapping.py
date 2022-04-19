@@ -1,13 +1,8 @@
 import pandas as pd
+import glob
 from celescope.tools import utils
 from celescope.tools.step import s_common
 from celescope.fl_vdj_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
-import celescope
-import os
-import glob
-
-
-TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
 
 class Mapping(VDJ_Mixin):
@@ -50,8 +45,7 @@ class Mapping(VDJ_Mixin):
     @utils.add_log
     def process(self):
 
-        self.run_mapping(
-            TOOLS_DIR, self.rds, self.contig, self.sample, self.outdir, self.assign_file)
+        self.run_mapping()
         meta = pd.read_csv(glob.glob(f'{self.outdir}/{self.sample}_meta.csv')[0])
         metaTB = meta[meta['CellTypes'].isin(self.Celltype)]
         mappedmeta = meta[meta['Class']=='T/BCR']
