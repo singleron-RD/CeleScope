@@ -8,26 +8,26 @@ class Multi_fl_vdj_CR(Multi):
 
     1. Clone repo
     ```
-    git clone -b convert_10X https://github.com/singleron-RD/CeleScope.git
+    git clone https://github.com/singleron-RD/CeleScope.git
     ```
 
     2. Create conda environment and install conda packages
     ```
     cd CeleScope
-    conda create -n convert_10X -y --file conda_pkgs.txt
+    conda create -n celescope -y --file conda_pkgs.txt
     ```
 
     Alternatively, you can use [mamba](https://github.com/mamba-org/mamba) to improve speed.
     ```
     conda install mamba
-    mamba create -n convert_10X -y --file conda_pkgs.txt
+    mamba create -n celescope -y --file conda_pkgs.txt
     ```
 
     3. Install celescope
 
     Make sure you have activated the conda environment before running `pip install Celescope`. 
     ```
-    conda activate convert_10X
+    conda activate celescope
     pip install .
     ```
 
