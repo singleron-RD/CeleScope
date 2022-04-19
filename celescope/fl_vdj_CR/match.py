@@ -53,7 +53,7 @@ class Match(VDJ_Mixin):
                 self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_match_dir(
                     args.match_dir)
             except IndexError as e:
-                raise IncorrectMatchDir from e("Incorrect match_dir, Please Check the match_dir path")
+                raise IncorrectMatchDir("Incorrect match_dir, Please Check the match_dir path") from e
 
     @utils.add_log
     def gen_match_clonotypes(self, df_match):
