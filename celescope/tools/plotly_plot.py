@@ -152,6 +152,27 @@ class Tsne_plot(Plotly_plot):
         )
 
 
+class Bar_plot(Plotly_plot):
+
+    def __init__(self, df_bar):
+        super().__init__(df_bar)
+        self.set_fig()
+    
+    def set_fig(self):
+        self._fig = px.bar(
+                    x=[str(i) for i in list(self._df.head(10).ClonotypeID)],
+                    y=self._df.head(10).proportion.tolist(),
+                    labels={'x': 'Clonotype ID', 'y': 'Fraction of Cells'},
+                    width=700,
+                    height=500
+                    )
+        self._fig.update_traces(marker_color='rgb(158,202,225)', marker_line_color='rgb(8,48,107)',
+                   marker_line_width=1.5, opacity=0.6)
+        self._fig.update_layout(title_text='Top 10 Clonotype Frequencies',
+                   title={"x": 0.5, "y": 0.9, "font": {"size": 20, "family": "San Serif"}},
+                   plot_bgcolor='#FFFFFF')
+
+                   
 class Pie_plot(Plotly_plot):
 
     def __init__(self, df_region):
