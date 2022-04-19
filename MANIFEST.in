@@ -1,3 +1,4 @@
 recursive-include celescope/templates/ *
 recursive-include celescope/data/ *
 recursive-include celescope/ *.R
+recursive-include celescope/tools/trust4/ *
