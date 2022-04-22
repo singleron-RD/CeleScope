@@ -1,5 +1,14 @@
 
 ## [Unreleased] 
+
+## [1.10.0] - 2021-04-22
+ ### `fl_vdj`
+ - Add 3 new assays: `fl_vdj_CR`, `fl_vdj_TRUST4` and `fl_vdj_TRUST4_split`.
+
+ ### `rna` and `dynaseq`
+ - Limit the marker genes of each cluster in the HTML report to a maximum of 50 to avoid the slow opening of the report.
+ - Add read_saturation to the HTML report and `{sample}/*.count/downsample.txt`
+
  ### `snp`
  - Add panel `blood_1`.
 
