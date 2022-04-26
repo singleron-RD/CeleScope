@@ -14,7 +14,7 @@ class Otsu():
     remove all zero in array
     Return 1 if len(array) < otsu_min_len
     """
-    def __init__(self, array, log_base=10, otsu_min_len = 50, otsu_plot_path=None,):
+    def __init__(self, array, log_base=10, otsu_min_len = 50, otsu_plot_path=None, **kwargs):
         
         self.len_bool = True
         array = [x for x in array if x > 0 ]
@@ -100,11 +100,11 @@ class Otsu():
 
 class Auto():
     """
-    threshold = top 1% cell count / coef
+    threshold = top 1% positive cell count / coef
     """
-    def __init__(self, array, coef=3):
+    def __init__(self, array, coef=3, **kwargs):
         self.array = [x for x in array if x > 0 ]
-        self.coef = coef
+        self.coef = int(coef)
     
     def run(self):
         array = self.array
@@ -144,7 +144,7 @@ class Threshold():
             otsu = Otsu(self.array, otsu_plot_path=self.otsu_plot_path, **self.kwargs)
             threshold = otsu.run()
         elif self.threshold_method == 'auto':
-            auto = Auto(self.array)
+            auto = Auto(self.array, **self.kwargs)
             threshold = auto.run()
         elif self.threshold_method == 'hard':
             if self.hard_threshold:

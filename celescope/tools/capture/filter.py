@@ -35,6 +35,12 @@ def get_opts_filter(parser, sub_program):
         "--umi_hard_threshold",
         help='int, use together with `--umi_threshold_method hard`',
     )
+    parser.add_argument(
+        "--auto_coef",
+        help='int, threshold = top 1% positive cell count / auto_coef',
+        default=3,
+    )
+
 
     if sub_program:
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
@@ -115,6 +121,13 @@ class Filter(Step):
     def get_read_threshold(self):
         self.add_metric('Read Threshold Method', self.args.read_threshold_method)
 
+        if self.args.read_threshold_method == 'auto':
+            self.add_metric(
+                name='Read auto coeffient',
+                value=self.args.auto_coef,
+                help_info='threshold = top 1% positive cell count / auto_coef',
+            )
+
         read_dict = utils.genDict(dim=1, valType=list)
 
         for barcode in self.count_dict:
@@ -130,7 +143,8 @@ class Filter(Step):
                 array=read_dict[ref], 
                 threshold_method=self.args.read_threshold_method, 
                 otsu_plot_path=otsu_plot_path,
-                hard_threshold=self.args.read_hard_threshold
+                hard_threshold=self.args.read_hard_threshold,
+                coef=self.args.auto_coef,
             )
             read_threshold = runner.run()
             
@@ -186,6 +200,13 @@ class Filter(Step):
     def get_umi_threshold(self):
         self.add_metric('UMI Threshold Method', self.args.umi_threshold_method)
 
+        if self.args.umi_threshold_method == 'auto':
+            self.add_metric(
+            name='UMI auto coeffient',
+            value=self.args.auto_coef,
+            help_info='threshold = top 1% positive cell count / auto_coef',
+        )
+
         for ref in self.ref_barcode_umi_dict:
             umi_array = list(self.ref_barcode_umi_dict[ref].values())
             otsu_plot_path = f'{self.out_prefix}_{ref}_UMI_otsu.png'
@@ -193,7 +214,8 @@ class Filter(Step):
                 umi_array, 
                 threshold_method=self.args.umi_threshold_method, 
                 otsu_plot_path=otsu_plot_path,
-                hard_threshold=self.args.umi_hard_threshold
+                hard_threshold=self.args.umi_hard_threshold,
+                coef=self.args.auto_coef,
             )
             umi_threshold = runner.run()
             
