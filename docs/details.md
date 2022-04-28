@@ -119,8 +119,35 @@ If you want to split the expression matrix of match scRNA-Seq library，you need
 multi_tag \
  --mapfile ./tag.mapfile\
  --mod shell\
- --barcode_fasta ./smk_barcode.fa\
+ --barcode_fasta ./tag_barcode.fasta\
  --fq_pattern L25C15 \
  --split_matrix
 ```
 The output matrices are in `{sample}/06.split_tag`
+
+## Split fastq
+To split the R1 and R2 fastq files:
+
+1.  Run `barcode` to get demultiplexed R2 fastq
+```
+multi_rna \ 
+ --mapfile ./rna.mapfile \
+ --mod shell \
+ --steps_run sample,barcode \
+ --genomeDir {genomeDir}
+```
+
+As the `sample` and `barcode` are the same among all assays, it is ok to use `multi_dynaseq` and other `multi_{assay}` to demultiplex the R2 fastq.
+
+2. Run `multi_tag`
+```
+multi_tag \
+ --mapfile ./tag.mapfile\
+ --mod shell\
+ --barcode_fasta ./tag_barcode.fasta\
+ --fq_pattern L25C15 \
+ --split_fastq \
+ --R1_read {R1 fastq path}
+```
+The output fastqs are in `{sample}/06.split_tag/`
+
