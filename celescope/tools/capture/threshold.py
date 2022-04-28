@@ -29,6 +29,7 @@ class Otsu():
         else:
             raise Exception('log_base must be 2, 10')
 
+        self.kwargs = kwargs
         self.threshold = 1
         self.counts = None
         self.bins = None
@@ -105,6 +106,7 @@ class Auto():
     def __init__(self, array, coef=3, **kwargs):
         self.array = [x for x in array if x > 0 ]
         self.coef = int(coef)
+        self.kwargs = kwargs
     
     def run(self):
         array = self.array
