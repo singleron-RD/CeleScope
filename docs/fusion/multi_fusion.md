@@ -6,8 +6,13 @@
 multi_fusion\
 --mapfile ./fusion.mapfile\
 --fusion_genomeDir {fusion_genomeDir}\  
---mod shell
+--mod shell\
 ```
+
+Use `celescope fusion mkref` to generate the fusion genomeDir.
+
+## Main Output
+- `05.filter_fusion/{sample}_filtered_UMI.csv`: Filtered fusion UMI counts of each cell barcode.
 ## Features
 ### mkref
 - Create a fusion genome directory.
@@ -27,6 +32,15 @@ multi_fusion\
 - Trim adapters in R2 reads with cutadapt. Default adapters includes:
     - polyT=A{18}, 18 A bases. 
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+
+### star_fusion
+- The reads were aligned to the known fusion sites(specified by `--fusion_genomeDir`) using STAR. 
+Please note that [STAR-Fusion](https://github.com/STAR-Fusion/STAR-Fusion/wiki) is not used here.
+
+### count_fusion
+- Count the number of reads and umis that 
+    1. originate from cell barcodes;
+    2. align to the fusion site and include flanking sequences of a certain length(default 20bp) on both sides of the fusion site.
 
 ### filter_fusion
 - Correct single-base errors in UMIs due to sequencing, amplification, etc.
@@ -192,6 +206,8 @@ is higher than or equal to this value.
 `--umi_threshold_method` method to find UMI threshold. Cell barcode with `UMI` < `UMI threshold` are considered negative.
 
 `--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
+
+`--auto_coef` int, threshold = top 1% positive cell count / auto_coef.
 
 `--fusion_genomeDir` Fusion genome directory.
 

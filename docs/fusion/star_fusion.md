@@ -1,3 +1,6 @@
+## Features
+- The reads were aligned to the known fusion sites(specified by `--fusion_genomeDir`) using STAR. 
+Please note that [STAR-Fusion](https://github.com/STAR-Fusion/STAR-Fusion/wiki) is not used here.
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 

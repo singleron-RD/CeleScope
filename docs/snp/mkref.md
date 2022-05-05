@@ -23,3 +23,5 @@ celescope snp mkref \
 
 `--fasta` Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.
 
+`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
+

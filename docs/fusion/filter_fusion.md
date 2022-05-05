@@ -21,6 +21,8 @@ There are three methods to determine the UMI threshold:
 
 `--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
 
+`--auto_coef` int, threshold = top 1% positive cell count / auto_coef.
+
 `--match_dir` Match celescope scRNA-Seq directory.
 
 `--raw_read_count_file` None

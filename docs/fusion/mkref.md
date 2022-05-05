@@ -23,6 +23,8 @@ celescope fusion mkref \
 
 `--fasta` Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.
 
+`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
+
 `--fusion_pos` fusion position file. A two column tab-delimited text file with header.
 "pos" is the end postion of the first gene(1-based).
 e.g.  
@@ -32,5 +34,7 @@ PML_4	254
 PML_5	326  
 PML_6	204.
 
-`--genomeSAindexNbases` STAR genomeSAindexNbases.
+`--genomeSAindexNbases` For small genomes, the parameter --genomeSAindexNbases must to be scaled down, with a typical 
+value of min(14, log2(GenomeLength)/2 - 1). For example, for 1 megaBase genome, this is equal 
+to 9, for 100 kiloBase genome, this is equal to 7.
 

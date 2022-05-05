@@ -12,8 +12,13 @@ class Multi_fusion(Multi):
     multi_fusion\\
     --mapfile ./fusion.mapfile\\
     --fusion_genomeDir {fusion_genomeDir}\\  
-    --mod shell
+    --mod shell\\
     ```
+
+    Use `celescope fusion mkref` to generate the fusion genomeDir.
+
+    ## Main Output
+    - `05.filter_fusion/{sample}_filtered_UMI.csv`: Filtered fusion UMI counts of each cell barcode.
     """
 
     def star_fusion(self, sample):

@@ -1,5 +1,6 @@
 
 from celescope.tools.mkref import Mkref, super_opts
+from celescope.__init__ import HELP_DICT
 
 class Mkref_fusion(Mkref):
     """
@@ -53,4 +54,4 @@ PML_5\t326
 PML_6\t204   
 """,
             required=True,)
-        parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=14)
+        parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)

@@ -26,11 +26,15 @@ refflat = Homo_sapiens_ensembl_99.refFlat
 
 `--fasta` Required. Genome fasta file. Use absolute path or relative path to `genomeDir`.
 
+`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
+
 `--gtf` Required. Genome gtf file. Use absolute path or relative path to `genomeDir`.
 
 `--mt_gene_list` Mitochondria gene list file. Use absolute path or relative path to `genomeDir`.
 It is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.
 
-`--genomeSAindexNbases` STAR genomeSAindexNbases.
+`--genomeSAindexNbases` For small genomes, the parameter --genomeSAindexNbases must to be scaled down, with a typical 
+value of min(14, log2(GenomeLength)/2 - 1). For example, for 1 megaBase genome, this is equal 
+to 9, for 100 kiloBase genome, this is equal to 7.
 

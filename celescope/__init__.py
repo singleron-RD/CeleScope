@@ -24,7 +24,7 @@ ASSAY_LIST = [
 
 ROOT_PATH = os.path.dirname(__file__)
 
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus']
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion']
 
 # argument help
 HELP_DICT = {
@@ -43,6 +43,9 @@ HELP_DICT = {
     'df_marker_file': 'match_dir df_marker_file. Not required when `--match_dir` is provided.',
     'cell_calling_method': 'Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`]',
     'additional_param': 'Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.',
+    'genomeSAindexNbases': '''For small genomes, the parameter --genomeSAindexNbases must to be scaled down, with a typical 
+value of min(14, log2(GenomeLength)/2 - 1). For example, for 1 megaBase genome, this is equal 
+to 9, for 100 kiloBase genome, this is equal to 7.'''
     
 }
 

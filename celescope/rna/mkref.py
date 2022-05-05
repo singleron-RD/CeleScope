@@ -2,6 +2,7 @@ import subprocess
 
 from celescope.tools import utils
 from celescope.tools.mkref import Mkref, super_opts
+from celescope.__init__ import HELP_DICT
 
 
 class Mkref_rna(Mkref):
@@ -95,4 +96,4 @@ It is a plain text file with one gene per line.
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
             default="None"
         )
-        parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=14)
+        parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)

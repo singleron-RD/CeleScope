@@ -230,3 +230,5 @@ is higher than or equal to this value.
 
 `--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
 
+`--auto_coef` int, threshold = top 1% positive cell count / auto_coef.
+
