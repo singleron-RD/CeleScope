@@ -29,7 +29,7 @@ def get_opts_filter(parser, sub_program):
         "--umi_threshold_method",
         help='method to find UMI threshold. Cell barcode with `UMI` < `UMI threshold` are considered negative.',
         choices=['otsu', 'auto', 'hard', 'none'],
-        default='auto'
+        default='otsu'
     )
     parser.add_argument(
         "--umi_hard_threshold",

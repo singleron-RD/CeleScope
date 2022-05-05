@@ -1,5 +1,8 @@
 
 ## [Unreleased] 
+ ### `snp`,`capture_virus` and `fusion`
+ - Change the default `--umi_threshold_method` from `auto` to `otsu`.
+ 
 
 ## [1.10.0] - 2021-04-22
  ### `fl_vdj`
