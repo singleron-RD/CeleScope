@@ -19,15 +19,17 @@ TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 SAMPLE_TSV_REQUIRED_COLS = ['fastq_prefix', 'fastq_dir', 'sample_name']
 
 
-def get_read(fastq_prefix, fastq_dir, read='1'):
+def get_read(fastq_prefix, fastq_dirs, read='1'):
     read1_list = [f'_{read}', f'R{read}', f'R{read}_001']
     fq_list = ['fq', 'fastq']
     suffix_list = ["", ".gz"]
+    fastq_dirs = fastq_dirs.split(",")
     read_pattern_list = [
         f'{fastq_dir}/{fastq_prefix}*{read}.{fq_str}{suffix}'
         for read in read1_list
         for fq_str in fq_list
         for suffix in suffix_list
+        for fastq_dir in fastq_dirs
     ]
     fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
     fq_list = (non_empty for non_empty in fq_list if non_empty)
@@ -138,8 +140,11 @@ class Multi():
         self.sjm_cmd = ''
         self.sjm_order = ''
         self.shell_dict = defaultdict(str)
-
-        self.rule_cmd = ''
+  
+        #snakemake
+        self.the_end_step = self.steps_run[-1]
+        self.snakemake_shell_rule_all_dict = defaultdict(str)
+        self.snakemake_shell_dict = defaultdict(str)
 
         self.outdir_dic = {}
 
@@ -185,8 +190,8 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 ```
 ''',
             required=True)
-        parser.add_argument('--mod', help='Which type of script to generate, `sjm` or `shell`.',
-            choices=['sjm', 'shell'], default='sjm')
+        parser.add_argument('--mod', help='Which type of script to generate, `sjm` or `shell` or `snakemake`.',
+            choices=['sjm', 'shell','snakemake'], default='sjm')
         parser.add_argument('--queue', help='Only works if the `--mod` selects `sjm`.')
         parser.add_argument('--rm_files', action='store_true',
             help='Remove redundant fastq and bam files after running.')
@@ -229,12 +234,16 @@ use `--steps_run barcode,cutadapt`
         self.logdir = self.args.outdir + '/log'
         self.sjm_cmd = f'log_dir {self.logdir}\n'
 
+        #add_snakemake
+        self.snakemake_dir = f'{self.args.outdir}/snakemake/'
+
         # parse_mapfile
         self.sample_dict = parse_sample_tsv(self.args.sample_tsv)
 
         # mk dir
         utils.check_mkdir(self.logdir)
         utils.check_mkdir(self.sjm_dir)
+        utils.check_mkdir(self.snakemake_dir)
 
         for sample in self.sample_dict:
             self.outdir_dic[sample] = {}
@@ -258,12 +267,76 @@ job_begin
 job_end
 '''
 
+
+    def generate_snakemake_cmd(self, cmd, step, outdir, last_step, sample, x=1,fq=None):
+        """
+        this is snakemake need
+        """
+        if sample:
+            sample = "_" + sample
+        if step == 'sample' and fq != None:
+            self.snakemake_shell_dict[sample] += f'''
+rule {step}{sample}:
+    input:
+        {fq},
+    output:
+        directory("{outdir}"),
+    threads:{x},
+    params:
+        step_name="celescope {self.__ASSAY__} {step}",
+        cmd_line="{cmd}",
+    message:"Executing {{params.step_name}} with {{threads}} threads.",
+    conda:"{self.__CONDA__}",
+    shell:
+        "{{params.cmd_line}}"       
+'''
+        else:
+            self.snakemake_shell_dict[sample] += f'''
+rule {step}{sample}:
+    input:
+        rules.{last_step}{sample}.output,
+    output:
+        directory("{outdir}"),
+    threads:{x},
+    params:
+        step_name="celescope {self.__ASSAY__} {step}",
+        cmd_line="{cmd}",
+    message:"Executing {{params.step_name}} with {{threads}} threads.",
+    conda:"{self.__CONDA__}",
+    shell:
+        "{{params.cmd_line}}"       
+'''
+
+
+    def snakemake_rule_all(self,sample,outdir,step):
+        """
+        the rule all of snakemake
+        """
+        if sample:
+            sample = "_" + sample
+        if step == self.the_end_step:
+            self.snakemake_shell_rule_all_dict[sample] += f'''
+rule all:
+    input:"{outdir}"      
+'''         
+        
+
+
     def process_cmd(self, cmd, step, sample, m=1, x=1):
         self.generate_cmd(cmd, step, sample, m=m, x=x)
         self.shell_dict[sample] += cmd + '\n'
         if self.last_step:
             self.sjm_order += f'order {step}_{sample} after {self.last_step}_{sample}\n'
         self.last_step = step
+
+
+
+    def process_snakemake_cmd(self, cmd, step, outdir, sample, x=1,fq=None):
+        """
+        creat snakemake rule
+        """
+        self.generate_snakemake_cmd(cmd, step, outdir, self.last_step, sample, fq=fq, x=x) 
+        self.snakemake_rule_all(sample,outdir,step)
 
 
     def add_arguments_from_sample_tsv(self):
@@ -344,79 +417,103 @@ job_end
     def sample(self, sample):
         step = "sample"
         cmd_line = self.get_cmd_line(step, sample)
+        fq = self.sample_dict[sample]['fq1'].split(",")
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd = (
             f'{cmd_line} '
         )
+
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,fq=fq,x=1)  
         self.process_cmd(cmd, step, sample, m=1, x=1)
+       
 
     def barcode(self, sample):
         step = "barcode"
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd = (
             f'{cmd_line} '
         )
-        self.process_cmd(cmd, step, sample, m=5, x=1)
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
+        self.process_cmd(cmd, step, sample, m=5, x=1)  
+        
 
     def cutadapt(self, sample):
         step = "cutadapt"
         fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{self.fq_suffix}'
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=5, x=1)
+       
 
     def star(self, sample):
         step = 'star'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '
         )
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=self.args.thread)
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread) 
+        
 
     def featureCounts(self, sample):
         step = 'featureCounts'
         input_bam = f'{self.outdir_dic[sample]["star"]}/{sample}_Aligned.sortedByCoord.out.bam'
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--input {input_bam} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=self.args.thread)
         self.process_cmd(cmd, step, sample, m=5, x=self.args.thread)
+        
 
     def count(self, sample):
         step = 'count'
         bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
         )
-
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=10, x=1)
+        
 
     def analysis(self, sample):
         step = 'analysis'
         matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--matrix_file {matrix_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=10, x=1)
+        
 
     def consensus(self, sample):
         step = 'consensus'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '
         )
-        self.process_cmd(cmd, step, sample, m=5, x=1)
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
+        self.process_cmd(cmd, step, sample, m=5, x=1)    
         outfile = f'{self.outdir_dic[sample][step]}/{sample}_consensus.fq'
         return outfile
 
@@ -437,7 +534,7 @@ job_end
     def merge_report(self):
         step = "merge_report"
         steps_str = ",".join(self.__STEPS__)
-        samples = ','.join(self.fq_dict.keys())
+        samples = ','.join(self.sample_dict.keys())
         app = TOOLS_DIR + '/merge_table.py'
         cmd = (
             f'python {app} --samples {samples} '
@@ -446,7 +543,7 @@ job_end
         if self.args.rm_files:
             cmd += ' --rm_files'
         self.generate_cmd(cmd, step, sample="")
-        for sample in self.fq_dict:
+        for sample in self.sample_dict:
             self.sjm_order += f'order {step} after {self.last_step}_{sample}\n'
 
     def end(self):
@@ -460,6 +557,11 @@ job_end
             for sample in self.shell_dict:
                 with open(f'./shell/{sample}.sh', 'w') as f:
                     f.write(self.shell_dict[sample])
+        if self.args.mod == "snakemake":
+            for sample in self.snakemake_shell_dict:
+                with open(f'{self.snakemake_dir}/Snakefile{sample}','w') as fh:
+                    fh.write(self.snakemake_shell_rule_all_dict[sample] + '\n')
+                    fh.write(self.snakemake_shell_dict[sample])
 
     def run(self):
         self.prepare()
