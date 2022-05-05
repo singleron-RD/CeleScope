@@ -13,6 +13,7 @@ class Mkref():
         self.thread = args.thread
         self.genome_type = genome_type
         self.dry_run = args.dry_run
+        self.STAR_param = args.STAR_param
         self.files = ('fasta',) + files
         self.non_files = ('genome_name',) + non_files
 
@@ -39,6 +40,8 @@ class Mkref():
             f'--genomeFastaFiles {self.fasta} \\\n'
             f'--genomeSAindexNbases {self.genomeSAindexNbases} \\\n'
         )
+        if self.STAR_param:
+            cmd += (" " + self.STAR_param)
         self.build_star_index.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -119,3 +122,4 @@ def super_opts(parser, sub_program):
         parser.add_argument("--genome_name", help="Required, genome name. ", required=True)
         parser.add_argument("--dry_run", help="Only write config file and exit.", action='store_true')
         parser.add_argument("--fasta", help=HELP_DICT['fasta'], required=True)
+        parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], default="")
