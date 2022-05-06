@@ -33,7 +33,7 @@ class Mkref_rna(Mkref):
         self.refflat = f'{self.genome_name}.refFlat'
 
     @utils.add_log
-    def build_star_index(self):
+    def build_rna_star_index(self):
         cmd = (
             f'STAR \\\n'
             f'--runMode genomeGenerate \\\n'
@@ -43,6 +43,8 @@ class Mkref_rna(Mkref):
             f'--sjdbGTFfile {self.gtf} \\\n'
             f'--sjdbOverhang 100 \\\n'
         )
+        if self.STAR_param:
+            cmd += (" " + self.STAR_param)
         self.build_star_index.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
