@@ -328,7 +328,7 @@ def get_opts_assemble(parser, sub_program):
         parser.add_argument('--fq2', help='R2 reads matched with scRNA-seq.', required=True)
         parser.add_argument('--match_dir', help='Match scRNA-seq directory.', required=True)
 
-    parser.add_argument('--species', help='Species name and version.', choices=["hg19", "hg38", "GRCm38"], required=True)
+    parser.add_argument('--species', help='Species name and version.', choices=["hg19", "hg38", "GRCm38", "other"], required=True)
     parser.add_argument('--seqtype', help='TCR/BCR seq data.', choices=['TCR', 'BCR'], required=True)
     parser.add_argument('--barcodeRange', help='Barcode range in fq1, INT INT CHAR.', default='0 23 +') 
     parser.add_argument('--umiRange', help='UMI range in fq1, INT INT CHAR.', default='24 -1 +')

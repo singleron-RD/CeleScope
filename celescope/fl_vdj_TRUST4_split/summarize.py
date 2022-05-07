@@ -397,9 +397,16 @@ class Summarize(Step):
         
         for c in self.chains:
             temp_df = df_for_clono_pro[df_for_clono_pro['chain']==c]
+
+            try:
+                median_umi = int(temp_df['umis'].median())
+            except ValueError:
+                # ValueError: cannot convert float NaN to integer
+                median_umi = 0
+
             self.add_metric(
                 name = f'Median {c} UMIs per Cell',
-                value = int(temp_df['umis'].median())
+                value = median_umi
             )
 
     def run(self):
