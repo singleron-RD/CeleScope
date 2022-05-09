@@ -6,6 +6,7 @@ import os
 import subprocess
 import numpy as np
 import pandas as pd
+from collections import Counter
 from celescope.tools.step import Step, s_common
 import celescope.tools.utils as utils
 
@@ -102,22 +103,9 @@ class Conversion(Step):
         ConvsPerPos = {}
         CoverofPosWithConvs = {}
         for key in ContigLocs.keys():
-            ContigLocs[key] = sorted(ContigLocs[key])
             ConvsPerPos[key] = {}
-            k = 0
-            current = ContigLocs[key][k]
-            k += 1
-            nextone = ContigLocs[key][k]
-            while k < len(ContigLocs[key])-1:
-                ConvsPerPos[key][current] = 1
-                while current == nextone and k < len(ContigLocs[key])-1:
-                    k += 1
-                    nextone = ContigLocs[key][k]
-                    ConvsPerPos[key][current] += 1
-                current = nextone
-                if k < len(ContigLocs[key])-1:
-                    k += 1
-                    nextone = ContigLocs[key][k]
+            ContigLocs[key] = sorted(ContigLocs[key])
+            ConvsPerPos[key] = Counter(ContigLocs[key])
 
             CoverofPosWithConvs[key] = {}
             for key2 in ConvsPerPos[key].keys():
