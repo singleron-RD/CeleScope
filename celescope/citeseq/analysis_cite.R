@@ -35,7 +35,7 @@ tags = rownames(rds@assays$ADT@data)
 n_tags = length(tags)
 
 pdf(pdf.feature, height=n_tags, width=12)
-p = FeaturePlot(rds, rownames(rds@assays$ADT@data), ncol=4, pt.size=0.2)
+p = FeaturePlot(rds, rownames(rds@assays$ADT@data), ncol=4, pt.size=0.2, reduction='tsne')
 print(p)
 dev.off()
 

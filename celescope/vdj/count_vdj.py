@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
@@ -15,11 +15,11 @@ SEQUENCES_HEADER = ["aaSeqCDR3", "nSeqCDR3"]
 
 class Count_vdj(Step):
     """
-    Features
+    ## Features
     - Cell-calling based on barcode-UMI rank.    
     - Summarize clonetypes infomation.
 
-    Output
+    ## Output
     - `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, each chain occupies one line.
 
     - `{sample}_cell_confident_count.tsv` The clone type of VDJ cell barcode, each cell occupies one line.
@@ -41,12 +41,11 @@ class Count_vdj(Step):
                 self.cols.append("_".join([seq, chain]))
 
         self.match_bool = False
-        if args.match_dir and args.match_dir.strip() != 'None':
-            self.match_cell_barcodes, _match_cell_number = utils.read_barcode_file(
-                args.match_dir)
+        if utils.check_arg_not_none(self.args, 'match_dir'):
+            self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_match_dir(args.match_dir)
             self.match_bool = True
-        elif args.matrix_dir and args.matrix_dir.strip() != 'None':
-            self.match_cell_barcodes = utils.get_barcodes_from_matrix_dir(args.matrix_dir)
+        elif utils.check_arg_not_none(self.args, 'matrix_dir'):
+            self.match_cell_barcodes = utils.get_barcode_from_matrix_dir(args.matrix_dir)
             self.match_bool = True
         if self.match_bool:
             self.match_cell_barcodes = set(self.match_cell_barcodes)
@@ -204,8 +203,9 @@ class Count_vdj(Step):
                 self.add_metric(
                     name="Cell with Barcode Match, TRA and TRB",
                     value=match_cell_with_TRA_and_TRB,
-                    total=total_cell_number,
-                    help_info=f"cell with matched barcode and with as least {self.args.iUMI} UMI mapped to each chain"
+                    total=cell_with_match_barcode_number,
+                    help_info=f"cell with matched barcode and with as least {self.args.iUMI} UMI mapped to each chain. \
+When calculating the percentage, the denominator is `Cell with Barcode Match`"
                 )
 
         # BCR

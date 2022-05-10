@@ -8,14 +8,18 @@ __PATTERN_DICT__ = {
     'scopeV3.0.1': 'C9L16C9L16C9L1U12T18',
     'customized': None,
     'auto': None,
-    'scopeV1': 'C12U8T18'
+    'scopeV1': 'C12U8T18',
+    'flv_rna': 'C8L16C8L16C8U9',
+    'flv' : 'U9C8L16C8L16C8',
 }
 
 
 # count
-MATRIX_FILE_NAME = 'matrix.mtx'
-FEATURE_FILE_NAME = 'genes.tsv'
-BARCODE_FILE_NAME = 'barcodes.tsv'
+RAW_MATRIX_DIR_SUFFIX = ['raw_feature_bc_matrix', 'all_matrix']
+FILTERED_MATRIX_DIR_SUFFIX = ['filtered_feature_bc_matrix', 'matrix_10X']
+MATRIX_FILE_NAME = ['matrix.mtx']
+FEATURE_FILE_NAME = ['genes.tsv']
+BARCODE_FILE_NAME = ['barcodes.tsv']
 
 # mkref
 GENOME_CONFIG = 'celescope_genome.config'

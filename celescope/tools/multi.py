@@ -5,7 +5,8 @@ import os
 from collections import defaultdict
 
 import celescope
-import celescope.tools.utils as utils
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
+from celescope.tools import utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
 
@@ -42,6 +43,8 @@ class Multi():
         self.col4_dict = {}
         self.col5_dict = {}
         self.logdir = None
+        self.sjm_dir = None
+        self.sjm_file = None
 
         self.sjm_cmd = ''
         self.sjm_order = ''
@@ -93,10 +96,16 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 ''',
             required=True)
         parser.add_argument('--mod', help='Which type of script to generate, `sjm` or `shell`.',
-                            choices=['sjm', 'shell'], default='sjm')
+            choices=['sjm', 'shell'], default='sjm')
+        parser.add_argument('--queue', help='Only works if the `--mod` selects `sjm`.')
         parser.add_argument('--rm_files', action='store_true',
-                            help='Remove redundant fastq and bam files after running.')
-        parser.add_argument('--steps_run', help='Steps to run. Multiple Steps are separated by comma.', default='all')
+            help='Remove redundant fastq and bam files after running.')
+        parser.add_argument('--steps_run', 
+            help='''
+Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`
+''', 
+            default='all')
         # sub_program parser do not have
         parser.add_argument('--outdir', help='Output directory.', default="./")
         parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
@@ -158,6 +167,7 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
     def prepare(self):
         """
         parse_mapfile, make log dir, init script variables, init outdir_dic
+        make sjm dir, sjm file
         """
         self.args = self.parser.parse_args()
 
@@ -165,16 +175,19 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
             self.fq_suffix = ".gz"
         if self.args.steps_run != 'all':
             self.steps_run = self.args.steps_run.strip().split(',')
+        
+        if self.args.mod == 'sjm':
 
-        self.logdir = self.args.outdir + '/log'
-        self.sjm_cmd = f'log_dir {self.logdir}\n'
+            self.sjm_dir = f'{self.args.outdir}/sjm/'
+            utils.check_mkdir(self.sjm_dir)
+            self.logdir = self.args.outdir + '/log'
+            utils.check_mkdir(self.logdir)
+
+            self.sjm_file = f'{self.sjm_dir}/sjm.job'
+            self.sjm_cmd = f'log_dir {self.logdir}\n'
 
         # parse_mapfile
         self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(self.args.mapfile, self.col4_default)
-
-        # mk log dir
-        if self.args.mod == 'sjm':
-            os.system('mkdir -p %s' % (self.logdir))
 
         for sample in self.fq_dict:
             self.outdir_dic[sample] = {}
@@ -187,10 +200,13 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
     def generate_cmd(self, cmd, step, sample, m=1, x=1):
         if sample:
             sample = "_" + sample
+        sched_options = f'sched_options -w n -cwd -V -l vf={m}g,p={x}'
+        if self.args.queue:
+            sched_options += f' -q {self.args.queue} '
         self.sjm_cmd += f'''
 job_begin
     name {step}{sample}
-    sched_options -w n -cwd -V -l vf={m}g,p={x}
+    {sched_options}
     cmd source activate {self.__CONDA__}; {cmd}
 job_end
 '''
@@ -220,7 +236,6 @@ job_end
             f'{self.__APP__} {self.__ASSAY__} {step} '
             f'--outdir {self.outdir_dic[sample][step]} '
             f'--sample {sample} '
-            f'--assay {self.__ASSAY__} '
             f'--thread {self.args.thread} '
         )
         cmd_line = step_prefix
@@ -306,7 +321,7 @@ job_end
 
     def analysis(self, sample):
         step = 'analysis'
-        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_matrix_10X'
+        matrix_file = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
@@ -358,7 +373,7 @@ job_end
     def end(self):
         if self.args.mod == 'sjm':
             self.merge_report()
-            with open(self.logdir + '/sjm.job', 'w') as fh:
+            with open(self.sjm_file, 'w') as fh:
                 fh.write(self.sjm_cmd + '\n')
                 fh.write(self.sjm_order)
         if self.args.mod == 'shell':

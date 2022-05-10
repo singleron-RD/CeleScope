@@ -1,14 +1,16 @@
 import pandas as pd
 
-import celescope.tools.utils as utils
-from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools import utils
+from celescope.tools.step import Step
 from celescope.tools.step import s_common
 from celescope.tools.plotly_plot import Tsne_plot
+from celescope.tools import analysis_wrapper
+from celescope.__init__ import HELP_DICT
 
 
-class Analysis_tag(AnalysisMixin):
+class Analysis_tag(Step):
     """
-    Features
+    ## Features
     - Combine scRNA-Seq clustering infromation with tag assignment.
     """
 
@@ -18,8 +20,10 @@ class Analysis_tag(AnalysisMixin):
         self.df_tsne_tag = pd.read_csv(self.tsne_tag_file, sep='\t')
 
     def run(self):
+        report_runner = analysis_wrapper.Report_runner(self.args, display_title=self.display_title)
+        df_tsne, _df_marker = report_runner.get_df()
 
-        tsne_cluster = Tsne_plot(self.df_tsne, 'cluster').get_plotly_div()
+        tsne_cluster = Tsne_plot(df_tsne, 'cluster').get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
 
         tsne_tag = Tsne_plot(self.df_tsne_tag, 'tag').get_plotly_div()
@@ -29,8 +33,8 @@ class Analysis_tag(AnalysisMixin):
 def get_opts_analysis_tag(parser, sub_program):
     if sub_program:
         parser.add_argument('--tsne_tag_file', help='`{sample}_tsne_tag.tsv` from count_tag. ', required=True)
-        parser.add_argument("--match_dir", help="Match celescope scRNA-Seq directory. ")
-        parser.add_argument("--tsne_file", help="t-SNE coord file.")
+        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
+        parser.add_argument("--tsne_file", help=HELP_DICT['tsne_file'])
         parser = s_common(parser)
 
 

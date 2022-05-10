@@ -8,7 +8,7 @@ import subprocess
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 
 
@@ -25,7 +25,6 @@ def s_common(parser):
     """subparser common arguments
     """
     parser.add_argument('--outdir', help='Output diretory.', required=True)
-    parser.add_argument('--assay', help='Assay name.', required=True)
     parser.add_argument('--sample', help='Sample name.', required=True)
     parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
     parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
@@ -38,14 +37,18 @@ class Step:
     """
 
     def __init__(self, args, display_title=None):
+        '''
+        display_title controls the section title in HTML report
+        '''
 
         self.args = args
         self.outdir = args.outdir
         self.sample = args.sample
-        self.assay = args.assay
+        self.assay = args.subparser_assay
         self.thread = int(args.thread)
         self.debug = args.debug
         self.out_prefix = f'{self.outdir}/{self.sample}'
+        self.display_title = display_title
 
         # important! make outdir before path_dict because path_dict use relative path.
         utils.check_mkdir(self.outdir)
@@ -85,12 +88,15 @@ class Step:
         # out file
         self.__stat_file = f'{self.outdir}/stat.txt'
 
-    def add_metric(self, name, value, total=None, help_info=None, display=None):
+    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True):
         '''
         add metric to metric_list
         
         Args
-            display: controls how to display the metric in HTML report.
+            total: int or float, used to calculate fraction
+            help_info: str, help info for metric in html report
+            display: str, controls how to display the metric in HTML report.
+            show: bool, whether to add to `.data.json` and `stat.txt`. `.data.json` is used for HTML report. `stat.txt` is used in house.
         '''
 
         name = cap_str_except_preposition(name)
@@ -115,17 +121,19 @@ class Step:
                 "fraction": fraction,
                 "display": display,
                 "help_info": help_info,
+                "show": show,
             }
         )
 
     def _write_stat(self):
         with open(self.__stat_file, 'w') as writer:
             for metric in self.__metric_list:
-                name = metric['name']
-                display = metric['display']
+                if metric['show']:
+                    name = metric['name']
+                    display = metric['display']
 
-                line = f'{name}: {display}'
-                writer.write(line + '\n')
+                    line = f'{name}: {display}'
+                    writer.write(line + '\n')
 
     def _dump_content(self):
         '''dump content to json file
@@ -146,7 +154,11 @@ class Step:
     def _add_content_data(self):
         step_summary = {}
         step_summary['display_title'] = self._display_title
-        step_summary['metric_list'] = self.__metric_list
+        metric_list = []
+        for metric in self.__metric_list:
+            if metric['show']:
+                metric_list.append(metric)
+        step_summary['metric_list'] = metric_list
         step_summary['help_content'] = self.__help_content
         self.__content_dict['data'][self._step_summary_name].update(step_summary)
 
@@ -181,10 +193,16 @@ class Step:
             }
         )
 
+    @utils.add_log
     def get_slot_key(self, slot, step_name, key):
         '''read slot from json file
         '''
-        return self.__content_dict[slot][step_name + '_summary'][key]
+        try:
+            return self.__content_dict[slot][step_name + '_summary'][key]
+        except KeyError:
+            self.get_slot_key.logger.warning(f'{key} not found in {step_name}_summary.{slot}')
+            raise
+
 
     def get_table_dict(self, title, table_id, df_table):
         """
@@ -215,6 +233,12 @@ class Step:
         '''
         self.debug_subprocess_call.logger.debug(cmd)
         subprocess.check_call(cmd, shell=True)
+
+    def get_metric_list(self):
+        return self.__metric_list
+
+    def set_metric_list(self, metric_list):
+        self.__metric_list = metric_list
 
     @abc.abstractmethod
     def run(self):

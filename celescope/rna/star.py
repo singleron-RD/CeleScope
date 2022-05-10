@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
 from celescope.tools.plotly_plot import Pie_plot
@@ -10,11 +10,11 @@ from celescope.rna.mkref import Mkref_rna
 
 class Star(Star_mixin):
     """
-    Features
+    ## Features
     - Align R2 reads to the reference genome with STAR.
     - Collect Metrics with Picard.
 
-    Output
+    ## Output
     - `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
 
     - `{sample}_SJ.out.tab` SJ.out.tab contains high confidence collapsed splice junctions in tab-delimited format.

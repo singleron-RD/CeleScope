@@ -5,17 +5,17 @@ vdj mapping
 import pandas as pd
 import pysam
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
 
 
 class Mapping_vdj(Step):
     """
-    Features
+    ## Features
     - Align R2 reads to IGMT(http://www.imgt.org/) database sequences with mixcr.
 
-    Output
+    ## Output
     - `{sample}_consensus.fasta` Fasta file after UMI consensus.
 
     - `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.

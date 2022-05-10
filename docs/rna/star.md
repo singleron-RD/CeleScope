@@ -24,17 +24,15 @@ summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated 
 i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
 
 - `{sample}_region.log` Picard CollectRnaSeqMetrics results.
-
-
 ## Arguments
-`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
+`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
 `--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Other STAR parameters.
+`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
@@ -45,8 +43,6 @@ is higher than or equal to this value.
 `--consensus_fq` A indicator that the input fastq has been consensused.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

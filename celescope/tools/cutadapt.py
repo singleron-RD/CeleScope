@@ -1,28 +1,62 @@
 import re
 import subprocess
-from itertools import islice
 
 import pysam
 
 from celescope.tools.step import Step, s_common
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 ADAPTER = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
 
+LOG_METRICS_TITLE = (
+    'Total reads processed',
+    'Reads with adapters',
+    'Reads that were too short',
+    'Reads written (passing filters)',
+    'Total basepairs processed',
+    'Quality-trimmed',
+    'Total written (filtered)',
+)
+
+def read_cutadapt_log(cutadapt_log):
+    """
+    Returns:
+        dict: {
+            'Total reads processed': int, 'Reads with adapters': int, 'Reads that were too short': int, 
+            'Reads written (passing filters)': int, 'Total basepairs processed': int, 
+            'Quality-trimmed': int, 'Total written (filtered)': int
+        }
+    """
+    metrics_dict = {}
+    remove_strs = [r',', r' bp', r'\(.*\)']
+
+    for _line_index, line in enumerate(cutadapt_log.split('\n')):
+        line = line.strip()
+        if not line:
+            continue
+        attr = line.split(":")
+        if attr[0] in LOG_METRICS_TITLE:
+            title, number = attr[0], attr[1]                
+            number = attr[1].strip()
+            for remove_str in remove_strs:
+                number = re.sub(pattern=remove_str, repl='', string=number)
+            metrics_dict[title] = int(number)
+
+    return metrics_dict
 
 class Cutadapt(Step):
     """
-    Features
+    ## Features
     - Trim adapters in R2 reads with cutadapt. Default adapters includes:
         - polyT=A{18}, 18 A bases. 
         - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
-    Output
+    ## Output
     - `cutadapt.log` Cutadapt output log file.
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
     """
 
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
+        super().__init__(args, display_title=display_title)
 
         # set
         self.adapter_args = self.read_adapter_fasta(args.adapter_fasta)
@@ -48,37 +82,19 @@ class Cutadapt(Step):
                     adapter_args.append(f'{read.name}={read.sequence}')
         return adapter_args
 
-    def format_and_write_stat(self, cutadapt_log):
-        # Total reads processed:...Total written (filtered):
-        start_line = 8
-        end_line = 15
-        useful_content = islice(cutadapt_log.split('\n'), start_line, end_line + 1)
-        p_list = []
-        remove_strs = [r',', r' bp', r'\(.*\)']
-        for line_index, line in enumerate(useful_content):
-            line = line.strip()
-            if not line:
-                continue
-            attr = line.split(":")
-            if len(attr) < 2:
-                raise Exception(
-                    'May caused by cutadapt version != 1.1.7. '
-                    f'Check version in {self.outdir}/cutadapt.log\n'
-                    f'cutadapt log error at line {line_index + start_line}:\n'
-                    f'{line}'
-                )
-            number = attr[1].strip()
-            for remove_str in remove_strs:
-                number = re.sub(remove_str, '', number)
-            p_list.append(int(number))
 
-        total_reads = p_list[0]
-        reads_with_adapters = p_list[1]
-        reads_too_short = p_list[2]
-        reads_written = p_list[3]
-        total_base_pairs = p_list[4]
-        quality_trimmed = p_list[5]
-        base_pairs_written = p_list[6]
+
+    def add_cutadapt_metrics(self, cutadapt_log):
+        # Total reads processed:...Total written (filtered):
+        metrics_dict = read_cutadapt_log(cutadapt_log)
+
+        total_reads = metrics_dict['Total reads processed']
+        reads_with_adapters = metrics_dict['Reads with adapters']
+        reads_too_short = metrics_dict['Reads that were too short']
+        reads_written = metrics_dict['Reads written (passing filters)']
+        total_base_pairs = metrics_dict['Total basepairs processed']
+        quality_trimmed = metrics_dict['Quality-trimmed']
+        base_pairs_written = metrics_dict['Total written (filtered)']
 
         self.add_metric(
             name='Reads with Adapters',
@@ -129,6 +145,7 @@ class Cutadapt(Step):
             f'--overlap {self.args.overlap} '
             f'-l {self.args.insert} '
             f'-o {self.out_fq2} '
+            f'{self.args.cutadapt_param} '
             f'{self.args.fq} '
         )
         self.run.logger.info(cmd)
@@ -140,7 +157,7 @@ class Cutadapt(Step):
         cutadapt_log = results.stdout
         with open(self.cutadapt_log_file, 'w') as f:
             f.write(cutadapt_log)
-        self.format_and_write_stat(cutadapt_log)
+        self.add_cutadapt_metrics(cutadapt_log)
 
 
 @utils.add_log
@@ -181,6 +198,7 @@ at least {overlap} bases match between adapter and read. """,
         help="Default `150`. Read2 insert length.",
         default=150
     )
+    parser.add_argument('--cutadapt_param', help='Other cutadapt parameters. For example, --cutadapt_param "-g AAA" ', default="")
     if sub_program:
         parser.add_argument('--fq', help='Required. R2 reads from step Barcode.', required=True)
         parser = s_common(parser)

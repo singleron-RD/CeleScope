@@ -1,3 +1,76 @@
+
+## [Unreleased] 
+ ### `snp`,`capture_virus` and `fusion`
+ - Change the default `--umi_threshold_method` from `auto` to `otsu`.
+ 
+
+## [1.10.0] - 2021-04-22
+ ### `fl_vdj`
+ - Add 3 new assays: `fl_vdj_CR`, `fl_vdj_TRUST4` and `fl_vdj_TRUST4_split`.
+
+ ### `rna` and `dynaseq`
+ - Limit the marker genes of each cluster in the HTML report to a maximum of 50 to avoid the slow opening of the report.
+ - Add read_saturation to the HTML report and `{sample}/*.count/downsample.txt`
+
+ ### `snp`
+ - Add panel `blood_1`.
+
+## [1.9.0] - 2021-04-01
+ ### `rna` and `dynaseq`
+ - Rename the cell-calling method from `cellranger3` to `EmptyDrops_CR`. Make `EmptyDrops_CR` the default method.
+ - Fix an issue that mitochondrial percent is not added to metrics.
+
+ ### `snp`,`capture_virus` and `fusion`
+ - When calculating the `auto` threshold, the default coefficient changes from 10 to 3. This will make the filtering more stringent.
+
+## [1.8.1] - 2021-03-23
+ ### General improvments
+ - Fix an issue where the matrix suffix `filtered_feature_bc_matrix` introduced in v1.8.0 is not recognized when parsing match_dir.
+
+## [1.8.0] - 2021-03-17
+ ### `rna` and `dynaseq`
+ - Replace `Seurat` with `scanpy`.
+ - Add read_saturation to downsample file.
+
+ ### `snp`,`capture_virus` and `fusion`
+ - When calculating `otsu` threshold, use `math.ceil` instead of `int`.
+ 
+ ### General improvments
+ - Fix an issue where the conditions for detecting scopeV2.0.1 are too loose. (#108)
+ - Move `sjm.job` from `./log/` to `./sjm/`.
+ - Change output file suffix.
+    - raw_matrix: `all_matrix` -> `raw_feature_bc_matrix`
+    - fitered_matrix: `matrix_10X`-> `filtered_feature_bc_matrix`
+
+
+## [1.7.2] - 2021-02-10
+
+ ### `vdj`
+ - "Cell with Barcode Match, TRA and TRB": When calculating the percentage, the denominator is `Cell with Barcode Match`. The denominator used previously was `Estimated Mumber of Cells`.
+
+ ### `capture_virus` and `fusion`
+ - Make UMI correction optional. If you do not want to perform UMI correction, use `--not_correct_UMI`.
+ - Add a filtering step to filter UMI with supporting reads less then read_threshold. 
+
+ ### `dyanseq`
+ - modify vcf base [#96](https://github.com/singleron-RD/CeleScope/pull/96).
+
+ ### General improvments
+ - Remove the redundant `--assay` parameter.
+ - Add the `--queue` argument for `sjm` job submission.
+
+## [1.7.1] - 2021-01-17
+
+ ### `rna`
+ - Fix a bug with mt_gene_list (#92)
+
+ ### `snp`
+  - Add a fitering step: `celescope snp filter_snp` with arguments `--threshold_method`. Choices can be one of 
+    - `auto` : Default method. Using a method similar to cell calling method.
+    - `otsu` : Counts are first log transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method).
+    - `hard` : Using user provided UMI threshold.
+    - `none` : Do not perform filtering. 
+
 ## [1.7.0] - 2021-12-28
  ### `capture_virus`
   - Add documents.

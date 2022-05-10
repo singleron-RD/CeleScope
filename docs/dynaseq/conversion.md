@@ -5,18 +5,14 @@
 ## Output
 - `{sample}.PosTag.bam` Bam file with conversion info.
 - `{sample}.PosTag.csv` SNP info in csv format.
-
-
 ## Arguments
-`--strand` gene strand file, the format is "geneID,+/-"
+`--strand` gene strand file, the format is "geneID,+/-".
 
-`--bam` featureCount bam(sortedByCoord), must have "MD" tag, set in star step
+`--bam` featureCount bam(sortedByCoord), must have "MD" tag, set in star step.
 
-`--cell` barcode cell list
+`--cell` barcode cell list.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

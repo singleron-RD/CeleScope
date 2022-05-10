@@ -8,15 +8,15 @@ import pandas as pd
 import plotly
 import plotly.graph_objects as go
 from celescope.tools.step import Step, s_common
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 class Substitution(Step):
     """
-    Features
+    ## Features
     - Computes the overall conversion rates in reads and plots a barplot.
 
-    Output
+    ## Output
     - `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
     """
 

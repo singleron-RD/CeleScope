@@ -1,5 +1,7 @@
-
-
+## Features
+- Count the number of reads and umis that 
+    1. originate from cell barcodes;
+    2. align to the fusion site and include flanking sequences of a certain length(default 20bp) on both sides of the fusion site.
 ## Arguments
 `--fusion_genomeDir` Fusion genome directory.
 
@@ -12,8 +14,6 @@
 `--capture_bam` None
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 
