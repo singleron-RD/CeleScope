@@ -2,7 +2,6 @@
 vdj mapping
 '''
 
-from tkinter.tix import InputOnly
 import pandas as pd
 import pysam
 
