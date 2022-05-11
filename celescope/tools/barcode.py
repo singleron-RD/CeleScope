@@ -274,9 +274,6 @@ def format_percent(x):
     x = str(round(x*100, 2))+"%"
     return x
 
-def format_percent(x):
-    x = str(round(x*100, 2))+"%"
-    return x
 
 class Chemistry():
     """

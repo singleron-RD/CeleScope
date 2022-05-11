@@ -341,11 +341,6 @@ rule all:
         self.snakemake_rule_all(sample,outdir,step)
 
 
-    def add_arguments_from_sample_tsv(self):
-        """
-        Add arguments from sample_tsv except SAMPLE_TSV_REQUIRED_COLUMNS
-        """
-        pass
 
     def get_args_from_multi_cli(self, step):
         """
