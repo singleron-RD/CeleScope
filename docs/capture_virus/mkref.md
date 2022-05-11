@@ -22,8 +22,6 @@ fasta = EBV_genome.fasta
 genome_name = EBV
 genomesaindexnbases = 7
 ```
-
-
 ## Arguments
 `--thread` Default=6. Threads to use.
 

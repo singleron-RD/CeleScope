@@ -4,7 +4,7 @@ from celescope.tools.multi import Multi
 
 class Multi_capture_virus(Multi):
     """
-    Usage
+    ## Usage
     1. Make a virus genomeDir using `celescope capture_virus mkref`
 
     2. Generate shell scripts
@@ -27,6 +27,7 @@ class Multi_capture_virus(Multi):
     def star_virus(self, sample):
         step = 'star_virus'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         if self.args.not_consensus:
             fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         else:
@@ -36,36 +37,44 @@ class Multi_capture_virus(Multi):
             f'{cmd_line} '
             f'--fq {fq} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=self.args.thread)
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def count_virus(self, sample):
         step = 'count_virus'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         capture_bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
         cmd = (
             f'{cmd_line} '
             f'--capture_bam {capture_bam} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
     def filter_virus(self, sample):
         step = 'filter_virus'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         raw_read_count_file = f'{self.outdir_dic[sample]["count_virus"]}/{sample}_raw_read_count.json'
         cmd = (
             f'{cmd_line} '
             f'--raw_read_count_file {raw_read_count_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
     def analysis_virus(self, sample):
         step = 'analysis_virus'
         cmd_line = self.get_cmd_line(step, sample)
-        filter_tsne_file = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_UMI_tsne.csv'
+        out_dir = f'{self.outdir_dic[sample][step]}'
+        filter_umi_file = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_UMI.csv'
         cmd = (
             f'{cmd_line} '
-            f'--filter_tsne_file {filter_tsne_file} '
+            f'--match_dir {self.col4_dict[sample]} '
+            f'--filter_umi_file {filter_umi_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
 

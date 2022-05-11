@@ -4,7 +4,7 @@ from celescope.tools.multi import Multi
 
 class Multi_snp(Multi):
     """
-    Usage
+    ## Usage
 
     ### Make a snp reference genomeDir
 
@@ -37,9 +37,9 @@ class Multi_snp(Multi):
     multi_snp\\
         --mapfile ./test1.mapfile\\
         --genomeDir {genomeDir after running celescope snp mkref}\\
-        --thread 10\\
+        --thread 4\\
         --mod shell\\
-        --gene_list gene_list.tsv\\
+        --panel lung_1\\
         --annovar_config annovar.config\\
         --not_consensus
     ```
@@ -50,11 +50,10 @@ class Multi_snp(Multi):
     multi_snp\\
         --mapfile ./test1.mapfile\\
         --genomeDir {genomeDir after running celescope snp mkref}\\
-        --thread 10\\
+        --thread 4\\
         --mod shell\\
-        --gene_list gene_list.tsv\\
+        --panel lung_1\\
         --annovar_config annovar.config\\
-        --min_support_read 1
     ```
 
     """
@@ -62,6 +61,7 @@ class Multi_snp(Multi):
     def star(self, sample):
         step = 'star'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         if self.args.not_consensus:
             fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         else:
@@ -72,47 +72,56 @@ class Multi_snp(Multi):
             f'{cmd_line} '
             f'--fq {fq} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,fq=fq,x=self.args.thread)
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def target_metrics(self, sample):
         step = 'target_metrics'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam'
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
             f'--add_RG '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
     def variant_calling(self, sample):
         step = 'variant_calling'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         bam = f'{self.outdir_dic[sample]["target_metrics"]}/{sample}_filtered_sorted.bam'
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=8, x=1)
 
     def filter_snp(self, sample):
         step ='filter_snp'
         vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_norm.vcf'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd = (
             f'{cmd_line} '
             f'--vcf {vcf} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def analysis_snp(self, sample):
         step = 'analysis_snp'
         vcf = f'{self.outdir_dic[sample]["filter_snp"]}/{sample}_filtered.vcf'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd = (
             f'{cmd_line} '
             f'--vcf {vcf} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
 

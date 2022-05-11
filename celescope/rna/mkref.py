@@ -6,10 +6,10 @@ from celescope.__init__ import HELP_DICT
 
 class Mkref_rna(Mkref):
     """
-    Features
+    ## Features
     - Create a genome reference directory.
 
-    Output
+    ## Output
 
     - STAR genome index files
 

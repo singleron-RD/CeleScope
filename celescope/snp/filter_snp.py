@@ -7,6 +7,14 @@ from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
 
 class Filter_snp(Step):
+    """
+    ## Features
+    - Filter out `ref` and `alt` alleles that do not have enough reads to support.
+
+    ## Output
+    - `{sample}_test1_filtered.vcf` VCF file after filtering. Alleles read counts that do not have enough reads to support are set to zero. 
+    Genotypes are changed accordingly.
+    """
     def __init__(self, args, display_title='Filtering'):
         super().__init__(args, display_title)
         self.vcf = args.vcf

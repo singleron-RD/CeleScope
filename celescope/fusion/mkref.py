@@ -4,15 +4,15 @@ from celescope.__init__ import HELP_DICT
 
 class Mkref_fusion(Mkref):
     """
-    Features
+    ## Features
     - Create a fusion genome directory.
 
-    Output
+    ## Output
 
     - STAR genome index files
     - Genome config file
 
-    Usage
+    ## Usage
     ```
     celescope fusion mkref \\
     --genome_name {genome_name} \\

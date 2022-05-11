@@ -13,11 +13,16 @@ from celescope.tools.step import Step, s_common
 
 class Consensus(Step):
     """
-    Features
-    - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI).
+    ## Features
+    - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and 
+    count up the number of each type of residue (ie. A or G or T or C for DNA) in all sequences in the
+    alignment. If the following conditions are met, the consensus sequence will be the most common residue in the alignment:
+    1. the percentage of the most common residue type > threshold(default: 0.5);
+    2. most common residue reads >= min_consensus_read;
+    otherwise an ambiguous character(N) will be added.
 
-    Output
-    - `{sample}_consensus.fq` Consensus fastq.
+    ## Output
+    - `{sample}_consensus.fq` Fastq file after consensus.
     """
 
     def __init__(self, args, display_title=None):
@@ -32,31 +37,33 @@ class Consensus(Step):
 
     @utils.add_log
     def run(self):
+        if self.args.mod == "snakemake":
+            subprocess.check_call(f'mkdir -p {self.outdir}',shell=True)
+        else:
+            sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
+            n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
+                fq=self.fq_tmp_file,
+                outfile=self.consensus_fq,
+                threshold=self.args.threshold,
+                min_consensus_read=self.min_consensus_read,
+            )
 
-        sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
-        n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
-            fq=self.fq_tmp_file,
-            outfile=self.consensus_fq,
-            threshold=self.args.threshold,
-            min_consensus_read=self.min_consensus_read,
-        )
-
-        self.add_metric(
-            name="UMI Counts",
-            value=n,
-            help_info='total UMI from FASTQ files',
-        )
-        self.add_metric(
-            name="Mean UMI Length",
-            value=round(np.mean(length_list), 2),
-            help_info='mean of all UMI length'
-        )
-        self.add_metric(
-            name="Ambiguous Base Counts",
-            value=total_ambiguous_base_n,
-            total=sum(length_list),
-            help_info='number of bases that do not pass consensus threshold'
-        )
+            self.add_metric(
+                name="UMI Counts",
+                value=n,
+                help_info='total UMI from FASTQ files',
+            )
+            self.add_metric(
+                name="Mean UMI Length",
+                value=round(np.mean(length_list), 2),
+                help_info='mean of all UMI length'
+            )
+            self.add_metric(
+                name="Ambiguous Base Counts",
+                value=total_ambiguous_base_n,
+                total=sum(length_list),
+                help_info='number of bases that do not pass consensus threshold'
+            )
 
 
 @utils.add_log
@@ -187,8 +194,6 @@ def get_read_length(read_list, threshold=0.5):
 
 @utils.add_log
 def consensus(args):
-    if args.not_consensus:
-        return
     with Consensus(args, display_title="Consensus") as runner:
         runner.run()
 

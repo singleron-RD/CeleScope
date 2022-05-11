@@ -12,11 +12,11 @@ from celescope.__init__ import HELP_DICT
 
 class Conversion(Step):
     """
-    Features
+    ## Features
     - Get conversion pos in each read.
         - Get snp info. 
 
-    Output
+    ## Output
     - `{sample}.PosTag.bam` Bam file with conversion info.
     - `{sample}.PosTag.csv` SNP info in csv format.
     """

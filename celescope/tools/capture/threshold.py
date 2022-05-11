@@ -8,19 +8,17 @@ import celescope.tools.utils as utils
 
 matplotlib.use('Agg')
 
-# minimum array length to use otsu method
-OTSU_MIN_LEN = 50
 
 class Otsu():
     """
     remove all zero in array
-    Return 1 if len(array) < OTSU_MIN_LEN
+    Return 1 if len(array) < otsu_min_len
     """
-    def __init__(self, array, log_base=10, otsu_plot_path=None,):
+    def __init__(self, array, log_base=10, otsu_min_len = 50, otsu_plot_path=None, **kwargs):
         
         self.len_bool = True
         array = [x for x in array if x > 0 ]
-        if len(array) < OTSU_MIN_LEN:
+        if len(array) < otsu_min_len:
             self.len_bool = False
 
         self.log_base = log_base
@@ -31,6 +29,7 @@ class Otsu():
         else:
             raise Exception('log_base must be 2, 10')
 
+        self.kwargs = kwargs
         self.threshold = 1
         self.counts = None
         self.bins = None
@@ -102,10 +101,12 @@ class Otsu():
 
 class Auto():
     """
-    threshold = top 1% cell count / 10
+    threshold = top 1% positive cell count / coef
     """
-    def __init__(self, array):
+    def __init__(self, array, coef=3, **kwargs):
         self.array = [x for x in array if x > 0 ]
+        self.coef = int(coef)
+        self.kwargs = kwargs
     
     def run(self):
         array = self.array
@@ -114,7 +115,7 @@ class Auto():
         n_cell_1_percentile = len(array) // 100
         sorted_counts = sorted(array, reverse=True)
         count_cell_1_percentile = sorted_counts[n_cell_1_percentile]
-        threshold = int(count_cell_1_percentile / 10)
+        threshold = int(count_cell_1_percentile / self.coef)
 
         return threshold
 
@@ -127,11 +128,13 @@ class Threshold():
         otsu_plot_path: str
         hard_threshold: int
     """
-    def __init__(self, array, threshold_method='auto', otsu_plot_path=None, hard_threshold=None):
+    def __init__(self, array, threshold_method='auto', otsu_plot_path=None, hard_threshold=None, **kwargs):
         self.array = [x for x in array if x > 0 ]
         self.threshold_method = threshold_method
         self.otsu_plot_path = otsu_plot_path
         self.hard_threshold = hard_threshold
+
+        self.kwargs = kwargs
     
     def run(self):
         """
@@ -140,16 +143,18 @@ class Threshold():
         if not self.array:
             return 1
         if self.threshold_method == 'otsu':
-            otsu = Otsu(self.array, otsu_plot_path=self.otsu_plot_path)
+            otsu = Otsu(self.array, otsu_plot_path=self.otsu_plot_path, **self.kwargs)
             threshold = otsu.run()
         elif self.threshold_method == 'auto':
-            auto = Auto(self.array)
+            auto = Auto(self.array, **self.kwargs)
             threshold = auto.run()
         elif self.threshold_method == 'hard':
             if self.hard_threshold:
                 threshold = int(self.hard_threshold)
             else:
                 raise Exception('hard_threshold must be set')
+        elif self.threshold_method == 'none':
+            threshold = 1
         else:
             raise ValueError(f'Unknown threshold method: {self.threshold_method}')
 

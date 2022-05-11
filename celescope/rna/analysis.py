@@ -1,6 +1,4 @@
 
-from pathlib import PurePath
-
 from celescope.tools import analysis_wrapper
 from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools import utils
@@ -9,14 +7,14 @@ from celescope.tools.step import Step
 
 class Analysis(Step):
     """
-    Features
+    ## Features
     - Cell clustering with Seurat.
 
     - Calculate the marker gene of each cluster.
 
     - Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
 
-    Output
+    ## Output
     - `markers.tsv` Marker genes of each cluster.
 
     - `tsne_coord.tsv` t-SNE coordinates and clustering information.
@@ -38,13 +36,14 @@ class Analysis(Step):
 
     def run(self):
 
-        scanpy_wrapper = analysis_wrapper.Scanpy_wrapper(self.args, display_title=self.display_title)
-        scanpy_wrapper.run()
+        with analysis_wrapper.Scanpy_wrapper(self.args, display_title=self.display_title) as scanpy_wrapper:
+            scanpy_wrapper.run()
+            df_tsne, df_marker = scanpy_wrapper.get_df()
+            self.set_metric_list(metric_list=scanpy_wrapper.get_metric_list())
 
-        report_runner = analysis_wrapper.Report_runner(self.args, display_title=self.display_title)
-        report_runner.add_marker_help()
+        with analysis_wrapper.Report_runner(self.args, display_title=self.display_title) as report_runner:
+            report_runner.add_marker_help()
 
-        df_tsne, df_marker = scanpy_wrapper.get_df()
 
         tsne_cluster = Tsne_plot(df_tsne, 'cluster').get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)

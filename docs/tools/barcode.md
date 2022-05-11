@@ -11,8 +11,6 @@
 
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
 the read name is `{barcode}_{UMI}_{read ID}`.
-
-
 ## Arguments
 `--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
 - `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  

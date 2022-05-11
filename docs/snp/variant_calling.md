@@ -2,14 +2,12 @@
 - Perform variant calling at single cell level.
 
 ## Output
-
-- `{sample}_norm.vcf` Normalized vcf file.
-
-
+- `{sample}_raw.vcf` Variants are called with bcftools default settings.
+- `{sample}_norm.vcf` Indels are left-aligned and normalized. See https://samtools.github.io/bcftools/bcftools.html#norm for more details.
 ## Arguments
-`--genomeDir` Required. Genome directory after running `celescope rna mkref`.
+`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
-`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
+`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
 
 `--bam` Input BAM file from step `target_metrics`.
 

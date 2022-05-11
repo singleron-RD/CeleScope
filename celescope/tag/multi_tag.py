@@ -7,7 +7,7 @@ class Multi_tag(Multi):
     `multi_tag` is used to analyze Single-cell Multiplexing data generated with CLindex<sup>TM</sup> Sample Multiplexing kits. 
     Before running `multi_tag`, you need to run scRNA-Seq data with CeleScope first.
 
-    Usage
+    ## Usage
 
     ```
     multi_tag \\
@@ -24,40 +24,48 @@ class Multi_tag(Multi):
         step = 'mapping_tag'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def count_tag(self, sample):
         step = 'count_tag'
         read_count_file = f'{self.outdir_dic[sample]["mapping_tag"]}/{sample}_read_count.tsv'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd = (
             f'{cmd_line} '
             f'--read_count_file {read_count_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def analysis_tag(self, sample):
         step = 'analysis_tag'
         tsne_tag_file = f'{self.outdir_dic[sample]["count_tag"]}/{sample}_tsne_tag.tsv'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd = (
             f'{cmd_line} '
             f'--tsne_tag_file {tsne_tag_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def split_tag(self, sample):
         step = 'split_tag'
         umi_tag_file = f'{self.outdir_dic[sample]["count_tag"]}/{sample}_umi_tag.tsv'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         cmd = (
             f'{cmd_line} '
             f'--umi_tag_file {umi_tag_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
 

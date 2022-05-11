@@ -4,12 +4,13 @@ from celescope.tools.multi import Multi
 
 class Multi_rna(Multi):
     """
-    Usage
+    ## Usage
     ```
         multi_rna\\
         --mapfile ./rna.mapfile\\
         --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
         --thread 8\\
+        --allowNoPolyT\\
         --mod shell
     ```
 

@@ -57,10 +57,10 @@ def count_tag(args):
 
 class Count_tag(Step):
     """
-    Features
+    ## Features
     - Assign tag to each cell barcode and summarize.
 
-    Output
+    ## Output
 
     - `{sample}_umi_tag.tsv` 
 

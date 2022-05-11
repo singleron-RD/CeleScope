@@ -1,11 +1,9 @@
 ## Features
 
-- Count raw virus reads
+- Taking the bam file as input, count the number of UMIs and reads mapped to the viral genome.
 
 ## Output
 - {sample_raw_read_count.json} : barcode - UMI - raw_reads_count
-
-
 ## Arguments
 `--min_query_length` Minimum query length.
 

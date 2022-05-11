@@ -1,6 +1,7 @@
 import argparse
 import inspect
 import os
+from collections import OrderedDict
 
 from celescope.tools import utils
 from celescope.celescope import ArgFormatter
@@ -9,6 +10,26 @@ from celescope.__init__ import ASSAY_LIST, RELEASED_ASSAYS
 PRE_PROCESSING_STEPS = ('sample', 'barcode', 'cutadapt')
 DOCS_DIR = f'docs/'
 MANUAL = f'{DOCS_DIR}/manual.md'
+
+def parse_docstring_to_dict(docstring):
+    """
+    Parse docstring(markown) to dict
+    Return:
+        dict {title: content}
+    """
+
+    doc_dict = {}
+    title = None
+    for line in docstring.split('\n'):
+        if line.find('##') != -1:
+            title = line.replace('##', '').strip().lower()
+            doc_dict[title] = ""
+        else:
+            if title:
+                doc_dict[title] += line + '\n'
+
+    return doc_dict
+
 
 
 def get_argument_docs_from_parser(parser):
@@ -27,8 +48,14 @@ def get_argument_docs_from_parser(parser):
 
 
 def get_class_docs(step_module):
-    titles = ("Features", "Output", "Usage")
-    class_docs = ""
+    """
+    Return:
+        class_docs: str
+        doc_dict: dict
+    """
+    # case ignored
+    titles = ("features", "output", "usage")
+
     for child in inspect.getmembers(step_module, inspect.isclass):
         """Filter out class not defined in step_module"""
         class_obj = child[1]
@@ -39,20 +66,17 @@ def get_class_docs(step_module):
         # only write class docs when the doc contains at least one title
         write_bool = False
         if doc:
+            doc_dict = parse_docstring_to_dict(doc)
             for title in titles:
-                if title in doc:
+                if title in doc_dict:
                     write_bool = True
+                    break
 
         if write_bool:
-            for line in doc.split('\n'):
-                for title in titles:
-                    if line.find(title) != -1:
-                        class_docs += "## " + line + '\n'
-                        break
-                else:
-                    class_docs += line + '\n'
-    class_docs += '\n\n'
-    return class_docs
+            class_docs = doc + '\n'
+            return class_docs, doc_dict
+
+    return "", {}
 
 
 class Docs():
@@ -61,11 +85,15 @@ class Docs():
 
         init_module = utils.find_assay_init(assay)
         self.steps = init_module.__STEPS__.copy()
-        self.steps.append(f'multi_{assay}')
+        self.multi_step = f'multi_{assay}'
 
         self.out_md_dict = {}
         self.relative_md_path = {}
         self.release_bool = self.assay in RELEASED_ASSAYS
+
+        # order: step
+        self.output_file_doc_dict = OrderedDict()
+        self.feature_doc_dict = OrderedDict()
 
         assay_dir = f'docs/{assay}'
         if not os.path.exists(assay_dir):
@@ -92,6 +120,23 @@ class Docs():
             argument_docs = get_argument_docs_from_parser(parser)
         return argument_docs
 
+    def get_multi_feature_doc(self):
+        multi_feature_doc = "## Features\n"
+        for step in self.feature_doc_dict:
+            multi_feature_doc += f"### {step}\n"
+            multi_feature_doc += self.feature_doc_dict[step]
+            multi_feature_doc += '\n'
+
+        return multi_feature_doc
+
+    def get_multi_output_doc(self):
+        multi_output_doc = "## Output files\n"
+        for step in self.output_file_doc_dict:
+            multi_output_doc += f"### {step}\n"
+            multi_output_doc += self.output_file_doc_dict[step]
+            multi_output_doc += '\n'
+
+        return multi_output_doc
 
     def write_step_doc(self, step):
         """
@@ -102,22 +147,34 @@ class Docs():
         self.out_md_dict[step] = f'docs/{folder}/{step}.md'
         self.relative_md_path[step] = f'{folder}/{step}.md'
 
-        class_docs = get_class_docs(step_module)
+        class_docs, doc_dict = get_class_docs(step_module)
+        if 'output' in doc_dict:
+            self.output_file_doc_dict[step] = doc_dict['output']
+        if 'features' in doc_dict:
+            self.feature_doc_dict[step] = doc_dict['features']
         argument_docs = self.get_argument_docs(step, step_module)
 
         with open(self.out_md_dict[step], 'w') as out_file:
             out_file.write(class_docs)
+            if step.startswith("multi"):
+                out_file.write(self.get_multi_feature_doc())
+                out_file.write(self.get_multi_output_doc())
             out_file.write(argument_docs)
 
     def run(self):
         if self.release_bool:
             assay_text = utils.get_assay_text(self.assay)
-            self.manual_lines.append(f'## {assay_text}\n')            
+            self.manual_lines.append(f'## {assay_text}\n')       
 
         for step in self.steps:
             self.write_step_doc(step)
             if self.release_bool:
                 self.add_step_in_manual(step)
+
+        # write multi last because multi need to collect output files from each step
+        self.write_step_doc(self.multi_step)
+        if self.release_bool:
+            self.add_step_in_manual(self.multi_step)
 
         self.write_manual()
 

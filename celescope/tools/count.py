@@ -16,10 +16,11 @@ from scipy.io import mmwrite
 from scipy.sparse import coo_matrix
 
 from celescope.tools import utils
+from celescope.__init__ import HELP_DICT
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
     MATRIX_FILE_NAME, FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
-from celescope.tools.cellranger3 import get_plot_elements
-from celescope.tools.cellranger3.cell_calling_3 import cell_calling_3
+from celescope.tools.emptydrop_cr import get_plot_elements
+from celescope.tools.emptydrop_cr.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.plotly_plot import Line_plot
@@ -28,19 +29,27 @@ TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)
 np.random.seed(0)
 
+# downsample.csv
+READ_FRACTION = 'read_fraction'
+MEDIAN_GENE_NUMBER = 'median_gene_number'
+READ_SATURATION = 'read_saturation'
+UMI_SATURATION = 'umi_saturation'
+
+# Plot axis title in HTML
+X_TITLE = 'Read Fraction'
+SATURATION_Y_TITLE = 'Sequencing Saturation(%)'
+MEDIAN_GENE_Y_TITLE = 'Median Genes per Cell'
+
 
 class Count(Step):
     """
-    Features
+    ## Features
     - Cell-calling: Distinguish cell barcodes from background barcodes. 
     - Generate expression matrix.
-    Output
-    - `{sample}_all_matrix` The expression matrix of all detected barcodes. 
-        Can be read in by calling the `Seurat::Read10X` function.
-    - `{sample}_matrix_10X` The expression matrix of the barcode that is identified to be the cell. 
-    Can be read in by calling the `Seurat::Read10X` function.
-    - `{sample}_matrix.tsv.gz` The expression matrix of the barcode that is identified to be the cell, separated by tabs. 
-    CeleScope >=1.2.0 does not output this file.
+    ## Output
+    - `{sample}_raw_feature_bc_matrix` The expression matrix of all detected barcodes in [Matrix Market Exchange Formats](
+        https://math.nist.gov/MatrixMarket/formats.html). 
+    - `{sample}_filtered_feature_bc_matrix` The expression matrix of cell barcodes in Matrix Market Exchange Formats. 
     - `{sample}_count_detail.txt.gz` 4 columns: 
         - barcode  
         - gene ID  
@@ -49,17 +58,13 @@ class Count(Step):
     - `{sample}_counts.txt` 6 columns:
         - Barcode: barcode sequence
         - readcount: read count of each barcode
-        - UMI2: UMI count (with reads per UMI >= 2) for each barcode
+        - UMI2: read count with reads per UMI >= 2 for each barcode
         - UMI: UMI count for each barcode
         - geneID: gene count for each barcode
         - mark: cell barcode or backgound barcode.
             `CB` cell  
             `UB` background  
-    - `{sample}_downsample.txt` 3 columns：
-        - percent: percentage of sampled reads
-        - median_geneNum: median gene number per cell
-        - saturation: sequencing saturation
-    - `barcode_filter_magnitude.pdf` Barcode-UMI plot.
+    - `{sample}_downsample.tsv` Subset a fraction of reads and calculate median gene number and sequencing saturation.
     """
 
     def __init__(self, args, display_title=None):
@@ -81,12 +86,17 @@ class Count(Step):
         self.marked_count_file = f'{self.outdir}/{self.sample}_counts.txt'
         self.raw_matrix_dir = f'{self.outdir}/{self.sample}_{RAW_MATRIX_DIR_SUFFIX[0]}'
         self.cell_matrix_dir = f'{self.outdir}/{self.sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
-        self.downsample_file = f'{self.outdir}/{self.sample}_downsample.txt'
+        self.downsample_file = f'{self.outdir}/{self.sample}_downsample.tsv'
 
-    def line_data(self):
-        columns = ['Reads Fraction', 'Median Genes per Cell', 'Sequencing Saturation(%)']
-        data = pd.read_csv(self.downsample_file, sep="\t", names=columns, header=0)
-        return data
+    def get_df_line(self):
+        df_line = pd.read_csv(self.downsample_file, sep="\t", header=0)
+        df_line.rename(columns={
+            READ_FRACTION: X_TITLE,
+            MEDIAN_GENE_NUMBER: MEDIAN_GENE_Y_TITLE,
+            UMI_SATURATION: SATURATION_Y_TITLE,
+        }, inplace=True)
+
+        return df_line
 
     def run(self):
         self.bam2table()
@@ -118,13 +128,13 @@ class Count(Step):
         self.get_summary(CB_describe, CB_total_Genes,
                          CB_reads_count, reads_mapped_to_transcriptome)
 
-        df_line = self.line_data()
+        df_line = self.get_df_line()
 
-        line_saturation = Line_plot(df_line=df_line,title="Sequencing Saturation",x_title="Reads Fraction",
-                                    y_title="Sequencing Saturation(%)",y_range=[0,100],section=False).get_plotly_div()
+        line_saturation = Line_plot(df_line=df_line,title="Sequencing Saturation",x_title=X_TITLE,
+                                    y_title=SATURATION_Y_TITLE, y_range=[0,100], section=False).get_plotly_div()
         self.add_data(line_saturation=line_saturation)
-        line_median = Line_plot(df_line=df_line,title="Median Genes per Cell",x_title="Reads Fraction",
-                                y_title="Median Genes per Cell").get_plotly_div()
+        line_median = Line_plot(df_line=df_line,title="Median Genes per Cell", x_title=X_TITLE,
+                                y_title=MEDIAN_GENE_Y_TITLE).get_plotly_div()
         self.add_data(line_median=line_median)
 
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.marked_count_file))
@@ -208,8 +218,8 @@ class Count(Step):
             cell_bc, UMI_threshold = self.force_cell(df_sum)
         elif cell_calling_method == 'auto':
             cell_bc, UMI_threshold = self.auto_cell(df_sum)
-        elif cell_calling_method == 'cellranger3':
-            cell_bc, UMI_threshold = self.cellranger3_cell(df_sum)
+        elif cell_calling_method == 'EmptyDrops_CR':
+            cell_bc, UMI_threshold = self.emptydrop_cr_cell(df_sum)
         return cell_bc, UMI_threshold
 
     @utils.add_log
@@ -257,7 +267,7 @@ class Count(Step):
         return cell_bc, threshold
 
     @utils.add_log
-    def cellranger3_cell(self, df_sum):
+    def emptydrop_cr_cell(self, df_sum):
         cell_bc, initial_cell_num = cell_calling_3(self.raw_matrix_dir, self.expected_cell_num)
         threshold = Count.find_threshold(df_sum, initial_cell_num)
         return cell_bc, threshold
@@ -319,7 +329,7 @@ class Count(Step):
         self.add_metric(
             name='Estimated Number of Cells',
             value=estimated_cells,
-            help_info='the number of barcodes considered as cell-associated'
+            help_info=f'the number of barcodes considered as cell-associated. The cell calling method used for this sample is {self.cell_calling_method}.'
         )
 
         fraction_reads_in_cells = round(float(CB_reads_count) / reads_mapped_to_transcriptome * 100, 2)
@@ -337,7 +347,7 @@ class Count(Step):
                 key='Valid Reads',
             )
         except KeyError:
-            self.get_summary.logger.warning('barcode_summary not found. Will not output `Mean Reads per Cell`')
+            self.get_summary.logger.warning('Will not output `Mean Reads per Cell`')
         else:
             mean_reads_per_cell = int(valid_read_number / estimated_cells)
             self.add_metric(
@@ -367,12 +377,19 @@ class Count(Step):
             help_info='the median number of genes detected per cell-associated barcode'
         )
 
-        saturation = round(self.downsample_dict['umi_saturation'][-1], 2)
+        umi_saturation = round(self.downsample_dict['umi_saturation'][-1], 2)
+        read_saturation = round(self.downsample_dict['read_saturation'][-1], 2)
         self.add_metric(
             name='Saturation',
-            value=saturation,
-            display=f'{saturation}%',
-            help_info='the fraction of UMI originating from an already-observed UMI'
+            value=umi_saturation,
+            display=f'{umi_saturation}%',
+            help_info=(
+                'the fraction of UMI originating from an already-observed UMI. '
+                'There is a difference in how CeleScope and CellRanger calculate saturation. '
+                'CeleScope shows umi_saturation in the report, while CellRanger shows read_saturation in the report. '
+                'For details, see <a href="https://github.com/singleron-RD/CeleScope/blob/dev/docs/details.md#saturation">here</a>. '
+                f'read_saturation: {read_saturation}%'
+            )
         )
 
     @staticmethod
@@ -381,6 +398,7 @@ class Count(Step):
         umi_saturation = 1 - n_deduped_reads / n_umis
         read_saturation = 1 - n_deduped_reads / n_reads
         Currently the html report shows umi_saturation.
+
         n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads.
         n_umis = Total number of (confidently mapped, valid cell-barcode, valid UMI) UMIs.
         n_reads = Total number of (confidently mapped, valid cell-barcode, valid UMI) reads.
@@ -414,26 +432,39 @@ class Count(Step):
         cell_read_index = np.array(df_cell.index.repeat(df_cell['count']), dtype='int32')
         np.random.shuffle(cell_read_index)
 
-        format_str = "%.2f\t%.2f\t%.2f\n"
-        res_dict = {
-            "fraction": [],
-            "umi_saturation": [],
-            "read_saturation": [],
-            "median_gene": []
+        downsample_dict = {
+            READ_FRACTION: [0],
+            UMI_SATURATION: [0],
+            READ_SATURATION: [0],
+            MEDIAN_GENE_NUMBER: [0],
         }
-        with open(self.downsample_file, 'w') as fh:
-            fh.write('percent\tmedian_geneNum\tsaturation\n')
-            fh.write(format_str % (0, 0, 0))
-            for fraction in np.arange(0.1, 1.1, 0.1):
-                umi_saturation, read_saturation, geneNum_median = Count.sub_sample(
-                    fraction, df_cell, cell_read_index)
-                fh.write(format_str % (fraction, geneNum_median, umi_saturation))
-                res_dict["fraction"].append(round(fraction, 1))
-                res_dict["umi_saturation"].append(round(umi_saturation, 2))
-                res_dict["read_saturation"].append(round(read_saturation, 2))
-                res_dict["median_gene"].append(geneNum_median)
 
-        self.downsample_dict = res_dict
+        for fraction in np.arange(0.1, 1.1, 0.1):
+            umi_saturation, read_saturation, geneNum_median = Count.sub_sample(
+                fraction, df_cell, cell_read_index)
+            fraction = round(fraction,1)
+            umi_saturation = round(umi_saturation, 2)
+            read_saturation = round(read_saturation, 2)
+            downsample_dict[READ_FRACTION].append(fraction)
+            downsample_dict[UMI_SATURATION].append(umi_saturation)
+            downsample_dict[READ_SATURATION].append(read_saturation)
+            downsample_dict[MEDIAN_GENE_NUMBER].append(geneNum_median)
+        
+            self.add_metric(
+                name=f'Read Fraction {fraction} read_saturation',
+                value=read_saturation,
+                show=False,
+            )
+
+            self.add_metric(
+                name=f'Read Fraction {fraction} umi_saturation',
+                value=umi_saturation,
+                show=False,
+            )
+
+        df_downsample = pd.DataFrame(downsample_dict, columns=[READ_FRACTION, MEDIAN_GENE_NUMBER, UMI_SATURATION, READ_SATURATION])
+        df_downsample.to_csv(self.downsample_file, index=False, sep='\t')
+        self.downsample_dict = downsample_dict
 
 
 @utils.add_log
@@ -447,16 +478,16 @@ def get_opts_count(parser, sub_program):
     parser.add_argument('--expected_cell_num', help='Default `3000`. Expected cell number.', default=3000)
     parser.add_argument(
         '--cell_calling_method',
-        help='Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`',
-        choices=['auto', 'cellranger3'],
-        default='auto',
+        help=HELP_DICT['cell_calling_method'],
+        choices=['auto', 'EmptyDrops_CR'],
+        default='EmptyDrops_CR',
     )
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
         parser.add_argument(
             '--force_cell_num',
-            help='Default `None`. Force the cell number within (value * 0.9, value * 1.1). ',
+            help='Default `None`. Force the cell number to be this number. ',
         )
 
 

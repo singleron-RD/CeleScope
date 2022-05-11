@@ -9,10 +9,8 @@
     `tag_name`  tag name in barcode_fasta  
     `UMI`   UMI sequence  
     `read_count` read count per UMI  
-
-
 ## Arguments
-`--fq_pattern` Required. R2 read pattern. The number after the letter represents the number of bases.         
+`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
 `L` linker(common sequences)  
 `C` tag barcode.
 

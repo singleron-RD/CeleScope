@@ -1,15 +1,41 @@
 
 ## [Unreleased] 
- ### `rna`
- - Use `scanpy` instead of `seurat` for data analysis.
- - TODO: add read_saturation to downsample file.
+
+## [1.10.0] - 2021-04-22
+ ### `fl_vdj`
+ - Add 3 new assays: `fl_vdj_CR`, `fl_vdj_TRUST4` and `fl_vdj_TRUST4_split`.
+
+ ### `rna` and `dynaseq`
+ - Limit the marker genes of each cluster in the HTML report to a maximum of 50 to avoid the slow opening of the report.
+ - Add read_saturation to the HTML report and `{sample}/*.count/downsample.txt`
+
+ ### `snp`
+ - Add panel `blood_1`.
+
+## [1.9.0] - 2021-04-01
+ ### `rna` and `dynaseq`
+ - Rename the cell-calling method from `cellranger3` to `EmptyDrops_CR`. Make `EmptyDrops_CR` the default method.
+ - Fix an issue that mitochondrial percent is not added to metrics.
+
+ ### `snp`,`capture_virus` and `fusion`
+ - When calculating the `auto` threshold, the default coefficient changes from 10 to 3. This will make the filtering more stringent.
+
+## [1.8.1] - 2021-03-23
+ ### General improvments
+ - Fix an issue where the matrix suffix `filtered_feature_bc_matrix` introduced in v1.8.0 is not recognized when parsing match_dir.
+
+## [1.8.0] - 2021-03-17
+ ### `rna` and `dynaseq`
+ - Replace `Seurat` with `scanpy`.
+ - Add read_saturation to downsample file.
 
  ### `snp`,`capture_virus` and `fusion`
  - When calculating `otsu` threshold, use `math.ceil` instead of `int`.
  
  ### General improvments
- - Move `sjm.job` from `./log/` to `./sjm/`
- - Change file suffix
+ - Fix an issue where the conditions for detecting scopeV2.0.1 are too loose. (#108)
+ - Move `sjm.job` from `./log/` to `./sjm/`.
+ - Change output file suffix.
     - raw_matrix: `all_matrix` -> `raw_feature_bc_matrix`
     - fitered_matrix: `matrix_10X`-> `filtered_feature_bc_matrix`
 

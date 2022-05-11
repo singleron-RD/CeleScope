@@ -1,8 +1,5 @@
-import subprocess
 import scanpy as sc
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import pandas as pd
 
 from celescope.tools import utils
@@ -10,13 +7,18 @@ from celescope.__init__ import HELP_DICT
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
 
-
+# markers adjust p_value
+PVAL_CUTOFF = 0.05
+# scanpy mitochonrial variable name
 MITO_VAR = 'mito'
 NORMALIZED_LAYER = 'normalised'
-
 RESOLUTION = 1.2
 N_PCS = 25
-PVAL_CUTOFF = 0.05
+MITO_GENE_PERCENT_LIST = [5, 10, 15, 20, 50]
+# output marker top n in html
+MARKER_TOP_N = 50
+# marker sort by
+MARKER_SORT_BY = 'p_val_adj'
 
 
 def read_tsne(tsne_file):
@@ -26,6 +28,19 @@ def read_tsne(tsne_file):
         df.rename(columns={'Unnamed: 0': 'barcode'}, inplace=True)
         df = df.set_index('barcode')
     return df
+
+def format_df_marker(df_marker):
+
+    avg_logfc_col = "avg_log2FC"  # seurat 4
+    if "avg_logFC" in df_marker.columns:  # seurat 2.3.4
+        avg_logfc_col = "avg_logFC"
+    df_marker = df_marker.loc[:,
+                                ["cluster", "gene", avg_logfc_col, "pct.1", "pct.2", "p_val_adj"]
+                                ]
+    df_marker["cluster"] = df_marker["cluster"].apply(lambda x: f"cluster {x}")
+    df_marker = df_marker[df_marker["p_val_adj"] < PVAL_CUTOFF]
+
+    return df_marker
 
 def get_opts_analysis(parser, sub_program):
     
@@ -54,6 +69,7 @@ class Scanpy_wrapper(Step):
 
         # out
         self.df_marker_file = f'{self.out_prefix}_markers.tsv'
+        self.df_marker_raw_file = f'{self.out_prefix}_markers_raw.tsv'
         self.df_tsne_file = f'{self.out_prefix}_tsne_coord.tsv'
         self.h5ad_file = f'{self.out_prefix}.h5ad'
 
@@ -81,20 +97,18 @@ class Scanpy_wrapper(Step):
 
     @utils.add_log
     def write_mito_stats(self):
- 
-        #stat.txt
-        total_cell = len(self.adata.obs)
-        percent_list = [5,10,15,20,50]
-        mito_dict = {
-            key: sum(self.adata.obs[f'pct_counts_{MITO_VAR}'] > key) / total_cell             
-            for key in percent_list
-        }
 
-        for percent in percent_list:
+        mt_pct_var = f'pct_counts_{MITO_VAR}'
+        total_cell_number = self.adata.n_obs
+
+        for mito_gene_percent in MITO_GENE_PERCENT_LIST:
+            cell_number = sum(self.adata.obs[mt_pct_var] > mito_gene_percent)
+            fraction = round(cell_number / total_cell_number * 100, 2)
             self.add_metric(
-                name=f'Fraction of cells have mito gene percent>{percent}%',
-                value=round(mito_dict[percent], 2),
+                name=f'Fraction of cells have mito gene percent>{mito_gene_percent}%',
+                value=f'{fraction}%',
             )
+
 
     @utils.add_log
     def normalize(self):
@@ -243,7 +257,7 @@ class Scanpy_wrapper(Step):
         )
 
     @utils.add_log
-    def cluster(self):
+    def find_marker_genes(self):
         """
         Wrapper function for sc.tl.rank_genes_groups
         """
@@ -259,6 +273,9 @@ class Scanpy_wrapper(Step):
 
     @utils.add_log
     def write_markers(self):
+        '''
+        write only p_val_adj < PVAL_CUTOFF to avoid too many markers
+        '''
         df_markers = sc.get.rank_genes_groups_df(self.adata, group=None, pval_cutoff=PVAL_CUTOFF)
         df_markers = df_markers[df_markers['logfoldchanges'].notna()]
         markers_name_dict = {
@@ -266,13 +283,23 @@ class Scanpy_wrapper(Step):
             'names':'gene',
             'logfoldchanges':'avg_log2FC',
             'pvals':'p_val',
-            'pvalse_adj':'p_val_adj',
+            'pvals_adj':'p_val_adj',
             'pct_nz_group':'pct.1',
             'pct_nz_reference':'pct.2'
          }
         df_markers = df_markers.rename(markers_name_dict,axis='columns')
         df_markers['cluster'] = df_markers['cluster'].map(lambda x : int(x)+1)
-        df_markers.to_csv(self.df_marker_file, index=None, sep='\t')
+        df_markers = df_markers.loc[df_markers['p_val_adj'] < PVAL_CUTOFF, ]
+        df_markers.to_csv(self.df_marker_raw_file, index=None, sep='\t')
+
+        df_markers_filter = df_markers.loc[df_markers['avg_log2FC'] > 0].sort_values(MARKER_SORT_BY, ascending=False).groupby('cluster').head(50)
+        df_markers_filter = df_markers_filter.round({
+            'avg_log2FC':3,
+            'pct.1':3,
+            'pct.2':3,
+        })
+        df_markers_filter.to_csv(self.df_marker_file, index=None, sep='\t')
+
 
     @utils.add_log
     def write_tsne(self):
@@ -302,8 +329,7 @@ class Scanpy_wrapper(Step):
         self.tsne()
         self.umap()
         self.leiden()
-        self.cluster()
-
+        self.find_marker_genes()
 
         self.write_markers()
         self.write_tsne()
@@ -316,10 +342,14 @@ class Scanpy_wrapper(Step):
         """
         df_tsne = read_tsne(self.df_tsne_file)
         df_marker = pd.read_csv(self.df_marker_file, sep="\t")
+        df_marker = format_df_marker(df_marker)
         return df_tsne, df_marker
 
 
 def get_opts_analysis_match(parser, sub_program):
+    """
+    Do not perform analysis. Only read data from scRNA-seq match_dir.
+    """
     if sub_program:
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
         parser.add_argument("--tsne_file", help=HELP_DICT['tsne_file'])
@@ -371,10 +401,15 @@ class Report_runner(Step):
         """
         if utils.check_arg_not_none(self.args, 'match_dir'):
             df_tsne_file, df_marker_file = self.get_df_file(self.args.match_dir)
-        else:
+        elif utils.check_arg_not_none(self.args, 'tsne_file'):
             df_tsne_file = self.args.tsne_file
             df_marker_file = self.args.df_marker_file
+        else:
+            raise ValueError('match_dir or tsne_file must be specified')
         df_tsne = read_tsne(df_tsne_file)
         df_marker = pd.read_csv(df_marker_file, sep="\t")
+        df_marker = format_df_marker(df_marker)
         return df_tsne, df_marker
 
+    def run(self):
+        pass

@@ -4,7 +4,7 @@ from celescope.vdj.__init__ import __ASSAY__
 
 class Multi_vdj(Multi):
     """
-    Usage
+    ## Usage
     ```
     multi_vdj \\
         --mapfile ./vdj.mapfile \\
@@ -17,6 +17,7 @@ class Multi_vdj(Multi):
     def mapping_vdj(self, sample):
         step = 'mapping_vdj'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         if self.args.not_consensus:
             fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         else:
@@ -25,12 +26,14 @@ class Multi_vdj(Multi):
             f'{cmd_line} '
             f'--fq {fq} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=self.args.thread)
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
 
     def count_vdj(self, sample):
         # count_vdj
         step = 'count_vdj'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         UMI_count_filter_file = (
             f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_UMI_count_filtered.tsv'
         )
@@ -38,6 +41,7 @@ class Multi_vdj(Multi):
             f'{cmd_line} '
             f'--UMI_count_filter_file {UMI_count_filter_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=self.args.thread)
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
 

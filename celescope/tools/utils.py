@@ -1,29 +1,23 @@
-import argparse
 import glob
 import gzip
 import importlib
-import itertools
-import json
 import logging
 import os
 import re
 import resource
 import subprocess
-import sys
 import time
+import unittest
 from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps
 
-import numpy as np
 import pandas as pd
 import pysam
 
 import celescope.tools
-from celescope.tools.__init__ import __PATTERN_DICT__, FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
 from celescope.__init__ import ROOT_PATH
-
-tools_dir = os.path.dirname(celescope.tools.__file__)
 
 
 def add_log(func):
@@ -88,90 +82,6 @@ def add_mem(func):
     return wrapper
 
 
-def arg_str(arg, arg_name):
-    '''
-    return action store_true arguments as string
-    '''
-    if arg:
-        return '--' + arg_name
-    return ''
-
-
-def format_stat(count, total_count):
-    percent = round(count / total_count * 100, 2)
-    string = f'{format_number(count)}({percent}%)'
-    return string
-
-
-def multi_opts(assay):
-    readme = f'{assay} multi-samples'
-    parser = argparse.ArgumentParser(readme)
-    parser.add_argument('--mod', help='mod, sjm or shell', choices=['sjm', 'shell'], default='sjm')
-    parser.add_argument(
-        '--mapfile',
-        help='''
-            tsv file, 4 columns:
-            1st col: LibName;
-            2nd col: DataDir;
-            3rd col: SampleName;
-            4th col: Cell number or match_dir, optional;
-        ''',
-        required=True)
-    parser.add_argument('--chemistry', choices=list(__PATTERN_DICT__.keys()), help='chemistry version', default='auto')
-    parser.add_argument('--whitelist', help='cellbarcode list')
-    parser.add_argument('--linker', help='linker')
-    parser.add_argument('--pattern', help='read1 pattern')
-    parser.add_argument('--outdir', help='output dir', default="./")
-    parser.add_argument(
-        '--adapt',
-        action='append',
-        help='adapter sequence',
-        default=[
-            'polyT=A{15}',
-            'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC'])
-    parser.add_argument(
-        '--minimum_length',
-        dest='minimum_length',
-        help='minimum_length',
-        default=20)
-    parser.add_argument(
-        '--nextseq-trim',
-        dest='nextseq_trim',
-        help='nextseq_trim',
-        default=20)
-    parser.add_argument(
-        '--overlap',
-        help='minimum overlap length, default=5',
-        default=5)
-    parser.add_argument(
-        '--lowQual',
-        type=int,
-        help='max phred of base as lowQual',
-        default=0)
-    parser.add_argument(
-        '--lowNum',
-        type=int,
-        help='max number with lowQual allowed',
-        default=2)
-    parser.add_argument(
-        '--rm_files',
-        action='store_true',
-        help='remove redundant fq.gz and bam after running')
-    parser.add_argument('--steps_run', help='steps to run', default='all')
-    parser.add_argument('--debug', help='debug or not', action='store_true')
-    parser.add_argument('--outFilterMatchNmin', help='STAR outFilterMatchNmin', default=0)
-    return parser
-
-
-def link_data(outdir, fq_dict):
-    raw_dir = f'{outdir}/data_give/rawdata'
-    os.system('mkdir -p %s' % (raw_dir))
-    with open(raw_dir + '/ln.sh', 'w') as fh:
-        fh.write('cd %s\n' % (raw_dir))
-        for s, arr in fq_dict.items():
-            fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
-            fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
-
 
 def generic_open(file_name, *args, **kwargs):
     if file_name.endswith('.gz'):
@@ -183,9 +93,11 @@ def generic_open(file_name, *args, **kwargs):
 
 class Gtf_dict(dict):
     '''
-
     key: gene_id
     value: gene_name
+    If the key does not exist, return key. This is to avoid the error:
+        The gtf file contains one exon lines with a gene_id, but do not contain a gene line with the same gene_id. FeatureCounts 
+        work correctly under this condition, but the gene_id will not appear in the Gtf_dict.
     '''
 
     def __init__(self, gtf_file):
@@ -201,6 +113,7 @@ class Gtf_dict(dict):
             - one gene_name with multiple gene_id: "_{count}" will be added to gene_name.
             - one gene_id with multiple gene_name: error.
             - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
+            - no gene_name: gene_id will be used as gene_name.
 
         Returns:
             {gene_id: gene_name} dict
@@ -321,93 +234,8 @@ def hamming_distance(string1, string2):
     return distance
 
 
-def gen_stat(df, stat_file):
-    # 3cols: item count total_count
-
-    def add_percent(row):
-        count = row['count']
-        percent = count / row['total_count']
-        value = f'{format_number(count)}({round(percent * 100, 2)}%)'
-        return value
-
-    df.loc[:, 'value'] = df.loc[:, 'count']
-    df.loc[~df['total_count'].isna(), 'value'] = df.loc[~df['total_count'].isna(), :].apply(
-        add_percent, axis=1
-    )
-    df.loc[df['total_count'].isna(), 'value'] = df.loc[df['total_count'].isna(), :].apply(
-        lambda row: f'{format_number(row["count"])}', axis=1
-    )
-    df = df.loc[:, ["item", "value"]]
-    df.to_csv(stat_file, sep=":", header=None, index=False)
-
-
-def get_read(library_id, library_path, read='1'):
-    read1_list = [f'_{read}', f'R{read}', f'R{read}_001']
-    fq_list = ['fq', 'fastq']
-    suffix_list = ["", ".gz"]
-    read_pattern_list = [
-        f'{library_path}/*{library_id}*{read}.{fq_str}{suffix}'
-        for read in read1_list
-        for fq_str in fq_list
-        for suffix in suffix_list
-    ]
-    fq_list = [glob.glob(read1_pattern) for read1_pattern in read_pattern_list]
-    fq_list = sorted(non_empty for non_empty in fq_list if non_empty)
-    fq_list = list(itertools.chain(*fq_list))
-    if len(fq_list) == 0:
-        print("Allowed R1 patterns:")
-        for pattern in read_pattern_list:
-            print(pattern)
-        raise Exception(
-            '\n'
-            f'Invalid Read{read} path! \n'
-            f'library_id: {library_id}\n'
-            f'library_path: {library_path}\n'
-        )
-    return fq_list
-
-
-def get_fq(library_id, library_path):
-    fq1_list = get_read(library_id, library_path, read='1')
-    fq2_list = get_read(library_id, library_path, read='2')
-    if len(fq1_list) != len(fq2_list):
-        raise Exception("Read1 and Read2 fastq number do not match!")
-    fq1 = ",".join(fq1_list)
-    fq2 = ",".join(fq2_list)
-    return fq1, fq2
-
-
 def format_number(number: int) -> str:
     return format(number, ",")
-
-
-def format_metrics(metrics: dict):
-    for key in metrics:
-        value = metrics[key]
-        metrics[key] = format_number(value)
-        if isinstance(value, float):
-            metrics[key] = round(value, 2)
-
-
-def format_ratios(ratios: dict):
-    for key in ratios:
-        ratios[key] = round(ratios[key] * 100, 2)
-
-
-def get_slope(x, y, window=200, step=10):
-    assert len(x) == len(y)
-    start = 0
-    last = len(x)
-    res = [[], []]
-    while True:
-        end = start + window
-        if end > last:
-            break
-        z = np.polyfit(x[start:end], y[start:end], 1)
-        res[0].append(x[start])
-        res[1].append(z[0])
-        start += step
-    return res
 
 
 def genDict(dim=3, valType=int):
@@ -416,49 +244,6 @@ def genDict(dim=3, valType=int):
     else:
         return defaultdict(lambda: genDict(dim - 1, valType=valType))
 
-
-def report_prepare(outdir, **kwargs):
-    json_file = outdir + '/../.data.json'
-    if not os.path.exists(json_file):
-        data = {}
-    else:
-        fh = open(json_file)
-        data = json.load(fh)
-        fh.close()
-
-    for key in kwargs:
-        data[key] = kwargs[key]
-
-    with open(json_file, 'w') as fh:
-        json.dump(data, fh)
-
-
-def parse_vcf(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
-    """
-    Read cols and infos into pandas df
-    """
-    vcf = pysam.VariantFile(vcf_file)
-    df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
-    rec_dict = {}
-    for rec in vcf.fetch():
-
-        for col in cols:
-            rec_dict[col.capitalize()] = getattr(rec, col)
-            if col == 'alleles':
-                rec_dict['Alleles'] = '-'.join(rec_dict['Alleles'])
-
-        for info in infos:
-            rec_dict[info] = rec.info[info]
-
-        '''
-        rec_dict['GT'] = [s['GT'] for s in rec.samples.values()][0]
-        rec_dict['GT'] = [str(item) for item in rec_dict['GT']]
-        rec_dict['GT'] = '/'.join(rec_dict['GT'])
-        '''
-
-        df = df.append(pd.Series(rec_dict), ignore_index=True)
-    vcf.close()
-    return df
 
 
 def parse_annovar(annovar_file):
@@ -504,47 +289,85 @@ def parse_annovar(annovar_file):
             }, ignore_index=True)
     return df
 
+class MultipleFileFoundError(Exception):
+    pass
+
+def glob_file(pattern_list: list):
+    """
+    glob file among pattern list
+    Returns:
+        PosixPath object
+    Raises:
+        FileNotFoundError: if no file found
+        MultipleFileFound: if more than one file is found
+    """
+    if not isinstance(pattern_list, list):
+        raise TypeError('pattern_list must be a list')
+
+    match_list = []
+    for pattern in pattern_list:
+        files = glob.glob(pattern)
+        if files:
+            for f in files:
+                match_list.append(f)
+    
+    if len(match_list) == 0:
+        raise FileNotFoundError(f'No file found for {pattern_list}')
+    
+    if len(match_list) > 1:
+        raise MultipleFileFoundError(
+            f'More than one file found for pattern: {pattern_list}\n'
+            f'File found: {match_list}'
+        )
+    
+    return match_list[0]
+
+
+@add_log
+def get_barcode_from_matrix_dir(matrix_dir):
+    """
+    Returns:
+        match_barcode: list
+        no_match_barcode: int
+    """
+    barcode_file_pattern_list = []
+    for barcode_file_name in BARCODE_FILE_NAME:
+        barcode_file_pattern_list.append(f"{matrix_dir}/{barcode_file_name}")
+  
+    match_barcode_file = glob_file(barcode_file_pattern_list)
+    get_barcode_from_matrix_dir.logger.info(f"Barcode file:{match_barcode_file}")
+    match_barcode, n_match_barcode = read_one_col(match_barcode_file)
+
+    return match_barcode, n_match_barcode
+
+
+@add_log
+def get_matrix_dir_from_match_dir(match_dir):
+    """
+    Returns:
+        matrix_dir: PosixPath object
+    """
+    matrix_dir_pattern_list = []
+    for matrix_dir_suffix in FILTERED_MATRIX_DIR_SUFFIX:
+        matrix_dir_pattern_list.append(f"{match_dir}/*count/*{matrix_dir_suffix}")
+  
+    matrix_dir = glob_file(matrix_dir_pattern_list)
+    get_matrix_dir_from_match_dir.logger.info(f"Matrix_dir :{matrix_dir}")
+
+    return matrix_dir
+
 
 @add_log
 def get_barcode_from_match_dir(match_dir):
     '''
     multi version compatible
+    Returns:
+        match_barcode: list
+        no_match_barcode: int
     '''
-    barcode_file_pattern_list = []
-    for matrix_dir_suffix in FILTERED_MATRIX_DIR_SUFFIX:
-        for barcode_file_name in BARCODE_FILE_NAME:
-            barcode_file_pattern_list.append(f"{match_dir}/*count/*{matrix_dir_suffix}/{barcode_file_name}")
+    matrix_dir = get_matrix_dir_from_match_dir(match_dir)
+    return get_barcode_from_matrix_dir(matrix_dir)
 
-    match_list = []
-    for barcode_file_pattern in barcode_file_pattern_list:
-        match_pattern = glob.glob(barcode_file_pattern)
-        if match_pattern:
-            match_list.append(match_pattern[0])
-
-    if len(match_list) == 0:
-        raise FileNotFoundError(
-            f"No barcode file found in {match_dir}\n"
-            f"Allowed barcode file pattern: {barcode_file_pattern_list}"
-        )
-
-    if len(match_list) > 1:
-        print("ERROR: Multiple Barcode file found!")
-        print(f"Barcode file found: {match_list}")
-        sys.exit(1)
-
-    match_barcode_file = match_list[0]
-    get_barcode_from_match_dir.logger.info(f"Barcode file:{match_barcode_file}")
-    match_barcode, n_match_barcode = read_one_col(match_barcode_file)
-    return match_barcode, n_match_barcode
-
-
-def get_barcode_from_matrix_dir(matrix_dir):
-    """
-
-    """
-    match_barcode_file = f'{matrix_dir}/{BARCODE_FILE_NAME[0]}'
-    match_barcode, n_match_barcode = read_one_col(barcodes_file)
-    return match_barcode, n_match_barcode
 
 @add_log
 def parse_match_dir(match_dir):
@@ -555,71 +378,27 @@ def parse_match_dir(match_dir):
     match_dict = {}
 
     pattern_dict = {
-        'matrix_dir': f'{match_dir}/*count*/*matrix_10X',
-        'tsne_coord': f'{match_dir}/*analysis*/*tsne_coord.tsv',
-        'markers': f'{match_dir}/*analysis*/*markers.tsv',
-
+        'tsne_coord': [f'{match_dir}/*analysis*/*tsne_coord.tsv'],
+        'markers': [f'{match_dir}/*analysis*/*markers.tsv'],
     }
 
-    for file_name in pattern_dict:
-        match_file = glob.glob(pattern_dict[file_name])
-        if not match_file:
-            parse_match_dir.logger.warning(f"No {file_name} found in {match_dir}")
+    for file_key in pattern_dict:
+        file_pattern= pattern_dict[file_key]
+        try:
+            match_file = glob_file(file_pattern)
+        except FileNotFoundError:
+            parse_match_dir.logger.warning(f"No {file_key} found in {match_dir}")
         else:
-            match_dict[file_name] = match_file[0]
+            match_dict[file_key] = match_file
 
-    try:
-        match_barcode, n_match_barcode = get_barcode_from_match_dir(match_dir)
-    except FileNotFoundError as e:
-        parse_match_dir.logger.warning(e)
-    else:
-        match_dict['match_barcode'] = match_barcode
-        match_dict['n_match_barcode'] = n_match_barcode
+    match_dict['matrix_dir'] = get_matrix_dir_from_match_dir(match_dir)
+    match_barcode, n_match_barcode = get_barcode_from_match_dir(match_dir)
+    match_dict['match_barcode'] = match_barcode
+    match_dict['n_match_barcode'] = n_match_barcode
 
     return match_dict
 
 
-@add_log
-def STAR_util(
-    sample,
-    outdir,
-    input_read,
-    genomeDir,
-    runThreadN,
-    outFilterMatchNmin=35,
-    out_unmapped=False,
-    outFilterMultimapNmax=1,
-    outBAMsortingBinsN=50,
-):
-
-    # check dir
-    if not os.path.exists(outdir):
-        os.system('mkdir -p %s' % (outdir))
-
-    out_prefix = f'{outdir}/{sample}_'
-    out_BAM = out_prefix + "Aligned.sortedByCoord.out.bam"
-
-    cmd = f"STAR \
- --genomeDir {genomeDir} \
- --readFilesIn {input_read}\
- --readFilesCommand zcat\
- --outSAMtype BAM SortedByCoordinate\
- --runThreadN {runThreadN}\
- --outFilterMatchNmin {outFilterMatchNmin}\
- --outFileNamePrefix {out_prefix}\
- --outFilterMultimapNmax {outFilterMultimapNmax}\
- --outBAMsortingBinsN {outBAMsortingBinsN}\
- --limitBAMsortRAM 100000000000 "
-
-    if out_unmapped:
-        cmd += ' --outReadsUnmapped Fastx '
-
-    STAR_util.logger.info(cmd)
-    subprocess.check_call(cmd, shell=True)
-
-    cmd = "samtools index {out_BAM}".format(out_BAM=out_BAM)
-    STAR_util.logger.info(cmd)
-    os.system(cmd)
 
 
 def get_scope_bc(bctype):
@@ -631,17 +410,6 @@ def get_scope_bc(bctype):
 
 def fastq_line(name, seq, qual):
     return f'@{name}\n{seq}\n+\n{qual}\n'
-
-
-def s_common(parser):
-    """subparser common arguments
-    """
-    parser.add_argument('--outdir', help='output dir', required=True)
-    parser.add_argument('--assay', help='assay', required=True)
-    parser.add_argument('--sample', help='sample name', required=True)
-    parser.add_argument('--thread', default=4)
-    parser.add_argument('--debug', help='debug', action='store_true')
-    return parser
 
 
 def find_assay_init(assay):
@@ -823,3 +591,48 @@ def check_arg_not_none(args, arg_name):
         return True
     else:
         return False
+
+
+def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
+    """
+    Read cols and infos into pandas df
+    """
+    vcf = pysam.VariantFile(vcf_file)
+    df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
+    rec_dict = {}
+    for rec in vcf.fetch():
+
+        for col in cols:
+            rec_dict[col.capitalize()] = getattr(rec, col)
+            if col == 'alleles':
+                rec_dict['Alleles'] = '-'.join(rec_dict['Alleles'])
+
+        for info in infos:
+            rec_dict[info] = rec.info[info]
+
+        '''
+        rec_dict['GT'] = [s['GT'] for s in rec.samples.values()][0]
+        rec_dict['GT'] = [str(item) for item in rec_dict['GT']]
+        rec_dict['GT'] = '/'.join(rec_dict['GT'])
+        '''
+
+        df = df.append(pd.Series(rec_dict), ignore_index=True)
+    vcf.close()
+    return df
+
+
+class Test_utils(unittest.TestCase):
+    def test_gtf_dict(self):
+        import tempfile
+        fp = tempfile.NamedTemporaryFile(suffix='.gtf')
+        fp.write(b'1\tprocessed_transcript\tgene\t11869\t14409\t.\t+\t.\tgene_id "gene_id_with_gene_name"; gene_name "gene_name";\n')
+        fp.write(b'1\tprocessed_transcript\tgene\t11869\t14409\t.\t+\t.\tgene_id "gene_id_without_gene_name"; \n')
+        fp.seek(0)
+        gtf_dict = Gtf_dict(fp.name)
+        self.assertEqual(gtf_dict['gene_id_with_gene_name'], 'gene_name')
+        self.assertEqual(gtf_dict['gene_id_without_gene_name'], 'gene_id_without_gene_name')
+        self.assertEqual(gtf_dict['gene_id_not_exist'], 'gene_id_not_exist')
+        fp.close()
+
+if __name__ == '__main__':
+    unittest.main()

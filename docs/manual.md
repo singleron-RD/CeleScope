@@ -21,11 +21,11 @@ Currently, CeleScope includes the follwing pipelines:
 
 ## [Quick start](quick_start.md)
 
-## [Chemistry](chemistry.md)
-
 ## [Change log](CHANGELOG.md)
 
 ## [Test scripts and data](https://github.com/singleron-RD/celescope_test_script)
+
+## [Details](details.md)
 
 ## Pre-processing
 

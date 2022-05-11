@@ -3,16 +3,16 @@ from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
-
+from celescope.snp.__init__ import PANEL
 
 class Variant_calling(Step):
     """
-    Features
+    ## Features
     - Perform variant calling at single cell level.
 
-    Output
-
-    - `{sample}_norm.vcf` Normalized vcf file.
+    ## Output
+    - `{sample}_raw.vcf` Variants are called with bcftools default settings.
+    - `{sample}_norm.vcf` Indels are left-aligned and normalized. See https://samtools.github.io/bcftools/bcftools.html#norm for more details.
     """
 
     def __init__(self, args):
@@ -122,7 +122,7 @@ def variant_calling(args):
 def get_opts_variant_calling(parser, sub_program):
 
     parser.add_argument("--genomeDir", help=HELP_DICT['genomeDir'], required=True)
-    parser.add_argument("--panel", help=HELP_DICT['panel'])
+    parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
     if sub_program:
         parser.add_argument(
             "--bam",

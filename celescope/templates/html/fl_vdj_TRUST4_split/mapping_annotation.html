@@ -1,0 +1,19 @@
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    <h2>{{ step_summary.display_title}}    <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
+    <div class="box">
+      {% include "html/utils/help_info.html" %}
+      {% include "html/utils/col2_metrics.html" %}
+      <div class="clear" ></div>
+    </div>
+  </div>
+
+  <div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+    {% include "html/utils/table_dict.html" %}
+
+    <hr />
+    <div id="myDivBar" style="float: left; margin-left: 15%; margin-right:0%;width: 70%">
+        {{ step_summary.Barplot |safe }}
+    </div>
+    <div class="clear" ></div>
+    
+</div>

@@ -12,8 +12,6 @@
 - `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
 
 - `{sample}_cluster_count.tsv` cell barcode number assigned to *undeterminded*, *multiplet* and *each tag*
-
-
 ## Arguments
 `--UMI_min` Default='auto'. Minimum UMI threshold. Cell barcodes with valid UMI < UMI_min are classified as *undeterminded*.
 
@@ -34,7 +32,7 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.
 
 `--matrix_dir` Match celescope scRNA-Seq matrix directory.
 
-`--tsne_file` t-SNE coord file.
+`--tsne_file` match_dir t-SNE coord file. Do not required when `--match_dir` is provided.
 
 `--outdir` Output diretory.
 

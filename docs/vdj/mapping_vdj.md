@@ -12,8 +12,6 @@ most VJ_pair UMI reads is kept.
 - `{sample}_align.txt` Result report.
 
 - `{sample}_alignments.txt` The alignment result of each UMI/read.
-
-
 ## Arguments
 `--type` TCR or BCR.
 

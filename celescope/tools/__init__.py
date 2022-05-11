@@ -8,7 +8,9 @@ __PATTERN_DICT__ = {
     'scopeV3.0.1': 'C9L16C9L16C9L1U12T18',
     'customized': None,
     'auto': None,
-    'scopeV1': 'C12U8T18'
+    'scopeV1': 'C12U8T18',
+    'flv_rna': 'C8L16C8L16C8U9',
+    'flv' : 'U9C8L16C8L16C8',
 }
 
 

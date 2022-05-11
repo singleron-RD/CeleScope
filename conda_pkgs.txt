@@ -1,4 +1,4 @@
-conda-forge::python=3.7.12
+conda-forge::python=3.9
 bioconda::star=2.6.1b
 bioconda::picard=2.18.17
 bioconda::ucsc-gtftogenepred=377
@@ -8,7 +8,11 @@ conda-forge::r-argparser
 conda-forge::r-tidyverse
 conda-forge::r-deldir=1.0_6
 conda-forge::r-vcfr
+conda-forge::r-reshape2
 imperial-college-research-computing::mixcr=3.0.3
 bioconda::bcftools=1.12
 bioconda::gatk4
 conda-forge::gcc
+bioconda::trust4
+conda-forge::r-argparse
+conda-forge::r-seurat=4.0.1

@@ -7,6 +7,20 @@ from celescope.tools.barcode import Chemistry
 from celescope.tools.step import Step, s_common
 
 
+def add_kit_version(chemistry):
+    kit_dict = {
+        '1': 'no longer in use',
+        '2': 'kit V1',
+        '3': 'kit V2',
+    }
+    if chemistry.startswith('scopeV'):
+        s = chemistry.replace('scopeV', '')
+        chem_version = s[0]
+        kit = kit_dict[chem_version]
+        chemistry = f'{chemistry} ({kit})'
+    
+    return chemistry
+
 class Sample(Step):
     def __init__(self, args):
         Step.__init__(self, args)
@@ -35,7 +49,8 @@ class Sample(Step):
         self.add_metric(
             name='Chemistry',
             value=chemistry,
-            help_info='Chemistry of the input fastqs',
+            display=add_kit_version(chemistry),
+            help_info='For more information, see <a href="https://github.com/singleron-RD/CeleScope/blob/master/docs/chemistry.md">here</a>',
         )
         self.add_metric(
             name='Software Version',

@@ -4,11 +4,6 @@ FROM continuumio/miniconda3
 
 WORKDIR /app
 COPY conda_pkgs.txt conda_pkgs.txt
-RUN conda install --file conda_pkgs.txt \
- --channel conda-forge --channel bioconda --channel r --channel imperial-college-research-computing \
- && conda clean --all
-COPY requirements.txt requirements.txt
-RUN pip install -i https://pypi.mirrors.ustc.edu.cn/simple/ -r requirements.txt
-COPY . .
-RUN python setup.py install
+RUN mkdir -p /opt/conda/pkgs/cache && conda clean --packages && conda clean --all \
+&& conda install -c conda-forge mamba &&  mamba install -y --file conda_pkgs.txt && pip install celescope
 

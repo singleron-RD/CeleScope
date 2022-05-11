@@ -98,7 +98,7 @@ class Count_capture_rna(Count):
 
         # downsampling
         cell_bc = set(cell_bc)
-        _saturation, res_dict = self.downsample(df_cell)
+        self.downsample(df_cell)
 
         # summary
         self.get_summary(CB_describe, CB_total_Genes,
@@ -106,7 +106,7 @@ class Count_capture_rna(Count):
 
         self.report_prepare()
 
-        self.add_content_item('metric', downsample_summary=res_dict)
+        self.add_content_item('metric', downsample_dict=self.downsample_dict)
         self._clean_up()
 
 

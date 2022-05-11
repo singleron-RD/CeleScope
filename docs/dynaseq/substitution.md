@@ -3,8 +3,6 @@
 
 ## Output
 - `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
-
-
 ## Arguments
 `--bam` bam file from conversion step.
 

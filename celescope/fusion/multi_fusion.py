@@ -4,10 +4,10 @@ from celescope.tools.multi import Multi
 
 class Multi_fusion(Multi):
     """
-    Features
+    ## Features
     - Generate multi-sample scripts.
 
-    Usage
+    ## Usage
     ```
     multi_fusion\\
     --mapfile ./fusion.mapfile\\
@@ -19,41 +19,50 @@ class Multi_fusion(Multi):
     def star_fusion(self, sample):
         step = 'star_fusion'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=self.args.thread)
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def count_fusion(self, sample):
         step = 'count_fusion'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         capture_bam = f'{self.outdir_dic[sample]["star_fusion"]}/{sample}_Aligned.sortedByCoord.out.bam'
         cmd = (
             f'{cmd_line} '
             f'--capture_bam {capture_bam} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
     def filter_fusion(self, sample):
         step = 'filter_fusion'
         cmd_line = self.get_cmd_line(step, sample)
+        out_dir = f'{self.outdir_dic[sample][step]}'
         raw_read_count_file = f'{self.outdir_dic[sample]["count_fusion"]}/{sample}_raw_read_count.json'
         cmd = (
             f'{cmd_line} '
             f'--raw_read_count_file {raw_read_count_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
     def analysis_fusion(self, sample):
         step = 'analysis_fusion'
         cmd_line = self.get_cmd_line(step, sample)
-        filter_tsne_file = f'{self.outdir_dic[sample]["filter_fusion"]}/{sample}_filtered_UMI_tsne.csv'
+        out_dir = f'{self.outdir_dic[sample][step]}'
+        filter_umi_file = f'{self.outdir_dic[sample]["filter_fusion"]}/{sample}_filtered_UMI.csv'
         cmd = (
             f'{cmd_line} '
-            f'--filter_tsne_file {filter_tsne_file} '
+            f'--match_dir {self.col4_dict[sample]} '
+            f'--filter_umi_file {filter_umi_file} '
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=1)
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
 

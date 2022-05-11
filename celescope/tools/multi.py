@@ -134,7 +134,7 @@ class Multi():
         self.sample_dict = {}
 
         self.logdir = None
-        self.sjmdir = None
+        self.sjm_dir = None
         self.sjm_file = None
 
         self.sjm_cmd = ''
@@ -142,6 +142,7 @@ class Multi():
         self.shell_dict = defaultdict(str)
   
         #snakemake
+        self.snakemake_dir = None
         self.the_end_step = self.steps_run[-1]
         self.snakemake_shell_rule_all_dict = defaultdict(str)
         self.snakemake_shell_dict = defaultdict(str)
@@ -178,15 +179,17 @@ Sample1 has 2 paired-end fastq files located in fastq_dir1. Sample2 has 1 paired
 ```
 $cat ./sample.tsv
 sample_name fastq_prefix    fastq_dir
-sample1 fastq_prefix1, fastq_prefix3	fastq_dir1
-sample2 fastq_prefix2	fastq_dir2
+sample1 fastq_prefix1	fastq_dir1,fastq_dir2
+sample2 fastq_prefix3	fastq_dir3
 
 $ls fastq_dir1
 fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
-fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
 
 $ls fastq_dir2
-fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
+fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
+
+$ls fastq_dir2
+fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
 ```
 ''',
             required=True)
@@ -227,23 +230,25 @@ use `--steps_run barcode,cutadapt`
             self.fq_suffix = ".gz"
         if self.args.steps_run != 'all':
             self.steps_run = self.args.steps_run.strip().split(',')
+        
+        if self.args.mod == 'sjm':
 
-        self.sjm_dir = f'{self.args.outdir}/sjm/'
-        self.sjm_file = f'{self.sjm_dir}/sjm.job'
+            self.sjm_dir = f'{self.args.outdir}/sjm/'
+            utils.check_mkdir(self.sjm_dir)
+            self.logdir = self.args.outdir + '/log'
+            utils.check_mkdir(self.logdir)
 
-        self.logdir = self.args.outdir + '/log'
-        self.sjm_cmd = f'log_dir {self.logdir}\n'
+            self.sjm_file = f'{self.sjm_dir}/sjm.job'
+            self.sjm_cmd = f'log_dir {self.logdir}\n'
 
         #add_snakemake
-        self.snakemake_dir = f'{self.args.outdir}/snakemake/'
+        if self.args.mod == 'snakemake':
+            self.snakemake_dir = f'{self.args.outdir}/snakemake/'
+            utils.check_mkdir(self.snakemake_dir)
 
         # parse_mapfile
         self.sample_dict = parse_sample_tsv(self.args.sample_tsv)
-
-        # mk dir
-        utils.check_mkdir(self.logdir)
-        utils.check_mkdir(self.sjm_dir)
-        utils.check_mkdir(self.snakemake_dir)
+        
 
         for sample in self.sample_dict:
             self.outdir_dic[sample] = {}
