@@ -22,7 +22,7 @@ class Replace_tsne(Step):
 
     def __init__(self, args , display_title=None):
         super().__init__(args,display_title)
-        display_title = display_title
+        self.display_title = display_title
         # input files
         self.tsnefile = args.tsne
         self.matfile = args.mat
