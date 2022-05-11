@@ -270,6 +270,9 @@ def read_fasta(fasta):
         fasta_dict = {record.name:record.sequence for record in fh}
     return fasta_dict
 
+def format_percent(x):
+    x = str(round(x*100, 2))+"%"
+    return x
 
 class Chemistry():
     """
@@ -677,9 +680,6 @@ class Barcode(Step):
                     {"probe_name": probe_name, "UMI_count": UMI_count, "read_count": read_count})
             df_count = pd.DataFrame(count_list, columns=[
                                 "probe_name", "read_count", "UMI_count"])
-            def format_percent(x):
-                x = str(round(x*100, 2))+"%"
-                return x
             df_count["read_fraction"] = (
                 df_count["read_count"]/total_valid_read).apply(format_percent)
             df_count["UMI_fraction"] = (
@@ -711,9 +711,6 @@ class Barcode(Step):
                     {"amp_name": amp_name, "UMI_count": UMI_count, "read_count": read_count})
             df_amp_count = pd.DataFrame(count_amp_list, columns=[
                                 "amp_name", "read_count", "UMI_count"])
-            def format_percent(x):
-                x = str(round(x*100, 2))+"%"
-                return x
             df_amp_count["read_fraction"] = (
                 df_amp_count["read_count"]/total_valid_amp_read).apply(format_percent)
             df_amp_count["UMI_fraction"] = (
