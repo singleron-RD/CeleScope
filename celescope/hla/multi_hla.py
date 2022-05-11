@@ -15,7 +15,6 @@ class Multi_hla(Multi):
         step = 'mapping_hla'
         cmd_line = self.get_cmd_line(step,sample)
         out_dir = f'{self.outdir_dic[sample][step]}'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd = (
             f'{cmd_line} '
             f'--fq None '

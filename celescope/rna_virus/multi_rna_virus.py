@@ -14,6 +14,7 @@ class Multi_rna_virus(Multi):
             f'--fq {fq} '
 
         )
+        self.process_snakemake_cmd(cmd, step, out_dir,sample,x=self.args.thread)
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def count_virus(self, sample):

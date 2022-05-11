@@ -1,4 +1,3 @@
-import imp
 import pandas as pd
 
 from celescope.tools import utils
