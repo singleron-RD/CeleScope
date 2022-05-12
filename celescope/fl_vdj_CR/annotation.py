@@ -141,7 +141,7 @@ class Annotation(VDJ_Mixin):
                 name = f'Cells With {chain} Contig',
                 value = len(set(filter_contig[filter_contig['chain'] == chain].barcode)),
                 total = cell_nums,
-                help_info = f"Fraction of cell-associated barcodes with at least one {chain} contig where a CDR3 was detected"
+                help_info = f"Fraction of cell-associated barcodes with at least one {chain} contig"
             )
 
             self.add_metric(
