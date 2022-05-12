@@ -1,6 +1,3 @@
-## Features
-- Generate multi-sample scripts.
-
 ## Usage
 ```
 multi_fusion\
@@ -9,7 +6,15 @@ multi_fusion\
 --mod shell\
 ```
 
-Use `celescope fusion mkref` to generate the fusion genomeDir.
+Use `celescope/data/fusion/{panel}/mkref.sh` to generate the fusion genomeDir. 
+```
+source activate celescope
+celescope fusion mkref \
+--genome_name BCR_ABL1_PML_RARA_all \
+--fasta BCR_ABL1_PML_RARA_all.fasta \
+--fusion_pos BCR_ABL1_PML_RARA_all_pos.txt\
+--genomeSAindexNbases 2
+```
 
 ## Main Output
 - `05.filter_fusion/{sample}_filtered_UMI.csv`: Filtered fusion UMI counts of each cell barcode.
@@ -49,10 +54,6 @@ There are three methods to determine the UMI threshold:
     - 'auto' : Using a method similar to cell calling method.
     - 'otsu' : UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
     - 'hard' : Using User provided UMI threshold.
-
-
-### multi_fusion
-- Generate multi-sample scripts.
 
 
 ## Output files
