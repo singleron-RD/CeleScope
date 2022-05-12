@@ -37,6 +37,7 @@ class Summarize(Step):
         self.reads_assignment = args.reads_assignment
         self.fq2 = args.fq2
         self.assembled_fa = args.assembled_fa
+        self.record_file = f'{self.outdir}/Cell_num.txt'
 
         self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
         self.min_read_count = args.min_read_count
@@ -48,9 +49,15 @@ class Summarize(Step):
     @staticmethod
     def _parse_seqtype(seqtype):
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
+    
+    @staticmethod
+    def record_cell_num(df, record_file, step):
+        cellnum = len(set(df[df['productive']==True].barcode))
+        with open(record_file, 'a+') as f:
+            f.write(f'{step}: ' + str(cellnum) + '\n')
 
     @staticmethod
-    def filter_cell(df, seqtype, filterbc_rep, trust_rep):
+    def filter_cell(df, seqtype, filterbc_rep, trust_rep, record_file=None):
 
         df.sort_values(by='umis', ascending=False, inplace=True)
         if seqtype == 'BCR':
@@ -65,6 +72,9 @@ class Summarize(Step):
             df_TRA = df_TRA.drop_duplicates(['barcode'])
             df_TRB = df_TRB.drop_duplicates(['barcode'])
             df_for_clono = pd.concat([df_TRA, df_TRB], ignore_index=True)
+        
+        if record_file != None:
+            Summarize.record_cell_num(df_for_clono, record_file, step='Total Assembled Cell Number')
         
         """
         Filter barcode by filtered barcode report.
@@ -104,13 +114,23 @@ class Summarize(Step):
         trust_rep = trust_rep[trust_rep['CDR3aa'] != 'out_of_frame']
         trust_rep = trust_rep.rename(columns = {'cid':'barcode', '#count':'count'})
         trust_rep['barcode'] = trust_rep['barcode'].apply(lambda x:x.split('_')[0])
+        trust_rep_bc = set(trust_rep['barcode'])
+        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(trust_rep_bc)]
+
+        if record_file != None:
+            Summarize.record_cell_num(df_for_clono, record_file, step='Cell Number After Trust Report Filter(Not full length, nonfunctional CDR3)')
         #
         cdr3_list = list(trust_rep['CDR3aa'])
         cdr3_list = [i for i in cdr3_list if i.startswith('C')]
         cdr3_list = [i for i in cdr3_list if len(i)>=5]
         cdr3_list = [i for i in cdr3_list if 'UAG' or 'UAA' or 'UGA' not in i]
         trust_rep = trust_rep[trust_rep['CDR3aa'].isin(cdr3_list)]
+        trust_rep_bc = set(trust_rep['barcode'])
+        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(trust_rep_bc)]
 
+        if record_file != None:
+            Summarize.record_cell_num(df_for_clono, record_file, 
+            step='Cell Number After Trust Report Filter(CDR3aa:Not start with C, length<5, no stop codon)')
         # trust_rep = trust_rep.sort_values(by = 'count', ascending = False)
         # if min_read_count == "auto":
         #     if seqtype == 'BCR':
@@ -119,14 +139,13 @@ class Summarize(Step):
         #         min_read_count = 0
         # min_read_count = int(min_read_count)
         # trust_rep = trust_rep[trust_rep['count'] > min_read_count]
-
-
-        trust_rep_bc = set(trust_rep['barcode'].tolist())
-
         # df_for_clono = df_for_clono[df_for_clono['umis']>=3]
         # df_for_clono = df_for_clono[df_for_clono['reads']>=2]
+
         df_for_clono = df_for_clono[df_for_clono['barcode'].isin(filterbc)]
-        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(trust_rep_bc)]
+
+        if record_file != None:
+            Summarize.record_cell_num(df_for_clono, record_file, step='Cell Number After Trust Barcode Report Filter')
 
         barcode_count = df_for_clono.groupby(['barcode']).agg({'umis': 'mean','reads': 'mean'}).reset_index()
 
@@ -314,11 +333,13 @@ class Summarize(Step):
         os.system(_cmd)
 
         trust_rep = pd.read_csv(filtered_report_out, sep='\t')
-        df_for_clono = self.filter_cell(df, self.seqtype, filterbc_rep, trust_rep)
+        df_for_clono = self.filter_cell(df, self.seqtype, filterbc_rep, trust_rep, self.record_file)
         
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
         total_cells =len(cell_barcodes)
+        with open(self.record_file, 'a+') as f:
+            f.write('Cell Number After Cut-off Filter: ' + str(total_cells) + '\n')
 
         # filter contig.fasta
         all_contig_fasta = f'{self.outdir}/{self.sample}_all_contig.fasta'
