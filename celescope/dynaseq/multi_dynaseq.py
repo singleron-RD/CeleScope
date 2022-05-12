@@ -7,6 +7,7 @@ class Multi_dynaseq(Multi):
 
     """
     ## Usage
+
     ```
         multi_dynaseq\\
         --mapfile ./rna.mapfile\\
