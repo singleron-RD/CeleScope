@@ -40,6 +40,12 @@ def get_opts_filter(parser, sub_program):
         help='int, threshold = top 1% positive cell count / auto_coef',
         default=3,
     )
+    parser.add_argument(
+        "--otsu_log_base",
+        help='raw counts are first log transformed before thresholding. This argument is the log base. Commonly used values are 2 and 10.',
+        default=10,
+        type=int,
+    )
 
 
     if sub_program:
@@ -55,7 +61,7 @@ class Filter(Step):
     - Filter background UMIs base on a UMI threshold.
     There are three methods to determine the UMI threshold:
         - 'auto' : Using a method similar to cell calling method.
-        - 'otsu' : UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
+        - 'otsu' : UMI counts are first log transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
         - 'hard' : Using User provided UMI threshold.
 
     ## Output
@@ -119,7 +125,14 @@ class Filter(Step):
 
     @utils.add_log
     def get_read_threshold(self):
-        self.add_metric('Read Threshold Method', self.args.read_threshold_method)
+        self.add_metric(
+            'Read Threshold Method', 
+            self.args.read_threshold_method,
+            help_info=f"""There are three methods to determine the threshold:<br>
+1. 'auto' : Using a method similar to cell calling method. threshold = top 1% positive cell count / auto_coef. auto_coef = {self.args.auto_coef} <br>
+2. 'otsu' : UMI counts are first log transformed and then the threshold is determined by Otsu's method. otsu_log_base = {self.args.otsu_log_base} <br>
+3. 'hard' : Using User provided UMI threshold."""
+        )
 
         if self.args.read_threshold_method == 'auto':
             self.add_metric(
@@ -145,6 +158,7 @@ class Filter(Step):
                 otsu_plot_path=otsu_plot_path,
                 hard_threshold=self.args.read_hard_threshold,
                 coef=self.args.auto_coef,
+                log_base=self.args.otsu_log_base,
             )
             read_threshold = runner.run()
             
@@ -152,7 +166,6 @@ class Filter(Step):
             self.add_metric(
                 f'{ref} Read Threshold', 
                 read_threshold,
-                help_info='filter UMI with less than this number of reads',
             )
 
 
@@ -198,7 +211,11 @@ class Filter(Step):
                 self.ref_barcode_umi_dict[ref][barcode] = self.barcode_ref_umi_dict[barcode][ref]
 
     def get_umi_threshold(self):
-        self.add_metric('UMI Threshold Method', self.args.umi_threshold_method)
+        self.add_metric(
+            'UMI Threshold Method', 
+            self.args.umi_threshold_method,
+            help_info="""Use the same threshold method as read count threshold."""
+        )
 
         if self.args.umi_threshold_method == 'auto':
             self.add_metric(
@@ -216,6 +233,7 @@ class Filter(Step):
                 otsu_plot_path=otsu_plot_path,
                 hard_threshold=self.args.umi_hard_threshold,
                 coef=self.args.auto_coef,
+                log_base=self.args.otsu_log_base,
             )
             umi_threshold = runner.run()
             
@@ -252,6 +270,7 @@ class Filter(Step):
             name='Number of Positive Cells after Filtering',
             value=n_cell_positive,
             total=cell_total,
+            help_info='Cells with sum_UMI > 0 after filtering',
         )
 
     def run(self):

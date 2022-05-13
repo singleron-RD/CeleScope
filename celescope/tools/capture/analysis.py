@@ -31,7 +31,7 @@ class Analysis(Step):
         self.df_tsne.to_csv(self.df_tsne_file)
 
     def add_cluster_metrics(self):
-        self.add_help_content('cluster 1,2,3...', 'number of positive cells in each cluster after filtering')
+        self.add_help_content('cluster 1,2,3...', 'number of positive cells(sum_UMI > 0) in each cluster after filtering')
 
         df_cluster_all = self.df_tsne.groupby("cluster").count()
 

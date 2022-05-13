@@ -21,13 +21,9 @@ class Otsu():
         if len(array) < otsu_min_len:
             self.len_bool = False
 
-        self.log_base = log_base
-        if log_base == 2:
-            self.array = np.log2(array)
-        elif log_base == 10:
-            self.array = np.log10(array)
-        else:
-            raise Exception('log_base must be 2, 10')
+        self.log_base = int(log_base)
+        # base change rule
+        self.array = np.log(array) / np.log(self.log_base)
 
         self.kwargs = kwargs
         self.threshold = 1

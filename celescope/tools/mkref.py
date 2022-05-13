@@ -4,7 +4,7 @@ import sys
 
 from celescope.tools import utils
 from celescope.tools.__init__ import GENOME_CONFIG
-from celescope.__init__ import HELP_DICT
+from celescope.__init__ import HELP_DICT, __VERSION__
 
 
 class Mkref():
@@ -12,6 +12,7 @@ class Mkref():
     def __init__(self, genome_type, args, files=(), non_files=()):
         self.thread = args.thread
         self.genome_type = genome_type
+        self.celescope_version = __VERSION__
         self.dry_run = args.dry_run
         self.STAR_param = args.STAR_param
         self.files = ('fasta',) + files
@@ -51,6 +52,7 @@ class Mkref():
         if some files are not in input arguments, set them in overwrite set_config_dict function
         """
         self.config_dict['genome_type'] = self.genome_type
+        self.config_dict['celescope_version'] = self.celescope_version
 
         for entry in self.files + self.non_files:
             value = getattr(self, entry)
