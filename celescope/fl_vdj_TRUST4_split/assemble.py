@@ -1,7 +1,7 @@
 import glob
 import os
 from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Pool
 import pandas as pd
 import pysam
 from Bio.Seq import Seq
@@ -146,21 +146,21 @@ class Assemble(Step):
     def Multi_Executor(threads, temp_dirs, temp_species, temp_samples, idx_len):
         assmble_res, annot_res, full_len_res, contig_res = [], [], [], []
 
-        with ProcessPoolExecutor(idx_len-1) as pool:
-            for res in pool.map(tr.trust_assemble, threads, temp_species, temp_dirs, temp_samples):
-                assmble_res.append(res)
+        with Pool(idx_len-1) as pool:
+            pool.starmap(tr.trust_assemble, zip(threads, temp_species, temp_dirs, temp_samples))
 
-        with ProcessPoolExecutor(idx_len-1) as pool:
-            for res in pool.map(tr.annotate, temp_samples, threads, temp_dirs, temp_species):
-                annot_res.append(res) 
 
-        with ProcessPoolExecutor(idx_len-1) as pool:
-            for res in pool.map(tr.get_full_len_assembly, temp_dirs, temp_samples):
-                full_len_res.append(res)
+        with Pool(idx_len-1) as pool:
+            pool.starmap(tr.annotate, zip(temp_samples, threads, temp_dirs, temp_species))
 
-        with ProcessPoolExecutor(idx_len-1) as pool:
-            for res in pool.map(tr.fa_to_csv, temp_dirs, temp_samples):
-                contig_res.append(res)
+
+        with Pool(idx_len-1) as pool:
+            pool.starmap(tr.get_full_len_assembly, zip(temp_dirs, temp_samples))
+
+
+        with Pool(idx_len-1) as pool:
+            pool.starmap(tr.fa_to_csv, zip(temp_dirs, temp_samples))
+
 
     @utils.add_log
     def out_match_fastq(self):
@@ -209,9 +209,9 @@ class Assemble(Step):
         map_cb_range = [cb_range] * _map_len
         map_umi_range = [umi_range] * _map_len
 
-        with ProcessPoolExecutor(_map_len) as pool:
-            for res in pool.map(tr.extract_candidate_reads, map_threads, map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range):
-                map_res.append(res)
+        with Pool(_map_len) as pool:
+            pool.starmap(tr.extract_candidate_reads, 
+                zip(map_threads, map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range))
 
         candidate_reads = pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq')
         df_count, read_barcode_dict = self.umi_cutoff(candidate_reads, self.UMI_min, self.assemble_out)
