@@ -31,6 +31,7 @@ class Mapping_annotation(Step):
         self.match_dir = args.match_dir
         self.chains, self.paired_groups = Summarize._parse_seqtype(self.seqtype)
         self.min_read_count = args.min_read_count
+        self.coef = int(args.coef)
 
         try:
             self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
@@ -70,7 +71,7 @@ class Mapping_annotation(Step):
 
         filterbc_rep = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/barcoderepfl.tsv',sep='\t')
         filtered_report_out = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/trust_filter_report.out',sep='\t')
-        df_for_clono = Summarize.filter_cell(df, self.seqtype, filterbc_rep, filtered_report_out)
+        df_for_clono = Summarize.filter_cell(df, self.seqtype, self.coef, record_file=None)
         return df_for_clono
 
     @utils.add_log
@@ -153,6 +154,7 @@ def mapping_annotation(args):
 def get_opts_mapping_annotation(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR',
                         choices=['TCR', 'BCR'], required=True)
+    parser.add_argument('--coef', help='coef for auto filter', default=10)
     parser.add_argument('--min_read_count', help ='filter cell by read count number, int type required', default='auto')
     if sub_program:
         s_common(parser)
