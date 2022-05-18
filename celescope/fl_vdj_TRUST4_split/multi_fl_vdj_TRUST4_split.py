@@ -57,7 +57,7 @@ class Multi_fl_vdj_TRUST4_split(Multi):
             f'--fq2 {fq2} '
             f'--match_dir {self.col4_dict[sample]}'
         )
-        self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
+        self.process_cmd(cmd, step, sample, m=30, x=self.args.thread)
     
     def summarize(self, sample):
         step = 'summarize'

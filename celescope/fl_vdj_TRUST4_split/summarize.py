@@ -37,6 +37,8 @@ class Summarize(Step):
         self.reads_assignment = args.reads_assignment
         self.fq2 = args.fq2
         self.assembled_fa = args.assembled_fa
+        self.record_file = f'{self.outdir}/Cell_num.txt'
+        self.coef = int(args.coef)
 
         self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
         self.min_read_count = args.min_read_count
@@ -48,9 +50,26 @@ class Summarize(Step):
     @staticmethod
     def _parse_seqtype(seqtype):
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
+    
+    @staticmethod
+    def record_cell_num(df, record_file, step):
+        cellnum = len(set(df[df['productive']==True].barcode))
+        with open(record_file, 'a+') as f:
+            f.write(f'{step}: ' + str(cellnum) + '\n')
 
     @staticmethod
-    def filter_cell(df, seqtype, filterbc_rep, trust_rep):
+    def Auto_filter(df, coef):
+        """
+        threshold = top 20% contig umi value / coef
+        """
+        n_cell_1_percentile = len(df) // 5
+        sorted_counts = sorted(df.umis, reverse=True)
+        count_cell_1_percentile = sorted_counts[n_cell_1_percentile]
+        threshold = int(count_cell_1_percentile / coef)
+        return threshold
+
+    @staticmethod
+    def filter_cell(df, seqtype, coef, record_file=None):
 
         df.sort_values(by='umis', ascending=False, inplace=True)
         if seqtype == 'BCR':
@@ -66,85 +85,35 @@ class Summarize(Step):
             df_TRB = df_TRB.drop_duplicates(['barcode'])
             df_for_clono = pd.concat([df_TRA, df_TRB], ignore_index=True)
         
-        """
-        Filter barcode by filtered barcode report.
-        Each cell has at least one chain.
-        CDR3 germline similarity > 90.
-        Keep cell type called T/B in barcode report.
-        If cell A's two chains CDR3s are identical to another cell B, 
-        and A's chain abundance is significantly lower than B's (--diffuseFrac), filter A.
-        """
-        filterbc_rep = filterbc_rep.rename(columns = {'#barcode':'barcode'})
-        # filterbc = filterbc_rep[(filterbc_rep['chain1']!='*') | (filterbc_rep['chain2']!='*')]
+        if record_file != None:
+            Summarize.record_cell_num(df_for_clono, record_file, step='Total Assembled Cell Number')
         
-        # filterbc_chain1 = [i if i !='*' else 0 for i in list(filterbc['chain1'])]
-        # filterbc_chain2 = [i if i !='*' else 0 for i in list(filterbc['chain2'])]
-        # filterbc_chain1 = [i if i !='*' else 0 for i in filterbc_chain1]
-        # filterbc_chain2 = [i if i !='*' else 0 for i in filterbc_chain2]
-        # filterbc_chain1 = [float(i.split(',')[-2]) if i !=0 else i for i in filterbc_chain1]
-        # filterbc_chain2 = [float(i.split(',')[-2]) if i !=0 else i for i in filterbc_chain2]
-        # _bc_list, _filtered_list = filterbc['barcode'].tolist(), []
-        # for i in range(len(_bc_list)):
-        #     if filterbc_chain1[i] <= 90 or filterbc_chain2[i] <= 90:
-        #         _filtered_list.append(_bc_list[i])
-        # filterbc = filterbc[~filterbc['barcode'].isin(_filtered_list)]
-        filterbc = set(filterbc_rep['barcode'].tolist())
-
-        # By filtered trust report 
-        """
-        Filter trust report:the nonfunctional CDR3, or CDR3 sequences containing "N" in the nucleotide sequence.
-        Filter cell by read count of CDR3 from filtered trust report (default:4).
-        Keep CDR3aa start with C.
-        Keep CDR3aa length >= 5.
-        Keep no stop codon in CDR3aa.
-        Keep read count of CDR3 >= 4(default).
-        Contig's umi < 3 and read count < 2 considered to be noise
-        """
-        trust_rep = trust_rep[trust_rep['cid_full_length'] >= 1]
-        trust_rep = trust_rep[trust_rep['CDR3aa'] != 'out_of_frame']
-        trust_rep = trust_rep.rename(columns = {'cid':'barcode', '#count':'count'})
-        trust_rep['barcode'] = trust_rep['barcode'].apply(lambda x:x.split('_')[0])
-        #
-        cdr3_list = list(trust_rep['CDR3aa'])
+        cdr3_list = list(df_for_clono['cdr3'])
         cdr3_list = [i for i in cdr3_list if i.startswith('C')]
         cdr3_list = [i for i in cdr3_list if len(i)>=5]
         cdr3_list = [i for i in cdr3_list if 'UAG' or 'UAA' or 'UGA' not in i]
-        trust_rep = trust_rep[trust_rep['CDR3aa'].isin(cdr3_list)]
+        df_for_clono = df_for_clono[df_for_clono['cdr3'].isin(cdr3_list)]
 
-        # trust_rep = trust_rep.sort_values(by = 'count', ascending = False)
-        # if min_read_count == "auto":
-        #     if seqtype == 'BCR':
-        #         min_read_count = 8
-        #     else:
-        #         min_read_count = 0
-        # min_read_count = int(min_read_count)
-        # trust_rep = trust_rep[trust_rep['count'] > min_read_count]
-
-
-        trust_rep_bc = set(trust_rep['barcode'].tolist())
-
-        # df_for_clono = df_for_clono[df_for_clono['umis']>=3]
-        # df_for_clono = df_for_clono[df_for_clono['reads']>=2]
-        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(filterbc)]
-        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(trust_rep_bc)]
-
-        barcode_count = df_for_clono.groupby(['barcode']).agg({'umis': 'mean','reads': 'mean'}).reset_index()
-
-        barcode_count.sort_values('umis', ascending=True, inplace = True)
-        RANK = barcode_count.shape[0]//5
-        rank_UMI = barcode_count.iloc[RANK, :]["umis"]
-        UMI_min = int(rank_UMI)
+        if record_file != None:
+            Summarize.record_cell_num(df_for_clono, record_file, 
+            step='Cell Number: Filter CDR3aa:Not start with C, length<5, no stop codon')
         
-        barcode_count.sort_values('reads', ascending=True, inplace = True)
-        RANK = barcode_count.shape[0]//5
-        rank_read = barcode_count.iloc[RANK, :]["reads"]
-        UMI_read = int(rank_read)
-
-        barcode_count = barcode_count[barcode_count['umis']>=UMI_min]
-        barcode_count = barcode_count[barcode_count['reads']>=UMI_read]
-
-        df_for_clono = df_for_clono[df_for_clono['barcode'].isin(barcode_count.barcode)]
-
+        if seqtype == 'BCR':
+            threshold = Summarize.Auto_filter(df_chain_heavy, coef)
+            df_chain_heavy = df_chain_heavy[df_chain_heavy['umis']>=threshold]
+            threshold = Summarize.Auto_filter(df_chain_light, coef)
+            df_chain_light = df_chain_light[df_chain_light['umis']>=threshold]
+            df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
+        else:
+            threshold = Summarize.Auto_filter(df_TRA, coef)
+            df_TRA = df_TRA[df_TRA['umis']>=threshold]
+            threshold = Summarize.Auto_filter(df_TRB, coef)
+            df_TRB = df_TRB[df_TRB['umis']>=threshold]
+            df_for_clono = pd.concat([df_TRA, df_TRB], ignore_index=True)
+        
+        if record_file != None:
+            Summarize.record_cell_num(df_for_clono, record_file, 
+            step='Cell Number After Auto')
 
         return df_for_clono
 
@@ -314,7 +283,7 @@ class Summarize(Step):
         os.system(_cmd)
 
         trust_rep = pd.read_csv(filtered_report_out, sep='\t')
-        df_for_clono = self.filter_cell(df, self.seqtype, filterbc_rep, trust_rep)
+        df_for_clono = self.filter_cell(df, self.seqtype, self.coef, self.record_file)
         
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
@@ -423,6 +392,7 @@ def summarize(args):
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
     parser.add_argument('--min_read_count', help ='filter cell by read count number, int type required', default='auto')
+    parser.add_argument('--coef', help='coef for auto filter', default=10)
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--reads_assignment', help='File records reads assigned to contigs.', required=True)

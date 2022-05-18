@@ -41,7 +41,6 @@ class Assemble(Step):
         self.umiRange = args.umiRange
         self.match_dir = args.match_dir
         self.trimLevel = args.trimLevel
-        self.UMI_min = args.UMI_min
 
         self.chains = self._get_chain_type(self.seqtype)
         self.match_barcodes = self._get_match_barcode(self.match_dir)
@@ -74,91 +73,72 @@ class Assemble(Step):
         utils.check_mkdir(temp_dir)
 
     @staticmethod
-    # UMI cut-off filter for candidate_reads
-    def umi_cutoff(candidate_reads, UMI_min, assemble_out) :
-        read_count_dict = defaultdict(int)
-        umi_dict = defaultdict(set)
-        read_barcode_dict = defaultdict(list)
-        for read in candidate_reads:
-            attrs = read.name.split('_')
-            cb, umi = attrs[0], attrs[1]
-            read_count_dict[cb] += 1
-            umi_dict[cb].add(umi)
-            read_barcode_dict[cb].append(read)
-        barcode_list = list(read_count_dict.keys())
+    def split_candidate_reads(candidate_reads, temp_dir, assemble_out):
+        """split original candidate reads by barcode info into 4 files for Multithreaded assembly
 
-        df_count = pd.DataFrame({'barcode': list(read_count_dict.keys()), 
+        :param candidate_reads: candidate_reads
+        :param temp_dir: temp directory
+        :param assemble_out: assemble out directory
+        """
+        read_count_dict, umi_dict = defaultdict(int), defaultdict(set)
+        with pysam.FastxFile(candidate_reads) as f:
+            for read in f:
+                attrs = read.name.split('_')
+                cb, umi = attrs[0], attrs[1]
+                read_count_dict[cb] += 1
+                umi_dict[cb].add(umi)
+        barcode_list = list(read_count_dict.keys())
+        df_count = pd.DataFrame({'barcode': barcode_list, 
                             'read_count': [read_count_dict[i] for i in barcode_list], 
                             'UMI': [len(umi_dict[i]) for i in barcode_list]})
-
         df_count.sort_values(by='UMI', ascending=False, inplace=True)
-        if UMI_min == "auto":
-            RANK = 20
-            rank_UMI = df_count.iloc[RANK, :]["UMI"]
-            UMI_min = int(rank_UMI / 10)
-        UMI_min = int(UMI_min)
-        df_count["mark"] = df_count["UMI"].apply(
-            lambda x: "CB" if (x >= UMI_min) else "UB")
         df_count.to_csv(f'{assemble_out}/count.txt', sep='\t', index=False)
 
-        return df_count, read_barcode_dict
+        del read_count_dict
+        del umi_dict
+        del barcode_list
 
-    @staticmethod
-    # split candidate reads file for Multithreaded assembly
-    def split_candidate_reads(df_count, read_barcode_dict, temp_dir):
-        df_count_cb = df_count[df_count['mark']=='CB']
-        df_count_cb.sort_values(by='UMI', ascending=False, inplace = True)
-        cell_cbs = df_count_cb['barcode'].tolist()
-        umi_count_l = df_count_cb['UMI'].tolist()
-        sum_umi = sum(umi_count_l)
-        threshold = int(sum_umi/4)
-        umi_num = 0
-        idx = []
-        for i in range(len(umi_count_l)):
-            umi_num += umi_count_l[i]
-            umi_num_next = umi_num + umi_count_l[i+1]
-            if umi_num<=threshold and umi_num_next>=threshold:
-                idx.append(i+1)
-                umi_num = 0
-                if len(idx)==3:
-                    break
-        idx.insert(0, 0)
-        idx.append(len(cell_cbs))
-        for i in range(len(idx)-1):
-            temp_cbs = cell_cbs[idx[i]:idx[i+1]]
-            toassemble_fq = open(f'{temp_dir}/temp_{i}.fq', 'w')
-            toassemble_bc = open(f'{temp_dir}/temp_{i}_bc.fa', 'w')
-            toassemble_umi = open(f'{temp_dir}/temp_{i}_umi.fa', 'w')
-            for tmp in temp_cbs:
-                for read in read_barcode_dict[tmp]:
-                    name = read.name
-                    umi = name.split('_')[1]
-                    toassemble_fq.write(str(read)+'\n')
-                    toassemble_bc.write(f'>{name}\n{tmp}\n')
-                    toassemble_umi.write(f'>{name}\n{umi}\n')
-            toassemble_fq.close()
-            toassemble_bc.close()
-            toassemble_umi.close()
-        
-        return idx, len(idx)
+        barcode_list = list(df_count.barcode)
+        barcode_num = len(barcode_list)
+        _thread = 4
+        split_barcodes = [set(barcode_list[i*barcode_num//_thread: (i+1)*barcode_num//_thread]) for i in range(_thread)]
+
+        toassemble_fq_list = [open(f'{temp_dir}/temp_{i}.fq','w') for i in range(_thread)]
+        toassemble_bc_list = [open(f'{temp_dir}/temp_{i}_bc.fa','w') for i in range(_thread)]
+        toassemble_umi_list = [open(f'{temp_dir}/temp_{i}_umi.fa','w') for i in range(_thread)]
+
+        with pysam.FastxFile(candidate_reads) as f:
+            for read in f:
+                name = read.name
+                bc, umi = name.split('_')[0], name.split('_')[1]
+                for i in range(_thread):
+                    if bc in split_barcodes[i]:
+                        toassemble_fq_list[i].write(str(read) + '\n')
+                        toassemble_bc_list[i].write(f'>{name}\n{bc}\n')
+                        toassemble_umi_list[i].write(f'>{name}\n{umi}\n')
+
+        for i in range(_thread):
+            toassemble_fq_list[i].close()
+            toassemble_bc_list[i].close()
+            toassemble_umi_list[i].close()
     
     @staticmethod
-    def Multi_Executor(threads, temp_dirs, temp_species, temp_samples, idx_len):
+    def Multi_Executor(temp_dirs, temp_species, temp_samples):
         assmble_res, annot_res, full_len_res, contig_res = [], [], [], []
 
-        with Pool(idx_len-1) as pool:
-            pool.starmap(tr.trust_assemble, zip(threads, temp_species, temp_dirs, temp_samples))
+        with Pool(4) as pool:
+            pool.starmap(tr.trust_assemble, zip(temp_species, temp_dirs, temp_samples))
 
 
-        with Pool(idx_len-1) as pool:
-            pool.starmap(tr.annotate, zip(temp_samples, threads, temp_dirs, temp_species))
+        with Pool(4) as pool:
+            pool.starmap(tr.annotate, zip(temp_samples, temp_dirs, temp_species))
 
 
-        with Pool(idx_len-1) as pool:
+        with Pool(4) as pool:
             pool.starmap(tr.get_full_len_assembly, zip(temp_dirs, temp_samples))
 
 
-        with Pool(idx_len-1) as pool:
+        with Pool(4) as pool:
             pool.starmap(tr.fa_to_csv, zip(temp_dirs, temp_samples))
 
 
@@ -166,29 +146,22 @@ class Assemble(Step):
     def out_match_fastq(self):
         out_fq1 = open(self.match_fq1, 'w')
         out_fq2 = open(self.match_fq2, 'w')
-        read_dict = defaultdict(list)
 
+        matched_cbs, rna_cbs = set(), {self.reversed_compl(cb) for cb in self.match_barcodes}
         with pysam.FastxFile(self.fq2) as fq:
             for read in fq:
                 attr = read.name.split('_')
                 cb = attr[0]
-                read_dict[cb].append(read)
-            rna_cbs = [self.reversed_compl(cb) for cb in self.match_barcodes]
-            # matched_cbs = set(read_dict.keys())
-            matched_cbs = set(read_dict.keys()).intersection(set(rna_cbs))
-            
-            assert len(matched_cbs) != 0
-            for cb in matched_cbs:
-                for read in read_dict[cb]:
-                    umi = read.name.split('_')[1]
-                    qual = 'F' * len(cb + umi)
-                    seq1 = f'@{read.name}\n{cb}{umi}\n+\n{qual}\n'
+                umi = attr[1]
+                qual = 'F' * len(cb + umi)
+                seq1 = f'@{read.name}\n{cb}{umi}\n+\n{qual}\n'
+                if cb in rna_cbs:
                     out_fq1.write(seq1)
                     out_fq2.write(str(read)+'\n')
-                    # matched_cbs.add(cb)
                     self.matched_reads += 1
-            out_fq1.close()
-            out_fq2.close()
+                    matched_cbs.add(cb)
+        out_fq1.close()
+        out_fq2.close()
 
         return matched_cbs
 
@@ -201,7 +174,6 @@ class Assemble(Step):
         map_index_prefix = ['bcrtcr'] + self.chains
         _map_len = len(map_index_prefix)
         samples = [self.sample] * _map_len
-        map_threads = [self.thread] * _map_len
         map_species = [self.species] * _map_len
         map_outdirs = [self.temp_dir] * _map_len
         map_fq1 = [self.match_fq1] * _map_len
@@ -211,18 +183,16 @@ class Assemble(Step):
 
         with Pool(_map_len) as pool:
             pool.starmap(tr.extract_candidate_reads, 
-                zip(map_threads, map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range))
+                zip(map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range))
 
-        candidate_reads = pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq')
-        df_count, read_barcode_dict = self.umi_cutoff(candidate_reads, self.UMI_min, self.assemble_out)
-        _, idx_len = self.split_candidate_reads(df_count, read_barcode_dict, self.temp_dir)
+        candidate_reads = f'{self.temp_dir}/{self.sample}_bcrtcr.fq'
+        self.split_candidate_reads(candidate_reads, self.temp_dir, self.assemble_out)
 
-        threads = [self.thread] * idx_len
-        temp_dirs = [self.temp_dir] * idx_len
-        temp_species = [self.species] * idx_len
-        temp_samples = [f'temp_{i}' for i in range(idx_len-1)]
+        temp_dirs = [self.temp_dir] * 4
+        temp_species = [self.species] * 4
+        temp_samples = [f'temp_{i}' for i in range(4)]
         # multithread-run for assembly and annotation
-        self.Multi_Executor(threads, temp_dirs, temp_species, temp_samples, idx_len)
+        self.Multi_Executor(temp_dirs, temp_species, temp_samples)
 
     @utils.add_log
     def merge_file(self):
@@ -333,4 +303,3 @@ def get_opts_assemble(parser, sub_program):
     parser.add_argument('--barcodeRange', help='Barcode range in fq1, INT INT CHAR.', default='0 23 +') 
     parser.add_argument('--umiRange', help='UMI range in fq1, INT INT CHAR.', default='24 -1 +')
     parser.add_argument('--trimLevel', help='INT: 0: no trim; 1: trim low quality; 2: trim unmatched.', default=1)
-    parser.add_argument('--UMI_min', help='UMI number, INT.', default='auto')
