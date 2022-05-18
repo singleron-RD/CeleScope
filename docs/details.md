@@ -49,6 +49,16 @@ multi_rna \
 - pattern: https://github.com/singleron-RD/CeleScope/blob/master/celescope/tools/__init__.py
 - whitelist and linker:  https://github.com/singleron-RD/CeleScope/tree/master/celescope/data/chemistry/ . `bclist` is the barcode whitelist.
 
+## Cell-calling algorithm
+
+Cell Ranger 3.0 introduces an improved cell-calling algorithm that is better able to identify populations of low RNA content cells, especially when low RNA content cells are mixed into a population of high RNA content cells. For example, tumor samples often contain large tumor cells mixed with smaller tumor infiltrating lymphocytes (TIL) and researchers may be particularly interested in the TIL population. The new algorithm is based on the EmptyDrops method (Lun et al., 2018).
+https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/algorithms/overview
+
+If you are using CeleScope < v1.9.0, the default cell calling method is `auto` which is similar to the method used in Cell Ranger 2.2. You can rerun the `count` and `analysis`step with `--cell_calling_method cellranger3 --steps_run count,analysis`.
+If you are using CeleScope >= v1.9.0, the default cell calling method has been changed to `EmptyDrops_CR` which is a synonym for `cellranger3`.
+https://github.com/singleron-RD/CeleScope/blob/master/docs/CHANGELOG.md#rna-and-dynaseq-1
+
+
 ## Saturation
 
 There is a difference in how CeleScope and CellRanger calculate saturation. CeleScope shows umi_saturation in the report, while CellRanger shows read_saturation in the report. 
