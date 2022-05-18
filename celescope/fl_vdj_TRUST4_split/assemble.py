@@ -1,5 +1,5 @@
 import glob
-import os
+import subprocess
 from collections import defaultdict
 from multiprocessing import Pool
 import pandas as pd
@@ -40,18 +40,23 @@ class Assemble(Step):
         self.barcodeRange = args.barcodeRange
         self.umiRange = args.umiRange
         self.match_dir = args.match_dir
-        self.trimLevel = args.trimLevel
 
         self.chains = self._get_chain_type(self.seqtype)
-        self.match_barcodes = self._get_match_barcode(self.match_dir)
+        self.match_barcodes, _ = utils.get_barcode_from_match_dir(self.match_dir) 
+
 
         # outdir
-        self.match_out = f'{self.outdir}/match'
-        self.assemble_out = f'{self.outdir}/assemble'
-        self.temp_dir = f'{self.assemble_out}/temp'
-        self._check_outdir(self.match_out, self.assemble_out, self.temp_dir)
+        self.match_outdir = f'{self.outdir}/match'
+        self.assemble_outdir = f'{self.outdir}/assemble'
+        self.temp_outdir = f'{self.assemble_outdir}/temp'
+        for d in [self.match_outdir, self.assemble_outdir, self.temp_outdir]:
+            utils.check_mkdir(dir_name=d)
         self.matched_reads = 0
-        self.match_fq1, self.match_fq2 = f'{self.match_out}/{self.sample}_matched_R1.fq', f'{self.match_out}/{self.sample}_matched_R2.fq'
+
+        # output files
+        self.match_fq1, self.match_fq2 = f'{self.match_outdir}/{self.sample}_matched_R1.fq', \
+            f'{self.match_outdir}/{self.sample}_matched_R2.fq'
+        self.candidate_reads = f'{self.temp_outdir}/{self.sample}_bcrtcr.fq'
 
     @staticmethod
     def reversed_compl(seq):
@@ -61,27 +66,13 @@ class Assemble(Step):
     def _get_chain_type(seqtype):
         return CHAIN[seqtype]
     
-    @staticmethod
-    def _get_match_barcode(match_dir):
-        match_barcodes, _ = utils.get_barcode_from_match_dir(match_dir) 
-        return match_barcodes
-    
-    @staticmethod
-    def _check_outdir(match_out, assemble_out, temp_dir):
-        utils.check_mkdir(match_out)
-        utils.check_mkdir(assemble_out)
-        utils.check_mkdir(temp_dir)
-
-    @staticmethod
-    def split_candidate_reads(candidate_reads, temp_dir, assemble_out):
-        """split original candidate reads by barcode info into 4 files for Multithreaded assembly
-
-        :param candidate_reads: candidate_reads
-        :param temp_dir: temp directory
-        :param assemble_out: assemble out directory
+    @utils.add_log
+    def split_candidate_reads(self):
+        """
+        split original candidate reads(_bcrtcr.fq) by barcode into n files, n = self.thread
         """
         read_count_dict, umi_dict = defaultdict(int), defaultdict(set)
-        with pysam.FastxFile(candidate_reads) as f:
+        with pysam.FastxFile(self.candidate_reads) as f:
             for read in f:
                 attrs = read.name.split('_')
                 cb, umi = attrs[0], attrs[1]
@@ -92,7 +83,7 @@ class Assemble(Step):
                             'read_count': [read_count_dict[i] for i in barcode_list], 
                             'UMI': [len(umi_dict[i]) for i in barcode_list]})
         df_count.sort_values(by='UMI', ascending=False, inplace=True)
-        df_count.to_csv(f'{assemble_out}/count.txt', sep='\t', index=False)
+        df_count.to_csv(f'{self.assemble_outdir}/count.txt', sep='\t', index=False)
 
         del read_count_dict
         del umi_dict
@@ -100,46 +91,58 @@ class Assemble(Step):
 
         barcode_list = list(df_count.barcode)
         barcode_num = len(barcode_list)
-        _thread = 4
-        split_barcodes = [set(barcode_list[i*barcode_num//_thread: (i+1)*barcode_num//_thread]) for i in range(_thread)]
+        thread = self.thread
+        chunk_size = barcode_num // thread
+        # split barcode list into equal size chunks
+        split_barcodes = [set(barcode_list[i: i + chunk_size]) for i in range(0, barcode_num, chunk_size)]
 
-        toassemble_fq_list = [open(f'{temp_dir}/temp_{i}.fq','w') for i in range(_thread)]
-        toassemble_bc_list = [open(f'{temp_dir}/temp_{i}_bc.fa','w') for i in range(_thread)]
-        toassemble_umi_list = [open(f'{temp_dir}/temp_{i}_umi.fa','w') for i in range(_thread)]
+        fq_list = [open(f'{self.temp_outdir}/temp_{i}.fq','w') for i in range(thread)]
+        bc_list = [open(f'{self.temp_outdir}/temp_{i}_bc.fa','w') for i in range(thread)]
+        umi_list = [open(f'{self.temp_outdir}/temp_{i}_umi.fa','w') for i in range(thread)]
 
-        with pysam.FastxFile(candidate_reads) as f:
+        with pysam.FastxFile(self.candidate_reads) as f:
             for read in f:
                 name = read.name
                 bc, umi = name.split('_')[0], name.split('_')[1]
-                for i in range(_thread):
+                for i in range(thread):
                     if bc in split_barcodes[i]:
-                        toassemble_fq_list[i].write(str(read) + '\n')
-                        toassemble_bc_list[i].write(f'>{name}\n{bc}\n')
-                        toassemble_umi_list[i].write(f'>{name}\n{umi}\n')
+                        fq_list[i].write(str(read) + '\n')
+                        bc_list[i].write(f'>{name}\n{bc}\n')
+                        umi_list[i].write(f'>{name}\n{umi}\n')
+                        break
 
-        for i in range(_thread):
-            toassemble_fq_list[i].close()
-            toassemble_bc_list[i].close()
-            toassemble_umi_list[i].close()
+        for i in range(thread):
+            fq_list[i].close()
+            bc_list[i].close()
+            umi_list[i].close()
     
-    @staticmethod
-    def Multi_Executor(temp_dirs, temp_species, temp_samples):
-        assmble_res, annot_res, full_len_res, contig_res = [], [], [], []
+    @utils.add_log
+    def assemble(self):
+        """
+        trust_assemble
+        annotate
+        get_full_len_assembly
+        fa_to_csv
+        """
 
-        with Pool(4) as pool:
-            pool.starmap(tr.trust_assemble, zip(temp_species, temp_dirs, temp_samples))
+        self.temp_outdirs = [self.temp_outdir] * self.thread
+        temp_species = [self.species] * self.thread
+        temp_samples = [f'temp_{i}' for i in range(self.thread)]
+
+        with Pool(self.thread) as pool:
+            pool.starmap(tr.trust_assemble, zip(temp_species, self.temp_outdirs, temp_samples))
 
 
-        with Pool(4) as pool:
-            pool.starmap(tr.annotate, zip(temp_samples, temp_dirs, temp_species))
+        with Pool(self.thread) as pool:
+            pool.starmap(tr.annotate, zip(temp_samples, self.temp_outdirs, temp_species))
 
 
-        with Pool(4) as pool:
-            pool.starmap(tr.get_full_len_assembly, zip(temp_dirs, temp_samples))
+        with Pool(self.thread) as pool:
+            pool.starmap(tr.get_full_len_assembly, zip(self.temp_outdirs, temp_samples))
 
 
-        with Pool(4) as pool:
-            pool.starmap(tr.fa_to_csv, zip(temp_dirs, temp_samples))
+        with Pool(self.thread) as pool:
+            pool.starmap(tr.fa_to_csv, zip(self.temp_outdirs, temp_samples))
 
 
     @utils.add_log
@@ -166,16 +169,19 @@ class Assemble(Step):
         return matched_cbs
 
     @utils.add_log
-    def VDJ_process(self):
+    def extract_chain_reads(self):
+        """
+        bcrtcr.fq + {chains}.fq
+        """
         cb_range = self.barcodeRange.split(' ')
         umi_range = self.umiRange.split(' ')
-        # candidate read extraction
+
         map_res = []
         map_index_prefix = ['bcrtcr'] + self.chains
         _map_len = len(map_index_prefix)
         samples = [self.sample] * _map_len
         map_species = [self.species] * _map_len
-        map_outdirs = [self.temp_dir] * _map_len
+        map_outdirs = [self.temp_outdir] * _map_len
         map_fq1 = [self.match_fq1] * _map_len
         map_fq2 = [self.match_fq2] * _map_len
         map_cb_range = [cb_range] * _map_len
@@ -183,58 +189,34 @@ class Assemble(Step):
 
         with Pool(_map_len) as pool:
             pool.starmap(tr.extract_candidate_reads, 
-                zip(map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range))
-
-        candidate_reads = f'{self.temp_dir}/{self.sample}_bcrtcr.fq'
-        self.split_candidate_reads(candidate_reads, self.temp_dir, self.assemble_out)
-
-        temp_dirs = [self.temp_dir] * 4
-        temp_species = [self.species] * 4
-        temp_samples = [f'temp_{i}' for i in range(4)]
-        # multithread-run for assembly and annotation
-        self.Multi_Executor(temp_dirs, temp_species, temp_samples)
+                zip(map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range))       
 
     @utils.add_log
     def merge_file(self):
-        temp_outs_fa = glob.glob(f'{self.temp_dir}/temp_*_annot.fa')
-        string = ' '.join(temp_outs_fa)
-        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_annot.fa'
-        Assemble.merge_file.logger.info(cmd)
-        os.system(cmd)
+        """
+        merge files from all threads into one file.
+        """
 
-        temp_outs_cdr3 = glob.glob(f'{self.temp_dir}/temp_*_cdr3.out')
-        string = ' '.join(temp_outs_cdr3)
-        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_cdr3.out'
-        Assemble.merge_file.logger.info(cmd)
-        os.system(cmd)
+        file_suffixes = [
+            'annot.fa',
+            'cdr3.out',
+            'assembled_reads.fa',
+            'assign.out',
+            'contig.csv',
+            'full_len.fa',
+        ]
 
-        temp_out_assembled_reads = glob.glob(f'{self.temp_dir}/temp_*_assembled_reads.fa')
-        string = ' '.join(temp_out_assembled_reads)
-        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_assembled_reads.fa'
-        Assemble.merge_file.logger.info(cmd)
-        os.system(cmd)
+        for file_suffix in file_suffixes:
+            file_path = [f'{self.temp_outdir}/temp_{thread}_{file_suffix}' for thread in range(self.thread)]
+            file_path_str = ' '.join(file_path)
+            cmd = f'cat {file_path_str} > {self.assemble_outdir}/{self.sample}_{file_suffix}'
+            self.merge_file.logger.info(cmd)
+            subprocess.check_call(cmd, shell=True)
 
-        temp_out_reads_assign = glob.glob(f'{self.temp_dir}/temp_*_assign.out')
-        string = ' '.join(temp_out_reads_assign)
-        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_assign.out'
-        Assemble.merge_file.logger.info(cmd)
-        os.system(cmd) 
-
-        temp_contigs = glob.glob(f'{self.temp_dir}/temp_*_contig.csv')
-        string = ' '.join(temp_contigs)
-        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_contig.csv'
-        Assemble.merge_file.logger.info(cmd)
-        os.system(cmd)     
-
-        temp_out_full_len = glob.glob(f'{self.temp_dir}/temp_*_full_len.fa')
-        string = ' '.join(temp_out_full_len)
-        cmd = f'cat {string} > {self.assemble_out}/{self.sample}_full_len.fa'
-        Assemble.merge_file.logger.info(cmd)
-        os.system(cmd) 
 
     def gen_all_contig_fasta(self):
-        os.system(f'mkdir {self.outdir}/../04.summarize')
-        full_len_fa = f'{self.assemble_out}/{self.sample}_full_len.fa'
+        utils.check_mkdir(f'{self.outdir}/../04.summarize')
+        full_len_fa = f'{self.assemble_outdir}/{self.sample}_full_len.fa'
         all_fa = open(f'{self.outdir}/../04.summarize/{self.sample}_all_contig.fasta','w')
         with pysam.FastxFile(full_len_fa) as fa:
             for read in fa: 
@@ -245,9 +227,9 @@ class Assemble(Step):
         all_fa.close()
     
     def gen_report(self, matched_cbs):
-        tr.get_trust_report(self.assemble_out,self.sample)
-        tr.get_bc_report(self.assemble_out, self.sample)
-        tr.get_bcfilter_report(self.assemble_out)
+        tr.get_trust_report(self.assemble_outdir,self.sample)
+        tr.get_bc_report(self.assemble_outdir, self.sample)
+        tr.get_bcfilter_report(self.assemble_outdir)
 
         self.add_metric(
             name="Matched Barcodes with scRNA-seq",
@@ -261,7 +243,7 @@ class Assemble(Step):
             help_info="Number of reads those were from barcodes determined to be cells in scRNA-seq"
             )
 
-        with pysam.FastxFile(f'{self.temp_dir}/{self.sample}_bcrtcr.fq') as f:
+        with pysam.FastxFile(f'{self.temp_outdir}/{self.sample}_bcrtcr.fq') as f:
             self.add_metric(
                 name = 'Reads Mapped to Any V(D)J genes', 
                 value = len(list(f)),
@@ -270,7 +252,7 @@ class Assemble(Step):
             )
 
         for _chain in self.chains:
-            with pysam.FastxFile(f'{self.temp_dir}/{self.sample}_{_chain}.fq') as f:
+            with pysam.FastxFile(f'{self.temp_outdir}/{self.sample}_{_chain}.fq') as f:
                 self.add_metric(
                     name = f'Reads Mapped to {_chain}', 
                     value = len(list(f)), 
@@ -280,7 +262,9 @@ class Assemble(Step):
 
     def run(self):
         matched_cbs = self.out_match_fastq()
-        self.VDJ_process()
+        self.extract_chain_reads()
+        self.split_candidate_reads()
+        self.assemble()
         self.merge_file()
         self.gen_all_contig_fasta()
         self.gen_report(matched_cbs)
@@ -302,4 +286,3 @@ def get_opts_assemble(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR/BCR seq data.', choices=['TCR', 'BCR'], required=True)
     parser.add_argument('--barcodeRange', help='Barcode range in fq1, INT INT CHAR.', default='0 23 +') 
     parser.add_argument('--umiRange', help='UMI range in fq1, INT INT CHAR.', default='24 -1 +')
-    parser.add_argument('--trimLevel', help='INT: 0: no trim; 1: trim low quality; 2: trim unmatched.', default=1)

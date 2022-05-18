@@ -15,8 +15,12 @@ trust goes through the following steps:
 """
 @utils.add_log
 def extract_candidate_reads(species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange):
+    """
+    extract reads map to index_prefix
+    index_prefix can be 'bcrtcr' + chains
+    """
     cmd = (
-        f'fastq-extractor -t 2 '
+        f'fastq-extractor -t 1 '
         f'-f {INDEX}/{species}/{index_prefix}.fa '
         f'-o {outdir}/{sample}_{index_prefix} '
         f'--barcodeStart {barcodeRange[0]} '
@@ -68,7 +72,7 @@ def get_bcfilter_report(filedir):
 def trust_assemble(species, outdir, sample, trimLevel=1):
 
     cmd = (
-        f'trust4 -t 2 '
+        f'trust4 -t 1 '
         f'-f {INDEX}/{species}/bcrtcr.fa '
         f'-o {outdir}/{sample} '
         f'-u {outdir}/{sample}.fq '
@@ -97,7 +101,7 @@ def annotate(sample, outdir, species):
     cmd = (
         f'annotator -f {INDEX}/{species}/IMGT+C.fa '
         f'-a {outdir}/{sample}_final.out '
-        f'-t 2 '
+        f'-t 1 '
         f'-o {outdir}/{sample} '
         f'--barcode --UMI --noImpute '
         f'--readAssignment {outdir}/{sample}_assign.out '
