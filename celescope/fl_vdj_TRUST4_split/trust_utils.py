@@ -14,13 +14,13 @@ trust goes through the following steps:
 			3: start from generating the report table
 """
 @utils.add_log
-def extract_candidate_reads(species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange):
+def extract_candidate_reads(species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange, n_thread):
     """
     extract reads map to index_prefix
     index_prefix can be 'bcrtcr' + chains
     """
     cmd = (
-        f'fastq-extractor -t 1 '
+        f'fastq-extractor -t {n_thread} '
         f'-f {INDEX}/{species}/{index_prefix}.fa '
         f'-o {outdir}/{sample}_{index_prefix} '
         f'--barcodeStart {barcodeRange[0]} '

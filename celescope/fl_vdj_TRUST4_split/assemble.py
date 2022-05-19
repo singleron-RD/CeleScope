@@ -176,7 +176,6 @@ class Assemble(Step):
         cb_range = self.barcodeRange.split(' ')
         umi_range = self.umiRange.split(' ')
 
-        map_res = []
         map_index_prefix = ['bcrtcr'] + self.chains
         _map_len = len(map_index_prefix)
         samples = [self.sample] * _map_len
@@ -186,10 +185,12 @@ class Assemble(Step):
         map_fq2 = [self.match_fq2] * _map_len
         map_cb_range = [cb_range] * _map_len
         map_umi_range = [umi_range] * _map_len
+        n_thread = self.thread // _map_len + 1
+        map_n_thread = [n_thread] * _map_len
 
         with Pool(_map_len) as pool:
             pool.starmap(tr.extract_candidate_reads, 
-                zip(map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range))       
+            zip(map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2, map_cb_range, map_umi_range, map_n_thread))       
 
     @utils.add_log
     def merge_file(self):
