@@ -2,6 +2,8 @@ import glob
 import subprocess
 from collections import defaultdict
 from multiprocessing import Pool
+import math
+
 import pandas as pd
 import pysam
 from Bio.Seq import Seq
@@ -11,6 +13,9 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.fl_vdj_TRUST4_split.__init__ import CHAIN
 
+# split fastq into const N_CHUNK. Different N_CHUNK will cause different results as discussed in 
+# https://github.com/liulab-dfci/TRUST4/issues/75
+N_CHUNK = 4
 
 class Assemble(Step):
     """
@@ -42,7 +47,9 @@ class Assemble(Step):
         self.match_dir = args.match_dir
 
         self.chains = self._get_chain_type(self.seqtype)
-        self.match_barcodes, _ = utils.get_barcode_from_match_dir(self.match_dir) 
+        self.match_barcodes, _ = utils.get_barcode_from_match_dir(self.match_dir)
+        # total thread may be higher than argument thread
+        self.single_thread = math.ceil(self.thread / N_CHUNK)
 
 
         # outdir
@@ -125,23 +132,24 @@ class Assemble(Step):
         fa_to_csv
         """
 
-        self.temp_outdirs = [self.temp_outdir] * self.thread
-        temp_species = [self.species] * self.thread
-        temp_samples = [f'temp_{i}' for i in range(self.thread)]
+        self.temp_outdirs = [self.temp_outdir] * N_CHUNK
+        temp_species = [self.species] * N_CHUNK
+        temp_samples = [f'temp_{i}' for i in range(N_CHUNK)]
+        single_threads = [self.single_thread] * N_CHUNK
 
-        with Pool(self.thread) as pool:
-            pool.starmap(tr.trust_assemble, zip(temp_species, self.temp_outdirs, temp_samples))
-
-
-        with Pool(self.thread) as pool:
-            pool.starmap(tr.annotate, zip(temp_samples, self.temp_outdirs, temp_species))
+        with Pool(N_CHUNK) as pool:
+            pool.starmap(tr.trust_assemble, zip(temp_species, self.temp_outdirs, temp_samples, single_threads))
 
 
-        with Pool(self.thread) as pool:
+        with Pool(N_CHUNK) as pool:
+            pool.starmap(tr.annotate, zip(temp_samples, self.temp_outdirs, temp_species, single_threads))
+
+
+        with Pool(N_CHUNK) as pool:
             pool.starmap(tr.get_full_len_assembly, zip(self.temp_outdirs, temp_samples))
 
 
-        with Pool(self.thread) as pool:
+        with Pool(N_CHUNK) as pool:
             pool.starmap(tr.fa_to_csv, zip(self.temp_outdirs, temp_samples))
 
 
@@ -185,8 +193,7 @@ class Assemble(Step):
         map_fq2 = [self.match_fq2] * _map_len
         map_cb_range = [cb_range] * _map_len
         map_umi_range = [umi_range] * _map_len
-        n_thread = self.thread // _map_len + 1
-        map_n_thread = [n_thread] * _map_len
+        map_n_thread = [self.single_thread] * _map_len
 
         with Pool(_map_len) as pool:
             pool.starmap(tr.extract_candidate_reads, 

@@ -14,13 +14,13 @@ trust goes through the following steps:
 			3: start from generating the report table
 """
 @utils.add_log
-def extract_candidate_reads(species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange, n_thread):
+def extract_candidate_reads(species, index_prefix, outdir, sample, fq1, fq2, barcodeRange, umiRange, single_thread):
     """
     extract reads map to index_prefix
     index_prefix can be 'bcrtcr' + chains
     """
     cmd = (
-        f'fastq-extractor -t {n_thread} '
+        f'fastq-extractor -t {single_thread} '
         f'-f {INDEX}/{species}/{index_prefix}.fa '
         f'-o {outdir}/{sample}_{index_prefix} '
         f'--barcodeStart {barcodeRange[0]} '
@@ -69,10 +69,10 @@ def get_bcfilter_report(filedir):
 
 
 @utils.add_log
-def trust_assemble(species, outdir, sample, trimLevel=1):
+def trust_assemble(species, outdir, sample, single_thread, trimLevel=1):
 
     cmd = (
-        f'trust4 -t 1 '
+        f'trust4 -t {single_thread} '
         f'-f {INDEX}/{species}/bcrtcr.fa '
         f'-o {outdir}/{sample} '
         f'-u {outdir}/{sample}.fq '
@@ -96,12 +96,12 @@ def get_full_len_assembly(filedir, sample):
 
 
 @utils.add_log
-def annotate(sample, outdir, species):
+def annotate(sample, outdir, species, single_thread):
 
     cmd = (
         f'annotator -f {INDEX}/{species}/IMGT+C.fa '
         f'-a {outdir}/{sample}_final.out '
-        f'-t 1 '
+        f'-t {single_thread} '
         f'-o {outdir}/{sample} '
         f'--barcode --UMI --noImpute '
         f'--readAssignment {outdir}/{sample}_assign.out '
