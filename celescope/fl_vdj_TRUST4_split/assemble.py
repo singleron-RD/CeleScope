@@ -76,7 +76,7 @@ class Assemble(Step):
     @utils.add_log
     def split_candidate_reads(self):
         """
-        split original candidate reads(_bcrtcr.fq) by barcode into n files, n = self.thread
+        split original candidate reads(_bcrtcr.fq) by barcode into N_CHUNK files
         """
         read_count_dict, umi_dict = defaultdict(int), defaultdict(set)
         with pysam.FastxFile(self.candidate_reads) as f:
@@ -98,27 +98,27 @@ class Assemble(Step):
 
         barcode_list = list(df_count.barcode)
         barcode_num = len(barcode_list)
-        thread = self.thread
-        chunk_size = barcode_num // thread
+
+        chunk_size = barcode_num // N_CHUNK
         # split barcode list into equal size chunks
         split_barcodes = [set(barcode_list[i: i + chunk_size]) for i in range(0, barcode_num, chunk_size)]
 
-        fq_list = [open(f'{self.temp_outdir}/temp_{i}.fq','w') for i in range(thread)]
-        bc_list = [open(f'{self.temp_outdir}/temp_{i}_bc.fa','w') for i in range(thread)]
-        umi_list = [open(f'{self.temp_outdir}/temp_{i}_umi.fa','w') for i in range(thread)]
+        fq_list = [open(f'{self.temp_outdir}/temp_{i}.fq','w') for i in range(N_CHUNK)]
+        bc_list = [open(f'{self.temp_outdir}/temp_{i}_bc.fa','w') for i in range(N_CHUNK)]
+        umi_list = [open(f'{self.temp_outdir}/temp_{i}_umi.fa','w') for i in range(N_CHUNK)]
 
         with pysam.FastxFile(self.candidate_reads) as f:
             for read in f:
                 name = read.name
                 bc, umi = name.split('_')[0], name.split('_')[1]
-                for i in range(thread):
+                for i in range(N_CHUNK):
                     if bc in split_barcodes[i]:
                         fq_list[i].write(str(read) + '\n')
                         bc_list[i].write(f'>{name}\n{bc}\n')
                         umi_list[i].write(f'>{name}\n{umi}\n')
                         break
 
-        for i in range(thread):
+        for i in range(N_CHUNK):
             fq_list[i].close()
             bc_list[i].close()
             umi_list[i].close()
@@ -215,7 +215,7 @@ class Assemble(Step):
         ]
 
         for file_suffix in file_suffixes:
-            file_path = [f'{self.temp_outdir}/temp_{thread}_{file_suffix}' for thread in range(self.thread)]
+            file_path = [f'{self.temp_outdir}/temp_{thread}_{file_suffix}' for thread in range(N_CHUNK)]
             file_path_str = ' '.join(file_path)
             cmd = f'cat {file_path_str} > {self.assemble_outdir}/{self.sample}_{file_suffix}'
             self.merge_file.logger.info(cmd)
