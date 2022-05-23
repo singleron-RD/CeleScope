@@ -23,15 +23,17 @@ def run_mapping(rds, contig, sample, outdir, assign):
     subprocess.check_call(cmd, shell=True)
 
 
-class Mapping_annotation(Step):
+class Mapping_annotation(Summarize):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir
         self.chains, self.paired_groups = Summarize._parse_seqtype(self.seqtype)
-        self.min_read_count = args.min_read_count
         self.coef = int(args.coef)
+        self.original_contig = args.contig_file
+        self.trust_report = args.trust_report
+        self.record_file = None
 
         try:
             self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
@@ -54,6 +56,8 @@ class Mapping_annotation(Step):
 
     @staticmethod
     def parse_clonotype(outdir):
+        """Generate clonotypes table in html.
+        """
         df_clonotypes=pd.read_csv(f'{outdir}/../04.summarize/clonotypes.csv', sep=',')
         df_clonotypes['ClonotypeID'] = df_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
         df_clonotypes['Frequency'] = df_clonotypes['frequency']
@@ -61,22 +65,10 @@ class Mapping_annotation(Step):
         df_clonotypes['CDR3_aa'] = df_clonotypes['cdr3s_aa'].apply(lambda x: x.replace(';', '<br>'))
         return df_clonotypes
 
-    def parse_contig(self):
-        df = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/{self.sample}_contig.csv', sep='\t', header=None) 
-        df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis']
-        df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
-        df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
-        df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
-        df['productive'] = df['cdr3'].apply(lambda x: False if x=='None' else True)
-
-        filterbc_rep = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/barcoderepfl.tsv',sep='\t')
-        filtered_report_out = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/trust_filter_report.out',sep='\t')
-        df_for_clono = Summarize.filter_cell(df, self.seqtype, self.coef, record_file=None)
-        return df_for_clono
-
     @utils.add_log
     def annotation_process(self):
-        df_for_clono = self.parse_contig()
+        original_df = self.parse_contig_file()
+        df_for_clono, _ = self.filter_contig(original_df)
         annotation_summary = tr.get_vj_annot(df_for_clono, self.chains, self.paired_groups)
         for anno in annotation_summary:
             self.add_metric(anno['name'], anno['value'], anno.get('total'), anno.get('help_info'))
@@ -155,8 +147,9 @@ def get_opts_mapping_annotation(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR',
                         choices=['TCR', 'BCR'], required=True)
     parser.add_argument('--coef', help='coef for auto filter', default=10)
-    parser.add_argument('--min_read_count', help ='filter cell by read count number, int type required', default='auto')
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help='scRNA-seq match directory', required=True)
+        parser.add_argument('--trust_report', help='Filtered trust report,Filter Nonfunctional CDR3 and CDR3 sequences containing N', required=True)
+        parser.add_argument('--contig_file', help='original contig annotation file', required=True)  
     return parser

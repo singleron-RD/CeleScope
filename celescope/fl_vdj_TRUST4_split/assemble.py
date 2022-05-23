@@ -236,6 +236,7 @@ class Assemble(Step):
     
     def gen_report(self, matched_cbs):
         tr.get_trust_report(self.assemble_outdir,self.sample)
+        tr.filter_trust_report(self.assemble_outdir)
         tr.get_bc_report(self.assemble_outdir, self.sample)
         tr.get_bcfilter_report(self.assemble_outdir)
 

@@ -39,16 +39,28 @@ class Summarize(Step):
         self.assembled_fa = args.assembled_fa
         self.record_file = f'{self.outdir}/Cell_num.txt'
         self.coef = int(args.coef)
+        self.original_contig = args.contig_file
+        self.trust_report = args.trust_report
 
         self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
-        self.min_read_count = args.min_read_count
 
     @staticmethod
     def reversed_compl(seq):
+        """Reverse complementary sequence
+
+        :param original seq
+        :return Reverse complementary sequence
+        """
         return str(Seq(seq).reverse_complement())
     
     @staticmethod
     def _parse_seqtype(seqtype):
+        """Parse BCR or TCR
+
+        :param seqtype
+        :return CHAIN[seqtype]: 'TCR': ['TRA', 'TRB'], 'BCR': ['IGH', 'IGL', 'IGK']
+        	    PAIRED_CHAIN[seqtype]: ['TRA_TRB'], 'BCR': ['IGH_IGL', 'IGH_IGK']
+        """
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
     
     @staticmethod
@@ -60,7 +72,7 @@ class Summarize(Step):
     @staticmethod
     def Auto_filter(df, coef):
         """
-        threshold = top 20% contig umi value / coef
+        Filter contig by assign info of transcriptome, threshold = top 20% contig umi value / coef
         """
         n_cell_1_percentile = len(df) // 5
         sorted_counts = sorted(df.umis, reverse=True)
@@ -68,87 +80,105 @@ class Summarize(Step):
         threshold = int(count_cell_1_percentile / coef)
         return threshold
 
-    @staticmethod
-    def filter_cell(df, seqtype, coef, record_file=None):
+    @utils.add_log
+    def parse_contig_file(self):
+        """
+        Add column name for original contig file.
+        """
+        df = pd.read_csv(self.original_contig, sep='\t', header=None)
+        df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis']
+        df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
+        df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
+        df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
+        df['productive'] = df['cdr3'].apply(lambda x: False if x=='None' else True)
 
+        return df
+
+    @utils.add_log
+    def filter_contig(self, df):
+        """
+        CDR3 filtering
+        Filter nonfunctional CDR3(shown 'out_of_frame' in cdr3 report), or CDR3 sequences containing "N" in the nucleotide sequence.
+        Keep CDR3aa start with C.
+        Keep CDR3aa length >= 5.
+        Keep no stop codon in CDR3aa.
+        Filter low abundance contigs based on a umi cut-off. 
+        """
         df.sort_values(by='umis', ascending=False, inplace=True)
-        if seqtype == 'BCR':
+        if self.seqtype == 'BCR':
             df_chain_heavy = df[df['chain']=='IGH']
             df_chain_light = df[(df['chain']=='IGK') | (df['chain']=='IGL')]
-            df_chain_heavy = df_chain_heavy.drop_duplicates(['barcode'])
-            df_chain_light = df_chain_light.drop_duplicates(['barcode'])
-            df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
         else:
-            df_TRA = df[df['chain'] == 'TRA']
-            df_TRB = df[df['chain'] == 'TRB']
-            df_TRA = df_TRA.drop_duplicates(['barcode'])
-            df_TRB = df_TRB.drop_duplicates(['barcode'])
-            df_for_clono = pd.concat([df_TRA, df_TRB], ignore_index=True)
+            df_chain_heavy = df[df['chain'] == 'TRA']
+            df_chain_light = df[df['chain'] == 'TRB']
+        df_chain_heavy = df_chain_heavy.drop_duplicates(['barcode'])
+        df_chain_light = df_chain_light.drop_duplicates(['barcode'])
+        df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
         
-        if record_file != None:
-            Summarize.record_cell_num(df_for_clono, record_file, step='Total Assembled Cell Number')
+        if self.record_file != None:
+            Summarize.record_cell_num(df_for_clono, self.record_file, step='Total Assembled Cell Number')
         
-        cdr3_list = list(df_for_clono['cdr3'])
-        cdr3_list = [i for i in cdr3_list if i.startswith('C')]
-        cdr3_list = [i for i in cdr3_list if len(i)>=5]
-        cdr3_list = [i for i in cdr3_list if 'UAG' or 'UAA' or 'UGA' not in i]
-        df_for_clono = df_for_clono[df_for_clono['cdr3'].isin(cdr3_list)]
+        trust_report = pd.read_csv(self.trust_report, sep='\t')
+        correct_cdr3 = set(df_for_clono['cdr3']).intersection(set(trust_report.CDR3nt))
+        correct_cdr3 = [i for i in correct_cdr3 if i.startswith('C')]
+        correct_cdr3 = [i for i in correct_cdr3 if len(i)>=5]
+        correct_cdr3 = [i for i in correct_cdr3 if 'UAG' or 'UAA' or 'UGA' not in i]
+        df_for_clono = df_for_clono[df_for_clono['cdr3'].isin(correct_cdr3)]
 
-        if record_file != None:
-            Summarize.record_cell_num(df_for_clono, record_file, 
+        if self.record_file != None:
+            Summarize.record_cell_num(df_for_clono, self.record_file, 
             step='Cell Number: Filter CDR3aa:Not start with C, length<5, no stop codon')
         
-        if seqtype == 'BCR':
-            threshold = Summarize.Auto_filter(df_chain_heavy, coef)
-            df_chain_heavy = df_chain_heavy[df_chain_heavy['umis']>=threshold]
-            threshold = Summarize.Auto_filter(df_chain_light, coef)
-            df_chain_light = df_chain_light[df_chain_light['umis']>=threshold]
-            df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
-        else:
-            threshold = Summarize.Auto_filter(df_TRA, coef)
-            df_TRA = df_TRA[df_TRA['umis']>=threshold]
-            threshold = Summarize.Auto_filter(df_TRB, coef)
-            df_TRB = df_TRB[df_TRB['umis']>=threshold]
-            df_for_clono = pd.concat([df_TRA, df_TRB], ignore_index=True)
+        threshold = Summarize.Auto_filter(df_chain_heavy, self.coef)
+        df_chain_heavy = df_chain_heavy[df_chain_heavy['umis']>=threshold]
+        threshold = Summarize.Auto_filter(df_chain_light, self.coef)
+        df_chain_light = df_chain_light[df_chain_light['umis']>=threshold]
+        df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
         
-        if record_file != None:
-            Summarize.record_cell_num(df_for_clono, record_file, 
-            step='Cell Number After Auto')
+        if self.record_file != None:
+            Summarize.record_cell_num(df_for_clono, self.record_file, 
+            step='Cell Number After Auto filter')
 
-        return df_for_clono
+        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+        cell_barcodes = set(df_for_clono_pro['barcode'])
 
-    @staticmethod
-    def init_contig(df, cell_barcodes):
-        # all contig.csv
-        df_all_contig = copy.deepcopy(df)
-        df_all_contig['barcode'] = df_all_contig['barcode'].apply(Summarize.reversed_compl)
-        df_all_contig['contig_id'] = df_all_contig['contig_id'].apply(lambda x: Summarize.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
-        # filter contig.csv
-        df_filter_contig = copy.deepcopy(df)
-        df_filter_contig = df_filter_contig[df_filter_contig['barcode'].isin(cell_barcodes)]
-        df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(Summarize.reversed_compl)
-        df_filter_contig['contig_id'] = df_filter_contig['contig_id'].apply(lambda x: Summarize.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
+        return df_for_clono, cell_barcodes
 
-        return df_all_contig, df_filter_contig
+    @utils.add_log
+    def filter_fasta(self, cell_barcodes):
+        """Filter all contig fasta file by barcodes which are identified to be cell.
 
-    @staticmethod
-    def filter_fasta(cell_barcodes, all_contig_fasta, filter_contig_fasta):
+        :param cell_barcodes: all barcodes identified to be cell.
+        """
+        all_contig_fasta = f'{self.outdir}/{self.sample}_all_contig.fasta'
+        filter_contig_fasta = f'{self.outdir}/{self.sample}_filtered_contig.fasta'
+
+        filter_contig_fasta = open(filter_contig_fasta,'w')
         with pysam.FastxFile(all_contig_fasta) as fa:
             for read in fa:
                 name = read.name
                 barcode = name.split('_')[0]
                 sequence = read.sequence
-                if Summarize.reversed_compl(barcode) in cell_barcodes:
+                if self.reversed_compl(barcode) in cell_barcodes:
                     filter_contig_fasta.write('>' + name + '\n' + sequence + '\n')
+                    
         filter_contig_fasta.close()
 
-    @staticmethod
-    def parse_clonotypes(df_for_clono_pro, outdir):
+    @utils.add_log
+    def parse_clonotypes(self, df, df_for_clono, cell_barcodes):
+        """Parse clonotypes from CDR3 and manually add clonotype id for each contig.
+
+        :param df: original contig file.
+        :param df_for_clono: contig info after filter.
+        :param cell_barcodes: all barcodes identified to be cell.
+        :return df_filter_contig: filtered contigs by cell barcodes.
+        """
+        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         df_for_clono_pro['chain_cdr3aa'] = df_for_clono_pro[['chain', 'cdr3']].apply(':'.join, axis=1)
         df_for_clono_pro['chain_cdr3nt'] = df_for_clono_pro[['chain', 'cdr3_nt']].apply(':'.join, axis=1)
 
-        cbs = set(df_for_clono_pro['barcode'].tolist())
-        clonotypes = open(f'{outdir}/clonotypes.csv', 'w')
+        cbs = set(df_for_clono_pro['barcode'])
+        clonotypes = open(f'{self.outdir}/clonotypes.csv', 'w')
         clonotypes.write('barcode\tcdr3s_aa\tcdr3s_nt\n')
         for cb in cbs:
             temp = df_for_clono_pro[df_for_clono_pro['barcode']==cb]
@@ -160,156 +190,73 @@ class Summarize(Step):
             clonotypes.write(f'{cb}\t{chain_str}\t{ntchain_str}\n')
         clonotypes.close() 
 
-        df_clonotypes = pd.read_csv(f'{outdir}/clonotypes.csv', sep='\t', index_col=None)
+        df_clonotypes = pd.read_csv(f'{self.outdir}/clonotypes.csv', sep='\t', index_col=None)
         df_dict = df_clonotypes[["cdr3s_nt", "cdr3s_aa"]].set_index("cdr3s_nt").to_dict(orient='dict')['cdr3s_aa']
         contig_with_clonotype = copy.deepcopy(df_clonotypes)
-
         df_clonotypes = df_clonotypes.groupby('cdr3s_nt', as_index=False).agg({'barcode': 'count'})
-        df_clonotypes = df_clonotypes.rename(columns={'barcode': 'frequency'})
+        df_clonotypes.rename(columns={'barcode': 'frequency'}, inplace=True)
         sum_f = df_clonotypes['frequency'].sum()
         df_clonotypes['proportion'] = df_clonotypes['frequency'].apply(lambda x: x/sum_f)
-        df_clonotypes = df_clonotypes.sort_values(by='frequency', ascending=False)
+        df_clonotypes.sort_values(by='frequency', ascending=False, inplace=True)
         df_clonotypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonotypes.shape[0]+1)]
         df_clonotypes['cdr3s_aa'] = df_clonotypes['cdr3s_nt'].apply(lambda x:df_dict[x])
         df_clonotypes = df_clonotypes.reindex(columns=['clonotype_id', 'frequency', 'proportion', 'cdr3s_aa', 'cdr3s_nt'])
-        df_clonotypes.to_csv(f'{outdir}/clonotypes.csv', sep=',', index=False) 
+        df_clonotypes.to_csv(f'{self.outdir}/clonotypes.csv', sep=',', index=False) 
         used_for_merge = df_clonotypes[['cdr3s_nt','clonotype_id']]
 
-        df_clonotypes['ClonotypeID'] = df_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
-        df_clonotypes['Frequency'] = df_clonotypes['frequency']
-        df_clonotypes['Proportion'] = df_clonotypes['proportion'].apply(lambda x: f'{round(x*100, 2)}%')
-        df_clonotypes['CDR3_aa'] = df_clonotypes['cdr3s_aa'].apply(lambda x: x.replace(';', '<br>'))
-
-        return df_clonotypes, contig_with_clonotype, used_for_merge
-
-    @staticmethod
-    def add_clonotypes(used_for_merge, contig_with_clonotype, df_all_contig, df_filter_contig, outdir, sample):
-        # add clonotype_id in contig.csv file
         df_merge = pd.merge(used_for_merge, contig_with_clonotype, on='cdr3s_nt', how='outer')
-        df_merge = df_merge[['barcode','clonotype_id']]
-        df_merge['barcode'] = df_merge['barcode'].apply(Summarize.reversed_compl)
-        df_all_contig = pd.merge(df_merge, df_all_contig, on='barcode',how='outer')
-        df_filter_contig = pd.merge(df_merge, df_filter_contig, on='barcode',how='outer')
+        df_merge = df_merge[['barcode', 'clonotype_id']]
+        df_all_contig = pd.merge(df_merge, df, on='barcode',how='outer')
         df_all_contig.fillna('None',inplace = True)
-        df_filter_contig.fillna('None',inplace = True)
         df_all_contig = df_all_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
-        df_filter_contig = df_filter_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
-        df_all_contig.to_csv(f'{outdir}/{sample}_all_contig.csv', sep=',', index=False)
-        df_filter_contig.to_csv(f'{outdir}/{sample}_filtered_contig.csv', sep=',', index=False)
-        
+        df_filter_contig = df_all_contig[df_all_contig['barcode'].isin(cell_barcodes)]
+
+        df_all_contig['barcode'] = df_all_contig['barcode'].apply(self.reversed_compl)
+        df_all_contig['contig_id'] = df_all_contig['contig_id'].apply(lambda x: self.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
+        df_all_contig.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
+
+        df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(self.reversed_compl)
+        df_filter_contig['contig_id'] = df_filter_contig['contig_id'].apply(lambda x: self.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
+        df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
+
         return df_filter_contig
 
-    @staticmethod
-    def keep_two_chains(df_filter_contig, outdir, sample):
-        df_filter_contig=df_filter_contig[df_filter_contig['productive']==True]
-        df_filter_contig.sort_values(by=['barcode','umis'],ascending=[True,False],inplace=True)
-        df_filter_contig.reset_index(drop=True,inplace=True)
-        contig_dict = df_filter_contig.groupby('barcode')['contig_id'].apply(lambda x:x.tolist()).to_dict()
-        chain_dict = df_filter_contig.groupby('barcode')['chain'].apply(lambda x:x.tolist()).to_dict()
-        chain_filter_set = set()
-        for key,val in chain_dict.items():
-            type_count=dict(Counter(val))
-            for _type, _count in type_count.items():
-                if _count>=2:
-                    index = [_i for _i,_j in enumerate(val) if _j == _type]
-                    for _index in index[:2]:
-                        chain_filter_set.add(contig_dict[key][_index])
-                elif _count==1:
-                    index = val.index(_type)
-                    chain_filter_set.add(contig_dict[key][index])
-                else:
-                    continue
-        two_chains_contig = df_filter_contig[df_filter_contig['contig_id'].isin(chain_filter_set)]
-        two_chains_contig.to_csv(f'{outdir}/{sample}_two_chain_contig.csv', sep=',', index=False)
-        
-        #fasta
-        filter_contig_set = set(df_filter_contig['contig_id'].tolist())
-        two_chains_fasta = f'{outdir}/{sample}_two_chain_contig.fasta'
-        two_chains_fasta = open(two_chains_fasta,'w')
-        filter_contig_fasta = f'{outdir}/{sample}_filtered_contig.fasta'
-        with pysam.FastxFile(filter_contig_fasta) as fa:
-            for read in fa:
-                seq = read.sequence
-                name = read.name
-                if name in filter_contig_set:
-                    two_chains_fasta.write(">"+name+"\n"+seq+"\n")
-        two_chains_fasta.close()
-
-        return two_chains_contig, two_chains_fasta
-    
-    @staticmethod
-    def keep_one_pair(seqtype, two_chains_contig, outdir, sample):
-        if seqtype == 'BCR':
-            df_one_chain_heavy = two_chains_contig[ (two_chains_contig['chain'] == 'IGH') ] 
-            df_one_chain_light = two_chains_contig[ (two_chains_contig['chain'] == 'IGL')|(two_chains_contig['chain'] =='IGK')]
-            
-            df_one_chain_heavy = df_one_chain_heavy.sort_values(by='umis', ascending=False)
-            df_one_chain_light = df_one_chain_light.sort_values(by='umis', ascending=False)
-            df_one_chain_heavy = df_one_chain_heavy.drop_duplicates(['barcode'])
-            df_one_chain_light = df_one_chain_light.drop_duplicates(['barcode'])
-            df_one_chain_merge = pd.concat([df_one_chain_heavy, df_one_chain_light], ignore_index=True)
-            df_one_chain_merge = df_one_chain_merge.sort_values(by=['barcode','umis'], ascending=[True,False])
+    @utils.add_log
+    def keep_unique_contig(self, df_filter_contig):
+        """
+        Keep unique contig for each chain(Highest umi) of one cell
+        """
+        df_filter_contig.sort_values(by='umis',ascending=False)
+        if self.seqtype == 'BCR':
+            df_chain_heavy = df_filter_contig[df_filter_contig['chain']=='IGH']
+            df_chain_light = df_filter_contig[(df_filter_contig['chain']=='IGK') | (df_filter_contig['chain']=='IGL')]
         else:
-            df_one_chain = two_chains_contig[(two_chains_contig['chain']=='TRA') | (two_chains_contig['chain']=='TRB')]
-            df_one_chain = df_one_chain.sort_values(by=['barcode','umis'], ascending=[True,False])
-            df_one_chain_merge = df_one_chain.drop_duplicates(['barcode', 'chain'])
-        df_one_chain_merge.to_csv(f'{outdir}/{sample}_one_chain_contig.csv', sep=',', index=False)
-            
-        # IGH+IGK/IGL TRA+TRB pair fasta
-        one_chain_contig_set = set(df_one_chain_merge['contig_id'].tolist())
-        one_chain_fasta = f'{outdir}/{sample}_one_chain_contig.fasta'
-        one_chain_fasta = open(one_chain_fasta,'w')
-        with pysam.FastxFile(f'{outdir}/{sample}_filtered_contig.fasta') as fa:
+            df_chain_heavy = df_filter_contig[df_filter_contig['chain'] == 'TRA']
+            df_chain_light = df_filter_contig[df_filter_contig['chain'] == 'TRB']
+        df_chain_heavy = df_chain_heavy.drop_duplicates(['barcode'])
+        df_chain_light = df_chain_light.drop_duplicates(['barcode'])
+        df_unique_contig = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
+        df_unique_contig.to_csv(f'{self.outdir}/{self.sample}_unique_contig.csv', sep=',', index=False)
+
+        unique_contig_set = set(df_unique_contig['contig_id'])
+        unique_contig_fasta = f'{self.outdir}/{self.sample}_unique_contig.fasta'
+        one_chain_fasta = open(unique_contig_fasta,'w')
+        with pysam.FastxFile(f'{self.outdir}/{self.sample}_filtered_contig.fasta') as fa:
             for read in fa:
                 seq = read.sequence
                 name = read.name
-                if name in one_chain_contig_set:
+                if name in unique_contig_set:
                     one_chain_fasta.write(">"+name+"\n"+seq+"\n")
         one_chain_fasta.close()
 
     @utils.add_log
-    def parse_contig_file(self):
-        df = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/{self.sample}_contig.csv', sep='\t', header=None)
-        df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis']
-        df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
-        df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
-        df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
-        df['productive'] = df['cdr3'].apply(lambda x: False if x=='None' else True)
-    
-        filterbc_rep = pd.read_csv(f'{self.outdir}/../03.assemble/assemble/barcoderepfl.tsv',sep='\t')
-        report_out = f'{self.outdir}/../03.assemble/assemble/report.out'
-        filtered_report_out = f'{self.outdir}/../03.assemble/assemble/trust_filter_report.out'
-        _cmd = f''' awk '$4!~"_" && $4!~"?"' {report_out} > {filtered_report_out} '''
-        os.system(_cmd)
-
-        trust_rep = pd.read_csv(filtered_report_out, sep='\t')
-        df_for_clono = self.filter_cell(df, self.seqtype, self.coef, self.record_file)
-        
+    def gen_summary(self, df_for_clono):
+        """ Generate metrics in html 
+        """
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
-        cell_barcodes = set(df_for_clono_pro['barcode'].tolist())
+        cell_barcodes = set(df_for_clono_pro['barcode'])
         total_cells =len(cell_barcodes)
 
-        # filter contig.fasta
-        all_contig_fasta = f'{self.outdir}/{self.sample}_all_contig.fasta'
-        filter_contig_fasta = f'{self.outdir}/{self.sample}_filtered_contig.fasta'
-        filter_contig_fasta = open(filter_contig_fasta,'w')
-        self.filter_fasta(cell_barcodes, all_contig_fasta, filter_contig_fasta)
-
-        df_all_contig, df_filter_contig = self.init_contig(df, cell_barcodes)
-        _, contig_with_clonotype, used_for_merge = self.parse_clonotypes(df_for_clono_pro,self.outdir)
-
-        # add clonotype_id in contig.csv file
-        df_filter_contig = self.add_clonotypes(used_for_merge, contig_with_clonotype, df_all_contig, df_filter_contig, self.outdir, self.sample)
-
-        # keep chains with two highest umi contigs 
-        two_chains_contig, _ = self.keep_two_chains(df_filter_contig, self.outdir, self.sample)
-        # keep one chain, IGH+IGK/IGL TRA+TRB pair
-        self.keep_one_pair(self.seqtype, two_chains_contig, self.outdir, self.sample)
-
-        return df_for_clono, df_for_clono_pro, cell_barcodes, total_cells
-
-    @utils.add_log
-    def gen_summary(self, _, df_for_clono_pro, cell_barcodes, total_cells):
         read_count = 0
         read_count_all = 0
         umi_dict = defaultdict(set)
@@ -379,9 +326,12 @@ class Summarize(Step):
             )
 
     def run(self):
-        df_for_clono, df_for_clono_pro, cell_barcodes, total_cells = self.parse_contig_file()
-        self.gen_summary(df_for_clono, df_for_clono_pro, cell_barcodes, total_cells)
-
+        original_df = self.parse_contig_file()
+        df_for_clono, cell_barcodes = self.filter_contig(original_df)
+        self.filter_fasta(cell_barcodes)
+        df_filter_contig = self.parse_clonotypes(original_df, df_for_clono, cell_barcodes)
+        self.keep_unique_contig(df_filter_contig)
+        self.gen_summary(df_for_clono)
 
 @utils.add_log
 def summarize(args):
@@ -391,10 +341,11 @@ def summarize(args):
 
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
-    parser.add_argument('--min_read_count', help ='filter cell by read count number, int type required', default='auto')
     parser.add_argument('--coef', help='coef for auto filter', default=10)
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--reads_assignment', help='File records reads assigned to contigs.', required=True)
         parser.add_argument('--fq2', help='Cutadapt R2 reads.', required=True)
         parser.add_argument('--assembled_fa', help='Read used for assembly', required=True)
+        parser.add_argument('--trust_report', help='Filtered trust report,Filter Nonfunctional CDR3 and CDR3 sequences containing N', required=True)
+        parser.add_argument('--contig_file', help='original contig annotation file', required=True)  

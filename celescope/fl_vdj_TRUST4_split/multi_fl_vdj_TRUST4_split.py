@@ -65,21 +65,29 @@ class Multi_fl_vdj_TRUST4_split(Multi):
         reads_assignment = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_assign.out'
         assembled_fa = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_assembled_reads.fa'
         fq2 = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
+        trust_report = f'{self.outdir_dic[sample]["assemble"]}/assemble/trust_filter_report.out'
+        contig_file = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_contig.csv'
         cmd = (
             f'{cmd_line} '
             f'--reads_assignment {reads_assignment} '
             f'--assembled_fa {assembled_fa} '
             f'--fq2 {fq2} '
+            f'--trust_report {trust_report} '
+            f'--contig_file {contig_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
         
     def mapping_annotation(self,sample):
         step = 'mapping_annotation'
         cmd_line = self.get_cmd_line(step,sample)
+        trust_report = f'{self.outdir_dic[sample]["assemble"]}/assemble/trust_filter_report.out'
+        contig_file = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_contig.csv'
         match_dir = f'{self.col4_dict[sample]}'
         cmd=(
             f'{cmd_line} '
             f'--match_dir {match_dir} '
+            f'--trust_report {trust_report} '
+            f'--contig_file {contig_file} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
