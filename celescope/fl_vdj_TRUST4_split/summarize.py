@@ -183,19 +183,18 @@ class Summarize(Step):
         for cb in cbs:
             temp = df_for_clono_pro[df_for_clono_pro['barcode']==cb]
             temp = temp.sort_values(by='chain', ascending=True)
-            chain_list = temp['chain_cdr3aa'].tolist()
-            chain_str = ';'.join(chain_list)
-            ntchain_list = temp['chain_cdr3nt'].tolist()
-            ntchain_str = ';'.join(ntchain_list)
-            clonotypes.write(f'{cb}\t{chain_str}\t{ntchain_str}\n')
+            aa_chain = ';'.join(list(temp['chain_cdr3aa']))
+            nt_chain = ';'.join(list(temp['chain_cdr3nt']))
+            clonotypes.write(f'{cb}\t{aa_chain}\t{nt_chain}\n')
         clonotypes.close() 
 
         df_clonotypes = pd.read_csv(f'{self.outdir}/clonotypes.csv', sep='\t', index_col=None)
-        df_dict = df_clonotypes[["cdr3s_nt", "cdr3s_aa"]].set_index("cdr3s_nt").to_dict(orient='dict')['cdr3s_aa']
         contig_with_clonotype = copy.deepcopy(df_clonotypes)
+        df_dict = df_clonotypes[["cdr3s_nt", "cdr3s_aa"]].set_index("cdr3s_nt").to_dict(orient='dict')['cdr3s_aa']
         df_clonotypes = df_clonotypes.groupby('cdr3s_nt', as_index=False).agg({'barcode': 'count'})
         df_clonotypes.rename(columns={'barcode': 'frequency'}, inplace=True)
         sum_f = df_clonotypes['frequency'].sum()
+
         df_clonotypes['proportion'] = df_clonotypes['frequency'].apply(lambda x: x/sum_f)
         df_clonotypes.sort_values(by='frequency', ascending=False, inplace=True)
         df_clonotypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonotypes.shape[0]+1)]
@@ -214,7 +213,6 @@ class Summarize(Step):
         df_all_contig['barcode'] = df_all_contig['barcode'].apply(self.reversed_compl)
         df_all_contig['contig_id'] = df_all_contig['contig_id'].apply(lambda x: self.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
         df_all_contig.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
-
         df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(self.reversed_compl)
         df_filter_contig['contig_id'] = df_filter_contig['contig_id'].apply(lambda x: self.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
@@ -239,15 +237,14 @@ class Summarize(Step):
         df_unique_contig.to_csv(f'{self.outdir}/{self.sample}_unique_contig.csv', sep=',', index=False)
 
         unique_contig_set = set(df_unique_contig['contig_id'])
-        unique_contig_fasta = f'{self.outdir}/{self.sample}_unique_contig.fasta'
-        one_chain_fasta = open(unique_contig_fasta,'w')
+        unique_contig_fasta = open(f'{self.outdir}/{self.sample}_unique_contig.fasta', 'w')
         with pysam.FastxFile(f'{self.outdir}/{self.sample}_filtered_contig.fasta') as fa:
             for read in fa:
                 seq = read.sequence
                 name = read.name
                 if name in unique_contig_set:
-                    one_chain_fasta.write(">"+name+"\n"+seq+"\n")
-        one_chain_fasta.close()
+                    unique_contig_fasta.write(">"+name+"\n"+seq+"\n")
+        unique_contig_fasta.close()
 
     @utils.add_log
     def gen_summary(self, df_for_clono):
@@ -332,6 +329,7 @@ class Summarize(Step):
         df_filter_contig = self.parse_clonotypes(original_df, df_for_clono, cell_barcodes)
         self.keep_unique_contig(df_filter_contig)
         self.gen_summary(df_for_clono)
+
 
 @utils.add_log
 def summarize(args):
