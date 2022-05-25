@@ -97,21 +97,42 @@ class Otsu():
 
 class Auto():
     """
-    threshold = top 1% positive cell count / coef
+    threshold = top {percentile}% cell count / coef
+    count is usually UMI count.
+
+    >>> array = [50] * 100 + [30] * 100 + [10] * 100 + [4] * 100
+    >>> Auto(array, coef=10).run()
+    5
+    >>> Auto(array, percentile=70, coef=3).run()
+    10
+    >>> Auto(array, percentile=50, coef=10, expected_cell_num=100).run()
+    5
+    >>> Auto([1, 2, 20, 30, 40], expected_cell_num=4, percentile=50, coef=10).run()
+    2
     """
-    def __init__(self, array, coef=3, **kwargs):
+    def __init__(self, array, percentile=99, coef=3, expected_cell_num=None, **kwargs):
         self.array = [x for x in array if x > 0 ]
+        self.percentile = percentile
         self.coef = int(coef)
+        self.expected_cell_num = expected_cell_num
         self.kwargs = kwargs
     
     def run(self):
         array = self.array
         if not array:
             return 1
-        n_cell_1_percentile = len(array) // 100
+
+        if not self.expected_cell_num:
+            expected_cell_num = len(array)
+        else:
+            expected_cell_num = self.expected_cell_num
+            if expected_cell_num > len(array):
+                print('Warning: expected_cell_num > len(array)')
+                expected_cell_num = len(array)
+                      
         sorted_counts = sorted(array, reverse=True)
-        count_cell_1_percentile = sorted_counts[n_cell_1_percentile]
-        threshold = int(count_cell_1_percentile / self.coef)
+        count_cell_percentile = np.percentile(sorted_counts[:expected_cell_num], self.percentile)
+        threshold = int(count_cell_percentile / self.coef)
 
         return threshold
 

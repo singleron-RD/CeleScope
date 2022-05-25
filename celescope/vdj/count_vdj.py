@@ -5,12 +5,37 @@ from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
+from celescope.tools.capture.threshold import Auto
 
-
-# UMI_min auto = CELL_CALLING_RANK UMI / 10
-CELL_CALLING_RANK = 20
 # mixcr sequence header
 SEQUENCES_HEADER = ["aaSeqCDR3", "nSeqCDR3"]
+
+
+def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=3, coef=10, percentile=99):
+    """
+    Args:
+        df_UMI_sum: A dataframe with columns barcode and UMI. The barcode are match cell barcodes.
+    
+    Returns:
+        A list of target cell barcodes
+
+    >>> df_UMI_sum = pd.DataFrame({"barcode": ["A", "B", "C", "D", "E"], "UMI": [1, 2, 1, 30, 40]})
+    >>> umi_threshold, target_cell_barcodes = target_cell_calling(df_UMI_sum, expected_target_cell_num=5, percentile=80, coef=10, target_barcodes=["A", "C"])
+    >>> umi_threshold == 3
+    True
+    >>> target_cell_barcodes == {'A', 'C', 'D', 'E'}
+    True
+    """
+    umi_threshold = Auto(list(df_UMI_sum['UMI']), expected_cell_num=expected_target_cell_num, coef=coef, percentile=percentile).run()
+    # avoid change the original dataframe
+    df_temp = df_UMI_sum.copy()
+    if target_barcodes:
+        df_temp['UMI'] = df_temp.apply(
+            lambda row:  row['UMI'] * weight if row['barcode'] in target_barcodes else row['UMI'], axis=1)
+             
+    target_cell_barcodes = set(df_temp.loc[df_temp['UMI'] >= umi_threshold].barcode)
+
+    return umi_threshold, target_cell_barcodes
 
 
 class Count_vdj(Step):
@@ -40,15 +65,27 @@ class Count_vdj(Step):
             for seq in SEQUENCES_HEADER:
                 self.cols.append("_".join([seq, chain]))
 
-        self.match_bool = False
         if utils.check_arg_not_none(self.args, 'match_dir'):
             self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_match_dir(args.match_dir)
-            self.match_bool = True
         elif utils.check_arg_not_none(self.args, 'matrix_dir'):
             self.match_cell_barcodes = utils.get_barcode_from_matrix_dir(args.matrix_dir)
-            self.match_bool = True
-        if self.match_bool:
-            self.match_cell_barcodes = set(self.match_cell_barcodes)
+        else:
+            raise FileNotFoundError("--match_dir or --matrix_dir is required.")
+        self.match_cell_barcodes = set(self.match_cell_barcodes)
+
+        # input data
+        df_UMI_count_filter = pd.read_csv(args.UMI_count_filter_file, sep='\t')
+        df_UMI_sum = df_UMI_count_filter.groupby(
+            ['barcode'], as_index=False).agg({"UMI": "sum"})
+        self.df_match_UMI_count_filter = df_UMI_count_filter[df_UMI_count_filter['barcode'].isin(self.match_cell_barcodes)]
+
+        if args.target_cell_barcode:
+            self.target_cell_barcodes = utils.read_one_col(args.target_cell_barcode)
+        else:
+            self.target_cell_barcodes = None
+
+        self.expected_target_cell_num = args.expected_target_cell_num
+
 
         # out files
         self.cell_confident_file = f"{self.out_prefix}_cell_confident.tsv"
@@ -60,16 +97,24 @@ class Count_vdj(Step):
         self.add_data(iUMI=args.iUMI)
 
     @utils.add_log
-    def cell_calling(self, df_UMI_count_filter):
-        df_UMI_sum = df_UMI_count_filter.groupby(
+    def cell_calling(self):
+        """
+
+        """
+        df_UMI_sum = df_match_UMI_count_filter.groupby(
             ['barcode'], as_index=False).agg({"UMI": "sum"})
         if (self.args.UMI_min == "auto"):
             df_UMI_sum_sorted = df_UMI_sum.sort_values(
-                ["UMI"], ascending=False)
-            rank_UMI = df_UMI_sum_sorted.iloc[CELL_CALLING_RANK, :]["UMI"]
+                ["UMI"], ascending=False)            
+            rank_UMI = df_UMI_sum_sorted.iloc[self.cell_rank, :]["UMI"]
             UMI_min = int(rank_UMI / 10)
         else:
             UMI_min = int(self.args.UMI_min)
+
+        # get cell barcodes
+
+
+
         df_UMI_cell = df_UMI_sum[df_UMI_sum.UMI >= UMI_min]
         df_UMI_sum["mark"] = df_UMI_sum["UMI"].apply(
             lambda x: "CB" if (x >= UMI_min) else "UB")
@@ -362,8 +407,6 @@ When calculating the percentage, the denominator is `Cell with Barcode Match`"
 
 
 def count_vdj(args):
-    # TODO
-    # add TCR or BCR prefix to distinguish them in html report summary; should improve
     with Count_vdj(args, display_title="Count") as runner:
         runner.run()
 
@@ -374,18 +417,36 @@ def get_opts_count_vdj(parser, sub_program):
     parser.add_argument(
         '--UMI_min',
         help='Default `auto`. Minimum UMI number to filter. The barcode with UMI>=UMI_min is considered to be cell.',
-        default="auto"
+        default="auto",
     )
     parser.add_argument(
         '--iUMI',
         help="""Default `1`. Minimum number of UMI of identical receptor type and CDR3. 
 For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""",
         type=int,
-        default=1
+        default=1,
+    )
+    parser.add_argument(
+        "--expected_target_cell_num", 
+        help="Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.", 
+        type=int,
+        default=3000,
+    )
+    parser.add_argument(
+        "--target_cell_barcode", 
+        help="Barcode of target cells. It is a plain text file with one barcode per line. If provided, `--expected_target_cell_num` is ignored.",
+        default=None,
+    )
+    parser.add_argument(
+        "--target_weight", 
+        help="UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.", 
+        type=float,
+        default=3.0,
     )
     if sub_program:
         parser.add_argument("--UMI_count_filter_file",
                             help="Required. File from step mapping_vdj.", required=True)
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
         parser.add_argument("--matrix_dir", help=HELP_DICT['matrix_dir'])
+
         parser = s_common(parser)

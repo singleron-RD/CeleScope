@@ -16,8 +16,6 @@ class Mapping_vdj(Step):
     - Align R2 reads to IGMT(http://www.imgt.org/) database sequences with mixcr.
 
     ## Output
-    - `{sample}_consensus.fasta` Fasta file after UMI consensus.
-
     - `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.
 
     - `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
