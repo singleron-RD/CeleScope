@@ -68,7 +68,7 @@ Mapfile is a tab-delimited text file with as least three columns. Each line of m
 4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
 - `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
+- `vdj` Required, matched_dir.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.

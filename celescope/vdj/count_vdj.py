@@ -12,7 +12,7 @@ from celescope.tools.emptydrop_cr import get_plot_elements
 SEQUENCES_HEADER = ["aaSeqCDR3", "nSeqCDR3"]
 # Auto filter percentitle
 PERCENTILE = {
-    'TCR': 90,
+    'TCR': 85,
     'BCR': 90,
 }
 

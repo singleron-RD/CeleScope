@@ -121,7 +121,7 @@ it means that the given marker is not enough to identify the cluster.
 4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
 - `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
+- `vdj` Required, matched_dir.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
