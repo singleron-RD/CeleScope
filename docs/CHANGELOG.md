@@ -2,6 +2,9 @@
 ## [Unreleased] 
  ### `snp`,`capture_virus` and `fusion`
  - Change the default `--umi_threshold_method` from `auto` to `otsu`.
+
+ ### `vdj`
+ - Use an improved cell-calling method that only match cell barcodes are considered.
  
 
 ## [1.10.0] - 2021-04-22

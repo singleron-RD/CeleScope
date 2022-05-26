@@ -6,18 +6,26 @@ from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
 from celescope.tools.capture.threshold import Auto
+from celescope.tools.emptydrop_cr import get_plot_elements
 
 # mixcr sequence header
 SEQUENCES_HEADER = ["aaSeqCDR3", "nSeqCDR3"]
+# Auto filter percentitle
+PERCENTILE = {
+    'TCR': 90,
+    'BCR': 90,
+}
 
 
-def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=3, coef=10, percentile=99):
+def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=3, coef=10, 
+    percentile=99, UMI_min=3, umi_col='UMI'):
     """
     Args:
         df_UMI_sum: A dataframe with columns barcode and UMI. The barcode are match cell barcodes.
     
     Returns:
-        A list of target cell barcodes
+        umi_threhold: int
+        target_cell_barcodes: list
 
     >>> df_UMI_sum = pd.DataFrame({"barcode": ["A", "B", "C", "D", "E"], "UMI": [1, 2, 1, 30, 40]})
     >>> umi_threshold, target_cell_barcodes = target_cell_calling(df_UMI_sum, expected_target_cell_num=5, percentile=80, coef=10, target_barcodes=["A", "C"])
@@ -26,14 +34,16 @@ def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcod
     >>> target_cell_barcodes == {'A', 'C', 'D', 'E'}
     True
     """
-    umi_threshold = Auto(list(df_UMI_sum['UMI']), expected_cell_num=expected_target_cell_num, coef=coef, percentile=percentile).run()
+    umi_threshold = Auto(list(df_UMI_sum[umi_col]), expected_cell_num=expected_target_cell_num, coef=coef, percentile=percentile).run()
+    if umi_threshold < UMI_min:
+        umi_threshold = UMI_min
     # avoid change the original dataframe
     df_temp = df_UMI_sum.copy()
     if target_barcodes:
-        df_temp['UMI'] = df_temp.apply(
-            lambda row:  row['UMI'] * weight if row['barcode'] in target_barcodes else row['UMI'], axis=1)
+        df_temp[umi_col] = df_temp.apply(
+            lambda row:  row[umi_col] * weight if row['barcode'] in target_barcodes else row[umi_col], axis=1)
              
-    target_cell_barcodes = set(df_temp.loc[df_temp['UMI'] >= umi_threshold].barcode)
+    target_cell_barcodes = set(df_temp.loc[df_temp[umi_col] >= umi_threshold].barcode)
 
     return umi_threshold, target_cell_barcodes
 
@@ -68,74 +78,63 @@ class Count_vdj(Step):
         if utils.check_arg_not_none(self.args, 'match_dir'):
             self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_match_dir(args.match_dir)
         elif utils.check_arg_not_none(self.args, 'matrix_dir'):
-            self.match_cell_barcodes = utils.get_barcode_from_matrix_dir(args.matrix_dir)
+            self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_matrix_dir(args.matrix_dir)
         else:
             raise FileNotFoundError("--match_dir or --matrix_dir is required.")
         self.match_cell_barcodes = set(self.match_cell_barcodes)
 
         # input data
         df_UMI_count_filter = pd.read_csv(args.UMI_count_filter_file, sep='\t')
-        df_UMI_sum = df_UMI_count_filter.groupby(
+        self.df_UMI_sum = df_UMI_count_filter.groupby(
             ['barcode'], as_index=False).agg({"UMI": "sum"})
         self.df_match_UMI_count_filter = df_UMI_count_filter[df_UMI_count_filter['barcode'].isin(self.match_cell_barcodes)]
+        self.df_match_UMI_sum = self.df_UMI_sum[self.df_UMI_sum['barcode'].isin(self.match_cell_barcodes)]
 
         if args.target_cell_barcode:
-            self.target_cell_barcodes = utils.read_one_col(args.target_cell_barcode)
+            self.target_barcodes = utils.read_one_col(args.target_cell_barcode)
+            self.expected_target_cell_num = len(self.target_barcodes)
         else:
-            self.target_cell_barcodes = None
-
-        self.expected_target_cell_num = args.expected_target_cell_num
+            self.target_barcodes = None
+            self.expected_target_cell_num = args.expected_target_cell_num
 
 
         # out files
+        self.UMI_sum_file = f"{self.out_prefix}_UMI_sum.tsv"
         self.cell_confident_file = f"{self.out_prefix}_cell_confident.tsv"
         self.cell_confident_count_file = f"{self.out_prefix}_cell_confident_count.tsv"
         self.clonetypes_file = f"{self.out_prefix}_clonetypes.tsv"
         self.match_clonetypes_file = f"{self.out_prefix}_match_clonetypes.tsv"
 
-        # add args data
-        self.add_data(iUMI=args.iUMI)
 
     @utils.add_log
     def cell_calling(self):
         """
 
         """
-        df_UMI_sum = df_match_UMI_count_filter.groupby(
-            ['barcode'], as_index=False).agg({"UMI": "sum"})
-        if (self.args.UMI_min == "auto"):
-            df_UMI_sum_sorted = df_UMI_sum.sort_values(
-                ["UMI"], ascending=False)            
-            rank_UMI = df_UMI_sum_sorted.iloc[self.cell_rank, :]["UMI"]
-            UMI_min = int(rank_UMI / 10)
-        else:
-            UMI_min = int(self.args.UMI_min)
+        # UMI_min filter
+        percentile = PERCENTILE[self.args.type]
+        umi_threshold, target_cell_barcodes = target_cell_calling(
+            self.df_match_UMI_sum, 
+            expected_target_cell_num=self.expected_target_cell_num, 
+            target_barcodes=self.target_barcodes,
+            UMI_min=self.args.UMI_min,
+            percentile=percentile
+        )
+        df_cell = self.df_match_UMI_count_filter[self.df_match_UMI_count_filter['barcode'].isin(
+            target_cell_barcodes)]
+        self.df_UMI_sum['mark'] = self.df_UMI_sum['barcode'].apply(lambda x: 'CB' if x in target_cell_barcodes else 'UB')
+        self.df_UMI_sum =  self.df_UMI_sum.sort_values(by=['UMI'], ascending=False)
+        self.df_UMI_sum.to_csv(self.UMI_sum_file, sep='\t', index=False)
+        self.add_data(chart=get_plot_elements.plot_barcode_rank(self.UMI_sum_file))
 
-        # get cell barcodes
-
-
-
-        df_UMI_cell = df_UMI_sum[df_UMI_sum.UMI >= UMI_min]
-        df_UMI_sum["mark"] = df_UMI_sum["UMI"].apply(
-            lambda x: "CB" if (x >= UMI_min) else "UB")
-
-        df = df_UMI_sum.sort_values('UMI', ascending=False)
-        self.add_data(CB_num=df[df['mark'] == 'CB'].shape[0])
-        self.add_data(Cells=list(df.loc[df['mark'] == 'CB', 'UMI']))
-        self.add_data(UB_num=df[df['mark'] == 'UB'].shape[0])
-        self.add_data(Background=list(df.loc[df['mark'] == 'UB', 'UMI']))
-
-        cell_barcodes = set(df_UMI_cell.barcode)
-        total_cell_number = len(cell_barcodes)
         self.add_metric(
             name="Estimated Number of Cells",
-            value=total_cell_number,
-            help_info="number of barcodes considered as cell-associated"
+            value=len(target_cell_barcodes),
+            help_info=f"number of barcodes considered as cell-associated. \
+                UMI_threshold: {umi_threshold}. expected_cell_num: {self.expected_target_cell_num}"
         )
 
-        df_cell = df_UMI_count_filter[df_UMI_count_filter.barcode.isin(
-            cell_barcodes)]
-        return df_cell, cell_barcodes
+        return df_cell, target_cell_barcodes
 
     @utils.add_log
     def get_df_confident(self, df_cell):
@@ -143,7 +142,11 @@ class Count_vdj(Step):
         1. UMI > iUMI
         2. in chain
         """
-        df_iUMI = df_cell[df_cell.UMI >= self.args.iUMI]
+        if self.args.type == 'TCR':
+            iUMI = self.args.TCR_iUMI
+        elif self.args.type == 'BCR':
+            iUMI = self.args.BCR_iUMI
+        df_iUMI = df_cell[df_cell.UMI >= iUMI]
         df_confident = df_iUMI[df_iUMI["chain"].isin(self.chains)]
         df_confident = df_confident.sort_values("UMI", ascending=False)
         df_confident = df_confident.groupby(
@@ -223,35 +226,10 @@ class Count_vdj(Step):
                 name="Cell with TRA and TRB",
                 value=cell_with_confident_TRA_and_TRB,
                 total=total_cell_number,
-                help_info=f"cells with as least {self.args.iUMI} UMI mapped to each chain"
+                help_info=f"cells with as least {self.args.TCR_iUMI} UMI mapped to each chain"
             )
 
-            if self.match_bool:
-                cell_with_match_barcode = self.match_cell_barcodes.intersection(
-                    cell_barcodes)
-                cell_with_match_barcode_number = len(cell_with_match_barcode)
 
-                df_match = df_valid_count[df_valid_count.barcode.isin(
-                    self.match_cell_barcodes)]
-
-                df_match_TRA_TRB = df_match[
-                    (df_match.aaSeqCDR3_TRA != "NA") &
-                    (df_match.aaSeqCDR3_TRB != "NA")
-                ]
-                match_cell_with_TRA_and_TRB = df_match_TRA_TRB.shape[0]
-                self.add_metric(
-                    name="Cell with Barcode Match",
-                    value=cell_with_match_barcode_number,
-                    total=total_cell_number,
-                    help_info="cells with barcode matched with scRNA-seq library"
-                )
-                self.add_metric(
-                    name="Cell with Barcode Match, TRA and TRB",
-                    value=match_cell_with_TRA_and_TRB,
-                    total=cell_with_match_barcode_number,
-                    help_info=f"cell with matched barcode and with as least {self.args.iUMI} UMI mapped to each chain. \
-When calculating the percentage, the denominator is `Cell with Barcode Match`"
-                )
 
         # BCR
         elif self.args.type == "BCR":
@@ -288,63 +266,9 @@ When calculating the percentage, the denominator is `Cell with Barcode Match`"
                 name="Cell with Heavy and Light Chain",
                 value=Cell_with_Heavy_and_Light_Chain,
                 total=total_cell_number,
-                help_info=f"cells with as least {self.args.iUMI} UMI mapped to each chain"
+                help_info=f"cells with as least {self.args.BCR_iUMI} UMI mapped to each chain"
             )
 
-            if self.match_bool:
-                cell_with_match_barcode = self.match_cell_barcodes.intersection(
-                    cell_barcodes)
-                cell_with_match_barcode_number = len(cell_with_match_barcode)
-
-                df_match = df_valid_count[df_valid_count.barcode.isin(
-                    self.match_cell_barcodes)]
-
-                # median match UMI
-                df_match_heavy_light = df_match[
-                    (df_match.aaSeqCDR3_IGH != "NA") &
-                    (
-                        (df_match.aaSeqCDR3_IGL != "NA") |
-                        (df_match.aaSeqCDR3_IGK != "NA")
-                    )
-                ]
-                match_cell_with_heavy_and_light = df_match_heavy_light.shape[0]
-                self.add_metric(
-                    name="Cell with Barcode Match",
-                    value=cell_with_match_barcode_number,
-                    total=total_cell_number,
-                    help_info="cells with barcode matched with scRNA-seq library"
-                )
-                self.add_metric(
-                    name="Cell with Barcode Match, Heavy and Light Chain",
-                    value=match_cell_with_heavy_and_light,
-                    total=total_cell_number,
-                    help_info=f"cell with matched barcode and with as least {self.args.iUMI} UMI mapped to each chain"
-                )
-
-        if self.match_bool:
-            """
-            df_match_clonetypes
-            """
-            df_match_clonetypes = df_match.groupby(self.cols, as_index=False).agg({
-                "barcode": "count"})
-            total_match_CDR3_barcode_number = sum(
-                df_match_clonetypes.barcode)
-            df_match_clonetypes["percent"] = df_match_clonetypes.barcode / \
-                total_match_CDR3_barcode_number * 100
-            df_match_clonetypes["percent"] = df_match_clonetypes["percent"].apply(
-                lambda x: round(x, 2)
-            )
-            df_match_clonetypes.rename(
-                columns={"barcode": "barcode_count"}, inplace=True)
-            df_match_clonetypes = df_match_clonetypes.merge(
-                df_clonetypes, on=self.cols, how='left', suffixes=('', '_y'))
-            # order and drop duplicated cols
-            order = ["clonetype_ID"] + self.cols + ["barcode_count", "percent"]
-            df_match_clonetypes = df_match_clonetypes[order]
-            df_match_clonetypes.sort_values(["barcode_count", "clonetype_ID"], ascending=[
-                                            False, True], inplace=True)
-            df_match_clonetypes.to_csv(
-                self.match_clonetypes_file, sep="\t", index=False)
         return df_clonetypes, df_match_clonetypes
 
     def write_cell_confident_count(self, df_valid_count, df_clonetypes, df_confident):
@@ -382,9 +306,6 @@ When calculating the percentage, the denominator is `Cell with Barcode Match`"
 
         df_table, _table_header = format_table(df_clonetypes)
         title = 'Clonetypes'
-        if self.match_bool:
-            df_table, _table_header = format_table(df_match_clonetypes)
-            title = 'Match Clonetypes'
 
         table_dict = self.get_table_dict(
             title=title,
@@ -394,9 +315,7 @@ When calculating the percentage, the denominator is `Cell with Barcode Match`"
         self.add_data(table_dict=table_dict)
 
     def run(self):
-        df_UMI_count_filter = pd.read_csv(
-            self.args.UMI_count_filter_file, sep='\t')
-        df_cell, cell_barcodes = self.cell_calling(df_UMI_count_filter)
+        df_cell, cell_barcodes = self.cell_calling()
         df_confident = self.get_df_confident(df_cell)
         df_valid_count = self.get_df_valid_count(df_confident)
         df_clonetypes, df_match_clonetypes = self.get_clonetypes_and_write(
@@ -416,12 +335,20 @@ def get_opts_count_vdj(parser, sub_program):
         "--type", help="Required. `TCR` or `BCR`. ", required=True)
     parser.add_argument(
         '--UMI_min',
-        help='Default `auto`. Minimum UMI number to filter. The barcode with UMI>=UMI_min is considered to be cell.',
-        default="auto",
+        help='minimum number of chain UMI to consider as as cell',
+        type=int,
+        default=3,
     )
     parser.add_argument(
-        '--iUMI',
-        help="""Default `1`. Minimum number of UMI of identical receptor type and CDR3. 
+        '--BCR_iUMI',
+        help="""Minimum number of UMI of identical receptor type and CDR3 for BCR. 
+For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""",
+        type=int,
+        default=2,
+    )
+    parser.add_argument(
+        '--TCR_iUMI',
+        help="""Minimum number of UMI of identical receptor type and CDR3 for BCR. 
 For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""",
         type=int,
         default=1,
