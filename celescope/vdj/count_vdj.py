@@ -165,13 +165,10 @@ class Count_vdj(Step):
         """
         Returns
         - df_clonetypes
-        - df_match_clonetypes
         """
 
         total_cell_number = len(cell_barcodes)
         df_clonetypes = df_valid_count.copy()
-        df_match_clonetypes = None
-
         df_clonetypes = df_clonetypes.groupby(self.cols, as_index=False).agg({
             "barcode": "count"})
         # put na last
@@ -229,8 +226,6 @@ class Count_vdj(Step):
                 help_info=f"cells with as least {self.args.TCR_iUMI} UMI mapped to each chain"
             )
 
-
-
         # BCR
         elif self.args.type == "BCR":
 
@@ -269,8 +264,7 @@ class Count_vdj(Step):
                 help_info=f"cells with as least {self.args.BCR_iUMI} UMI mapped to each chain"
             )
 
-        return df_clonetypes, df_match_clonetypes
-
+        return df_clonetypes
     def write_cell_confident_count(self, df_valid_count, df_clonetypes, df_confident):
         df_mergeID = pd.merge(df_valid_count,
                               df_clonetypes, how="left", on=self.cols)
@@ -287,7 +281,7 @@ class Count_vdj(Step):
         df_cell_confident_with_ID.to_csv(
             self.cell_confident_file, sep="\t", index=False)
 
-    def write_clonetypes_table_to_data(self, df_clonetypes, df_match_clonetypes):
+    def write_clonetypes_table_to_data(self, df_clonetypes):
         # cloneytpes table
         def format_table(df_clonetypes):
             df_table = df_clonetypes.copy()
@@ -318,11 +312,11 @@ class Count_vdj(Step):
         df_cell, cell_barcodes = self.cell_calling()
         df_confident = self.get_df_confident(df_cell)
         df_valid_count = self.get_df_valid_count(df_confident)
-        df_clonetypes, df_match_clonetypes = self.get_clonetypes_and_write(
+        df_clonetypes= self.get_clonetypes_and_write(
             df_valid_count, cell_barcodes)
         self.write_cell_confident_count(
             df_valid_count, df_clonetypes, df_confident)
-        self.write_clonetypes_table_to_data(df_clonetypes, df_match_clonetypes)
+        self.write_clonetypes_table_to_data(df_clonetypes)
 
 
 def count_vdj(args):
