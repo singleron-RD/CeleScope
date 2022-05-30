@@ -1,10 +1,13 @@
 
-## [Unreleased] 
+## [1.11.0] - 
  ### `snp`,`capture_virus` and `fusion`
  - Change the default `--umi_threshold_method` from `auto` to `otsu`.
 
  ### `vdj`
  - Use an improved cell-calling method that only match cell barcodes are considered. 
+
+ ### `mkref`
+ - Change parameters for generating refFlat files to tolerate non-ensembl-compliant gtf.
  
 
 ## [1.10.0] - 2021-04-22
