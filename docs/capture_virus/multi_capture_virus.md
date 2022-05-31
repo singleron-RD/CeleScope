@@ -102,7 +102,7 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
 - `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
+- `vdj` Required, matched_dir.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
@@ -231,4 +231,6 @@ is higher than or equal to this value.
 `--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
 
 `--auto_coef` int, threshold = top 1% positive cell count / auto_coef.
+
+`--otsu_log_base` raw counts are first log transformed before thresholding. This argument is the log base. Commonly used values are 2 and 10.
 

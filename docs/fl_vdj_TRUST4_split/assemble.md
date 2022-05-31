@@ -35,7 +35,3 @@
 
 `--umiRange` UMI range in fq1, INT INT CHAR.
 
-`--trimLevel` INT: 0: no trim; 1: trim low quality; 2: trim unmatched.
-
-`--UMI_min` UMI number, INT.
-

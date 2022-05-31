@@ -72,8 +72,7 @@ class Summarize(Step):
         self.diffuseFrac = args.diffuseFrac
         self.target_weight = args.target_weight
         if args.target_cell_barcode:
-            self.target_barcodes = utils.read_one_col(args.target_cell_barcode)[0]
-            self.expected_target_cell_num = len(self.target_barcodes)
+            self.target_barcodes, self.expected_target_cell_num = utils.read_one_col(args.target_cell_barcode)
         else:
             self.target_barcodes = None
             self.expected_target_cell_num = args.expected_target_cell_num
@@ -316,6 +315,8 @@ class Summarize(Step):
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'])
         total_cells =len(cell_barcodes)
+        with open(self.record_file, 'a+') as f:
+            f.write('Cell Number After Cut-off Filter: ' + str(total_cells) + '\n')
 
         read_count = 0
         read_count_all = 0

@@ -23,6 +23,8 @@ There are three methods to determine the UMI threshold:
 
 `--auto_coef` int, threshold = top 1% positive cell count / auto_coef.
 
+`--otsu_log_base` raw counts are first log transformed before thresholding. This argument is the log base. Commonly used values are 2 and 10.
+
 `--match_dir` Match celescope scRNA-Seq directory.
 
 `--raw_read_count_file` None

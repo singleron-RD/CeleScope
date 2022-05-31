@@ -32,6 +32,8 @@ class Mkref_rna(Mkref):
         super().__init__(genome_type, args, files, non_files)
         self.refflat = f'{self.genome_name}.refFlat'
 
+        self.gtf_temp = f'{self.genome_name}.gtf.temp'
+
     @utils.add_log
     def build_rna_star_index(self):
         cmd = (
@@ -51,12 +53,23 @@ class Mkref_rna(Mkref):
 
     @utils.add_log
     def build_refflat(self):
+        # remove lines without gene_id
+        cmd = f"grep 'gene_id' {self.gtf} > {self.gtf_temp}"
+        self.build_refflat.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+
+        # ignore all errors
         cmd = (
-            'gtfToGenePred -genePredExt -geneNameAsName2 \\\n'
-            f'{self.gtf} /dev/stdout | \\\n'
+            'gtfToGenePred -genePredExt -allErrors -ignoreGroupsWithoutExons \\\n'
+            f'{self.gtf_temp} /dev/stdout | \\\n'
             'awk \'{print $12"\\t"$1"\\t"$2"\\t"$3"\\t"$4"\\t"$5"\\t"$6"\\t"$7"\\t"$8"\\t"$9"\\t"$10}\' \\\n'
             f'> {self.refflat} \\\n'
         )
+        self.build_refflat.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+
+        # remove temp file
+        cmd = f"rm {self.gtf_temp}"
         self.build_refflat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 

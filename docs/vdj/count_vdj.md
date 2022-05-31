@@ -14,10 +14,19 @@ This file will only be produced when the `match_dir` parameter is provided.
 ## Arguments
 `--type` Required. `TCR` or `BCR`.
 
-`--UMI_min` Default `auto`. Minimum UMI number to filter. The barcode with UMI>=UMI_min is considered to be cell.
+`--UMI_min` minimum number of chain UMI to consider as as cell.
 
-`--iUMI` Default `1`. Minimum number of UMI of identical receptor type and CDR3. 
+`--BCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for BCR. 
 For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
+
+`--TCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for BCR. 
+For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
+
+`--expected_target_cell_num` Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.
+
+`--target_cell_barcode` Barcode of target cells. It is a plain text file with one barcode per line. If provided, `--expected_target_cell_num` is ignored.
+
+`--target_weight` UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.
 
 `--UMI_count_filter_file` Required. File from step mapping_vdj.
 
