@@ -1,15 +1,16 @@
 ## Features
 
-- TCR/BCR full length assembly results.
+- Assembled T/B cells mapping to transcriptome.
+- Generate VDJ annotation info, clonetypes table and bar-plot of clonetypes distribution in html.
 
 ## Output
-- `04.summarize/clonetypes.tsv` High-level descriptions of each clonotype.
-- `04.summarize/{sample}_all_contig.csv` High-level and detailed annotations of each contig.
-- `04.summarize/{sample}_all_contig.fasta` All assembled contig sequences.
-- `04.summarize/{sample}_filtered_contig.csv` High-level annotations of each cellular contig after filter. This is a subset of all_contig_annotations.csv.
-- `04.summarize/{sample}_filtered_contig.fasta` Assembled contig sequences after filter.
-- `04.summarize/{sample}_one_chain_contig.csv`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.csv.
-- `04.summarize/{sample}_one_chain_contig.fasta`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.fasta.
+- `05.mapping_annotation/{sample}_assign.png` Umap plot of Auto-assigned celltype in transcriptome.
+
+- `05.mapping_annotation/{sample}_cluster_umap.png` Umap plot of Cluster in transcriptome.
+
+- `05.mapping_annotation/{sample}_umapplot.png` Umap plot of assembled barcodes marked as read color.
+
+- `05.mapping_annotation/{sample}_distribution.txt` Number of assembled barcodes in every clusters.
 ## Arguments
 `--seqtype` TCR or BCR.
 
