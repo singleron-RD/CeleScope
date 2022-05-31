@@ -33,6 +33,15 @@ class Mapping_annotation(Summarize):
         self.coef = int(args.coef)
         self.original_contig = args.contig_file
         self.trust_report = args.trust_report
+        self.barcode_report = args.barcode_report
+        self.diffuseFrac = args.diffuseFrac
+        self.target_weight = args.target_weight
+        if args.target_cell_barcode:
+            self.target_barcodes = utils.read_one_col(args.target_cell_barcode)[0]
+            self.expected_target_cell_num = len(self.target_barcodes)
+        else:
+            self.target_barcodes = None
+            self.expected_target_cell_num = args.expected_target_cell_num
         self.record_file = None
 
         try:
@@ -67,8 +76,10 @@ class Mapping_annotation(Summarize):
 
     @utils.add_log
     def annotation_process(self):
+        """Generate metrics, clonotypes table in html.
+        """
         original_df = self.parse_contig_file()
-        df_for_clono, _ = self.filter_contig(original_df)
+        df_for_clono, _ = self.cell_calling(original_df)
         annotation_summary = tr.get_vj_annot(df_for_clono, self.chains, self.paired_groups)
         for anno in annotation_summary:
             self.add_metric(anno['name'], anno['value'], anno.get('total'), anno.get('help_info'))
@@ -89,6 +100,8 @@ class Mapping_annotation(Summarize):
 
     @utils.add_log
     def mapping_process(self):
+        """Mapping result with matched scRNA.
+        """
         run_mapping(self.rds,self.contig,self.sample,self.outdir,self.assign_file)
         meta = pd.read_csv(glob.glob(f'{self.outdir}/{self.sample}_meta.csv')[0])
         metaTB = meta[meta['CellTypes'].isin(self.Celltype)]
@@ -146,10 +159,31 @@ def mapping_annotation(args):
 def get_opts_mapping_annotation(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR',
                         choices=['TCR', 'BCR'], required=True)
-    parser.add_argument('--coef', help='coef for auto filter', default=10)
+    parser.add_argument('--coef', help='coef for auto filter', default=5)
+    parser.add_argument(
+        '--diffuseFrac', 
+        help="If cell A's two chains CDR3s are identical to another cell B, and A's chain abundance is significantly lower than B's, filter A.",
+        action='store_true')
+    parser.add_argument(
+        "--expected_target_cell_num", 
+        help="Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.", 
+        type=int,
+        default=3000,
+    )
+    parser.add_argument(
+        '--target_cell_barcode', 
+        help="Barcode of target cells. It is a plain text file with one barcode per line",
+        default=None)
+    parser.add_argument(
+        "--target_weight", 
+        help="UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.", 
+        type=float,
+        default=6.0,
+    )
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help='scRNA-seq match directory', required=True)
         parser.add_argument('--trust_report', help='Filtered trust report,Filter Nonfunctional CDR3 and CDR3 sequences containing N', required=True)
+        parser.add_argument('--barcode_report', help='Filtered barcode report of trust4 which is related to diffuseFrac option', required=True)
         parser.add_argument('--contig_file', help='original contig annotation file', required=True)  
     return parser

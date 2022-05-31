@@ -1,14 +1,45 @@
 from collections import defaultdict
 from collections import Counter
 import pandas as pd
+import numpy as np
 import pysam
 import copy
 import os
+import subprocess
 from Bio.Seq import Seq
 from celescope.tools import utils
+from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common
 from celescope.fl_vdj_TRUST4_split.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.emptydrop_cr import get_plot_elements
+
+
+def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=6, coef=5, 
+    percentile=85, umi_col='umis'):
+    """
+    Args:
+        df_UMI_sum: A dataframe with columns highest umi's contig and UMI.
+    
+    Returns:
+        target_contigs_id: list
+    >>> df_UMI_sum = pd.DataFrame({"contig_id": ["A", "B", "C", "D", "E"], "UMI": [1, 2, 1, 30, 40]})
+    >>> target_contigs_id = target_cell_calling(df_UMI_sum, expected_target_cell_num=5, percentile=80, coef=5, target_barcodes=["A", "C"])
+    >>> target_contigs_id == {'A_1', 'C_1', 'D_1', 'E_1'}
+    True
+    """
+    if target_barcodes != None:
+        target_barcodes = {Summarize.reversed_compl(i) for i in target_barcodes}
+    umi_threshold = Auto(list(df_UMI_sum[umi_col]), expected_cell_num=expected_target_cell_num, coef=coef, percentile=percentile).run()
+
+    # avoid change the original dataframe
+    df_temp = df_UMI_sum.copy()
+    if target_barcodes:
+        df_temp[umi_col] = df_temp.apply(
+            lambda row:  row[umi_col] * weight if row['barcode'] in target_barcodes else row[umi_col], axis=1)
+             
+    target_contigs = set(df_temp.loc[df_temp[umi_col] >= umi_threshold].contig_id)
+
+    return target_contigs
 
 
 class Summarize(Step):
@@ -23,26 +54,34 @@ class Summarize(Step):
     - `04.summarize/{sample}_all_contig.fasta` All assembled contig sequences.
     - `04.summarize/{sample}_filtered_contig.csv` High-level annotations of each cellular contig after filter. This is a subset of all_contig_annotations.csv.
     - `04.summarize/{sample}_filtered_contig.fasta` Assembled contig sequences after filter.
-    - `04.summarize/{sample}_two_chain_contig.csv`Keep the 2 contigs with the highest UMI. This is a subset of filtered_contig.csv.
-    - `04.summarize/{sample}_two_chain_contig.fasta`Keep the 2 contigs with the highest UMI. This is a subset of filtered_contig.fasta.
     - `04.summarize/{sample}_one_chain_contig.csv`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.csv.
     - `04.summarize/{sample}_one_chain_contig.fasta`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.fasta.
     """
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
-        self.outdir = args.outdir
-        self.sample = args.sample
         self.seqtype = args.seqtype
         self.reads_assignment = args.reads_assignment
         self.fq2 = args.fq2
         self.assembled_fa = args.assembled_fa
-        self.record_file = f'{self.outdir}/Cell_num.txt'
+        
         self.coef = int(args.coef)
         self.original_contig = args.contig_file
         self.trust_report = args.trust_report
+        self.barcode_report = args.barcode_report
+        self.diffuseFrac = args.diffuseFrac
+        self.target_weight = args.target_weight
+        if args.target_cell_barcode:
+            self.target_barcodes = utils.read_one_col(args.target_cell_barcode)[0]
+            self.expected_target_cell_num = len(self.target_barcodes)
+        else:
+            self.target_barcodes = None
+            self.expected_target_cell_num = args.expected_target_cell_num
 
+        self.matrix_file = utils.get_matrix_dir_from_match_dir(args.match_dir)
         self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
+        self.record_file = f'{self.outdir}/Cell_num.txt'
+        
 
     @staticmethod
     def reversed_compl(seq):
@@ -65,20 +104,11 @@ class Summarize(Step):
     
     @staticmethod
     def record_cell_num(df, record_file, step):
+        """Record cell number after each single filtering step.
+        """
         cellnum = len(set(df[df['productive']==True].barcode))
         with open(record_file, 'a+') as f:
             f.write(f'{step}: ' + str(cellnum) + '\n')
-
-    @staticmethod
-    def Auto_filter(df, coef):
-        """
-        Filter contig by assign info of transcriptome, threshold = top 20% contig umi value / coef
-        """
-        n_cell_1_percentile = len(df) // 5
-        sorted_counts = sorted(df.umis, reverse=True)
-        count_cell_1_percentile = sorted_counts[n_cell_1_percentile]
-        threshold = int(count_cell_1_percentile / coef)
-        return threshold
 
     @utils.add_log
     def parse_contig_file(self):
@@ -95,14 +125,23 @@ class Summarize(Step):
         return df
 
     @utils.add_log
-    def filter_contig(self, df):
+    def cell_calling(self, df):
         """
-        CDR3 filtering
+        Common filtering based on CDR3:
         Filter nonfunctional CDR3(shown 'out_of_frame' in cdr3 report), or CDR3 sequences containing "N" in the nucleotide sequence.
         Keep CDR3aa start with C.
         Keep CDR3aa length >= 5.
         Keep no stop codon in CDR3aa.
         Filter low abundance contigs based on a umi cut-off. 
+
+        DiffuseFrac filtering(option --diffuseFrac needed):
+        If cell A's two chains CDR3s are identical to another cell B, 
+        and A's chain abundance is significantly lower than B's (--diffuseFrac), filter A.
+
+        Target cell barcodes filtering(option, --target_cell_barcode needed):
+        Filter low abundance contigs based on a umi cut-off.
+        The umi counts of all contigs originated from B cells are multiplied by a weight to 
+        better distinguish signal from background noise.
         """
         df.sort_values(by='umis', ascending=False, inplace=True)
         if self.seqtype == 'BCR':
@@ -118,8 +157,9 @@ class Summarize(Step):
         if self.record_file != None:
             Summarize.record_cell_num(df_for_clono, self.record_file, step='Total Assembled Cell Number')
         
+        # Common filtering
         trust_report = pd.read_csv(self.trust_report, sep='\t')
-        correct_cdr3 = set(df_for_clono['cdr3']).intersection(set(trust_report.CDR3nt))
+        correct_cdr3 = set(df_for_clono.cdr3).intersection(set(trust_report.CDR3aa))
         correct_cdr3 = [i for i in correct_cdr3 if i.startswith('C')]
         correct_cdr3 = [i for i in correct_cdr3 if len(i)>=5]
         correct_cdr3 = [i for i in correct_cdr3 if 'UAG' or 'UAA' or 'UGA' not in i]
@@ -129,15 +169,38 @@ class Summarize(Step):
             Summarize.record_cell_num(df_for_clono, self.record_file, 
             step='Cell Number: Filter CDR3aa:Not start with C, length<5, no stop codon')
         
-        threshold = Summarize.Auto_filter(df_chain_heavy, self.coef)
-        df_chain_heavy = df_chain_heavy[df_chain_heavy['umis']>=threshold]
-        threshold = Summarize.Auto_filter(df_chain_light, self.coef)
-        df_chain_light = df_chain_light[df_chain_light['umis']>=threshold]
-        df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
+        # DiffuseFrac filtering
+        if self.diffuseFrac:
+            barcode_report = pd.read_csv(self.barcode_report, sep='\t')
+            df_for_clono = df_for_clono[df_for_clono.barcode.isin(set(barcode_report['#barcode']))]
+            if self.record_file != None:
+                Summarize.record_cell_num(df_for_clono, self.record_file, 
+                step='Cell Number after use diffuseFrac ')
+        
+        # Filter low abundance contigs based on a umi cut-off
+        if self.seqtype == 'BCR':
+            df_chain_heavy = df_for_clono[df_for_clono['chain']=='IGH']
+            df_chain_light = df_for_clono[(df_for_clono['chain']=='IGK') | (df_for_clono['chain']=='IGL')]
+        else:
+            df_chain_heavy = df_for_clono[df_for_clono['chain'] == 'TRA']
+            df_chain_light = df_for_clono[df_for_clono['chain'] == 'TRB']
+
+        filtered_congtigs_id = set()
+        for _df in [df_chain_heavy, df_chain_light]:
+            target_contigs = target_cell_calling(
+            _df, 
+            expected_target_cell_num=self.expected_target_cell_num, 
+            target_barcodes=self.target_barcodes,
+            weight = self.target_weight,
+            coef = self.coef
+            )
+            filtered_congtigs_id = filtered_congtigs_id | target_contigs       
+        
+        df_for_clono = df_for_clono[df_for_clono.contig_id.isin(filtered_congtigs_id)]
         
         if self.record_file != None:
             Summarize.record_cell_num(df_for_clono, self.record_file, 
-            step='Cell Number After Auto filter')
+            step='Cell Number After Cell calling')
 
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'])
@@ -324,7 +387,7 @@ class Summarize(Step):
 
     def run(self):
         original_df = self.parse_contig_file()
-        df_for_clono, cell_barcodes = self.filter_contig(original_df)
+        df_for_clono, cell_barcodes = self.cell_calling(original_df)
         self.filter_fasta(cell_barcodes)
         df_filter_contig = self.parse_clonotypes(original_df, df_for_clono, cell_barcodes)
         self.keep_unique_contig(df_filter_contig)
@@ -339,11 +402,34 @@ def summarize(args):
 
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
-    parser.add_argument('--coef', help='coef for auto filter', default=10)
+    parser.add_argument('--coef', help='coef for auto filter', default=5)
+    parser.add_argument(
+        '--diffuseFrac', 
+        help="If cell A's two chains CDR3s are identical to another cell B, and A's chain abundance is significantly lower than B's, filter A.",
+        action='store_true')
+    parser.add_argument(
+        "--expected_target_cell_num", 
+        help="Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.", 
+        type=int,
+        default=3000,
+    )
+    parser.add_argument(
+        '--target_cell_barcode', 
+        help="Barcode of target cells. It is a plain text file with one barcode per line",
+        default=None)
+    parser.add_argument(
+        "--target_weight", 
+        help="UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.", 
+        type=float,
+        default=6.0,
+    )
+
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--reads_assignment', help='File records reads assigned to contigs.', required=True)
         parser.add_argument('--fq2', help='Cutadapt R2 reads.', required=True)
         parser.add_argument('--assembled_fa', help='Read used for assembly', required=True)
-        parser.add_argument('--trust_report', help='Filtered trust report,Filter Nonfunctional CDR3 and CDR3 sequences containing N', required=True)
-        parser.add_argument('--contig_file', help='original contig annotation file', required=True)  
+        parser.add_argument('--trust_report', help='Filtered trust report, Filter Nonfunctional CDR3 and CDR3 sequences containing N', required=True)
+        parser.add_argument('--barcode_report', help='Filtered barcode report of trust4 which is related to diffuseFrac option', required=True)
+        parser.add_argument('--contig_file', help='original contig annotation file', required=True)
+        parser.add_argument('--match_dir', help='Match scRNA-seq directory.', required=True)
