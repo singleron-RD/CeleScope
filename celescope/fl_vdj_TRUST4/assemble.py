@@ -5,8 +5,7 @@ import subprocess
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.fl_vdj_TRUST4.__init__ import CHAIN
-from celescope.fl_vdj_TRUST4.__init__ import INDEX, TOOLS_DIR
+from celescope.fl_vdj_TRUST4.__init__ import CHAIN, INDEX, TOOLS_DIR
 
 """
 trust goes through the following steps:

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np 
 import subprocess
 import glob
-from Bio.Seq import Seq
+
 from celescope.fl_vdj_TRUST4_split.summarize import Summarize
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
@@ -41,7 +41,7 @@ class Mapping_annotation(Summarize):
 
     """
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
+        super().__init__(args, display_title=display_title)
 
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir

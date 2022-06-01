@@ -1,4 +1,3 @@
-import glob
 import subprocess
 from collections import defaultdict
 from multiprocessing import Pool
@@ -132,25 +131,25 @@ class Assemble(Step):
         fa_to_csv
         """
 
-        self.temp_outdirs = [self.temp_outdir] * N_CHUNK
+        temp_outdirs = [self.temp_outdir] * N_CHUNK
         temp_species = [self.species] * N_CHUNK
         temp_samples = [f'temp_{i}' for i in range(N_CHUNK)]
         single_threads = [self.single_thread] * N_CHUNK
 
         with Pool(N_CHUNK) as pool:
-            pool.starmap(tr.trust_assemble, zip(temp_species, self.temp_outdirs, temp_samples, single_threads))
+            pool.starmap(tr.trust_assemble, zip(temp_species, temp_outdirs, temp_samples, single_threads))
 
 
         with Pool(N_CHUNK) as pool:
-            pool.starmap(tr.annotate, zip(temp_samples, self.temp_outdirs, temp_species, single_threads))
+            pool.starmap(tr.annotate, zip(temp_samples, temp_outdirs, temp_species, single_threads))
 
 
         with Pool(N_CHUNK) as pool:
-            pool.starmap(tr.get_full_len_assembly, zip(self.temp_outdirs, temp_samples))
+            pool.starmap(tr.get_full_len_assembly, zip(temp_outdirs, temp_samples))
 
 
         with Pool(N_CHUNK) as pool:
-            pool.starmap(tr.fa_to_csv, zip(self.temp_outdirs, temp_samples))
+            pool.starmap(tr.fa_to_csv, zip(temp_outdirs, temp_samples))
 
 
     @utils.add_log

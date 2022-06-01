@@ -1,11 +1,10 @@
 from collections import defaultdict
-from collections import Counter
+
 import pandas as pd
-import numpy as np
+
 import pysam
 import copy
-import os
-import subprocess
+
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
@@ -58,7 +57,7 @@ class Summarize(Step):
     - `04.summarize/{sample}_one_chain_contig.fasta`Keep only one chain pair(IGH+IGL/K TRA+TRB) with the highest UMI. This is a subset of chain_filtered_contig.fasta.
     """
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
+        super().__init__(args, display_title=display_title)
 
         self.seqtype = args.seqtype
         self.reads_assignment = args.reads_assignment
@@ -101,13 +100,21 @@ class Summarize(Step):
         """
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
     
-    @staticmethod
-    def record_cell_num(df, record_file, step):
-        """Record cell number after each single filtering step.
+    def add_cell_num_metric(self, df, name):
         """
-        cellnum = len(set(df[df['productive']==True].barcode))
-        with open(record_file, 'a+') as f:
-            f.write(f'{step}: ' + str(cellnum) + '\n')
+        add cell number after each filtering step to .metrics.json
+        do not show in HTML report
+        """
+        cell_num = len(set(df[df['productive']==True].barcode))
+        self.add_metric(name, cell_num, show=False)
+        return cell_num
+
+    def get_cell_num_from_report(self, report_file):
+        """Get cell number from trust report
+        """
+        report_df = pd.read_csv(report_file, sep='\t')
+        return len(set(report_df.barcode))
+
 
     @utils.add_log
     def parse_contig_file(self):
@@ -153,8 +160,7 @@ class Summarize(Step):
         df_chain_light = df_chain_light.drop_duplicates(['barcode'])
         df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
         
-        if self.record_file != None:
-            Summarize.record_cell_num(df_for_clono, self.record_file, step='Total Assembled Cell Number')
+        self.add_cell_num_metric(df_for_clono, 'Total Assembled Cell Number')
         
         # Common filtering
         trust_report = pd.read_csv(self.trust_report, sep='\t')
@@ -164,17 +170,15 @@ class Summarize(Step):
         correct_cdr3 = [i for i in correct_cdr3 if 'UAG' or 'UAA' or 'UGA' not in i]
         df_for_clono = df_for_clono[df_for_clono['cdr3'].isin(correct_cdr3)]
 
-        if self.record_file != None:
-            Summarize.record_cell_num(df_for_clono, self.record_file, 
-            step='Cell Number: Filter CDR3aa:Not start with C, length<5, no stop codon')
-        
+
+        self.add_cell_num_metric(df_for_clono, 'Cell Number after CDR3 filtering')
+       
         # DiffuseFrac filtering
         if self.diffuseFrac:
             barcode_report = pd.read_csv(self.barcode_report, sep='\t')
             df_for_clono = df_for_clono[df_for_clono.barcode.isin(set(barcode_report['#barcode']))]
-            if self.record_file != None:
-                Summarize.record_cell_num(df_for_clono, self.record_file, 
-                step='Cell Number after use diffuseFrac ')
+
+            self.add_cell_num_metric(df_for_clono, 'Cell Number after DiffuseFrac filtering')
         
         # Filter low abundance contigs based on a umi cut-off
         if self.seqtype == 'BCR':
@@ -196,11 +200,8 @@ class Summarize(Step):
             filtered_congtigs_id = filtered_congtigs_id | target_contigs       
         
         df_for_clono = df_for_clono[df_for_clono.contig_id.isin(filtered_congtigs_id)]
+        self.add_cell_num_metric(df_for_clono, 'Cell Number after UMI filtering')
         
-        if self.record_file != None:
-            Summarize.record_cell_num(df_for_clono, self.record_file, 
-            step='Cell Number After Cell calling')
-
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'])
 
