@@ -73,6 +73,18 @@ class Assemble(Step):
     def _get_chain_type(seqtype):
         return CHAIN[seqtype]
     
+    @staticmethod
+    def split_to_n_list(original_list, n):
+        """Divide a list into n equally sized lists.
+        """
+        if len(original_list) % n == 0:
+            chunk = len(original_list) // n
+        else:
+            chunk = len(original_list) // n + 1
+        
+        for i in range(n):
+            yield original_list[i * chunk : (i + 1) * chunk]
+
     @utils.add_log
     def split_candidate_reads(self):
         """
@@ -96,12 +108,10 @@ class Assemble(Step):
         del umi_dict
         del barcode_list
 
-        barcode_list = list(df_count.barcode)
-        barcode_num = len(barcode_list)
-
-        chunk_size = barcode_num // N_CHUNK
-        # split barcode list into equal size chunks
-        split_barcodes = [set(barcode_list[i: i + chunk_size]) for i in range(0, barcode_num, chunk_size)]
+        # Split barcode list into equal size chunks.
+        barcode_list = list(self.split_to_n_list(list(df_count.barcode), 2*N_CHUNK))
+        # Ensure read count of barcodes in each chunk is basically equal.
+        split_barcodes = [set(barcode_list[i] + barcode_list[2*N_CHUNK - i - 1]) for i in range(N_CHUNK)]
 
         fq_list = [open(f'{self.temp_outdir}/temp_{i}.fq','w') for i in range(N_CHUNK)]
         bc_list = [open(f'{self.temp_outdir}/temp_{i}_bc.fa','w') for i in range(N_CHUNK)]
