@@ -99,6 +99,7 @@ class Assemble(Step):
         # Split barcode list into equal size chunks.
         random.shuffle(barcode_list)
         split_barcodes = np.array_split(barcode_list, N_CHUNK)
+        split_barcodes = [set(i) for i in split_barcodes]
 
         fq_list = [open(f'{self.temp_outdir}/temp_{i}.fq','w') for i in range(N_CHUNK)]
         bc_list = [open(f'{self.temp_outdir}/temp_{i}_bc.fa','w') for i in range(N_CHUNK)]
