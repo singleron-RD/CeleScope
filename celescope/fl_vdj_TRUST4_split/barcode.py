@@ -337,11 +337,15 @@ class Barcode(Step):
         - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
         - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
         - Low quality reads: low sequencing quality in barcode and UMI regions.
+        - Write coverage is capped to a maximum of 80,000 reads per barcode.
+        - Include only reads from match barcodes.
+        - Reverse complement the barcode to match with sc-RNA.
 
     ## Output
 
     - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
     the read name is `{barcode}_{UMI}_{read ID}`.
+    - `01.barcode/{sample}_1.fq(.gz)` Write barcode and umi to R1 read(can be directly used as input file of TRUST4).
     """
 
     def __init__(self, args, display_title=None):
