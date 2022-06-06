@@ -46,36 +46,39 @@ class Multi_fl_vdj_TRUST4_split(Multi):
         --seqtype BCR \\
     ```
     """
+
+    def barcode(self, sample):
+        step = "barcode"
+        arr = self.fq_dict[sample]
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--fq1 {arr[0]} --fq2 {arr[1]} '
+            f'--match_dir {self.col4_dict[sample]}'
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)
     
     def assemble(self, sample):
         step = 'assemble'
         cmd_line = self.get_cmd_line(step, sample)
-        fq2 = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
-
+        match_fq1 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_1.fq'
+        match_fq2 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd = (
             f'{cmd_line} '
-            f'--fq2 {fq2} '
-            f'--match_dir {self.col4_dict[sample]}'
+            f'--match_fq1 {match_fq1} '
+            f'--match_fq2 {match_fq2} '
         )
         self.process_cmd(cmd, step, sample, m=30, x=self.args.thread)
     
     def summarize(self, sample):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
-        reads_assignment = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_assign.out'
-        assembled_fa = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_assembled_reads.fa'
-        fq2 = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
-        trust_report = f'{self.outdir_dic[sample]["assemble"]}/assemble/trust_filter_report.out'
-        barcode_report = f'{self.outdir_dic[sample]["assemble"]}/assemble/barcoderepfl.tsv'
-        contig_file = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_contig.csv'
+        assemble_out = f'{self.outdir_dic[sample]["assemble"]}/assemble'
+        fq2 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd = (
             f'{cmd_line} '
-            f'--reads_assignment {reads_assignment} '
-            f'--assembled_fa {assembled_fa} '
+            f'--assemble_out {assemble_out} '
             f'--fq2 {fq2} '
-            f'--trust_report {trust_report} '
-            f'--barcode_report {barcode_report} '
-            f'--contig_file {contig_file} '
             f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=15, x=1)

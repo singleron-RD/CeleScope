@@ -10,6 +10,7 @@ from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common
 from celescope.fl_vdj_TRUST4_split.__init__ import CHAIN, PAIRED_CHAIN
+from celescope.fl_vdj_TRUST4_split import trust_utils as tr
 from celescope.tools.emptydrop_cr import get_plot_elements
 
 
@@ -27,7 +28,7 @@ def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcod
     True
     """
     if target_barcodes != None:
-        target_barcodes = {Summarize.reversed_compl(i) for i in target_barcodes}
+        target_barcodes = {i for i in target_barcodes}
     umi_threshold = Auto(list(df_UMI_sum[umi_col]), expected_cell_num=expected_target_cell_num, coef=coef, percentile=percentile).run()
 
     # avoid change the original dataframe
@@ -60,15 +61,19 @@ class Summarize(Step):
         super().__init__(args, display_title=display_title)
 
         self.seqtype = args.seqtype
-        self.reads_assignment = args.reads_assignment
         self.fq2 = args.fq2
-        self.assembled_fa = args.assembled_fa
+        self.diffuseFrac = args.diffuseFrac
+        self.assembled_fa = f'{args.assemble_out}/{self.sample}_assembled_reads.fa'
+        self.trust_report = f'{args.assemble_out}/reportfl.tsv'
+        self.annot = f'{args.assemble_out}/{self.sample}_annot.fa'
+
+        # if --diffuseFrac provided
+        if self.diffuseFrac:
+            self.barcode_report = f'{args.assemble_out}/barcoderepfl.tsv'
+        else:
+            self.barcode_report = f'{args.assemble_out}/barcoderep.tsv'
         
         self.coef = int(args.coef)
-        self.original_contig = args.contig_file
-        self.trust_report = args.trust_report
-        self.barcode_report = args.barcode_report
-        self.diffuseFrac = args.diffuseFrac
         self.target_weight = args.target_weight
         if args.target_cell_barcode:
             self.target_barcodes, self.expected_target_cell_num = utils.read_one_col(args.target_cell_barcode)
@@ -79,16 +84,6 @@ class Summarize(Step):
         self.matrix_file = utils.get_matrix_dir_from_match_dir(args.match_dir)
         self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
         self.record_file = f'{self.outdir}/Cell_num.txt'
-        
-
-    @staticmethod
-    def reversed_compl(seq):
-        """Reverse complementary sequence
-
-        :param original seq
-        :return Reverse complementary sequence
-        """
-        return str(Seq(seq).reverse_complement())
     
     @staticmethod
     def _parse_seqtype(seqtype):
@@ -119,16 +114,37 @@ class Summarize(Step):
     @utils.add_log
     def parse_contig_file(self):
         """
-        Add column name for original contig file.
+        parse all contig annotation file from barcode report.
         """
-        df = pd.read_csv(self.original_contig, sep='\t', header=None)
-        df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis']
-        df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
-        df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
-        df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
-        df['productive'] = df['cdr3'].apply(lambda x: False if x=='None' else True)
+        tr.convert_barcode_report(self.barcode_report, outdir=f'{self.outdir}/{self.sample}')
 
+        if self.seqtype == 'BCR':
+            df = pd.read_csv(f'{self.outdir}/{self.sample}_b.csv')
+        else:
+            df = pd.read_csv(f'{self.outdir}/{self.sample}_t.csv')
+
+        df['productive'] = df['full_length']
+        cb_contig_set = set(df.contig_id)
+
+        # generate all contig fasta file
+        all_fa = open(f'{self.outdir}/{self.sample}_all_contig.fasta','w')
+        with pysam.FastxFile(self.annot) as fa:
+            for read in fa: 
+                if read.name in cb_contig_set:
+                    sequence = read.sequence
+                    all_fa.write('>' + read.name + '\n' + sequence + '\n')    
+        all_fa.close()
+        
+        # add length of each contig. 
+        len_dict = dict()
+        with pysam.FastxFile(self.annot) as fa:
+            for read in fa:
+                len_dict[read.name] = read.comment.split(' ')[0]
+        for i in set(df.contig_id):
+            df.length = len_dict[i]
+        
         return df
+
 
     @utils.add_log
     def cell_calling(self, df):
@@ -172,13 +188,6 @@ class Summarize(Step):
 
 
         self.add_cell_num_metric(df_for_clono, 'Cell Number after CDR3 filtering')
-       
-        # DiffuseFrac filtering
-        if self.diffuseFrac:
-            barcode_report = pd.read_csv(self.barcode_report, sep='\t')
-            df_for_clono = df_for_clono[df_for_clono.barcode.isin(set(barcode_report['#barcode']))]
-
-            self.add_cell_num_metric(df_for_clono, 'Cell Number after DiffuseFrac filtering')
         
         # Filter low abundance contigs based on a umi cut-off
         if self.seqtype == 'BCR':
@@ -220,9 +229,9 @@ class Summarize(Step):
         with pysam.FastxFile(all_contig_fasta) as fa:
             for read in fa:
                 name = read.name
-                barcode = name.split('_')[0]
+                cb = name.split('_')[0]
                 sequence = read.sequence
-                if self.reversed_compl(barcode) in cell_barcodes:
+                if cb in cell_barcodes:
                     filter_contig_fasta.write('>' + name + '\n' + sequence + '\n')
                     
         filter_contig_fasta.close()
@@ -272,12 +281,7 @@ class Summarize(Step):
         df_all_contig.fillna('None',inplace = True)
         df_all_contig = df_all_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
         df_filter_contig = df_all_contig[df_all_contig['barcode'].isin(cell_barcodes)]
-
-        df_all_contig['barcode'] = df_all_contig['barcode'].apply(self.reversed_compl)
-        df_all_contig['contig_id'] = df_all_contig['contig_id'].apply(lambda x: self.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
         df_all_contig.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
-        df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(self.reversed_compl)
-        df_filter_contig['contig_id'] = df_filter_contig['contig_id'].apply(lambda x: self.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
 
         return df_filter_contig
@@ -316,8 +320,6 @@ class Summarize(Step):
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'])
         total_cells =len(cell_barcodes)
-        with open(self.record_file, 'a+') as f:
-            f.write('Cell Number After Cut-off Filter: ' + str(total_cells) + '\n')
 
         read_count = 0
         read_count_all = 0
@@ -339,7 +341,6 @@ class Summarize(Step):
         df_umi = df_umi.reindex(columns=['barcode', 'UMI'])
         df_umi = df_umi.sort_values(by='UMI', ascending=False)
         df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cell_barcodes else 'UB')
-        df_umi['barcode'] = df_umi['barcode'].apply(self.reversed_compl)
         df_umi.to_csv(f'{self.outdir}/count.txt', sep='\t', index=False)
         self.add_data(chart=get_plot_elements.plot_barcode_rank(f'{self.outdir}/count.txt'))
 
@@ -428,10 +429,6 @@ def get_opts_summarize(parser, sub_program):
 
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--reads_assignment', help='File records reads assigned to contigs.', required=True)
-        parser.add_argument('--fq2', help='Cutadapt R2 reads.', required=True)
-        parser.add_argument('--assembled_fa', help='Read used for assembly', required=True)
-        parser.add_argument('--trust_report', help='Filtered trust report, Filter Nonfunctional CDR3 and CDR3 sequences containing N', required=True)
-        parser.add_argument('--barcode_report', help='Filtered barcode report of trust4 which is related to diffuseFrac option', required=True)
-        parser.add_argument('--contig_file', help='original contig annotation file', required=True)
+        parser.add_argument('--fq2', help='Barcode R2 reads.', required=True)
+        parser.add_argument('--assemble_out', help='Result of  assemble dirctory.', required=True)
         parser.add_argument('--match_dir', help='Match scRNA-seq directory.', required=True)
