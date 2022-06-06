@@ -8,10 +8,10 @@ import pandas as pd
 import numpy as np
 import pysam
 
-from celescope.fl_vdj_TRUST4_split import trust_utils as tr
+from celescope.flv_trust4_split import trust_utils as tr
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.fl_vdj_TRUST4_split.__init__ import CHAIN
+from celescope.flv_trust4_split.__init__ import CHAIN
 
 # split fastq into const N_CHUNK. Different N_CHUNK will cause different results as discussed in 
 # https://github.com/liulab-dfci/TRUST4/issues/75

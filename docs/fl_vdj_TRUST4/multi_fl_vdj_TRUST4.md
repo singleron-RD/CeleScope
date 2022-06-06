@@ -29,7 +29,7 @@ pip install .
 
 ```
 conda activate TRUST_dev
-    multi_fl_vdj_TRUST4 \
+    multi_flv_trust4 \
     --mapfile ./test.mapfile \
     --outdir ./ \
     --chemistry flv \

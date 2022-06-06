@@ -3,7 +3,7 @@ import celescope.tools
 
 
 __STEPS__ = ['sample', 'barcode', 'assemble', 'summarize', 'mapping_annotation']
-__ASSAY__ = 'fl_vdj_TRUST4_split'
+__ASSAY__ = 'flv_trust4_split'
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__) + '/trust4'
 INDEX = f'{TOOLS_DIR}/database'

@@ -3,7 +3,7 @@ import pandas as pd
 import pysam
 
 from celescope.tools import utils
-from celescope.fl_vdj_TRUST4_split.__init__ import INDEX, TOOLS_DIR
+from celescope.flv_trust4_split.__init__ import INDEX, TOOLS_DIR
 
 
 """
