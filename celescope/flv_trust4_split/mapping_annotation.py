@@ -23,7 +23,7 @@ def run_mapping(rds, contig, sample, outdir, assign):
     subprocess.check_call(cmd, shell=True)
 
 
-class Mapping_annotation(Summarize):
+class Mapping_annotation(Step):
     """
     ## Features
 
@@ -41,7 +41,7 @@ class Mapping_annotation(Summarize):
 
     """
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
+        super().__init__(args, display_title=display_title)
 
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir

@@ -46,7 +46,7 @@ class Multi_flv_trust4(Multi):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
         full_len_assembly = f'{self.outdir_dic[sample]["assemble"]}/{sample}_full_len.fa'
-        fq2 = f''
+        fq2 = ''
         assign_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}_assign.out'
         filter_report = f'{self.outdir_dic[sample]["assemble"]}/{sample}_filter_report.tsv'
         barcode_filter_report = f'{self.outdir_dic[sample]["assemble"]}/{sample}_barcode_filter_report.tsv'
