@@ -29,7 +29,7 @@ pip install .
 
 ```
 conda activate TRUST_dev
-    multi_fl_vdj_TRUST4_split \
+    multi_flv_trust4_split \
     --mapfile ./test.mapfile \
     --outdir ./ \
     --chemistry flv \

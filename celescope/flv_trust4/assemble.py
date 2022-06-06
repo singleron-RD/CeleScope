@@ -5,7 +5,7 @@ import subprocess
 from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.fl_vdj_TRUST4.__init__ import CHAIN, INDEX, TOOLS_DIR
+from celescope.flv_trust4.__init__ import CHAIN, INDEX, TOOLS_DIR
 
 """
 trust goes through the following steps:
@@ -296,12 +296,14 @@ def assemble(args):
         runner.run()
 
 
+
 def get_opts_assemble(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--cutadapted_fq', help='cutadapted_fq', required=True)
-        parser.add_argument('--match_dir', help='Match scRNA-seq directory.', required=True)
+        parser.add_argument('--match_fq2', help='R2 reads matched with scRNA-seq.', required=True)
+        parser.add_argument('--match_fq1', help='R1 reads matched with scRNA-seq.', required=True)
 
-    parser.add_argument('--species', help='Species name and version.', choices=["hg19", "hg38", "GRCm38"], required=True)
+    parser.add_argument('--species', help='Species name and version.', choices=["hg19", "hg38", "GRCm38", "other"], required=True)
     parser.add_argument('--seqtype', help='TCR/BCR seq data.', choices=['TCR', 'BCR'], required=True)
-    parser.add_argument('--match_previous_assemble', help='whether match reads with sc-RNA before assemble', action='store_true')
+    parser.add_argument('--barcodeRange', help='Barcode range in fq1, INT INT CHAR.', default='0 23 +') 
+    parser.add_argument('--umiRange', help='UMI range in fq1, INT INT CHAR.', default='24 -1 +')

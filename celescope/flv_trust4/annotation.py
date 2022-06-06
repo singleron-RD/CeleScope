@@ -3,10 +3,10 @@ import numpy as np
 import subprocess
 import glob
 from Bio.Seq import Seq
-from celescope.fl_vdj_TRUST4.summarize import Summarize
+from celescope.flv_trust4.summarize import Summarize
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.fl_vdj_TRUST4.__init__ import TOOLS_DIR
+from celescope.flv_trust4.__init__ import TOOLS_DIR
 from celescope.tools.plotly_plot import Bar_plot
 
 

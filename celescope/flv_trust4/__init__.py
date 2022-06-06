@@ -2,8 +2,8 @@ import os
 import celescope.tools
 
 
-__STEPS__ = ['sample', 'barcode', 'cutadapt', 'assemble', 'summarize', 'annotation']
-__ASSAY__ = 'fl_vdj_TRUST4'
+__STEPS__ = ['sample', 'barcode', 'assemble', 'summarize', 'annotation']
+__ASSAY__ = 'flv_trust4'
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__) + '/trust4'
 INDEX = f'{TOOLS_DIR}/database'

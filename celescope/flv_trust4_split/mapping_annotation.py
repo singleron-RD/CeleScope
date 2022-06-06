@@ -3,11 +3,11 @@ import numpy as np
 import subprocess
 import glob
 
-from celescope.fl_vdj_TRUST4_split.summarize import Summarize
+from celescope.flv_trust4_split.summarize import Summarize
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.fl_vdj_TRUST4_split.__init__ import TOOLS_DIR, CHAIN, PAIRED_CHAIN
-from celescope.fl_vdj_TRUST4_split import trust_utils as tr
+from celescope.flv_trust4_split.__init__ import TOOLS_DIR, CHAIN, PAIRED_CHAIN
+from celescope.flv_trust4_split import trust_utils as tr
 from celescope.tools.plotly_plot import Bar_plot
 
 
@@ -23,7 +23,7 @@ def run_mapping(rds, contig, sample, outdir, assign):
     subprocess.check_call(cmd, shell=True)
 
 
-class Mapping_annotation(Summarize):
+class Mapping_annotation(Step):
     """
     ## Features
 
