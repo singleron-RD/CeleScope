@@ -7,7 +7,6 @@ import random
 import pandas as pd
 import numpy as np
 import pysam
-from Bio.Seq import Seq
 
 from celescope.fl_vdj_TRUST4_split import trust_utils as tr
 from celescope.tools import utils
