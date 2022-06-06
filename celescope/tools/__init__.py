@@ -9,7 +9,8 @@ __PATTERN_DICT__ = {
     'customized': None,
     'auto': None,
     'scopeV1': 'C12U8T18',
-    'flv_rna': 'C8L16C8L16C8U9',
+    # flv_rna is actually U9L16, but the last 
+    'flv_rna': 'C8L16C8L16C8U9L6',
     'flv' : 'U9C8L16C8L16C8',
 }
 
