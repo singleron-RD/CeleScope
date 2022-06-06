@@ -1,8 +1,8 @@
-from celescope.fl_vdj_TRUST4_split.__init__ import __ASSAY__
+from celescope.flv_trust4_split.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
 
 
-class Multi_fl_vdj_TRUST4_split(Multi):
+class Multi_flv_trust4_split(Multi):
     """
 
     ## Installation
@@ -36,7 +36,7 @@ class Multi_fl_vdj_TRUST4_split(Multi):
     
     ```
     conda activate TRUST_dev
-        multi_fl_vdj_TRUST4_split \\
+        multi_flv_trust4_split \\
         --mapfile ./test.mapfile \\
         --outdir ./ \\
         --chemistry flv \\
@@ -98,7 +98,7 @@ class Multi_fl_vdj_TRUST4_split(Multi):
 
 
 def main():
-    multi = Multi_fl_vdj_TRUST4_split(__ASSAY__)
+    multi = Multi_flv_trust4_split(__ASSAY__)
     multi.run()
 
 

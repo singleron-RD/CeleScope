@@ -18,8 +18,8 @@ ASSAY_LIST = [
     'sweetseq',
     'fl_vdj_CR',
     'convert10X',
-    'fl_vdj_TRUST4',
-    'fl_vdj_TRUST4_split',
+    'flv_trust4',
+    'flv_trust4_split',
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

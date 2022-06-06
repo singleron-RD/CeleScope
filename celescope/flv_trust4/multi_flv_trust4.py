@@ -1,42 +1,14 @@
-from celescope.fl_vdj_TRUST4.__init__ import __ASSAY__
+from celescope.flv_trust4.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
 
 
-class Multi_fl_vdj_TRUST4(Multi):
+class Multi_flv_trust4(Multi):
     """
-
-    ## Installation
-
-    1. Clone repo
-    ```
-    git clone https://github.com/singleron-RD/CeleScope.git
-    ```
-
-    2. Create conda environment and install conda packages
-    ```
-    cd CeleScope
-    conda create -n celescope -y --file conda_pkgs.txt
-    ```
-
-    Alternatively, you can use [mamba](https://github.com/mamba-org/mamba) to improve speed.
-    ```
-    conda install mamba
-    mamba create -n celescope -y --file conda_pkgs.txt
-    ```
-
-    3. Install celescope
-
-    Make sure you have activated the conda environment before running `pip install Celescope`. 
-    ```
-    conda activate celescope
-    pip install .
-    ```
 
     ## Usage
     
     ```
-    conda activate TRUST_dev
-        multi_fl_vdj_TRUST4 \\
+    multi_flv_trust4 \\
         --mapfile ./test.mapfile \\
         --outdir ./ \\
         --chemistry flv \\
@@ -44,18 +16,29 @@ class Multi_fl_vdj_TRUST4(Multi):
         --species GRCm38 \\
         --thread 10 \\
         --seqtype BCR \\
-        --match_previous_assemble
     ```
     """
+    def barcode(self, sample):
+        step = "barcode"
+        arr = self.fq_dict[sample]
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--fq1 {arr[0]} --fq2 {arr[1]} '
+            f'--match_dir {self.col4_dict[sample]} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)
+
     def assemble(self, sample):
         step = 'assemble'
         cmd_line = self.get_cmd_line(step, sample)
-        fq2 = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
+        match_fq1 = ""
+        match_fq2 = ""
 
         cmd = (
             f'{cmd_line} '
-            f'--cutadapted_fq {fq2} '
-            f'--match_dir {self.col4_dict[sample]}'
+            f'--match_fq1 {match_fq1} '
+            f'--match_fq2 {match_fq2} '
         )
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
     
@@ -63,7 +46,7 @@ class Multi_fl_vdj_TRUST4(Multi):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
         full_len_assembly = f'{self.outdir_dic[sample]["assemble"]}/{sample}_full_len.fa'
-        fq2 = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
+        fq2 = f''
         assign_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}_assign.out'
         filter_report = f'{self.outdir_dic[sample]["assemble"]}/{sample}_filter_report.tsv'
         barcode_filter_report = f'{self.outdir_dic[sample]["assemble"]}/{sample}_barcode_filter_report.tsv'
@@ -92,7 +75,7 @@ class Multi_fl_vdj_TRUST4(Multi):
 
 
 def main():
-    multi = Multi_fl_vdj_TRUST4(__ASSAY__)
+    multi = Multi_flv_trust4(__ASSAY__)
     multi.run()
 
 

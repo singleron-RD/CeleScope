@@ -9,7 +9,7 @@ from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common
-from celescope.fl_vdj_TRUST4_split.__init__ import CHAIN, PAIRED_CHAIN
+from celescope.flv_trust4_split.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.emptydrop_cr import get_plot_elements
 
 
