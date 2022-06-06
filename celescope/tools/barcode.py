@@ -56,15 +56,11 @@ def parse_pattern(pattern):
 
 def get_scope_bc(chemistry):
     """Return (linker file path, whitelist file path)"""
-
-    if chemistry == 'scopeV1':
-        return None, None
-    elif chemistry == 'flv':
-        linker_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/reversed_linker_4types'
-        whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/reversed_bclist'
-    else:
+    try:
         linker_f = glob.glob(f'{ROOT_PATH}/data/chemistry/{chemistry}/linker*')[0]
         whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/bclist'
+    except IndexError:
+        return None, None
     return linker_f, whitelist_f
 
 
@@ -205,6 +201,17 @@ def parse_chemistry(chemistry):
     return pattern_dict, barcode_set_list, barcode_mismatch_list, linker_set_list, linker_mismatch_list
 
 
+def check_polyT(seq, pattern_dict, min_polyT_count=MIN_T):
+    """
+    Return:
+        True if polyT is found
+    """
+    seq_polyT = get_seq_str(seq, pattern_dict['T'])
+    n_polyT_found = seq_polyT.count('T')
+    if n_polyT_found >= min_polyT_count:
+        return True
+    return False
+
 class Chemistry():
     """
     Auto detect chemistry from R1-read
@@ -226,6 +233,10 @@ class Chemistry():
         self.pattern_dict_v2, * \
             _, self.linker_4_v2_set_list, self.linker_4_v2_mismatch_list = parse_chemistry('scopeV2.2.1')
         self.pattern_dict_v3, *_, self.linker_v3_set_list, self.linker_v3_mismatch_list = parse_chemistry('scopeV3.0.1')
+        self.pattern_dict_flv, *_, self.linker_flv_set_list, self.linker_flv_mismatch_list = parse_chemistry('flv')
+        self.pattern_dict_flv_rna, *_, self.linker_flv_rna_set_list, self.linker_flv_rna_mismatch_list = parse_chemistry('flv_rna')
+
+        self.l4_dict = defaultdict(int)
 
     @utils.add_log
     def check_chemistry(self):
@@ -238,6 +249,7 @@ class Chemistry():
         if len(set(chemistry_list)) != 1:
             Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
         return chemistry_list
+
 
     def seq_chemistry(self, seq):
         """
@@ -262,6 +274,14 @@ class Chemistry():
 
         """
 
+        # check flv_rna first. otherwise it may be considered as scopeV2.1.1 and scopeV2.2.1
+        linker_flv_rna = get_seq_str(seq, self.pattern_dict_flv_rna["L"])
+        bool_valid, _, _ = check_seq_mismatch(
+            [linker_flv_rna], self.linker_flv_rna_set_list, self.linker_flv_rna_mismatch_list)
+        if bool_valid:
+            return "flv_rna"
+
+
         linker_v2 = get_seq_str(seq, self.pattern_dict_v2["L"])
         bool_valid, _, _ = check_seq_mismatch(
             [linker_v2], self.linker_1_v2_set_list, self.linker_1_v2_mismatch_list)
@@ -271,17 +291,23 @@ class Chemistry():
             else:
                 return "scopeV2.1.1"
 
+        linker_v3 = get_seq_str(seq, self.pattern_dict_v3["L"])
+        bool_valid, _, _ = check_seq_mismatch(
+            [linker_v3], self.linker_v3_set_list, self.linker_v3_mismatch_list)
+        if bool_valid:
+            return "scopeV3.0.1"
+
+        linker_v2 = get_seq_str(seq, self.pattern_dict_v2["L"])
         bool_valid, _, _ = check_seq_mismatch(
             [linker_v2], self.linker_4_v2_set_list, self.linker_4_v2_mismatch_list)
         if bool_valid:
             return "scopeV2.2.1"
 
-        linker_v3 = get_seq_str(seq, self.pattern_dict_v3["L"])
-        linker_v3 = "".join(linker_v3)
+        linker_flv = get_seq_str(seq, self.pattern_dict_flv["L"])
         bool_valid, _, _ = check_seq_mismatch(
-            [linker_v3], self.linker_v3_set_list, self.linker_v3_mismatch_list)
+            [linker_flv], self.linker_flv_set_list, self.linker_flv_mismatch_list)
         if bool_valid:
-            return "scopeV3.0.1"
+            return "flv"
 
         return
 
@@ -310,10 +336,17 @@ class Chemistry():
             self.get_chemistry.logger.error("Valid chemistry read counts percent < 0.1")
             raise Exception(
                 'Auto chemistry detection failed! '
+                '`--chemistry auto` can auto-detect scopeV2 and V3 mRNA library.'
+                'You need to use `--chemistry scopeV1` for scopeV1, '
+                '`--chemistry flv_rna` for mRNA library match with full length VDJ,'
+                '`--chemistry flv`'
                 'If the sample is from Singleron, ask the technical staff you are connecting with for the chemistry used. '
-                'You need to use `--chemistry scopeV1` for scopeV1, and `--chemistry auto` should be fine for scopeV2 and V3 '
+                'You need to use `--chemistry scopeV1` for scopeV1, `--chemistry` flv_rna` for mRNA library match with full length VDJ'
+                'and `--chemistry auto` should be fine for scopeV2 and V3 '
             )
         Chemistry.get_chemistry.logger.info(f'chemistry: {chemistry}')
+        for value in sorted(self.l4_dict.items(), key=lambda x: x[1], reverse=True):
+            print(f'{value[0]}: {value[1]}')
         return chemistry
 
 
@@ -454,8 +487,7 @@ class Barcode(Step):
 
                     # polyT filter
                     if bool_T and (not self.allowNoPolyT):
-                        polyT = get_seq_str(seq1, pattern_dict['T'])
-                        if polyT.count('T') < MIN_T:
+                        if not check_polyT(seq1, pattern_dict):
                             self.no_polyT_num += 1
                             if self.nopolyT:
                                 fh1_without_polyT.write(
