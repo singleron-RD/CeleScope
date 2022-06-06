@@ -41,7 +41,7 @@ class Mapping_annotation(Summarize):
 
     """
     def __init__(self, args, display_title=None):
-        super().__init__(args, display_title=display_title)
+        Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir
@@ -66,7 +66,7 @@ class Mapping_annotation(Summarize):
         except IndexError:
             pass
   
-        self.contig = glob.glob(f'{self.outdir}/../04.summarize/{self.sample}_filtered_contig.csv')[0]
+        self.contig = glob.glob(f'{self.outdir}/../03.summarize/{self.sample}_filtered_contig.csv')[0]
 
         if self.seqtype == 'TCR':
             self.Celltype = {'T_cells','NKT_cells','T cells','NK T cells','Tcells'}
@@ -83,7 +83,7 @@ class Mapping_annotation(Summarize):
     def parse_clonotype(outdir):
         """Generate clonotypes table in html.
         """
-        df_clonotypes=pd.read_csv(f'{outdir}/../04.summarize/clonotypes.csv', sep=',')
+        df_clonotypes=pd.read_csv(f'{outdir}/../03.summarize/clonotypes.csv', sep=',')
         df_clonotypes['ClonotypeID'] = df_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
         df_clonotypes['Frequency'] = df_clonotypes['frequency']
         df_clonotypes['Proportion'] = df_clonotypes['proportion'].apply(lambda x: f'{round(x*100, 2)}%')
