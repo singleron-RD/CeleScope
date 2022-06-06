@@ -124,13 +124,13 @@ class Summarize(Step):
             df = pd.read_csv(f'{self.outdir}/{self.sample}_t.csv')
 
         df['productive'] = df['full_length']
-        cb_contig_set = set(df.contig_id)
+        contig_set = set(df.contig_id)
 
         # generate all contig fasta file
         all_fa = open(f'{self.outdir}/{self.sample}_all_contig.fasta','w')
         with pysam.FastxFile(self.annot) as fa:
             for read in fa: 
-                if read.name in cb_contig_set:
+                if read.name in contig_set:
                     sequence = read.sequence
                     all_fa.write('>' + read.name + '\n' + sequence + '\n')    
         all_fa.close()
@@ -140,8 +140,7 @@ class Summarize(Step):
         with pysam.FastxFile(self.annot) as fa:
             for read in fa:
                 len_dict[read.name] = read.comment.split(' ')[0]
-        for i in set(df.contig_id):
-            df.length = len_dict[i]
+        df['length'] = df['contig_id'].apply(lambda x: len_dict[x])
         
         return df
 
@@ -185,7 +184,6 @@ class Summarize(Step):
         correct_cdr3 = [i for i in correct_cdr3 if len(i)>=5]
         correct_cdr3 = [i for i in correct_cdr3 if 'UAG' or 'UAA' or 'UGA' not in i]
         df_for_clono = df_for_clono[df_for_clono['cdr3'].isin(correct_cdr3)]
-
 
         self.add_cell_num_metric(df_for_clono, 'Cell Number after CDR3 filtering')
         
@@ -284,35 +282,6 @@ class Summarize(Step):
         df_all_contig.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
 
-        return df_filter_contig
-
-    @utils.add_log
-    def keep_unique_contig(self, df_filter_contig):
-        """
-        Keep unique contig for each chain(Highest umi) of one cell
-        """
-        df_filter_contig.sort_values(by='umis',ascending=False)
-        if self.seqtype == 'BCR':
-            df_chain_heavy = df_filter_contig[df_filter_contig['chain']=='IGH']
-            df_chain_light = df_filter_contig[(df_filter_contig['chain']=='IGK') | (df_filter_contig['chain']=='IGL')]
-        else:
-            df_chain_heavy = df_filter_contig[df_filter_contig['chain'] == 'TRA']
-            df_chain_light = df_filter_contig[df_filter_contig['chain'] == 'TRB']
-        df_chain_heavy = df_chain_heavy.drop_duplicates(['barcode'])
-        df_chain_light = df_chain_light.drop_duplicates(['barcode'])
-        df_unique_contig = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
-        df_unique_contig.to_csv(f'{self.outdir}/{self.sample}_unique_contig.csv', sep=',', index=False)
-
-        unique_contig_set = set(df_unique_contig['contig_id'])
-        unique_contig_fasta = open(f'{self.outdir}/{self.sample}_unique_contig.fasta', 'w')
-        with pysam.FastxFile(f'{self.outdir}/{self.sample}_filtered_contig.fasta') as fa:
-            for read in fa:
-                seq = read.sequence
-                name = read.name
-                if name in unique_contig_set:
-                    unique_contig_fasta.write(">"+name+"\n"+seq+"\n")
-        unique_contig_fasta.close()
-
     @utils.add_log
     def gen_summary(self, df_for_clono):
         """ Generate metrics in html 
@@ -392,8 +361,7 @@ class Summarize(Step):
         original_df = self.parse_contig_file()
         df_for_clono, cell_barcodes = self.cell_calling(original_df)
         self.filter_fasta(cell_barcodes)
-        df_filter_contig = self.parse_clonotypes(original_df, df_for_clono, cell_barcodes)
-        self.keep_unique_contig(df_filter_contig)
+        self.parse_clonotypes(original_df, df_for_clono, cell_barcodes)
         self.gen_summary(df_for_clono)
 
 

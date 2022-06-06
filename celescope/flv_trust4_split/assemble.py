@@ -127,14 +127,15 @@ class Assemble(Step):
 
     @utils.add_log
     def out_match_fastq(self):
-
+        """
+        Count matched barcodes and matched reads.
+        """
         matched_cbs = set()
         with pysam.FastxFile(self.match_fq2) as fq:
             for read in fq:
                 cb = read.name.split('_')[0]
                 self.matched_reads += 1
                 matched_cbs.add(cb)
-
 
         return matched_cbs
 
