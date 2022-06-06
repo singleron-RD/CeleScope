@@ -41,7 +41,7 @@ class Mapping_annotation(Summarize):
 
     """
     def __init__(self, args, display_title=None):
-        super().__init__(args, display_title=display_title)
+        Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir
