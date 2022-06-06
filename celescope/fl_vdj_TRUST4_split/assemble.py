@@ -25,50 +25,37 @@ class Assemble(Step):
     - Assemble TCR/BCR seq data.
 
     ## Output
-    - `03.assemble/match/{sample}_matched_R1.fq` New R1 reads matched with scRNA-seq
-    - `03.assemble/match/{sample}_matched_R1.fq` New R2 reads matched with scRNA-seq
-
     - `03.assemble/assemble/{sample}_cdr3.out` All assembled CDR3 output and gene information.
     - `03.assemble/assemble/{sample}_assign.out` read assignment results.
     - `03.assemble/assemble/{sample}_assembled_reads.fa` Assembled raw reads.
     - `03.assemble/assemble/{sample}_annot.fa` Assembled annotated contig sequences.
-    - `03.assemble/assemble/{sample}_full_len.fa` Assembled full length contig sequences.
-    - `03.assemble/assemble/report.out` Record assembled CDR3 types, read count and proportion of read count.
+    - `03.assemble/assemble/report.tsv` Record assembled CDR3 types, read count and proportion of read count.
     - `03.assemble/assemble/barcoderep.tsv` Record chain information for each barcode.
     - `03.assemble/assemble/barcoderepfl.tsv` Record chain information for each barcode(preliminary filter).
     """
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
-        self.fq2 = args.fq2
         self.species = args.species
         self.seqtype = args.seqtype
         self.barcodeRange = args.barcodeRange
         self.umiRange = args.umiRange
-        self.match_dir = args.match_dir
+        self.match_fq1 = args.match_fq1
+        self.match_fq2 = args.match_fq2
 
         self.chains = self._get_chain_type(self.seqtype)
-        self.match_barcodes, _ = utils.get_barcode_from_match_dir(self.match_dir)
         # total thread may be higher than argument thread
         self.single_thread = math.ceil(self.thread / N_CHUNK)
 
-
         # outdir
-        self.match_outdir = f'{self.outdir}/match'
         self.assemble_outdir = f'{self.outdir}/assemble'
         self.temp_outdir = f'{self.assemble_outdir}/temp'
-        for d in [self.match_outdir, self.assemble_outdir, self.temp_outdir]:
+        for d in [self.assemble_outdir, self.temp_outdir]:
             utils.check_mkdir(dir_name=d)
         self.matched_reads = 0
 
         # output files
-        self.match_fq1, self.match_fq2 = f'{self.match_outdir}/{self.sample}_matched_R1.fq', \
-            f'{self.match_outdir}/{self.sample}_matched_R2.fq'
         self.candidate_reads = f'{self.temp_outdir}/{self.sample}_bcrtcr.fq'
-
-    @staticmethod
-    def reversed_compl(seq):
-        return str(Seq(seq).reverse_complement())
 
     @staticmethod
     def _get_chain_type(seqtype):
@@ -126,8 +113,6 @@ class Assemble(Step):
         """
         trust_assemble
         annotate
-        get_full_len_assembly
-        fa_to_csv
         """
 
         temp_outdirs = [self.temp_outdir] * N_CHUNK
@@ -138,39 +123,19 @@ class Assemble(Step):
         with Pool(N_CHUNK) as pool:
             pool.starmap(tr.trust_assemble, zip(temp_species, temp_outdirs, temp_samples, single_threads))
 
-
         with Pool(N_CHUNK) as pool:
             pool.starmap(tr.annotate, zip(temp_samples, temp_outdirs, temp_species, single_threads))
 
-
-        with Pool(N_CHUNK) as pool:
-            pool.starmap(tr.get_full_len_assembly, zip(temp_outdirs, temp_samples))
-
-
-        with Pool(N_CHUNK) as pool:
-            pool.starmap(tr.fa_to_csv, zip(temp_outdirs, temp_samples))
-
-
     @utils.add_log
     def out_match_fastq(self):
-        out_fq1 = open(self.match_fq1, 'w')
-        out_fq2 = open(self.match_fq2, 'w')
 
-        matched_cbs, rna_cbs = set(), {self.reversed_compl(cb) for cb in self.match_barcodes}
-        with pysam.FastxFile(self.fq2) as fq:
+        matched_cbs = set()
+        with pysam.FastxFile(self.match_fq2) as fq:
             for read in fq:
-                attr = read.name.split('_')
-                cb = attr[0]
-                umi = attr[1]
-                qual = 'F' * len(cb + umi)
-                seq1 = f'@{read.name}\n{cb}{umi}\n+\n{qual}\n'
-                if cb in rna_cbs:
-                    out_fq1.write(seq1)
-                    out_fq2.write(str(read)+'\n')
-                    self.matched_reads += 1
-                    matched_cbs.add(cb)
-        out_fq1.close()
-        out_fq2.close()
+                cb = read.name.split('_')[0]
+                self.matched_reads += 1
+                matched_cbs.add(cb)
+
 
         return matched_cbs
 
@@ -208,8 +173,6 @@ class Assemble(Step):
             'cdr3.out',
             'assembled_reads.fa',
             'assign.out',
-            'contig.csv',
-            'full_len.fa',
         ]
 
         for file_suffix in file_suffixes:
@@ -220,17 +183,19 @@ class Assemble(Step):
             subprocess.check_call(cmd, shell=True)
 
 
+    """
     def gen_all_contig_fasta(self):
-        utils.check_mkdir(f'{self.outdir}/../04.summarize')
+        utils.check_mkdir(f'{self.outdir}/../03.summarize')
         full_len_fa = f'{self.assemble_outdir}/{self.sample}_full_len.fa'
-        all_fa = open(f'{self.outdir}/../04.summarize/{self.sample}_all_contig.fasta','w')
+        all_fa = open(f'{self.outdir}/../03.summarize/{self.sample}_all_contig.fasta','w')
         with pysam.FastxFile(full_len_fa) as fa:
             for read in fa: 
                 name = read.name
                 barcode = name.split('_')[0]
                 sequence = read.sequence
-                all_fa.write('>' + self.reversed_compl(barcode) + '_' + name.split('_')[1] + '\n' + sequence + '\n')    
+                all_fa.write('>' + barcode + '_' + name.split('_')[1] + '\n' + sequence + '\n')    
         all_fa.close()
+    """
     
     def gen_report(self, matched_cbs):
         tr.get_trust_report(self.assemble_outdir,self.sample)
@@ -273,7 +238,6 @@ class Assemble(Step):
         self.split_candidate_reads()
         self.assemble()
         self.merge_file()
-        self.gen_all_contig_fasta()
         self.gen_report(matched_cbs)
 
 
@@ -286,8 +250,8 @@ def assemble(args):
 def get_opts_assemble(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--fq2', help='R2 reads matched with scRNA-seq.', required=True)
-        parser.add_argument('--match_dir', help='Match scRNA-seq directory.', required=True)
+        parser.add_argument('--match_fq2', help='R2 reads matched with scRNA-seq.', required=True)
+        parser.add_argument('--match_fq1', help='R1 reads matched with scRNA-seq.', required=True)
 
     parser.add_argument('--species', help='Species name and version.', choices=["hg19", "hg38", "GRCm38", "other"], required=True)
     parser.add_argument('--seqtype', help='TCR/BCR seq data.', choices=['TCR', 'BCR'], required=True)
