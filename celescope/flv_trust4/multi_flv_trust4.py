@@ -32,15 +32,14 @@ class Multi_flv_trust4(Multi):
     def assemble(self, sample):
         step = 'assemble'
         cmd_line = self.get_cmd_line(step, sample)
-        match_fq1 = ""
-        match_fq2 = ""
-
+        match_fq1 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_1.fq'
+        match_fq2 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd = (
             f'{cmd_line} '
             f'--match_fq1 {match_fq1} '
             f'--match_fq2 {match_fq2} '
         )
-        self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
+        self.process_cmd(cmd, step, sample, m=30, x=self.args.thread)
     
     def summarize(self, sample):
         step = 'summarize'
