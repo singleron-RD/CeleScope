@@ -44,30 +44,24 @@ class Multi_flv_trust4(Multi):
     def summarize(self, sample):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
-        full_len_assembly = f'{self.outdir_dic[sample]["assemble"]}/{sample}_full_len.fa'
-        fq2 = ''
-        assign_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}_assign.out'
-        filter_report = f'{self.outdir_dic[sample]["assemble"]}/{sample}_filter_report.tsv'
-        barcode_filter_report = f'{self.outdir_dic[sample]["assemble"]}/{sample}_barcode_filter_report.tsv'
-        assembled_fa = f'{self.outdir_dic[sample]["assemble"]}/{sample}_assembled_reads.fa'
-
+        assemble_out = f'{self.outdir_dic[sample]["assemble"]}'
+        fq2 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd = (
             f'{cmd_line} '
-            f'--full_len_assembly {full_len_assembly} '
-            f'--cutadapted_fq {fq2} '
-            f'--assign_out {assign_out} '
-            f'--filter_report {filter_report} '
-            f'--barcode_filter_report {barcode_filter_report} '
-            f'--assembled_fa {assembled_fa} '
+            f'--assemble_out {assemble_out} '
+            f'--fq2 {fq2} '
+            f'--match_dir {self.col4_dict[sample]} '
         )
-        self.process_cmd(cmd, step, sample, m=10, x=5)
+        self.process_cmd(cmd, step, sample, m=15, x=1)
 
-    def annotation(self,sample):
-        step = 'annotation'
+    def mapping_annotation(self,sample):
+        step = 'mapping_annotation'
         cmd_line = self.get_cmd_line(step,sample)
+        contig_file = f'{self.outdir_dic[sample]["summarize"]}/{sample}_filtered_contig.csv'
         match_dir = f'{self.col4_dict[sample]}'
-        cmd=(
+        cmd = (
             f'{cmd_line} '
+            f'--contig_file {contig_file} '
             f'--match_dir {match_dir} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
