@@ -3,7 +3,7 @@ import pysam
 
 from celescope.tools import utils
 from celescope.tools.step import s_common
-from celescope.fl_vdj_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
+from celescope.flv_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
 
 
 class Annotation(VDJ_Mixin):

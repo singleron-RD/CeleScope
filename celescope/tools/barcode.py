@@ -10,7 +10,7 @@ from xopen import xopen
 
 from celescope.tools import utils
 from celescope.tools.__init__ import __PATTERN_DICT__
-from celescope.__init__ import ROOT_PATH
+from celescope.__init__ import ROOT_PATH, HELP_DICT
 from celescope.tools.step import Step, s_common
 
 MIN_T = 10
@@ -236,7 +236,6 @@ class Chemistry():
         self.pattern_dict_flv, *_, self.linker_flv_set_list, self.linker_flv_mismatch_list = parse_chemistry('flv')
         self.pattern_dict_flv_rna, *_, self.linker_flv_rna_set_list, self.linker_flv_rna_mismatch_list = parse_chemistry('flv_rna')
 
-        self.l4_dict = defaultdict(int)
 
     @utils.add_log
     def check_chemistry(self):
@@ -335,18 +334,10 @@ class Chemistry():
         if percent < 0.1:
             self.get_chemistry.logger.error("Valid chemistry read counts percent < 0.1")
             raise Exception(
-                'Auto chemistry detection failed! '
-                '`--chemistry auto` can auto-detect scopeV2 and V3 mRNA library.'
-                'You need to use `--chemistry scopeV1` for scopeV1, '
-                '`--chemistry flv_rna` for mRNA library match with full length VDJ,'
-                '`--chemistry flv`'
-                'If the sample is from Singleron, ask the technical staff you are connecting with for the chemistry used. '
-                'You need to use `--chemistry scopeV1` for scopeV1, `--chemistry` flv_rna` for mRNA library match with full length VDJ'
-                'and `--chemistry auto` should be fine for scopeV2 and V3 '
+                'Auto chemistry detection failed! ' + HELP_DICT['chemistry']
             )
         Chemistry.get_chemistry.logger.info(f'chemistry: {chemistry}')
-        for value in sorted(self.l4_dict.items(), key=lambda x: x[1], reverse=True):
-            print(f'{value[0]}: {value[1]}')
+
         return chemistry
 
 
@@ -609,11 +600,7 @@ def barcode(args):
 def get_opts_barcode(parser, sub_program=True):
     parser.add_argument(
         '--chemistry',
-        help="""Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
-- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
-- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
-- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
-same time.""",
+        help='Predefined (pattern, barcode whitelist, linker whitelist) combinations. ' + HELP_DICT['chemistry'],
         choices=list(__PATTERN_DICT__.keys()),
         default='auto'
     )

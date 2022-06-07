@@ -7,7 +7,7 @@ from celescope.tools import utils
 from celescope.tools.step import s_common
 from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.plotly_plot import Bar_plot
-from celescope.fl_vdj_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
+from celescope.flv_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
 
 
 class Summarize(VDJ_Mixin):
