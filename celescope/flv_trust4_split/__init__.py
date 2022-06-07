@@ -16,3 +16,7 @@ PAIRED_CHAIN = {
 	'TCR': ['TRA_TRB'],
 	'BCR': ['IGH_IGL', 'IGH_IGK']
 }
+
+IMPORT_DICT = {
+	'barcode': 'celescope.flv_trust4',
+}
