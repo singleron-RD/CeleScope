@@ -12,6 +12,7 @@ from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps
 
+from Bio.Seq import Seq
 import pandas as pd
 import pysam
 
@@ -399,8 +400,6 @@ def parse_match_dir(match_dir):
     return match_dict
 
 
-
-
 def get_scope_bc(bctype):
     root_path = os.path.dirname(celescope.__file__)
     linker_f = glob.glob(f'{root_path}/data/chemistry/{bctype}/linker*')[0]
@@ -418,15 +417,21 @@ def find_assay_init(assay):
 
 
 def find_step_module(assay, step):
+    file_path_dict = {
+        'assay': f'{ROOT_PATH}/{assay}/{step}.py',
+        'tools': f'{ROOT_PATH}/tools/{step}.py',
+    }
+
     init_module = find_assay_init(assay)
-    try:
+    if os.path.exists(file_path_dict['assay']):
         step_module = importlib.import_module(f"celescope.{assay}.{step}")
-    except ModuleNotFoundError:
-        try:
-            step_module = importlib.import_module(f"celescope.tools.{step}")
-        except ModuleNotFoundError:
-            module_path = init_module.IMPORT_DICT[step]
-            step_module = importlib.import_module(f"{module_path}.{step}")
+    elif hasattr(init_module, 'IMPORT_DICT') and step in init_module.IMPORT_DICT:
+        module_path = init_module.IMPORT_DICT[step]
+        step_module = importlib.import_module(f"{module_path}.{step}")
+    elif os.path.exists(file_path_dict['tools']):
+        step_module = importlib.import_module(f"celescope.tools.{step}")
+    else:
+        raise ModuleNotFoundError(f"No module found for {assay}.{step}")
 
     return step_module
 
@@ -619,6 +624,15 @@ def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'C
         df = df.append(pd.Series(rec_dict), ignore_index=True)
     vcf.close()
     return df
+
+
+def reverse_complement(seq):
+    """Reverse complementary sequence
+
+    :param original seq
+    :return Reverse complementary sequence
+    """
+    return str(Seq(seq).reverse_complement())
 
 
 class Test_utils(unittest.TestCase):
