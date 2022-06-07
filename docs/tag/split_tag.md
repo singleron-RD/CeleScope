@@ -4,8 +4,6 @@
 ## Output
 - `matrix/` Matrix files of each tag.(Optional)
 - `fastq/` Fastq files of each tag.(Optional)
-
-
 ## Arguments
 `--split_fastq` If used, will split scRNA-Seq fastq file according to tag assignment.
 
@@ -24,8 +22,6 @@
 `--R1_read` R1 read path.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

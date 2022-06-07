@@ -2,11 +2,9 @@ import configparser
 import subprocess
 import sys
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.__init__ import GENOME_CONFIG
 from celescope.__init__ import HELP_DICT
-
-
 
 
 class Mkref():
@@ -15,6 +13,7 @@ class Mkref():
         self.thread = args.thread
         self.genome_type = genome_type
         self.dry_run = args.dry_run
+        self.STAR_param = args.STAR_param
         self.files = ('fasta',) + files
         self.non_files = ('genome_name',) + non_files
 
@@ -41,6 +40,8 @@ class Mkref():
             f'--genomeFastaFiles {self.fasta} \\\n'
             f'--genomeSAindexNbases {self.genomeSAindexNbases} \\\n'
         )
+        if self.STAR_param:
+            cmd += (" " + self.STAR_param)
         self.build_star_index.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -74,12 +75,21 @@ class Mkref():
     @staticmethod
     def get_file_path(raw_file_path, genomeDir):
         """
-        if raw_file_path is not absolute path, add genomeDir
+        if raw_file_path is not absolute path and not None,
+        add genomeDir
+        if 'NONE'(str), return None
 
         >>> raw_file_path = '/root/Homo_sapiens.GRCh38.92.chr.gtf'
         >>> Mkref.get_file_path(raw_file_path, 'fake')
         '/root/Homo_sapiens.GRCh38.92.chr.gtf'
+
+        >>> raw_file_path = 'None'
+        >>> Mkref.get_file_path(raw_file_path, 'fake')
+        'None'
         """
+        if (not raw_file_path) or (raw_file_path == 'None'):
+            return None
+
         file_path = raw_file_path
         if not file_path.startswith('/'):
             file_path = f'{genomeDir}/{file_path}'
@@ -96,7 +106,7 @@ class Mkref():
         config_file = f'{genomeDir}/{GENOME_CONFIG}'
         config = configparser.ConfigParser()
         config.read_file(open(config_file))
-        genome = config['genome']
+        genome = dict(config['genome'])
 
         for entry in files:
             if entry not in genome:
@@ -112,3 +122,4 @@ def super_opts(parser, sub_program):
         parser.add_argument("--genome_name", help="Required, genome name. ", required=True)
         parser.add_argument("--dry_run", help="Only write config file and exit.", action='store_true')
         parser.add_argument("--fasta", help=HELP_DICT['fasta'], required=True)
+        parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], default="")

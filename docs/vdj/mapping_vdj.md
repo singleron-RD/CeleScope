@@ -12,10 +12,8 @@ most VJ_pair UMI reads is kept.
 - `{sample}_align.txt` Result report.
 
 - `{sample}_alignments.txt` The alignment result of each UMI/read.
-
-
 ## Arguments
-`--type` TCR or BCR
+`--type` TCR or BCR.
 
 `--species` Default `hs`. `hs`(human) or `mmu`(mouse).
 
@@ -24,8 +22,6 @@ most VJ_pair UMI reads is kept.
 `--fq` Required. Input fastq file.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

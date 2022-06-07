@@ -7,7 +7,7 @@ import pandas as pd
 from plotnine import aes, geom_point, ggplot
 
 from celescope.celescope import ArgFormatter
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 SAMPLE_COL_INDEX = 2

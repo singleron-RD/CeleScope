@@ -4,7 +4,7 @@ from celescope.tools.multi import Multi
 
 class Multi_snp(Multi):
     """
-    Usage
+    ## Usage
 
     ### Make a snp reference genomeDir
 
@@ -37,9 +37,9 @@ class Multi_snp(Multi):
     multi_snp\\
         --mapfile ./test1.mapfile\\
         --genomeDir {genomeDir after running celescope snp mkref}\\
-        --thread 10\\
+        --thread 4\\
         --mod shell\\
-        --gene_list gene_list.tsv\\
+        --panel lung_1\\
         --annovar_config annovar.config\\
         --not_consensus
     ```
@@ -50,11 +50,10 @@ class Multi_snp(Multi):
     multi_snp\\
         --mapfile ./test1.mapfile\\
         --genomeDir {genomeDir after running celescope snp mkref}\\
-        --thread 10\\
+        --thread 4\\
         --mod shell\\
-        --gene_list gene_list.tsv\\
+        --panel lung_1\\
         --annovar_config annovar.config\\
-        --min_support_read 1
     ```
 
     """
@@ -97,9 +96,19 @@ class Multi_snp(Multi):
         )
         self.process_cmd(cmd, step, sample, m=8, x=1)
 
+    def filter_snp(self, sample):
+        step ='filter_snp'
+        vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_norm.vcf'
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--vcf {vcf} '
+        )
+        self.process_cmd(cmd, step, sample, m=1, x=1)
+
     def analysis_snp(self, sample):
         step = 'analysis_snp'
-        vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_norm.vcf'
+        vcf = f'{self.outdir_dic[sample]["filter_snp"]}/{sample}_filtered.vcf'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

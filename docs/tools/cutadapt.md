@@ -5,8 +5,6 @@
 ## Output
 - `cutadapt.log` Cutadapt output log file.
 - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
-
-
 ## Arguments
 `--gzip` Output gzipped fastq files.
 
@@ -29,11 +27,11 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
+
 `--fq` Required. R2 reads from step Barcode.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

@@ -5,7 +5,7 @@ import os
 
 import pysam
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.celescope import ArgFormatter
 

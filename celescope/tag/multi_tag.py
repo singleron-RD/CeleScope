@@ -4,14 +4,20 @@ from celescope.tools.multi import Multi
 
 class Multi_tag(Multi):
     """
-    Usage
+    `multi_tag` is used to analyze Single-cell Multiplexing data generated with CLindex<sup>TM</sup> Sample Multiplexing kits. 
+    Before running `multi_tag`, you need to run scRNA-Seq data with CeleScope first.
+
+    ## Usage
+
     ```
     multi_tag \\
         --mapfile ./tag.mapfile\\
         --barcode_fasta ./tag_barcode.fasta\\
-        --fq_pattern L25C45\\
+        --fq_pattern L25C15\\
+        --split_matrix\\
         --mod shell
     ```
+
     """
 
     def mapping_tag(self, sample):

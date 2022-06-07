@@ -1,4 +1,28 @@
+## Features
+### barcode
 
+- Demultiplex barcodes.
+- Filter invalid R1 reads, which includes:
+    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+    - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+
+### cutadapt
+- Trim adapters in R2 reads with cutadapt. Default adapters includes:
+    - polyT=A{18}, 18 A bases. 
+    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+
+## Output files
+### barcode
+
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -37,9 +61,12 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--mod` Which type of script to generate, `sjm` or `shell`.
 
+`--queue` Only works if the `--mod` selects `sjm`.
+
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`.
 
 `--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
 - `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
@@ -52,7 +79,7 @@ same time.
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
-- `T`: poly T
+- `T`: poly T.
 
 `--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
@@ -69,6 +96,8 @@ same time.
 `--allowNoPolyT` Allow valid reads without polyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
+
+`--output_R1` Output valid R1 reads.
 
 `--gzip` Output gzipped fastq files.
 
@@ -91,13 +120,13 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
-`--match_dir` match scRNA-Seq dir
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
-`--nCell` select top N cell
+`--match_dir` match scRNA-Seq dir.
+
+`--nCell` select top N cell.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

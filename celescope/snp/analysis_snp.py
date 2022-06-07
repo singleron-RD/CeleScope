@@ -3,21 +3,21 @@ import configparser
 import pandas as pd
 from venn import generate_petal_labels, draw_venn, generate_colors
 
-import celescope.tools.utils as utils
-from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.tools import utils
+from celescope.tools.step import Step
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT, ROOT_PATH
 
 
-class Analysis_snp(AnalysisMixin):
+class Analysis_snp(Step):
     """
-    Features
+    ## Features
     - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
 
-    Output
-    - `{sample}_gt.csv` genotypes of variants of each cell. Row is variant, column is cell.
+    ## Output
+    - `{sample}_gt.csv` Genotypes of variants of each cell. Rows are variants and columns are cells.
     - `{sample}_variant_ncell.csv` Number of cells with each genotype.
-    - `{sample}_variant_table.csv` Annotated `{sample}_variant_ncell.csv`.
+    - `{sample}_variant_table.csv` `{sample}_variant_ncell.csv` annotated with COSMIC(https://cancer.sanger.ac.uk/cosmic).
 
     """
 
@@ -25,7 +25,6 @@ class Analysis_snp(AnalysisMixin):
         super().__init__(args, display_title)
         self.vcf_file = args.vcf
         self.annovar_config = args.annovar_config
-        self.match_dir = args.match_dir
 
         # parse
         self.annovar_section = self.read_annovar_config()
@@ -97,7 +96,7 @@ class Analysis_snp(AnalysisMixin):
 
     def get_variant_table(self):
 
-        df_vcf = utils.parse_vcf(self.vcf_file, infos=[])
+        df_vcf = utils.parse_vcf_to_df(self.vcf_file, infos=[])
         df_annovar = utils.parse_annovar(self.multianno_file)
         df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
         df_ncell = pd.read_csv(self.ncell_file)

@@ -1,15 +1,16 @@
 import subprocess
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.mkref import Mkref, super_opts
+from celescope.__init__ import HELP_DICT
 
 
 class Mkref_rna(Mkref):
     """
-    Features
+    ## Features
     - Create a genome reference directory.
 
-    Output
+    ## Output
 
     - STAR genome index files
 
@@ -32,7 +33,7 @@ class Mkref_rna(Mkref):
         self.refflat = f'{self.genome_name}.refFlat'
 
     @utils.add_log
-    def build_star_index(self):
+    def build_rna_star_index(self):
         cmd = (
             f'STAR \\\n'
             f'--runMode genomeGenerate \\\n'
@@ -42,6 +43,8 @@ class Mkref_rna(Mkref):
             f'--sjdbGTFfile {self.gtf} \\\n'
             f'--sjdbOverhang 100 \\\n'
         )
+        if self.STAR_param:
+            cmd += (" " + self.STAR_param)
         self.build_star_index.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -85,14 +88,14 @@ def get_opts_mkref(parser, sub_program):
     if sub_program:
         parser.add_argument(
             "--gtf",
-            help="Required. Genome gtf file. Must be relative file path to genomeDir.",
+            help="Required. Genome gtf file. Use absolute path or relative path to `genomeDir`.",
             required=True
         )
         parser.add_argument(
             "--mt_gene_list",
-            help="""Mitochondria gene list file. Must be relative file path to genomeDir.
+            help="""Mitochondria gene list file. Use absolute path or relative path to `genomeDir`.
 It is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
             default="None"
         )
-        parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=14)
+        parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)

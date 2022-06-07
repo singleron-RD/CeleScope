@@ -7,7 +7,7 @@ import subprocess
 import pandas as pd
 import pysam
 from celescope.tools.step import Step, s_common
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 toolsdir = os.path.dirname(__file__)
 

@@ -4,29 +4,30 @@ import pysam
 import sys
 import subprocess
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
+from celescope.snp.__init__ import PANEL
 
 
 class Target_metrics(Step):
     """
-    Features
+    ## Features
     - Filter bam file
         - Filter reads that are not cell-associated.
         - Filter reads that are not mapped to target genes. 
 
     - Collect enrichment metrics.
 
-    Output
-    - `filtered.bam` BAM file after filtering.
+    ## Output
+    - `filtered.bam` BAM file after filtering. Reads that are not cell-associated or not mapped to target genes are filtered.
     """
 
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
         # set
-        self.match_barcode_list, self.n_cell = utils.read_barcode_file(args.match_dir)
+        self.match_barcode_list, self.n_cell = utils.get_barcode_from_match_dir(args.match_dir)
         self.match_barcode = set(self.match_barcode_list)
 
         if args.panel:
@@ -156,7 +157,7 @@ def target_metrics(args):
 
 def get_opts_target_metrics(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
-    parser.add_argument("--panel", help=HELP_DICT['panel'])
+    parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)

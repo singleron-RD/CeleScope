@@ -4,7 +4,7 @@ from celescope.vdj.__init__ import __ASSAY__
 
 class Multi_vdj(Multi):
     """
-    Usage
+    ## Usage
     ```
     multi_vdj \\
         --mapfile ./vdj.mapfile \\

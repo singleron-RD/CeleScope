@@ -1,17 +1,18 @@
 
 from celescope.tools.mkref import Mkref, super_opts
+from celescope.__init__ import HELP_DICT
 
 class Mkref_virus(Mkref):
     """
-    Features
+    ## Features
     - Create a virus genome reference directory.
 
-    Output
+    ## Output
 
     - STAR genome index files
     - Genome config file
 
-    Usage
+    ## Usage
     ```
     celescope capture_virus mkref \\
         --genome_name EBV \\
@@ -41,4 +42,4 @@ def mkref(args):
 
 def get_opts_mkref(parser, sub_program):
     super_opts(parser, sub_program)
-    parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=14)
+    parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)

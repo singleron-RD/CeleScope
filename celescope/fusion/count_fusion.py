@@ -8,6 +8,12 @@ from celescope.fusion.mkref import Mkref_fusion
 
 
 class Count_fusion(Count_bam):
+    """
+    ## Features
+    - Count the number of reads and umis that 
+        1. originate from cell barcodes;
+        2. align to the fusion site and include flanking sequences of a certain length(default 20bp) on both sides of the fusion site.
+    """
     def __init__(self, args, display_title='Count'):
         super().__init__(args, display_title)
 

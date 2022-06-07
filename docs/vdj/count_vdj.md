@@ -11,8 +11,6 @@
 
 - `{sample}_match_clonetypes.tsv` When summarize clonetypes, only consider barcodes in the match scRNA-Seq library. 
 This file will only be produced when the `match_dir` parameter is provided.
-
-
 ## Arguments
 `--type` Required. `TCR` or `BCR`.
 
@@ -28,8 +26,6 @@ For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
 `--matrix_dir` Match celescope scRNA-Seq matrix directory.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

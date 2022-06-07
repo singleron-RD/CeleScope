@@ -6,23 +6,19 @@
 - Collect enrichment metrics.
 
 ## Output
-- `filtered.bam` BAM file after filtering.
-
-
+- `filtered.bam` BAM file after filtering. Reads that are not cell-associated or not mapped to target genes are filtered.
 ## Arguments
-`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported.
+`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
 
-`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`.
+`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
 
-`--bam` Input bam file
+`--bam` Input bam file.
 
 `--match_dir` Match celescope scRNA-Seq directory.
 
-`--add_RG` Add tag read group: RG. RG is the same as CB(cell barcode)
+`--add_RG` Add tag read group: RG. RG is the same as CB(cell barcode).
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 

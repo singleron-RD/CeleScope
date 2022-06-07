@@ -5,7 +5,7 @@ map read2 to barcode_fasta
 import pandas as pd
 import pysam
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 import celescope.tools.barcode as Barcode
 from celescope.tools.barcode import parse_pattern
 from celescope.tools.step import Step, s_common
@@ -14,11 +14,11 @@ from celescope.tools.step import Step, s_common
 def get_opts_mapping_tag(parser, sub_program):
     parser.add_argument(
         "--fq_pattern",
-        help="""Required. R2 read pattern. The number after the letter represents the number of bases.         
+        help="""R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
 `L` linker(common sequences)  
 `C` tag barcode  
 """,
-        required=True
+        default='L25C15'
     )
     parser.add_argument(
         "--barcode_fasta",
@@ -26,16 +26,42 @@ def get_opts_mapping_tag(parser, sub_program):
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
 It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
 If no such tag exists, the read is classified as invalid.
+
+You can find the barcode fasta file under `celescope/data/Clindex`
 ```
->tag_0
-GGGCGTCTGTGACCGCGTGATACTGCATTGTAGACCGCCCAACTC
->tag_1
-TTCCTCCAGAGGAGACCGAGCCGGTCAATTCAGGAGAACGTCCGG
->tag_2
-AGGGCTAGGCGTGTCATTTGGCGAGGTCCTGAGGTCATGGAGCCA
->tag_3
-CACTGGTCATCGACACTGGGAACCTGAGGTGAGTTCGCGCGCAAG
-```  
+>CLindex_TAG_1
+CGTGTTAGGGCCGAT
+>CLindex_TAG_2
+GAGTGGTTGCGCCAT
+>CLindex_TAG_3
+AAGTTGCCAAGGGCC
+>CLindex_TAG_4
+TAAGAGCCCGGCAAG
+>CLindex_TAG_5
+TGACCTGCTTCACGC
+>CLindex_TAG_6
+GAGACCCGTGGAATC
+>CLindex_TAG_7
+GTTATGCGACCGCGA
+>CLindex_TAG_8
+ATACGCAGGGTCCGA
+>CLindex_TAG_9
+AGCGGCATTTGGGAC
+>CLindex_TAG_10
+TCGCCAGCCAAGTCT
+>CLindex_TAG_11
+ACCAATGGCGCATGG
+>CLindex_TAG_12
+TCCTCCTAGCAACCC
+>CLindex_TAG_13
+GGCCGATACTTCAGC
+>CLindex_TAG_14
+CCGTTCGACTTGGTG
+>CLindex_TAG_15
+CGCAAGACACTCCAC
+>CLindex_TAG_16
+CTGCAACAAGGTCGC
+```
 """,
         required=True,
     )
@@ -58,10 +84,10 @@ def mapping_tag(args):
 
 class Mapping_tag(Step):
     """
-    Features
+    ## Features
     - Align R2 reads to the tag barcode fasta.
 
-    Output
+    ## Output
 
     - `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
 

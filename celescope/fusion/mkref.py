@@ -1,17 +1,18 @@
 
 from celescope.tools.mkref import Mkref, super_opts
+from celescope.__init__ import HELP_DICT
 
 class Mkref_fusion(Mkref):
     """
-    Features
+    ## Features
     - Create a fusion genome directory.
 
-    Output
+    ## Output
 
     - STAR genome index files
     - Genome config file
 
-    Usage
+    ## Usage
     ```
     celescope fusion mkref \\
     --genome_name {genome_name} \\
@@ -27,7 +28,7 @@ class Mkref_fusion(Mkref):
 
     @staticmethod
     def parse_genomeDir(genomeDir):
-        super().parse_genomeDir(genomeDir, files=('fusion_pos',))
+        return Mkref.parse_genomeDir(genomeDir, files=('fusion_pos',))
 
 
 
@@ -53,4 +54,4 @@ PML_5\t326
 PML_6\t204   
 """,
             required=True,)
-        parser.add_argument("--genomeSAindexNbases", help="STAR genomeSAindexNbases", default=14)
+        parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)

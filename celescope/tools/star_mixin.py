@@ -1,7 +1,7 @@
 import re
 import subprocess
 
-import celescope.tools.utils as utils
+from celescope.tools import utils
 from celescope.tools.mkref import Mkref
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT
@@ -136,7 +136,7 @@ is higher than or equal to this value.""",
         help='Output unmapped reads.',
         action='store_true'
     )
-    parser.add_argument('--STAR_param', help='Other STAR parameters.', default="")
+    parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], default="")
     parser.add_argument(
         '--outFilterMultimapNmax',
         help='Default `1`. How many places are allowed to match a read at most.',

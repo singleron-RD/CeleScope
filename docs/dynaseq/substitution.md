@@ -3,14 +3,10 @@
 
 ## Output
 - `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
-
-
 ## Arguments
-`--bam` bam file from conversion step
+`--bam` bam file from conversion step.
 
 `--outdir` Output diretory.
-
-`--assay` Assay name.
 
 `--sample` Sample name.
 
