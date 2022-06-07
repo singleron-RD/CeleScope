@@ -66,8 +66,6 @@ class Replacement(Step):
         self._clean_up()
 
         # clean
-        #cmd = ['rm', self.outread]
-        #self.run_cmd(cmd)
         cmd = ['rm', self.outmat]
         self.run_cmd(cmd)
         cmd = ['rm', con_mat]
