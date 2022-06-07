@@ -1,5 +1,5 @@
 # barcode
-__PATTERN_DICT__ = {
+PATTERN_DICT = {
     'auto': None,
     'scopeV1': 'C12U8T18',
     'scopeV2.0.0': 'C8L16C8L16C8U8T18',
