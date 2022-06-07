@@ -207,7 +207,6 @@ class Summarize(Step):
         df_for_clono = df_for_clono[df_for_clono.contig_id.isin(filtered_congtigs_id)]
         self.add_cell_num_metric(df_for_clono, 'Cell Number after UMI filtering')
         
-        df_for_clono.to_csv(f'{self.outdir}/test.csv')
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'])
 
