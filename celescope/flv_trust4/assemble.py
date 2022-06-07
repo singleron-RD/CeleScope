@@ -1,8 +1,6 @@
-from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 import pysam
 import subprocess
-from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.flv_trust4.__init__ import CHAIN, INDEX, TOOLS_DIR
@@ -83,7 +81,7 @@ def get_barcode_filter_report(outdir, sample):
     cmd = (
         f'python {TOOLS_DIR}/barcoderep-filter.py '
         f'-b {outdir}/{sample}_barcode_report.tsv > '
-        f'{outdir}/{sample}_barcode_filter_report.tsv '
+        f'{outdir}/{sample}_barcodefl_report.tsv '
     )
     get_barcode_filter_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
@@ -100,28 +98,8 @@ def get_filter_report(outdir, sample):
         sample: sample name.
     """
     
-    cmd = (f''' awk '$4!~"_" && $4!~"?"' {outdir}/{sample}_report.tsv > {outdir}/{sample}_filter_report.tsv ''')
+    cmd = (f''' awk '$4!~"_" && $4!~"?"' {outdir}/{sample}_report.tsv > {outdir}/{sample}_reportfl.tsv ''')
     get_filter_report.logger.info(cmd)
-    subprocess.check_call(cmd, shell=True)
-
-
-@utils.add_log
-def get_full_len_assembly(outdir, sample):
-    """ Get full length assembled contig.
-
-    get full length result from annotation of the consensus assembly in fasta format.
-
-    Args: 
-        outdir: output directory.
-        sample: sample name.
-    """
-
-    cmd = (
-        f'perl {TOOLS_DIR}/GetFullLengthAssembly.pl '
-        f'{outdir}/{sample}_annot.fa > '
-        f'{outdir}/{sample}_full_len.fa '
-    )
-    get_full_len_assembly.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
 
@@ -139,7 +117,6 @@ class Assemble(Step):
     - `03.assemble/{sample}_assign.out` read assignment results.
     - `03.assemble/{sample}_assembled_reads.fa` Assembled raw reads.
     - `03.assemble/{sample}_annot.fa` Assembled annotated contig sequences.
-    - `03.assemble/{sample}_full_len.fa` Assembled full length contig sequences.
     - `03.assemble/{sample}_report.tsv` Record assembled CDR3 types, read count and proportion of read count.
     - `03.assemble/{sample}_filter_report.tsv` Filter nonfunctional CDR3
     - `03.assemble/{sample}_barcode_report.tsv` Record chain information for each barcode.
@@ -149,86 +126,35 @@ class Assemble(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
         
-        self.cutadapted_fq = args.cutadapted_fq
         self.species = args.species
         self.seqtype = args.seqtype
-        self.match_dir = args.match_dir
-        self.match_previous_assemble = args.match_previous_assemble
-        self.fq1, self.fq2 = f'{self.outdir}/{self.sample}_R1.fq', f'{self.outdir}/{self.sample}_R2.fq'
-        
+        self.match_fq1 = args.match_fq1
+        self.match_fq2 = args.match_fq2
         self.chains = self._get_chain_type(self.seqtype)
-        self.match_barcodes = self._get_match_barcode(self.match_dir)
+        self.matched_reads = 0
 
-    @staticmethod
-    def reversed_compl(seq):
-        """ Return reverse complementation sequence."""
-        return str(Seq(seq).reverse_complement())
 
     @staticmethod
     def _get_chain_type(seqtype):
         """ Return ['TRA', 'TRB'] for TCR, ['IGH', 'IGL', 'IGK'] for BCR."""
         return CHAIN[seqtype]
-    
-    @staticmethod
-    def _get_match_barcode(match_dir):
-        """ Return matched barcodes set for match scRNA-seq dir."""
-        match_barcodes, _ = utils.get_barcode_from_match_dir(match_dir) 
-        return match_barcodes
 
     @utils.add_log
-    def gen_fq(self):
-        """ Generate fq1 and fq2 file.
-        
-        fq1 file including barcode and umi info.
-        fq2 file including sequence and quality info.
-
-        Returns:
-            matched_cbs: set of matched barcodes with scRNA-seq.
-            matched_read_count: read count for matched barcode with scRNA-seq.
-            read_count: read count for all barcode.
+    def out_match_fastq(self):
         """
-
-        out_fq1 = open(self.fq1, 'w')
-        out_fq2 = open(self.fq2, 'w')
-        read_dict = defaultdict(list)
-
-        total_read_count, matched_read_count = 0, 0
-        with pysam.FastxFile(self.cutadapted_fq) as fq:
+        Count matched barcodes and matched reads.
+        """
+        matched_cbs = set()
+        with pysam.FastxFile(self.match_fq2) as fq:
             for read in fq:
-                attr = read.name.split('_')
-                bc = attr[0]
-                read_dict[bc].append(read)
-            barcodes = set(read_dict.keys())
+                cb = read.name.split('_')[0]
+                self.matched_reads += 1
+                matched_cbs.add(cb)
 
-            rna_cbs = [self.reversed_compl(cb) for cb in self.match_barcodes]
-            matched_cbs = set(read_dict.keys()).intersection(set(rna_cbs))
-
-            if self.match_previous_assemble:
-                barcodes = matched_cbs
-
-            assert len(barcodes) != 0
-
-            for cb in barcodes:
-                for read in read_dict[cb]:
-                    umi = read.name.split('_')[1]
-                    qual = 'F' * len(cb + umi)
-                    seq1 = f'@{read.name}\n{cb}{umi}\n+\n{qual}\n'
-                    out_fq1.write(seq1)
-                    out_fq2.write(str(read)+'\n')
-                    total_read_count += 1
-                    if cb in matched_cbs:
-                        matched_read_count += 1
-            out_fq1.close()
-            out_fq2.close()
-
-            read_count = total_read_count
-            if self.match_previous_assemble:
-                read_count = matched_read_count
-            
-        return matched_cbs, matched_read_count, read_count
+        return matched_cbs
 
     @utils.add_log
-    def get_VDJmapping_reads(self):
+    def extract_chain_reads(self):
         """ Get total and each chain type candiates read."""
         map_res = []
         map_index_prefix = self.chains
@@ -237,18 +163,18 @@ class Assemble(Step):
         map_threads = [self.thread] * _map_len
         map_species = [self.species] * _map_len
         map_outdirs = [self.outdir] * _map_len
-        fq1 = [self.fq1] * _map_len
-        fq2 = [self.fq2] * _map_len
+        map_fq1 = [self.match_fq1] * _map_len
+        map_fq2 = [self.match_fq2] * _map_len
 
         with ProcessPoolExecutor(_map_len) as pool:
-            for res in pool.map(extract_candidate_reads, map_threads, map_species, map_index_prefix, map_outdirs, samples, fq1, fq2):
+            for res in pool.map(extract_candidate_reads, map_threads, map_species, map_index_prefix, map_outdirs, samples, map_fq1, map_fq2):
                 map_res.append(res)
 
     @utils.add_log
-    def gen_report(self, matched_cbs, matched_read_count, read_count):
+    def gen_report(self, matched_cbs):
+
         get_barcode_filter_report(self.outdir, self.sample)
         get_filter_report(self.outdir, self.sample)
-        self.get_VDJmapping_reads()
 
         self.add_metric(
             name="Matched Barcodes with scRNA-seq",
@@ -258,7 +184,7 @@ class Assemble(Step):
 
         self.add_metric(
             name = 'Matched Reads with scRNA-seq',
-            value = matched_read_count, 
+            value = self.matched_reads, 
             help_info="Number of reads those were from barcodes determined to be cells in scRNA-seq"
             )
 
@@ -266,7 +192,7 @@ class Assemble(Step):
             self.add_metric(
                 name = 'Reads Mapped to Any V(D)J genes', 
                 value = len(list(f)),
-                total = read_count,
+                total = self.matched_reads,
                 help_info = "Fraction of reads that partially or wholly map to any germline V(D)J gene segment"
             )
 
@@ -275,27 +201,25 @@ class Assemble(Step):
                 self.add_metric(
                     name = f'Reads Mapped to {_chain}', 
                     value = len(list(f)), 
-                    total = read_count,
+                    total = self.matched_reads,
                     help_info = f"Fraction of reads that map partially or wholly to a germline {_chain} gene segment."
                 )
 
     def run(self):
-        matched_cbs, matched_read_count, read_count = self.gen_fq()
+        matched_cbs = self.out_match_fastq()
+        self.extract_chain_reads()
 
         IMGT_ref = f'{INDEX}/{self.species}/IMGT+C.fa'
         fasta_ref = f'{INDEX}/{self.species}/bcrtcr.fa'
-        run_trust4(self.thread, self.fq2, self.fq1, IMGT_ref, fasta_ref, self.sample, self.outdir)
+        run_trust4(self.thread, self.match_fq2, self.match_fq1, IMGT_ref, fasta_ref, self.sample, self.outdir)
+        self.gen_report(matched_cbs)
 
-        self.gen_report(matched_cbs, matched_read_count, read_count)
-        get_full_len_assembly(self.outdir, self.sample)
 
 
 @utils.add_log
 def assemble(args):
     with Assemble(args, display_title="Match and Mapping") as runner:
         runner.run()
-
-
 
 def get_opts_assemble(parser, sub_program):
     if sub_program:

@@ -1,6 +1,5 @@
 import subprocess
 import pandas as pd
-import pysam
 
 from celescope.tools import utils
 from celescope.flv_trust4_split.__init__ import INDEX, TOOLS_DIR
@@ -40,7 +39,7 @@ def get_trust_report(filedir, sample):
     cmd = (
         f'perl {TOOLS_DIR}/trust-simplerep.pl '
         f'{filedir}/{sample}_cdr3.out > '
-        f'{filedir}/report.out'
+        f'{filedir}/report.tsv'
     )
     get_trust_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
@@ -48,7 +47,7 @@ def get_trust_report(filedir, sample):
 
 @utils.add_log
 def filter_trust_report(filedir):
-    cmd = f''' awk '$4!~"_" && $4!~"?"' {filedir}/report.out > {filedir}/trust_filter_report.out '''
+    cmd = f''' awk '$4!~"_" && $4!~"?"' {filedir}/report.tsv > {filedir}/reportfl.tsv '''
     filter_trust_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
@@ -76,6 +75,17 @@ def get_bcfilter_report(filedir):
 
 
 @utils.add_log
+def convert_barcode_report(barcode_report, outdir):
+    cmd = (
+        f'{TOOLS_DIR}/trust-barcoderep-to-10X.pl '
+        f'{barcode_report} '
+        f'{outdir} '
+    )
+    convert_barcode_report.logger.info(cmd)
+    subprocess.check_call(cmd, shell=True)
+
+
+@utils.add_log
 def trust_assemble(species, outdir, sample, single_thread, trimLevel=1):
 
     cmd = (
@@ -88,17 +98,6 @@ def trust_assemble(species, outdir, sample, single_thread, trimLevel=1):
         f'--trimLevel {trimLevel}'
     )
     trust_assemble.logger.info(cmd)
-    subprocess.check_call(cmd, shell=True)
-
-
-@utils.add_log
-def get_full_len_assembly(filedir, sample):
-    cmd = (
-        f'perl {TOOLS_DIR}/GetFullLengthAssembly.pl '
-        f'{filedir}/{sample}_annot.fa > '
-        f'{filedir}/{sample}_full_len.fa '
-    )
-    get_full_len_assembly.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
 
@@ -116,51 +115,6 @@ def annotate(sample, outdir, species, single_thread):
     )
     annotate.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
-
-
-@utils.add_log
-def fa_to_csv(outdir, sample):
-    # file name
-    full_len_fa = f'{outdir}/{sample}_full_len.fa'
-    assign_file = f'{outdir}/{sample}_assign.out'
-
-    assignment = pd.read_csv(assign_file, sep='\t', header=None)
-    assignment = assignment.rename(columns={0:'read_name',1:'contig_id'})
-    assignment['umi'] = assignment['read_name'].apply(lambda x:x.split('_')[1])
-    read_count_dict = assignment.groupby('contig_id')['read_name'].apply(lambda x:len(set(x))).to_dict()
-    umi_count_dict = assignment.groupby('contig_id')['umi'].apply(lambda x:len(set(x))).to_dict()
-    # write contig csv
-    contigs = open(f'{outdir}/{sample}_contig.csv', 'w')
-
-    process_read = 0
-    with pysam.FastxFile(full_len_fa) as fa:
-        for read in fa:
-            name = read.name
-            comment = read.comment
-            attrs = comment.split(' ')
-            barcode = name.split('_')[0]
-            is_cell = 'True'
-            high_confidence = 'True'
-            length = attrs[0]
-            chain = attrs[2][:3]
-            full_length = 'True'
-            v_gene = attrs[2].split('(')[0]
-            d_gene = attrs[3]
-            j_gene = attrs[4].split('(')[0]
-            c_gene = attrs[5]
-            cdr3 = attrs[8].split('=')[1]
-            cdr3_aa = 'None'
-            productive = 'False'
-            reads = str(read_count_dict.get(name, 0))
-            umis = str(umi_count_dict.get(name, 0))
-
-            string = '\t'.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis])
-            contigs.write(f'{string}\n')
-            process_read+=1
-            if process_read % 10000 == 0:
-                fa_to_csv.logger.info(f'Processed {process_read} contigs')
-                
-    contigs.close()
 
 
 def get_vj_annot(df, chains, pairs):

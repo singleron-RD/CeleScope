@@ -127,14 +127,15 @@ class Assemble(Step):
 
     @utils.add_log
     def out_match_fastq(self):
-
+        """
+        Count matched barcodes and matched reads.
+        """
         matched_cbs = set()
         with pysam.FastxFile(self.match_fq2) as fq:
             for read in fq:
                 cb = read.name.split('_')[0]
                 self.matched_reads += 1
                 matched_cbs.add(cb)
-
 
         return matched_cbs
 
@@ -181,21 +182,6 @@ class Assemble(Step):
             self.merge_file.logger.info(cmd)
             subprocess.check_call(cmd, shell=True)
 
-
-    """
-    def gen_all_contig_fasta(self):
-        utils.check_mkdir(f'{self.outdir}/../03.summarize')
-        full_len_fa = f'{self.assemble_outdir}/{self.sample}_full_len.fa'
-        all_fa = open(f'{self.outdir}/../03.summarize/{self.sample}_all_contig.fasta','w')
-        with pysam.FastxFile(full_len_fa) as fa:
-            for read in fa: 
-                name = read.name
-                barcode = name.split('_')[0]
-                sequence = read.sequence
-                all_fa.write('>' + barcode + '_' + name.split('_')[1] + '\n' + sequence + '\n')    
-        all_fa.close()
-    """
-    
     def gen_report(self, matched_cbs):
         tr.get_trust_report(self.assemble_outdir,self.sample)
         tr.filter_trust_report(self.assemble_outdir)
