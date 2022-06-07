@@ -1,7 +1,7 @@
 from celescope.tools.multi import Multi
-from celescope.fl_vdj_CR.__init__ import __ASSAY__
+from celescope.flv_CR.__init__ import __ASSAY__
 
-class Multi_fl_vdj_CR(Multi):
+class Multi_flv_CR(Multi):
     """
 
     ## Download and unpack cellranger soft and reference file.
@@ -21,7 +21,7 @@ class Multi_fl_vdj_CR(Multi):
     
     ```
     conda activate celescope
-    multi_fl_vdj_CR \\
+    multi_flv_CR \\
         --mapfile ./test.mapfile \\
         --chemistry flv \\
         --mem 10 \\
@@ -101,7 +101,7 @@ class Multi_fl_vdj_CR(Multi):
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
 def main():
-    multi = Multi_fl_vdj_CR(__ASSAY__)
+    multi = Multi_flv_CR(__ASSAY__)
     multi.run()
     
 

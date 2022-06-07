@@ -15,7 +15,7 @@ tar -xzvf refdata-cellranger-vdj-GRCm38-alts-ensembl-5.0.0.tar.gz
 
 ```
 conda activate celescope
-multi_fl_vdj_CR \
+multi_flv_CR \
     --mapfile ./test.mapfile \
     --chemistry flv \
     --mem 10 \

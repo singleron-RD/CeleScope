@@ -15,7 +15,7 @@
 
 ## [1.10.0] - 2021-04-22
  ### `fl_vdj`
- - Add 3 new assays: `fl_vdj_CR`, `flv_trust4` and `flv_trust4_split`.
+ - Add 3 new assays: `flv_CR`, `flv_trust4` and `flv_trust4_split`.
 
  ### `rna` and `dynaseq`
  - Limit the marker genes of each cluster in the HTML report to a maximum of 50 to avoid the slow opening of the report.

@@ -16,7 +16,7 @@ ASSAY_LIST = [
     'capture_rna',
     'citeseq',
     'sweetseq',
-    'fl_vdj_CR',
+    'flv_CR',
     'convert10X',
     'flv_trust4',
     'flv_trust4_split',
