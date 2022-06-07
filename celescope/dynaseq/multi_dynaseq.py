@@ -12,7 +12,6 @@ class Multi_dynaseq(Multi):
         multi_dynaseq\\
         --mapfile ./rna.mapfile\\
         --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
-        --STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 --outSAMattributes MD"\\
         --strand /SGRNJ03/Public/Database/genome/gene.strandedness.csv
     ```
 
@@ -25,6 +24,16 @@ class Multi_dynaseq(Multi):
     ```
     """
 
+    def star(self, sample):
+        step = 'star'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--fq {fq} '
+            f'--STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 --outSAMattributes MD NH HI AS nM" '
+        )
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def conversion(self, sample):
         step = 'conversion'
@@ -36,7 +45,7 @@ class Multi_dynaseq(Multi):
             f'--bam {bam} '
             f'--cell {cell} '
         )
-        self.process_cmd(cmd, step, sample, m=5, x=1)
+        self.process_cmd(cmd, step, sample, m=8, x=1)
 
     def substitution(self, sample):
         step = 'substitution'
