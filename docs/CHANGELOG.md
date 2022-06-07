@@ -1,5 +1,8 @@
 
 ## [1.11.0] - 
+ ### `flv_vdj`
+ - Chemistry `flv_rna`(full length VDJ matched mRNA) and `flv` can be auto-detected. 
+
  ### `snp`,`capture_virus` and `fusion`
  - Change the default `--umi_threshold_method` from `auto` to `otsu`.
 
