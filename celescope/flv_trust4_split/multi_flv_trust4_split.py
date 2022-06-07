@@ -86,15 +86,11 @@ class Multi_flv_trust4_split(Multi):
     def mapping_annotation(self,sample):
         step = 'mapping_annotation'
         cmd_line = self.get_cmd_line(step,sample)
-        trust_report = f'{self.outdir_dic[sample]["assemble"]}/assemble/trust_filter_report.out'
-        barcode_report = f'{self.outdir_dic[sample]["assemble"]}/assemble/barcoderepfl.tsv'
-        contig_file = f'{self.outdir_dic[sample]["assemble"]}/assemble/{sample}_contig.csv'
+        contig_file = f'{self.outdir_dic[sample]["summarize"]}/{sample}_filtered_contig.csv'
         match_dir = f'{self.col4_dict[sample]}'
         cmd = (
             f'{cmd_line} '
-            f'--trust_report {trust_report} '
             f'--contig_file {contig_file} '
-            f'--barcode_report {barcode_report} '
             f'--match_dir {match_dir} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)

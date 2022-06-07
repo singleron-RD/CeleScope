@@ -69,9 +69,6 @@ def get_scope_bc(chemistry):
 
     if chemistry == 'scopeV1':
         return None, None
-    elif chemistry == 'flv':
-        linker_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/reversed_linker_4types'
-        whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/reversed_bclist'
     else:
         linker_f = glob.glob(f'{ROOT_PATH}/data/chemistry/{chemistry}/linker*')[0]
         whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/bclist'

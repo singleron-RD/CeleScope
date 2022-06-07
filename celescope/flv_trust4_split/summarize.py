@@ -5,7 +5,6 @@ import pandas as pd
 import pysam
 import copy
 
-from Bio.Seq import Seq
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common
@@ -209,6 +208,7 @@ class Summarize(Step):
         df_for_clono = df_for_clono[df_for_clono.contig_id.isin(filtered_congtigs_id)]
         self.add_cell_num_metric(df_for_clono, 'Cell Number after UMI filtering')
         
+        df_for_clono.to_csv(f'{self.outdir}/test.csv')
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
         cell_barcodes = set(df_for_clono_pro['barcode'])
 
@@ -279,6 +279,7 @@ class Summarize(Step):
         df_all_contig.fillna('None',inplace = True)
         df_all_contig = df_all_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
         df_filter_contig = df_all_contig[df_all_contig['barcode'].isin(cell_barcodes)]
+
         df_all_contig.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
 
