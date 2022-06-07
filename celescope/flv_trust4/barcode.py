@@ -286,8 +286,4 @@ def barcode(args):
 def get_opts_barcode(parser, sub_program=True):
     tools_barcode.get_opts_barcode(parser, sub_program)
     if sub_program:
-<<<<<<< HEAD
         parser.add_argument('--match_dir', help='Matched scRNA-seq directory.', required=True)
-=======
-        parser.add_argument('--match_dir', help='Matched scRNA-seq directory.', required=True)
->>>>>>> 1d35e4ef52ed7965c7875aa8d7bd7d3ec5525487
