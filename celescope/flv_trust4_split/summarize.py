@@ -126,19 +126,18 @@ class Summarize(Step):
         contig_set = set(df.contig_id)
 
         # generate all contig fasta file
+        # add length of each contig. 
+        len_dict = dict()
         all_fa = open(f'{self.outdir}/{self.sample}_all_contig.fasta','w')
+
         with pysam.FastxFile(self.annot) as fa:
-            for read in fa: 
+            for read in fa:
+                len_dict[read.name] = read.comment.split(' ')[0]
                 if read.name in contig_set:
                     sequence = read.sequence
                     all_fa.write('>' + read.name + '\n' + sequence + '\n')    
         all_fa.close()
-        
-        # add length of each contig. 
-        len_dict = dict()
-        with pysam.FastxFile(self.annot) as fa:
-            for read in fa:
-                len_dict[read.name] = read.comment.split(' ')[0]
+
         df['length'] = df['contig_id'].apply(lambda x: len_dict[x])
         
         return df
