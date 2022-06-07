@@ -7,6 +7,7 @@ from itertools import combinations, product
 
 import pysam
 from xopen import xopen
+from Bio.Seq import Seq
 
 from celescope.tools import utils
 from celescope.tools.__init__ import __PATTERN_DICT__
@@ -14,6 +15,15 @@ from celescope.__init__ import ROOT_PATH, HELP_DICT
 from celescope.tools.step import Step, s_common
 
 MIN_T = 10
+
+
+def reversed_compl(seq):
+    """get reverse complementary sequence.
+    >>> seq = 'ATCG'
+    >>> reversed_compl(seq)
+    >>> 'CGAT'
+    """
+    return str(Seq(seq).reverse_complement())
 
 
 def get_seq_str(seq, sub_pattern_dict):
@@ -391,6 +401,11 @@ class Barcode(Step):
         self.nopolyT = args.nopolyT  # true == output nopolyT reads
         self.noLinker = args.noLinker
         self.output_R1 = args.output_R1
+        if self.chemistry_list[0] == 'flv':
+            self.output_R1 = True
+            self.barcode_read_Counter = Counter()
+            self.match_barcodes, _ = utils.get_barcode_from_match_dir(args.match_dir)
+            self.match_barcodes = {reversed_compl(cb) for cb in self.match_barcodes}
 
         # out file
         if args.gzip:
@@ -531,13 +546,23 @@ class Barcode(Step):
                     self.clean_num += 1
                     self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
-
-                    out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-                    if self.output_R1:
-                        out_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')
+                    
+                    if chemistry == 'flv':
+                        self.barcode_read_Counter.update(cb)
+                        if cb in self.match_barcodes and self.barcode_read_Counter[cb] <= 80000:
+                            qua1 = 'F' * len(cb + umi)
+                            cb = reversed_compl(cb)
+                            out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                            out_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qua1}\n')
+                    else:
+                        out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                        if self.output_R1:
+                            out_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')
                         
             self.run.logger.info(self.fq1_list[i] + ' finished.')
         out_fq2.close()
+        if self.output_R1:
+            out_fq1.close()
 
         # logging
         self.run.logger.info(
@@ -667,6 +692,7 @@ lowQual will be regarded as low-quality bases.',
     if sub_program:
         parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
         parser.add_argument('--fq2', help='R2 fastq file. Multiple files are separated by comma.', required=True)
+        parser.add_argument('--match_dir', help='Matched scRNA-seq directory.', required=True)
         parser = s_common(parser)
 
     return parser
