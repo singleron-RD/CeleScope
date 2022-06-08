@@ -6,16 +6,21 @@ from collections import defaultdict
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common
-from celescope.flv_trust4_split import trust_utils as tr
 from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.emptydrop_cr import get_plot_elements
 
 
+<<<<<<< HEAD
 assembled_suffix = 'assembled_reads.fa'
 trust_report_suffix = 'report_filter.tsv'
 annot_suffix = 'annot.fa'
 barcode_report_suffix = 'barcode_report.tsv'
 barcode_filter_report_suffix = 'barcode_filter_report.tsv'
+=======
+
+ASSEMBLE_FA_SUFFIX = 'assembled_reads.fa'
+TRUST_REPORT_FILTER_SUFFIX  = 'report_filter.tsv'
+>>>>>>> 99b37d167a7b5f0f5d9efef3f9a4eb7d036ba2dd
 
 
 def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=6, coef=5, 
@@ -65,9 +70,15 @@ class Summarize(Step):
         self.seqtype = args.seqtype
         self.fq2 = args.fq2
         self.diffuseFrac = args.diffuseFrac
+<<<<<<< HEAD
         self.assembled_fa = f'{args.assemble_out}/{self.sample}_{assembled_suffix}'
         self.trust_report = f'{args.assemble_out}/{self.sample}_{trust_report_suffix}'
         self.annot = f'{args.assemble_out}/{self.sample}_{annot_suffix}'
+=======
+        self.assembled_fa = f'{args.assemble_out}/{self.sample}_{ASSEMBLE_FA_SUFFIX}'
+        self.trust_report = f'{args.assemble_out}/{self.sample}_reportfl.tsv'
+        self.annot = f'{args.assemble_out}/{self.sample}_annot.fa'
+>>>>>>> 99b37d167a7b5f0f5d9efef3f9a4eb7d036ba2dd
 
         # if --diffuseFrac provided
         if self.diffuseFrac:
@@ -118,7 +129,7 @@ class Summarize(Step):
         """
         parse all contig annotation file from barcode report.
         """
-        tr.convert_barcode_report(self.barcode_report, outdir=f'{self.outdir}/{self.sample}')
+        convert_barcode_report(self.barcode_report, outdir=f'{self.outdir}/{self.sample}')
 
         if self.seqtype == 'BCR':
             df = pd.read_csv(f'{self.outdir}/{self.sample}_b.csv')

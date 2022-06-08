@@ -6,8 +6,12 @@ import glob
 from celescope.flv_trust4.summarize import Summarize
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
+<<<<<<< HEAD
 from celescope.flv_trust4.__init__ import TOOLS_DIR
 from celescope.flv_trust4_split import trust_utils as tr
+=======
+from celescope.flv_trust4.__init__ import TOOLS_DIR, CHAIN, PAIRED_CHAIN
+>>>>>>> 99b37d167a7b5f0f5d9efef3f9a4eb7d036ba2dd
 from celescope.tools.plotly_plot import Bar_plot
 
 
