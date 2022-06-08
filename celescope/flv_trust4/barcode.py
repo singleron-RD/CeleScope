@@ -47,7 +47,7 @@ class Barcode(tools_barcode.Barcode):
             - low quality in barcode and UMI
             - invalid inlinker
             - invalid barcode
-
+            
         for every sample
             get chemistry
             get linker_mismatch_dict and barcode_mismatch_dict

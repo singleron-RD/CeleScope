@@ -1,342 +1,301 @@
-from collections import defaultdict
 import pandas as pd
 import pysam
 import copy
-from Bio.Seq import Seq
+
+from collections import defaultdict
 from celescope.tools import utils
+from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common
+from celescope.flv_trust4_split import trust_utils as tr
 from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.emptydrop_cr import get_plot_elements
 
 
-@utils.add_log
-def gen_contig_csv(outdir, sample, full_len_assembly, assign_out):
-    """ Generate contig file in 10X format.
-    
-    Genrate contig file from full length annotated fasta file.
-
-    Args:
-        outdir: output directory.
-        sample: sample name.
-        full_len_assembly: full length annotated fasta file.
-        assign_out: read assignment results.
+def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=6, coef=5, 
+    percentile=85, umi_col='umis'):
     """
-    # reads assignment 
-    assignment = pd.read_csv(assign_out, sep='\t', header=None)
-    # assignment['read_barcode'] = assignment[0].apply(lambda x: x.split('_')[0])
-    # assignment['contig_barcode'] = assignment[1].apply(lambda x: x.split('_')[0])
-    # assignment['match_barcode'] = assignment[['read_barcode', 'contig_barcode']].apply(lambda x: x['read_barcode']==x['contig_barcode'], axis=1)
-    # assignment = assignment[assignment['match_barcode']==True]
-    # assignment['umi'] = assignment[0].apply(lambda x: x.split('_')[1])
+    Args:
+        df_UMI_sum: A dataframe with columns highest umi's contig and UMI.
+    
+    Returns:
+        target_contigs_id: list
+    >>> df_UMI_sum = pd.DataFrame({"contig_id": ["A", "B", "C", "D", "E"], "UMI": [1, 2, 1, 30, 40]})
+    >>> target_contigs_id = target_cell_calling(df_UMI_sum, expected_target_cell_num=5, percentile=80, coef=5, target_barcodes=["A", "C"])
+    >>> target_contigs_id == {'A_1', 'C_1', 'D_1', 'E_1'}
+    True
+    """
+    if target_barcodes != None:
+        target_barcodes = {i for i in target_barcodes}
+    umi_threshold = Auto(list(df_UMI_sum[umi_col]), expected_cell_num=expected_target_cell_num, coef=coef, percentile=percentile).run()
 
-    assignment = assignment.rename(columns={0:'read_name',1:'contig_id'})
-    assignment['umi'] = assignment['read_name'].apply(lambda x:x.split('_')[1])
-    read_count_dict = assignment.groupby('contig_id')['read_name'].apply(lambda x:len(set(x))).to_dict()
-    umi_count_dict = assignment.groupby('contig_id')['umi'].apply(lambda x:len(set(x))).to_dict()
-    # write contig csv
-    contigs = open(f'{outdir}/{sample}_contig.csv', 'w')
-    process_read = 0
-    with pysam.FastxFile(full_len_assembly) as fa:
-        for read in fa:
-            name = read.name
-            comment = read.comment
-            attrs = comment.split(' ')
-            barcode = name.split('_')[0]
-            is_cell = 'True'
-            high_confidence = 'True'
-            length = attrs[0]
-            chain = attrs[2][:3]
-            full_length = 'True'
-            v_gene = attrs[2].split('(')[0]
-            d_gene = attrs[3]
-            j_gene = attrs[4].split('(')[0]
-            c_gene = attrs[5]
-            cdr3 = attrs[8].split('=')[1]
-            cdr3_aa = 'None'
-            productive = 'False'
-            # temp = assignment[assignment[1]==name]
-            # reads = str(len(temp[0].tolist()))
-            # umis = str(len(set(temp['umi'].tolist())))
-            reads = str(read_count_dict.get(name, 0))
-            umis = str(umi_count_dict.get(name, 0))
+    # avoid change the original dataframe
+    df_temp = df_UMI_sum.copy()
+    if target_barcodes:
+        df_temp[umi_col] = df_temp.apply(
+            lambda row:  row[umi_col] * weight if row['barcode'] in target_barcodes else row[umi_col], axis=1)
+             
+    target_contigs = set(df_temp.loc[df_temp[umi_col] >= umi_threshold].contig_id)
 
-            string = '\t'.join([barcode, is_cell, name, high_confidence, length, chain, v_gene, d_gene, j_gene, c_gene, full_length, productive, cdr3_aa, cdr3, reads, umis])
-            contigs.write(f'{string}\n')
-            process_read+=1
-            if process_read % 10000 == 0:
-                gen_contig_csv.logger.info(f'Processed {process_read} contigs')
-
-    contigs.close()
+    return target_contigs
 
 
 class Summarize(Step):
-
     """
     ## Features
 
     - TCR/BCR full length assembly results.
 
     ## Output
-    - `04.summarize/clonetypes.csv` High-level descriptions of each clonotype.
+    - `04.summarize/clonetypes.tsv` High-level descriptions of each clonotype.
     - `04.summarize/{sample}_all_contig.csv` High-level and detailed annotations of each contig.
     - `04.summarize/{sample}_all_contig.fasta` All assembled contig sequences.
-    - `04.summarize/{sample}_filtered_contig.csv` High-level annotations of each cellular contig after filter. This is a subset of all_contig.csv.
+    - `04.summarize/{sample}_filtered_contig.csv` High-level annotations of each cellular contig after filter. This is a subset of all_contig_annotations.csv.
     - `04.summarize/{sample}_filtered_contig.fasta` Assembled contig sequences after filter.
     """
-
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
+        super().__init__(args, display_title=display_title)
 
         self.seqtype = args.seqtype
-        self.full_len_assembly = args.full_len_assembly
-        self.assign_out = args.assign_out
-        self.filter_report = args.filter_report
-        self.barcode_filter_report = args.barcode_filter_report
-        self.cutadapted_fq = args.cutadapted_fq
-        self.assembled_fa = args.assembled_fa
+        self.fq2 = args.fq2
+        self.diffuseFrac = args.diffuseFrac
+        self.assembled_fa = f'{args.assemble_out}/{self.sample}_assembled_reads.fa'
+        self.trust_report = f'{args.assemble_out}/{self.sample}_reportfl.tsv'
+        self.annot = f'{args.assemble_out}/{self.sample}_annot.fa'
 
+        # if --diffuseFrac provided
+        if self.diffuseFrac:
+            self.barcode_report = f'{args.assemble_out}/{self.sample}_barcodefl_report.tsv'
+        else:
+            self.barcode_report = f'{args.assemble_out}/{self.sample}_barcode_report.tsv'
+        
+        self.coef = int(args.coef)
+        self.target_weight = args.target_weight
+        if args.target_cell_barcode:
+            self.target_barcodes, self.expected_target_cell_num = utils.read_one_col(args.target_cell_barcode)
+        else:
+            self.target_barcodes = None
+            self.expected_target_cell_num = args.expected_target_cell_num
+
+        self.matrix_file = utils.get_matrix_dir_from_match_dir(args.match_dir)
         self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
-
-    @staticmethod
-    def reversed_compl(seq):
-        """ Return reverse complementation sequence."""
-        return str(Seq(seq).reverse_complement())
+        self.record_file = f'{self.outdir}/Cell_num.txt'
     
     @staticmethod
     def _parse_seqtype(seqtype):
-        """ Return 'TRA_TRB' for TCR or 'IGH_IGL', 'IGH_IGK' for BCR."""
+        """Parse BCR or TCR
+
+        :param seqtype
+        :return CHAIN[seqtype]: 'TCR': ['TRA', 'TRB'], 'BCR': ['IGH', 'IGL', 'IGK']
+        	    PAIRED_CHAIN[seqtype]: ['TRA_TRB'], 'BCR': ['IGH_IGL', 'IGH_IGK']
+        """
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
     
-    @staticmethod
-    def cut_off(barcode_count):
-        """ barcode cut-off by umi and reads.
-        
-        Args:
-            barcode_count: umi and read count info for each barcode.
-        
-        Returns:
-            barcode_count: filtered barcode_count dataframe.
+    def add_cell_num_metric(self, df, name):
         """
-        barcode_count.sort_values('umis', ascending=True, inplace = True)
-        RANK = barcode_count.shape[0]//5
-        rank_UMI = barcode_count.iloc[RANK, :]["umis"]
-        UMI_min = int(rank_UMI)
-        
-        barcode_count.sort_values('reads', ascending=True, inplace = True)
-        RANK = barcode_count.shape[0]//5
-        rank_read = barcode_count.iloc[RANK, :]["reads"]
-        UMI_read = int(rank_read)
+        add cell number after each filtering step to .metrics.json
+        do not show in HTML report
+        """
+        cell_num = len(set(df[df['productive']==True].barcode))
+        self.add_metric(name, cell_num, show=False)
+        return cell_num
 
-        barcode_count = barcode_count[barcode_count['umis']>=UMI_min]
-        barcode_count = barcode_count[barcode_count['reads']>=UMI_read]
+    def get_cell_num_from_report(self, report_file):
+        """Get cell number from trust report
+        """
+        report_df = pd.read_csv(report_file, sep='\t')
+        return len(set(report_df.barcode))
 
-        return barcode_count
 
-    @utils.add_log
-    def gen_all_contig_file(self):
-        """ Generate sequence info of all assembled contigs in fasta format."""
-        all_fa = open(f'{self.outdir}/{self.sample}_all_contig.fasta','w')
-        with pysam.FastxFile(self.full_len_assembly) as fa:
-            for read in fa: 
-                name = read.name
-                barcode = name.split('_')[0]
-                sequence = read.sequence
-                all_fa.write('>' + self.reversed_compl(barcode) + '_' + name.split('_')[1] + '\n' + sequence + '\n')    
-        all_fa.close()
-
-        gen_contig_csv(self.outdir, self.sample, self.full_len_assembly, self.assign_out)
-    
     @utils.add_log
     def parse_contig_file(self):
-        """ Return formatted contig file."""
-        df = pd.read_csv(f'{self.outdir}/{self.sample}_contig.csv', sep='\t', header=None)
-        df.columns = ['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis']
-        df['d_gene'] = df['d_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
-        df['c_gene'] = df['c_gene'].apply(lambda x: x.split('(')[0] if not x == '*' else 'None')
-        df['cdr3'] = df['cdr3_nt'].apply(lambda x: 'None' if "*" in str(Seq(x).translate()) or not len(x)%3==0 else str(Seq(x).translate()))
-        df['productive'] = df['cdr3'].apply(lambda x: False if x=='None' else True)
+        """
+        parse all contig annotation file from barcode report.
+        """
+        tr.convert_barcode_report(self.barcode_report, outdir=f'{self.outdir}/{self.sample}')
 
+        if self.seqtype == 'BCR':
+            df = pd.read_csv(f'{self.outdir}/{self.sample}_b.csv')
+        else:
+            df = pd.read_csv(f'{self.outdir}/{self.sample}_t.csv')
+
+        df['productive'] = df['full_length']
+        contig_set = set(df.contig_id)
+
+        # generate all contig fasta file
+        # add length of each contig. 
+        len_dict = dict()
+        all_fa = open(f'{self.outdir}/{self.sample}_all_contig.fasta','w')
+
+        with pysam.FastxFile(self.annot) as fa:
+            for read in fa:
+                len_dict[read.name] = read.comment.split(' ')[0]
+                if read.name in contig_set:
+                    sequence = read.sequence
+                    all_fa.write('>' + read.name + '\n' + sequence + '\n')    
+        all_fa.close()
+
+        df['length'] = df['contig_id'].apply(lambda x: len_dict.get(x))
+        
         return df
 
-    @staticmethod
-    def filter_cell(df, seqtype, filter_report, barcode_filter_report):
-        """ Filter barcode in contig file.
+
+    @utils.add_log
+    def cell_calling(self, df):
+        """
+        Common filtering based on CDR3:
+        Filter nonfunctional CDR3(shown 'out_of_frame' in cdr3 report), or CDR3 sequences containing "N" in the nucleotide sequence.
         Keep CDR3aa start with C.
         Keep CDR3aa length >= 5.
         Keep no stop codon in CDR3aa.
-        Filter low abundance contigs in barcode.
+        Filter low abundance contigs based on a umi cut-off. 
 
-        Args:
-            df: contig file.
-            seqtype: BCR or TCR.
-            filter_report: filtered trust report file.
-            barcode_filter_report: filtered barcode report file.
-        
-        Returns:
-            df_filter: filtered contig info.
-            productive_barcodes: productive barcode set in filtered contig file.
+        DiffuseFrac filtering(option --diffuseFrac needed):
+        If cell A's two chains CDR3s are identical to another cell B, 
+        and A's chain abundance is significantly lower than B's (--diffuseFrac), filter A.
+
+        Target cell barcodes filtering(option, --target_cell_barcode needed):
+        Filter low abundance contigs based on a umi cut-off.
+        The umi counts of all contigs originated from B cells are multiplied by a weight to 
+        better distinguish signal from background noise.
         """
-        filter_report = pd.read_csv(filter_report, sep='\t')
-        barcode_filter_report = pd.read_csv(barcode_filter_report, sep='\t')
-
         df.sort_values(by='umis', ascending=False, inplace=True)
-        if seqtype == 'BCR':
+        if self.seqtype == 'BCR':
             df_chain_heavy = df[df['chain']=='IGH']
             df_chain_light = df[(df['chain']=='IGK') | (df['chain']=='IGL')]
-            df_chain_heavy = df_chain_heavy.drop_duplicates(['barcode'])
-            df_chain_light = df_chain_light.drop_duplicates(['barcode'])
-            df_filter = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
         else:
-            df_TRA = df[df['chain'] == 'TRA']
-            df_TRB = df[df['chain'] == 'TRB']
-            df_TRA = df_TRA.drop_duplicates(['barcode'])
-            df_TRB = df_TRB.drop_duplicates(['barcode'])
-            df_filter = pd.concat([df_TRA, df_TRB], ignore_index=True)
+            df_chain_heavy = df[df['chain'] == 'TRA']
+            df_chain_light = df[df['chain'] == 'TRB']
+        df_chain_heavy = df_chain_heavy.drop_duplicates(['barcode'])
+        df_chain_light = df_chain_light.drop_duplicates(['barcode'])
+        df_for_clono = pd.concat([df_chain_heavy, df_chain_light], ignore_index=True)
         
-        barcode_filter_report.rename(columns = {'#barcode':'barcode'}, inplace=True)
+        self.add_cell_num_metric(df_for_clono, 'Total Assembled Cell Number')
+        
+        # Common filtering
+        trust_report = pd.read_csv(self.trust_report, sep='\t')
+        correct_cdr3 = set(df_for_clono.cdr3).intersection(set(trust_report.CDR3aa))
+        correct_cdr3 = [i for i in correct_cdr3 if i.startswith('C')]
+        correct_cdr3 = [i for i in correct_cdr3 if len(i)>=5]
+        correct_cdr3 = [i for i in correct_cdr3 if 'UAG' or 'UAA' or 'UGA' not in i]
+        df_for_clono = df_for_clono[df_for_clono['cdr3'].isin(correct_cdr3)]
 
-        filter_report = filter_report[filter_report['cid_full_length'] >= 1]
-        filter_report.rename(columns = {'cid':'barcode', '#count':'count'}, inplace=True)
-        filter_report['barcode'] = filter_report['barcode'].apply(lambda x:x.split('_')[0])
-        cdr3_list = list(filter_report['CDR3aa'])
-        cdr3_list = [i for i in cdr3_list if i.startswith('C')]
-        cdr3_list = [i for i in cdr3_list if len(i)>=5]
-        cdr3_list = [i for i in cdr3_list if 'UAG' or 'UAA' or 'UGA' not in i]
-        filter_report = filter_report[filter_report['CDR3aa'].isin(cdr3_list)]
+        self.add_cell_num_metric(df_for_clono, 'Cell Number after CDR3 filtering')
+        
+        # Filter low abundance contigs based on a umi cut-off
+        if self.seqtype == 'BCR':
+            df_chain_heavy = df_for_clono[df_for_clono['chain']=='IGH']
+            df_chain_light = df_for_clono[(df_for_clono['chain']=='IGK') | (df_for_clono['chain']=='IGL')]
+        else:
+            df_chain_heavy = df_for_clono[df_for_clono['chain'] == 'TRA']
+            df_chain_light = df_for_clono[df_for_clono['chain'] == 'TRB']
 
-        # df_filter = df_filter[df_filter['umis']>=3]
-        # df_filter = df_filter[df_filter['reads']>=2]
-        df_filter = df_filter[df_filter['barcode'].isin(set(filter_report['barcode']))]
-        df_filter = df_filter[df_filter['barcode'].isin(set(barcode_filter_report['barcode']))]
+        filtered_congtigs_id = set()
+        for _df in [df_chain_heavy, df_chain_light]:
+            target_contigs = target_cell_calling(
+            _df, 
+            expected_target_cell_num=self.expected_target_cell_num, 
+            target_barcodes=self.target_barcodes,
+            weight = self.target_weight,
+            coef = self.coef
+            )
+            filtered_congtigs_id = filtered_congtigs_id | target_contigs       
+        
+        df_for_clono = df_for_clono[df_for_clono.contig_id.isin(filtered_congtigs_id)]
+        self.add_cell_num_metric(df_for_clono, 'Cell Number after UMI filtering')
+        
+        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+        cell_barcodes = set(df_for_clono_pro['barcode'])
 
-        # record file IGH+IGK/IGL for BCR, TRA+TRB for TCR
-        barcode_count = df_filter.groupby(['barcode']).agg({'umis': 'mean','reads': 'mean'}).reset_index()
-        filter_barcode_count = Summarize.cut_off(barcode_count)
-
-        df_filter = df_filter[df_filter['barcode'].isin(filter_barcode_count.barcode)]
-
-        # df_chain_pair.to_csv(f'{self.outdir}/{self.sample}_chain_pair.csv', sep=',', index=False)
-        df_filter_pro = df_filter[df_filter['productive']==True]
-        productive_barcodes = set(df_filter_pro['barcode'])
-
-        return df_filter, productive_barcodes
+        return df_for_clono, cell_barcodes
 
     @utils.add_log
-    def gen_filter_fasta(self, productive_barcodes):
-        """ Generate filtered contig fasta file."""
-        all_contig_fa = f'{self.outdir}/{self.sample}_all_contig.fasta'
-        out_filter_fa = open(f'{self.outdir}/{self.sample}_filtered_contig.fasta','w')
-        with pysam.FastxFile(all_contig_fa) as fa:
+    def filter_fasta(self, cell_barcodes):
+        """Filter all contig fasta file by barcodes which are identified to be cell.
+
+        :param cell_barcodes: all barcodes identified to be cell.
+        """
+        all_contig_fasta = f'{self.outdir}/{self.sample}_all_contig.fasta'
+        filter_contig_fasta = f'{self.outdir}/{self.sample}_filtered_contig.fasta'
+
+        filter_contig_fasta = open(filter_contig_fasta,'w')
+        with pysam.FastxFile(all_contig_fasta) as fa:
             for read in fa:
                 name = read.name
-                barcode = name.split('_')[0]
+                cb = name.split('_')[0]
                 sequence = read.sequence
-                if Summarize.reversed_compl(barcode) in productive_barcodes:
-                    out_filter_fa.write('>' + name + '\n' + sequence + '\n')
-        out_filter_fa.close()
-    
-    @staticmethod
-    def reverse_contig(df, productive_barcodes):
-        """ Return dataframe of all contig and filtered contig that including reverse complementation barcode info."""
-        # all contig.csv
-        df_all_contig = copy.deepcopy(df)
-        df_all_contig['barcode'] = df_all_contig['barcode'].apply(Summarize.reversed_compl)
-        df_all_contig['contig_id'] = df_all_contig['contig_id'].apply(lambda x: Summarize.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
-        # filter contig.csv
-        df_filter_contig = copy.deepcopy(df)
-        df_filter_contig = df_filter_contig[df_filter_contig['barcode'].isin(productive_barcodes)]
-        df_filter_contig['barcode'] = df_filter_contig['barcode'].apply(Summarize.reversed_compl)
-        df_filter_contig['contig_id'] = df_filter_contig['contig_id'].apply(lambda x: Summarize.reversed_compl(x.split('_')[0]) + '_' + x.split('_')[1])
-
-        return df_all_contig, df_filter_contig
+                if cb in cell_barcodes:
+                    filter_contig_fasta.write('>' + name + '\n' + sequence + '\n')
+                    
+        filter_contig_fasta.close()
 
     @utils.add_log
-    def gen_clonotypes_file(self, df_chain_pair, productive_barcodes):
-        """ Generate clonotypes.csv file.
+    def parse_clonotypes(self, df, df_for_clono, cell_barcodes):
+        """Parse clonotypes from CDR3 and manually add clonotype id for each contig.
 
-        Args:
-            df_chain_pair: filtered contig info.
-            productive_barcodes: productive barcode set in filtered contig file.
-        Returns:
-            contig_with_clonotype: dataframe records barcode, cdr3s_aa, cdr3s_nt info.
-            used_for_merge: datafram records cdr3s_nt, clonotype_id info.
+        :param df: original contig file.
+        :param df_for_clono: contig info after filter.
+        :param cell_barcodes: all barcodes identified to be cell.
+        :return df_filter_contig: filtered contigs by cell barcodes.
         """
-        df_chain_pair['chain_cdr3aa'] = df_chain_pair[['chain', 'cdr3']].apply(':'.join, axis=1)
-        df_chain_pair['chain_cdr3nt'] = df_chain_pair[['chain', 'cdr3_nt']].apply(':'.join, axis=1)
+        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+        df_for_clono_pro['chain_cdr3aa'] = df_for_clono_pro[['chain', 'cdr3']].apply(':'.join, axis=1)
+        df_for_clono_pro['chain_cdr3nt'] = df_for_clono_pro[['chain', 'cdr3_nt']].apply(':'.join, axis=1)
 
+        cbs = set(df_for_clono_pro['barcode'])
         clonotypes = open(f'{self.outdir}/clonotypes.csv', 'w')
         clonotypes.write('barcode\tcdr3s_aa\tcdr3s_nt\n')
-        for cb in productive_barcodes:
-            temp = df_chain_pair[df_chain_pair['barcode']==cb]
+        for cb in cbs:
+            temp = df_for_clono_pro[df_for_clono_pro['barcode']==cb]
             temp = temp.sort_values(by='chain', ascending=True)
-            chain_list = temp['chain_cdr3aa'].tolist()
-            chain_str = ';'.join(chain_list)
-            ntchain_list = temp['chain_cdr3nt'].tolist()
-            ntchain_str = ';'.join(ntchain_list)
-            clonotypes.write(f'{cb}\t{chain_str}\t{ntchain_str}\n')
-        clonotypes.close()
+            aa_chain = ';'.join(list(temp['chain_cdr3aa']))
+            nt_chain = ';'.join(list(temp['chain_cdr3nt']))
+            clonotypes.write(f'{cb}\t{aa_chain}\t{nt_chain}\n')
+        clonotypes.close() 
 
         df_clonotypes = pd.read_csv(f'{self.outdir}/clonotypes.csv', sep='\t', index_col=None)
-        nt_aa_dict = df_clonotypes[["cdr3s_nt", "cdr3s_aa"]].set_index("cdr3s_nt").to_dict(orient='dict')['cdr3s_aa']
         contig_with_clonotype = copy.deepcopy(df_clonotypes)
-
+        df_dict = df_clonotypes[["cdr3s_nt", "cdr3s_aa"]].set_index("cdr3s_nt").to_dict(orient='dict')['cdr3s_aa']
         df_clonotypes = df_clonotypes.groupby('cdr3s_nt', as_index=False).agg({'barcode': 'count'})
-        df_clonotypes = df_clonotypes.rename(columns={'barcode': 'frequency'})
-        sum_frequency = df_clonotypes['frequency'].sum()
-        df_clonotypes['proportion'] = df_clonotypes['frequency'].apply(lambda x: x/sum_frequency)
-        df_clonotypes = df_clonotypes.sort_values(by='frequency', ascending=False)
+        df_clonotypes.rename(columns={'barcode': 'frequency'}, inplace=True)
+        sum_f = df_clonotypes['frequency'].sum()
+
+        df_clonotypes['proportion'] = df_clonotypes['frequency'].apply(lambda x: x/sum_f)
+        df_clonotypes.sort_values(by='frequency', ascending=False, inplace=True)
         df_clonotypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonotypes.shape[0]+1)]
-        df_clonotypes['cdr3s_aa'] = df_clonotypes['cdr3s_nt'].apply(lambda x:nt_aa_dict[x])
+        df_clonotypes['cdr3s_aa'] = df_clonotypes['cdr3s_nt'].apply(lambda x:df_dict[x])
         df_clonotypes = df_clonotypes.reindex(columns=['clonotype_id', 'frequency', 'proportion', 'cdr3s_aa', 'cdr3s_nt'])
         df_clonotypes.to_csv(f'{self.outdir}/clonotypes.csv', sep=',', index=False) 
         used_for_merge = df_clonotypes[['cdr3s_nt','clonotype_id']]
 
-        return contig_with_clonotype, used_for_merge
-
-    @utils.add_log
-    def add_clonotypes_for_contig(self, used_for_merge, contig_with_clonotype, df_all_contig, df_filter_contig):
-        """ Add clonotype_id in contig.csv file.
-        
-        Args:
-            contig_with_clonotype: dataframe records barcode, cdr3s_aa, cdr3s_nt info.
-            used_for_merge: datafram records cdr3s_nt, clonotype_id info.
-            df_all_contig: all contig info.
-            df_filter_contig: filtered contig info.
-        """
         df_merge = pd.merge(used_for_merge, contig_with_clonotype, on='cdr3s_nt', how='outer')
-        df_merge = df_merge[['barcode','clonotype_id']]
-        df_merge['barcode'] = df_merge['barcode'].apply(Summarize.reversed_compl)
-        df_all_contig = pd.merge(df_merge, df_all_contig, on='barcode',how='outer')
-        df_filter_contig = pd.merge(df_merge, df_filter_contig, on='barcode',how='outer')
+        df_merge = df_merge[['barcode', 'clonotype_id']]
+        df_all_contig = pd.merge(df_merge, df, on='barcode',how='outer')
         df_all_contig.fillna('None',inplace = True)
-        df_filter_contig.fillna('None',inplace = True)
         df_all_contig = df_all_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
-        df_filter_contig = df_filter_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
+        df_filter_contig = df_all_contig[df_all_contig['barcode'].isin(cell_barcodes)]
+
         df_all_contig.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
-    
-    @utils.add_log
-    def gen_summary(self, df_chain_pair, productive_barcodes):
-        """ Generate summary metrics for html.
-        Including: Estimated Number of Cells, Mean Read Pairs per Cell, Mean Used Read Pairs per Cell,
-            Fraction of Reads in Cells, Median UMIs per Cell, Barcode rank plot
 
-        Args:
-            df_chain_pair: filtered contig info
-            productive_barcodes: productive barcode set in filtered contig.
+    @utils.add_log
+    def gen_summary(self, df_for_clono):
+        """ Generate metrics in html 
         """
-        total_cell_num = len(productive_barcodes)
+        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
+        cell_barcodes = set(df_for_clono_pro['barcode'])
+        total_cells =len(cell_barcodes)
+
         read_count = 0
         read_count_all = 0
         umi_dict = defaultdict(set)
         umi_count = defaultdict()
-        with pysam.FastxFile(self.cutadapted_fq) as fq:
+        with pysam.FastxFile(self.fq2) as fq:
             for read in fq:
                 read_count_all+=1
                 cb = read.name.split('_')[0]
                 umi = read.name.split('_')[1]
                 umi_dict[cb].add(umi)
-                if cb in productive_barcodes:
+                if cb in cell_barcodes:
                     read_count+=1
         for cb in umi_dict:
             umi_count[cb] = len(umi_dict[cb])
@@ -345,20 +304,19 @@ class Summarize(Step):
         df_umi = df_umi.reset_index(drop=True)
         df_umi = df_umi.reindex(columns=['barcode', 'UMI'])
         df_umi = df_umi.sort_values(by='UMI', ascending=False)
-        df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in productive_barcodes else 'UB')
-        df_umi['barcode'] = df_umi['barcode'].apply(self.reversed_compl)
+        df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cell_barcodes else 'UB')
         df_umi.to_csv(f'{self.outdir}/count.txt', sep='\t', index=False)
         self.add_data(chart=get_plot_elements.plot_barcode_rank(f'{self.outdir}/count.txt'))
 
         self.add_metric(
             name = 'Estimated Number of Cells',
-            value = total_cell_num,
+            value = total_cells,
             help_info = "Number of cells which contain at least one chain (for TCR: TRA or TRB, for BCR: IGH, IGL or IGK)"            
         )
 
         self.add_metric(
             name = 'Mean Read Pairs per Cell',
-            value = int(read_count/total_cell_num),
+            value = int(read_count/total_cells),
             help_info = 'Number of input reads divided by the estimated number of cells'
         )
 
@@ -366,11 +324,11 @@ class Summarize(Step):
         with pysam.FastxFile(self.assembled_fa) as fa:
             for read in fa:
                 bc = read.name.split('_')[0]
-                if bc in productive_barcodes:
+                if bc in cell_barcodes:
                     used_read += 1
         self.add_metric(
             name = 'Mean Used Read Pairs per Cell',
-            value = int(used_read/total_cell_num), 
+            value = int(used_read/total_cells), 
             help_info = "Mean number of reads used in assembly per cell-associated barcode"
         )
         self.add_metric(
@@ -381,21 +339,25 @@ class Summarize(Step):
         )
         
         for c in self.chains:
-            temp_df = df_chain_pair[df_chain_pair['chain']==c]
+            temp_df = df_for_clono_pro[df_for_clono_pro['chain']==c]
+
+            try:
+                median_umi = int(temp_df['umis'].median())
+            except ValueError:
+                # ValueError: cannot convert float NaN to integer
+                median_umi = 0
+
             self.add_metric(
                 name = f'Median {c} UMIs per Cell',
-                value = int(temp_df['umis'].median())
+                value = median_umi
             )
 
     def run(self):
-        self.gen_all_contig_file()
-        df = self.parse_contig_file()
-        df_chain_pair, productive_barcodes = self.filter_cell(df, self.seqtype, self.filter_report, self.barcode_filter_report)
-        self.gen_filter_fasta(productive_barcodes)
-        df_all_contig, df_filter_contig = self.reverse_contig(df, productive_barcodes)
-        contig_with_clonotype, used_for_merge = self.gen_clonotypes_file(df_chain_pair, productive_barcodes)
-        self.add_clonotypes_for_contig(used_for_merge, contig_with_clonotype, df_all_contig, df_filter_contig)
-        self.gen_summary(df_chain_pair, productive_barcodes)
+        original_df = self.parse_contig_file()
+        df_for_clono, cell_barcodes = self.cell_calling(original_df)
+        self.filter_fasta(cell_barcodes)
+        self.parse_clonotypes(original_df, df_for_clono, cell_barcodes)
+        self.gen_summary(df_for_clono)
 
 
 @utils.add_log
@@ -406,11 +368,30 @@ def summarize(args):
 
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    parser.add_argument('--coef', help='coef for auto filter', default=5)
+    parser.add_argument(
+        '--diffuseFrac', 
+        help="If cell A's two chains CDR3s are identical to another cell B, and A's chain abundance is significantly lower than B's, filter A.",
+        action='store_true')
+    parser.add_argument(
+        "--expected_target_cell_num", 
+        help="Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.", 
+        type=int,
+        default=3000,
+    )
+    parser.add_argument(
+        '--target_cell_barcode', 
+        help="Barcode of target cells. It is a plain text file with one barcode per line",
+        default=None)
+    parser.add_argument(
+        "--target_weight", 
+        help="UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.", 
+        type=float,
+        default=6.0,
+    )
+
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--full_len_assembly', help='full len assembly file', required=True)
-        parser.add_argument('--assign_out', help='read assignment results', required=True)
-        parser.add_argument('--filter_report', help='Filtered trust report', required=True)
-        parser.add_argument('--barcode_filter_report', help='Filtered barcode report', required=True)
-        parser.add_argument('--cutadapted_fq', help='Cutadapt R2 reads.', required=True)
-        parser.add_argument('--assembled_fa', help='Read used for assembly', required=True)
+        parser.add_argument('--fq2', help='Barcode R2 reads.', required=True)
+        parser.add_argument('--assemble_out', help='Result of  assemble dirctory.', required=True)
+        parser.add_argument('--match_dir', help='Match scRNA-seq directory.', required=True)

@@ -2,7 +2,7 @@ import os
 import celescope.tools
 
 
-__STEPS__ = ['sample', 'barcode', 'assemble', 'summarize', 'annotation']
+__STEPS__ = ['sample', 'barcode', 'assemble', 'summarize', 'mapping_annotation']
 __ASSAY__ = 'flv_trust4'
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__) + '/trust4'
