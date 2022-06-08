@@ -7,7 +7,6 @@ from itertools import combinations, product
 
 import pysam
 from xopen import xopen
-from Bio.Seq import Seq
 
 from celescope.tools import utils
 from celescope.tools.__init__ import PATTERN_DICT
@@ -532,12 +531,12 @@ class Barcode(Step):
                     self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
                     
-
-                        
+                    out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                    if self.output_R1:
+                        out_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')
+  
             self.run.logger.info(self.fq1_list[i] + ' finished.')
         out_fq2.close()
-        if self.output_R1:
-            out_fq1.close()
 
         # logging
         self.run.logger.info(

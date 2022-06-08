@@ -1,6 +1,6 @@
 from celescope.tools import utils
-from celescope.flv_trust4.summarize import *
 import celescope.flv_trust4.summarize as tools_summarize
+
 
 class Summarize(tools_summarize.Summarize):
 

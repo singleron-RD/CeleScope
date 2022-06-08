@@ -1,7 +1,7 @@
 import glob
-
 import celescope.flv_trust4.mapping_annotation as tools_anno
 from celescope.flv_trust4.summarize import Summarize
+from celescope.tools import utils
 
 
 class Mapping_annotation(tools_anno.Mapping_annotation):
@@ -45,6 +45,7 @@ class Mapping_annotation(tools_anno.Mapping_annotation):
             self._name = "Bcells"
 
 
+@utils.add_log
 def mapping_annotation(args):
     with Mapping_annotation(args, display_title="V(D)J Annotation") as runner:
         runner.run()

@@ -1,10 +1,8 @@
-from collections import defaultdict
-
 import pandas as pd
-
 import pysam
 import copy
 
+from collections import defaultdict
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common

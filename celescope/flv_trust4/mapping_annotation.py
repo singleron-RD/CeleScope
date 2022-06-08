@@ -154,6 +154,7 @@ class Mapping_annotation(Step):
             print(f"Not found auto-assigned {self._name} in matched sc-RNA")
 
 
+@utils.add_log
 def mapping_annotation(args):
     with Mapping_annotation(args, display_title="V(D)J Annotation") as runner:
         runner.run()
