@@ -16,7 +16,6 @@ from Bio.Seq import Seq
 import pandas as pd
 import pysam
 
-import celescope.tools
 from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
 from celescope.__init__ import ROOT_PATH
 
@@ -398,13 +397,6 @@ def parse_match_dir(match_dir):
     match_dict['n_match_barcode'] = n_match_barcode
 
     return match_dict
-
-
-def get_scope_bc(bctype):
-    root_path = os.path.dirname(celescope.__file__)
-    linker_f = glob.glob(f'{root_path}/data/chemistry/{bctype}/linker*')[0]
-    whitelist_f = f'{root_path}/data/chemistry/{bctype}/bclist'
-    return linker_f, whitelist_f
 
 
 def fastq_line(name, seq, qual):

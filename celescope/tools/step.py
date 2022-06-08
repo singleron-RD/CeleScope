@@ -88,7 +88,7 @@ class Step:
         # out file
         self.__stat_file = f'{self.outdir}/stat.txt'
 
-    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True):
+    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True, print_log=True):
         '''
         add metric to metric_list
         
@@ -97,6 +97,7 @@ class Step:
             help_info: str, help info for metric in html report
             display: str, controls how to display the metric in HTML report.
             show: bool, whether to add to `.data.json` and `stat.txt`. `.data.json` is used for HTML report. `stat.txt` is used in house.
+            print_log: bool, whether to print metric to stdout
         '''
 
         name = cap_str_except_preposition(name)
@@ -124,6 +125,9 @@ class Step:
                 "show": show,
             }
         )
+
+        if print_log:
+            print(f'{name}: {display}')
 
     def _write_stat(self):
         with open(self.__stat_file, 'w') as writer:
