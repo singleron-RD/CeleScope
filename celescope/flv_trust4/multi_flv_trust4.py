@@ -29,6 +29,18 @@ class Multi_flv_trust4(Multi):
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
+    def mapping(self, sample):
+        step = 'mapping'
+        cmd_line = self.get_cmd_line(step, sample)
+        match_fq1 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_1.fq'
+        match_fq2 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
+        cmd = (
+            f'{cmd_line} '
+            f'--match_fq1 {match_fq1} '
+            f'--match_fq2 {match_fq2} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=self.args.thread)
+
     def assemble(self, sample):
         step = 'assemble'
         cmd_line = self.get_cmd_line(step, sample)

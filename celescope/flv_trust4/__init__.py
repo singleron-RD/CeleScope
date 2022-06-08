@@ -2,11 +2,11 @@ import os
 import celescope.tools
 
 
-__STEPS__ = ['sample', 'barcode', 'assemble', 'summarize', 'mapping_annotation']
+__STEPS__ = ['sample', 'barcode', 'mapping', 'assemble', 'summarize', 'mapping_annotation']
 __ASSAY__ = 'flv_trust4'
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__) + '/trust4'
-INDEX = f'{TOOLS_DIR}/database'
+REF_DIR = f'{TOOLS_DIR}/database'
 
 CHAIN = {
 	'TCR': ['TRA', 'TRB'], 

@@ -6,9 +6,13 @@ from collections import defaultdict
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common
-from celescope.flv_trust4_split import trust_utils as tr
 from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.emptydrop_cr import get_plot_elements
+
+
+
+ASSEMBLE_FA_SUFFIX = 'assembled_reads.fa'
+TRUST_REPORT_FILTER_SUFFIX  = 'report_filter.tsv'
 
 
 def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=6, coef=5, 
@@ -58,7 +62,7 @@ class Summarize(Step):
         self.seqtype = args.seqtype
         self.fq2 = args.fq2
         self.diffuseFrac = args.diffuseFrac
-        self.assembled_fa = f'{args.assemble_out}/{self.sample}_assembled_reads.fa'
+        self.assembled_fa = f'{args.assemble_out}/{self.sample}_{ASSEMBLE_FA_SUFFIX}'
         self.trust_report = f'{args.assemble_out}/{self.sample}_reportfl.tsv'
         self.annot = f'{args.assemble_out}/{self.sample}_annot.fa'
 
@@ -111,7 +115,7 @@ class Summarize(Step):
         """
         parse all contig annotation file from barcode report.
         """
-        tr.convert_barcode_report(self.barcode_report, outdir=f'{self.outdir}/{self.sample}')
+        convert_barcode_report(self.barcode_report, outdir=f'{self.outdir}/{self.sample}')
 
         if self.seqtype == 'BCR':
             df = pd.read_csv(f'{self.outdir}/{self.sample}_b.csv')

@@ -626,6 +626,15 @@ def reverse_complement(seq):
     """
     return str(Seq(seq).reverse_complement())
 
+def get_fastx_read_number(fastx_file):
+    """
+    get read number using pysam
+    """
+    n = 0
+    with pysam.FastxFile(fastx_file) as f:
+        for read in f:
+            n += 1
+    return n
 
 class Test_utils(unittest.TestCase):
     def test_gtf_dict(self):
