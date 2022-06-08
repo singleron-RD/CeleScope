@@ -1,6 +1,4 @@
-import glob
 import celescope.flv_trust4.mapping_annotation as tools_anno
-from celescope.flv_trust4.summarize import Summarize
 from celescope.tools import utils
 
 
@@ -23,26 +21,6 @@ class Mapping_annotation(tools_anno.Mapping_annotation):
     """
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
-
-        self.seqtype = args.seqtype
-        self.match_dir = args.match_dir
-        self.chains, self.paired_groups = Summarize._parse_seqtype(self.seqtype)
-        self.contig_file = args.contig_file
-
-        try:
-            self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
-            self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-        except IndexError:
-            pass
-  
-        self.contig = glob.glob(f'{self.outdir}/../03.summarize/{self.sample}_filtered_contig.csv')[0]
-
-        if self.seqtype == 'TCR':
-            self.Celltype = {'T_cells','NKT_cells','T cells','NK T cells','Tcells'}
-            self._name = "Tcells"
-        elif self.seqtype == 'BCR':
-            self.Celltype = {'Plasma_cells','B_cells','Mature_B_cell','Plasma cells','B cells','Bcells'}
-            self._name = "Bcells"
 
 
 @utils.add_log

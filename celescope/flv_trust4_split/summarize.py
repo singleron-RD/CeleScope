@@ -19,31 +19,6 @@ class Summarize(tools_summarize.Summarize):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-        self.seqtype = args.seqtype
-        self.fq2 = args.fq2
-        self.diffuseFrac = args.diffuseFrac
-        self.assembled_fa = f'{args.assemble_out}/{self.sample}_assembled_reads.fa'
-        self.trust_report = f'{args.assemble_out}/reportfl.tsv'
-        self.annot = f'{args.assemble_out}/{self.sample}_annot.fa'
-
-        # if --diffuseFrac provided
-        if self.diffuseFrac:
-            self.barcode_report = f'{args.assemble_out}/barcoderepfl.tsv'
-        else:
-            self.barcode_report = f'{args.assemble_out}/barcoderep.tsv'
-        
-        self.coef = int(args.coef)
-        self.target_weight = args.target_weight
-        if args.target_cell_barcode:
-            self.target_barcodes, self.expected_target_cell_num = utils.read_one_col(args.target_cell_barcode)
-        else:
-            self.target_barcodes = None
-            self.expected_target_cell_num = args.expected_target_cell_num
-
-        self.matrix_file = utils.get_matrix_dir_from_match_dir(args.match_dir)
-        self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
-        self.record_file = f'{self.outdir}/Cell_num.txt'
-
 
 @utils.add_log
 def summarize(args):

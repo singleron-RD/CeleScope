@@ -11,6 +11,13 @@ from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.tools.emptydrop_cr import get_plot_elements
 
 
+assembled_suffix = 'assembled_reads.fa'
+trust_report_suffix = 'report_filter.tsv'
+annot_suffix = 'annot.fa'
+barcode_report_suffix = 'barcode_report.tsv'
+barcode_filter_report_suffix = 'barcode_filter_report.tsv'
+
+
 def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=6, coef=5, 
     percentile=85, umi_col='umis'):
     """
@@ -58,15 +65,15 @@ class Summarize(Step):
         self.seqtype = args.seqtype
         self.fq2 = args.fq2
         self.diffuseFrac = args.diffuseFrac
-        self.assembled_fa = f'{args.assemble_out}/{self.sample}_assembled_reads.fa'
-        self.trust_report = f'{args.assemble_out}/{self.sample}_reportfl.tsv'
-        self.annot = f'{args.assemble_out}/{self.sample}_annot.fa'
+        self.assembled_fa = f'{args.assemble_out}/{self.sample}_{assembled_suffix}'
+        self.trust_report = f'{args.assemble_out}/{self.sample}_{trust_report_suffix}'
+        self.annot = f'{args.assemble_out}/{self.sample}_{annot_suffix}'
 
         # if --diffuseFrac provided
         if self.diffuseFrac:
-            self.barcode_report = f'{args.assemble_out}/{self.sample}_barcodefl_report.tsv'
+            self.barcode_report = f'{args.assemble_out}/{self.sample}_{barcode_filter_report_suffix}'
         else:
-            self.barcode_report = f'{args.assemble_out}/{self.sample}_barcode_report.tsv'
+            self.barcode_report = f'{args.assemble_out}/{self.sample}_{barcode_report_suffix}'
         
         self.coef = int(args.coef)
         self.target_weight = args.target_weight

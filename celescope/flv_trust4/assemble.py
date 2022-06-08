@@ -81,7 +81,7 @@ def get_barcode_filter_report(outdir, sample):
     cmd = (
         f'python {TOOLS_DIR}/barcoderep-filter.py '
         f'-b {outdir}/{sample}_barcode_report.tsv > '
-        f'{outdir}/{sample}_barcodefl_report.tsv '
+        f'{outdir}/{sample}_barcode_filter_report.tsv '
     )
     get_barcode_filter_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
@@ -98,7 +98,7 @@ def get_filter_report(outdir, sample):
         sample: sample name.
     """
     
-    cmd = (f''' awk '$4!~"_" && $4!~"?"' {outdir}/{sample}_report.tsv > {outdir}/{sample}_reportfl.tsv ''')
+    cmd = (f''' awk '$4!~"_" && $4!~"?"' {outdir}/{sample}_report.tsv > {outdir}/{sample}_report_filter.tsv ''')
     get_filter_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 

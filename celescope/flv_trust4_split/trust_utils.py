@@ -35,40 +35,40 @@ def extract_candidate_reads(species, index_prefix, outdir, sample, fq1, fq2, bar
 
 
 @utils.add_log
-def get_trust_report(filedir, sample):
+def get_trust_report(sample, filedir):
     cmd = (
         f'perl {TOOLS_DIR}/trust-simplerep.pl '
         f'{filedir}/{sample}_cdr3.out > '
-        f'{filedir}/report.tsv'
+        f'{filedir}/{sample}_report.tsv'
     )
     get_trust_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
 
 @utils.add_log
-def filter_trust_report(filedir):
-    cmd = f''' awk '$4!~"_" && $4!~"?"' {filedir}/report.tsv > {filedir}/reportfl.tsv '''
+def filter_trust_report(sample ,filedir):
+    cmd = f''' awk '$4!~"_" && $4!~"?"' {filedir}/{sample}_report.tsv > {filedir}/{sample}_filter_report.tsv '''
     filter_trust_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
 
 @utils.add_log
-def get_bc_report(filedir, sample):
+def get_bc_report(sample, filedir):
     cmd = (
         f'perl {TOOLS_DIR}/trust-barcoderep.pl '
         f'{filedir}/{sample}_cdr3.out > '
-        f'{filedir}/barcoderep.tsv ' 
+        f'{filedir}/{sample}_barcode_report.tsv ' 
     )
     get_bc_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)
 
 
 @utils.add_log
-def get_bcfilter_report(filedir):
+def get_bcfilter_report(sample, filedir):
     cmd = (
         f'python {TOOLS_DIR}/barcoderep-filter.py '
-        f'-b {filedir}/barcoderep.tsv > '
-        f'{filedir}/barcoderepfl.tsv '
+        f'-b {filedir}/{sample}_barcode_report.tsv > '
+        f'{filedir}/{sample}_barcode_filter_report.tsv '
     )
     get_bcfilter_report.logger.info(cmd)
     subprocess.check_call(cmd, shell=True)

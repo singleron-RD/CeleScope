@@ -6,7 +6,7 @@ import glob
 from celescope.flv_trust4.summarize import Summarize
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
-from celescope.flv_trust4.__init__ import TOOLS_DIR, CHAIN, PAIRED_CHAIN
+from celescope.flv_trust4.__init__ import TOOLS_DIR
 from celescope.flv_trust4_split import trust_utils as tr
 from celescope.tools.plotly_plot import Bar_plot
 
@@ -62,10 +62,6 @@ class Mapping_annotation(Step):
         elif self.seqtype == 'BCR':
             self.Celltype = {'Plasma_cells','B_cells','Mature_B_cell','Plasma cells','B cells','Bcells'}
             self._name = "Bcells"
-
-    @staticmethod
-    def _parse_seqtype(seqtype):
-        return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
 
     @staticmethod
     def parse_clonotype(outdir):

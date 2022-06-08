@@ -183,10 +183,10 @@ class Assemble(Step):
             subprocess.check_call(cmd, shell=True)
 
     def gen_report(self, matched_cbs):
-        tr.get_trust_report(self.assemble_outdir,self.sample)
-        tr.filter_trust_report(self.assemble_outdir)
-        tr.get_bc_report(self.assemble_outdir, self.sample)
-        tr.get_bcfilter_report(self.assemble_outdir)
+        tr.get_trust_report(self.sample, self.assemble_outdir)
+        tr.filter_trust_report(self.sample, self.assemble_outdir)
+        tr.get_bc_report(self.sample, self.assemble_outdir)
+        tr.get_bcfilter_report(self.sample, self.assemble_outdir)
 
         self.add_metric(
             name="Matched Barcodes with scRNA-seq",
