@@ -38,6 +38,8 @@ class Barcode(tools_barcode.Barcode):
         self.barcode_read_Counter = Counter()
         self.match_barcodes, _ = utils.get_barcode_from_match_dir(args.match_dir)
 
+        self.fh_fq1 = xopen(self.out_fq1, 'w')
+
 
     @utils.add_log
     def run(self):
@@ -56,23 +58,10 @@ class Barcode(tools_barcode.Barcode):
                 write valid R2 read to file
         """
 
-        out_fq1 = xopen(self.out_fq1, 'w')
-        out_fq2 = xopen(self.out_fq2, 'w')
-
-
-        if self.nopolyT:
-            fh1_without_polyT = xopen(self.nopolyT_1, 'w')
-            fh2_without_polyT = xopen(self.nopolyT_2, 'w')
-
-        if self.noLinker:
-            fh1_without_linker = xopen(self.noLinker_1, 'w')
-            fh2_without_linker = xopen(self.noLinker_2, 'w')
-
         for i in range(self.fq_number):
 
             chemistry = self.chemistry_list[i]
             lowNum = int(self.lowNum)
-            Barcode.run.logger.info(f'lowQual score: {self.lowQual}')
             lowQual = int(self.lowQual)
             if chemistry == 'scopeV1':
                 lowNum = min(0, lowNum)
@@ -172,69 +161,25 @@ class Barcode(tools_barcode.Barcode):
                         if self.barcode_read_Counter[cb] <= 80000:
                             umi = Barcode.get_seq_str(seq1, pattern_dict['U'])
                             qual = 'F' * len(cb + umi)
-                            out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-                            out_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual}\n')
+                            self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                            self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual}\n')
                         
             self.run.logger.info(self.fq1_list[i] + ' finished.')
-        out_fq2.close()
-        out_fq1.close()
 
-        # logging
-        self.run.logger.info(
-            f'processed reads: {utils.format_number(self.total_num)}. '
-            f'valid reads: {utils.format_number(self.clean_num)}. '
-        )
+        self.close_files()
+        self.add_step_metrics()
 
-        self.run.logger.info(f'no polyT reads number : {self.no_polyT_num}')
-        self.run.logger.info(f'low qual reads number: {self.lowQual_num}')
-        self.run.logger.info(f'no_linker: {self.no_linker_num}')
-        self.run.logger.info(f'no_barcode: {self.no_barcode_num}')
-        self.run.logger.info(f'corrected linker: {self.linker_corrected_num}')
-        self.run.logger.info(f'corrected barcode: {self.barcode_corrected_num}')
+    @utils.add_log
+    def add_step_metrics(self):
+        super().add_step_metrics()
 
-        if self.clean_num == 0:
-            raise Exception(
-                'no valid reads found! please check the --chemistry parameter.')
-
-        # stat
-        BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= Barcode.ord2chr(
-            30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
-        BarcodesQ30 = round(BarcodesQ30, 2)
-        BarcodesQ30_display = f'{BarcodesQ30}%'
-        UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= Barcode.ord2chr(
-            30)]) / float(sum(self.umi_qual_Counter.values())) * 100
-        UMIsQ30 = round(UMIsQ30, 2)
-        UMIsQ30_display = f'{UMIsQ30}%'
-
-        self.add_metric(
-            name='Raw Reads',
-            value=self.total_num,
-            help_info='total reads from FASTQ files'
-        )
-        self.add_metric(
-            name='Valid Reads',
-            value=self.clean_num,
-            total=self.total_num,
-            help_info='reads pass filtering(filtered: reads without poly T, reads without linker, reads without correct barcode or low quality reads)'
-        )
         self.add_metric(
             name='Valid Matched Reads',
             value=self.match_num,
             total=self.total_num,
             help_info='reads match with flv_rna cell barcodes'
         )
-        self.add_metric(
-            name='Q30 of Barcodes',
-            value=BarcodesQ30,
-            display=BarcodesQ30_display,
-            help_info='percent of barcode base pairs with quality scores over Q30',
-        )
-        self.add_metric(
-            name='Q30 of UMIs',
-            value=UMIsQ30,
-            display=UMIsQ30_display,
-            help_info='percent of UMI base pairs with quality scores over Q30',
-        )
+
 
 
 @utils.add_log
