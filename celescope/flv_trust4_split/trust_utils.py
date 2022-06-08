@@ -148,7 +148,7 @@ def get_vj_annot(df, chains, pairs):
         })
         Result.append({
             'name': f'Cells With CDR3-annotated {c} Contig',
-            'value': len(set(df[(df['chain']==c)&(df['productive']==True)].barcode.tolist())),
+            'value': len(set(df[(df['chain']==c)&(df['cdr3']!=None)].barcode.tolist())),
             'total': cell_nums,
         })
         Result.append({

@@ -136,7 +136,7 @@ class Summarize(Step):
                     all_fa.write('>' + read.name + '\n' + sequence + '\n')    
         all_fa.close()
 
-        df['length'] = df['contig_id'].apply(lambda x: len_dict[x])
+        df['length'] = df['contig_id'].apply(lambda x: len_dict.get(x))
         
         return df
 
