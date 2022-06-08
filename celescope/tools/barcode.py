@@ -393,7 +393,6 @@ class Barcode(Step):
             return True
         return False
 
-
     def open_files(self):
         if self.output_R1:
             self.fh_fq1 = xopen(self.out_fq1, 'w')
