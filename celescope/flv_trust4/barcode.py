@@ -1,12 +1,16 @@
-from celescope.tools.barcode import *
+from collections import Counter
+from xopen import xopen
+import pysam
+
+from celescope.tools.__init__ import PATTERN_DICT
 from celescope.tools import barcode as tools_barcode
+from celescope.tools import utils
 
-
-class Barcode(Step):
+class Barcode(tools_barcode.Barcode):
     """
     ## Features
 
-    - Demultiplex barcodes.
+    - Demultiplex barcodes for TRUST4.
     - Filter invalid R1 reads, which includes:
         - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
         - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
@@ -24,59 +28,16 @@ class Barcode(Step):
     """
 
     def __init__(self, args, display_title=None):
-        Step.__init__(self, args, display_title=display_title)
-
-        self.fq1_list = args.fq1.split(",")
-        self.fq2_list = args.fq2.split(",")
-        self.fq_number = len(self.fq1_list)
-        if self.fq_number != len(self.fq2_list):
-            raise Exception('fastq1 and fastq2 do not have same file number!')
-        if args.chemistry == 'auto':
-            ch = Chemistry(args.fq1)
-            self.chemistry_list = ch.check_chemistry()
-        else:
-            self.chemistry_list = [args.chemistry] * self.fq_number
+        super().__init__(args, display_title=display_title)
         # check flv
         for chemistry in self.chemistry_list:
             if chemistry != 'flv':
                 raise Exception('chemistry should be `flv`!')
 
-        self.barcode_corrected_num = 0
-        self.linker_corrected_num = 0
-        self.total_num = 0
-        self.clean_num = 0
-        self.match_num = 0
-        self.no_polyT_num = 0
-        self.lowQual_num = 0
-        self.no_linker_num = 0
-        self.no_barcode_num = 0
-        self.barcode_qual_Counter = Counter()
-        self.umi_qual_Counter = Counter()
+        self.match_num = 0 # read number match with flv_rna
         self.barcode_read_Counter = Counter()
-        self.pattern = args.pattern
-        self.linker = args.linker
-        self.whitelist = args.whitelist
-        self.lowNum = args.lowNum
-        self.lowQual = args.lowQual
-        self.allowNoPolyT = args.allowNoPolyT
-        self.allowNoLinker = args.allowNoLinker
-        self.nopolyT = args.nopolyT  # true == output nopolyT reads
-        self.noLinker = args.noLinker
         self.match_barcodes, _ = utils.get_barcode_from_match_dir(args.match_dir)
 
-        # out file
-        if args.gzip:
-            suffix = ".gz"
-        else:
-            suffix = ""
-        self.out_fq2 = f'{self.out_prefix}_2.fq{suffix}'
-        self.out_fq1 = f'{self.out_prefix}_1.fq{suffix}'
-        if self.nopolyT:
-            self.nopolyT_1 = f'{self.out_prefix}_noPolyT_1.fq'
-            self.nopolyT_2 = f'{self.out_prefix}_noPolyT_2.fq'
-        if self.noLinker:
-            self.noLinker_1 = f'{self.out_prefix}_noLinker_1.fq'
-            self.noLinker_2 = f'{self.out_prefix}_noLinker_2.fq'
 
     @utils.add_log
     def run(self):
@@ -120,7 +81,7 @@ class Barcode(Step):
             # get linker and whitelist
             bc_pattern = PATTERN_DICT[chemistry]
             if (bc_pattern):
-                linker_file, whitelist_file = get_scope_bc(chemistry)
+                linker_file, whitelist_file = Barcode.get_scope_bc(chemistry)
             else:
                 bc_pattern = self.pattern
                 linker_file = self.linker
@@ -128,7 +89,7 @@ class Barcode(Step):
             if not bc_pattern:
                 raise Exception("invalid bc_pattern!")
 
-            pattern_dict = parse_pattern(bc_pattern)
+            pattern_dict = Barcode.parse_pattern(bc_pattern)
 
             bool_T = True if 'T' in pattern_dict else False
             bool_L = True if 'L' in pattern_dict else False
@@ -136,10 +97,10 @@ class Barcode(Step):
             C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
 
             if bool_whitelist:
-                barcode_set_list, barcode_mismatch_list = parse_whitelist_file(whitelist_file,
+                barcode_set_list, barcode_mismatch_list = Barcode.parse_whitelist_file(whitelist_file,
                                                                                n_mismatch=1, n_repeat=len(pattern_dict['C']))
             if bool_L:
-                linker_set_list, linker_mismatch_list = parse_linker_file(linker_file)
+                linker_set_list, linker_mismatch_list = Barcode.parse_linker_file(linker_file)
 
             with pysam.FastxFile(self.fq1_list[i], persist=False) as fq1, \
                     pysam.FastxFile(self.fq2_list[i], persist=False) as fq2:
@@ -150,8 +111,8 @@ class Barcode(Step):
 
                     # polyT filter
                     if bool_T and (not self.allowNoPolyT):
-                        polyT = get_seq_str(seq1, pattern_dict['T'])
-                        if polyT.count('T') < MIN_T:
+                        polyT = Barcode.get_seq_str(seq1, pattern_dict['T'])
+                        if polyT.count('T') < tools_barcode.MIN_T:
                             self.no_polyT_num += 1
                             if self.nopolyT:
                                 fh1_without_polyT.write(
@@ -161,17 +122,17 @@ class Barcode(Step):
                             continue
 
                     # lowQual filter
-                    C_U_quals_ascii = get_seq_str(
+                    C_U_quals_ascii = Barcode.get_seq_str(
                         qual1, pattern_dict['C'] + pattern_dict['U'])
                     # C_U_quals_ord = [ord(q) - 33 for q in C_U_quals_ascii]
-                    if lowQual > 0 and low_qual(C_U_quals_ascii, lowQual, lowNum):
+                    if lowQual > 0 and Barcode.low_qual(C_U_quals_ascii, lowQual, lowNum):
                         self.lowQual_num += 1
                         continue
 
                     # linker filter
                     if bool_L and (not self.allowNoLinker):
-                        seq_str = get_seq_str(seq1, pattern_dict['L'])
-                        bool_valid, bool_corrected, _ = check_seq_mismatch(
+                        seq_str = Barcode.get_seq_str(seq1, pattern_dict['L'])
+                        bool_valid, bool_corrected, _ = Barcode.check_seq_mismatch(
                             [seq_str], linker_set_list, linker_mismatch_list)
                         if not bool_valid:
                             self.no_linker_num += 1
@@ -185,10 +146,9 @@ class Barcode(Step):
                             self.linker_corrected_num += 1
 
                     # barcode filter
-                    seq_list = get_seq_list(seq1, pattern_dict, 'C')
-                    # flv barcode is reverse complement of the flv_rna barcode
+                    seq_list = Barcode.get_seq_list(seq1, pattern_dict, 'C')
                     if bool_whitelist:
-                        bool_valid, bool_corrected, corrected_seq = check_seq_mismatch(
+                        bool_valid, bool_corrected, corrected_seq = Barcode.check_seq_mismatch(
                             seq_list, barcode_set_list, barcode_mismatch_list)
 
                         if not bool_valid:
@@ -210,7 +170,7 @@ class Barcode(Step):
                     if cb in self.match_barcodes:
                         self.match_num += 1
                         if self.barcode_read_Counter[cb] <= 80000:
-                            umi = get_seq_str(seq1, pattern_dict['U'])
+                            umi = Barcode.get_seq_str(seq1, pattern_dict['U'])
                             qual = 'F' * len(cb + umi)
                             out_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
                             out_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual}\n')
@@ -237,11 +197,11 @@ class Barcode(Step):
                 'no valid reads found! please check the --chemistry parameter.')
 
         # stat
-        BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= ord2chr(
+        BarcodesQ30 = sum([self.barcode_qual_Counter[k] for k in self.barcode_qual_Counter if k >= Barcode.ord2chr(
             30)]) / float(sum(self.barcode_qual_Counter.values())) * 100
         BarcodesQ30 = round(BarcodesQ30, 2)
         BarcodesQ30_display = f'{BarcodesQ30}%'
-        UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= ord2chr(
+        UMIsQ30 = sum([self.umi_qual_Counter[k] for k in self.umi_qual_Counter if k >= Barcode.ord2chr(
             30)]) / float(sum(self.umi_qual_Counter.values())) * 100
         UMIsQ30 = round(UMIsQ30, 2)
         UMIsQ30_display = f'{UMIsQ30}%'

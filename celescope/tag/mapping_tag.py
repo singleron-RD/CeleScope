@@ -7,7 +7,7 @@ import pysam
 
 from celescope.tools import utils
 import celescope.tools.barcode as Barcode
-from celescope.tools.barcode import parse_pattern
+from celescope.tools.barcode import Barcode
 from celescope.tools.step import Step, s_common
 
 
@@ -112,7 +112,7 @@ class Mapping_tag(Step):
             self.linker_dict, self.linker_length = utils.read_fasta(self.linker_fasta, equal=True)
         else:
             self.linker_dict, self.linker_length = {}, 0
-        self.pattern_dict = parse_pattern(self.fq_pattern)
+        self.pattern_dict = Barcode.parse_pattern(self.fq_pattern)
 
         # check barcode length
         barcode1 = self.pattern_dict["C"][0]
