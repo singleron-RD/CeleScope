@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np 
 import subprocess
 import glob
 
@@ -194,7 +193,7 @@ class Annotation(Step):
         except AttributeError:
             print("rds file and type file do not exist" + "\n" )
         except ZeroDivisionError:
-            print(f"Not found auto-assigned T/B cell in matched sc-RNA")
+            print("Not found auto-assigned T/B cell in matched sc-RNA")
 
 
 @utils.add_log
