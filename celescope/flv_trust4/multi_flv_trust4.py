@@ -44,19 +44,17 @@ class Multi_flv_trust4(Multi):
     def assemble(self, sample):
         step = 'assemble'
         cmd_line = self.get_cmd_line(step, sample)
-        match_fq1 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_1.fq'
-        match_fq2 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
+        candidate_fq = f'{self.outdir_dic[sample]["mapping"]}/{sample}_bcrtcr.fq'
         cmd = (
             f'{cmd_line} '
-            f'--match_fq1 {match_fq1} '
-            f'--match_fq2 {match_fq2} '
+            f'--candidate_fq {candidate_fq} '
         )
         self.process_cmd(cmd, step, sample, m=30, x=self.args.thread)
     
     def summarize(self, sample):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
-        assemble_out = f'{self.outdir_dic[sample]["assemble"]}'
+        assemble_out = f'{self.outdir_dic[sample]["assemble"]}/assemble'
         fq2 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd = (
             f'{cmd_line} '
@@ -66,14 +64,14 @@ class Multi_flv_trust4(Multi):
         )
         self.process_cmd(cmd, step, sample, m=15, x=1)
 
-    def mapping_annotation(self,sample):
-        step = 'mapping_annotation'
+    def annotation(self,sample):
+        step = 'annotation'
         cmd_line = self.get_cmd_line(step,sample)
-        contig_file = f'{self.outdir_dic[sample]["summarize"]}/{sample}_filtered_contig.csv'
+        summarize_out = f'{self.outdir_dic[sample]["summarize"]}'
         match_dir = f'{self.col4_dict[sample]}'
         cmd = (
             f'{cmd_line} '
-            f'--contig_file {contig_file} '
+            f'--summarize_out {summarize_out} '
             f'--match_dir {match_dir} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)

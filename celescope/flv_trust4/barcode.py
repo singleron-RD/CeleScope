@@ -35,6 +35,7 @@ class Barcode(tools_barcode.Barcode):
                 raise Exception('chemistry should be `flv`!')
 
         self.match_num = 0 # read number match with flv_rna
+        self.match_cbs = set() # barcode number match with flv_rna
         self.barcode_read_Counter = Counter()
         self.match_barcodes, _ = utils.get_barcode_from_match_dir(args.match_dir)
 
@@ -104,9 +105,9 @@ class Barcode(tools_barcode.Barcode):
                         if polyT.count('T') < tools_barcode.MIN_T:
                             self.no_polyT_num += 1
                             if self.nopolyT:
-                                fh1_without_polyT.write(
+                                Barcode.fh1_without_polyT.write(
                                     '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                                fh2_without_polyT.write(
+                                Barcode.fh2_without_polyT.write(
                                     '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                             continue
 
@@ -126,9 +127,9 @@ class Barcode(tools_barcode.Barcode):
                         if not bool_valid:
                             self.no_linker_num += 1
                             if self.noLinker:
-                                fh1_without_linker.write(
+                                Barcode.fh1_without_linker.write(
                                     '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                                fh2_without_linker.write(
+                                Barcode.fh2_without_linker.write(
                                     '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                             continue
                         elif bool_corrected:
@@ -158,6 +159,7 @@ class Barcode(tools_barcode.Barcode):
 
                     if cb in self.match_barcodes:
                         self.match_num += 1
+                        self.match_cbs.add(cb)
                         if self.barcode_read_Counter[cb] <= 80000:
                             umi = Barcode.get_seq_str(seq1, pattern_dict['U'])
                             qual = 'F' * len(cb + umi)
@@ -178,6 +180,12 @@ class Barcode(tools_barcode.Barcode):
             value=self.match_num,
             total=self.total_num,
             help_info='reads match with flv_rna cell barcodes'
+        )
+
+        self.add_metric(
+            name='Matched Barcodes',
+            value=len(self.match_cbs),
+            help_info='barcodes match with flv_rna'
         )
 
 

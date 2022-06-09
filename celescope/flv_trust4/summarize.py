@@ -1,26 +1,21 @@
 import pandas as pd
 import pysam
 import copy
+import subprocess
 
 from collections import defaultdict
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.step import Step, s_common
-from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
+from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN, TOOLS_DIR
 from celescope.tools.emptydrop_cr import get_plot_elements
 
 
-<<<<<<< HEAD
-assembled_suffix = 'assembled_reads.fa'
-trust_report_suffix = 'report_filter.tsv'
-annot_suffix = 'annot.fa'
-barcode_report_suffix = 'barcode_report.tsv'
-barcode_filter_report_suffix = 'barcode_filter_report.tsv'
-=======
-
-ASSEMBLE_FA_SUFFIX = 'assembled_reads.fa'
-TRUST_REPORT_FILTER_SUFFIX  = 'report_filter.tsv'
->>>>>>> 99b37d167a7b5f0f5d9efef3f9a4eb7d036ba2dd
+ASSEMBLE_SUFFIX = 'assembled_reads.fa'
+ANNOTATE_SUFFIX = 'annotate.fa'
+TRUST_REPORT_SUFFIX = 'filter_report.tsv'
+BARCODE_REPORT_SUFFIX = 'barcode_report.tsv'
+BARCODE_REPORT_FILTER_SUFFIX = 'barcode_filter_report.tsv'
 
 
 def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcodes=None, weight=6, coef=5, 
@@ -65,26 +60,20 @@ class Summarize(Step):
     - `04.summarize/{sample}_filtered_contig.fasta` Assembled contig sequences after filter.
     """
     def __init__(self, args, display_title=None):
-        super().__init__(args, display_title=display_title)
+        Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
         self.fq2 = args.fq2
         self.diffuseFrac = args.diffuseFrac
-<<<<<<< HEAD
-        self.assembled_fa = f'{args.assemble_out}/{self.sample}_{assembled_suffix}'
-        self.trust_report = f'{args.assemble_out}/{self.sample}_{trust_report_suffix}'
-        self.annot = f'{args.assemble_out}/{self.sample}_{annot_suffix}'
-=======
-        self.assembled_fa = f'{args.assemble_out}/{self.sample}_{ASSEMBLE_FA_SUFFIX}'
-        self.trust_report = f'{args.assemble_out}/{self.sample}_reportfl.tsv'
-        self.annot = f'{args.assemble_out}/{self.sample}_annot.fa'
->>>>>>> 99b37d167a7b5f0f5d9efef3f9a4eb7d036ba2dd
+        self.assembled_fa = f'{args.assemble_out}/{self.sample}_{ASSEMBLE_SUFFIX}'
+        self.trust_report = f'{args.assemble_out}/{self.sample}_{TRUST_REPORT_SUFFIX}'
+        self.annot = f'{args.assemble_out}/{self.sample}_{ANNOTATE_SUFFIX}'
 
         # if --diffuseFrac provided
         if self.diffuseFrac:
-            self.barcode_report = f'{args.assemble_out}/{self.sample}_{barcode_filter_report_suffix}'
+            self.barcode_report = f'{args.assemble_out}/{self.sample}_{BARCODE_REPORT_FILTER_SUFFIX}'
         else:
-            self.barcode_report = f'{args.assemble_out}/{self.sample}_{barcode_report_suffix}'
+            self.barcode_report = f'{args.assemble_out}/{self.sample}_{BARCODE_REPORT_SUFFIX}'
         
         self.coef = int(args.coef)
         self.target_weight = args.target_weight
@@ -96,7 +85,6 @@ class Summarize(Step):
 
         self.matrix_file = utils.get_matrix_dir_from_match_dir(args.match_dir)
         self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
-        self.record_file = f'{self.outdir}/Cell_num.txt'
     
     @staticmethod
     def _parse_seqtype(seqtype):
@@ -108,6 +96,17 @@ class Summarize(Step):
         """
         return CHAIN[seqtype], PAIRED_CHAIN[seqtype]
     
+    @staticmethod
+    @utils.add_log
+    def convert_barcode_report(barcode_report, outdir):
+        cmd = (
+            f'{TOOLS_DIR}/trust-barcoderep-to-10X.pl '
+            f'{barcode_report} '
+            f'{outdir} '
+        )
+        Summarize.convert_barcode_report.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+    
     def add_cell_num_metric(self, df, name):
         """
         add cell number after each filtering step to .metrics.json
@@ -117,19 +116,13 @@ class Summarize(Step):
         self.add_metric(name, cell_num, show=False)
         return cell_num
 
-    def get_cell_num_from_report(self, report_file):
-        """Get cell number from trust report
-        """
-        report_df = pd.read_csv(report_file, sep='\t')
-        return len(set(report_df.barcode))
-
-
     @utils.add_log
     def parse_contig_file(self):
         """
-        parse all contig annotation file from barcode report.
+        Convert to all_contig_annotation file in 10X format.
+        Generate all_contig_fasta file.
         """
-        convert_barcode_report(self.barcode_report, outdir=f'{self.outdir}/{self.sample}')
+        self.convert_barcode_report(self.barcode_report, outdir=f'{self.outdir}/{self.sample}')
 
         if self.seqtype == 'BCR':
             df = pd.read_csv(f'{self.outdir}/{self.sample}_b.csv')
@@ -143,7 +136,6 @@ class Summarize(Step):
         # add length of each contig. 
         len_dict = dict()
         all_fa = open(f'{self.outdir}/{self.sample}_all_contig.fasta','w')
-
         with pysam.FastxFile(self.annot) as fa:
             for read in fa:
                 len_dict[read.name] = read.comment.split(' ')[0]
@@ -151,11 +143,9 @@ class Summarize(Step):
                     sequence = read.sequence
                     all_fa.write('>' + read.name + '\n' + sequence + '\n')    
         all_fa.close()
-
         df['length'] = df['contig_id'].apply(len_dict.get)
         
         return df
-
 
     @utils.add_log
     def cell_calling(self, df):
@@ -243,7 +233,7 @@ class Summarize(Step):
                 sequence = read.sequence
                 if cb in cell_barcodes:
                     filter_contig_fasta.write('>' + name + '\n' + sequence + '\n')
-                    
+
         filter_contig_fasta.close()
 
     @utils.add_log
@@ -407,7 +397,6 @@ def get_opts_summarize(parser, sub_program):
         type=float,
         default=6.0,
     )
-
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fq2', help='Barcode R2 reads.', required=True)
