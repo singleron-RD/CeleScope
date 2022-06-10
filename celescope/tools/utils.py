@@ -632,7 +632,7 @@ def get_fastx_read_number(fastx_file):
     """
     n = 0
     with pysam.FastxFile(fastx_file) as f:
-        for read in f:
+        for _ in f:
             n += 1
     return n
 

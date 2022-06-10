@@ -17,9 +17,9 @@
     {% include "html/flv_trust4/summarize.html"%}
     {% endif %}
 
-    {% if mapping_annotation_summary is defined %}
-    {% set step_summary = mapping_annotation_summary %}
-    {% include "html/flv_trust4/mapping_annotation.html"%}
+    {% if annotation_summary is defined %}
+    {% set step_summary = annotation_summary %}
+    {% include "html/flv_trust4/annotation.html"%}
     {% endif %}
 
 {% include "html/utils/end.html"%}
