@@ -13,8 +13,8 @@ class Multi_flv_trust4(Multi):
         --outdir ./ \\
         --chemistry flv \\
         --allowNoLinker \\
-        --species GRCm38 \\
-        --thread 10 \\
+        --ref GRCm38 \\
+        --thread 8 \\
         --seqtype BCR \\
     ```
     """
