@@ -1,16 +1,20 @@
 ## Features
 
-- Demultiplex barcodes.
+- Demultiplex barcodes for TRUST4.
 - Filter invalid R1 reads, which includes:
     - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
     - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
     - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
     - Low quality reads: low sequencing quality in barcode and UMI regions.
+    - Write coverage is capped to a maximum of 80,000 reads per barcode.
+    - Include only reads from match barcodes.
+    - Reverse complement the barcode to match with sc-RNA.
 
 ## Output
 
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
 the read name is `{barcode}_{UMI}_{read ID}`.
+- `01.barcode/{sample}_1.fq(.gz)` Write barcode and umi to R1 read(can be directly used as input file of TRUST4).
 ## Arguments
 `--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
 
@@ -52,4 +56,6 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 `--thread` Thread to use.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
+
+`--match_dir` Matched scRNA-seq directory.
 

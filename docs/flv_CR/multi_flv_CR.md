@@ -1,3 +1,30 @@
+## Download and unpack cellranger soft and reference file.
+```
+wget -O cellranger-6.1.2.tar.gz "https://cf.10xgenomics.com/releases/cell-vdj/cellranger-6.1.2.tar.gz?Expires=1646072261&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC12ZGovY2VsbHJhbmdlci02LjEuMi50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2NDYwNzIyNjF9fX1dfQ__&Signature=Z-2m906CV5Rb1snIAga-QDSXYSZ8cNqCj1EECGP4uloU3qH~uCMH42MHf4TNnDL2zAsKA7cXsCsQYz0A9yJdNh7dfRT8ohpuAzASFx5Pj-bkqfw4p2tql55IIaPN0zqxyUuyZ9sfKl5qTQX82LoVolRpiBUL8dF9nr~bA2P1gJZ~xg1QssS7icR5MmTzvKKS5NYkezG8vWaTiEdXU0nuKI2ciZSX5GOMeIRW-YYR7mJwHmBbTVxe0o-uBuUtqor0Y98jdIv8Z~dwMjujRjrEShdCGNixTSonGzeS2~9CXqWquCJIOolqFFkcFHgXkD7ZWNfSXWbTxuF57rCsub98pA__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA"
+
+Reference: human and mouse
+wget https://cf.10xgenomics.com/supp/cell-vdj/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0.tar.gz
+wget https://cf.10xgenomics.com/supp/cell-vdj/refdata-cellranger-vdj-GRCm38-alts-ensembl-5.0.0.tar.gz
+
+tar -xzvf cellranger-6.1.2.tar.gz
+tar -xzvf refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0.tar.gz
+tar -xzvf refdata-cellranger-vdj-GRCm38-alts-ensembl-5.0.0.tar.gz
+```
+
+## Usage
+
+```
+conda activate celescope
+multi_flv_CR \
+    --mapfile ./test.mapfile \
+    --chemistry flv \
+    --mem 10 \
+    --thread 8 \
+    --allowNoLinker \
+    --seqtype TCR \
+    --ref_path "/SGRNJ/Database/script/soft/cellranger/vdj_ref/6.0.0/hs/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0" \
+    --soft_path "/SGRNJ03/randd/cjj/soft/cellranger/cellranger-6.1.2/cellranger" 
+```
 ## Features
 ### barcode
 
@@ -9,13 +36,24 @@
     - Low quality reads: low sequencing quality in barcode and UMI regions.
 
 
-### cutadapt
-- Trim adapters in R2 reads with cutadapt. Default adapters includes:
-    - polyT=A{18}, 18 A bases. 
-    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+### assemble
 
-### mapping_tag
-- Align R2 reads to the tag barcode fasta.
+- TCR/BCR Assemble.
+
+
+### annotation
+
+- V(D)J annotation infomation.
+
+
+### match
+
+- V(D)J results match SC-RNA infomation.
+
+
+### mapping
+
+- Assembled T/B cells Mapping with SC-RNA barcodes.
 
 
 ## Output files
@@ -24,18 +62,31 @@
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
 the read name is `{barcode}_{UMI}_{read ID}`.
 
-### cutadapt
-- `cutadapt.log` Cutadapt output log file.
-- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+### assemble
+- `03.assemble/{sample}/outs/` Recording assemble results.
 
-### mapping_tag
+### annotation
+- `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
 
-- `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
+- `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
 
-    `barcode` cell barcode  
-    `tag_name`  tag name in barcode_fasta  
-    `UMI`   UMI sequence  
-    `read_count` read count per UMI  
+- `clonotypes.csv` High-level descriptions of each clonotype.
+
+### match
+- `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
+
+- `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
+
+- `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
+
+### mapping
+- `{sample}_assign.png` Auto-assigned umap plot in scRNA-Seq library.
+
+- `{sample}_cluster_umap.png` Cluster umap plot in scRNA-Seq library.
+
+- `{sample}_umapplot.png` Umap plot of assembled and un-assembled barcodes in scRNA-Seq library.
+
+- `{sample}_distribution.txt` Number of assembled barcodes in every clusters in scRNA-Seq library.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -112,76 +163,23 @@ use `--steps_run barcode,cutadapt`.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 
-`--output_R1` Output valid R1 reads.
-
 `--gzip` Output gzipped fastq files.
 
-`--adapter_fasta` Addtional adapter fasta file.
+`--output_R1` Output valid R1 reads.
 
-`--minimum_length` Default `20`. Discard processed reads that are shorter than LENGTH.
+`--species` species.
 
-`--nextseq_trim` Default `20`. Quality trimming of reads using two-color chemistry (NextSeq). 
-Some Illumina instruments use a two-color chemistry to encode the four bases. 
-This includes the NextSeq and the NovaSeq. 
-In those instruments, a ‘dark cycle’ (with no detected color) encodes a G. 
-However, dark cycles also occur when sequencing “falls off” the end of the fragment.
-The read then contains a run of high-quality, but incorrect “G” calls at its 3’ end.
+`--soft` cellranger version.
 
-`--overlap` Default `10`. Since Cutadapt allows partial matches between the read and the adapter sequence,
-short matches can occur by chance, leading to erroneously trimmed bases. 
-For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. 
-To reduce the number of falsely trimmed bases, the alignment algorithm requires that 
-at least {overlap} bases match between adapter and read.
+`--ref_path` reference path for cellranger.
 
-`--insert` Default `150`. Read2 insert length.
+`--soft_path` soft path for cellranger.
 
-`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
+`--other_param` Other cellranger parameters.
 
-`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
-`L` linker(common sequences)  
-`C` tag barcode.
+`--not_split_R2` whether split r2.
 
-`--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
-sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
-If no such tag exists, the read is classified as invalid.
+`--mem` memory (G).
 
-You can find the barcode fasta file under `celescope/data/Clindex`
-```
->CLindex_TAG_1
-CGTGTTAGGGCCGAT
->CLindex_TAG_2
-GAGTGGTTGCGCCAT
->CLindex_TAG_3
-AAGTTGCCAAGGGCC
->CLindex_TAG_4
-TAAGAGCCCGGCAAG
->CLindex_TAG_5
-TGACCTGCTTCACGC
->CLindex_TAG_6
-GAGACCCGTGGAATC
->CLindex_TAG_7
-GTTATGCGACCGCGA
->CLindex_TAG_8
-ATACGCAGGGTCCGA
->CLindex_TAG_9
-AGCGGCATTTGGGAC
->CLindex_TAG_10
-TCGCCAGCCAAGTCT
->CLindex_TAG_11
-ACCAATGGCGCATGG
->CLindex_TAG_12
-TCCTCCTAGCAACCC
->CLindex_TAG_13
-GGCCGATACTTCAGC
->CLindex_TAG_14
-CCGTTCGACTTGGTG
->CLindex_TAG_15
-CGCAAGACACTCCAC
->CLindex_TAG_16
-CTGCAACAAGGTCGC
-```
-
-`--linker_fasta` Optional. If provided, it will check the mismatches between linker sequence in R2 reads 
-with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1, the read is classified as invalid.
+`--seqtype` TCR or BCR.
 

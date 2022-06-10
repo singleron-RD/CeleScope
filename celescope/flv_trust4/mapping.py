@@ -10,6 +10,19 @@ CANDIDATE_FQ_SUFFIX = 'bcrtcr.fq'
 
 
 class Mapping(Step):
+    """
+    ## Features
+
+    - Extract candidate reads to assemble.
+
+    ## Output
+    - `02.mapping/{sample}_bcrtcr.fq` All candidate reads(mapped to any V(D)J genes) sequence.
+    - `02.mapping/{sample}_bcrtcr_bc.fa` All candidate reads(mapped to any V(D)J genes) barcode.
+    - `02.mapping/{sample}_bcrtcr_umi.fa` All candidate reads(mapped to any V(D)J genes) umi.
+    - `02.mapping/{sample}_{chain}.fq` Candidate reads(mapped to {chain}) sequence. For BCR: IGH, IGK, IGL, For TCR: TRA, TRB.
+    - `02.mapping/{sample}_{chain}_bc.fa` Candidate reads(mapped to {chain}) barcode. For BCR: IGH, IGK, IGL, For TCR: TRA, TRB.
+    - `02.mapping/{sample}_{chain}_umi.fa` Candidate reads(mapped to {chain}) umi. For BCR: IGH, IGK, IGL, For TCR: TRA, TRB.
+    """
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
