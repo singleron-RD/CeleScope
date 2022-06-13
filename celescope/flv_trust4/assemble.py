@@ -49,11 +49,6 @@ class Assemble(Step):
         self._chains = CHAIN[self.seqtype]
         # total thread may be higher than argument thread
         self._single_thread = math.ceil(self.thread / SPLIT_N_CHUNKS)
-        self._match_reads = self.get_slot_key(
-            slot='metrics',
-            step_name='barcode',
-            key='Valid Matched Reads',
-        )
 
         # outdir
         self.assemble_outdir = f'{self.outdir}/assemble'

@@ -156,7 +156,7 @@ class Annotation(Step):
         """Mapping result with matched scRNA.
         """
         Annotation.run_mapping(
-            self.rds, self.contig, self.sample, self.outdir, self.assign_file
+            self.rds, self.contig_file, self.sample, self.outdir, self.assign_file
             )
 
         meta = pd.read_csv(f'{self.outdir}/{self.sample}_meta.csv')
