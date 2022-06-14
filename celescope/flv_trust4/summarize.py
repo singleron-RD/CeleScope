@@ -49,8 +49,10 @@ def target_cell_calling(df_UMI_sum, expected_target_cell_num=3000, target_barcod
 class Summarize(Step):
     """
     ## Features
-
-    - TCR/BCR full length assembly results.
+    - CDR3 filtering: contain stop condon, length <=5, etc..
+    - If barcode A's two chains CDR3s are identical to another barcode B, and A's chain abundance is significantly lower than B's, filter A.
+    - If `--target_cell_barcode` is provided, the UMI counts of all contigs originated from target cells are multiplied by a weight(default: 6.0) to better distinguish signal from background noise. `--target_cell_barcode` comes from the cell type annotation results of the RNA library.
+    - Cell-calling is similar to the rna cell-calling algorithm.
 
     ## Output
     - `04.summarize/clonetypes.tsv` High-level description for each clonotype.
