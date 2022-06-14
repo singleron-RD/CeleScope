@@ -24,54 +24,18 @@ class VDJ_Mixin(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title)
 
-        self.species = args.species
-        self.soft = args.soft
         self.other_param = args.other_param
         self.not_split_R2 = args.not_split_R2
         self.mem = args.mem
 
-        if args.ref_path and args.soft_path:
-            self.ref_path = args.ref_path
-            self.soft_path = args.soft_path
-        else:
-            self.ref_path, self.soft_path = self.get_ref_path(self.soft, self.species), self.get_soft_path(self.soft)
+        self.ref_path = args.ref_path
+        self.soft_path = args.soft_path
 
         self.BARCODES_10X_FILE = os.path.dirname(self.soft_path) + "/lib/python/cellranger/barcodes/737K-august-2016.txt"
         self.out_fq1_file = f'{self.outdir}/{self.sample}_S1_L001_R1_001.fastq.gz'
         self.out_fq2_file = f'{self.outdir}/{self.sample}_S1_L001_R2_001.fastq.gz'
         self.barcode_correspondence_file = f'{self.outdir}/barcode_correspond.txt'
 
-    @staticmethod
-    def get_ref_path(soft, species):
-        """Reutrn cellranger reference path
-
-        :param soft: soft version
-        :param species: species info
-        :raises NotFoundPath
-        :return ref_path
-        """
-        try:
-            ref_path = glob.glob(f'/SGRNJ/Database/script/soft/cellranger/vdj_ref/{soft}/{species}/refdata*')
-        except IndexError as e:
-            raise NotFoundPath from e
-        
-        ref_path = [i for i in ref_path if os.path.isdir(i)][0]
-        return ref_path
-
-    @staticmethod
-    def get_soft_path(soft):
-        """Return cellranger soft path
-
-        :param soft: soft version
-        :raises NotFoundPath
-        :return soft_path
-        """
-        try:
-            soft_path = glob.glob(f'/SGRNJ/Database/script/soft/cellranger/cellranger-{soft}/cellranger')[0]
-        except IndexError as e:
-            raise NotFoundPath from e
-        
-        return soft_path
     
     @staticmethod
     def reversed_compl(seq):
@@ -205,12 +169,8 @@ class VDJ_Mixin(Step):
 
 
 def get_opts_VDJ_Mixin(parser):
-    parser.add_argument('--species', help='species',
-                        choices=['hs', 'mmu'], default='hs')
-    parser.add_argument('--soft', help='cellranger version', choices=['3.0.2', '3.1.0', '4.0.0', '6.0.0'],
-                        default='4.0.0')
-    parser.add_argument('--ref_path', help='reference path for cellranger')
-    parser.add_argument('--soft_path', help='soft path for cellranger')
+    parser.add_argument('--ref_path', help='reference path for cellranger', required=True)
+    parser.add_argument('--soft_path', help='soft path for cellranger', required=True)
     parser.add_argument('--other_param', help='Other cellranger parameters.', default="")
     parser.add_argument('--not_split_R2', help='whether split r2',action='store_true')
     parser.add_argument('--mem', help='memory (G)', default=10)

@@ -4,13 +4,13 @@ import pysam
 from collections import defaultdict
 
 from celescope.tools import utils
-from celescope.tools.step import s_common
+from celescope.tools.step import Step, s_common
 from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.plotly_plot import Bar_plot
 from celescope.flv_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
 
 
-class Summarize(VDJ_Mixin):
+class Summarize(Step):
     """
     Features
 
@@ -57,6 +57,7 @@ class Summarize(VDJ_Mixin):
             self.pair = ['IGH_IGL', 'IGH_IGK']
 
         self.not_split_R2 = args.not_split_R2
+
     
     @staticmethod
     def get_productive_fasta(in_fasta, out_fasta, productive_contig_id):
@@ -225,7 +226,7 @@ class Summarize(VDJ_Mixin):
         for read in all_bam:
             cb = read.get_tag('CB')
             umi = read.get_tag('UB')
-            new_cb = self.reversed_compl(barcode_dict[cb.split('-')[0]])
+            new_cb = utils.reverse_complement(barcode_dict[cb.split('-')[0]])
             dic_umi[new_cb].add(umi)
 
         df_umi = pd.DataFrame()
@@ -273,9 +274,9 @@ def summarize(args):
 
 
 def get_opts_summarize(parser, sub_program):
-    get_opts_VDJ_Mixin(parser)
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
     if sub_program:
         s_common(parser)
         parser.add_argument('--barcode_dict', help='10X barcode correspond sgr barcode', required=True)
+        parser.add_argument('--not_split_R2', help='not split R2 reads')
     return parser
