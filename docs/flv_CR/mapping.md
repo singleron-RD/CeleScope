@@ -1,30 +1,13 @@
 ## Features
 
-- Assembled T/B cells Mapping with SC-RNA barcodes.
+- Output assembled T/B cells mapping to transcriptome if rds and auto-assign info exist in match directory.
 
 ## Output
-- `{sample}_assign.png` Auto-assigned umap plot in scRNA-Seq library.
-
-- `{sample}_cluster_umap.png` Cluster umap plot in scRNA-Seq library.
-
-- `{sample}_umapplot.png` Umap plot of assembled and un-assembled barcodes in scRNA-Seq library.
-
-- `{sample}_distribution.txt` Number of assembled barcodes in every clusters in scRNA-Seq library.
+- `05.annotation/{sample}_assign.png` Umap plot of Auto-assigned celltype in transcriptome.
+- `05.annotation/{sample}_cluster_umap.png` Umap plot of Cluster in transcriptome.
+- `05.annotation/{sample}_umapplot.png` Umap plot of assembled barcodes marked as read color.
+- `05.annotation/{sample}_distribution.txt` Number of assembled barcodes in every clusters.
 ## Arguments
-`--species` species.
-
-`--soft` cellranger version.
-
-`--ref_path` reference path for cellranger.
-
-`--soft_path` soft path for cellranger.
-
-`--other_param` Other cellranger parameters.
-
-`--not_split_R2` whether split r2.
-
-`--mem` memory (G).
-
 `--seqtype` TCR or BCR.
 
 `--outdir` Output diretory.
@@ -36,4 +19,6 @@
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
 `--match_dir` scRNA-seq match directory.
+
+`--summarize_out` summarize output directory.
 

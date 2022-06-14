@@ -2,17 +2,20 @@ import pandas as pd
 import pysam
 
 from celescope.tools import utils
-from celescope.tools.step import s_common
-from celescope.flv_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
+from celescope.tools.step import s_common, Step
 
 
-class Annotation(VDJ_Mixin):
+
+class Annotation(Step):
     """
     ## Features
 
-    - V(D)J annotation infomation.
+    - Convert 10X barcode of assemble result back to SGR barcode.
+
+    - Generate VDJ annotation metrics in html.
 
     ## Output
+
     - `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
 
     - `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
@@ -22,9 +25,10 @@ class Annotation(VDJ_Mixin):
     """
 
     def __init__(self, args, display_title=None):
-        super().__init__(args, display_title=display_title)
+        Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
+        self.version = args.version
         self.barcode_dict = args.barcode_dict
 
         if self.seqtype == 'TCR':
@@ -34,71 +38,70 @@ class Annotation(VDJ_Mixin):
             self.chains = ['IGH', 'IGL', 'IGK']
             self.pair = ['IGH_IGL', 'IGH_IGK']
 
-        self.outs = f'{self.outdir}/../03.assemble/{self.sample}/outs'
+        self.outs = args.assemble_out
         self.all_bam = f'{self.outs}/all_contig.bam'
         self.filter_contig = f'{self.outs}/filtered_contig_annotations.csv'
-        self.filter_fa = f'{self.outs}/filtered_contig.fasta'
-
-    @staticmethod
-    def get_df_productive(df, seqtype):
-        """Get unique productive contig for each chain.
-
-        :param df: filtered contig annotations file.
-        :param seqtype: TCR or BCR.
-        :return: productive chain pair. eg: TRA/TRB or IGH/IGL, IGH/IGK.
-        """
-        df_productive = df[(df['full_length'] == True) & (df['productive'] == True)]
-        
-        if seqtype == "BCR":
-            df_chain_heavy = df_productive[ (df_productive['chain'] == 'IGH') ] 
-            df_chain_light = df_productive[ (df_productive['chain'] == 'IGL')|(df_productive['chain'] =='IGK')]
-            df_chain_heavy.drop_duplicates(['barcode'], inplace=True)
-            df_chain_light.drop_duplicates(['barcode'], inplace=True)
-            df_productive = pd.merge(df_chain_heavy, df_chain_light, on = 'barcode', how = 'inner')
-
-        else:
-            df_TRA = df_productive[ (df_productive['chain'] == 'TRA') ]
-            df_TRB = df_productive[ (df_productive['chain'] == 'TRB') ]
-            df_TRA.drop_duplicates(['barcode'], inplace=True)
-            df_TRB.drop_duplicates(['barcode'], inplace=True)
-            df_productive = pd.merge(df_TRA, df_TRB, on = 'barcode', how = 'inner')
-
-        return df_productive
+        self.filter_fasta = f'{self.outs}/filtered_contig.fasta'
     
     @utils.add_log
     def convert_barcode(self):
-        """Convert 10X barcode to SGR barcode
-
-        :return: filter contig annotations in SGR barcode format.
+        """
+        Convert 10X barcode to SGR barcode format.
+        return: filter contig annotations in SGR barcode format.
         """
 
         barcode_df = pd.read_csv(self.barcode_dict, sep='\t', index_col=1)
         barcode_dict = barcode_df.to_dict()['sgr']
         filter_contig = pd.read_csv(f'{self.filter_contig}', sep=',', index_col=None)
 
-        filter_contig['barcode'] = filter_contig['barcode'].apply(lambda x: self.reversed_compl(barcode_dict[x.split('-')[0]]))
-        filter_contig['contig_id'] = filter_contig['contig_id'].apply(lambda x: self.reversed_compl(
+        filter_contig['barcode'] = filter_contig['barcode'].apply(lambda x: utils.reverse_complement(barcode_dict[x.split('-')[0]]))
+        filter_contig['contig_id'] = filter_contig['contig_id'].apply(lambda x: utils.reverse_complement(
             barcode_dict[x.split('-')[0]])+'_'+x.split('_')[1]+'_'+x.split('_')[2])
-        if self.soft == '3.0.2':
+        if self.version == '3.0.2':
             filter_contig.productive = filter_contig.productive.replace({'True': True, 'None': False})
 
         filter_contig.to_csv(f'{self.outdir}/filtered_contig_annotations.csv', sep=',', index=False)
     
-        in_fa = pysam.FastxFile(self.filter_fa)
+        input_fa = pysam.FastxFile(self.filter_fasta)
         out_fa = open(f'{self.outdir}/filtered_contig.fasta', 'w')
-        for entry in in_fa:
+        for entry in input_fa:
             name = entry.name
             seq = entry.sequence
             attrs = name.split('_')
-            new_name = self.reversed_compl(barcode_dict[attrs[0].split('-')[0]]) + '_' + attrs[1] + '_' + attrs[2]
+            new_name = utils.reverse_complement(barcode_dict[attrs[0].split('-')[0]]) + '_' + attrs[1] + '_' + attrs[2]
             out_fa.write(f'>{new_name}\n{seq}\n')
         out_fa.close()
 
         return filter_contig
+
+    @staticmethod
+    def get_df_productive(df, seqtype):
+        """
+        Get unique productive contig for each chain.
+
+        :param df: filtered contig annotations file.
+        :param seqtype: TCR or BCR.
+        :return: productive chain pair. eg: TRA/TRB or IGH/IGL, IGH/IGK.
+        """
+        
+        df_productive = df[df['productive'] == True]
+        
+        if seqtype == "BCR":
+            df_chain_heavy = df_productive[(df_productive['chain'] == 'IGH')] 
+            df_chain_light = df_productive[(df_productive['chain'] == 'IGL') | (df_productive['chain'] =='IGK')]
+        else:
+            df_chain_heavy = df_productive[df_productive['chain'] == 'TRA']
+            df_chain_light = df_productive[df_productive['chain'] == 'TRB']
+        df_chain_heavy.drop_duplicates(['barcode'], inplace=True)
+        df_chain_light.drop_duplicates(['barcode'], inplace=True)
+        df_productive = pd.merge(df_chain_heavy, df_chain_light, on = 'barcode', how = 'inner')
+
+        return df_productive
     
     @utils.add_log
     def gen_clonotypes(self):
-        """Generate clonotypes.csv file"""
+        """Generate clonotypes.csv file
+        """
 
         raw_clonotypes = pd.read_csv(f'{self.outs}/clonotypes.csv', sep=',', index_col=None)
         raw_clonotypes['ClonotypeID'] = raw_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
@@ -154,7 +157,7 @@ class Annotation(VDJ_Mixin):
             self.add_metric(
                 name = f'Cells With V-J Spanning {chain} Contig',
                 value = len(set(filter_contig[(filter_contig['full_length'] == True) &
-                                 (filter_contig['chain'] == chain)].barcode.tolist())),
+                                 (filter_contig['chain'] == chain)].barcode)),
                 total = cell_nums,
                 help_info = f"Fraction of cell-associated barcodes with at least one contig spanning the 5' end of the V region to the 3' end of the J region for {chain}"
             )
@@ -179,9 +182,11 @@ def annotation(args):
 
 
 def get_opts_annotation(parser, sub_program):
-    get_opts_VDJ_Mixin(parser)
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    parser.add_argument('--version', help='cellranger version', choices=['3.0.2', '3.1.0', '4.0.0', '6.0.0'],
+                        default='4.0.0')
     if sub_program:
         s_common(parser)
         parser.add_argument('--barcode_dict', help='10X barcode correspond sgr barcode', required=True)
+        parser.add_argument('--assemble_out', help='directory of cellranger assemble result', required=True)
     return parser

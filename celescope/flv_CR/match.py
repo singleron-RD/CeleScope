@@ -3,19 +3,18 @@ import pysam
 
 from celescope.flv_CR.annotation import Annotation
 from celescope.tools import utils
-from celescope.tools.step import s_common
-from celescope.flv_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
+from celescope.tools.step import s_common, Step
 
 
 class IncorrectMatchDir(Exception):
     pass
 
 
-class Match(VDJ_Mixin):
+class Match(Step):
     """
     ## Features
 
-    - V(D)J results match SC-RNA infomation.
+    - Assembled V(D)J results match with SC-RNA.
 
     ## Output
     - `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
@@ -26,10 +25,10 @@ class Match(VDJ_Mixin):
 
     """
     def __init__(self, args, display_title=None):
-        super().__init__(args, display_title=display_title)
+        Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
-        self.barcode_dict = args.barcode_dict
+        self.match_cell_barcodes, _ = utils.get_barcode_from_match_dir(args.match_dir)
 
         if self.seqtype == 'TCR':
             self.chains = ['TRA', 'TRB']
@@ -38,26 +37,16 @@ class Match(VDJ_Mixin):
             self.chains = ['IGH', 'IGL', 'IGK']
             self.pair = ['IGH_IGL', 'IGH_IGK']
 
-        self.match_dir = args.match_dir
+        self.filter_contig = f'{args.annotation_out}/filtered_contig_annotations.csv'
+        self.filter_fa = f'{args.annotation_out}/filtered_contig.fasta'
 
-        self.filter_contig = f'{self.outdir}/../04.annotation/filtered_contig_annotations.csv'
-        self.filter_fa = f'{self.outdir}/../03.assemble/{self.sample}/outs/filtered_contig.fasta'
-
+        # out
         self.match_fa = f'{self.outdir}/match_contig.fasta'
         
-        match_bool = True
-        if (not args.match_dir) or (args.match_dir == "None"):
-            match_bool = False
-        if match_bool:
-            try:
-                self.match_cell_barcodes, _match_cell_number = utils.get_barcode_from_match_dir(
-                    args.match_dir)
-            except IndexError as e:
-                raise IncorrectMatchDir("Incorrect match_dir, Please Check the match_dir path") from e
-
     @utils.add_log
     def gen_match_clonotypes(self, df_match):
-        """Generate clonotypes file where barcodes match with scRNA
+        """
+        Generate clonotypes file where barcodes match with scRNA
 
         :param df_match: filter contig annotation where barcodes match with scRNA.
         """
@@ -89,18 +78,15 @@ class Match(VDJ_Mixin):
     def gen_match_fa(self):
         """Generate fasta file where barcodes match with scRNA"""
 
-        barcode_df = pd.read_csv(self.barcode_dict, sep='\t', index_col=1)
-        barcode_dict = barcode_df.to_dict()['sgr']
         fa = pysam.FastxFile(self.filter_fa)
         match_fa = open(self.match_fa, 'w')
 
         for entry in fa:
             name = entry.name
             attrs = name.split('_')
-            cb = attrs[0].split('-')[0]
-            new_cb = self.reversed_compl(barcode_dict[cb])
-            if new_cb in self.match_cell_barcodes:
-                new_name = new_cb + '_' + attrs[1] + '_' + attrs[2]
+            cb = attrs[0]
+            if cb in self.match_cell_barcodes:
+                new_name = cb + '_' + attrs[1] + '_' + attrs[2]
                 seq = entry.sequence
                 match_fa.write(f'>{new_name}\n{seq}\n')
         match_fa.close() 
@@ -132,10 +118,9 @@ def match(args):
 
 
 def get_opts_match(parser, sub_program):
-    get_opts_VDJ_Mixin(parser)
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
     if sub_program:
         s_common(parser)
-        parser.add_argument('--barcode_dict', help='10X barcode correspond sgr barcode', required=True)
         parser.add_argument('--match_dir', help='scRNA-seq match directory', required=True)
+        parser.add_argument('--annotation_out', help='annotation result in SGR barcode', required=True)
     return parser
