@@ -59,9 +59,11 @@ class Multi_flv_CR(Multi):
         step = 'annotation'
         cmd_line = self.get_cmd_line(step, sample)
         barcode_dict = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
-        cmd=(
+        assemble_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}/outs'
+        cmd = (
             f'{cmd_line} '
             f'--barcode_dict {barcode_dict} '
+            f'--assemble_out {assemble_out} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
@@ -69,12 +71,12 @@ class Multi_flv_CR(Multi):
     def match(self,sample):
         step = 'match'
         cmd_line = self.get_cmd_line(step, sample)
-        barcode_dict = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
+        annotation_out = f'{self.outdir_dic[sample]["annotation"]}'
         match_dir = f'{self.col4_dict[sample]}'
         cmd = (
             f'{cmd_line} '
-            f'--barcode_dict {barcode_dict} '
             f'--match_dir {match_dir} '
+            f'--annotation_out {annotation_out} '
         )
         self.process_cmd(cmd, step, sample, m=8, x= self.args.thread)
     
@@ -82,9 +84,15 @@ class Multi_flv_CR(Multi):
     def summarize(self, sample):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
+        assemble_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}/outs'
+        annotation_out = f'{self.outdir_dic[sample]["annotation"]}'
+        match_out = f'{self.outdir_dic[sample]["match"]}'
         barcode_dict = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
-        cmd=(
+        cmd = (
             f'{cmd_line} '
+            f'--assemble_out {assemble_out} '
+            f'--annotation_out {annotation_out} '
+            f'--match_out {match_out} '
             f'--barcode_dict {barcode_dict} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
@@ -94,9 +102,11 @@ class Multi_flv_CR(Multi):
         step = 'mapping'
         cmd_line = self.get_cmd_line(step,sample)
         match_dir = f'{self.col4_dict[sample]}'
-        cmd=(
+        summarize_out = f'{self.outdir_dic[sample]["summarize"]}'
+        cmd = (
             f'{cmd_line} '
             f'--match_dir {match_dir} '
+            f'--summarize_out {summarize_out} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 

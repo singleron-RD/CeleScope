@@ -1,13 +1,14 @@
 ## Features
 
-- TCR/BCR Assemble.
+- TCR/BCR Assemble by Cellranger.
 
 ## Output
-- `03.assemble/{sample}/outs/` Recording assemble results.
+
+- `03.assemble/{sample}` Cellranger vdj results.
 ## Arguments
 `--species` species.
 
-`--soft` cellranger version.
+`--version` cellranger version.
 
 `--ref_path` reference path for cellranger.
 
@@ -15,9 +16,11 @@
 
 `--other_param` Other cellranger parameters.
 
-`--not_split_R2` whether split r2.
+`--mem` memory(G).
 
-`--mem` memory (G).
+`--seqtype` TCR or BCR.
+
+`--not_split_R2` whether split r2.
 
 `--outdir` Output diretory.
 

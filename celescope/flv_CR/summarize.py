@@ -7,17 +7,18 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.plotly_plot import Bar_plot
-from celescope.flv_CR.VDJ_Mixin import VDJ_Mixin, get_opts_VDJ_Mixin
 
 
 class Summarize(Step):
     """
-    Features
+    ##Features
 
     - Summarize contig and clonetypes infomation.
 
+    - Generate Mapped reads and Cells metrics, barcode rank plot, clonotypes table and clonotypes frequency barplot in html.
+
     Output
-    - `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
+    - `filtered_contig_annotations.csv` High-level annotations of each high-confidence, cellular contig.
 
     - `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
 
@@ -32,22 +33,21 @@ class Summarize(Step):
     """
 
     def __init__(self, args, display_title=None):
-        super().__init__(args, display_title=display_title)
+        Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
         self.barcode_dict = args.barcode_dict
+        self.not_split_R2 = args.not_split_R2
+        self.assemble_out = args.assemble_out
+        self.annotation_out = args.annotation_out
+        self.match_out = args.match_out
 
-        self.all_bam = f'{self.outdir}/../03.assemble/{self.sample}/outs/all_contig.bam'
-        self.annotation = f'{self.outdir}/../04.annotation'
-        self.match = f'{self.outdir}/../05.match'
-        self.productive = f'{self.outdir}/productive'
-
-        self.filter_contig = pd.read_csv(f'{self.annotation}/filtered_contig_annotations.csv')
-        self.match_contig = pd.read_csv(f'{self.match}/match_contigs.csv')
-        self.filter_contig_fasta = f'{self.annotation}/filtered_contig.fasta'
-        self.match_contig_fasta = f'{self.match}/match_contig.fasta'
-
-        self.clonotable = f'{self.outdir}/../03.assemble/{self.sample}/outs/clonotypes.csv'
+        self.all_bam = f'{self.assemble_out}/all_contig.bam'
+        self.clono_table = f'{self.assemble_out}/clonotypes.csv'
+        self.filter_contig = pd.read_csv(f'{self.annotation_out}/filtered_contig_annotations.csv')
+        self.match_contig = pd.read_csv(f'{self.match_out}/match_contigs.csv')
+        self.filter_contig_fasta = f'{self.annotation_out}/filtered_contig.fasta'
+        self.match_contig_fasta = f'{self.match_out}/match_contig.fasta'
 
         if self.seqtype == 'TCR':
             self.chains = ['TRA', 'TRB']
@@ -56,8 +56,8 @@ class Summarize(Step):
             self.chains = ['IGH', 'IGL', 'IGK']
             self.pair = ['IGH_IGL', 'IGH_IGK']
 
-        self.not_split_R2 = args.not_split_R2
-
+        # out
+        self.productive = f'{self.outdir}/productive'
     
     @staticmethod
     def get_productive_fasta(in_fasta, out_fasta, productive_contig_id):
@@ -108,110 +108,57 @@ class Summarize(Step):
 
         stat_dict = pd.read_csv(f'{self.outdir}/../01.barcode/stat.txt', sep=':', header=None)
         read_count = int(stat_dict.iloc[0, 1].replace(',', ''))
-        sum_dict = pd.read_csv(f'{self.outdir}/../03.assemble/{self.sample}/outs/metrics_summary.csv', sep=',', index_col=None)
+        sum_dict = pd.read_csv(f'{self.assemble_out}/metrics_summary.csv', sep=',', index_col=None)
         sum_dict = sum_dict.T.to_dict()
         total_reads = int(sum_dict[0]["Number of Read Pairs"].replace(',', ''))
+        cell_nums = len(set(self.filter_contig.barcode))
 
         _index = 200
         if self.not_split_R2:
             _index = 100
 
-        if self.seqtype == "TCR":
-            cell_nums = len(set(self.filter_contig.barcode))
+        self.add_metric(
+            name='Estimated Number of Cells',
+            value=cell_nums,
+            help_info="Cells with at least one productive TRA or TRB chain"
+        )
 
-            self.add_metric(
-                name='Estimated Number of Cells',
-                value=cell_nums,
-                help_info="Cells with at least one productive TRA or TRB chain"
-            )
+        self.add_metric(
+            name='Reads Mapped to Any V(D)J Gene',
+            value=int(total_reads * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/_index)),
+            total=read_count,
+            help_info="Reads mapped to any TCR or BCR genes."
+        )
 
+        for chain in self.chains:
             self.add_metric(
-                name='Reads Mapped to Any V(D)J Gene',
-                value=int(
-                    total_reads * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/_index)),
+                name=f'Reads Mapped to {chain}',
+                value=int(total_reads * (float(sum_dict[0][f'Reads Mapped to {chain}'].strip('%'))/_index)),
                 total=read_count,
-                help_info="Reads mapped to any TCR or BCR genes."
+                help_info=f"Reads mapped to {chain} chain. For BCR, this should be one of {self.seqtype}"
             )
 
-            for chain in self.chains:
+        self.add_metric(
+            name='Fraction Reads in Cells',
+            value=int(total_reads * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/_index)),
+            total=read_count,
+            help_info="Number of reads with cell-associated barcodes divided by the number of reads with valid barcodes"
+        )
+
+        for chain in self.chains:
+            mid = self.filter_contig[self.filter_contig['chain']== chain]['umis'].median()
+            if mid == mid:
                 self.add_metric(
-                    name=f'Reads Mapped to {chain}',
-                    value=int(
-                        total_reads * (float(sum_dict[0][f'Reads Mapped to {chain}'].strip('%'))/_index)),
-                    total=read_count,
-                    help_info=f"Reads mapped to {chain} chain. For BCR, this should be one of [IGH, IGL, IGK]"
+                    name=f'Median used {chain} UMIs per Cell',
+                    value=int(mid),
+                    help_info=f"Median number of UMIs assigned to a {chain} contig per cell."
                 )
-
-            self.add_metric(
-                name='Fraction Reads in Cells',
-                value=int(
-                    total_reads * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/_index)),
-                total=read_count,
-                help_info="Number of reads with cell-associated barcodes divided by the number of reads with valid barcodes"
-            )
-            for chain in self.chains:
-                mid = self.filter_contig[self.filter_contig['chain']== chain]['umis'].median()
-                if mid == mid:
-                    self.add_metric(
-                        name=f'Median used {chain} UMIs per Cell',
-                        value=int(mid),
-                        help_info=f"Median number of UMIs assigned to a {chain} contig per cell. For B cells, only the max of [IGK, IGL] are counted"
-                    )
-                else:
-                    self.add_metric(
-                        name=f'Median used {chain} UMIs per Cell',
-                        value=0,
-                        help_info=f"Median number of UMIs assigned to a {chain} contig per cell. For B cells, only the max of [IGK, IGL] are counted"
-                    )
-
-        elif self.seqtype == 'BCR':
-            cell_nums = len(set(self.filter_contig.barcode))
-
-            self.add_metric(
-                name='Estimated Number of Cells',
-                value=cell_nums,
-                help_info="Cells with at least one productive IGH, IGL or IGK chain"
-            )
-
-            self.add_metric(
-                name='Reads Mapped to Any V(D)J Gene',
-                value=int(
-                    total_reads * (float(sum_dict[0]['Reads Mapped to Any V(D)J Gene'].strip('%'))/_index)),
-                total=read_count,
-                help_info="Reads mapped to any IGH, IGL or IGK genes"
-            )
-
-            for chain in self.chains:
+            else:
                 self.add_metric(
-                    name=f'Reads Mapped to {chain}',
-                    value=int(
-                        total_reads * (float(sum_dict[0][f'Reads Mapped to {chain}'].strip('%'))/_index)),
-                    total=read_count,
-                    help_info=f"Reads mapped to {chain} chain. For BCR, this should be one of [TRA, TRB]"
+                    name=f'Median used {chain} UMIs per Cell',
+                    value=0,
+                    help_info=f"Median number of UMIs assigned to a {chain} contig per cell."
                 )
-
-            self.add_metric(
-                name='Fraction Reads in Cells',
-                value=int(
-                    total_reads * (float(sum_dict[0]['Fraction Reads in Cells'].strip('%'))/_index)),
-                total=read_count,
-                help_info="Number of reads with cell-associated barcodes divided by the number of reads with valid barcodes"
-            )
-
-            for chain in self.chains:
-                mid = self.filter_contig[self.filter_contig['chain']== chain]['umis'].median()
-                if mid == mid:
-                    self.add_metric(
-                        name=f'Median used {chain} UMIs per Cell',
-                        value=int(mid),
-                        help_info=f"Median number of UMIs assigned to a {chain} contig per cell."
-                    )
-                else:
-                    self.add_metric(
-                        name=f'Median used {chain} UMIs per Cell',
-                        value=0,
-                        help_info=f"Median number of UMIs assigned to a {chain} contig per cell."
-                    )
     
     @utils.add_log
     def get_plot(self):
@@ -240,7 +187,7 @@ class Summarize(Step):
         self.add_data(chart=get_plot_elements.plot_barcode_rank(f'{self.outdir}/count.txt'))
 
         title = 'Clonetypes'
-        raw_clonotypes = pd.read_csv(self.clonotable, sep=',', index_col=None)
+        raw_clonotypes = pd.read_csv(self.clono_table, sep=',', index_col=None)
         raw_clonotypes['ClonotypeID'] = raw_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
         raw_clonotypes['Frequency'] = raw_clonotypes['frequency']
         raw_clonotypes['Proportion'] = raw_clonotypes['proportion'].apply(lambda x: f'{round(x*100, 2)}%')
@@ -260,9 +207,8 @@ class Summarize(Step):
 
     @utils.add_log
     def run(self):
-        os.system(f'cp {self.annotation}/* {self.outdir}')
-        os.system(f'cp {self.match}/* {self.outdir}')
-
+        os.system(f'cp {self.annotation_out}/* {self.outdir}')
+        os.system(f'cp {self.match_out}/* {self.outdir}')
         self.gen_productive_res()
         self.gen_report()
         self.get_plot()
@@ -275,8 +221,11 @@ def summarize(args):
 
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    parser.add_argument('--not_split_R2', help='not split R2 reads')
     if sub_program:
         s_common(parser)
         parser.add_argument('--barcode_dict', help='10X barcode correspond sgr barcode', required=True)
-        parser.add_argument('--not_split_R2', help='not split R2 reads')
+        parser.add_argument('--assemble_out', help='assemble result', required=True)
+        parser.add_argument('--annotation_out', help='annotation result', required=True)
+        parser.add_argument('--match_out', help='match result', required=True)
     return parser

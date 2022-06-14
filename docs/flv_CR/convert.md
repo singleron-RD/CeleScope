@@ -1,17 +1,9 @@
 ## Arguments
-`--species` species.
-
-`--soft` cellranger version.
-
-`--ref_path` reference path for cellranger.
-
 `--soft_path` soft path for cellranger.
 
-`--other_param` Other cellranger parameters.
+`--not_split_R2` whether to split R2.
 
-`--not_split_R2` whether split r2.
-
-`--mem` memory (G).
+`--version` cellranger version.
 
 `--outdir` Output diretory.
 

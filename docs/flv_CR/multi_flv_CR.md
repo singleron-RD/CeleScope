@@ -38,22 +38,43 @@ multi_flv_CR \
 
 ### assemble
 
-- TCR/BCR Assemble.
+- TCR/BCR Assemble by Cellranger.
 
 
 ### annotation
 
-- V(D)J annotation infomation.
+- Convert 10X barcode of assemble result back to SGR barcode.
+
+- Generate VDJ annotation metrics in html.
 
 
 ### match
 
-- V(D)J results match SC-RNA infomation.
+- Assembled V(D)J results match with SC-RNA.
 
+
+### summarize
+
+- Summarize contig and clonetypes infomation.
+
+- Generate Mapped reads and Cells metrics, barcode rank plot, clonotypes table and clonotypes frequency barplot in html.
+
+Output
+- `filtered_contig_annotations.csv` High-level annotations of each high-confidence, cellular contig.
+
+- `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
+
+- `clonotypes.csv` High-level descriptions of each clonotype.
+
+- `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
+
+- `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
+
+- `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
 
 ### mapping
 
-- Assembled T/B cells Mapping with SC-RNA barcodes.
+- Output assembled T/B cells mapping to transcriptome if rds and auto-assign info exist in match directory.
 
 
 ## Output files
@@ -63,9 +84,11 @@ multi_flv_CR \
 the read name is `{barcode}_{UMI}_{read ID}`.
 
 ### assemble
-- `03.assemble/{sample}/outs/` Recording assemble results.
+
+- `03.assemble/{sample}` Cellranger vdj results.
 
 ### annotation
+
 - `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
 
 - `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
@@ -80,13 +103,10 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
 
 ### mapping
-- `{sample}_assign.png` Auto-assigned umap plot in scRNA-Seq library.
-
-- `{sample}_cluster_umap.png` Cluster umap plot in scRNA-Seq library.
-
-- `{sample}_umapplot.png` Umap plot of assembled and un-assembled barcodes in scRNA-Seq library.
-
-- `{sample}_distribution.txt` Number of assembled barcodes in every clusters in scRNA-Seq library.
+- `05.annotation/{sample}_assign.png` Umap plot of Auto-assigned celltype in transcriptome.
+- `05.annotation/{sample}_cluster_umap.png` Umap plot of Cluster in transcriptome.
+- `05.annotation/{sample}_umapplot.png` Umap plot of assembled barcodes marked as read color.
+- `05.annotation/{sample}_distribution.txt` Number of assembled barcodes in every clusters.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -172,17 +192,17 @@ use `--steps_run barcode,cutadapt`.
 
 `--species` species.
 
-`--soft` cellranger version.
-
 `--ref_path` reference path for cellranger.
 
 `--soft_path` soft path for cellranger.
 
 `--other_param` Other cellranger parameters.
 
-`--not_split_R2` whether split r2.
+`--mem` memory(G).
 
-`--mem` memory (G).
+`--version` cellranger version.
+
+`--not_split_R2` not split R2 reads.
 
 `--seqtype` TCR or BCR.
 
