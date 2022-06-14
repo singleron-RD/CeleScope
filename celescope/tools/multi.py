@@ -73,7 +73,10 @@ Mapfile is a tab-delimited text file with as least three columns. Each line of m
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
-
+- `fusion` Required, matched_dir.
+- `flv_CR` Required, matched_dir.
+- `flv_trust4` Required, matched_dir.
+ 
 5th column:
 - `dynaseq` Required, background snp file.
 
