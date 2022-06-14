@@ -43,14 +43,14 @@ class Mapping(Step):
 
     @staticmethod
     @utils.add_log
-    def run_mapping(self):
+    def run_mapping(rds, contig, sample, outdir, assign):
         cmd = (
             f'Rscript {TOOLS_DIR}/VDJmapping.R '
-            f'--rds {self.rds} '
-            f'--VDJ {self.contig} '
-            f'--sample {self.sample} '
-            f'--outdir {self.outdir} '
-            f'--assign_file {self.assign}'
+            f'--rds {rds} '
+            f'--VDJ {contig} '
+            f'--sample {sample} '
+            f'--outdir {outdir} '
+            f'--assign_file {assign}'
         )
         subprocess.check_call(cmd, shell=True)
 
