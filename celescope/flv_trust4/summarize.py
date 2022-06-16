@@ -212,9 +212,10 @@ class Summarize(Step):
         self.add_cell_num_metric(df_for_clono, 'Cell Number after UMI filtering')
         
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
-        cell_barcodes = set(df_for_clono_pro['barcode'])
+        cell_barcodes, filtered_contig = set(df_for_clono_pro['barcode']), set(df_for_clono['contig_id'])
 
-        return df_for_clono, cell_barcodes
+
+        return df_for_clono, cell_barcodes, filtered_contig
 
     @utils.add_log
     def filter_fasta(self, cell_barcodes):
@@ -237,7 +238,7 @@ class Summarize(Step):
         filter_contig_fasta.close()
 
     @utils.add_log
-    def parse_clonotypes(self, df, df_for_clono, cell_barcodes):
+    def parse_clonotypes(self, df, df_for_clono, cell_barcodes, filtered_contig):
         """Parse clonotypes from CDR3 and manually add clonotype id for each contig.
 
         :param df: original contig file.
@@ -278,9 +279,11 @@ class Summarize(Step):
         df_merge = pd.merge(used_for_merge, contig_with_clonotype, on='cdr3s_nt', how='outer')
         df_merge = df_merge[['barcode', 'clonotype_id']]
         df_all_contig = pd.merge(df_merge, df, on='barcode',how='outer')
-        df_all_contig.fillna('None',inplace = True)
+        df_all_contig.fillna('',inplace = True)
         df_all_contig = df_all_contig[['barcode', 'is_cell', 'contig_id', 'high_confidence', 'length', 'chain', 'v_gene', 'd_gene', 'j_gene', 'c_gene', 'full_length', 'productive', 'cdr3', 'cdr3_nt', 'reads', 'umis', 'clonotype_id']]
         df_filter_contig = df_all_contig[df_all_contig['barcode'].isin(cell_barcodes)]
+        for _df in [df_all_contig, df_filter_contig]:
+            _df.loc[~_df.contig_id.isin(filtered_contig), 'clonotype_id'] = ''
 
         df_all_contig.to_csv(f'{self.outdir}/{self.sample}_all_contig.csv', sep=',', index=False)
         df_filter_contig.to_csv(f'{self.outdir}/{self.sample}_filtered_contig.csv', sep=',', index=False)
@@ -362,9 +365,9 @@ class Summarize(Step):
 
     def run(self):
         original_df = self.parse_contig_file()
-        df_for_clono, cell_barcodes = self.cell_calling(original_df)
+        df_for_clono, cell_barcodes, filtered_contig = self.cell_calling(original_df)
         self.filter_fasta(cell_barcodes)
-        self.parse_clonotypes(original_df, df_for_clono, cell_barcodes)
+        self.parse_clonotypes(original_df, df_for_clono, cell_barcodes, filtered_contig)
         self.gen_summary(df_for_clono)
 
 
