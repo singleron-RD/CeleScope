@@ -58,11 +58,11 @@ class Multi_flv_CR(Multi):
     def annotation(self,sample):
         step = 'annotation'
         cmd_line = self.get_cmd_line(step, sample)
-        barcode_dict = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
+        barcode_convert_json = f'{self.outdir_dic[sample]["convert"]}/barcode_convert.json'
         assemble_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}/outs'
         cmd = (
             f'{cmd_line} '
-            f'--barcode_dict {barcode_dict} '
+            f'--barcode_convert_json {barcode_convert_json} '
             f'--assemble_out {assemble_out} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
@@ -87,13 +87,13 @@ class Multi_flv_CR(Multi):
         assemble_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}/outs'
         annotation_out = f'{self.outdir_dic[sample]["annotation"]}'
         match_out = f'{self.outdir_dic[sample]["match"]}'
-        barcode_dict = f'{self.outdir_dic[sample]["convert"]}/barcode_correspond.txt'
+        barcode_convert_json = f'{self.outdir_dic[sample]["convert"]}/barcode_convert.json'
         cmd = (
             f'{cmd_line} '
             f'--assemble_out {assemble_out} '
             f'--annotation_out {annotation_out} '
             f'--match_out {match_out} '
-            f'--barcode_dict {barcode_dict} '
+            f'--barcode_convert_json {barcode_convert_json} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
     
