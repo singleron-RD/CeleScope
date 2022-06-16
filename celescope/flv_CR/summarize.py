@@ -1,7 +1,9 @@
 import os
+import json
+from collections import defaultdict
+
 import pandas as pd
 import pysam
-from collections import defaultdict
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
@@ -36,11 +38,13 @@ class Summarize(Step):
         Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
-        self.barcode_dict = args.barcode_dict
         self.not_split_R2 = args.not_split_R2
         self.assemble_out = args.assemble_out
         self.annotation_out = args.annotation_out
         self.match_out = args.match_out
+
+        with open(args.barcode_convert_json, 'r') as f:
+            self.tenX_sgr = json.load(f)
 
         self.all_bam = f'{self.assemble_out}/all_contig.bam'
         self.clono_table = f'{self.assemble_out}/clonotypes.csv'
@@ -135,7 +139,7 @@ class Summarize(Step):
                 name=f'Reads Mapped to {chain}',
                 value=int(total_reads * (float(sum_dict[0][f'Reads Mapped to {chain}'].strip('%'))/_index)),
                 total=read_count,
-                help_info=f"Reads mapped to {chain} chain. For BCR, this should be one of {self.seqtype}"
+                help_info=f"Reads mapped to {chain} chain. "
             )
 
         self.add_metric(
@@ -164,16 +168,13 @@ class Summarize(Step):
     def get_plot(self):
         """Barcode rank plot and Clonotypes bar plot"""
         
-        barcode_df = pd.read_csv(self.barcode_dict, sep='\t', index_col=1)
-        barcode_dict = barcode_df.to_dict()['sgr']
-
         all_bam = pysam.AlignmentFile(self.all_bam)
         dic_umi = defaultdict(set)
 
         for read in all_bam:
             cb = read.get_tag('CB')
             umi = read.get_tag('UB')
-            new_cb = utils.reverse_complement(barcode_dict[cb.split('-')[0]])
+            new_cb = utils.reverse_complement(self.tenX_sgr[cb.split('-')[0]])
             dic_umi[new_cb].add(umi)
 
         df_umi = pd.DataFrame()
@@ -224,7 +225,7 @@ def get_opts_summarize(parser, sub_program):
     parser.add_argument('--not_split_R2', help='not split R2 reads')
     if sub_program:
         s_common(parser)
-        parser.add_argument('--barcode_dict', help='10X barcode correspond sgr barcode', required=True)
+        parser.add_argument('--barcode_convert_json', help='json file', required=True)
         parser.add_argument('--assemble_out', help='assemble result', required=True)
         parser.add_argument('--annotation_out', help='annotation result', required=True)
         parser.add_argument('--match_out', help='match result', required=True)

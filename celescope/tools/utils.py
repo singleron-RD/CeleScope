@@ -8,6 +8,7 @@ import resource
 import subprocess
 import time
 import unittest
+import json
 from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps
@@ -635,6 +636,12 @@ def get_fastx_read_number(fastx_file):
         for _ in f:
             n += 1
     return n
+
+@add_log
+def dump_dict_to_json(dict, json_file):
+    with open(json_file, 'w') as f:
+        json.dump(dict, f, indent=4)
+
 
 class Test_utils(unittest.TestCase):
     def test_gtf_dict(self):

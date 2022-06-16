@@ -21,7 +21,8 @@ class Assemble(Step):
     """
     ## Features
 
-    - Assemble TCR/BCR seq data.
+    - TRUST4 does not use multi-processing when assembling. By default, the candidate reads are split into 4 chunks to speed up.
+    - Keep only full-length contigs.
 
     ## Output
     - `03.assemble/assemble/{sample}_cdr3.out` All assembled CDR3 output and gene information.

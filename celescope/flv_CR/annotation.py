@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 import pysam
 
@@ -29,7 +31,8 @@ class Annotation(Step):
 
         self.seqtype = args.seqtype
         self.version = args.version
-        self.barcode_dict = args.barcode_dict
+        with open(args.barcode_convert_json, 'r') as f:
+            self.tenX_sgr = json.load(f)
 
         if self.seqtype == 'TCR':
             self.chains = ['TRA', 'TRB']
@@ -50,13 +53,11 @@ class Annotation(Step):
         return: filter contig annotations in SGR barcode format.
         """
 
-        barcode_df = pd.read_csv(self.barcode_dict, sep='\t', index_col=1)
-        barcode_dict = barcode_df.to_dict()['sgr']
         filter_contig = pd.read_csv(f'{self.filter_contig}', sep=',', index_col=None)
 
-        filter_contig['barcode'] = filter_contig['barcode'].apply(lambda x: utils.reverse_complement(barcode_dict[x.split('-')[0]]))
+        filter_contig['barcode'] = filter_contig['barcode'].apply(lambda x: utils.reverse_complement(self.tenX_sgr[x.split('-')[0]]))
         filter_contig['contig_id'] = filter_contig['contig_id'].apply(lambda x: utils.reverse_complement(
-            barcode_dict[x.split('-')[0]])+'_'+x.split('_')[1]+'_'+x.split('_')[2])
+            self.tenX_sgr[x.split('-')[0]])+'_'+x.split('_')[1]+'_'+x.split('_')[2])
         if self.version == '3.0.2':
             filter_contig.productive = filter_contig.productive.replace({'True': True, 'None': False})
 
@@ -68,7 +69,7 @@ class Annotation(Step):
             name = entry.name
             seq = entry.sequence
             attrs = name.split('_')
-            new_name = utils.reverse_complement(barcode_dict[attrs[0].split('-')[0]]) + '_' + attrs[1] + '_' + attrs[2]
+            new_name = utils.reverse_complement(self.tenX_sgr[attrs[0].split('-')[0]]) + '_' + attrs[1] + '_' + attrs[2]
             out_fa.write(f'>{new_name}\n{seq}\n')
         out_fa.close()
 
@@ -187,6 +188,6 @@ def get_opts_annotation(parser, sub_program):
                         default='4.0.0')
     if sub_program:
         s_common(parser)
-        parser.add_argument('--barcode_dict', help='10X barcode correspond sgr barcode', required=True)
+        parser.add_argument('--barcode_convert_json', help='json file', required=True)
         parser.add_argument('--assemble_out', help='directory of cellranger assemble result', required=True)
     return parser

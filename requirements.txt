@@ -20,3 +20,4 @@ igraph
 pandas>=1.2.5
 biopython
 xlwt
+anndata==0.7.6
