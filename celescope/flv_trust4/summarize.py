@@ -214,7 +214,7 @@ class Summarize(Step):
         self.add_cell_num_metric(df_for_clono, 'Cell Number after UMI filtering')
         
         df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
-        cell_barcodes, filtered_contig = set(df_for_clono_pro['barcode']), set(df_for_clono['contig_id'])
+        cell_barcodes, filtered_contig = set(df_for_clono_pro['barcode']), set(df_for_clono_pro['contig_id'])
 
 
         return df_for_clono, cell_barcodes, filtered_contig
