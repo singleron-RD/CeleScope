@@ -11,27 +11,36 @@ from celescope.tools.step import Step, s_common
 
 UMI_10X_LEN = 10
 TSO = "TTTCTTATATGGG"
-WHITELIST_10X_PATH = "/lib/python/cellranger/barcodes/737K-august-2016.txt"
+WHITELIST_10X_PATH = [
+    "/lib/python/cellranger/barcodes/737K-august-2016.txt",
+    "/cellranger-cs/3.0.2/lib/python/cellranger/barcodes/737K-august-2016.txt",
+                      ]
+
 
 class Convert(Step):
     """
-    Features
+    ##Features
 
     - Convert barcodes and UMI to 10X format.
 
-    Output        
+    Output
+
     - `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
 
     - `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads as cellranger input.
 
     - `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads as cellranger input.
+    
     """
 
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
         self.fq2 = args.fq2
 
-        self.whitelist_10X_file = os.path.dirname(args.soft_path) + WHITELIST_10X_PATH
+        self.whitelist_10X_file = os.path.dirname(args.soft_path) + WHITELIST_10X_PATH[0]
+        if not os.path.exists(self.whitelist_10X_file):
+            self.whitelist_10X_file = os.path.dirname(args.soft_path) + WHITELIST_10X_PATH[1]
+
         self.whitelist_10X_fh = xopen(self.whitelist_10X_file, 'r')
         self.sgr_tenX = {}
 

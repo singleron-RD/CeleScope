@@ -36,41 +36,40 @@ multi_flv_CR \
     - Low quality reads: low sequencing quality in barcode and UMI regions.
 
 
+### convert
+
+- Convert barcodes and UMI to 10X format.
+
+Output
+
+- `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
+
+- `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads as cellranger input.
+
+- `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads as cellranger input.
+
 ### assemble
 
 - TCR/BCR Assemble by Cellranger.
 
-
-### annotation
-
-- Convert 10X barcode of assemble result back to SGR barcode.
-
-- Generate VDJ annotation metrics in html.
-
-
-### match
-
-- Assembled V(D)J results match with SC-RNA.
+- Generate Mapping, Cells, V(D)J annotations metrics in html.
 
 
 ### summarize
 
-- Summarize contig and clonetypes infomation.
+- Convert 10X barcode of assemble result back to SGR barcode.
 
-- Generate Mapped reads and Cells metrics, barcode rank plot, clonotypes table and clonotypes frequency barplot in html.
+- Generate Productive contigs sequences and annotation files.
 
-Output
-- `filtered_contig_annotations.csv` High-level annotations of each high-confidence, cellular contig.
+- Generate VDJ-annotation metrics in html.
 
-- `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
 
-- `clonotypes.csv` High-level descriptions of each clonotype.
+### match
 
-- `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
+- Assembled results match with sc-RNA library.
 
-- `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
+- Generate matched VDJ-annotation metrics, clonetypes table and bar-plot of clonetypes distribution in html.
 
-- `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
 
 ### mapping
 
@@ -87,25 +86,37 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 
 - `03.assemble/{sample}` Cellranger vdj results.
 
-### annotation
+### summarize
 
-- `filtered_contig_annotations.csv' High-level annotations of each high-confidence, cellular contig.
+- `filtered_contig_annotations.csv` High-level annotations of each high-confidence contigs from cell-associated barcodes.
 
-- `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
+- `filtered_contig.fasta` High-confidence contig sequences annotated in the filtered_contig_annotations.csv.
+
+- `productive_contig_annotations.csv` Annotations of each productive contigs from cell-associated barcodes. This is a subset of filtered_contig_annotations.csv.
+
+- `productive_contig.fasta` Productive contig sequences annotated in the productive_contig_annotations.csv.
 
 - `clonotypes.csv` High-level descriptions of each clonotype.
 
 ### match
-- `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
 
-- `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
+- `matched_contig_annotations.csv` High-level annotations of each high-confidence contigs from matched cell-associated barcodes.
 
-- `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
+- `matched_contig.fasta` High-confidence contig sequences annotated in the matched_contig_annotations.csv.
+
+- `matched_productive_contig_annotations.csv` Annotations of each productive contigs from matched cell-associated barcodes. This is a subset of matched_contig_annotations.csv.
+
+- `matched_productive_contig.fasta` Productive contig sequences annotated in the matched_productive_contig_annotations.csv.
+
+- `clonotypes.csv` High-level descriptions of each clonotype where barcodes match with scRNA-Seq.
 
 ### mapping
 - `05.annotation/{sample}_assign.png` Umap plot of Auto-assigned celltype in transcriptome.
+
 - `05.annotation/{sample}_cluster_umap.png` Umap plot of Cluster in transcriptome.
+
 - `05.annotation/{sample}_umapplot.png` Umap plot of assembled barcodes marked as read color.
+
 - `05.annotation/{sample}_distribution.txt` Number of assembled barcodes in every clusters.
 
 ## Arguments
@@ -190,19 +201,13 @@ use `--steps_run barcode,cutadapt`.
 
 `--output_R1` Output valid R1 reads.
 
-`--species` species.
-
 `--ref_path` reference path for cellranger.
-
-`--soft_path` soft path for cellranger.
 
 `--other_param` Other cellranger parameters.
 
 `--mem` memory(G).
 
-`--version` cellranger version.
-
-`--not_split_R2` not split R2 reads.
+`--soft_path` soft path for cellranger.
 
 `--seqtype` TCR or BCR.
 
