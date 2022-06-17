@@ -14,12 +14,11 @@ toolsdir = os.path.dirname(__file__)
 
 class Replacement(Step):
     """
-    ## Features
+    Features
     - Computes the replacement rates in each cell and gene.
     - Boxplots for rates distribution.
 
-    ## Output
-    - `{sample}.TC_matrix.rds` New and old info for each barcode/gene/umi.
+    Output
     - `{sample}.new_matrix.tsv.gz` New RNA matrix.
     - `{sample}.old_matrix.tsv.gz` Old RNA matrix.
     - `{sample}.fraction_of_newRNA_per_cell.txt` Fraction of new RNA of each cell.
@@ -36,27 +35,26 @@ class Replacement(Step):
         self.bam_file = args.bam
         self.snp_file = args.bg
         self.bg_cov = args.bg_cov
-        self.cell_keep = args.cell_keep
+        self.snp_threshold = args.snp_threshold
+
         # output files
-        self.outread = os.path.join(self.outdir, self.sample+'.corrected_gene_cell_UMI_read.txt')
-        self.outrds = os.path.join(self.outdir, self.sample+'.TC_matrix.rds')
+        self.outmat = os.path.join(self.outdir, self.sample+'.TC_matrix.tsv')
         self.outpre = os.path.join(self.outdir, self.sample)
 
     @utils.add_log
     def run(self):
-        # get backgroud snp
-        bg = self.background_snp(self.snp_file, self.bg_cov)
+        # get backgroud snp        
+        bg = self.background_snp(self.snp_file, self.bg_cov, self.snp_threshold)
         # get reads with TC
-        self.extract_dem(self.bam_file, self.outread, bg)
+        outframe = self.extract_dem(self.bam_file, bg)
         # run_R
-        self.generate_TC_matrix(self.outread, self.outrds, self.cell_keep)
+        self.generate_TC_matrix(outframe, self.outmat)
 
         # split to New and Old Matrix
-        totMat = self.outrds+'.tsv'
         new_mat = self.outpre+'.new_matrix.tsv'
         old_mat = self.outpre+'.old_matrix.tsv'
         con_mat = self.outpre+'.NvsO_matrix.tsv'
-        self.split_matrix(totMat, self.outpre)
+        self.split_matrix(self.outmat, self.outpre)
 
         # replacement stat
         self.replacment_stat(con_mat, self.outpre)
@@ -68,9 +66,7 @@ class Replacement(Step):
         self._clean_up()
 
         # clean
-        cmd = ['rm', self.outread]
-        self.run_cmd(cmd)
-        cmd = ['rm', self.outrds+'.tsv']
+        cmd = ['rm', self.outmat]
         self.run_cmd(cmd)
         cmd = ['rm', con_mat]
         self.run_cmd(cmd)
@@ -83,7 +79,7 @@ class Replacement(Step):
         subprocess.call(' '.join(cmd), shell=True)
 
     @utils.add_log
-    def extract_dem(self, bam, outfile, bg):
+    def extract_dem(self, bam, bg):
         bamfile = pysam.AlignmentFile(bam, 'rb')
         countdict = {}
         for read in bamfile.fetch():
@@ -122,50 +118,72 @@ class Replacement(Step):
                 continue
         bamfile.close()
 
-        out1 = open(outfile, 'w')
+        out1 = []
         for rid in countdict:
-            out1.write(rid+'\t'+str(countdict[rid])+'\n')
-        out1.close()
+            out1.append(rid.split('\t'))
+        outframe = pd.DataFrame(out1)
+        outframe.columns=['geneID','Barcode','UMI']
+        out1=[]
+        countdict = {}
+
+        return outframe
 
     @utils.add_log
-    def background_snp(self, bgfile, cov=1):
+    def background_snp(self, bgfiles, cov=1, snp_threshold=0.5):
+        ## dict.update()
         outdict = {}
-        if bgfile.endswith('.csv'):
-            with open(bgfile) as f:
-                f.readline()
-                for i in f:
-                    ii = i.strip().split(',')
-                    if int(ii[2]) < cov:
+        bgs=bgfiles.strip().split(',')
+        for bgfile in bgs:
+            if bgfile.endswith('.csv'):
+                df = pd.read_csv(bgfile,index_col=0, dtype={"chrom":str})
+                df = df[df['convs']>=cov]
+                if 'pos' in df.columns:
+                    df['chrpos'] = df['chrom']+'_'+df['pos'].astype(str)
+                else: #compatible with previous version
+                    df['chrpos'] = df['chrom']+'_'+df['pos2'].astype(str)
+                df1 = df[['chrpos','posratio']]
+                df1.set_index('chrpos',inplace=True)
+                outdict.update(df1.to_dict(orient='index'))
+            elif bgfile.endswith('.vcf'):
+                bcf_in = pysam.VariantFile(bgfile)
+                for rec in bcf_in.fetch():
+                    try:
+                        chrom, pos = rec.chrom, rec.pos
+                        chr_pos = chrom+'_'+str(pos-1)
+                        outdict[chr_pos] = 1
+                    except (ValueError, KeyError):
                         continue
-                    chr_pos = ii[4]+'_'+ii[1]
-                    outdict[chr_pos] = 1
-        elif bgfile.endswith('.vcf'):
-            bcf_in = pysam.VariantFile(bgfile)
-            for rec in bcf_in.fetch():
+                bcf_in.close()
+            elif bgfile.upper() == "SELF":
+                selfbg = os.path.splitext(self.bam_file)[0]+'.csv'
+                df = pd.read_csv(selfbg,index_col=0, dtype={"chrom":str})
+                df = df[df['convs']>=cov]
+                df = df[df['posratio']>=snp_threshold]
+                if 'pos' in df.columns:
+                    df['chrpos'] = df['chrom']+'_'+df['pos'].astype(str)
+                else: #compatible with previous version
+                    df['chrpos'] = df['chrom']+'_'+df['pos2'].astype(str)
+                df1 = df[['chrpos','posratio']]
+                df1.set_index('chrpos',inplace=True)
+                outdict.update(df1.to_dict(orient='index'))                
+                continue
+            else:
                 try:
-                    chrom, pos = rec.chrom, rec.pos
-                    chr_pos = chrom+'_'+str(pos-1)
-                    outdict[chr_pos] = 1
-                except (ValueError, KeyError):
-                    continue
-            bcf_in.close()
-
-        else:
-            try:
-                sys.exit(1)
-            except SystemExit:
-                print('Background snp file format cannot be recognized! Only csv or vcf format.')
-            finally:
-                print('Background snp file format cannot be recognized! Only csv or vcf format.')
+                    sys.exit(1)
+                except SystemExit:
+                    print('Background snp file format cannot be recognized! Only csv or vcf format.')
+                finally:
+                    print('Background snp file format cannot be recognized! Only csv or vcf format.')
         return outdict
 
     @utils.add_log
-    def generate_TC_matrix(self, read, outrds, cell=100000):
-        app = toolsdir + "/Generate_T_C_matrix.R"
-        cmd = (
-            f'Rscript {app} {read} {cell} {outrds}'
-        )
-        os.system(cmd)
+    def generate_TC_matrix(self, read, outmat):
+        table = read.pivot_table(
+                    index='geneID', columns='Barcode', values='UMI',
+                    aggfunc=len).fillna(0).astype(int)
+        table.index.name = ''
+        table.to_csv(outmat,sep="\t")
+
 
     @utils.add_log
     def split_matrix(self, mat, outpre):
@@ -224,7 +242,7 @@ class Replacement(Step):
 
         outcell = open(outpre+'.fraction_of_newRNA_per_cell.txt', 'w')
         outgene = open(outpre+'.fraction_of_newRNA_per_gene.txt', 'w')
-        outmat = open(outpre+'.fraction_of_newRNA_matrix.txt', 'w')
+        outmat1 = open(outpre+'.fraction_of_newRNA_matrix.txt', 'w')
 
         cells = {}
         genes = {}
@@ -232,7 +250,7 @@ class Replacement(Step):
         with open(inmat) as f:
             hh = f.readline().strip().split()
             hh.insert(0, '')
-            outmat.write('\t'.join(hh)+'\n')
+            outmat1.write('\t'.join(hh)+'\n')
             for h in hh[1:]:
                 cells[h] = [[], []]
             for i in f:
@@ -266,11 +284,11 @@ class Replacement(Step):
             outgene.write(gi+'\t'+str(gfloat)+'\n')
 
         for mi in mats:
-            outmat.write(mi+'\t'+'\t'.join(mats[mi])+'\n')
+            outmat1.write(mi+'\t'+'\t'.join(mats[mi])+'\n')
 
         outcell.close()
         outgene.close()
-        outmat.close()
+        outmat1.close()
 
     @utils.add_log
     def replacment_plot(self, sample):
@@ -322,10 +340,12 @@ def replacement(args):
 def get_opts_replacement(parser, sub_program):
     parser.add_argument('--bg_cov', type=int, default=1,
                         help='background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format')
+    parser.add_argument('--snp_threshold', type=float, default=0.5,
+                        help='snp threshold filter, greater than snp_threshold will be recognized as snp. Only valid in csv format')
     if sub_program:
         parser.add_argument('--bam', help='bam file from conversion step', required=True)
         parser.add_argument('--bg', help='background snp file, csv or vcf format', required=True)
-        parser.add_argument('--cell_keep', type=int, default=100000, help='filter cell')
+        #parser.add_argument('--cell_keep', type=int, default=100000, help='filter cell')
         parser.add_argument('--min_cell', type=int, default=10, help='a gene expressed in at least cells, default 10')
         parser.add_argument('--min_gene', type=int, default=10, help='at least gene num in a cell, default 10')
         parser = s_common(parser)
