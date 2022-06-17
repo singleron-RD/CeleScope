@@ -4,7 +4,7 @@ import pandas as pd
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
-from celescope.vdj.__init__ import CHAINS
+from celescope.vdj.__init__ import CHAINS, PAIRS
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.emptydrop_cr import get_plot_elements
 
@@ -70,6 +70,7 @@ class Count_vdj(Step):
 
         # set
         self.chains = CHAINS[args.type]
+        self.pairs = PAIRS[args.type]
         self.cols = []
         for chain in self.chains:
             for seq in SEQUENCES_HEADER:
@@ -123,7 +124,7 @@ class Count_vdj(Step):
         df_cell = self.df_match_UMI_count_filter[self.df_match_UMI_count_filter['barcode'].isin(
             target_cell_barcodes)]
         self.df_UMI_sum['mark'] = self.df_UMI_sum['barcode'].apply(lambda x: 'CB' if x in target_cell_barcodes else 'UB')
-        self.df_UMI_sum =  self.df_UMI_sum.sort_values(by=['UMI'], ascending=False)
+        self.df_UMI_sum = self.df_UMI_sum.sort_values(by=['UMI'], ascending=False)
         self.df_UMI_sum.to_csv(self.UMI_sum_file, sep='\t', index=False)
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.UMI_sum_file))
 
@@ -161,13 +162,12 @@ class Count_vdj(Step):
         df_valid_count.fillna(inplace=True, value="NA")
         return df_valid_count
 
-    def get_clonetypes_and_write(self, df_valid_count, cell_barcodes):
+    def get_clonetypes_and_write(self, df_valid_count):
         """
         Returns
         - df_clonetypes
         """
 
-        total_cell_number = len(cell_barcodes)
         df_clonetypes = df_valid_count.copy()
         df_clonetypes = df_clonetypes.groupby(self.cols, as_index=False).agg({
             "barcode": "count"})
@@ -196,75 +196,46 @@ class Count_vdj(Step):
         # out clonetypes
         df_clonetypes.to_csv(self.clonetypes_file, sep="\t", index=False)
 
-        if self.args.type == "TCR":
-
-            UMI_col_dic = {"TRA": "UMI_TRA", "TRB": "UMI_TRB"}
-            for chain in UMI_col_dic:
-                UMI_col_name = UMI_col_dic[chain]
-                if UMI_col_name in df_valid_count.columns:
-                    df_valid_count[UMI_col_name].replace(
-                        "NA", 0, inplace=True)
-                    Median_chain_UMIs_per_Cell = np.median(
-                        df_valid_count[UMI_col_name])
-                else:
-                    Median_chain_UMIs_per_Cell = 0
-                self.add_metric(
-                    name=f"Median {chain} UMIs per Cell",
-                    value=Median_chain_UMIs_per_Cell,
-                    help_info=f"median number of UMI mapped to {chain} per cell"
-                )
-
-            df_TRA_TRB = df_valid_count[
-                (df_valid_count.aaSeqCDR3_TRA != "NA") &
-                (df_valid_count.aaSeqCDR3_TRB != "NA")
-            ]
-            cell_with_confident_TRA_and_TRB = df_TRA_TRB.shape[0]
-            self.add_metric(
-                name="Cell with TRA and TRB",
-                value=cell_with_confident_TRA_and_TRB,
-                total=total_cell_number,
-                help_info=f"cells with as least {self.args.TCR_iUMI} UMI mapped to each chain"
-            )
-
-        # BCR
-        elif self.args.type == "BCR":
-
-            UMI_col_dic = {"IGH": "UMI_IGH",
-                           "IGL": "UMI_IGL", "IGK": "UMI_IGK"}
-            for chain in UMI_col_dic:
-                UMI_col_name = UMI_col_dic[chain]
-                if UMI_col_name in df_valid_count.columns:
-                    df_valid_count[UMI_col_name].replace(
-                        "NA", 0, inplace=True)
-                    df_valid_count_over_zero = df_valid_count[
-                        df_valid_count[UMI_col_name] > 0
-                    ]
-                    Median_chain_UMIs_per_Cell = np.median(
-                        df_valid_count_over_zero[UMI_col_name])
-                else:
-                    Median_chain_UMIs_per_Cell = 0
-                self.add_metric(
-                    name=f"Median {chain} UMIs per Cell",
-                    value=Median_chain_UMIs_per_Cell,
-                    help_info="median number of UMI mapped to each chain per cell"
-                )
-
-            df_heavy_and_light = df_valid_count[
-                (df_valid_count.aaSeqCDR3_IGH != "NA") &
-                (
-                    (df_valid_count.aaSeqCDR3_IGL != "NA") |
-                    (df_valid_count.aaSeqCDR3_IGK != "NA")
-                )
-            ]
-            Cell_with_Heavy_and_Light_Chain = df_heavy_and_light.shape[0]
-            self.add_metric(
-                name="Cell with Heavy and Light Chain",
-                value=Cell_with_Heavy_and_Light_Chain,
-                total=total_cell_number,
-                help_info=f"cells with as least {self.args.BCR_iUMI} UMI mapped to each chain"
-            )
-
         return df_clonetypes
+
+    def add_metrics(self, df_valid_count, cell_barcodes):
+        n_cell = len(cell_barcodes)
+
+        for chain in self.chains:
+            UMI_col_name = "UMI_" + chain
+            if UMI_col_name in df_valid_count.columns:
+                df_valid_count[UMI_col_name].replace("NA", 0, inplace=True)
+                Median_chain_UMIs_per_Cell = np.median(df_valid_count[UMI_col_name])
+            else:
+                Median_chain_UMIs_per_Cell = 0
+
+            self.add_metric(
+                name=f"Median {chain} UMIs per Cell",
+                value=Median_chain_UMIs_per_Cell,
+                help_info=f"median number of UMI mapped to {chain} per cell"
+            )
+
+        if self.args.type == 'TCR':
+            iUMI = self.args.TCR_iUMI
+        elif self.args.type == 'BCR':
+            iUMI = self.args.BCR_iUMI
+
+        for pair in self.pairs:
+            df_pair = df_valid_count.copy()
+            for chain in pair:
+                cdr3_col_name = "aaSeqCDR3_" + chain
+                df_pair = df_pair[df_pair[cdr3_col_name] != "NA"]
+            
+            n_cell_pair = len(df_pair.barcode.unique())
+
+            pair_str = ','.join(pair)
+            self.add_metric(
+                name=f"Cells with ({pair_str}) pair",
+                value=n_cell_pair,
+                total=n_cell,
+                help_info=f"cells with as least {iUMI} UMI mapped to each chain"
+            )
+
     def write_cell_confident_count(self, df_valid_count, df_clonetypes, df_confident):
         df_mergeID = pd.merge(df_valid_count,
                               df_clonetypes, how="left", on=self.cols)
@@ -313,7 +284,8 @@ class Count_vdj(Step):
         df_confident = self.get_df_confident(df_cell)
         df_valid_count = self.get_df_valid_count(df_confident)
         df_clonetypes= self.get_clonetypes_and_write(
-            df_valid_count, cell_barcodes)
+            df_valid_count)
+        self.add_metrics(df_valid_count, cell_barcodes)
         self.write_cell_confident_count(
             df_valid_count, df_clonetypes, df_confident)
         self.write_clonetypes_table_to_data(df_clonetypes)

@@ -5,9 +5,12 @@
 
  ### `vdj`
  - Use an improved cell-calling method that only match cell barcodes are considered. 
+ - Change how median IGH, IGK and IGL UMIs are calculated. Now all cells(include 0 UMI count cells) are taken into consideration.
+ - Add cell with chain pair metrics, e.g. "Cells with (IGH, IGK) pair".
 
  ### `mkref`
  - Change parameters for generating refFlat files to tolerate non-ensembl-compliant gtf.
+
  
 
 ## [1.10.0] - 2021-04-22

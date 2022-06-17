@@ -4,3 +4,8 @@ CHAINS = {
     "TCR": ["TRA", "TRB"],
     "BCR": ["IGH", "IGL", "IGK"],
 }
+
+PAIRS = {
+    "TCR": [["TRA", "TRB"]],
+    "BCR": [["IGH", "IGK"], ["IGH", "IGL"]],
+}
