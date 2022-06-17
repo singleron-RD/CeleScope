@@ -1,4 +1,4 @@
-__STEPS__ = ['sample', 'barcode', 'convert', 'assemble', 'annotation', 'match', 'summarize', 'mapping'] 
+__STEPS__ = ['sample', 'barcode', 'convert', 'assemble', 'summarize', 'match', 'mapping'] 
 __ASSAY__ = 'flv_CR'
 
 

@@ -55,8 +55,8 @@ class Multi_flv_CR(Multi):
         self.process_cmd(cmd, step, sample, m=self.args.mem, x=self.args.thread)
 
 
-    def annotation(self,sample):
-        step = 'annotation'
+    def summarize(self,sample):
+        step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
         barcode_convert_json = f'{self.outdir_dic[sample]["convert"]}/barcode_convert.json'
         assemble_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}/outs'
@@ -71,42 +71,24 @@ class Multi_flv_CR(Multi):
     def match(self,sample):
         step = 'match'
         cmd_line = self.get_cmd_line(step, sample)
-        annotation_out = f'{self.outdir_dic[sample]["annotation"]}'
+        summarize_out = f'{self.outdir_dic[sample]["summarize"]}'
         match_dir = f'{self.col4_dict[sample]}'
         cmd = (
             f'{cmd_line} '
             f'--match_dir {match_dir} '
-            f'--annotation_out {annotation_out} '
+            f'--summarize_out {summarize_out} '
         )
         self.process_cmd(cmd, step, sample, m=8, x= self.args.thread)
-    
-
-    def summarize(self, sample):
-        step = 'summarize'
-        cmd_line = self.get_cmd_line(step, sample)
-        assemble_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}/outs'
-        annotation_out = f'{self.outdir_dic[sample]["annotation"]}'
-        match_out = f'{self.outdir_dic[sample]["match"]}'
-        barcode_convert_json = f'{self.outdir_dic[sample]["convert"]}/barcode_convert.json'
-        cmd = (
-            f'{cmd_line} '
-            f'--assemble_out {assemble_out} '
-            f'--annotation_out {annotation_out} '
-            f'--match_out {match_out} '
-            f'--barcode_convert_json {barcode_convert_json} '
-        )
-        self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
-    
     
     def mapping(self,sample):
         step = 'mapping'
         cmd_line = self.get_cmd_line(step,sample)
         match_dir = f'{self.col4_dict[sample]}'
-        summarize_out = f'{self.outdir_dic[sample]["summarize"]}'
+        match_out = f'{self.outdir_dic[sample]["match"]}'
         cmd = (
             f'{cmd_line} '
             f'--match_dir {match_dir} '
-            f'--summarize_out {summarize_out} '
+            f'--match_out {match_out} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 

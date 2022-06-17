@@ -22,8 +22,11 @@ class Mapping(Step):
 
     ## Output
     - `05.annotation/{sample}_assign.png` Umap plot of Auto-assigned celltype in transcriptome.
+
     - `05.annotation/{sample}_cluster_umap.png` Umap plot of Cluster in transcriptome.
+
     - `05.annotation/{sample}_umapplot.png` Umap plot of assembled barcodes marked as read color.
+    
     - `05.annotation/{sample}_distribution.txt` Number of assembled barcodes in every clusters.
 
     """
@@ -32,7 +35,7 @@ class Mapping(Step):
         
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir
-        self.contig = glob.glob(f'{args.summarize_out}/match_contigs.csv')[0]
+        self.contig = glob.glob(f'{args.match_out}/matched_contig_annotations.csv')[0]
         self.celltype_set = CELL_TYPE_DICT[self.seqtype]
 
         try:
@@ -104,5 +107,5 @@ def get_opts_mapping(parser, sub_program):
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help='scRNA-seq match directory', required=True)
-        parser.add_argument('--summarize_out', help='summarize output directory', required=True)
+        parser.add_argument('--match_out', help='assemble result from match directory', required=True)
     return parser
