@@ -13,15 +13,11 @@ multi_flv_trust4 \
 ## Features
 ### barcode
 
-- Demultiplex barcodes for TRUST4.
-- Filter invalid R1 reads, which includes:
-    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
-    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
-    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
-    - Low quality reads: low sequencing quality in barcode and UMI regions.
-    - Write coverage is capped to a maximum of 80,000 reads per barcode.
-    - Include only reads from match barcodes.
-    - Reverse complement the barcode to match with sc-RNA.
+- Demultiplex barcodes and UMIs.
+- Reverse complement the barcode to match RNA library barcodes.
+- Only reads with barcodes oberserbed in matched RNA library are kept.
+- If there are more than 80,000 reads for any barcodes, the reads are downsampled.
+
 
 
 ### mapping
@@ -31,12 +27,19 @@ multi_flv_trust4 \
 
 ### assemble
 
-- Assemble TCR/BCR seq data.
+- TRUST4 does not use multi-processing when assembling. By default, the candidate reads are split into 4 chunks to speed up.
+
+- Keep only full-length contigs.
 
 
 ### summarize
+- CDR3 filtering: contain stop condon, length <=5, etc..
 
-- TCR/BCR full length assembly results.
+- If barcode A's two chains CDR3s are identical to another barcode B, and A's chain abundance is significantly lower than B's, filter A.
+
+- If `--target_cell_barcode` is provided, the UMI counts of all contigs originated from target cells are multiplied by a weight(default: 6.0) to better distinguish signal from background noise. `--target_cell_barcode` comes from the cell type annotation results of the RNA library.
+
+- Cell-calling is similar to the rna cell-calling algorithm.
 
 
 ### annotation
@@ -62,19 +65,30 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 
 ### assemble
 - `03.assemble/assemble/{sample}_cdr3.out` All assembled CDR3 output and gene information.
+
 - `03.assemble/assemble/{sample}_assign.out` Read assignment results.
+
 - `03.assemble/assemble/{sample}_assembled_reads.fa` Assembled raw reads sequence.
+
 - `03.assemble/assemble/{sample}_annotate.fa` Assembled annotated contig sequences info.
+
 - `03.assemble/assemble/{sample}_report.tsv` Record assembled CDR3 types, read count and proportion.
+
 - `03.assemble/assemble/{sample}_filter_report.tsv` Filter non-functional CDR3.
+
 - `03.assemble/assemble/{sample}_barcode_report.tsv` Record chain information for each barcode.
+
 - `03.assemble/assemble/{sample}_barcode_filter_report.tsv` If --diffuseFrac provided. Filter low abundance barcode.
 
 ### summarize
 - `04.summarize/clonetypes.tsv` High-level description for each clonotype.
+
 - `04.summarize/{sample}_all_contig.csv` High-level and detailed annotation for each contig.
+
 - `04.summarize/{sample}_all_contig.fasta` All assembled contig sequences.
+
 - `04.summarize/{sample}_filtered_contig.csv` High-level annotations of each cellular contig after filter. This is a subset of {sample}_all_contig.csv.
+
 - `04.summarize/{sample}_filtered_contig.fasta` Assembled contig sequences after filter.
 
 ### annotation

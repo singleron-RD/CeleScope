@@ -1,13 +1,20 @@
 ## Features
 
-- Assembled V(D)J results match with SC-RNA.
+- Assembled results match with sc-RNA library.
+
+- Generate matched VDJ-annotation metrics, clonetypes table and bar-plot of clonetypes distribution in html.
 
 ## Output
-- `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
 
-- `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
+- `matched_contig_annotations.csv` High-level annotations of each high-confidence contigs from matched cell-associated barcodes.
 
-- `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
+- `matched_contig.fasta` High-confidence contig sequences annotated in the matched_contig_annotations.csv.
+
+- `matched_productive_contig_annotations.csv` Annotations of each productive contigs from matched cell-associated barcodes. This is a subset of matched_contig_annotations.csv.
+
+- `matched_productive_contig.fasta` Productive contig sequences annotated in the matched_productive_contig_annotations.csv.
+
+- `clonotypes.csv` High-level descriptions of each clonotype where barcodes match with scRNA-Seq.
 ## Arguments
 `--seqtype` TCR or BCR.
 
@@ -21,5 +28,5 @@
 
 `--match_dir` scRNA-seq match directory.
 
-`--annotation_out` annotation result in SGR barcode.
+`--summarize_out` assemble result in SGR barcode from summarize directory.
 

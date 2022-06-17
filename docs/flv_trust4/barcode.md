@@ -1,14 +1,10 @@
 ## Features
 
-- Demultiplex barcodes for TRUST4.
-- Filter invalid R1 reads, which includes:
-    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
-    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
-    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
-    - Low quality reads: low sequencing quality in barcode and UMI regions.
-    - Write coverage is capped to a maximum of 80,000 reads per barcode.
-    - Include only reads from match barcodes.
-    - Reverse complement the barcode to match with sc-RNA.
+- Demultiplex barcodes and UMIs.
+- Reverse complement the barcode to match RNA library barcodes.
+- Only reads with barcodes oberserbed in matched RNA library are kept.
+- If there are more than 80,000 reads for any barcodes, the reads are downsampled.
+
 
 ## Output
 

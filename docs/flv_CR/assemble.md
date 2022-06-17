@@ -2,14 +2,12 @@
 
 - TCR/BCR Assemble by Cellranger.
 
+- Generate Mapping, Cells, V(D)J annotations metrics in html.
+
 ## Output
 
 - `03.assemble/{sample}` Cellranger vdj results.
 ## Arguments
-`--species` species.
-
-`--version` cellranger version.
-
 `--ref_path` reference path for cellranger.
 
 `--soft_path` soft path for cellranger.
@@ -19,8 +17,6 @@
 `--mem` memory(G).
 
 `--seqtype` TCR or BCR.
-
-`--not_split_R2` whether split r2.
 
 `--outdir` Output diretory.
 

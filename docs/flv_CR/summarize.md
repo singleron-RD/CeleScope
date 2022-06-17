@@ -1,25 +1,26 @@
-##Features
+## Features
 
-- Summarize contig and clonetypes infomation.
+- Convert 10X barcode of assemble result back to SGR barcode.
 
-- Generate Mapped reads and Cells metrics, barcode rank plot, clonotypes table and clonotypes frequency barplot in html.
+- Generate Productive contigs sequences and annotation files.
 
-Output
-- `filtered_contig_annotations.csv` High-level annotations of each high-confidence, cellular contig.
+- Generate VDJ-annotation metrics in html.
 
-- `filtered_contig.fasta` High-confidence contig sequences in cell barcodes.
+## Output
+
+- `filtered_contig_annotations.csv` High-level annotations of each high-confidence contigs from cell-associated barcodes.
+
+- `filtered_contig.fasta` High-confidence contig sequences annotated in the filtered_contig_annotations.csv.
+
+- `productive_contig_annotations.csv` Annotations of each productive contigs from cell-associated barcodes. This is a subset of filtered_contig_annotations.csv.
+
+- `productive_contig.fasta` Productive contig sequences annotated in the productive_contig_annotations.csv.
 
 - `clonotypes.csv` High-level descriptions of each clonotype.
-
-- `match_contigs.csv` Consider barcodes match scRNA-Seq library in filtered_contig_annotations.csv.
-
-- `match_contig.fasta` Consider barcodes match scRNA-Seq library in filtered_contig.fasta.
-
-- `match_clonotypes.csv` Consider barcodes match scRNA-Seq library in clonotypes.csv.
 ## Arguments
 `--seqtype` TCR or BCR.
 
-`--not_split_R2` not split R2 reads.
+`--soft_path` soft path for cellranger.
 
 `--outdir` Output diretory.
 
@@ -29,11 +30,7 @@ Output
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--barcode_dict` 10X barcode correspond sgr barcode.
+`--barcode_convert_json` json file.
 
-`--assemble_out` assemble result.
-
-`--annotation_out` annotation result.
-
-`--match_out` match result.
+`--assemble_out` directory of cellranger assemble result.
 
