@@ -16,15 +16,14 @@ ASSAY_LIST = [
     'capture_rna',
     'citeseq',
     'sweetseq',
-    'fl_vdj_CR',
+    'flv_CR',
     'convert10X',
-    'fl_vdj_TRUST4',
-    'fl_vdj_TRUST4_split',
+    'flv_trust4',
 ]
 
 ROOT_PATH = os.path.dirname(__file__)
 
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion']
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion', 'flv_CR', 'flv_trust4']
 
 # argument help
 HELP_DICT = {
@@ -45,8 +44,8 @@ HELP_DICT = {
     'additional_param': 'Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.',
     'genomeSAindexNbases': '''For small genomes, the parameter --genomeSAindexNbases must to be scaled down, with a typical 
 value of min(14, log2(GenomeLength)/2 - 1). For example, for 1 megaBase genome, this is equal 
-to 9, for 100 kiloBase genome, this is equal to 7.'''
-    
+to 9, for 100 kiloBase genome, this is equal to 7.''',
+    'chemistry': '`--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.',   
 }
 
 # report metrics help

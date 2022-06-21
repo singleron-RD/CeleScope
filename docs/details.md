@@ -109,7 +109,10 @@ You can find the saturation calculated in both ways in {sample}/.metrics.json
 }
 ```
 
-
+## Fraction Reads in Cells
+Low `Fraction Reads in Cells` value is usually caused by:
+1. High amount of ambient RNA which indicates high fraction of lysed/dead cells in the sample.
+2. The cell-calling method does not apply. If you are using `--cell_calling_method auto`, try to change it to `--cell_calling_method cellranger3`(Celescope < v1.9.0) or `--cell_calling_method EmptyDrops_CR`(Celescope >= v1.9.0).
 
 
 # Clindex
@@ -138,7 +141,7 @@ The output matrices are in `{sample}/06.split_tag`
 ## Split fastq
 To split the R1 and R2 fastq files:
 
-1.  Run `barcode` to get demultiplexed R2 fastq. If you have already run `multi_rna`, this step can be skipped.
+1.  Run `barcode` to get demultiplexed R2 fastq. If you have already run `multi_rna`, `multi_vdj`, `multi_dynaseq`, etc.., this step can be skipped.
 ```
 multi_rna \ 
  --mapfile ./rna.mapfile \
@@ -146,8 +149,6 @@ multi_rna \
  --steps_run sample,barcode \
  --genomeDir {genomeDir}
 ```
-
-As the `sample` and `barcode` are the same among all assays, it is ok to use `multi_dynaseq` and other `multi_{assay}` to demultiplex the R2 fastq. The results will be the same.
 
 2. Run `multi_tag`
 ```

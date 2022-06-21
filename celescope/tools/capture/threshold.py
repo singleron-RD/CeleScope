@@ -1,3 +1,4 @@
+   
 import math
 
 import matplotlib.pyplot as plt
@@ -34,7 +35,6 @@ class Otsu():
 
     def _threshold_otsu(self):
         """Return threshold value based on Otsu's method.
-
         hist : array, or 2-tuple of arrays, optional
             Histogram from which to determine the threshold, and optionally a
             corresponding array of bin center intensities.
@@ -99,7 +99,6 @@ class Auto():
     """
     threshold = top {percentile}% cell count / coef
     count is usually UMI count.
-
     >>> array = [50] * 100 + [30] * 100 + [10] * 100 + [4] * 100
     >>> Auto(array, coef=10).run()
     5

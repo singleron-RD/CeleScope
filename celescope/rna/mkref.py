@@ -85,8 +85,9 @@ class Mkref_rna(Mkref):
     @utils.add_log
     def run(self):
         super().run()
-        self.build_star_index()
         self.build_refflat()
+        self.build_star_index()
+
 
 
 def mkref(args):
