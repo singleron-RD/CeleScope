@@ -1,4 +1,3 @@
-from ctypes import util
 import pandas as pd
 import pysam
 

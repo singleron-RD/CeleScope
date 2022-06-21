@@ -2,7 +2,6 @@ import os
 import subprocess
 
 import pysam
-import pandas as pd
 from xopen import xopen
 
 from celescope.tools import utils
@@ -102,11 +101,11 @@ class Convert(Step):
 
     @utils.add_log
     def dump_tenX_sgr_barcode_json(self):
-        self.tenX_sgr = {}
+        tenX_sgr = {}
         for sgr, tenX in self.sgr_tenX.items():
-            self.tenX_sgr[tenX] = sgr
+            tenX_sgr[tenX] = sgr
 
-        utils.dump_dict_to_json(self.tenX_sgr, self.barcode_convert_json)
+        utils.dump_dict_to_json(tenX_sgr, self.barcode_convert_json)
 
     def run(self):
         self.write_fq1()

@@ -27,3 +27,9 @@ Make sure you have activated the `celescope` conda environment before running `p
 conda activate celescope
 pip install celescope
 ```
+
+If you want to use `flv_CR` and `flv_trust4`
+```
+conda activate celescope
+pip install celescope>=1.11.0b0
+```

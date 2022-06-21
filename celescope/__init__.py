@@ -23,7 +23,7 @@ ASSAY_LIST = [
 
 ROOT_PATH = os.path.dirname(__file__)
 
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion']
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion', 'flv_CR', 'flv_trust4']
 
 # argument help
 HELP_DICT = {

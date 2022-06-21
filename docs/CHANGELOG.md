@@ -1,5 +1,5 @@
 
-## [1.11.0] - 
+## [1.11.0b0] - 2022-06-21
  ### `flv_vdj`
  - Chemistry `flv_rna`(full length VDJ matched mRNA) and `flv` can be auto-detected. 
  - Remove assay `flv_trust4_split`.

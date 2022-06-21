@@ -19,6 +19,10 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope fusion` for Single cell fusion detection. For example, it can be used to detect known fusion events in blood cancer. It performs preprocessing, fusion site alignment, UMI counting, filtering and analysis.
 
+- `celescope flv_CR` for Single cell full Length TCR/BCR data generated sCircle<sup>TM</sup> Kits. It performs preprocessing, barcode conversion, assemble, annotation and filtering.
+
+- `celescope flv_trust4` for Single cell full Length TCR/BCR data generated sCircle<sup>TM</sup> Kits. It performs preprocessing, mapping, assemble, annotation and filtering.
+
 ## [Installation](installation.md)
 
 ## [Quick start](quick_start.md)
@@ -86,3 +90,16 @@ Currently, CeleScope includes the follwing pipelines:
 - [filter_fusion](fusion/filter_fusion.md)
 - [analysis_fusion](fusion/analysis_fusion.md)
 - [multi_fusion](fusion/multi_fusion.md)
+## Single-cell flv_CR
+- [convert](flv_CR/convert.md)
+- [assemble](flv_CR/assemble.md)
+- [summarize](flv_CR/summarize.md)
+- [match](flv_CR/match.md)
+- [mapping](flv_CR/mapping.md)
+- [multi_flv_CR](flv_CR/multi_flv_CR.md)
+## Single-cell flv_trust4
+- [mapping](flv_trust4/mapping.md)
+- [assemble](flv_trust4/assemble.md)
+- [summarize](flv_trust4/summarize.md)
+- [annotation](flv_trust4/annotation.md)
+- [multi_flv_trust4](flv_trust4/multi_flv_trust4.md)

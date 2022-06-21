@@ -638,9 +638,9 @@ def get_fastx_read_number(fastx_file):
     return n
 
 @add_log
-def dump_dict_to_json(dict, json_file):
+def dump_dict_to_json(d, json_file):
     with open(json_file, 'w') as f:
-        json.dump(dict, f, indent=4)
+        json.dump(d, f, indent=4)
 
 
 class Test_utils(unittest.TestCase):

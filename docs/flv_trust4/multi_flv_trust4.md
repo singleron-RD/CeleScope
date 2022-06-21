@@ -3,10 +3,7 @@
 ```
 multi_flv_trust4 \
     --mapfile ./test.mapfile \
-    --outdir ./ \
-    --chemistry flv \
-    --allowNoLinker \
-    --ref GRCm38 \
+    --ref hg38 \
     --thread 8 \
     --seqtype BCR \
 ```
