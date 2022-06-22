@@ -130,6 +130,9 @@ class Cells(cellranger_metrics):
 
         self.all_bam = f'{self.outdir}/{self.sample}/outs/all_contig.bam'
         self.filter_contig_file = pd.read_csv(f'{self.outdir}/{self.sample}/outs/filtered_contig_annotations.csv')
+        
+        # out
+        self.count_file = f'{self.outdir}/count.txt'
 
     def add_metrics(self):
         name = 'Estimated Number of Cells'
@@ -185,13 +188,13 @@ class Cells(cellranger_metrics):
 
     @utils.add_log
     def Barcode_rank_plot(self):
-        all_bam = pysam.AlignmentFile(self.all_bam)
         dic_umi = defaultdict(set)
-
-        for read in all_bam:
-            cb = read.get_tag('CB')
-            umi = read.get_tag('UB')
-            dic_umi[cb].add(umi)
+        
+        with pysam.AlignmentFile(self.all_bam) as fh:
+            for read in fh:
+                cb = read.get_tag('CB')
+                umi = read.get_tag('UB')
+                dic_umi[cb].add(umi)
 
         df_umi = pd.DataFrame()
         df_umi['barcode'] = list(dic_umi.keys())
@@ -201,8 +204,8 @@ class Cells(cellranger_metrics):
         df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cbs else 'UB')
         df_umi['barcode'] = df_umi['barcode'].apply(lambda x : utils.reverse_complement(self.tenX_sgr[x.split('-')[0]]))
 
-        df_umi.to_csv(f'{self.outdir}/count.txt', sep='\t', index=False)
-        self.add_data(chart=get_plot_elements.plot_barcode_rank(f'{self.outdir}/count.txt'))
+        df_umi.to_csv(self.count_file, sep='\t', index=False)
+        self.add_data(chart=get_plot_elements.plot_barcode_rank(self.count_file))
 
     def run(self):
         self.add_metrics()

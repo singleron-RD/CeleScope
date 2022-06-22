@@ -103,7 +103,7 @@ class Match(Step):
         self.add_metric(
             name="Cells match with scRNA-seq analysis",
             value=len(set(df_match.barcode)),
-            help_info="Barcodes of cells and barcodes of scRNA-seq cells are reversed complementary"
+            help_info="The intersection between VDJ cell barcodes and scRNA-Seq barcodes. All the following metrics are based on this intersection."
         )
 
         cell_nums = len(set(df_match.barcode))
@@ -112,7 +112,6 @@ class Match(Step):
             name='Cells With Productive V-J Spanning Pair',
             value=Match.VJ_Spanning_Pair(df_match, self.seqtype),
             total = cell_nums,
-            help_info = "Fraction of cell-associated barcodes with at least one productive contig for each chain of the receptor pair. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region."
         )
 
         for pair in self.pairs:
@@ -124,7 +123,6 @@ class Match(Step):
                 name=f'Cells With Productive V-J Spanning ({chain1}, {chain2}) Pair',
                 value=len(cbs1.intersection(cbs2)),
                 total=cell_nums,
-                help_info=f"Fraction of cell-associated barcodes with at least one productive contig for each chain of the {chain1}, {chain2} receptor pair. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region."
             )
 
         for chain in self.chains:
@@ -132,28 +130,24 @@ class Match(Step):
                 name=f'Cells With {chain} Contig',
                 value=len(set(df_match[df_match['chain']==chain].barcode)),
                 total=cell_nums,
-                help_info = f"Fraction of cell-associated barcodes with at least one {chain} contig"
             )
 
             self.add_metric(
                 name=f'Cells With CDR3-annotated {chain} Contig',
                 value=len(set(df_match[(df_match['chain']==chain)&(df_match['cdr3']!='None')].barcode)),
                 total=cell_nums,
-                help_info = f"Fraction of cell-associated barcodes with at least one {chain} contig where a CDR3 was detected"
             )
 
             self.add_metric(
                 name=f'Cells With V-J Spanning {chain} Contig',
                 value=len(set(df_match[(df_match['full_length']==True)&(df_match['chain']==chain)].barcode)),
                 total=cell_nums,
-                help_info=f"Fraction of cell-associated barcodes with at least one contig spanning the 5' end of the V region to the 3' end of the J region for {chain}"
             )
 
             self.add_metric(
                 name=f'Cells With Productive {chain} Contig',
                 value=len(set(df_match[(df_match['productive']==True)&(df_match['chain'] == chain)].barcode)),
                 total=cell_nums,
-                help_info=f"raction of cell-associated barcodes with productive {chain} chain. A productive contig satisfies the following conditions: the contig annotations span the 5' end of the V region to the 3' end of the J region of the chain, a start codon was found in the expected part of the V sequence, an in-frame CDR3 amino acid motif was found, and no stop codons were found in the aligned V-J region"
             )
 
     @staticmethod
