@@ -24,6 +24,7 @@ from celescope.tools.emptydrop_cr.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.plotly_plot import Line_plot
+from celescope.tools.matrix import CountMatrix
 
 TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)
@@ -104,7 +105,7 @@ class Count(Step):
         df_sum = Count.get_df_sum(df)
 
         # export all matrix
-        self.write_matrix_10X(df, self.raw_matrix_dir)
+        Count.write_sparse_matrix(df, self.raw_matrix_dir, gtf_dict=self.gtf_dict)
 
         # call cells
         cell_bc, _threshold = self.cell_calling(df_sum)
@@ -114,7 +115,7 @@ class Count(Step):
 
         # export cell matrix
         df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
-        self.write_matrix_10X(df_cell, self.cell_matrix_dir)
+        Count.write_sparse_matrix(df_cell, self.cell_matrix_dir, gtf_dict=self.gtf_dict)
         (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
             df, cell_bc)
 
@@ -291,23 +292,13 @@ class Count(Step):
         CB_describe = df_sum.loc[df_sum['mark'] == 'CB', :].describe()
         return CB_describe
 
+    @staticmethod
     @utils.add_log
-    def write_matrix_10X(self, df, matrix_dir):
-        if not os.path.exists(matrix_dir):
-            os.mkdir(matrix_dir)
+    def write_sparse_matrix(df, matrix_dir, gtf_dict=None):
 
-        df_UMI = df.groupby(['geneID', 'Barcode']).agg({'UMI': 'count'})
-        mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.codes[0], df_UMI.index.codes[1])))
-        gene_id = df_UMI.index.levels[0].to_series()
-        # add gene symbol
-        gene_name = gene_id.apply(lambda x: self.gtf_dict[x])
-        genes = pd.concat([gene_id, gene_name], axis=1)
-        genes.columns = ['gene_id', 'gene_name']
+        count_matrix = CountMatrix.from_dataframe(df, value="UMI", gtf_dict=gtf_dict)
+        count_matrix.to_matrix_dir(matrix_dir)
 
-        barcodes = df_UMI.index.levels[1].to_series()
-        genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME[0]}', index=False, sep='\t', header=False)
-        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME[0]}', index=False, sep='\t', header=False)
-        mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME[0]}', mtx)
 
     @utils.add_log
     def cell_summary(self, df, cell_bc):

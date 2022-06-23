@@ -331,12 +331,8 @@ def get_barcode_from_matrix_dir(matrix_dir):
         match_barcode: list
         no_match_barcode: int
     """
-    barcode_file_pattern_list = []
-    for barcode_file_name in BARCODE_FILE_NAME:
-        barcode_file_pattern_list.append(f"{matrix_dir}/{barcode_file_name}")
   
-    match_barcode_file = glob_file(barcode_file_pattern_list)
-    get_barcode_from_matrix_dir.logger.info(f"Barcode file:{match_barcode_file}")
+    match_barcode_file = f"{matrix_dir}/{BARCODE_FILE_NAME}"
     match_barcode, n_match_barcode = read_one_col(match_barcode_file)
 
     return match_barcode, n_match_barcode
