@@ -14,5 +14,5 @@ CHAIN = {
 	}
 PAIRED_CHAIN = {
 	'TCR': ['TRA_TRB'],
-	'BCR': ['IGH_IGL', 'IGH_IGK']
+	'BCR': ['IGK_IGH', 'IGL_IGH']
 }
