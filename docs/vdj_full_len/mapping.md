@@ -11,6 +11,20 @@
 
 - `{sample}_distribution.txt` Number of assembled barcodes in every clusters in scRNA-Seq library.
 ## Arguments
+`--species` species.
+
+`--soft` cellranger version.
+
+`--ref_path` reference path for cellranger.
+
+`--soft_path` soft path for cellranger.
+
+`--other_param` Other cellranger parameters.
+
+`--not_split_R2` whether split r2.
+
+`--mem` memory (G).
+
 `--seqtype` TCR or BCR.
 
 `--outdir` Output diretory.

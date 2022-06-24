@@ -9,13 +9,15 @@
 
 `--soft` cellranger version.
 
-`--mem` memory (G).
-
 `--ref_path` reference path for cellranger.
 
 `--soft_path` soft path for cellranger.
 
 `--other_param` Other cellranger parameters.
+
+`--not_split_R2` whether split r2.
+
+`--mem` memory (G).
 
 `--outdir` Output diretory.
 
@@ -25,5 +27,5 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--fqs_dir` fastq dir.
+`--fqs_dir` fastq dir after convert.
 

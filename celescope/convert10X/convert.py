@@ -51,16 +51,15 @@ def fastq_line(name, seq, qual):
 
 class Convert(Step):
     """
-    ## Features
 
-    - Format barcodes and UMIs.
-
-    ## Output        
+    ##Features
+    - Convert barcodes and UMI to 10X format.
+    
+    Output
     - `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
-
-    - `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads in 10X format.
-
-    - `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads in 10X format.
+    - `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads as cellranger input.
+    - `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads as cellranger input.
+    
     """
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)

@@ -59,8 +59,15 @@ rna     /SGRNJ03/randd/cjj/celedev/TESTDATA/testcele/celescope_test_data/rna/fas
 
 
 ### convert
+- Convert barcodes and UMI to 10X format.
 
-- Format barcodes and UMIs.
+Output
+- `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
+- `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads as cellranger input.
+- `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads as cellranger input.
+
+### cellranger
+- Single cell RNA-seq Gene Expression analysis by Cellranger.
 
 
 ## Output files
@@ -69,12 +76,8 @@ rna     /SGRNJ03/randd/cjj/celedev/TESTDATA/testcele/celescope_test_data/rna/fas
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
 the read name is `{barcode}_{UMI}_{read ID}`.
 
-### convert
-- `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
-
-- `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads in 10X format.
-
-- `02.convert/{sample}_S1_L001_R2_001.fastq.gz` New R2 reads in 10X format.
+### cellranger
+- `03.assemble/{sample}` Cellranger count results.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -161,4 +164,12 @@ same time.
 `--output_R1` Output valid R1 reads.
 
 `--split_R2` whether split r2.
+
+`--ref_path` reference path for cellranger.
+
+`--soft_path` soft path for cellranger.
+
+`--other_param` Other cellranger parameters.
+
+`--mem` memory(G).
 

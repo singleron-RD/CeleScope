@@ -2,7 +2,7 @@
 
 1. Clone repo
 ```
-git clone -b convert_10X https://github.com/singleron-RD/CeleScope.git
+git clone -b convert_10X git@github.com:singleron-RD/CeleScope.git
 ```
 
 2. Create conda environment and install conda packages
@@ -201,7 +201,7 @@ same time.
 
 `--species` species.
 
-`--mem` memory (G).
+`--soft` cellranger version.
 
 `--ref_path` reference path for cellranger.
 
@@ -209,11 +209,9 @@ same time.
 
 `--other_param` Other cellranger parameters.
 
-`--soft` cellranger version.
-
-`--remove_3rd_chain` remove IGK or IGL according to umis when a cell has 3 chains at the same time.
-
 `--not_split_R2` whether split r2.
+
+`--mem` memory (G).
 
 `--seqtype` TCR or BCR.
 

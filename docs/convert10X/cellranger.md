@@ -1,19 +1,16 @@
+## Features
+- Single cell RNA-seq Gene Expression analysis by Cellranger.
+
+## Output
+- `03.assemble/{sample}` Cellranger count results.
 ## Arguments
-`--species` species.
-
-`--soft` cellranger version.
-
 `--ref_path` reference path for cellranger.
 
 `--soft_path` soft path for cellranger.
 
 `--other_param` Other cellranger parameters.
 
-`--not_split_R2` whether split r2.
-
-`--mem` memory (G).
-
-`--seqtype` TCR or BCR.
+`--mem` memory(G).
 
 `--outdir` Output diretory.
 
@@ -23,5 +20,5 @@
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--barcode_dict` 10X barcode correspond sgr barcode.
+`--fqs_dir` fastq dir after convert.
 

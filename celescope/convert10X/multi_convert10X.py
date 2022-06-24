@@ -65,6 +65,16 @@ class Multi_convert10X(Multi):
             f'--fq2 {fq2} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
+    
+    def cellranger(self, sample):
+        step = 'cellranger'
+        cmd_line = self.get_cmd_line(step, sample)
+        fqs_dir = f'{self.outdir_dic[sample]["convert"]}'
+        cmd = (
+            f'{cmd_line} '
+            f'--fqs_dir {fqs_dir} '
+        )
+        self.process_cmd(cmd, step, sample, m=self.args.mem, x=self.args.thread)
 
 
 def main():
