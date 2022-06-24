@@ -28,8 +28,8 @@ conda activate celescope
 pip install celescope
 ```
 
-If you want to use `flv_CR` and `flv_trust4`
+If you want to use `flv_CR` and `flv_trust4`, celescope>=1.11.0b0 is required.
 ```
 conda activate celescope
-pip install celescope>=1.11.0b0
+pip install celescope==1.11.0b0
 ```
