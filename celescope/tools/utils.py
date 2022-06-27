@@ -83,7 +83,6 @@ def add_mem(func):
     return wrapper
 
 
-
 def generic_open(file_name, *args, **kwargs):
     if file_name.endswith('.gz'):
         file_obj = gzip.open(file_name, *args, **kwargs)

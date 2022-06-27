@@ -4,7 +4,7 @@ import pandas as pd
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
-from celescope.tools.matrix import CountMatrix
+from celescope.tools.matrix import CountMatrix, Features
 
 
 TAG_COL = 'tag_name'
@@ -37,11 +37,11 @@ class Count_cite(Step):
             total=mapped_read,
         )
 
-        gtf_dict = {}
-        for tag_name in df_read_count_in_cell[TAG_COL].unique():
-            gtf_dict[tag_name] = tag_name
 
-        citeseq_matrix = CountMatrix.from_dataframe(df_read_count_in_cell, row=TAG_COL, column='barcode', value='UMI',gtf_dict=gtf_dict)
+        tag_names = df_read_count_in_cell[TAG_COL].unique()
+        features = Features(tag_names)
+
+        citeseq_matrix = CountMatrix.from_dataframe(df_read_count_in_cell, features, row=TAG_COL, column='barcode', value='UMI')
         rna_matrix = CountMatrix.from_matrix_dir(matrix_dir=self.match_matrix_dir)
         merged_matrix = rna_matrix.concat_by_barcodes(citeseq_matrix)
         merged_matrix.to_matrix_dir(self.matrix_dir)

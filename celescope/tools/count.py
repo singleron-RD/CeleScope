@@ -12,19 +12,17 @@ from itertools import groupby
 import numpy as np
 import pandas as pd
 import pysam
-from scipy.io import mmwrite
-from scipy.sparse import coo_matrix
 
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
-from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
-    MATRIX_FILE_NAME, FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
+from celescope.tools.__init__ import (FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
 from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.emptydrop_cr.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.plotly_plot import Line_plot
 from celescope.tools.matrix import CountMatrix
+from celescope.tools import reference
 
 TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)
@@ -76,8 +74,9 @@ class Count(Step):
         self.bam = args.bam
 
         # set
-        self.gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
-        self.gtf_dict = utils.Gtf_dict(self.gtf_file)
+        gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
+        self.gtf_parser = reference.GtfParser(gtf_file)
+        self.features = self.gtf_parser.get_features()
         self.downsample_dict = {}
 
         # output files
@@ -105,7 +104,7 @@ class Count(Step):
         df_sum = Count.get_df_sum(df)
 
         # export all matrix
-        Count.write_sparse_matrix(df, self.raw_matrix_dir, gtf_dict=self.gtf_dict)
+        self.write_sparse_matrix(df, self.raw_matrix_dir)
 
         # call cells
         cell_bc, _threshold = self.cell_calling(df_sum)
@@ -115,7 +114,7 @@ class Count(Step):
 
         # export cell matrix
         df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
-        Count.write_sparse_matrix(df_cell, self.cell_matrix_dir, gtf_dict=self.gtf_dict)
+        self.write_sparse_matrix(df_cell, self.cell_matrix_dir)
         (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
             df, cell_bc)
 
@@ -292,13 +291,11 @@ class Count(Step):
         CB_describe = df_sum.loc[df_sum['mark'] == 'CB', :].describe()
         return CB_describe
 
-    @staticmethod
     @utils.add_log
-    def write_sparse_matrix(df, matrix_dir, gtf_dict=None):
+    def write_sparse_matrix(self, df, matrix_dir):
 
-        count_matrix = CountMatrix.from_dataframe(df, value="UMI", gtf_dict=gtf_dict)
+        count_matrix = CountMatrix.from_dataframe(df, self.features, value="UMI")
         count_matrix.to_matrix_dir(matrix_dir)
-
 
     @utils.add_log
     def cell_summary(self, df, cell_bc):

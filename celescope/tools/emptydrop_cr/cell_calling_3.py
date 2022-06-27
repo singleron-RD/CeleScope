@@ -1,11 +1,8 @@
-import os
 import random
 from collections import namedtuple
 
 import numpy as np
 import numpy.ma as ma
-import pandas as pd
-import scipy.io
 
 import celescope.tools.emptydrop_cr.sgt as cr_sgt  # # modified sgt.py
 import celescope.tools.emptydrop_cr.stats as cr_stats  # # modified stats.py
@@ -227,7 +224,7 @@ def cell_calling_3(all_matrix_10X_dir, expected_cell_num):
 
     # Run cell calling
     filtered_bc_indices, round_1_filtered_metrics, _non_ambient_barcode_result = find_nonambient_barcodes(
-        raw_mat=count_matrix.__matrix, recovered_cells=expected_cell_num)
+        raw_mat=count_matrix.get_matrix(), recovered_cells=expected_cell_num)
 
     raw_barcodes = np.array(count_matrix.get_barcodes())
     cell_bc = raw_barcodes[filtered_bc_indices]

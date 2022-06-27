@@ -1,3 +1,5 @@
+
+
 import scipy.io
 import scipy.sparse
 import pandas as pd
@@ -6,7 +8,7 @@ from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME, MATR
 from celescope.tools import utils
 
 class Features:
-    def __init__(self, gene_id: list, gene_name=None, type=None):
+    def __init__(self, gene_id: list, gene_name=None, gene_type=None):
         """
         Args:
             gene_id: list of gene id
@@ -14,19 +16,22 @@ class Features:
             type: ype of features, e.g. [gene, protein]
         """
         self.gene_id = gene_id
-        self.gene_name = gene_name
-        self.type = type
+        if not gene_name:
+            self.gene_name = gene_id
+        else:
+            self.gene_name = gene_name
+        self.gene_type = gene_type 
 
     @classmethod
     def from_tsv(cls, tsv_file):
         df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'])
         gene_id = df['gene_id'].tolist()
         gene_name = df['gene_name'].tolist()
-        type = df['type'].tolist()
-        return cls(gene_id, gene_name, type)
+        gene_type = df['type'].tolist()
+        return cls(gene_id, gene_name, gene_type)
 
     def to_tsv(self, tsv_file):
-        df = pd.DataFrame({'gene_id': self.gene_id, 'gene_name': self.gene_name, 'type': self.type})
+        df = pd.DataFrame({'gene_id': self.gene_id, 'gene_name': self.gene_name, 'type': self.gene_type})
         df.to_csv(tsv_file, sep='\t', index=False, header=False)
 
 
@@ -57,30 +62,32 @@ class CountMatrix:
 
     def to_matrix_dir(self, matrix_dir):
         utils.check_mkdir(dir_name=matrix_dir)
-        features = self.__features.to_tsv(f'{matrix_dir}/{FEATURE_FILE_NAME}')
-        barcodes = pd.Series(self.__barcodes).to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t', header=False)
+        self.__features.to_tsv(f'{matrix_dir}/{FEATURE_FILE_NAME}')
+        pd.Series(self.__barcodes).to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t', header=False)
         matrix_path = f'{matrix_dir}/{MATRIX_FILE_NAME}'
         scipy.io.mmwrite(matrix_path, self.__matrix)
 
     @classmethod
-    def from_dataframe(cls, df, row='geneID', column='Barcode', value="UMI", gtf_dict=None, type=None):
+    def from_dataframe(cls, df, features: Features, row='geneID', column='Barcode', value="UMI"):
         """
+        Use all gene_id from features even if it is not in df
         Args:
             df: dataframe with columns: [row, column, value]. Will be grouped by row and column and count lines of value.
             value: value name in df, UMI
-            gtf_dict: {gene_id: gene_name}
+            features: Features
             type: type of features, e.g. [gene, protein]
         """
-        df = df.groupby([row, column]).agg({value: 'count'})
-        mtx = scipy.sparse.coo_matrix((df[value], (df.index.codes[0], df.index.codes[1])))
-        gene_id = df.index.levels[0].tolist()
-        # add gene symbol
-        gene_name = None
-        if gtf_dict:
-            gene_name = [gtf_dict[x] for x in gene_id]
+        index_dict = {}
+        for index, gene_id in enumerate(features.gene_id):
+            index_dict[gene_id] = index
 
-        features = Features(gene_id, gene_name, type)
+        df = df.groupby([row, column]).agg({value: 'count'})
         barcodes = df.index.levels[1].tolist()
+        # use all gene_id from features even if it is not in df
+        gene_id_codes = [index_dict[gene_id] for gene_id in df.index.get_level_values(level=0)]
+        mtx = scipy.sparse.coo_matrix((df[value], (gene_id_codes, df.index.codes[1])), 
+            shape=(len(features.gene_id), len(barcodes)))
+
         return cls(features, barcodes, mtx)
 
     def __str__(self):
@@ -100,10 +107,10 @@ class CountMatrix:
 
         gene_id = self.get_features().gene_id + other.get_features().gene_id
         gene_name = self.get_features().gene_name + other.get_features().gene_name
-        type = None
-        if self.get_features().type and other.get_features().type:
-            type = self.get_features().type + other.get_features().type
-        features = Features(gene_id, gene_name, type)
+        gene_type = None
+        if self.get_features().gene_type and other.get_features().gene_type:
+            gene_type = self.get_features().gene_type + other.get_features().gene_type
+        features = Features(gene_id, gene_name, gene_type)
 
         matrix = scipy.sparse.vstack([self.get_matrix(), other.get_matrix()])
 
