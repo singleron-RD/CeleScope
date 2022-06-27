@@ -4,7 +4,10 @@ import pandas as pd
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
+from celescope.tools.matrix import CountMatrix, Features
 
+
+TAG_COL = 'tag_name'
 
 class Count_cite(Step):
 
@@ -13,11 +16,13 @@ class Count_cite(Step):
 
         self.df_read_count = pd.read_csv(args.read_count_file, sep='\t', index_col=0)
 
-        self.tsne_dict = utils.parse_match_dir(args.match_dir)
-        self.match_barcode = self.tsne_dict['match_barcode']
+        self.match_dict = utils.parse_match_dir(args.match_dir)
+        self.match_barcode = self.match_dict['match_barcode']
+        self.match_matrix_dir = self.match_dict['matrix_dir']
 
         # out
         self.mtx = f'{self.out_prefix}_citeseq.mtx.gz'
+        self.matrix_dir = f'{self.out_prefix}_rna_citeseq_matrix'
 
     @utils.add_log
     def run(self):
@@ -32,12 +37,22 @@ class Count_cite(Step):
             total=mapped_read,
         )
 
+
+        tag_names = df_read_count_in_cell[TAG_COL].unique()
+        features = Features(tag_names)
+
+        citeseq_matrix = CountMatrix.from_dataframe(df_read_count_in_cell, features, row=TAG_COL, column='barcode', value='UMI')
+        rna_matrix = CountMatrix.from_matrix_dir(matrix_dir=self.match_matrix_dir)
+        merged_matrix = rna_matrix.concat_by_barcodes(citeseq_matrix)
+        merged_matrix.to_matrix_dir(self.matrix_dir)
+
         # UMI
         df_UMI_in_cell = df_read_count_in_cell.reset_index().groupby([
-            'barcode', 'tag_name']).agg({'UMI': 'count'})
+            'barcode', TAG_COL]).agg({'UMI': 'count'})
+
         df_UMI_in_cell = df_UMI_in_cell.reset_index()
         df_UMI_in_cell = df_UMI_in_cell.pivot(
-            index='barcode', columns='tag_name', values='UMI')
+            index='barcode', columns=TAG_COL, values='UMI')
         df_cell = pd.DataFrame(index=self.match_barcode)
         df_UMI_cell = pd.merge(
             df_cell,

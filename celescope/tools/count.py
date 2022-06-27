@@ -12,18 +12,17 @@ from itertools import groupby
 import numpy as np
 import pandas as pd
 import pysam
-from scipy.io import mmwrite
-from scipy.sparse import coo_matrix
 
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
-from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
-    MATRIX_FILE_NAME, FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
+from celescope.tools.__init__ import (FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
 from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.emptydrop_cr.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.plotly_plot import Line_plot
+from celescope.tools.matrix import CountMatrix
+from celescope.tools import reference
 
 TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)
@@ -75,8 +74,9 @@ class Count(Step):
         self.bam = args.bam
 
         # set
-        self.gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
-        self.gtf_dict = utils.Gtf_dict(self.gtf_file)
+        gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
+        self.gtf_parser = reference.GtfParser(gtf_file)
+        self.features = self.gtf_parser.get_features()
         self.downsample_dict = {}
 
         # output files
@@ -104,7 +104,7 @@ class Count(Step):
         df_sum = Count.get_df_sum(df)
 
         # export all matrix
-        self.write_matrix_10X(df, self.raw_matrix_dir)
+        self.write_sparse_matrix(df, self.raw_matrix_dir)
 
         # call cells
         cell_bc, _threshold = self.cell_calling(df_sum)
@@ -114,7 +114,7 @@ class Count(Step):
 
         # export cell matrix
         df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
-        self.write_matrix_10X(df_cell, self.cell_matrix_dir)
+        self.write_sparse_matrix(df_cell, self.cell_matrix_dir)
         (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
             df, cell_bc)
 
@@ -292,22 +292,10 @@ class Count(Step):
         return CB_describe
 
     @utils.add_log
-    def write_matrix_10X(self, df, matrix_dir):
-        if not os.path.exists(matrix_dir):
-            os.mkdir(matrix_dir)
+    def write_sparse_matrix(self, df, matrix_dir):
 
-        df_UMI = df.groupby(['geneID', 'Barcode']).agg({'UMI': 'count'})
-        mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.codes[0], df_UMI.index.codes[1])))
-        gene_id = df_UMI.index.levels[0].to_series()
-        # add gene symbol
-        gene_name = gene_id.apply(lambda x: self.gtf_dict[x])
-        genes = pd.concat([gene_id, gene_name], axis=1)
-        genes.columns = ['gene_id', 'gene_name']
-
-        barcodes = df_UMI.index.levels[1].to_series()
-        genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME[0]}', index=False, sep='\t', header=False)
-        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME[0]}', index=False, sep='\t', header=False)
-        mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME[0]}', mtx)
+        count_matrix = CountMatrix.from_dataframe(df, self.features, value="UMI")
+        count_matrix.to_matrix_dir(matrix_dir)
 
     @utils.add_log
     def cell_summary(self, df, cell_bc):
