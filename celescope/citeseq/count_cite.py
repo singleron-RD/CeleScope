@@ -37,11 +37,10 @@ class Count_cite(Step):
             total=mapped_read,
         )
 
-
         tag_names = df_read_count_in_cell[TAG_COL].unique()
         features = Features(tag_names)
 
-        citeseq_matrix = CountMatrix.from_dataframe(df_read_count_in_cell, features, row=TAG_COL, column='barcode', value='UMI')
+        citeseq_matrix = CountMatrix.from_dataframe(df_read_count_in_cell, features, barcodes=self.match_barcode, row=TAG_COL, column='barcode', value='UMI')
         rna_matrix = CountMatrix.from_matrix_dir(matrix_dir=self.match_matrix_dir)
         merged_matrix = rna_matrix.concat_by_barcodes(citeseq_matrix)
         merged_matrix.to_matrix_dir(self.matrix_dir)
