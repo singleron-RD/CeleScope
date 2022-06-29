@@ -14,16 +14,6 @@ from celescope.__init__ import HELP_DICT
 
 
 
-def check_return_info(return_info):
-    """
-    check fun return
-    """
-    if return_info > 1:
-        return True
-    else:
-        return False
-
-
 class FeatureCounts(Step):
     """
     ## Features
