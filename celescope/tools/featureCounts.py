@@ -56,7 +56,7 @@ class FeatureCounts(Step):
         #stats
         self.metrics_numbers = defaultdict(dict)
 
-    def format_stat(self,gtf_type):
+    def format_stat(self,gtf_type,featureCount_log_file):
         metrics_strs = ['Assigned', 'Unassigned_NoFeatures', 'Unassigned_Ambiguity']
         
         metrics_compiled = {}
@@ -66,7 +66,7 @@ class FeatureCounts(Step):
             compiled = re.compile(raw_str, flags=re.S)
             metrics_compiled[metrics_str] = compiled
 
-        with open(self.featureCount_log_file, 'r') as fh:
+        with open(featureCount_log_file, 'r') as fh:
 
             for line in fh:
                 line = line.strip()
@@ -102,26 +102,26 @@ class FeatureCounts(Step):
         outdir = f'{self.outdir}/tmp/{gtf_type}'
         pathlib.Path(outdir).mkdir(parents=True,exist_ok=True)
         #out files
-        self.name_sorted_bam = f'{outdir}/{self.out_prefix.split("/")[-1]}_name_sorted.bam'
+        name_sorted_bam = f'{outdir}/{self.out_prefix.split("/")[-1]}_name_sorted.bam'
         input_basename = os.path.basename(self.args.input)
-        self.featureCounts_bam = f'{outdir}/{input_basename}.featureCounts.bam'
-        self.featureCount_log_file = f'{outdir}/{self.out_prefix.split("/")[-1]}.summary'
+        featureCounts_bam = f'{outdir}/{input_basename}.featureCounts.bam'
+        featureCount_log_file = f'{outdir}/{self.out_prefix.split("/")[-1]}.summary'
 
         self.run_featureCounts(outdir,gtf_type)
         samtools_runner = utils.Samtools(
-            in_bam=self.featureCounts_bam,
-            out_bam=self.featureCounts_bam,
+            in_bam=featureCounts_bam,
+            out_bam=featureCounts_bam,
             threads=self.thread,
             debug=self.debug
         )
         samtools_runner.add_tag(self.gtf)
         samtools_runner.temp_sam2bam(by='coord')
         samtools_runner.samtools_sort(
-            in_file=self.featureCounts_bam,
-            out_file=self.name_sorted_bam,
+            in_file=featureCounts_bam,
+            out_file=name_sorted_bam,
             by='name',
         )
-        self.format_stat(gtf_type)
+        self.format_stat(gtf_type,featureCount_log_file)
 
         if (judge_cd:=len(self.gtf_type)):
             self.gtf_type.pop(0)
