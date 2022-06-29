@@ -1,10 +1,10 @@
 
 import os
-import re
 import pathlib
-from tenacity import retry_if_result,retry
+
 from collections import defaultdict
 
+import pandas as pd
 
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.mkref import Mkref
@@ -51,34 +51,25 @@ class FeatureCounts(Step):
         self.featureCounts_param = args.featureCounts_param
 
         #gtf_type
-        self.gtf_type = ['exon','gene']
+        self.gtf_types = ['exon','gene']
 
         #stats
-        self.metrics_numbers = defaultdict(dict)
+        self.feature_log_dict = defaultdict(dict)
 
-    def format_stat(self,gtf_type,featureCount_log_file):
-        metrics_strs = ['Assigned', 'Unassigned_NoFeatures', 'Unassigned_Ambiguity']
-        
-        metrics_compiled = {}
 
-        for metrics_str in metrics_strs:
-            raw_str = re.escape(metrics_str) + r'.*?(\d+)'
-            compiled = re.compile(raw_str, flags=re.S)
-            metrics_compiled[metrics_str] = compiled
+    @staticmethod
+    def read_log(log_file):
+        """
+        Args:
+            log_file: featureCounts log summary file
+        Returns:
+            log_dict: {'Assigned': 123, ...}
+        """
+        # skip first line
+        df = pd.read_csv(log_file, sep='\t', header=None, names=['name', 'value'], skiprows=1)
+        log_dict = df.set_index('name')['value'].to_dict()
+        return log_dict
 
-        with open(featureCount_log_file, 'r') as fh:
-
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-
-                for metrics_str in metrics_compiled:
-                    compiled = metrics_compiled[metrics_str]
-                    match = compiled.search(line)
-                    if match:
-                        self.metrics_numbers[gtf_type][metrics_str] = int(match.group(1))
-                        break
 
     @utils.add_log
     def run_featureCounts(self,outdir,gtf_type):
@@ -96,49 +87,44 @@ class FeatureCounts(Step):
             cmd += (" " + self.featureCounts_param)
         self.debug_subprocess_call(cmd)
 
-    @retry(retry=retry_if_result(check_return_info))
+
+
     def run(self):
-        gtf_type = self.gtf_type[0]
-        outdir = f'{self.outdir}/tmp/{gtf_type}'
-        pathlib.Path(outdir).mkdir(parents=True,exist_ok=True)
-        #out files
-        name_sorted_bam = f'{outdir}/{self.out_prefix.split("/")[-1]}_name_sorted.bam'
-        input_basename = os.path.basename(self.args.input)
-        featureCounts_bam = f'{outdir}/{input_basename}.featureCounts.bam'
-        featureCount_log_file = f'{outdir}/{self.out_prefix.split("/")[-1]}.summary'
+        for gtf_type in self.gtf_types:
+            outdir = f'{self.outdir}/tmp/{gtf_type}'
+            pathlib.Path(outdir).mkdir(parents=True,exist_ok=True)
+            #out files
+            name_sorted_bam = f'{outdir}/{self.out_prefix.split("/")[-1]}_name_sorted.bam'
+            input_basename = os.path.basename(self.args.input)
+            featureCounts_bam = f'{outdir}/{input_basename}.featureCounts.bam'
+            log_file = f'{outdir}/{self.out_prefix.split("/")[-1]}.summary'
 
-        self.run_featureCounts(outdir,gtf_type)
-        samtools_runner = utils.Samtools(
-            in_bam=featureCounts_bam,
-            out_bam=featureCounts_bam,
-            threads=self.thread,
-            debug=self.debug
-        )
-        samtools_runner.add_tag(self.gtf)
-        samtools_runner.temp_sam2bam(by='coord')
-        samtools_runner.samtools_sort(
-            in_file=featureCounts_bam,
-            out_file=name_sorted_bam,
-            by='name',
-        )
-        self.format_stat(gtf_type,featureCount_log_file)
+            self.run_featureCounts(outdir,gtf_type)
+            if gtf_type == self.args.gtf_type:
+                samtools_runner = utils.Samtools(
+                    in_bam=featureCounts_bam,
+                    out_bam=featureCounts_bam,
+                    threads=self.thread,
+                    debug=self.debug
+                )
+                samtools_runner.add_tag(self.gtf)
+                samtools_runner.temp_sam2bam(by='coord')
+                samtools_runner.samtools_sort(
+                    in_file=featureCounts_bam,
+                    out_file=name_sorted_bam,
+                    by='name',
+                )
+            self.feature_log_dict[gtf_type] = FeatureCounts.read_log(log_file)
 
-        if (judge_cd:=len(self.gtf_type)):
-            self.gtf_type.pop(0)
-            return judge_cd
 
     @utils.add_log
-    def creat_stat(self):
-        """
-        creat stat
-        """
-        metrics_numbers = {}
-        metrics_numbers['Assigned_exon'] = self.metrics_numbers['exon']['Assigned']
-        metrics_numbers['Assigned_intron'] = self.metrics_numbers['gene']['Assigned']-self.metrics_numbers['exon']['Assigned']
-        metrics_numbers['Assigned_intergenic'] = self.metrics_numbers['exon']['Unassigned_NoFeatures']
-        metrics_numbers['Unassigned_Ambiguity'] = self.metrics_numbers['exon']['Unassigned_Ambiguity'] - metrics_numbers['Assigned_intron']
+    def add_metrics(self):
+        Assigned_exon = self.feature_log_dict['exon']['Assigned']
+        Assigned_intron = self.feature_log_dict['gene']['Assigned'] - self.feature_log_dict['exon']['Assigned']
+        Assigned_intergenic = self.feature_log_dict['gene']['Unassigned_NoFeatures']
+        Unassigned_ambiguity = self.feature_log_dict['gene']['Unassigned_Ambiguity']
         
-        total = sum(metrics_numbers.values())
+        total = sum(self.feature_log_dict['exon'].values())
         
         self.add_metric(
             name='Genome',
@@ -147,28 +133,29 @@ class FeatureCounts(Step):
         self.add_metric(
             name='Feature Type',
             value=self.args.gtf_type.capitalize(),
+            help_info='Specified by `--gtf_type`. For snRNA-seq, you need to add `--gtf_type gene` to include reads mapped to intronic regions.'
         )
         self.add_metric(
             name='Reads Assigned To Exonic Regions',
-            value=metrics_numbers['Assigned_exon'],
+            value=Assigned_exon,
             total=total,
             help_info='Reads that can be successfully assigned to exonic regions'
         )
         self.add_metric(
             name='Reads Assigned To Intronic Regions',
-            value=metrics_numbers['Assigned_intron'],
+            value=Assigned_intron,
             total=total,
-            help_info='Reads that can be successfully assigned to intron regions'
+            help_info='Reads that can be successfully assigned to intronic regions'
         )
         self.add_metric(
             name='Reads Assigned To Intergenic Regions',
-            value=metrics_numbers['Assigned_intergenic'],
+            value=Assigned_intergenic,
             total=total,
             help_info='Reads that can be successfully assigned to intergenic regions'
         )
         self.add_metric(
             name='Reads Unassigned Ambiguity',
-            value=metrics_numbers['Unassigned_Ambiguity'],
+            value=Unassigned_ambiguity,
             total=total,
             help_info='Alignments that overlap two or more features'
         )
@@ -188,7 +175,7 @@ class FeatureCounts(Step):
 def featureCounts(args):
     with FeatureCounts(args) as runner:
         runner.run()
-        runner.creat_stat()
+        runner.add_metrics()
         runner.clean_tmp()
 
 
@@ -196,7 +183,8 @@ def get_opts_featureCounts(parser, sub_program):
     parser.add_argument(
         '--gtf_type',
         help='Specify feature type in GTF annotation',
-        default='exon'
+        default='exon',
+        choices=['exon', 'gene'],
     )
     parser.add_argument('--genomeDir', help=HELP_DICT['genomeDir'])
     parser.add_argument('--featureCounts_param', help=HELP_DICT['additional_param'], default="")
