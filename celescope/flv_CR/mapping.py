@@ -35,7 +35,8 @@ class Mapping(Step):
         
         self.seqtype = args.seqtype
         self.match_dir = args.match_dir
-        self.contig = glob.glob(f'{args.match_out}/matched_contig_annotations.csv')[0]
+        if self.match_dir != 'None':
+            self.contig = glob.glob(f'{args.match_out}/matched_contig_annotations.csv')[0]
         self.celltype_set = CELL_TYPE_DICT[self.seqtype]
 
         try:
