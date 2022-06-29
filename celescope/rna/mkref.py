@@ -23,8 +23,6 @@ class Mkref_rna(Mkref):
     ```
     """
 
-    def __init__(self, genome_type, args, files=(), non_files=()):
-        super().__init__(genome_type, args, files, non_files)
 
     @utils.add_log
     def build_rna_star_index(self):
