@@ -1,10 +1,8 @@
-import re
 import pandas as pd
 
 from celescope.tools import utils
 from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
-from celescope.tools.plotly_plot import Pie_plot
 from celescope.rna.mkref import Mkref_rna
 
 
@@ -52,12 +50,13 @@ class Star(Star_mixin):
         self.stats = pd.Series()
         self.df_region = pd.DataFrame()
 
+    """
     def add_other_metrics(self):
-        """
-        add picard region bases
-        add region plot
-        if debug, add ribosomal RNA reads percent
-        """
+        
+        #add picard region bases
+        #add region plot
+        #if debug, add ribosomal RNA reads percent
+        
         with open(self.STAR_map_log, 'r') as map_log:
             # number amd percent
             unique_reads_list = []
@@ -109,7 +108,7 @@ class Star(Star_mixin):
         )
 
         # ribo
-        """
+        
         if self.debug:
             with open(self.ribo_log, 'r') as ribo_log:
                 for line in ribo_log:
@@ -125,11 +124,12 @@ class Star(Star_mixin):
                     total=Reads_Total,
                     help_info='Number of reads or umis that mapped to rRNA'
                 )
-        """
+        
 
         region_plot = {'regions': ['Exonic Regions', 'Intronic Regions', 'Intergenic Regions'],
                        'values': [exonic_regions, intronic_regions, intergenic_regions]}
         self.df_region = pd.DataFrame(region_plot)
+        """
 
     @utils.add_log
     def ribo(self):
@@ -144,7 +144,8 @@ class Star(Star_mixin):
             f'> {self.ribo_run_log} 2>&1 '
         )
         self.debug_subprocess_call(cmd)
-
+    
+    """
     @utils.add_log
     def picard(self):
         cmd = [
@@ -159,15 +160,16 @@ class Star(Star_mixin):
             'VALIDATION_STRINGENCY=SILENT']
         cmd = ' '.join(cmd)
         self.debug_subprocess_call(cmd)
+    """
 
     @utils.add_log
     def run(self):
         super().run()
-        self.picard()
-        self.add_other_metrics()
+        #self.picard()
+        #self.add_other_metrics()
 
-        region_pie = Pie_plot(df_region=self.df_region).get_plotly_div()
-        self.add_data(region_pie=region_pie)
+        #region_pie = Pie_plot(df_region=self.df_region).get_plotly_div()
+        #self.add_data(region_pie=region_pie)
 
 
 def star(args):
