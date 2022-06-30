@@ -35,7 +35,10 @@ class Match(Step):
         self.seqtype = args.seqtype
         self.chains = CHAIN[self.seqtype]
         self.pairs = PAIRED_CHAIN[self.seqtype]
-        self.match_cell_barcodes, _ = utils.get_barcode_from_match_dir(args.match_dir)
+
+        self.match_dir = args.match_dir
+        if self.match_dir != 'None':
+            self.match_cell_barcodes, _ = utils.get_barcode_from_match_dir(self.match_dir)
 
         self.filter_annotation = f'{args.summarize_out}/filtered_contig_annotations.csv'
         self.filter_fasta = f'{args.summarize_out}/filtered_contig.fasta'
@@ -196,9 +199,10 @@ class Match(Step):
 
     @utils.add_log
     def run(self):
-        self.gen_matched_result()
-        self.gen_matched_clonotypes()
-        self.gen_matched_metrics()
+        if self.match_dir != 'None':
+            self.gen_matched_result()
+            self.gen_matched_clonotypes()
+            self.gen_matched_metrics()
         self.gen_clonotypes_table()
 
 
