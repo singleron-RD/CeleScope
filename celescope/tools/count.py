@@ -181,7 +181,7 @@ class Count(Step):
     @staticmethod
     def discard_read(gene_umi_dict):
         """
-        If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation # with the most supporting reads is kept for UMI counting, and the other read groups are discarded. In case of a tie # for maximal read support, all read groups are discarded, as the gene cannot be confidently assigned.
+        If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting, and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded, as the gene cannot be confidently assigned.
 
         Returns:
             discarded_umi: set. umi with tie read count
