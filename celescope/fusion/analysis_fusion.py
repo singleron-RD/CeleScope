@@ -1,5 +1,4 @@
 import plotnine as p9
-import pandas as pd
 
 from celescope.tools.capture.analysis import Analysis, get_opts_analysis
 from celescope.fusion.count_fusion import Count_fusion
@@ -33,6 +32,7 @@ class Analysis_fusion(Analysis):
             'axis_text_x':p9.element_text(colour="black"),
             'axis_text_y':p9.element_text(colour="black"),
         }
+        self.count_fusion_df = None
         self.count_fusion_out = f'{self.out_prefix}_fusion_count.csv'
 
     def plot_fusion(self):
