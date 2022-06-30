@@ -1,9 +1,5 @@
-import pandas as pd
-
 from celescope.tools import utils
-from celescope.__init__ import ROOT_PATH
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
-from celescope.rna.mkref import Mkref_rna
 
 class Star(Star_mixin):
     """
@@ -35,10 +31,12 @@ class Star(Star_mixin):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
+
     
     @utils.add_log
     def run(self):
         super().run()
+
 
 
 def star(args):

@@ -1,7 +1,7 @@
 
 import os
-import re
 import pathlib
+
 from collections import defaultdict
 
 import pandas as pd
@@ -11,6 +11,7 @@ from celescope.tools.mkref import Mkref
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
+
 
 
 class FeatureCounts(Step):
@@ -45,6 +46,7 @@ class FeatureCounts(Step):
         #stats
         self.feature_log_dict = defaultdict(dict)
 
+
     @staticmethod
     def read_log(log_file):
         """
@@ -56,8 +58,8 @@ class FeatureCounts(Step):
         # skip first line
         df = pd.read_csv(log_file, sep='\t', header=None, names=['name', 'value'], skiprows=1)
         log_dict = df.set_index('name')['value'].to_dict()
-
         return log_dict
+
 
     @utils.add_log
     def run_featureCounts(self,outdir,gtf_type):
@@ -74,6 +76,7 @@ class FeatureCounts(Step):
         if self.featureCounts_param:
             cmd += (" " + self.featureCounts_param)
         self.debug_subprocess_call(cmd)
+
 
 
     def run(self):
@@ -94,7 +97,6 @@ class FeatureCounts(Step):
                     threads=self.thread,
                     debug=self.debug
                 )
-
                 samtools_runner.add_tag(self.gtf)
                 samtools_runner.temp_sam2bam(by='coord')
                 samtools_runner.samtools_sort(
