@@ -1,4 +1,5 @@
 import plotnine as p9
+import pandas as pd
 
 from celescope.tools.capture.analysis import Analysis, get_opts_analysis
 from celescope.fusion.count_fusion import Count_fusion
@@ -32,6 +33,7 @@ class Analysis_fusion(Analysis):
             'axis_text_x':p9.element_text(colour="black"),
             'axis_text_y':p9.element_text(colour="black"),
         }
+        self.count_fusion_out = f'{self.out_prefix}_fusion_count.csv'
 
     def plot_fusion(self):
         """
@@ -47,12 +49,26 @@ class Analysis_fusion(Analysis):
                     p9.theme_bw() + \
                     p9.scale_color_gradient(low="lightgrey",high="blue")
                 plot.save(out_plot_file)
+    
+    def get_fusion_count_df(self):
+        fusion_df = self.df_tsne.reset_index().filter(list(self.pos_dict.keys()) + ["barcode"])
+        fusion_df = fusion_df.melt(id_vars=["barcode"],value_name="UMI",var_name="fusion",ignore_index=True)
+        
+        count = fusion_df[fusion_df["UMI"] > 0].groupby(["fusion"], as_index=False)["barcode"].count()
+        self.count_fusion_df = count.assign(percent = lambda x: 100 * x.barcode / len(self.df_tsne))
+        self.count_fusion_df.to_csv(self.count_fusion_out, index = None)
+    
+    def add_fusion_count_metrics(self):
+        self.add_help_content('fusion_1, fusion_2...', 'number of positive cells(UMI > 0) of each fusion')
+        for _, row in self.count_fusion_df.iterrows():
+            self.add_metric(
+                name=f'{row["fusion"]}',
+                value=int(row['barcode']),
+                total=int(len(self.df_tsne)),
+            )
 
     def run(self):
         super().run()
         self.plot_fusion()
-
-
-
-
-
+        self.get_fusion_count_df()
+        self.add_fusion_count_metrics()
