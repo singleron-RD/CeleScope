@@ -323,5 +323,6 @@ class Count_tag(Step):
             f'--sample {self.sample} '
             f'--umi_tag {self.UMI_tag_file} '
             f'--matrix_10X {self.matrix_dir} '
+            '2>&1 '
         )
         self.debug_subprocess_call(cmd)

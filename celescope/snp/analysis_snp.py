@@ -50,6 +50,7 @@ class Analysis_snp(Step):
             f'Rscript {app} '
             f'--vcf {self.vcf_file} '
             f'--out {self.gt_file} '
+            '2>&1 '
         )
         self.debug_subprocess_call(cmd)
 

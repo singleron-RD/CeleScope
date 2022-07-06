@@ -1,7 +1,8 @@
 ## [1.11.0] - 
  ### `rna`
  - All genes from the gtf file will be written to `genes.tsv`. https://github.com/singleron-RD/CeleScope/issues/81
-
+ - The `celescope rna mkref` command no longer generates refflat files; removes the number of bases mapped to each region; adds the number of reads mapped to each region.
+ 
  ### `flv_CR`
  - fix a bug that `VJ Spanning (IGH, IGL) pair` will cause an KeyError if the order of [IGH, IGL] is not satisfied. https://github.com/singleron-RD/CeleScope/pull/145 
 

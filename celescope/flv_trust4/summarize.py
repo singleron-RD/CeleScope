@@ -255,9 +255,9 @@ class Summarize(Step):
         :param cell_barcodes: all barcodes identified to be cell.
         :return df_filter_contig: filtered contigs by cell barcodes.
         """
-        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True]
-        df_for_clono_pro['chain_cdr3aa'] = df_for_clono_pro[['chain', 'cdr3']].apply(':'.join, axis=1)
-        df_for_clono_pro['chain_cdr3nt'] = df_for_clono_pro[['chain', 'cdr3_nt']].apply(':'.join, axis=1)
+        df_for_clono_pro = df_for_clono[df_for_clono['productive']==True].copy()
+        df_for_clono_pro['chain_cdr3aa'] = df_for_clono_pro.loc[:, ['chain', 'cdr3']].apply(':'.join, axis=1)
+        df_for_clono_pro['chain_cdr3nt'] = df_for_clono_pro.loc[:,['chain', 'cdr3_nt']].apply(':'.join, axis=1)
 
         cbs = set(df_for_clono_pro['barcode'])
         clonotypes = open(f'{self.outdir}/clonotypes.csv', 'w')

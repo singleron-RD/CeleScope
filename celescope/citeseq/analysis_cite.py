@@ -35,6 +35,7 @@ class Analysis_cite(Step):
             f'--citeseq_mtx {self.args.citeseq_mtx} '
             f'--outdir {self.outdir} '
             f'--sample {self.sample} '
+            '2>&1 '
         )
         self.debug_subprocess_call(cmd)
     
@@ -47,7 +48,8 @@ class Analysis_cite(Step):
             f'--outdir {self.outdir} '
             f'--matrix_file {self.match_matrix_dir} '
             f'--mt_gene_list None '
-            f'--save_rds True'
+            f'--save_rds True '
+            '2>&1 '
         )
         self.run_seurat.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)

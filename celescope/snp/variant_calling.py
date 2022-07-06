@@ -47,15 +47,6 @@ class Variant_calling(Step):
         self.debug_subprocess_call(cmd)
 
     @utils.add_log
-    def fix_header(self):
-        cmd = (
-            'picard FixVcfHeader '
-            f'I={self.raw_vcf_file} '
-            f'O={self.fixed_header_vcf} '
-        )
-        self.debug_subprocess_call(cmd)
-
-    @utils.add_log
     def gatk_norm(self):
         cmd = (
             f'gatk LeftAlignAndTrimVariants '
