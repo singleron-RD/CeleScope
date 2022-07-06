@@ -54,7 +54,8 @@ class Mapping(Step):
             f'--VDJ {contig} '
             f'--sample {sample} '
             f'--outdir {outdir} '
-            f'--assign_file {assign}'
+            f'--assign_file {assign} '
+            '2>&1 '
         )
         subprocess.check_call(cmd, shell=True)
 

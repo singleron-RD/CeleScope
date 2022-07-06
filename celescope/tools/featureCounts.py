@@ -72,6 +72,7 @@ class FeatureCounts(Step):
             f'-T {self.thread} '
             f'-t {gtf_type} '
             f'{self.args.input} '
+            '2>&1 '
         )
         if self.featureCounts_param:
             cmd += (" " + self.featureCounts_param)

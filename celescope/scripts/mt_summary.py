@@ -68,6 +68,7 @@ class Mt_summary():
             f'--outdir {self.outdir} '
             f'--mt_gene_list_file {self.mt_gene_list_file} '
             f'--matrix_dir {self.matrix_dir} '
+            '2>&1 '
         )
         self.umi_summary.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)

@@ -236,6 +236,8 @@ class Step:
         debug subprocess call
         '''
         self.debug_subprocess_call.logger.debug(cmd)
+        if cmd.find('2>&1') == -1:
+            cmd += ' 2>&1 '
         subprocess.check_call(cmd, shell=True)
 
     def get_metric_list(self):

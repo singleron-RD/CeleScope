@@ -146,7 +146,8 @@ class Assemble(Step):
             f'-u {outdir}/{sample}.fq '
             f'--barcode {outdir}/{sample}_bc.fa '
             f'--UMI {outdir}/{sample}_umi.fa '
-            f'--trimLevel {trimLevel}'
+            f'--trimLevel {trimLevel} '
+            '2>&1 '
         )
         Assemble.assemble.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
@@ -170,7 +171,8 @@ class Assemble(Step):
             f'-o {outdir}/{name} '
             f'--barcode --UMI --noImpute '
             f'--readAssignment {outdir}/{name}_assign.out '
-            f'-r {outdir}/{name}_assembled_reads.fa > {outdir}/{name}_annotate.fa'
+            f'-r {outdir}/{name}_assembled_reads.fa > {outdir}/{name}_annotate.fa '
+            '2>&1 '
         )
         Assemble.annotate.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
@@ -193,7 +195,7 @@ class Assemble(Step):
             file_path_str = ' '.join(file_path)
             cmd = f'cat {file_path_str} > {self.assemble_outdir}/{self.sample}_{file_suffix}'
             self.merge_file.logger.info(cmd)
-            subprocess.check_call(cmd, shell=True)
+            self.debug_subprocess_call(cmd)
 
     def gen_report(self):
         Assemble.get_trust_report(self.assemble_outdir, self.sample)
@@ -208,7 +210,8 @@ class Assemble(Step):
         cmd = (
             f'perl {TOOLS_DIR}/trust-simplerep.pl '
             f'{filedir}/{sample}_cdr3.out > '
-            f'{filedir}/{sample}_report.tsv'
+            f'{filedir}/{sample}_report.tsv '
+            '2>&1 '
         )
         Assemble.get_trust_report.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
@@ -216,7 +219,7 @@ class Assemble(Step):
     @staticmethod
     @utils.add_log
     def filter_trust_report(filedir, sample):
-        cmd = f''' awk '$4!~"_" && $4!~"?"' {filedir}/{sample}_report.tsv > {filedir}/{sample}_filter_report.tsv '''
+        cmd = f''' awk '$4!~"_" && $4!~"?"' {filedir}/{sample}_report.tsv > {filedir}/{sample}_filter_report.tsv 2>&1'''
         Assemble.filter_trust_report.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -226,7 +229,8 @@ class Assemble(Step):
         cmd = (
             f'perl {TOOLS_DIR}/trust-barcoderep.pl '
             f'{filedir}/{sample}_cdr3.out > '
-            f'{filedir}/{sample}_barcode_report.tsv ' 
+            f'{filedir}/{sample}_barcode_report.tsv '
+            '2>&1 ' 
         )
         Assemble.get_bc_report.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
@@ -238,6 +242,7 @@ class Assemble(Step):
             f'python {TOOLS_DIR}/barcoderep-filter.py '
             f'-b {filedir}/{sample}_barcode_report.tsv > '
             f'{filedir}/{sample}_barcode_filter_report.tsv '
+            '2>&1 '
         )
         Assemble.get_bcfilter_report.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)

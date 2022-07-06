@@ -9,6 +9,7 @@ import subprocess
 import time
 import unittest
 import json
+import sys
 from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps
@@ -33,7 +34,7 @@ def add_log(func):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
 
-    consoleHandler = logging.StreamHandler()
+    consoleHandler = logging.StreamHandler(sys.stdout)
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
 
@@ -281,12 +282,9 @@ def parse_annovar(annovar_file):
             combine = [','.join(item) for item in list(zip(*change_list))]
             mRNA = combine[0]
             protein = combine[1]
-            df = df.append({
-                'Gene': gene,
-                'mRNA': mRNA,
-                'Protein': protein,
-                'COSMIC': cosmic,
-            }, ignore_index=True)
+            df_new = pd.DataFrame([[gene, mRNA, protein, cosmic]], columns=['Gene', 'mRNA', 'Protein', 'COSMIC'], index=[0])
+            df = pd.concat([df, df_new])
+    df.reset_index(drop=True, inplace=True)
     return df
 
 class MultipleFileFoundError(Exception):
@@ -457,12 +455,13 @@ def sort_bam(input_bam, output_bam, threads=1):
         f'samtools sort {input_bam} '
         f'-o {output_bam} '
         f'--threads {threads} '
+        '2>&1 '
     )
     subprocess.check_call(cmd, shell=True)
 
 
 def index_bam(input_bam):
-    cmd = f"samtools index {input_bam}"
+    cmd = f"samtools index {input_bam} 2>&1 "
     subprocess.check_call(cmd, shell=True)
 
 
@@ -618,9 +617,11 @@ def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'C
         rec_dict['GT'] = [str(item) for item in rec_dict['GT']]
         rec_dict['GT'] = '/'.join(rec_dict['GT'])
         '''
+        df_new = pd.DataFrame(rec_dict, index=[0])
+        df = pd.concat([df, df_new])
 
-        df = df.append(pd.Series(rec_dict), ignore_index=True)
     vcf.close()
+    df.reset_index(drop=True, inplace=True)
     return df
 
 

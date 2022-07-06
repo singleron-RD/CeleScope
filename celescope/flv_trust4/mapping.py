@@ -83,6 +83,7 @@ class Mapping(Step):
             f'-u {fq2} '
             f'--barcode {fq1} '
             f'--UMI {fq1} '
+            '2>&1 '
             )
         Mapping.extract_candidate_reads.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)  
