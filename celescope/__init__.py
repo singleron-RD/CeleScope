@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict
 
-__VERSION__ = "1.11.0b1"
+__VERSION__ = "1.11.0"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
@@ -23,7 +23,7 @@ ASSAY_LIST = [
 
 ROOT_PATH = os.path.dirname(__file__)
 
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion', 'flv_CR', 'flv_trust4']
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion', 'citeseq', 'flv_CR', 'flv_trust4']
 
 # argument help
 HELP_DICT = {

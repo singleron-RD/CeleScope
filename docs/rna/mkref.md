@@ -5,8 +5,6 @@
 
 - STAR genome index files
 
-- Genome refFlat file
-
 - Genome config file
 ```
 $ cat celescope_genome.config
@@ -15,7 +13,6 @@ genome_name = Homo_sapiens_ensembl_99
 genome_type = rna
 fasta = Homo_sapiens.GRCh38.dna.primary_assembly.fa
 gtf = Homo_sapiens.GRCh38.99.gtf
-refflat = Homo_sapiens_ensembl_99.refFlat
 ```
 ## Arguments
 `--thread` Default=6. Threads to use.

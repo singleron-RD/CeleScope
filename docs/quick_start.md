@@ -14,6 +14,9 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 - snp
 - capture_virus
 - fusion
+- citeseq
+- flv_CR
+- flv_trust4
 
 Run `multi_{assay} -h` for help.
 
@@ -100,6 +103,9 @@ Note that the `./shell/{sample}.sh` must be run under the working directory(You 
 - [multi_snp.md](./snp/multi_snp.md)
 - [multi_capture_virus.md](./capture_virus/multi_capture_virus.md)
 - [multi_fusion.md](./fusion/multi_fusion.md)
+- [multi_citeseq.md](citeseq/multi_citeseq.md)
+- [multi_flv_CR.md](./flv_CR/multi_flv_CR.md)
+- [multi_flv_trust4.md](./flv_trust4/multi_flv_trust4.md)
 
 ## Test scripts and data
 https://github.com/singleron-RD/celescope_test_script

@@ -13,6 +13,7 @@ class Multi_flv_trust4(Multi):
         --ref hg38 \\
         --thread 8 \\
         --seqtype BCR \\
+        --mod shell
     ```
     """
     def barcode(self, sample):

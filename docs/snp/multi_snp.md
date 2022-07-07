@@ -82,7 +82,6 @@ otherwise an ambiguous character(N) will be added.
 
 ### star
 - Align R2 reads to the reference genome with STAR.
-- Collect Metrics with Picard.
 
 
 ### featureCounts
@@ -147,15 +146,13 @@ Each splicing is counted in the numbers of splices, which would correspond to
 summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
 i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
 
-- `{sample}_region.log` Picard CollectRnaSeqMetrics results.
-
 ### featureCounts
 - `{sample}` Numbers of reads assigned to features (or meta-features).
 - `{sample}_summary` Stat info for the overall summrization results, including number of 
 successfully assigned reads and number of reads that failed to be assigned due to 
 various reasons (these reasons are included in the stat info).
 - `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
-sorted by coordinates；BAM file contains tags as following(Software Version>=1.1.8):
+sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
     - CB cell barcode
     - UB UMI
     - GN gene name
@@ -193,6 +190,7 @@ Genotypes are changed accordingly.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
 - `fusion` Required, matched_dir.
+- `citeseq` Required, matched_dir.
 - `flv_CR` Required, matched_dir.
 - `flv_trust4` Required, matched_dir.
  
