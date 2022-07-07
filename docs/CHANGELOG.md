@@ -1,4 +1,4 @@
-## [1.11.0] - 
+## [1.11.0] - 2022-07-07
  ### `rna`
  - All genes from the gtf file will be written to `genes.tsv`. https://github.com/singleron-RD/CeleScope/issues/81
  - The `celescope rna mkref` command no longer generates refflat files; removes the number of bases mapped to each region; adds the number of reads mapped to each region.
