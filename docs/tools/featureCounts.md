@@ -6,7 +6,7 @@
 successfully assigned reads and number of reads that failed to be assigned due to 
 various reasons (these reasons are included in the stat info).
 - `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
-sorted by coordinates；BAM file contains tags as following(Software Version>=1.1.8):
+sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
     - CB cell barcode
     - UB UMI
     - GN gene name

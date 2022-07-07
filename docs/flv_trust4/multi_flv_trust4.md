@@ -6,6 +6,7 @@ multi_flv_trust4 \
     --ref hg38 \
     --thread 8 \
     --seqtype BCR \
+    --mod shell
 ```
 ## Features
 ### barcode
