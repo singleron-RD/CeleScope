@@ -124,6 +124,7 @@ it means that the given marker is not enough to identify the cluster.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
 - `fusion` Required, matched_dir.
+- `citeseq` Required, matched_dir.
 - `flv_CR` Required, matched_dir.
 - `flv_trust4` Required, matched_dir.
  
