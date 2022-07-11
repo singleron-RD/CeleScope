@@ -218,6 +218,8 @@ class Count(Step):
             cell_bc, UMI_threshold = self.auto_cell(df_sum)
         elif cell_calling_method == 'EmptyDrops_CR':
             cell_bc, UMI_threshold = self.emptydrop_cr_cell(df_sum)
+        elif cell_calling_method == 'Mixed':
+            cell_bc, UMI_threshold = self.cr_mixed(df_sum)
         return cell_bc, UMI_threshold
 
     @utils.add_log
@@ -268,6 +270,47 @@ class Count(Step):
     def emptydrop_cr_cell(self, df_sum):
         cell_bc, initial_cell_num = cell_calling_3(self.raw_matrix_dir, self.expected_cell_num)
         threshold = Count.find_threshold(df_sum, initial_cell_num)
+        return cell_bc, threshold
+
+    @utils.add_log
+    def cr_mixed(self, df_sum):
+        df_sum_auto, df_sum_emptydrops = df_sum.copy(), df_sum.copy()
+
+        def auto_CB_describe():
+            cell_bc_auto, threshold_auto = self.auto_cell(df_sum_auto)
+            CB_describe_auto = self.get_cell_stats(df_sum_auto, cell_bc_auto)
+            median_genes_per_cell_auto = int(CB_describe_auto.loc['50%', 'geneID'])
+            return [cell_bc_auto, threshold_auto, median_genes_per_cell_auto]
+
+        def emptydrops_CB_describe():
+            cell_bc_emptydrops, threshold_emptydrops = self.emptydrop_cr_cell(df_sum_emptydrops)
+            CB_describe_emptydrops = self.get_cell_stats(df_sum_emptydrops, cell_bc_emptydrops)
+            median_genes_per_cell_emptydrops = int(CB_describe_emptydrops.loc['50%', 'geneID'])
+            return [cell_bc_emptydrops, threshold_emptydrops, df_sum_emptydrops, median_genes_per_cell_emptydrops]
+        
+        auto_CB_describe, emptydrops_CB_describe = auto_CB_describe(), emptydrops_CB_describe()
+
+        def search_target_gene_bc():
+            df_sum_mixed = emptydrops_CB_describe[2]
+            target_median_gene = auto_CB_describe[-1] * 0.8
+            low, high = len(auto_CB_describe[0]), len(emptydrops_CB_describe[0])
+            while low <= high:
+                mid = (low + high) // 2
+                current_median_gene = df_sum_mixed.loc[df_sum_mixed['mark'] == 'CB', :][:mid].describe().loc['50%', 'geneID']
+                if current_median_gene == target_median_gene:
+                    break
+                elif current_median_gene > target_median_gene:
+                    low = mid + 1
+                else:
+                    high = mid - 1
+            cell_bc = df_sum_mixed.loc[df_sum_mixed['mark'] == 'CB', :][:mid].reset_index().Barcode.tolist()
+            threshold = Count.find_threshold(df_sum, len(cell_bc))
+            return cell_bc, threshold
+
+        if emptydrops_CB_describe[-1] > auto_CB_describe[-1] * 0.8:
+            return emptydrops_CB_describe[0], emptydrops_CB_describe[1]
+
+        cell_bc, threshold = search_target_gene_bc()
         return cell_bc, threshold
 
     @staticmethod
@@ -465,7 +508,7 @@ def get_opts_count(parser, sub_program):
     parser.add_argument(
         '--cell_calling_method',
         help=HELP_DICT['cell_calling_method'],
-        choices=['auto', 'EmptyDrops_CR'],
+        choices=['auto', 'EmptyDrops_CR', 'Mixed'],
         default='EmptyDrops_CR',
     )
     if sub_program:
