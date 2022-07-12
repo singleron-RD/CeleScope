@@ -60,9 +60,9 @@ class Summarize(Step):
         Convert 10X barcode to SGR barcode format.
         """
 
-        self.df_annotation['barcode'] = self.df_annotation['barcode'].apply(lambda x: utils.reverse_complement(self.tenX_sgr[x.split('-')[0]]))
-        self.df_annotation['contig_id'] = self.df_annotation['contig_id'].apply(lambda x: utils.reverse_complement(
-            self.tenX_sgr[x.split('-')[0]])+'_'+x.split('_')[1]+'_'+x.split('_')[2])
+        self.df_annotation['barcode'] = self.df_annotation['barcode'].apply(lambda x: self.tenX_sgr[x.split('-')[0]])
+        self.df_annotation['contig_id'] = self.df_annotation['contig_id'].apply(lambda x: 
+            self.tenX_sgr[x.split('-')[0]]+'_'+x.split('_')[1]+'_'+x.split('_')[2])
         if int(self.version.split('.')[0]) < 4:
             self.df_annotation['productive'].replace({'True': True, 'None': False}, inplace=True)
 
@@ -74,7 +74,7 @@ class Summarize(Step):
                 name = entry.name
                 seq = entry.sequence
                 attrs = name.split('_')
-                new_name = utils.reverse_complement(self.tenX_sgr[attrs[0].split('-')[0]]) + '_' + attrs[1] + '_' + attrs[2]
+                new_name = self.tenX_sgr[attrs[0].split('-')[0]] + '_' + attrs[1] + '_' + attrs[2]
                 f.write(f'>{new_name}\n{seq}\n')
         
         cmd = f'cp {self.assemble_out}/clonotypes.csv {self.outdir}'

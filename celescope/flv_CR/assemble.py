@@ -202,7 +202,7 @@ class Cells(cellranger_metrics):
         df_umi = df_umi.sort_values(by='UMI', ascending=False)
         cbs = set(self.filter_contig_file['barcode'])
         df_umi['mark'] = df_umi['barcode'].apply(lambda x: 'CB' if x in cbs else 'UB')
-        df_umi['barcode'] = df_umi['barcode'].apply(lambda x : utils.reverse_complement(self.tenX_sgr[x.split('-')[0]]))
+        df_umi['barcode'] = df_umi['barcode'].apply(lambda x : self.tenX_sgr[x.split('-')[0]])
 
         df_umi.to_csv(self.count_file, sep='\t', index=False)
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.count_file))
