@@ -30,13 +30,23 @@ class Barcode(tools_barcode.Barcode):
             if chemistry != 'flv':
                 raise Exception('chemistry should be `flv`!')
 
-        self.match_num = 0 # read number match with flv_rna
-        self.match_cbs = set() # barcode number match with flv_rna
+        self.flv_assay = self.get_slot_key(
+            slot='metrics',
+            step_name='sample',
+            key='Assay',
+        )
+        # flv_trust4 or flv_CR
+        self.flv_assay = self.flv_assay.split(' ')[-1]
+
+        if self.flv_assay == 'flv_trust4':
+            if args.match_dir == 'None':
+                raise FileNotFoundError('Match directory required when running flv_trust4')
+            self.match_barcodes, _ = utils.get_barcode_from_match_dir(args.match_dir)
+            self.match_num = 0 # read number match with flv_rna
+            self.match_cbs = set() # barcode number match with flv_rna
+
         self.barcode_read_Counter = Counter()
-        self.match_barcodes, _ = utils.get_barcode_from_match_dir(args.match_dir)
-
         self.fh_fq1 = xopen(self.out_fq1, 'w')
-
 
     @utils.add_log
     def run(self):
@@ -132,7 +142,9 @@ class Barcode(tools_barcode.Barcode):
                             self.linker_corrected_num += 1
 
                     # barcode filter
+                    # flv barcode is reverse complement of the flv_rna barcode
                     seq_list = Barcode.get_seq_list(seq1, pattern_dict, 'C')
+                    seq_list = [utils.reverse_complement(i) for i in seq_list[::-1]]
                     if bool_whitelist:
                         bool_valid, bool_corrected, corrected_seq = Barcode.check_seq_mismatch(
                             seq_list, barcode_set_list, barcode_mismatch_list)
@@ -145,22 +157,23 @@ class Barcode(tools_barcode.Barcode):
                         cb = corrected_seq
                     else:
                         cb = "".join(seq_list)
-                    # flv barcode is reverse complement of the flv_rna barcode
-                    cb = utils.reverse_complement(cb)
+                    
                     self.barcode_read_Counter.update(cb)
-
                     self.clean_num += 1
                     self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
-                    if cb in self.match_barcodes:
+                    umi = Barcode.get_seq_str(seq1, pattern_dict['U'])
+                    qual = 'F' * len(cb + umi)
+                    if self.flv_assay == 'flv_trust4' and cb in self.match_barcodes:
                         self.match_num += 1
                         self.match_cbs.add(cb)
                         if self.barcode_read_Counter[cb] <= 80000:
-                            umi = Barcode.get_seq_str(seq1, pattern_dict['U'])
-                            qual = 'F' * len(cb + umi)
                             self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
                             self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual}\n')
+                    else:
+                        self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                        self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual}\n')
                         
             self.run.logger.info(self.fq1_list[i] + ' finished.')
 
@@ -171,18 +184,19 @@ class Barcode(tools_barcode.Barcode):
     def add_step_metrics(self):
         super().add_step_metrics()
 
-        self.add_metric(
-            name='Valid Matched Reads',
-            value=self.match_num,
-            total=self.total_num,
-            help_info='reads match with flv_rna cell barcodes'
-        )
+        if self.flv_assay == 'flv_trust4':
+            self.add_metric(
+                name='Valid Matched Reads',
+                value=self.match_num,
+                total=self.total_num,
+                help_info='reads match with flv_rna cell barcodes'
+            )
 
-        self.add_metric(
-            name='Matched Barcodes',
-            value=len(self.match_cbs),
-            help_info='barcodes match with flv_rna'
-        )
+            self.add_metric(
+                name='Matched Barcodes',
+                value=len(self.match_cbs),
+                help_info='barcodes match with flv_rna'
+            )
 
 
 
