@@ -130,6 +130,18 @@ class CountMatrix:
 
         return CountMatrix(features, self.__barcodes, matrix)
 
+    def slice_matrix(self, slice_barcodes_indices):
+        """
+        Args:
+            slice_barcodes_indices: list of barcode indices
+        Returns:
+            CountMatrix object
+        """
+        mtx_csc = self.__matrix.tocsc()
+        sliced_mtx = mtx_csc[:, slice_barcodes_indices]
+        barcodes = [self.__barcodes[i] for i in slice_barcodes_indices]
+        return CountMatrix(self.__features, barcodes, sliced_mtx)
+
     def get_barcodes(self):
         return self.__barcodes
 
