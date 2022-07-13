@@ -30,16 +30,6 @@ class Multi_flv_CR(Multi):
         --mod shell
     ```
     """
-    def barcode(self, sample):
-        step = "barcode"
-        arr = self.fq_dict[sample]
-        cmd_line = self.get_cmd_line(step, sample)
-        cmd = (
-            f'{cmd_line} '
-            f'--fq1 {arr[0]} --fq2 {arr[1]} '
-            f'--match_dir {self.col4_dict[sample]} '
-        )
-        self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def convert(self, sample):
         step = 'convert'
