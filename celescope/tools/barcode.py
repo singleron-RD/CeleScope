@@ -195,6 +195,24 @@ class Barcode(Step):
         self.nopolyT = args.nopolyT  # true == output nopolyT reads
         self.noLinker = args.noLinker
         self.output_R1 = args.output_R1
+        self.bool_flv = False
+
+        self._assay = self.get_slot_key(
+            slot='metrics',
+            step_name='sample',
+            key='Assay',
+        )
+        self._assay = self._assay.split(' ')[-1]
+        # flv_trust4, flv_CR
+        if 'flv' in self._assay:
+            self.bool_flv = True
+            self.barcode_read_Counter = Counter()
+            if self._assay == 'flv_trust4':
+                if args.match_dir == 'None':
+                    raise FileNotFoundError('Match_dir required when running flv_trust4')
+                self.match_barcodes = set(utils.get_barcode_from_match_dir(args.match_dir)[0]) # barcode set of flv_rna.
+                self.match_num = 0 # record read number match with flv_rna.
+                self.match_cbs = set() # record barcode number match with flv_rna.
 
         # out file
         if args.gzip:
@@ -394,7 +412,7 @@ class Barcode(Step):
         return False
 
     def open_files(self):
-        if self.output_R1:
+        if self.output_R1 or self.bool_flv:
             self.fh_fq1 = xopen(self.out_fq1, 'w')
         self.fh_fq2 = xopen(self.out_fq2, 'w')
 
@@ -407,7 +425,7 @@ class Barcode(Step):
             self.fh_nolinker_fq2 = xopen(self.noLinker_2, 'w')
 
     def close_files(self):
-        if self.output_R1:
+        if self.output_R1 or self.bool_flv:
             self.fh_fq1.close()
         self.fh_fq2.close()
 
@@ -500,6 +518,20 @@ class Barcode(Step):
 
         if self.clean_num == 0:
             raise Exception('no valid reads found! please check the --chemistry parameter.' + HELP_DICT['chemistry'])
+        
+        if self._assay == 'flv_trust4':
+            self.add_metric(
+                name='Valid Matched Reads',
+                value=self.match_num,
+                total=self.total_num,
+                help_info='reads match with flv_rna cell barcodes'
+            )
+
+            self.add_metric(
+                name='Matched Barcodes',
+                value=len(self.match_cbs),
+                help_info='barcodes match with flv_rna'
+            )
 
 
     @utils.add_log
@@ -595,6 +627,8 @@ class Barcode(Step):
 
                     # barcode filter
                     seq_list = self.get_seq_list(seq1, pattern_dict, 'C')
+                    if self.bool_flv:
+                        seq_list = [utils.reverse_complement(i) for i in seq_list[::-1]]
                     if bool_whitelist:
                         bool_valid, bool_corrected, corrected_seq = Barcode.check_seq_mismatch(
                             seq_list, barcode_set_list, barcode_mismatch_list)
@@ -613,9 +647,24 @@ class Barcode(Step):
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
                     umi = Barcode.get_seq_str(seq1, pattern_dict['U'])
-                    self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-                    if self.output_R1:
-                        self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')                   
+
+                    if self.bool_flv:
+                        qual1 = 'F' * len(cb + umi)
+                        self.barcode_read_Counter.update(cb)
+                        if self._assay == 'flv_trust4' and cb in self.match_barcodes:
+                            self.match_num += 1
+                            self.match_cbs.add(cb)
+                            if self.barcode_read_Counter[cb] <= 80000:
+                                self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                                self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual1}\n')
+                        elif self._assay == 'flv_CR':
+                            self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                            self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual1}\n')
+
+                    else:
+                        self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                        if self.output_R1:
+                            self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')                   
             
             self.run.logger.info(self.fq1_list[i] + ' finished.')
 
@@ -699,6 +748,7 @@ lowQual will be regarded as low-quality bases.',
     if sub_program:
         parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
         parser.add_argument('--fq2', help='R2 fastq file. Multiple files are separated by comma.', required=True)
+        parser.add_argument('--match_dir', help='Matched scRNA-seq directory, required for flv_trust4')
         parser = s_common(parser)
 
     return parser
