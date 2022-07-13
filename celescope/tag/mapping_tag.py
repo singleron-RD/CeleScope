@@ -6,10 +6,11 @@ import pandas as pd
 import pysam
 
 from celescope.tools import utils
-import celescope.tools.barcode as Barcode
 from celescope.tools.barcode import Barcode
 from celescope.tools.step import Step, s_common
 
+# n_mismatch = 1 if n_tag_barcode > N_TAG_BARCODE_THRESHOLD else 2
+N_TAG_BARCODE_THRESHOLD = 10000
 
 def get_opts_mapping_tag(parser, sub_program):
     parser.add_argument(
@@ -124,6 +125,15 @@ class Mapping_tag(Step):
                 != pattern barcode length {pattern_barcode_length}'''
             )
 
+        # mismatch
+        self.mismatch_dict = self.get_tag_barcode_mismatch_dict()
+
+        # variables
+        self.total_reads = 0
+        self.reads_unmapped_too_short = 0
+        self.reads_unmapped_invalid_iinker = 0
+        self.reads_unmapped_invalid_barcode = 0
+        self.reads_mapped = 0
         self.res_dic = utils.genDict()
         self.res_sum_dic = utils.genDict(dim=2)
         self.match_barcode = []
@@ -133,16 +143,37 @@ class Mapping_tag(Step):
         self.UMI_count_file = f'{self.outdir}/{self.sample}_UMI_count.tsv'
         self.stat_file = f'{self.outdir}/stat.txt'
 
+    @utils.add_log
+    def get_tag_barcode_mismatch_dict(self):
+        mismatch_dict = {}
+        n_mismatch = 1 if len(self.barcode_dict) > N_TAG_BARCODE_THRESHOLD else 2
+        for seq_id, seq in self.barcode_dict.items():
+            for mismatch_seq in Barcode.findall_mismatch(seq, n_mismatch=n_mismatch):
+                mismatch_dict[mismatch_seq] = seq_id   
+        
+        return mismatch_dict
+
+
+
+    def check_barcode_with_mismatch(self, barcode, seq_barcode, umi):
+        """
+        Args:
+            barcode: cell barcode
+            seq_barcode: tag barcode sequence
+            umi: UMI sequence
+        """
+        if seq_barcode in self.mismatch_dict:
+            seq_id = self.mismatch_dict[seq_barcode]
+            self.res_dic[barcode][seq_id][umi] += 1
+            self.reads_mapped += 1
+        else:
+            self.reads_unmapped_invalid_barcode += 1
+
     def process_read(self):
-        total_reads = 0
-        reads_unmapped_too_short = 0
-        reads_unmapped_invalid_iinker = 0
-        reads_unmapped_invalid_barcode = 0
-        reads_mapped = 0
 
         with pysam.FastxFile(self.fq) as infile:
             for record in infile:
-                total_reads += 1
+                self.total_reads += 1
                 attr = str(record.name).strip("@").split("_")
                 barcode = str(attr[0])
                 umi = str(attr[1])
@@ -151,14 +182,14 @@ class Mapping_tag(Step):
                 if self.linker_length != 0:
                     seq_linker = Barcode.get_seq_str(seq, self.pattern_dict['L'])
                     if len(seq_linker) < self.linker_length:
-                        reads_unmapped_too_short += 1
+                        self.reads_unmapped_too_short += 1
                         continue
                 if self.barcode_dict:
                     seq_barcode = Barcode.get_seq_str(seq, self.pattern_dict['C'])
                     if self.barcode_length != len(seq_barcode):
                         miss_length = self.barcode_length - len(seq_barcode)
                         if miss_length > 2:
-                            reads_unmapped_too_short += 1
+                            self.reads_unmapped_too_short += 1
                             continue
                         seq_barcode = seq_barcode + "A" * miss_length
 
@@ -173,23 +204,11 @@ class Mapping_tag(Step):
                     valid_linker = True
 
                 if not valid_linker:
-                    reads_unmapped_invalid_iinker += 1
+                    self.reads_unmapped_invalid_iinker += 1
                     continue
 
                 # check barcode
-                valid_barcode = False
-                for barcode_name in self.barcode_dict:
-                    if utils.hamming_correct(self.barcode_dict[barcode_name], seq_barcode):
-                        self.res_dic[barcode][barcode_name][umi] += 1
-                        valid_barcode = True
-                        break
-
-                if not valid_barcode:
-                    reads_unmapped_invalid_barcode += 1
-                    continue
-
-                # mapped
-                reads_mapped += 1
+                self.check_barcode_with_mismatch(barcode, seq_barcode, umi)
 
         # write dic to pandas df
         rows = []
@@ -212,26 +231,26 @@ class Mapping_tag(Step):
         # add metrics
         self.add_metric(
             name='Reads Mapped',
-            value=reads_mapped,
-            total=total_reads,
+            value=self.reads_mapped,
+            total=self.total_reads,
             help_info="R2 reads that successfully mapped to linker and tag-barcode"
         )
         self.add_metric(
             name='Reads Unmapped too Short',
-            value=reads_unmapped_too_short,
-            total=total_reads,
+            value=self.reads_unmapped_too_short,
+            total=self.total_reads,
             help_info="Unmapped R2 reads because read length < linker length + tag-barcode length"
         )
         self.add_metric(
             name='Reads Unmapped Invalid Linker',
-            value=reads_unmapped_invalid_iinker,
-            total=total_reads,
+            value=self.reads_unmapped_invalid_iinker,
+            total=self.total_reads,
             help_info="Unmapped R2 reads because of too many mismatches in linker sequence"
         )
         self.add_metric(
             name='Reads Unmapped Invalid Barcode',
-            value=reads_unmapped_invalid_barcode,
-            total=total_reads,
+            value=self.reads_unmapped_invalid_barcode,
+            total=self.total_reads,
             help_info="Unmapped R2 reads because of too many mismatches in tag-barcode sequence"
         )
 
