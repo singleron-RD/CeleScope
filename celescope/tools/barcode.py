@@ -56,7 +56,7 @@ class Chemistry():
 
     def seq_chemistry(self, seq):
         """
-        Returns：chemistry or None
+        Returns: chemistry or None
 
         >>> runner = Chemistry("fake_fq1_string")
         >>> seq = "TCGACTGTCATCCACGTGCTTGAGATTCTAGGATTCAGCATGCGGCTACGTGCACGAGACATATCAATGGGTTTTCTTGTTGCTTTTTTTTTTTTTTTTTTTTTTTT"
@@ -627,8 +627,8 @@ class Barcode(Step):
 
                     # barcode filter
                     seq_list = self.get_seq_list(seq1, pattern_dict, 'C')
-                    if self.bool_flv:
-                        seq_list = [utils.reverse_complement(i) for i in seq_list[::-1]]
+                    if chemistry == 'flv':
+                        seq_list = [utils.reverse_complement(seq) for seq in seq_list[::-1]]
                     if bool_whitelist:
                         bool_valid, bool_corrected, corrected_seq = Barcode.check_seq_mismatch(
                             seq_list, barcode_set_list, barcode_mismatch_list)
@@ -666,7 +666,7 @@ class Barcode(Step):
                         if self.output_R1:
                             self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')                   
             
-            self.run.logger.info(self.fq1_list[i] + ' finished.')
+                self.run.logger.info(self.fq1_list[i] + ' finished.')
 
         self.close_files()
         self.add_step_metrics()
