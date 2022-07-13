@@ -201,7 +201,12 @@ def get_gene_region_from_bed(panel):
 
 
 def read_fasta(fasta_file, equal=False):
-    # seq must have equal length
+    """
+    Args:
+        equal: if True, seq in fasta must have equal length
+    Returns:
+        {seq_id: seq} dict
+    """
     fa_dict = {}
     length = None
     with pysam.FastxFile(fasta_file) as infile:
