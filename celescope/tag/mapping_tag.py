@@ -137,10 +137,12 @@ class Mapping_tag(Step):
         self.res_dic = utils.genDict()
         self.res_sum_dic = utils.genDict(dim=2)
         self.match_barcode = []
+        self.invalid_barcode_dict = utils.genDict(dim=1)
 
         # out files
         self.read_count_file = f'{self.outdir}/{self.sample}_read_count.tsv'
         self.UMI_count_file = f'{self.outdir}/{self.sample}_UMI_count.tsv'
+        self.invalid_barcode_file = f'{self.outdir}/{self.sample}_invalid_barcode.tsv'
         self.stat_file = f'{self.outdir}/stat.txt'
 
     @utils.add_log
@@ -152,7 +154,6 @@ class Mapping_tag(Step):
                 mismatch_dict[mismatch_seq] = seq_id   
         
         return mismatch_dict
-
 
 
     def check_barcode_with_mismatch(self, barcode, seq_barcode, umi):
@@ -168,6 +169,7 @@ class Mapping_tag(Step):
             self.reads_mapped += 1
         else:
             self.reads_unmapped_invalid_barcode += 1
+            self.invalid_barcode_dict[seq_barcode] += 1
 
     def process_read(self):
 
@@ -227,6 +229,11 @@ class Mapping_tag(Step):
             }, inplace=True)
         df_read_count.to_csv(
             self.read_count_file, sep="\t", index=False)
+
+        # write invalid seq_barcode to file
+        with open(self.invalid_barcode_file, "w") as f:
+            for seq_barcode,count in sorted(self.invalid_barcode_dict.items(), key=lambda x: x[1], reverse=True):
+                f.write(f"{seq_barcode}\t{count}\n")
 
         # add metrics
         self.add_metric(
