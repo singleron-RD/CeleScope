@@ -12,7 +12,7 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 from celescope.__init__ import HELP_DICT
-from celescope.tools.emptydrop_cr.wrapper import Cell_calling, read_raw_matrix
+from celescope.tools.matrix import CountMatrix
 
 
 def get_clonotypes_table(df):
@@ -67,7 +67,7 @@ class Split_tag(Step):
                 matrix_dir = args.matrix_dir
             else:
                 raise ValueError("--match_dir or --matrix_dir is required.")
-            self.raw_mat, self.raw_features_path, self.raw_barcodes = read_raw_matrix(matrix_dir)
+            self.count_matrix = CountMatrix.from_matrix_dir(matrix_dir)
 
         if args.split_fastq:
             self.rna_fq_file = glob.glob(f'{args.match_dir}/*barcode/*_2.fq*')[0]
@@ -126,13 +126,14 @@ class Split_tag(Step):
     @utils.add_log
     def split_matrix(self):
         for tag in self.tag_barcode_dict:
-            outdir = f'{self.matrix_outdir}/{tag}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/'
-            runner = Cell_calling(outdir, self.raw_mat, self.raw_features_path, self.raw_barcodes)
             tag_barcodes = list(self.tag_barcode_dict[tag])
-            raw_barcodes = list(runner.raw_barcodes)
+            raw_barcodes = self.count_matrix.get_barcodes()
             tag_barcodes_indices = [raw_barcodes.index(barcode) for barcode in tag_barcodes]
             tag_barcodes_indices.sort()
-            runner.write_slice_matrix(tag_barcodes_indices)
+            slice_matrix = self.count_matrix.slice_matrix(tag_barcodes_indices)
+
+            tag_matrix_dir = f'{self.matrix_outdir}/{tag}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/'
+            slice_matrix.to_matrix_dir(tag_matrix_dir)
 
     @utils.add_log
     def split_vdj(self):

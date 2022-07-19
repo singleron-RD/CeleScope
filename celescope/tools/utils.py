@@ -251,47 +251,6 @@ def genDict(dim=3, valType=int):
         return defaultdict(lambda: genDict(dim - 1, valType=valType))
 
 
-
-def parse_annovar(annovar_file):
-    df = pd.DataFrame(columns=['Gene', 'mRNA', 'Protein', 'COSMIC'])
-    with open(annovar_file, 'rt') as f:
-        index = 0
-        for line in f:
-            index += 1
-            if index == 1:
-                continue
-            attrs = line.split('\t')
-            gene = attrs[6]
-            func = attrs[5]
-            if func == 'exonic':
-                changes = attrs[9]
-                cosmic = attrs[10]
-            else:
-                changes = attrs[7]
-                cosmic = attrs[8]
-            change_list = list()
-            for change in changes.split(','):
-                change_attrs = change.split(':')
-                mRNA = ''
-                protein = ''
-                for change_index in range(len(change_attrs)):
-                    change_attr = change_attrs[change_index]
-                    if change_attr.startswith('c.'):
-                        base = change_attr.strip('c.')
-                        exon = change_attrs[change_index - 1]
-                        mRNA = f'{exon}:{base}'
-                    if change_attr.startswith('p.'):
-                        protein = change_attr.strip('p.')
-                if not (mRNA, protein) in change_list:
-                    change_list.append((mRNA, protein))
-            combine = [','.join(item) for item in list(zip(*change_list))]
-            mRNA = combine[0]
-            protein = combine[1]
-            df_new = pd.DataFrame([[gene, mRNA, protein, cosmic]], columns=['Gene', 'mRNA', 'Protein', 'COSMIC'], index=[0])
-            df = pd.concat([df, df_new])
-    df.reset_index(drop=True, inplace=True)
-    return df
-
 class MultipleFileFoundError(Exception):
     pass
 
@@ -598,36 +557,6 @@ def check_arg_not_none(args, arg_name):
         return True
     else:
         return False
-
-
-def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
-    """
-    Read cols and infos into pandas df
-    """
-    vcf = pysam.VariantFile(vcf_file)
-    df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
-    rec_dict = {}
-    for rec in vcf.fetch():
-
-        for col in cols:
-            rec_dict[col.capitalize()] = getattr(rec, col)
-            if col == 'alleles':
-                rec_dict['Alleles'] = '-'.join(rec_dict['Alleles'])
-
-        for info in infos:
-            rec_dict[info] = rec.info[info]
-
-        '''
-        rec_dict['GT'] = [s['GT'] for s in rec.samples.values()][0]
-        rec_dict['GT'] = [str(item) for item in rec_dict['GT']]
-        rec_dict['GT'] = '/'.join(rec_dict['GT'])
-        '''
-        df_new = pd.DataFrame(rec_dict, index=[0])
-        df = pd.concat([df, df_new])
-
-    vcf.close()
-    df.reset_index(drop=True, inplace=True)
-    return df
 
 
 def reverse_complement(seq):
