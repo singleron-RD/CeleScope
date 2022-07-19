@@ -43,6 +43,7 @@ class Count(Step):
         # read
         with open(self.read_count_file) as fh:
             self.count_dict = json.load(fh)
+        self.UMI_count_dict = copy.deepcopy(self.count_dict)
 
         if utils.check_arg_not_none(args, 'match_dir'):
             match_dict = utils.parse_match_dir(args.match_dir)
@@ -64,7 +65,6 @@ class Count(Step):
 
     @utils.add_log
     def correct_umi(self):
-        self.UMI_count_dict = copy.deepcopy(self.count_dict)
         for barcode in self.count_dict:
             for ref in self.count_dict[barcode]:
                 n_uncorrected_umi = len(self.count_dict[barcode][ref])
