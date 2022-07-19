@@ -15,8 +15,8 @@ class Multi_sweetseq(Multi):
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
-    def count_tag(self, sample):
-        step = 'count_tag'
+    def count(self, sample):
+        step = 'count'
         read_count_file = f'{self.outdir_dic[sample]["mapping"]}/{sample}_raw_read_count.json'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (

@@ -5,10 +5,10 @@ import copy
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
-from celescope.tools.count import Count
+from celescope.tools.count import Count as toolsCount
 
 
-def get_opts_count_tag(parser, sub_program):
+def get_opts_count(parser, sub_program):
     if sub_program:
         parser.add_argument("--read_count_file", help="Tag read count file.", required=True)
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
@@ -17,13 +17,13 @@ def get_opts_count_tag(parser, sub_program):
         s_common(parser)
 
 
-def count_tag(args):
+def count(args):
 
-    with Count_tag(args,display_title="count_tag") as runner:
+    with Count(args) as runner:
         runner.run()
 
 
-class Count_tag(Step):
+class Count(Step):
     """
     ## Features
 
@@ -57,21 +57,19 @@ class Count_tag(Step):
         else:
             raise ValueError("--match_dir or --matrix_dir is required.")
 
-        # init
-        self.no_noise = False
-
         # out files
         self.UMI_tag_file = f'{self.outdir}/{self.sample}_umi_tag.tsv'
         self.tsne_tag_file = f'{self.outdir}/{self.sample}_tsne_tag.tsv'
         self.corrected_UMI_count_file = f'{self.out_prefix}_corrected_UMI_count.json'
 
+    @utils.add_log
     def correct_umi(self):
         self.UMI_count_dict = copy.deepcopy(self.count_dict)
         for barcode in self.count_dict:
             for ref in self.count_dict[barcode]:
                 n_uncorrected_umi = len(self.count_dict[barcode][ref])
                 self.raw_umi += len(self.count_dict[barcode][ref])
-                n_corrected_umi, _n_corrected_read = Count.correct_umi(self.count_dict[barcode][ref])
+                n_corrected_umi, _n_corrected_read = toolsCount.correct_umi(self.count_dict[barcode][ref])
                 self.UMI_count_dict[barcode][ref] = n_uncorrected_umi - n_corrected_umi                
                 
                 if self.debug:
