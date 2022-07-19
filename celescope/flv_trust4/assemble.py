@@ -172,7 +172,6 @@ class Assemble(Step):
             f'--barcode --UMI --noImpute '
             f'--readAssignment {outdir}/{name}_assign.out '
             f'-r {outdir}/{name}_assembled_reads.fa > {outdir}/{name}_annotate.fa '
-            '2>&1 '
         )
         Assemble.annotate.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
@@ -202,6 +201,7 @@ class Assemble(Step):
         Assemble.filter_trust_report(self.assemble_outdir, self.sample)
         Assemble.get_bc_report(self.assemble_outdir, self.sample)
         Assemble.get_bcfilter_report(self.assemble_outdir, self.sample)
+        Assemble.get_airr_file(self.assemble_outdir, self.sample)
 
 
     @staticmethod
@@ -245,6 +245,19 @@ class Assemble(Step):
             '2>&1 '
         )
         Assemble.get_bcfilter_report.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+    
+    @staticmethod
+    @utils.add_log
+    def get_airr_file(filedir, sample):
+        cmd = (
+            f'perl {TOOLS_DIR}/trust-airr.pl '
+            f'{filedir}/{sample}_barcode_report.tsv '
+            f'{filedir}/{sample}_annotate.fa --format barcoderep > '
+            f'{filedir}/airr_rearrangement.tsv '
+            '2>&1 '
+        )
+        Assemble.get_airr_file.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
 
