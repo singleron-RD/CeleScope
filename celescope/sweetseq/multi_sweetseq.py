@@ -15,6 +15,7 @@ class Multi_sweetseq(Multi):
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
+
     def count(self, sample):
         step = 'count'
         read_count_file = f'{self.outdir_dic[sample]["mapping"]}/{sample}_raw_read_count.json'
@@ -30,11 +31,11 @@ class Multi_sweetseq(Multi):
 
     def analysis(self, sample):
         step = 'analysis'
-        raw_read_count_file = f'{self.outdir_dic[sample]["mapping"]}/{sample}_raw_read_count.json'
+        corrected_UMI_count_file = f'{self.outdir_dic[sample]["count_tag"]}/{sample}_corrected_UMI_count.json'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--raw_read_count_file {raw_read_count_file} '
+            f'--corrected_UMI_count_file {corrected_UMI_count_file} '
             f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
