@@ -23,8 +23,8 @@ class Analysis(Step):
         super().__init__(args, display_title)
      
         # input
-        with open(args.raw_read_count_file) as f:
-            self.read_count_dict = json.load(f)
+        with open(args.corrected_UMI_count_file) as f:
+            self.corrected_UMI_count_dict = json.load(f)
 
         self.display_title = display_title
         self.ref_barcode_umi_dict = utils.genDict(dim=2)
@@ -45,12 +45,9 @@ class Analysis(Step):
 
     @utils.add_log
     def set_ref_barcode_umi_dict(self):
-
-        for barcode in self.read_count_dict:
-            for ref in self.read_count_dict[barcode]:
-                for umi in self.read_count_dict[barcode][ref]:
-                    if self.read_count_dict[barcode][ref][umi] > 0:
-                        self.ref_barcode_umi_dict[ref][barcode] += 1
+        for barcode in self.corrected_UMI_count_dict:
+            for ref in self.corrected_UMI_count_dict[barcode]:
+                self.ref_barcode_umi_dict[ref][barcode] = self.corrected_UMI_count_dict[barcode][ref]
 
     @utils.add_log
     def add_umi_write_tsne(self):
@@ -96,6 +93,6 @@ def analysis(args):
 
 def get_opts_analysis(parser, sub_program):
     if sub_program:
-        parser.add_argument('--raw_read_count_file', help='raw read', required=True)
+        parser.add_argument('--corrected_UMI_count_file', help='raw read', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
         s_common(parser)
