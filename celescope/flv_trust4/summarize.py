@@ -2,7 +2,9 @@ import pandas as pd
 import pysam
 import copy
 import subprocess
+import json
 
+from celescope.tools import analysis_wrapper
 from collections import defaultdict
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Auto
@@ -72,11 +74,15 @@ class Summarize(Step):
         Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
+        self.ref = args.ref
         self.fq2 = args.fq2
         self.diffuseFrac = args.diffuseFrac
         self.assembled_fa = f'{args.assemble_out}/{self.sample}_{ASSEMBLE_SUFFIX}'
         self.trust_report = f'{args.assemble_out}/{self.sample}_{TRUST_REPORT_SUFFIX}'
         self.annot = f'{args.assemble_out}/{self.sample}_{ANNOTATE_SUFFIX}'
+
+        self.match_dict = utils.parse_match_dir(args.match_dir)
+        self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
 
         # if --diffuseFrac provided
         if self.diffuseFrac:
@@ -86,14 +92,20 @@ class Summarize(Step):
         
         self.coef = int(args.coef)
         self.target_weight = args.target_weight
-        if args.target_cell_barcode:
-            self.target_barcodes, self.expected_target_cell_num = utils.read_one_col(args.target_cell_barcode)
-        else:
+
+        """
+        There are three method. 
+        1. --expected_target_cell_num, Expected assembled T or B cell number. eg 3000
+        2. --target_cell_barcode Auto, Based on auto assigned cell type annotation results of the RNA library.
+        3. --target_cell_barcode Absolute path of a plain text file with one barcode per line.
+        """
+        if not args.target_cell_barcode:
             self.target_barcodes = None
             self.expected_target_cell_num = args.expected_target_cell_num
-
-        self.matrix_file = utils.get_matrix_dir_from_match_dir(args.match_dir)
-        self.chains, self.paired_groups = self._parse_seqtype(self.seqtype)
+        elif args.target_cell_barcode == 'Auto':
+            self.target_barcodes, self.expected_target_cell_num = self._auto_assign()
+        else:
+            self.target_barcodes, self.expected_target_cell_num = utils.read_one_col(args.target_cell_barcode)
     
     @staticmethod
     def _parse_seqtype(seqtype):
@@ -124,6 +136,59 @@ class Summarize(Step):
         cell_num = len(set(df[df['productive']==True].barcode))
         self.add_metric(name, cell_num, show=False)
         return cell_num
+    
+    @utils.add_log
+    def _auto_assign(self):
+        """
+        --target_cell_barcode Auto
+        Auto assign cell type of the RNA library based on marker gene file.
+        target_cell_barcode requires >=2 identified marker genes of T/B cells in top10 marker genes for each cluster.
+        Return target_barcodes, expected_target_cell_num.
+        """
+        species, cell_type = Summarize.get_cell_species(self.ref, self.seqtype)
+
+        with open(f'{TOOLS_DIR}/Immune_marker.json', 'r') as f:
+            marker_dict = json.load(f)
+
+        report_runner = analysis_wrapper.Report_runner(self.args)
+        df_tsne, df_marker = report_runner.get_df()
+        
+        bc_cluster_dict = df_tsne.reset_index().groupby('cluster')['barcode'].apply(lambda x: x.tolist()).to_dict()
+        df_marker_top10 = df_marker.groupby('cluster').head(10)
+        df_marker_top10['celltype'] = None
+
+        target_genes = set(df_marker_top10.gene)
+        for gene in target_genes:
+            if gene in marker_dict[species][cell_type]:
+                df_marker_top10.loc[df_marker_top10['gene']==gene, 'celltype'] = cell_type
+
+        target_clusters = df_marker_top10[df_marker_top10['celltype']==cell_type].cluster.tolist()
+        target_clusters = [int(x.split(' ')[-1]) for x in target_clusters]
+        target_clusters = set([x for x in target_clusters if target_clusters.count(x) > 1])
+        
+        if not target_clusters:
+            return None, self.args.expected_target_cell_num
+
+        target_barcodes = []
+        for cluster in target_clusters:
+            target_barcodes += bc_cluster_dict[cluster]
+
+        return target_barcodes, len(target_barcodes)
+
+    @staticmethod
+    def get_cell_species(ref, seqtype):
+
+        if ref == 'GRCm38':
+            species = 'mouse'
+        else:
+            species = 'human'
+
+        if seqtype =='BCR':
+            target_cell_type = 'B_cells'
+        else:
+            target_cell_type = 'T_cells'
+
+        return species, target_cell_type
 
     @utils.add_log
     def parse_contig_file(self):
@@ -388,6 +453,7 @@ def summarize(args):
 
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    parser.add_argument('--ref', help='reference name', choices=["hg19", "hg38", "GRCm38", "other"], required=True)
     parser.add_argument('--coef', help='coef for auto filter', default=5)
     parser.add_argument(
         '--diffuseFrac', 
@@ -401,7 +467,7 @@ def get_opts_summarize(parser, sub_program):
     )
     parser.add_argument(
         '--target_cell_barcode', 
-        help="Barcode of target cells. It is a plain text file with one barcode per line",
+        help="Barcode of target cells. Auto or path of plain text file with one barcode per line",
         default=None)
     parser.add_argument(
         "--target_weight", 
