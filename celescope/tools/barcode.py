@@ -270,6 +270,22 @@ class Barcode(Step):
         return pattern_dict
 
     @staticmethod
+    def get_abbr_len(pattern_dict, abbr):
+        """
+        >>> pattern_dict = Barcode.parse_pattern("C8L16C8L16C8L1U12T18")
+        >>> Barcode.get_abbr_len(pattern_dict, 'C')
+        24
+        >>> Barcode.get_abbr_len(pattern_dict, 'L')
+        33
+        """
+        length = 0
+        for item in pattern_dict[abbr]:
+            length += item[1] - item[0]
+
+        return length
+        
+
+    @staticmethod
     def get_scope_bc(chemistry):
         """Return (linker file path, whitelist file path)"""
         try:
