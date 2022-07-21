@@ -97,7 +97,7 @@ class Summarize(Step):
         There are three method. 
         1. --expected_target_cell_num, Expected assembled T or B cell number. eg 3000
         2. --target_cell_barcode Auto, Based on auto assigned cell type annotation results of the RNA library.
-        3. --target_cell_barcode Absolute path of a plain text file with one barcode per line.
+        3. --target_cell_barcode Absolute path of a plain text file with one barcode per line.(Recommend, need manual-assign first)
         """
         if not args.target_cell_barcode:
             self.target_barcodes = None
