@@ -115,10 +115,10 @@ class Chemistry():
         return
 
     @utils.add_log
-    def get_chemistry(self, fq1):
+    def get_chemistry(self):
         results = defaultdict(int)
 
-        with pysam.FastxFile(fq1) as fh:
+        with pysam.FastxFile(self.fq1) as fh:
             for _ in range(self.n_read):
                 entry = fh.__next__()
                 seq = entry.sequence
