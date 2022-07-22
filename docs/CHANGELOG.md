@@ -25,7 +25,7 @@
 
  
 
-## [1.10.0] - 2021-04-22
+## [1.10.0] - 2022-04-22
  ### `fl_vdj`
  - Add 3 new assays: `flv_CR`, `flv_trust4` and `flv_trust4_split`.
 
@@ -36,7 +36,7 @@
  ### `snp`
  - Add panel `blood_1`.
 
-## [1.9.0] - 2021-04-01
+## [1.9.0] - 2022-04-01
  ### `rna` and `dynaseq`
  - Rename the cell-calling method from `cellranger3` to `EmptyDrops_CR`. Make `EmptyDrops_CR` the default method.
  - Fix an issue that mitochondrial percent is not added to metrics.
@@ -44,11 +44,11 @@
  ### `snp`,`capture_virus` and `fusion`
  - When calculating the `auto` threshold, the default coefficient changes from 10 to 3. This will make the filtering more stringent.
 
-## [1.8.1] - 2021-03-23
+## [1.8.1] - 2022-03-23
  ### General improvments
  - Fix an issue where the matrix suffix `filtered_feature_bc_matrix` introduced in v1.8.0 is not recognized when parsing match_dir.
 
-## [1.8.0] - 2021-03-17
+## [1.8.0] - 2022-03-17
  ### `rna` and `dynaseq`
  - Replace `Seurat` with `scanpy`.
  - Add read_saturation to downsample file.
@@ -64,7 +64,7 @@
     - fitered_matrix: `matrix_10X`-> `filtered_feature_bc_matrix`
 
 
-## [1.7.2] - 2021-02-10
+## [1.7.2] - 2022-02-10
 
  ### `vdj`
  - "Cell with Barcode Match, TRA and TRB": When calculating the percentage, the denominator is `Cell with Barcode Match`. The denominator used previously was `Estimated Mumber of Cells`.
@@ -80,7 +80,7 @@
  - Remove the redundant `--assay` parameter.
  - Add the `--queue` argument for `sjm` job submission.
 
-## [1.7.1] - 2021-01-17
+## [1.7.1] - 2022-01-17
 
  ### `rna`
  - Fix a bug with mt_gene_list (#92)
