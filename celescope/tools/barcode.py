@@ -47,7 +47,7 @@ class Chemistry():
         chemistry_list = []
         for fastq1 in self.fq1_list:
             print(fastq1)
-            chemistry = self.get_chemistry(fastq1)
+            chemistry = self.get_chemistry()
             chemistry_list.append(chemistry)
         if len(set(chemistry_list)) != 1:
             Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
@@ -115,10 +115,10 @@ class Chemistry():
         return
 
     @utils.add_log
-    def get_chemistry(self, fq1):
+    def get_chemistry(self):
         results = defaultdict(int)
 
-        with pysam.FastxFile(fq1) as fh:
+        with pysam.FastxFile(self.fq1) as fh:
             for _ in range(self.n_read):
                 entry = fh.__next__()
                 seq = entry.sequence
@@ -268,6 +268,22 @@ class Barcode(Step):
             pattern_dict[item[0]].append([start, end])
             start = end
         return pattern_dict
+
+    @staticmethod
+    def get_abbr_len(pattern_dict, abbr):
+        """
+        >>> pattern_dict = Barcode.parse_pattern("C8L16C8L16C8L1U12T18")
+        >>> Barcode.get_abbr_len(pattern_dict, 'C')
+        24
+        >>> Barcode.get_abbr_len(pattern_dict, 'L')
+        33
+        """
+        length = 0
+        for item in pattern_dict[abbr]:
+            length += item[1] - item[0]
+
+        return length
+        
 
     @staticmethod
     def get_scope_bc(chemistry):

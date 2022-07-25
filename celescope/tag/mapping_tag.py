@@ -25,7 +25,7 @@ def get_opts_mapping_tag(parser, sub_program):
         "--barcode_fasta",
         help="""Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
+It will assign read to the tag with mismatch < 2. 
 If no such tag exists, the read is classified as invalid.
 
 You can find the barcode fasta file under `celescope/data/Clindex`
@@ -108,12 +108,25 @@ class Mapping_tag(Step):
         self.barcode_fasta = args.barcode_fasta
 
         # process
+        self.pattern_dict = Barcode.parse_pattern(self.fq_pattern)
+
         self.barcode_dict, self.barcode_length = utils.read_fasta(self.barcode_fasta, equal=True)
+        len_C = Barcode.get_abbr_len(self.pattern_dict, 'C')
+        if len_C != self.barcode_length:
+            raise ValueError(f"""The length of tag barcode in fq_pattern({len_C}) != 
+                length of tag barcode in barcode_fasta({self.barcode_length})""")
+
         if self.linker_fasta and self.linker_fasta != 'None':
             self.linker_dict, self.linker_length = utils.read_fasta(self.linker_fasta, equal=True)
+            len_L = Barcode.get_abbr_len(self.pattern_dict, 'L')
+            if len_L != self.linker_length:
+                raise ValueError(f"""The length of linker in fq_pattern({len_L}) != 
+                    length of linker in linker_fasta({self.linker_length})""")
         else:
             self.linker_dict, self.linker_length = {}, 0
-        self.pattern_dict = Barcode.parse_pattern(self.fq_pattern)
+
+
+
 
         # check barcode length
         barcode1 = self.pattern_dict["C"][0]
@@ -131,7 +144,7 @@ class Mapping_tag(Step):
         # variables
         self.total_reads = 0
         self.reads_unmapped_too_short = 0
-        self.reads_unmapped_invalid_iinker = 0
+        self.reads_unmapped_invalid_linker = 0
         self.reads_unmapped_invalid_barcode = 0
         self.reads_mapped = 0
         self.res_dic = utils.genDict()
@@ -206,7 +219,7 @@ class Mapping_tag(Step):
                     valid_linker = True
 
                 if not valid_linker:
-                    self.reads_unmapped_invalid_iinker += 1
+                    self.reads_unmapped_invalid_linker += 1
                     continue
 
                 # check barcode
@@ -250,7 +263,7 @@ class Mapping_tag(Step):
         )
         self.add_metric(
             name='Reads Unmapped Invalid Linker',
-            value=self.reads_unmapped_invalid_iinker,
+            value=self.reads_unmapped_invalid_linker,
             total=self.total_reads,
             help_info="Unmapped R2 reads because of too many mismatches in linker sequence"
         )

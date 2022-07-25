@@ -100,7 +100,7 @@ class Cutadapt(Step):
             name='Reads with Adapters',
             value=reads_with_adapters,
             total=total_reads,
-            help_info='reads with sequencing adapters or reads two with poly A(read-through adpaters)'
+            help_info='R2 reads with poly A(read-through adpaters) or sequencing adapters'
         )
         self.add_metric(
             name='Reads too Short',
