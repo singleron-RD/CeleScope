@@ -24,7 +24,7 @@ def get_opts_mapping_tag(parser, sub_program):
         "--barcode_fasta",
         help="""Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
+It will assign read to the tag with mismatch < 2. 
 If no such tag exists, the read is classified as invalid.
 
 You can find the barcode fasta file under `celescope/data/Clindex`
