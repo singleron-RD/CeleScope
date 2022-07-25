@@ -47,7 +47,7 @@ class Chemistry():
         chemistry_list = []
         for fastq1 in self.fq1_list:
             print(fastq1)
-            chemistry = self.get_chemistry(fastq1)
+            chemistry = self.get_chemistry()
             chemistry_list.append(chemistry)
         if len(set(chemistry_list)) != 1:
             Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
