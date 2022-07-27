@@ -154,15 +154,15 @@ class Summarize(Step):
         df_tsne, df_marker = report_runner.get_df()
         
         bc_cluster_dict = df_tsne.reset_index().groupby('cluster')['barcode'].apply(lambda x: x.tolist()).to_dict()
-        df_marker_top10 = df_marker.groupby('cluster').head(10)
-        df_marker_top10['celltype'] = None
+        df_marker_top5 = df_marker.groupby('cluster').head(5)
+        df_marker_top5['celltype'] = None
 
-        target_genes = set(df_marker_top10.gene)
+        target_genes = set(df_marker_top5.gene)
         for gene in target_genes:
             if gene in marker_dict[species][cell_type]:
-                df_marker_top10.loc[df_marker_top10['gene']==gene, 'celltype'] = cell_type
+                df_marker_top5.loc[df_marker_top5['gene']==gene, 'celltype'] = cell_type
 
-        target_clusters = df_marker_top10[df_marker_top10['celltype']==cell_type].cluster.tolist()
+        target_clusters = df_marker_top5[df_marker_top5['celltype']==cell_type].cluster.tolist()
         target_clusters = [int(x.split(' ')[-1]) for x in target_clusters]
         target_clusters = set([x for x in target_clusters if target_clusters.count(x) > 1])
         
