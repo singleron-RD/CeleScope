@@ -151,7 +151,7 @@ class Cutadapt(Step):
         self.run.logger.info(cmd)
         # need encoding argument to return str
         results = subprocess.run(
-            cmd, stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
+            cmd, stdout=subprocess.PIPE,
             encoding='utf-8', check=True, shell=True
         )
         cutadapt_log = results.stdout
