@@ -3,6 +3,7 @@ split scRNA-Seq fastq file(01.barcode/{sample}_2.fq)
 """
 import glob
 import os
+import itertools
 from collections import defaultdict
 
 import pysam
@@ -114,12 +115,15 @@ class Split_tag(Step):
 
     @utils.add_log
     def write_r1_fastq_files(self):
-        with pysam.FastxFile(self.args.R1_read, 'r') as r1_read:
-            for read_index, read in enumerate(r1_read, start=1):
-                for tag in self.tag_read_index_dict:
-                    if read_index in self.tag_read_index_dict[tag]:
-                        self.r1_fastq_files_handle[tag].write(str(read) + '\n')
+        file_handles = [pysam.FastxFile(r1, 'r') for r1 in self.args.R1_read.split(',')]
+        r1_read = itertools.chain(*file_handles)
+        for read_index, read in enumerate(r1_read, start=1):
+            for tag in self.tag_read_index_dict:
+                if read_index in self.tag_read_index_dict[tag]:
+                    self.r1_fastq_files_handle[tag].write(str(read) + '\n')
 
+        for r1 in file_handles:
+            r1.close()
         for tag in self.r1_fastq_files_handle:
             self.r1_fastq_files_handle[tag].close()
 
