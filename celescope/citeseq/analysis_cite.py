@@ -9,7 +9,6 @@ from scipy.io import mmwrite
 
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
-from celescope.tools import analysis_wrapper
 from celescope.tools.plotly_plot import Tsne_dropdown_plot,Tsne_plot
 
 
