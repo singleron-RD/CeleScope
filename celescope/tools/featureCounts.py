@@ -37,7 +37,6 @@ class FeatureCounts(Step):
 
         # set
         self.gtf = Mkref_rna.parse_genomeDir(self.args.genomeDir)['gtf']
-        self.genome = Mkref.parse_genomeDir(self.args.genomeDir)
         self.featureCounts_param = args.featureCounts_param
 
         #gtf_type
@@ -117,10 +116,6 @@ class FeatureCounts(Step):
         
         total = sum(self.feature_log_dict['exon'].values())
         
-        self.add_metric(
-            name='Genome',
-            value=self.genome['genome_name'],
-        )
         self.add_metric(
             name='Feature Type',
             value=self.args.gtf_type.capitalize(),

@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import plotly
 import plotly.express as px
+import plotly.graph_objects as go
 
 from celescope.tools import utils
 
@@ -149,6 +150,109 @@ class Tsne_plot(Plotly_plot):
             title={"text": self.title, "x": 0.5, "y": 0.95, "font": {"size": 15}},
             plot_bgcolor='#FFFFFF',
             hovermode="closest"
+        )
+
+
+
+class Tsne_dropdown_plot(Plotly_plot):
+
+    def __init__(self, df_tsne,name, feature_name_list, dropdown=True):
+        super().__init__(df_tsne)
+        
+        self.name = name
+        self.feature_name_list = feature_name_list
+        self.dropdown = dropdown
+        self.title = f"t-SNE plot Colored by {self.name}"
+
+        self._layout = {}
+        
+        self._buttons=[]
+        self._str_coord1 = "tSNE_1"
+        self._str_coord2 = "tSNE_2"
+        self.axes_config = {
+            'showgrid': True,
+            'gridcolor': '#F5F5F5',
+            'showline': False,
+            'ticks': None,
+            'zeroline': True,
+            'zerolinecolor': 'black',
+            'zerolinewidth': 0.7,
+        }
+        
+        
+    def get_plotly_div(self):
+        
+        if self.dropdown:
+            self._fig = go.Figure()
+            _num = len(self.feature_name_list)
+            i=0
+            for feature_name in self.feature_name_list:
+                self._fig.add_trace(go.Scatter(x=self._df[self._str_coord1],y=self._df[self._str_coord2],mode='markers',
+                                               name = feature_name[0].upper() + feature_name[1:],
+                                               showlegend=False,
+                                               marker=go.scatter.Marker(opacity=0.9,size=4,color=self._df[feature_name],
+                                                                        colorscale=[[0,'LightGrey'],[1,'Red']],
+                                                                        colorbar=go.scatter.marker.ColorBar(title=feature_name,
+                                                                                                            titlefont={'size':11})),
+                                               textposition='top center'
+                                                    ))
+                visible_list=[False]*_num
+                visible_list[i]=True
+                i += 1
+                button = dict(args=[{"visible":visible_list},],
+                  label=feature_name,
+                  method="update",
+                 )
+                self._buttons.append(button)
+        else:
+            pass
+        self.update_fig()
+        
+        return self.plotly_plot()
+        
+    def update_fig(self):
+        self._fig.update_xaxes(
+            title_text=self._str_coord1,
+            **self.axes_config
+        )
+
+        self._fig.update_yaxes(
+            title_text=self._str_coord2,
+            **self.axes_config
+        )
+
+        self._fig.update_layout(
+            self._layout,
+            updatemenus=[{'buttons':self._buttons,
+                          'direction':'down',
+                          'pad':{'r':8,'t':8},
+                          'showactive':True,
+                          'x':0.9,
+                          'xanchor':'left',
+                          'y':1.2,
+                          'yanchor':'top'}],
+            annotations=[{'text': 'TAG type:',
+                          'showarrow': False,
+                          'x': 0.9,
+                          'xref': 'paper',
+                          'xanchor': 'right',
+                          'y': 1.15,
+                          'yref': 'paper',
+                          'font': {'size': 11},
+                          'align': 'left'}],
+            title={"text": self.title, "x": 0.5, "y": 0.95, "font": {"size": 15}},
+            plot_bgcolor='#FFFFFF',
+            hovermode="closest"
+        )
+        
+        self._fig.update_yaxes(
+            title_text=self._str_coord2,
+            **self.axes_config
+        )
+        
+        self._fig.update_yaxes(
+            title_text=self._str_coord2,
+            **self.axes_config
         )
 
 
