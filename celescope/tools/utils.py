@@ -124,7 +124,7 @@ class Gtf_dict(dict):
         gene_name_pattern = re.compile(r'gene_name "(\S+)"')
         id_name = {}
         c = Counter()
-        with generic_open(self.gtf_file) as f:
+        with generic_open(self.gtf_file, mode='rt') as f:
             for line in f:
                 if not line.strip():
                     continue
