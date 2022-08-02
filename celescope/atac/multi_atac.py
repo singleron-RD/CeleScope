@@ -48,6 +48,7 @@ class Multi_atac(Multi):
         --soft_path "/SGRNJ06/randd/USER/cjj/cr-atac/cellranger-atac-2.1.0/" \\
         --mod shell
     ```
+    For bulk_seq data, add --bulk_seq option.
     """
 
     @staticmethod

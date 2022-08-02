@@ -17,13 +17,14 @@ tar -xzvf refdata-cellranger-atac-GRCh38-and-mm10-2020-A-2.0.0.tar.gz
 
 ```
 conda activate celescope
-multi_flv_CR \
+multi_atac \
     --mapfile ./test.mapfile \
     --customized \
     --ref_path "/SGRNJ06/randd/USER/cjj/cr-atac/refdata-cellranger-arc-GRCh38-2020-A-2.0.0" \
     --soft_path "/SGRNJ06/randd/USER/cjj/cr-atac/cellranger-atac-2.1.0/" \
     --mod shell
 ```
+For bulk_seq data, add --bulk_seq option.
 ## Features
 ### convert
 
