@@ -42,11 +42,10 @@ class Multi_citeseq(Multi):
 
         step = 'analysis_cite'
         cmd_line = self.get_cmd_line(step, sample)
-        citeseq_mtx = f'{self.outdir_dic[sample]["count_cite"]}/{sample}_citeseq.mtx.gz'
+        tsne_coord = f'{self.outdir_dic[sample]["count_cite"]}/{sample}_filtered_tsne_coord.tsv'
         cmd = (
             f'{cmd_line} '
-            f'--citeseq_mtx {citeseq_mtx} '
-            f'--match_dir {self.col4_dict[sample]} '
+            f'--tsne_coord {tsne_coord} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
