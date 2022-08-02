@@ -41,7 +41,7 @@ class Multi_atac(Multi):
     
     ```
     conda activate celescope
-    multi_flv_CR \\
+    multi_atac \\
         --mapfile ./test.mapfile \\
         --customized \\
         --ref_path "/SGRNJ06/randd/USER/cjj/cr-atac/refdata-cellranger-arc-GRCh38-2020-A-2.0.0" \\
