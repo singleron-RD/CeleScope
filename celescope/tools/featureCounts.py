@@ -7,7 +7,6 @@ from collections import defaultdict
 import pandas as pd
 
 from celescope.rna.mkref import Mkref_rna
-from celescope.tools.mkref import Mkref
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
