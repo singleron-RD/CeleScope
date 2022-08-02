@@ -30,7 +30,7 @@ class Convert(Step):
     """
     ##Features
 
-    - Convert barcodes and UMI to 10X format.
+    - Convert barcodes to 10X format.
 
     Output
 
@@ -81,10 +81,8 @@ class Convert(Step):
                 if self.bulk_seq:
                     barcode_10X = self.whitelist_10X_fh.readline().strip()
                     if not barcode_10X:
-                        print(barcode_10X)
                         self.whitelist_10X_fh = xopen(self.whitelist_10X_file, 'r')
                         barcode_10X = self.whitelist_10X_fh.readline().strip()
-                        print(barcode_10X)
                     self.sgr_tenX[sgr_barcode].append(barcode_10X)
                 else:
                     if sgr_barcode in self.sgr_tenX:

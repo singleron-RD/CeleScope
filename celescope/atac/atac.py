@@ -24,6 +24,14 @@ def get_opts_atac(parser, sub_program):
 
 
 class ATAC(Step):
+
+    """
+    ##Features
+
+    - Run cellranger-atac
+
+    """
+
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 

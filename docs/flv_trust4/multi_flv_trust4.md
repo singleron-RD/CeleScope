@@ -11,11 +11,12 @@ multi_flv_trust4 \
 ## Features
 ### barcode
 
-- Demultiplex barcodes and UMIs.
-- Reverse complement the barcode to match RNA library barcodes.
-- Only reads with barcodes oberserbed in matched RNA library are kept.
-- If there are more than 80,000 reads for any barcodes, the reads are downsampled.
-
+- Demultiplex barcodes.
+- Filter invalid R1 reads, which includes:
+    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+    - Low quality reads: low sequencing quality in barcode and UMI regions.
 
 
 ### mapping
@@ -51,7 +52,6 @@ multi_flv_trust4 \
 
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
 the read name is `{barcode}_{UMI}_{read ID}`.
-- `01.barcode/{sample}_1.fq(.gz)` Write barcode and umi to R1 read(can be directly used as input file of TRUST4).
 
 ### mapping
 - `02.mapping/{sample}_bcrtcr.fq` All candidate reads(mapped to any V(D)J genes) sequence.
@@ -180,11 +180,11 @@ use `--steps_run barcode,cutadapt`.
 
 `--not_split` do not split reads into chunks.
 
-`--ref` reference name.
-
 `--barcodeRange` Barcode range in fq1, INT INT CHAR.
 
 `--umiRange` UMI range in fq1, INT INT CHAR.
+
+`--ref` reference name.
 
 `--coef` coef for auto filter.
 
@@ -192,7 +192,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--expected_target_cell_num` Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.
 
-`--target_cell_barcode` Barcode of target cells. It is a plain text file with one barcode per line.
+`--target_cell_barcode` Barcode of target cells. Auto or path of plain text file with one barcode per line.
 
 `--target_weight` UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.
 
