@@ -1,6 +1,5 @@
 
 from celescope.tools.mkref import Mkref, super_opts
-from celescope.__init__ import HELP_DICT
 
 class Mkref_virus(Mkref):
     """
