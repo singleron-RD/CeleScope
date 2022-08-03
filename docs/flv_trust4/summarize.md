@@ -20,13 +20,15 @@
 ## Arguments
 `--seqtype` TCR or BCR.
 
+`--ref` reference name.
+
 `--coef` coef for auto filter.
 
 `--diffuseFrac` If cell A's two chains CDR3s are identical to another cell B, and A's chain abundance is significantly lower than B's, filter A.
 
 `--expected_target_cell_num` Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.
 
-`--target_cell_barcode` Barcode of target cells. It is a plain text file with one barcode per line.
+`--target_cell_barcode` Barcode of target cells. Auto or path of plain text file with one barcode per line.
 
 `--target_weight` UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.
 

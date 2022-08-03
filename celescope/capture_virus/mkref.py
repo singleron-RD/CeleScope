@@ -17,7 +17,6 @@ class Mkref_virus(Mkref):
     celescope capture_virus mkref \\
         --genome_name EBV \\
         --fasta EBV_genome.fasta \\
-        --genomeSAindexNbases 7
     ```
 
     ```
@@ -26,7 +25,6 @@ class Mkref_virus(Mkref):
     genome_type = virus
     fasta = EBV_genome.fasta
     genome_name = EBV
-    genomesaindexnbases = 7
     ```
     """
 
@@ -36,10 +34,9 @@ class Mkref_virus(Mkref):
 
 def mkref(args):
     genome_type = 'virus'
-    with Mkref_virus(genome_type, args, non_files=('genomeSAindexNbases',)) as runner:
+    with Mkref_virus(genome_type, args, ) as runner:
         runner.run()
 
 
 def get_opts_mkref(parser, sub_program):
     super_opts(parser, sub_program)
-    parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)

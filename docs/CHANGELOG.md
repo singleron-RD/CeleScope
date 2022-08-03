@@ -1,3 +1,7 @@
+## [Unreleased]
+ ### General improvments
+ - When making a STAR index, `--genomeSAindexNbases` can be automatically inferred based on genome size.
+
 ## [1.11.0] - 2022-07-07
  ### `rna`
  - All genes from the gtf file will be written to `genes.tsv`. https://github.com/singleron-RD/CeleScope/issues/81

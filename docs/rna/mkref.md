@@ -31,7 +31,3 @@ gtf = Homo_sapiens.GRCh38.99.gtf
 It is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.
 
-`--genomeSAindexNbases` For small genomes, the parameter --genomeSAindexNbases must to be scaled down, with a typical 
-value of min(14, log2(GenomeLength)/2 - 1). For example, for 1 megaBase genome, this is equal 
-to 9, for 100 kiloBase genome, this is equal to 7.
-
