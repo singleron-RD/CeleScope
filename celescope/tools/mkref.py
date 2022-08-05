@@ -1,6 +1,8 @@
 import configparser
 import subprocess
 import sys
+import os
+import math
 
 from celescope.tools import utils
 from celescope.tools.__init__ import GENOME_CONFIG
@@ -24,8 +26,33 @@ class Mkref():
 
         self.config_dict = {}
 
+        # get genomeSAindexNbases from fasta size
+        fasta_size = os.path.getsize(self.fasta)
+        self.genomeSAindexNbases = Mkref.get_SA(fasta_size)
+        print(f'genomeSAindexNbases: {self.genomeSAindexNbases}')
+
         # out file
         self.config_file = GENOME_CONFIG
+
+    @staticmethod
+    def get_SA(fasta_size):
+        """
+        Get genomeSAindexNbases from fasta size. For small genomes, the parameter --genomeSAindexNbases must to be scaled down, with a typical value of min(14, log2(GenomeLength)/2 - 1). For example, for 1 megaBase genome, this is equal to 8, for 100 kiloBase genome, this is equal to 7.
+
+        As mentioned in STAR manual, or 1 megaBase genome, this is equal to 9. But when the genome is relatively small, e.g. < 3kb,
+        using large value may caused core dump error when mapping.
+
+        Args:
+            fasta_size: fasta size in bytes
+
+        >>> Mkref.get_SA(10 ** 6)
+        8
+        >>> Mkref.get_SA(10 ** 5)
+        7
+        >>> Mkref.get_SA(10 ** 50)
+        14
+        """
+        return min(int(math.log2(fasta_size) / 2 - 1), 14)
 
     def run(self):
         if self.dry_run:
@@ -87,7 +114,6 @@ class Mkref():
 
         >>> raw_file_path = 'None'
         >>> Mkref.get_file_path(raw_file_path, 'fake')
-        'None'
         """
         if (not raw_file_path) or (raw_file_path == 'None'):
             return None

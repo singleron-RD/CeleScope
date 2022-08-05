@@ -18,6 +18,9 @@
 - Map R2 reads to the tag barcode.
 
 
+### count
+
+
 ### analysis
 
 
@@ -34,6 +37,12 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 
 ### mapping
 - raw_read_count.json: TODO
+
+### count
+
+- `{sample}_umi_tag.tsv` 
+
+- `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
 
 ### analysis
 

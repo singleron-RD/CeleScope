@@ -45,6 +45,8 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 
 `--fq2` R2 fastq file. Multiple files are separated by comma.
 
+`--match_dir` Matched scRNA-seq directory, required for flv_trust4.
+
 `--outdir` Output diretory.
 
 `--sample` Sample name.

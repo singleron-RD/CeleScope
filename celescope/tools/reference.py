@@ -28,7 +28,7 @@ class GtfParser:
         gene_id_pattern = re.compile(r'gene_id "(\S+)";')
         gene_name_pattern = re.compile(r'gene_name "(\S+)"')
 
-        with utils.generic_open(self.gtf_file) as f:
+        with utils.generic_open(self.gtf_file, mode='rt') as f:
             for line in f:
                 if not line.strip():
                     continue

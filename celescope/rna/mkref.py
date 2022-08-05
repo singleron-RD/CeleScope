@@ -1,6 +1,5 @@
 from celescope.tools import utils
 from celescope.tools.mkref import Mkref, super_opts
-from celescope.__init__ import HELP_DICT
 
 
 class Mkref_rna(Mkref):
@@ -56,7 +55,7 @@ class Mkref_rna(Mkref):
 def mkref(args):
     genome_type = 'rna'
     # files do not contain refflat because refflat is not input argument
-    with Mkref_rna(genome_type, args, files=('gtf', 'mt_gene_list'), non_files=('genomeSAindexNbases',)) as runner:
+    with Mkref_rna(genome_type, args, files=('gtf', 'mt_gene_list')) as runner:
         runner.run()
 
 
@@ -75,4 +74,3 @@ It is a plain text file with one gene per line.
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
             default="None"
         )
-        parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)

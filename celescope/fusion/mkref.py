@@ -1,6 +1,5 @@
 
 from celescope.tools.mkref import Mkref, super_opts
-from celescope.__init__ import HELP_DICT
 
 class Mkref_fusion(Mkref):
     """
@@ -18,7 +17,6 @@ class Mkref_fusion(Mkref):
     --genome_name {genome_name} \\
     --fasta fusion.fasta \\
     --fusion_pos fusion_pos.txt \\
-    --genomeSAindexNbases 4
     ```
     """
 
@@ -34,7 +32,7 @@ class Mkref_fusion(Mkref):
 
 def mkref(args):
     genome_type = 'fusion'
-    with Mkref_fusion(genome_type, args, files=('fusion_pos',), non_files=('genomeSAindexNbases',)) as runner:
+    with Mkref_fusion(genome_type, args, files=('fusion_pos',), ) as runner:
         runner.run()
 
 
@@ -54,4 +52,4 @@ PML_5\t326
 PML_6\t204   
 """,
             required=True,)
-        parser.add_argument("--genomeSAindexNbases", help=HELP_DICT['genomeSAindexNbases'], default=14)
+
