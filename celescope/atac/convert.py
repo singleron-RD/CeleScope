@@ -6,6 +6,7 @@ from xopen import xopen
 import subprocess
 import pysam
 import os
+import random
 
 
 BARCODE_10X_LEN = 16
@@ -56,6 +57,7 @@ class Convert(Step):
 
         self.sgr_tenX = {}
         if self.bulk_seq:
+            self.whitelist_10X_fh = utils.read_one_col(self.whitelist_10X_file)[0][:2500]
             self.sgr_tenX = defaultdict(list)
 
         self.out_fq1_file = f'{self.outdir}/{self.sample}_S1_L001_R1_001.fastq.gz'
@@ -79,10 +81,7 @@ class Convert(Step):
                 sgr_barcode = entry.sequence
 
                 if self.bulk_seq:
-                    barcode_10X = self.whitelist_10X_fh.readline().strip()
-                    if not barcode_10X:
-                        self.whitelist_10X_fh = xopen(self.whitelist_10X_file, 'r')
-                        barcode_10X = self.whitelist_10X_fh.readline().strip()
+                    barcode_10X = random.choice(self.whitelist_10X_fh)
                     self.sgr_tenX[sgr_barcode].append(barcode_10X)
                 else:
                     if sgr_barcode in self.sgr_tenX:

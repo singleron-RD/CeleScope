@@ -23,6 +23,15 @@ def get_opts_atac(parser, sub_program):
     return parser
 
 
+def format_value(value):
+    """
+    >>> value = 0.8941
+    >>> format_value(value)
+    89.41%
+    """
+    return str(round(value * 100, 2)) + '%'
+
+
 class ATAC(Step):
 
     """
@@ -43,15 +52,6 @@ class ATAC(Step):
         # out files
         self.cmd_line = f'{self.outdir}/{self.sample}_cmd_line'
 
-    @staticmethod
-    def run_cr_cmd(outdir, cmd):
-        # change dir back to avoid can not find 'stat.txt' error
-        cwd = os.getcwd()
-        os.chdir(outdir)
-        subprocess.check_call(cmd, shell=True)
-        # change dir back to avoid can not find 'stat.txt' error
-        os.chdir(cwd)
-
     @utils.add_log
     def cr_atac(self):
         """cellranger-atac count"""
@@ -71,17 +71,20 @@ class ATAC(Step):
         with open(self.cmd_line, 'w') as f:
             f.write(cmd)
         
-        ATAC.run_cr_cmd(self.outdir, cmd)
+        cwd = os.getcwd()
+        os.chdir(self.outdir)
+        subprocess.check_call(cmd, shell=True)
+        # change dir back to avoid can not find '03.assemble/stat.txt' error
+        os.chdir(cwd)
 
     def run(self):
         self.cr_atac()
 
 
 def atac(args):
-    with ATAC(args) as runner:
-        runner.run()
-    
-    """
+    # with ATAC(args) as runner:
+    #     runner.run()
+
     with Sequencing(args) as runner:
         runner.run()
 
@@ -93,14 +96,13 @@ def atac(args):
 
     with Targeting(args) as runner:
         runner.run()
-    """
 
 
 class cellranger_metrics(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-        cellranger_metrics_csv = f'{self.outdir}/{self.sample}/outs/metrics_summary.csv'
+        cellranger_metrics_csv = f'{self.outdir}/{self.sample}/outs/summary.csv'
         df = pd.read_csv(cellranger_metrics_csv, index_col=None)
         self.metrics_dict = df.T.to_dict()[0]
 
@@ -128,28 +130,28 @@ class Sequencing(cellranger_metrics):
         name = 'Valid barcodes'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of read pairs with barcodes that match the whitelist after error correction."
         )
         
         name = 'Q30 bases in barcode'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of barcode read (i2) bases with Q-score >= 30."
         )
 
         name = 'Q30 bases in read 1'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of read 1 bases with Q-score >= 30."
         )
 
         name = 'Q30 bases in read 2'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of read 2 bases with Q-score >= 30."
         )
 
@@ -163,35 +165,35 @@ class Mapping(cellranger_metrics):
         name = 'Confidently mapped read pairs'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of sequenced read pairs with mapping quality > 30."
         )
 
         name = 'Unmapped read pairs'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of sequenced read pairs that have a valid barcode but could not be mapped to the genome."
         )
 
         name = 'Non-nuclear read pairs'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of sequenced read pairs that have a valid barcode and map to non-nuclear genome contigs, including mitochondria,with mapping quality > 30."
         )
 
         name = 'Fragments in nucleosome-free regions'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of high-quality fragments smaller than 124 basepairs."
         )
 
         name = 'Fragments flanking a single nucleosome'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of high-quality fragments between 124 and 296 basepairs."
         )
 
@@ -226,14 +228,14 @@ class Cells(cellranger_metrics):
         name = 'Fraction of high-quality fragments in cells'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of high-quality fragments with a valid barcode that are associated with cell-containing partitions. High-quality fragments are defined as read pairs with a valid barcode that map to the nuclear genome with mapping quality > 30, are not chimeric and not duplicate."
         )
 
         name = 'Fraction of transposition events in peaks in cells'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of transposition events that are associated with cell-containing partitions and fall within peaks. Transposition events are located at both ends of all high-quality fragments. This metric measures the percentage of such events that overlap with peaks."
         )
 
@@ -253,14 +255,14 @@ class Targeting(cellranger_metrics):
         name = 'Fraction of genome in peaks'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=format_value(self.metrics_dict[name]),
             help_info="Fraction of bases in primary contigs that are defined as peaks."
         )
         
         name = 'TSS enrichment score'
         self.add_metric(
             name=name,
-            value=self.metrics_dict[name],
+            value=round(self.metrics_dict[name], 2),
             help_info="Maximum value of the transcription-start-site (TSS) profile.The TSS profile is the summed accessibility signal (defined as number of cut sites per base) in a window of 2,000 bases around all the annotated TSSs, normalized by the minimum signal in the window."
         )
 
@@ -268,13 +270,13 @@ class Targeting(cellranger_metrics):
             name = f'Fraction of high-quality fragments overlapping TSS{species}'
             self.add_metric(
                 name=name,
-                value=self.metrics_dict[name],
+                value=format_value(self.metrics_dict[name]),
                 help_info="Fraction of high-quality fragments in cell barcodes that overlap transcription start sites (TSS)."
             )
 
             name = f'Fraction of high-quality fragments overlapping peaks{species}'
             self.add_metric(
                 name=name,
-                value=self.metrics_dict[name],
+                value=format_value(self.metrics_dict[name]),
                 help_info="Fraction of high-quality fragments in cell barcodes that overlap called peaks."
             )
