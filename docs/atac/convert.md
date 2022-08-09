@@ -21,7 +21,7 @@ Output
 
 `--gzip` Output gzipped fastq files.
 
-`--bulk_seq` bulk_seq or not.
+`--method` bulk or 10X or sgr.
 
 `--outdir` Output diretory.
 

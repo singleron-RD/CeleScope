@@ -108,7 +108,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--gzip` Output gzipped fastq files.
 
-`--bulk_seq` bulk_seq or not.
+`--method` bulk or 10X or sgr.
 
 `--ref_path` reference path for cellranger-atac.
 
