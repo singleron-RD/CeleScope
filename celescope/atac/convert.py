@@ -18,7 +18,7 @@ WHITELIST_10X_PATH = [
 def get_opts_convert(parser, sub_program):
     parser.add_argument('--soft_path', help='soft path for cellranger', required=True)
     parser.add_argument('--gzip', help="Output gzipped fastq files.", action='store_true')
-    parser.add_argument('--bulk_seq', help='bulk_seq or not', action='store_true')
+    parser.add_argument('--method', help='bulk or 10X or sgr', required=True)
     if sub_program:
         s_common(parser)
         parser.add_argument('--fq1', help='R2 read file', required=True)
@@ -51,14 +51,13 @@ class Convert(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
-        self.bulk_seq = args.bulk_seq
+        self.method = args.method
         self.whitelist_10X_file = os.path.dirname(args.soft_path) + WHITELIST_10X_PATH[0]
         self.whitelist_10X_fh = xopen(self.whitelist_10X_file, 'r')
-
         self.sgr_tenX = {}
-        if self.bulk_seq:
-            self.whitelist_10X_fh = utils.read_one_col(self.whitelist_10X_file)[0][:2500]
-            self.sgr_tenX = defaultdict(list)
+
+        if self.method == 'bulk':
+            self.whitelist_10X_fh = utils.read_one_col(self.whitelist_10X_file)[0][:3000]
 
         self.out_fq1_file = f'{self.outdir}/{self.sample}_S1_L001_R1_001.fastq.gz'
         self.out_fq2_file = f'{self.outdir}/{self.sample}_S1_L001_R2_001.fastq.gz'
@@ -72,30 +71,33 @@ class Convert(Step):
 
     @utils.add_log
     def write_fq2(self):
-        out_fq2 = xopen(self.out_fq2_file, 'w')
+        if self.method == '10X':
+            cmd = f'cp {self.args.fq2} {self.out_fq2_file}'
+            subprocess.check_call(cmd, shell=True)
 
-        with pysam.FastxFile(self.args.fq2) as fq2_fh:
-            for entry in fq2_fh:
-                name = entry.name
-                comment = entry.comment
-                sgr_barcode = entry.sequence
+        else:
+            out_fq2 = xopen(self.out_fq2_file, 'w')
+            with pysam.FastxFile(self.args.fq2) as fq2_fh:
+                for entry in fq2_fh:
+                    name = entry.name
+                    comment = entry.comment
+                    sgr_barcode = entry.sequence
 
-                if self.bulk_seq:
-                    barcode_10X = random.choice(self.whitelist_10X_fh)
-                    self.sgr_tenX[sgr_barcode].append(barcode_10X)
-                else:
-                    if sgr_barcode in self.sgr_tenX:
-                        barcode_10X = self.sgr_tenX[sgr_barcode]
+                    if self.method=='bulk':
+                        barcode_10X = random.choice(self.whitelist_10X_fh)
                     else:
-                        # new barcode from whitelist
-                        barcode_10X = self.whitelist_10X_fh.readline().strip()
-                        self.sgr_tenX[sgr_barcode] = barcode_10X
+                        if sgr_barcode in self.sgr_tenX:
+                            barcode_10X = self.sgr_tenX[sgr_barcode]
+                        else:
+                            # new barcode from whitelist
+                            barcode_10X = self.whitelist_10X_fh.readline().strip()
+                            self.sgr_tenX[sgr_barcode] = barcode_10X
 
-                new_name = f'{name} {comment}'
-                new_qual = 'F' * len(barcode_10X)
-                out_fq2.write(f'@{new_name}\n{barcode_10X}\n+\n{new_qual}\n')
+                    new_name = f'{name} {comment}'
+                    new_qual = 'F' * len(barcode_10X)
+                    out_fq2.write(f'@{new_name}\n{barcode_10X}\n+\n{new_qual}\n')
 
-        out_fq2.close()
+            out_fq2.close()
     
     @utils.add_log
     def write_fq3(self):
@@ -116,7 +118,8 @@ class Convert(Step):
         self.write_fq1()
         self.write_fq2()
         self.write_fq3()
-        self.dump_tenX_sgr_barcode_json()
+        if self.method == 'sgr':
+            self.dump_tenX_sgr_barcode_json()
 
 def convert(args):
     step_name = 'convert'
