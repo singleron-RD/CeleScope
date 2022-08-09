@@ -82,8 +82,8 @@ class ATAC(Step):
 
 
 def atac(args):
-    # with ATAC(args) as runner:
-    #     runner.run()
+    with ATAC(args) as runner:
+        runner.run()
 
     with Sequencing(args) as runner:
         runner.run()
