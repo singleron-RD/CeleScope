@@ -1,7 +1,6 @@
 from celescope.tools import utils
 from celescope.tools.step import s_common, Step
 
-from collections import defaultdict
 from xopen import xopen
 import subprocess
 import pysam
