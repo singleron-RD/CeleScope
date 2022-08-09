@@ -47,7 +47,7 @@ class Chemistry():
         chemistry_list = []
         for fastq1 in self.fq1_list:
             print(fastq1)
-            chemistry = self.get_chemistry()
+            chemistry = self.get_chemistry(fastq1)
             chemistry_list.append(chemistry)
         if len(set(chemistry_list)) != 1:
             Chemistry.check_chemistry.logger.warning('multiple chemistry found!' + str(chemistry_list))
@@ -115,10 +115,10 @@ class Chemistry():
         return
 
     @utils.add_log
-    def get_chemistry(self):
+    def get_chemistry(self, fq1):
         results = defaultdict(int)
 
-        with pysam.FastxFile(self.fq1) as fh:
+        with pysam.FastxFile(fq1) as fh:
             for _ in range(self.n_read):
                 entry = fh.__next__()
                 seq = entry.sequence
