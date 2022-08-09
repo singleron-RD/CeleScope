@@ -46,9 +46,12 @@ class Multi_atac(Multi):
         --customized \\
         --ref_path "/SGRNJ06/randd/USER/cjj/cr-atac/refdata-cellranger-arc-GRCh38-2020-A-2.0.0" \\
         --soft_path "/SGRNJ06/randd/USER/cjj/cr-atac/cellranger-atac-2.1.0/" \\
+        --method 10X
         --mod shell
     ```
-    For bulk_seq data, add --bulk_seq option.
+    For bulk_seq data, --method bulk.
+    For 10X data, --method 10X.
+    For sgr data, --method sgr.
     """
 
     @staticmethod

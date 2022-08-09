@@ -34,7 +34,7 @@ class Convert(Step):
 
     Output
 
-    - `02.convert/barcode_correspond.txt` Recording barcodes correspondence.
+    - `02.convert/barcode_correspond.txt` Recording barcodes correspondence.(if --method sgr)
 
     - `02.convert/{sample}_S1_L001_R1_001.fastq.gz` New R1 reads as cellranger input.
 
