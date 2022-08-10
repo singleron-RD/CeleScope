@@ -139,7 +139,7 @@ multi_tag \
 The output matrices are in `{sample}/06.split_tag`
 
 ## Split fastq
-To split the R1 and R2 fastq files:
+Please note that only cell barcodes are considered and all the background barcodes are discarded. So the cell-calling results on each tag may be different from the results obtained from `--split_matrix` and `--split_vdj`.
 
 1.  Run `barcode` to get demultiplexed R2 fastq. If you have already run `multi_rna`, `multi_vdj`, `multi_dynaseq`, etc.., this step can be skipped.
 ```
@@ -158,7 +158,14 @@ multi_tag \
  --barcode_fasta ./tag_barcode.fasta\
  --fq_pattern L25C15 \
  --split_fastq \
- --R1_read {R1 fastq path}
+```
+
+3. Add `--R1_read` in `./shell/{sample}.sh`
+```
+...
+...
+celescope tag analysis_tag ...
+celescope tag split_tag ... --R1_read {e.g. R1_read of the matched scRNA-Seq library}
 ```
 The output fastqs are in `{sample}/06.split_tag/`
 

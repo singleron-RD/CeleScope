@@ -108,12 +108,17 @@ class FeatureCounts(Step):
 
     @utils.add_log
     def add_metrics(self):
-        Assigned_exon = self.feature_log_dict['exon']['Assigned']
-        Assigned_intron = self.feature_log_dict['gene']['Assigned'] - self.feature_log_dict['exon']['Assigned']
-        Assigned_intergenic = self.feature_log_dict['gene']['Unassigned_NoFeatures']
-        Unassigned_ambiguity = self.feature_log_dict['gene']['Unassigned_Ambiguity']
-        
         total = sum(self.feature_log_dict['exon'].values())
+
+        Assigned_exon = self.feature_log_dict['exon']['Assigned']
+        Assigned_intergenic = self.feature_log_dict['gene']['Unassigned_NoFeatures']
+        """
+        https://academic.oup.com/nargab/article/2/3/lqaa073/5910008
+        Approximately 15% of genes had exon counts that were greater than genebody counts (by a median value of eight counts). This was due to our conservative approach of excluding reads that overlapped features in multiple genes during the read summarization step by featureCounts using the argument allowMultiOverlap=FALSE. Under this strategy, some reads were counted towards the exon count set but not the genebody count set. This happens when a read overlaps the exon in one gene and the intron of another gene—it is counted towards exon counts but not genebody counts due to its overlap of multiple genebodies but not multiple exons.
+        """
+        Unassigned_ambiguity = self.feature_log_dict['exon']['Unassigned_Ambiguity']
+        Assigned_intron = total - Assigned_exon - Assigned_intergenic - Unassigned_ambiguity           
+       
         
         self.add_metric(
             name='Feature Type',

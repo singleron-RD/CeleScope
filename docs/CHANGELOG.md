@@ -1,6 +1,11 @@
-## [Unreleased]
+## [1.11.1] - 2022-08 -10
  ### General improvments
  - When making a STAR index, `--genomeSAindexNbases` can be automatically inferred based on genome size.
+ - Fix an issue that `Reads Assigned To Intronic Regions` could have negative values.
+ - Fix the problem that the excel download button of the marker gene list was removed.
+
+ ### `snp`
+ - Fix an issue where Annovar could generate extra lines in multianno.txt file.
 
 ## [1.11.0] - 2022-07-07
  ### `rna`
