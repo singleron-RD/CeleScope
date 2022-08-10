@@ -1,6 +1,7 @@
-## [Unreleased]
+## [1.11.1] - 2022-08 -10
  ### General improvments
  - When making a STAR index, `--genomeSAindexNbases` can be automatically inferred based on genome size.
+ - Fix a problem that `Reads Assigned To Intronic Regions` can have negative values.
 
 ## [1.11.0] - 2022-07-07
  ### `rna`
