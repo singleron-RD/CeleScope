@@ -218,6 +218,8 @@ class Count(Step):
             cell_bc, UMI_threshold = self.auto_cell(df_sum)
         elif cell_calling_method == 'EmptyDrops_CR':
             cell_bc, UMI_threshold = self.emptydrop_cr_cell(df_sum)
+        elif cell_calling_method == 'mixed':
+            cell_bc, UMI_threshold = self.mixed_cell(df_sum)
         return cell_bc, UMI_threshold
 
     @utils.add_log
@@ -269,6 +271,30 @@ class Count(Step):
         cell_bc, initial_cell_num = cell_calling_3(self.raw_matrix_dir, self.expected_cell_num)
         threshold = Count.find_threshold(df_sum, initial_cell_num)
         return cell_bc, threshold
+    
+    @utils.add_log
+    def mixed_cell(self, df_sum):
+        def get_emptydrop_calling_result(df_sum):
+            cell_bc_emptydrop, th_emptydrop = self.emptydrop_cr_cell(df_sum)
+            cell_median_gene_emptydrop = np.median(df_sum[df_sum.index.isin(cell_bc_emptydrop)]['geneID'])
+            return cell_bc_emptydrop, th_emptydrop, cell_median_gene_emptydrop
+        
+        def get_auto_calling_result(df_sum):
+            cell_bc_auto, th_auto = self.auto_cell(df_sum)
+            cell_median_gene_auto = np.median(df_sum[df_sum.index.isin(cell_bc_auto)]['geneID'])
+            return cell_bc_auto, th_auto, cell_median_gene_auto
+        
+        bc_emptydrop, th_emptydrop, median_emptydrop = get_emptydrop_calling_result(df_sum)
+        bc_auto, th_auto, median_auto = get_auto_calling_result(df_sum)
+        
+        cell_bc = list(set(bc_emptydrop).intersection(bc_auto))
+        threshold = (th_emptydrop + th_auto) / 2
+
+        if median_emptydrop >= median_auto * 0.8:
+            return cell_bc, threshold
+        
+        else:
+            return self.mixed_cell(df_sum[:-int(len(cell_bc) * 0.02)])
 
     @staticmethod
     def get_df_sum(df, col='UMI'):
@@ -465,7 +491,7 @@ def get_opts_count(parser, sub_program):
     parser.add_argument(
         '--cell_calling_method',
         help=HELP_DICT['cell_calling_method'],
-        choices=['auto', 'EmptyDrops_CR'],
+        choices=['auto', 'EmptyDrops_CR', 'mixed'],
         default='EmptyDrops_CR',
     )
     if sub_program:
