@@ -128,8 +128,8 @@ def dumb_consensus(read_list, threshold=0.5, min_consensus_read=1, ambiguous='N'
     '''
 
     con_len = get_read_length(read_list, threshold=threshold)
-    consensus_seq = ""
-    consensus_qual = ""
+    consensus_seq_list = []
+    consensus_qual_list = []
     ambiguous_base_n = 0
     for n in range(con_len):
         atom_dict = defaultdict(int)
@@ -155,7 +155,7 @@ def dumb_consensus(read_list, threshold=0.5, min_consensus_read=1, ambiguous='N'
                 break
         if consensus_atom == ambiguous:
             ambiguous_base_n += 1
-        consensus_seq += consensus_atom
+        consensus_seq_list.append(consensus_atom)
 
         max_freq_qual = 0
         consensus_base_qual = default_qual
@@ -164,7 +164,11 @@ def dumb_consensus(read_list, threshold=0.5, min_consensus_read=1, ambiguous='N'
                 max_freq_qual = quality_dict[base_qual]
                 consensus_base_qual = base_qual
 
-        consensus_qual += consensus_base_qual
+        consensus_qual_list.append(consensus_base_qual)
+    
+    consensus_seq = ''.join(consensus_seq_list)
+    consensus_qual = ''.join(consensus_qual_list)
+
     return consensus_seq, consensus_qual, ambiguous_base_n, con_len
 
 
