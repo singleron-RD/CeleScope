@@ -12,6 +12,9 @@ from celescope.tools import utils
 from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
 
 
+__SUB_STEPS__ = ['mapping', 'cells', 'annotation']
+
+
 class Assemble(Step):
     """
     ## Features
@@ -52,7 +55,7 @@ class Assemble(Step):
         )
 
         if self.other_param:
-            cmd += (self.other_param)
+            cmd += (" " + self.other_param)
 
         self.assemble.logger.info(cmd)
         with open(self.cmd_line, 'w') as f:
