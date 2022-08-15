@@ -12,6 +12,9 @@ from celescope.tools import utils
 from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
 
 
+__SUB_STEPS__ = ['mapping', 'cells', 'annotation']
+
+
 class Assemble(Step):
     """
     ## Features
@@ -34,9 +37,13 @@ class Assemble(Step):
         self.ref_path = args.ref_path
         self.soft_path = args.soft_path
 
+        if args.seqtype == 'BCR':
+            self.chain_type = 'IG'
+        else:
+            self.chain_type = 'TR'
+
         # out files
         self.cmd_line = f'{self.outdir}/{self.sample}_cmd_line'
-
 
     @utils.add_log
     def assemble(self):
@@ -47,12 +54,13 @@ class Assemble(Step):
             f'--reference={self.ref_path} '
             f'--fastqs={self.fqs_dir} '
             f'--sample={self.sample} '
+            f'--chain={self.chain_type} '
             f'--localcores={self.thread} '
             f'--localmem={self.mem} '
         )
 
         if self.other_param:
-            cmd += (self.other_param)
+            cmd += (" " + self.other_param)
 
         self.assemble.logger.info(cmd)
         with open(self.cmd_line, 'w') as f:
