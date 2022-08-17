@@ -101,6 +101,20 @@ class cellranger_metrics(Step):
         self.chains = CHAIN[self.seqtype]
         self.pairs = PAIRED_CHAIN[self.seqtype]
 
+        self.__stat_file = self._Step__stat_file
+        self.__metric_list = self._Step__metric_list
+
+    # avoid overwrite stat.txt
+    def _write_stat(self):
+        with open(self.__stat_file, 'a+') as writer:
+            for metric in self.__metric_list:
+                if metric['show']:
+                    name = metric['name']
+                    display = metric['display']
+
+                    line = f'{name}: {display}'
+                    writer.write(line + '\n')
+
     def run(self):
         self.add_metrics()
 
