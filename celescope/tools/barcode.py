@@ -190,7 +190,7 @@ class Barcode(Step):
         self.whitelist = args.whitelist
         self.lowNum = args.lowNum
         self.lowQual = args.lowQual
-        self.allowNoPolyT = args.allowNoPolyT
+        self.filterNoPolyT = args.filterNoPolyT
         self.allowNoLinker = args.allowNoLinker
         self.nopolyT = args.nopolyT  # true == output nopolyT reads
         self.noLinker = args.noLinker
@@ -608,7 +608,7 @@ class Barcode(Step):
                     self.total_num += 1
 
                     # polyT filter
-                    if bool_T and (not self.allowNoPolyT):
+                    if bool_T and self.filterNoPolyT:
                         if not Barcode.check_polyT(seq1, pattern_dict):
                             self.no_polyT_num += 1
                             if self.nopolyT:
@@ -742,8 +742,8 @@ lowQual will be regarded as low-quality bases.',
         action='store_true',
     )
     parser.add_argument(
-        '--allowNoPolyT',
-        help="Allow valid reads without polyT.",
+        '--filterNoPolyT',
+        help="Filter reads without PolyT.",
         action='store_true'
     )
     parser.add_argument(

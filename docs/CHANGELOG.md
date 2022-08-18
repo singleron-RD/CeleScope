@@ -1,4 +1,8 @@
-## [1.11.1] - 2022-08 -10
+## Unreleased - 2022-08-18
+ ### General improvments
+ - `Reads without poly T` are not filtered by default. Remove the argument `--allowNoPolyT` and add a new argument `--filterNoPolyT`.
+
+## [1.11.1] - 2022-08-10
  ### General improvments
  - When making a STAR index, `--genomeSAindexNbases` can be automatically inferred based on genome size.
  - Fix an issue that `Reads Assigned To Intronic Regions` could have negative values.
