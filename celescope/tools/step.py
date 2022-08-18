@@ -40,7 +40,7 @@ class Step:
         '''
         display_title controls the section title in HTML report
         '''
-
+        print(f'Args: {args}')
         self.args = args
         self.outdir = args.outdir
         self.sample = args.sample
