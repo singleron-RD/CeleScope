@@ -52,7 +52,7 @@ class Split_tag(Step):
 
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
-        if not (args.split_matrix or args.split_fastq or args.split_vdj):
+        if not (args.split_matrix or args.split_fastq or args.split_vdj or args.split_fl_vdj):
             return
 
         # set
@@ -92,6 +92,31 @@ class Split_tag(Step):
             self.vdj_outdir = f'{args.outdir}/vdj/'
             if not os.path.exists(self.vdj_outdir):
                 os.system(f'mkdir -p {self.vdj_outdir}')
+        
+        if args.split_fl_vdj:
+            self.fl_vdj_outdir = f'{args.outdir}/fl_vdj/'
+            if not os.path.exists(self.fl_vdj_outdir):
+                os.system(f'mkdir -p {self.fl_vdj_outdir}')
+            
+            # flv_CR
+            if os.path.exists(f'{args.vdj_dir}/02.convert'):
+                if os.path.exists(f'{args.vdj_dir}/03.assemble/match'):
+                    match_out_dir = f'{args.vdj_dir}/03.assemble/match'
+                else:
+                    match_out_dir = f'{args.vdj_dir}/05.match'
+                
+                try: # old version
+                    self.anno_file = glob.glob(f'{match_out_dir}/match_contigs.csv')[0]
+                    self.fasta_file = glob.glob(f'{match_out_dir}/match_contig.fasta')[0]
+                except IndexError: # latest version
+                    self.anno_file = glob.glob(f'{match_out_dir}/matched_contig_annotations.csv')[0]
+                    self.fasta_file = glob.glob(f'{match_out_dir}/matched_contig.fasta')[0]
+
+            # flv_trust4
+            else:
+                self.anno_file = glob.glob(f'{args.vdj_dir}/04.summarize/*_filtered_contig.csv')[0]
+                self.fasta_file = glob.glob(f'{args.vdj_dir}/04.summarize/*_filtered_contig.fasta')[0]
+
 
     @utils.add_log
     def write_r2_fastq_files(self):
@@ -152,6 +177,59 @@ class Split_tag(Step):
                 clonotypes.to_csv(f'{self.vdj_outdir}/{tag}_{seqtype}_clonotypes.tsv', sep='\t', index=False)
             else:
                 continue
+    
+    @utils.add_log
+    def split_fl_vdj(self):
+        df_anno = pd.read_csv(self.anno_file, keep_default_na=False)
+        if df_anno.chain[0].startswith('IG'):
+            seqtype = 'BCR'
+        else:
+            seqtype = 'TCR'
+
+        for tag in self.tag_barcode_dict:
+            tag_barcodes = set(self.tag_barcode_dict[tag])
+            df_temp = df_anno[df_anno.barcode.isin(tag_barcodes)]
+            if not df_temp.empty:
+                df_temp.to_csv(f'{self.fl_vdj_outdir}/{tag}_{seqtype}_contig_annotations.csv', sep=',', index=False)
+                fasta_temp = open(f'{self.fl_vdj_outdir}/{tag}_{seqtype}_contig.fasta' ,'w')
+                with pysam.FastxFile(self.fasta_file) as raw_fasta:
+                    for entry in raw_fasta:
+                        name = entry.name
+                        attrs = name.split('_')
+                        cb = attrs[0]
+                        if cb in tag_barcodes:
+                            new_name = cb + '_' + attrs[1] + '_' + attrs[2]
+                            seq = entry.sequence
+                            fasta_temp.write(f'>{new_name}\n{seq}\n')
+                fasta_temp.close()
+
+                if 'clonotype_id' in df_temp.columns:
+                    df_temp = df_temp[df_temp.clonotype_id != ''] # del clonotype for trust4
+                split_clonotypes = f'{self.fl_vdj_outdir}/{tag}_{seqtype}_clonotypes.csv'
+                self.get_fl_clonotypes_table(df_temp, split_clonotypes)
+
+    @staticmethod
+    def get_fl_clonotypes_table(df_temp, split_clonotypes):
+        df_match = df_temp[df_temp['productive'] == True]
+        df_match['chain_cdr3aa'] = df_match[['chain', 'cdr3']].apply(':'.join, axis=1)
+
+        match_clonotypes = open(split_clonotypes, 'w')
+        match_clonotypes.write('barcode\tcdr3s_aa\n')
+        for cb in set(df_match.barcode):
+            temp = df_match[df_match['barcode']==cb].sort_values(by='chain', ascending=True)
+            chain_pair = ';'.join(temp['chain_cdr3aa'].tolist())
+            match_clonotypes.write(f'{cb}\t{chain_pair}\n')
+        match_clonotypes.close()
+
+        df_match_clonetypes = pd.read_csv(split_clonotypes, sep='\t', index_col=None)
+        df_match_clonetypes = df_match_clonetypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
+        df_match_clonetypes.rename(columns={'barcode': 'frequency'}, inplace=True)
+        sum_f = df_match_clonetypes['frequency'].sum()
+        df_match_clonetypes['proportion'] = df_match_clonetypes['frequency'].apply(lambda x: x/sum_f)
+        df_match_clonetypes.sort_values(by='frequency', ascending=False, inplace=True)
+        df_match_clonetypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_match_clonetypes.shape[0]+1)]
+        df_match_clonetypes = df_match_clonetypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
+        df_match_clonetypes.to_csv(split_clonotypes, sep=',', index=False)
 
     @utils.add_log
     def run(self):
@@ -162,6 +240,8 @@ class Split_tag(Step):
             self.write_r1_fastq_files()
         if self.args.split_vdj:
             self.split_vdj()
+        if self.args.split_fl_vdj:
+            self.split_fl_vdj()
 
 
 def split_tag(args):
@@ -185,7 +265,12 @@ def get_opts_split_tag(parser, sub_program):
         help="If used, will split scRNA-Seq vdj count file according to tag assignment.",
         action='store_true',
     )
-    parser.add_argument("--vdj_dir", help="Match celescope vdj directory. Required when --split_vdj is specified.")
+    parser.add_argument(
+        "--split_fl_vdj",
+        help='If used, will split scRNA-Seq full-length vdj annotation, fasta, clonotypes file according to tag assignment.',
+        action='store_true',
+    )
+    parser.add_argument("--vdj_dir", help="Match celescope vdj directory. Required when --split_vdj or --split_fl_vdj is specified.")
     if sub_program:
         parser.add_argument("--umi_tag_file", help="UMI tag file.", required=True)
         parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
