@@ -3,7 +3,6 @@
 multi_citeseq \
     --mapfile ./test.mapfile \
     --barcode_fasta ./CLindex_TAG.fasta \
-    --allowNoPolyT \
     --fq_pattern L25C15 \
     --mod shell
 ```
@@ -121,7 +120,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 

@@ -76,7 +76,6 @@ multi_rna\
 	--mapfile ./rna.mapfile\
 	--genomeDir /SGRNJ/Public/Database/genome/homo_mus\
 	--thread 8\
-	--allowNoPolyT\
 	--mod shell
 ```
 `--mapfile` Required. Check [multi_rna.md](./rna/multi_rna.md) for how to write the mapfile.

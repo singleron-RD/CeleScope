@@ -18,7 +18,6 @@ You can check the log of the `barcode` step for the number of filtered reads in 
 2022-03-29 09:58:47,734 - celescope.tools.barcode.run - INFO - corrected barcode: 4728
 ```
 
-If `no polyT reads number` is very high, use `--allowNoPolyT`. This may be caused by excessive sequencing errors in the polyT region.
 
 PS: If the default parameters are used, low quality reads are not filtered. So `low qual reads number` will always be zero.
 

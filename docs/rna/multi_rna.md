@@ -4,7 +4,6 @@
     --mapfile ./rna.mapfile\
     --genomeDir /SGRNJ/Public/Database/genome/homo_mus\
     --thread 8\
-    --allowNoPolyT\
     --mod shell
 ```
 
@@ -214,7 +213,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 

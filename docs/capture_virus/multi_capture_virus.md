@@ -7,7 +7,6 @@ multi_capture_virus \
 --mapfile {mapfile} \
 --virus_genomeDir {virus_genomeDir} \
 --not_consensus \
---allowNoPolyT \
 --thread 4 \
 --mod shell
 ```
@@ -168,7 +167,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 

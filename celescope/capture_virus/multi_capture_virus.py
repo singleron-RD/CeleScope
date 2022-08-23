@@ -13,7 +13,6 @@ class Multi_capture_virus(Multi):
     --mapfile {mapfile} \\
     --virus_genomeDir {virus_genomeDir} \\
     --not_consensus \\
-    --allowNoPolyT \\
     --thread 4 \\
     --mod shell
     ```

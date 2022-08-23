@@ -170,7 +170,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 

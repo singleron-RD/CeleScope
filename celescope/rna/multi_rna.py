@@ -10,7 +10,6 @@ class Multi_rna(Multi):
         --mapfile ./rna.mapfile\\
         --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
         --thread 8\\
-        --allowNoPolyT\\
         --mod shell
     ```
 
