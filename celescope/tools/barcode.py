@@ -232,8 +232,38 @@ class Barcode(Step):
 
     @staticmethod
     def get_seq_str(seq, sub_pattern_dict):
-        """get subseq with intervals in arr and concatenate"""
-        return ''.join([seq[item[0]: item[1]] for item in sub_pattern_dict])
+        """
+        Get subseq with intervals in arr and concatenate
+
+        Args:
+            seq: str
+            sub_pattern_dict: [[0, 8], [24, 32], [48, 56]]
+
+        Returns:
+            str
+
+        Raise:
+            IndexError: if sequence length is not enough
+
+        >>> sub_pattern_dict = [[0, 8]]
+        >>> seq = "A" * 7
+        >>> Barcode.get_seq_str(seq, sub_pattern_dict)
+        Traceback (most recent call last):
+        ...
+        IndexError: sequence length is not enough in R1 read: AAAAAAA
+        >>> seq = "A" * 8
+        >>> Barcode.get_seq_str(seq, sub_pattern_dict)
+        'AAAAAAAA'
+        """
+        seq_len = len(seq)
+        ans = []
+        for item in sub_pattern_dict:
+            start, end = item[0], item[1]
+            if end > seq_len:
+                raise IndexError(f"sequence length is not enough in R1 read: {seq}")
+            else:
+                ans.append(seq[start:end])
+        return ''.join(ans)
 
     @staticmethod
     def get_seq_list(seq, pattern_dict, abbr):

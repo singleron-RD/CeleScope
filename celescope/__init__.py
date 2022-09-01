@@ -19,6 +19,7 @@ ASSAY_LIST = [
     'flv_CR',
     'convert10X',
     'flv_trust4',
+    'rna_virus'
 ]
 
 ROOT_PATH = os.path.dirname(__file__)
