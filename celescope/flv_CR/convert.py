@@ -8,12 +8,20 @@ from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 
 
-UMI_10X_LEN = 10
+# Template Swithcing Oligos Sequence. [16-bp cell barcode][10/12-bp UMI][TSO].
 TSO = "TTTCTTATATGGG"
+
+# Path of Whitelist File in Cellranger Directory.
 WHITELIST_10X_PATH = [
-    "/lib/python/cellranger/barcodes/737K-august-2016.txt",
-    "/cellranger-cs/3.0.2/lib/python/cellranger/barcodes/737K-august-2016.txt",
-                      ]
+    "/lib/python/cellranger/barcodes",
+    "/cellranger-cs/3.0.2/lib/python/cellranger/barcodes",
+]
+
+# Chemistry: [V2/V3 whitelist, 10X umi length].
+CHEMISTRY_DICT = {
+    'V2': ['737K-august-2016.txt', 10],
+    'V3': ['3M-february-2018.txt.gz', 12],
+}
 
 
 class Convert(Step):
@@ -35,10 +43,12 @@ class Convert(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
         self.fq2 = args.fq2
+        self.whitelist_suffix = CHEMISTRY_DICT[args.tenX_chemistry][0]
+        self.UMI_10X_LEN = CHEMISTRY_DICT[args.tenX_chemistry][-1]
 
-        self.whitelist_10X_file = os.path.dirname(args.soft_path) + WHITELIST_10X_PATH[0]
+        self.whitelist_10X_file = os.path.dirname(args.soft_path) + f'{WHITELIST_10X_PATH[0]}/{self.whitelist_suffix}'
         if not os.path.exists(self.whitelist_10X_file):
-            self.whitelist_10X_file = os.path.dirname(args.soft_path) + WHITELIST_10X_PATH[1]
+            self.whitelist_10X_file = os.path.dirname(args.soft_path) + f'{WHITELIST_10X_PATH[1]}/{self.whitelist_suffix}'
 
         self.whitelist_10X_fh = xopen(self.whitelist_10X_file, 'r')
         self.sgr_tenX = {}
@@ -87,10 +97,10 @@ class Convert(Step):
             self.sgr_tenX[barcode_sgr] = barcode_10X
 
         umi_len_sgr = len(umi_sgr)
-        if umi_len_sgr > UMI_10X_LEN:
-            umi_10X = umi_sgr[:UMI_10X_LEN]
-        elif umi_len_sgr < UMI_10X_LEN:
-            umi_10X = umi_sgr + 'C' * (UMI_10X_LEN - umi_len_sgr)
+        if umi_len_sgr > self.UMI_10X_LEN:
+            umi_10X = umi_sgr[:self.UMI_10X_LEN]
+        elif umi_len_sgr < self.UMI_10X_LEN:
+            umi_10X = umi_sgr + 'C' * (self.UMI_10X_LEN - umi_len_sgr)
         else:
             umi_10X = umi_sgr
 
@@ -120,6 +130,11 @@ def convert(args):
 
 def get_opts_convert(parser, sub_program):
     parser.add_argument('--soft_path', help='soft path for cellranger', required=True)
+    parser.add_argument(
+        '--tenX_chemistry',
+        help='10X chemistry version, V2 or V3 for scRNA, V2 for VDJ',
+        choices=['V2', 'V3'],
+        default='V2')
     if sub_program:
         s_common(parser)
         parser.add_argument('--fq2', help='R2 read file', required=True)

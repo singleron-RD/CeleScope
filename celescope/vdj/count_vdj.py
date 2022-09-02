@@ -105,6 +105,7 @@ class Count_vdj(Step):
         self.cell_confident_count_file = f"{self.out_prefix}_cell_confident_count.tsv"
         self.clonetypes_file = f"{self.out_prefix}_clonetypes.tsv"
         self.match_clonetypes_file = f"{self.out_prefix}_match_clonetypes.tsv"
+        self.filtered_annotation = f"{self.out_prefix}_filtered_contig_annotations.csv"
 
 
     @utils.add_log
@@ -278,6 +279,26 @@ class Count_vdj(Step):
             df_table=df_table
         )
         self.add_data(table_dict=table_dict)
+    
+    @utils.add_log
+    def convert_to_annotation(self):
+        in_file = pd.read_csv(self.cell_confident_file, sep='\t')
+        out_file = pd.DataFrame({
+                        'barcode':in_file.barcode,
+                        'chain':in_file.chain,
+                        'v_gene':in_file.bestVGene,
+                        'd_gene':'None',
+                        'j_gene':in_file.bestJGene,
+                        'c_gene':'None',
+                        'full_length':True,
+                        'productive':True,
+                        'cdr3':in_file.aaSeqCDR3,
+                        'cdr3_nt':in_file.nSeqCDR3,
+                        'reads':in_file.UMI,
+                        'umis':in_file.UMI,
+                        'raw_clonotype_id':in_file.clonetype_ID
+                        })
+        out_file.to_csv(self.filtered_annotation, sep=',', index=False)
 
     def run(self):
         df_cell, cell_barcodes = self.cell_calling()
@@ -289,6 +310,7 @@ class Count_vdj(Step):
         self.write_cell_confident_count(
             df_valid_count, df_clonetypes, df_confident)
         self.write_clonetypes_table_to_data(df_clonetypes)
+        self.convert_to_annotation()
 
 
 def count_vdj(args):
