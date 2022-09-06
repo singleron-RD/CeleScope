@@ -173,7 +173,7 @@ def get_opts_featureCounts(parser, sub_program):
     parser.add_argument(
         '--gtf_type',
         help='Specify feature type in GTF annotation',
-        default='exon',
+        default='gene',
         choices=['exon', 'gene'],
     )
     parser.add_argument('--genomeDir', help=HELP_DICT['genomeDir'])
