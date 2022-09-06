@@ -1,6 +1,7 @@
 ## Unreleased - 2022-08-18
  ### General improvments
  - `Reads without poly T` are not filtered by default. Remove the argument `--allowNoPolyT` and add a new argument `--filterNoPolyT`.
+ - Introns will be included in the `rna` analysis by default.
 
 ## [1.11.1] - 2022-08-10
  ### General improvments
