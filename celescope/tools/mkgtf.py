@@ -61,7 +61,7 @@ def get_properties_dict(properties_str):
         return properties_str
 
     properties = collections.OrderedDict()
-    pattern = re.compile('(\S+?)\s*"(.*?)"')
+    pattern = re.compile(r'(\S+?)\s*"(.*?)"')
     for m in re.finditer(pattern, properties_str):
         key = m.group(1)
         value = m.group(2)
