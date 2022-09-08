@@ -55,11 +55,13 @@ class Mapping_vdj(Step):
             '-OallowPartialAlignments=true '
             '-OvParameters.geneFeatureToAlign=VTranscriptWithP '
             f'{self.args.fq} {self.read2_vdjca} '
+            f'-Xmx{self.args.mixcr_mem}g '
             '\n'
             'mixcr exportAlignments '
             f'{self.read2_vdjca} {self.alignments} '
             '-readIds --force-overwrite -vGene -dGene -jGene -cGene '
             '-nFeature CDR3 -aaFeature CDR3 '
+            f'-Xmx{self.args.mixcr_mem}g '
         )
 
         self.debug_subprocess_call(cmd)
@@ -216,6 +218,11 @@ def get_opts_mapping_vdj(parser, sub_program):
         choices=['hs', 'mmu'],
         help='Default `hs`. `hs`(human) or `mmu`(mouse). ',
         default='hs'
+    )
+    parser.add_argument(
+        '--mixcr_mem',
+        help='Memory(in Gb) used by Java vitual machine.',
+        default=8,
     )
     parser.add_argument("--not_consensus", action='store_true', help="Input fastq is not consensused.")
     if sub_program:
