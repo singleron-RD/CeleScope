@@ -1,4 +1,7 @@
-## Unreleased - 2022-08-18
+## Unreleased - 2022-09-08
+ ### `vdj`
+ - Add an argument `--mixcr_mem` to avoid the `Invalid maximum heap size` error reported by mixcr. https://github.com/milaboratory/mixcr/issues/588
+
  ### General improvments
  - `Reads without poly T` are not filtered by default. Remove the argument `--allowNoPolyT` and add a new argument `--filterNoPolyT`.
  - Introns will be included in the `rna` analysis by default.
