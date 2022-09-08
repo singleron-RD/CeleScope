@@ -1,4 +1,4 @@
-## Unreleased 
+## Unreleased - 2022-09-08
  ### `vdj`
  - Add an argument `--mixcr_mem` to avoid the `Invalid maximum heap size` error reported by mixcr. https://github.com/milaboratory/mixcr/issues/588
 
