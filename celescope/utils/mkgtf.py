@@ -133,7 +133,7 @@ def mkgtf(args):
     runner.run()
 
 
-def get_opts_mkgtf(parser, sub_program=False):
+def get_opts_mkgtf(parser, sub_program=True):
     parser.add_argument('gtf', help='raw gtf file')
     parser.add_argument('filtered_gtf', help='filtered gtf file')
 
