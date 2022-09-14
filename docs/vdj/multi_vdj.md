@@ -183,6 +183,8 @@ at least {overlap} bases match between adapter and read.
 
 `--species` Default `hs`. `hs`(human) or `mmu`(mouse).
 
+`--mixcr_mem` Memory(in Gb) used by Java vitual machine.
+
 `--not_consensus` Input fastq is not consensused.
 
 `--type` Required. `TCR` or `BCR`.

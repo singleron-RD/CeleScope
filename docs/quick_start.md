@@ -41,7 +41,7 @@ gunzip Homo_sapiens.GRCh38.99.gtf.gz
 conda activate celescope
 celescope utils mkgtf Homo_sapiens.GRCh38.99.gtf Homo_sapiens.GRCh38.99.filtered.gtf
 celescope rna mkref \
- --genome_name Homo_sapiens_ensembl_99 \
+ --genome_name Homo_sapiens_ensembl_99_filtered \
  --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \
  --gtf Homo_sapiens.GRCh38.99.filtered.gtf
 ```
@@ -62,7 +62,7 @@ conda activate celescope
 celescope utils mkgtf Mus_musculus.GRCm38.99.gtf Mus_musculus.GRCm38.99.filtered.gtf
 
 celescope rna mkref \
- --genome_name Mus_musculus_ensembl_99 \
+ --genome_name Mus_musculus_ensembl_99_filtered \
  --fasta Mus_musculus.GRCm38.dna.primary_assembly.fa \
  --gtf Mus_musculus.GRCm38.99.filtered.gtf
 ```

@@ -200,6 +200,8 @@ use `--steps_run barcode,cutadapt`.
 
 `--output_R1` Output valid R1 reads.
 
+`--tenX_chemistry` 10X chemistry version, V2 or V3 for scRNA, V2 for VDJ.
+
 `--ref_path` reference path for cellranger.
 
 `--other_param` Other cellranger parameters.

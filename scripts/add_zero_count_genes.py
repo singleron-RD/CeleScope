@@ -46,6 +46,7 @@ if __name__ == '__main__':
     os.makedirs(args.outdir, exist_ok=True)
 
     gp = GtfParser(args.gtf)
+    gp.get_id_name()
     all_features = gp.get_features()
 
     matrix_list, _ = utils.read_one_col(args.matrix_list_file)

@@ -75,8 +75,9 @@ class Count(Step):
 
         # set
         gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
-        self.gtf_parser = reference.GtfParser(gtf_file)
-        self.features = self.gtf_parser.get_features()
+        gp = reference.GtfParser(gtf_file)
+        gp.get_id_name()
+        self.features = gp.get_features()
         self.downsample_dict = {}
 
         # output files
