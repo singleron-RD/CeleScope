@@ -1,10 +1,13 @@
-## Unreleased - 2022-09-08
+## [1.12.0] - 2022-09-08
+ ### `rna`
+ - Introns will be included in the `rna` analysis by default.
+
  ### `vdj`
  - Add an argument `--mixcr_mem` to avoid the `Invalid maximum heap size` error reported by mixcr. https://github.com/milaboratory/mixcr/issues/588
 
  ### General improvments
  - `Reads without poly T` are not filtered by default. Remove the argument `--allowNoPolyT` and add a new argument `--filterNoPolyT`.
- - Introns will be included in the `rna` analysis by default.
+ - Add a sub-command `celescope utils mkgtf` which is similar to `cellranger mkgtf`. After using this command, only the lines with gene_biotype as protein_coding, lncRNA, antisense and VDJ related genes will be kept in gtf. This removes 2 mitochondrial ribosomal RNAs (mt-rRNA) and 22 mitochondrial transfer RNAs (mt-tRNA) from gtf. The detected mitochondrial gene UMI is decreased.
 
 ## [1.11.1] - 2022-08-10
  ### General improvments

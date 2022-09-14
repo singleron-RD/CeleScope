@@ -231,6 +231,11 @@ class Barcode(Step):
         self.open_files()
 
     @staticmethod
+    def get_seq_str_no_exception(seq, sub_pattern_dict):
+        """get subseq with intervals in arr and concatenate"""
+        return ''.join([seq[item[0]: item[1]] for item in sub_pattern_dict])
+
+    @staticmethod
     def get_seq_str(seq, sub_pattern_dict):
         """
         Get subseq with intervals in arr and concatenate

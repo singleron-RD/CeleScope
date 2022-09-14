@@ -195,12 +195,12 @@ class Mapping_tag(Step):
                 seq = record.sequence
 
                 if self.linker_length != 0:
-                    seq_linker = Barcode.get_seq_str(seq, self.pattern_dict['L'])
+                    seq_linker = Barcode.get_seq_str_no_exception(seq, self.pattern_dict['L'])
                     if len(seq_linker) < self.linker_length:
                         self.reads_unmapped_too_short += 1
                         continue
                 if self.barcode_dict:
-                    seq_barcode = Barcode.get_seq_str(seq, self.pattern_dict['C'])
+                    seq_barcode = Barcode.get_seq_str_no_exception(seq, self.pattern_dict['C'])
                     if self.barcode_length != len(seq_barcode):
                         miss_length = self.barcode_length - len(seq_barcode)
                         if miss_length > 2:
