@@ -1,6 +1,7 @@
 import re
 import collections
 import csv
+import sys
 
 from celescope.tools import utils
 from celescope.tools.matrix import Features
@@ -71,7 +72,7 @@ class GtfParser:
             - no gene_name: gene_id will be used as gene_name.
 
         """
-        for row, is_comment, annotation, properties in self.gtf_reader_iter():
+        for _row, _is_comment, annotation, properties in self.gtf_reader_iter():
             if annotation == 'gene':
                 gene_id = properties['gene_id']
                 if 'gene_name' not in properties:
@@ -108,7 +109,7 @@ class GtfParser:
 
 
 class GtfBuilder:
-    def __init__(self, in_gtf_fn, out_gtf_fn, attributes={}):
+    def __init__(self, in_gtf_fn, out_gtf_fn, attributes):
         self.in_gtf_fn = in_gtf_fn
         self.out_gtf_fn = out_gtf_fn
         self.attributes = attributes
