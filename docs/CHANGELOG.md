@@ -1,3 +1,7 @@
+## [1.12.1] - 2022-09-16
+ ### General improvments
+ - Fixed version of package `matplotlib`. The latest version of matplotlib 3.6.0 causes the error: `ModuleNotFoundError: No module named 'matplotlib._contour'`.
+
 ## [1.12.0] - 2022-09-08
  ### `rna`
  - Introns will be included in the `rna` analysis by default.
