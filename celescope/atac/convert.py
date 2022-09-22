@@ -56,7 +56,7 @@ class Convert(Step):
         self.sgr_tenX = {}
 
         if self.method == 'bulk':
-            self.whitelist_10X_fh = utils.read_one_col(self.whitelist_10X_file)[0][:3000]
+            self.whitelist_10X_fh = utils.read_one_col(self.whitelist_10X_file)[0][:1000]
 
         self.out_fq1_file = f'{self.outdir}/{self.sample}_S1_L001_R1_001.fastq.gz'
         self.out_fq2_file = f'{self.outdir}/{self.sample}_S1_L001_R2_001.fastq.gz'

@@ -74,7 +74,7 @@ class ATAC(Step):
         cwd = os.getcwd()
         os.chdir(self.outdir)
         subprocess.check_call(cmd, shell=True)
-        # change dir back to avoid can not find '03.assemble/stat.txt' error
+        # change dir back to avoid can not find '02.atac/stat.txt' error
         os.chdir(cwd)
 
     def run(self):
