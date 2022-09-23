@@ -5,7 +5,6 @@ from xopen import xopen
 import subprocess
 import pysam
 import os
-import random
 
 
 BARCODE_10X_LEN = 16
