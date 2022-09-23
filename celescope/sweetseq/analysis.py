@@ -12,10 +12,8 @@ from celescope.__init__ import HELP_DICT
 
 class Analysis(Step):
     """
-    ## Features
-
-
     ## Output
+    - HTML report
 
     """
 

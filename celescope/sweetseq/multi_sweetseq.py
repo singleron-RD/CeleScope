@@ -4,8 +4,8 @@ from celescope.tools.multi import Multi
 
 class Multi_sweetseq(Multi):
 
-    def mapping(self, sample):
-        step = 'mapping'
+    def mapping_tag(self, sample):
+        step = 'mapping_tag'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (

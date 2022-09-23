@@ -66,7 +66,7 @@ def get_opts_mkgtf(parser, sub_program=True):
         parser.add_argument('out_gtf', help='output gtf file')
         parser.add_argument(
             '--attributes', 
-            help='Attributes to keep. Example: gene_biotype=protein_coding,lncRNA,antisense;',
+            help='Attributes to keep. Example: `gene_biotype=protein_coding,lncRNA,antisense;`',
             default="gene_biotype=protein_coding,lncRNA,antisense,IG_LV_gene,IG_V_gene,IG_V_pseudogene,IG_D_gene,IG_J_gene,IG_J_pseudogene,IG_C_gene,IG_C_pseudogene,TR_V_gene,TR_V_pseudogene,TR_D_gene,TR_J_gene,TR_J_pseudogene,TR_C_gene;",
             )
 
