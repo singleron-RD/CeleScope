@@ -11,6 +11,7 @@ import random
 BARCODE_10X_LEN = 16
 WHITELIST_10X_PATH = [
     "/lib/python/atac/barcodes/737K-cratac-v1.txt.gz",
+    "/SGRNJ06/randd/USER/cjj/celedev/atac/bc_pbmc/pbmc_bc.txt"
                       ]
 
 
@@ -51,12 +52,17 @@ class Convert(Step):
         Step.__init__(self, args, display_title=display_title)
 
         self.method = args.method
-        self.whitelist_10X_file = os.path.dirname(args.soft_path) + WHITELIST_10X_PATH[0]
+        if self.method != 'bulk':
+            self.whitelist_10X_file = os.path.dirname(args.soft_path) + WHITELIST_10X_PATH[0]
+        else:
+            self.whitelist_10X_file = WHITELIST_10X_PATH[1]
+
         self.whitelist_10X_fh = xopen(self.whitelist_10X_file, 'r')
         self.sgr_tenX = {}
 
         if self.method == 'bulk':
-            self.whitelist_10X_fh = utils.read_one_col(self.whitelist_10X_file)[0][:1000]
+            # make sure enough barcode
+            self.whitelist_10X_fh = iter(utils.read_one_col(self.whitelist_10X_file)[0] * 4)
 
         self.out_fq1_file = f'{self.outdir}/{self.sample}_S1_L001_R1_001.fastq.gz'
         self.out_fq2_file = f'{self.outdir}/{self.sample}_S1_L001_R2_001.fastq.gz'
@@ -83,7 +89,7 @@ class Convert(Step):
                     sgr_barcode = entry.sequence
 
                     if self.method=='bulk':
-                        barcode_10X = random.choice(self.whitelist_10X_fh)
+                        barcode_10X = next(self.whitelist_10X_fh)
                     else:
                         if sgr_barcode in self.sgr_tenX:
                             barcode_10X = self.sgr_tenX[sgr_barcode]
