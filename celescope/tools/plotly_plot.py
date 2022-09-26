@@ -210,7 +210,7 @@ class Tsne_dropdown_plot(Plotly_plot):
         
     def get_plotly_div(self):
 
-        # 绘制底图
+        # Draw the bottom diagram
         self._buttom_plot = go.Figure()
         self._buttom_plot.add_trace(go.Scatter(x=round_floats_in_list(self._df['tSNE_1']),y=round_floats_in_list(self._df['tSNE_2']),mode='markers',
                                                     showlegend=False,
@@ -228,10 +228,9 @@ class Tsne_dropdown_plot(Plotly_plot):
         self._buttom_plot.update_xaxes(range=self.x_range,**axes_config)
         self._buttom_plot.update_yaxes(range=self.y_range,**axes_config)
         self._buttom_plot.update_layout(plot_bgcolor='#FFFFFF', hovermode="closest")
-        # baocunditu
         self._buttom_plot.write_image(f"{self.tmp_dir}/tmp.png")
 
-        filename = f'{tself.tmp_dir}/tmp.png'
+        filename = f'{self.tmp_dir}/tmp.png'
         with open(filename, "rb") as image_file:
             image_show = image_file.read()
             encoded_string = base64.b64encode(image_show).decode("utf-8")
