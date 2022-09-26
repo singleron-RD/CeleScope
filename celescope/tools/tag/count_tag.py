@@ -45,7 +45,7 @@ class Count_tag(Step):
 
         self.add_metric(
             name=HELP_INFO_DICT['matched_barcode_number']['display'],
-            value=self.n_match_barcode
+            value=self.n_match_barcode,
             help_info=HELP_INFO_DICT['matched_barcode_number']['info'],
         )
 
