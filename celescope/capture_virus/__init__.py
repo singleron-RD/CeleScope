@@ -9,6 +9,7 @@ __STEPS__ = [
     "filter_virus",
     "analysis_virus",
     "featureCounts",
+    'count',
 ]
 __ASSAY__ = 'capture_virus'
 

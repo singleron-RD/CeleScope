@@ -414,13 +414,15 @@ def find_step_module_with_folder(assay, step):
     return step_module, folder
 
 
-def sort_bam(input_bam, output_bam, threads=1):
+def sort_bam(input_bam, output_bam, threads=1, by='coord'):
     cmd = (
         f'samtools sort {input_bam} '
         f'-o {output_bam} '
         f'--threads {threads} '
         '2>&1 '
     )
+    if by == "name":
+        cmd += " -n"
     subprocess.check_call(cmd, shell=True)
 
 
