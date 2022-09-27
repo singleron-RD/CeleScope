@@ -104,6 +104,8 @@ class FeatureCounts(Step):
                     by='name',
                 )
             self.feature_log_dict[gtf_type] = FeatureCounts.read_log(log_file)
+        self.add_metrics()
+        self.clean_tmp()
 
 
     @utils.add_log
@@ -165,8 +167,6 @@ class FeatureCounts(Step):
 def featureCounts(args):
     with FeatureCounts(args) as runner:
         runner.run()
-        runner.add_metrics()
-        runner.clean_tmp()
 
 
 def get_opts_featureCounts(parser, sub_program):
