@@ -1,5 +1,5 @@
 
-from celescope.__init__ import ROOT_PATH, HELP_DICT, HELP_INFO_DICT
+from celescope.__init__ import HELP_DICT, HELP_INFO_DICT
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 import pandas as pd
@@ -20,6 +20,12 @@ class Count_tag(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
         self.read_count_file = args.read_count_file
+
+        # vals
+        self.mapped_read = 0
+        self.mapped_read_in_cell = 0
+        self.df_UMI_cell = None
+        self.df_tsne_tag = None
 
         # read
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)

@@ -1,4 +1,4 @@
-from celescope.tools.tag.mapping_tag import Mapping_tag, mapping_tag
+from celescope.tools.tag.mapping_tag import Mapping_tag as Mt, mapping_tag as mt
 from celescope.tools.step import s_common
 
 # L23C15, not L25C15 like Clindex
@@ -31,3 +31,9 @@ with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1,
     if sub_program:
         s_common(parser)
         parser.add_argument("--fq", help="R2 read fastq.", required=True)
+
+class Mapping_tag(Mt):
+    pass
+
+def mapping_tag(args):
+    mt(args)

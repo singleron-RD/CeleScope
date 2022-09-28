@@ -1,5 +1,3 @@
-import pandas as pd
-
 from celescope.tools import utils
 from celescope.tools.step import Step
 from celescope.tools.step import s_common

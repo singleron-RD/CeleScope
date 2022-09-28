@@ -1,7 +1,7 @@
 import numpy as np
 
 from celescope.tools import utils, analysis_wrapper, plotly_plot
-from celescope.tools.tag.analysis_tag import Analysis_tag as At, get_opts_analysis_tag
+from celescope.tools.tag.analysis_tag import Analysis_tag as At, get_opts_analysis_tag as opts
 
 # default colnames in tsne_tag file 
 DEFAULT_COLS = ['', 'tSNE_1', 'tSNE_2', 'cluster', 'Gene_Counts']
@@ -31,3 +31,5 @@ def analysis_tag(args):
     with Analysis_tag(args, display_title="Analysis") as runner:
         runner.run()
 
+def get_opts_analysis_tag(parser, sub_program):
+    opts(parser, sub_program)
