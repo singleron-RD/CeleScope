@@ -1,18 +1,18 @@
 {% include "html/utils/start.html"%}
 
-    {% if mapping_summary is defined %}
-    {% set step_summary = mapping_summary %}
+    {% if mapping_tag_summary is defined %}
+    {% set step_summary = mapping_tag_summary %}
     {% include "html/utils/step.html" %}
     {% endif %}
 
-    {% if count_summary is defined %}
-    {% set step_summary = count_summary %}
+    {% if count_tag_summary is defined %}
+    {% set step_summary = count_tag_summary %}
     {% include "html/utils/step.html"%}
     {% endif %}
 
-    {% if analysis_summary is defined %}
-    {% set step_summary = analysis_summary %}
-    {% include "html/sweetseq/analysis.html"%}
+    {% if analysis_tag_summary is defined %}
+    {% set step_summary = analysis_tag_summary %}
+    {% include "html/sweetseq/analysis_tag.html"%}
     {% endif %}
 
 {% include "html/utils/end.html"%}
