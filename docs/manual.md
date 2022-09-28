@@ -19,9 +19,11 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope fusion` for Single cell fusion detection. For example, it can be used to detect known fusion events in blood cancer. It performs preprocessing, fusion site alignment, UMI counting, filtering and analysis.
 
-- `celescope flv_CR` for Single cell full Length TCR/BCR data generated sCircle<sup>TM</sup> Kits. It performs preprocessing, barcode conversion, assemble, annotation and filtering.
+- `celescope flv_CR` for Single cell full Length TCR/BCR data generated with sCircle<sup>TM</sup> Kits. It performs preprocessing, barcode conversion, assemble, annotation and filtering.
 
-- `celescope flv_trust4` for Single cell full Length TCR/BCR data generated sCircle<sup>TM</sup> Kits. It performs preprocessing, mapping, assemble, annotation and filtering.
+- `celescope flv_trust4` for Single cell full Length TCR/BCR data generated with sCircle<sup>TM</sup> Kits. It performs preprocessing, mapping, assemble, annotation and filtering.
+
+- `celescope sweetseq` for Single cell data generated with ProMoSCOPE<sup>TM</sup> Single Cell Glycosylation Detection Kits. It performs preprocessing, tag mapping and counting.
 
 ## [Installation](installation.md)
 
@@ -91,7 +93,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [analysis_fusion](fusion/analysis_fusion.md)
 - [multi_fusion](fusion/multi_fusion.md)
 ## Single-cell citeseq
-- [mapping_tag](tag/mapping_tag.md)
+- [mapping_tag](citeseq/mapping_tag.md)
 - [count_cite](citeseq/count_cite.md)
 - [analysis_cite](citeseq/analysis_cite.md)
 - [multi_citeseq](citeseq/multi_citeseq.md)
@@ -108,3 +110,8 @@ Currently, CeleScope includes the follwing pipelines:
 - [summarize](flv_trust4/summarize.md)
 - [annotation](flv_trust4/annotation.md)
 - [multi_flv_trust4](flv_trust4/multi_flv_trust4.md)
+## Single-cell sweetseq
+- [mapping_tag](sweetseq/mapping_tag.md)
+- [count_tag](sweetseq/count_tag.md)
+- [analysis_tag](sweetseq/analysis_tag.md)
+- [multi_sweetseq](sweetseq/multi_sweetseq.md)

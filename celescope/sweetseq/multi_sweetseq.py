@@ -3,6 +3,18 @@ from celescope.tools.multi import Multi
 
 
 class Multi_sweetseq(Multi):
+    """
+    Before running `multi_sweetseq`, you need to run scRNA-Seq data with CeleScope first.
+    ## Usage
+    ```
+    multi_sweetseq \\
+        --mapfile ./sweetseq.mapfile\\
+        --barcode_fasta celescope/data/sweetseq/sweet_tag_barcode.fasta\\
+        --linker_fasta celescope/data/sweetseq/sweet_tag_linker.fasta \\
+        --fq_pattern L23C15\\
+        --mod shell
+    ```
+    """
 
     def mapping_tag(self, sample):
         step = 'mapping_tag'

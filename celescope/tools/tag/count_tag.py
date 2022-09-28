@@ -16,7 +16,21 @@ def get_opts_count_tag(parser, sub_program):
         s_common(parser)
 
 class Count_tag(Step):
+    """
+    ## Features
+    - Assign tag to each cell barcode and summarize.
 
+    ## Output
+
+    - `{sample}_umi_tag.tsv` 
+
+        `first column` cell barcode  
+        `last column`  assigned tag  
+        `columns between first and last` UMI count for each tag 
+
+    - `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
+    """
+    
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
         self.read_count_file = args.read_count_file

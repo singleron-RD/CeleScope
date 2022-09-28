@@ -26,5 +26,5 @@ TR_J_pseudogene
 TR_C_gene
 ```
 ## Arguments
-`--attributes` Attributes to keep. Example: gene_biotype=protein_coding,lncRNA,antisense;.
+`--attributes` Attributes to keep. Example: `gene_biotype=protein_coding,lncRNA,antisense;`.
 
