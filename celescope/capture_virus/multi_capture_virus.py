@@ -70,6 +70,32 @@ class Multi_capture_virus(Multi):
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
+    def featureCounts(self, sample):
+        step = 'featureCounts'
+        cmd_line = self.get_cmd_line(step, sample)
+        filter_umi_file = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_UMI.csv'
+        filter_read_count_json = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_read_count.json'
+        bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        cmd = (
+            f'{cmd_line} '
+            f'--filter_umi_file {filter_umi_file} '
+            f'--filter_read_count_json {filter_read_count_json} '
+            f'--bam {bam}'
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=self.args.thread)
+
+    def count(self, sample):
+        step = 'count'
+        cmd_line = self.get_cmd_line(step, sample)
+        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_filter_name_sorted.bam'
+        filter_umi_file = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_UMI.csv'
+        cmd = (
+            f'{cmd_line} '
+            f'--bam {bam} '
+            f'--filter_umi_file {filter_umi_file} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=self.args.thread)
+
 
 def main():
     multi = Multi_capture_virus(__ASSAY__)
