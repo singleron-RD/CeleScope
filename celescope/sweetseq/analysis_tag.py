@@ -41,6 +41,6 @@ def get_opts_analysis_tag(parser, sub_program):
 
 @utils.add_log
 def analysis_tag(args):
-    with Analysis_tag(args, display_title="Analysis") as runner:
+    with Analysis_tag(args, display_title="Analysis" ) as runner:
         runner.run()
 
