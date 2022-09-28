@@ -1,12 +1,18 @@
 import numpy as np
 
 from celescope.tools import utils, analysis_wrapper, plotly_plot
-from celescope.tools.tag.analysis_tag import Analysis_tag as At, get_opts_analysis_tag
+from celescope.tools.tag.analysis_tag import Analysis_tag as At
+from celescope.tools.step import s_common
+from celescope.__init__ import HELP_DICT
 
 # default colnames in tsne_tag file 
 DEFAULT_COLS = ['', 'tSNE_1', 'tSNE_2', 'cluster', 'Gene_Counts']
 
 class Analysis_tag(At):
+    '''
+    ## Features
+    - Combine scRNA-Seq clustering infromation with tag assignment.
+    '''
     def run(self):
         colnames = list(self.df_tsne_tag.columns)
         tag_cols = set(colnames) - set(DEFAULT_COLS)
@@ -25,7 +31,14 @@ class Analysis_tag(At):
 
         tsne_tag = plotly_plot.Tsne_plot(self.df_tsne_tag, log_tag_col, discrete=False).get_plotly_div()
         self.add_data(tsne_tag=tsne_tag)
-    
+
+def get_opts_analysis_tag(parser, sub_program):
+    if sub_program:
+        parser.add_argument('--tsne_tag_file', help='`{sample}_tsne_tag.tsv` from count_tag. ', required=True)
+        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
+        parser.add_argument("--tsne_file", help=HELP_DICT['tsne_file'])
+        parser = s_common(parser)
+
 @utils.add_log
 def analysis_tag(args):
     with Analysis_tag(args, display_title="Analysis") as runner:

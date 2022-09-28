@@ -28,8 +28,7 @@ multi_tag \
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
 ### mapping_tag
-- Align R2 reads to the tag barcode fasta.
-
+- Assign tag to R2 reads.
 
 ### count_tag
 - Assign tag to each cell barcode and summarize.
@@ -54,12 +53,9 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 
 ### mapping_tag
 
-- `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
+- `{sample}_invalid_barcode.tsv` Reads count with invalid tag.
 
-    `barcode` cell barcode  
-    `tag_name`  tag name in barcode_fasta  
-    `UMI`   UMI sequence  
-    `read_count` read count per UMI  
+- `{sample}_read_count.tsv` Reads count with effective tag in each barcode.
 
 ### count_tag
 
@@ -187,44 +183,10 @@ at least {overlap} bases match between adapter and read.
 
 `--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < 2. 
+It will assign read to the tag with mismatch < threshold. 
 If no such tag exists, the read is classified as invalid.
 
-You can find the barcode fasta file under `celescope/data/Clindex`
-```
->CLindex_TAG_1
-CGTGTTAGGGCCGAT
->CLindex_TAG_2
-GAGTGGTTGCGCCAT
->CLindex_TAG_3
-AAGTTGCCAAGGGCC
->CLindex_TAG_4
-TAAGAGCCCGGCAAG
->CLindex_TAG_5
-TGACCTGCTTCACGC
->CLindex_TAG_6
-GAGACCCGTGGAATC
->CLindex_TAG_7
-GTTATGCGACCGCGA
->CLindex_TAG_8
-ATACGCAGGGTCCGA
->CLindex_TAG_9
-AGCGGCATTTGGGAC
->CLindex_TAG_10
-TCGCCAGCCAAGTCT
->CLindex_TAG_11
-ACCAATGGCGCATGG
->CLindex_TAG_12
-TCCTCCTAGCAACCC
->CLindex_TAG_13
-GGCCGATACTTCAGC
->CLindex_TAG_14
-CCGTTCGACTTGGTG
->CLindex_TAG_15
-CGCAAGACACTCCAC
->CLindex_TAG_16
-CTGCAACAAGGTCGC
-```
+You can find the barcode fasta file under `celescope/data/Clindex`.
 
 `--linker_fasta` Optional. If provided, it will check the mismatches between linker sequence in R2 reads 
 with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1, the read is classified as invalid.

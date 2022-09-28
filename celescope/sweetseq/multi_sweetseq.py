@@ -3,6 +3,22 @@ from celescope.tools.multi import Multi
 
 
 class Multi_sweetseq(Multi):
+    """
+    `multi_sweetseq` is used to analyze Single-cell Sweetseq data generated with CLindex<sup>TM</sup> Sample Multiplexing kits. 
+    Before running `multi_sweetseq`, you need to run scRNA-Seq data with CeleScope first.
+
+    ## Usage
+
+    ```
+    multi_sweetseq \\
+        --mapfile ./sweetseq.mapfile\\
+        --barcode_fasta ./sweet_tag_barcode.fasta\\
+        --linker_fasta ./sweet_tag_linker.fasta \\
+        --fq_pattern L23C15\\
+        --mod shell
+    ```
+
+    """
 
     def mapping_tag(self, sample):
         step = 'mapping_tag'

@@ -1,3 +1,16 @@
+`multi_sweetseq` is used to analyze Single-cell Sweetseq data generated with CLindex<sup>TM</sup> Sample Multiplexing kits. 
+Before running `multi_sweetseq`, you need to run scRNA-Seq data with CeleScope first.
+
+## Usage
+
+```
+multi_sweetseq \
+    --mapfile ./sweetseq.mapfile\
+    --barcode_fasta ./sweet_tag_barcode.fasta\
+    --linker_fasta ./sweet_tag_linker.fasta \
+    --fq_pattern L23C15\
+    --mod shell
+```
 ## Features
 ### barcode
 
@@ -14,16 +27,14 @@
     - polyT=A{18}, 18 A bases. 
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
-### mapping
-- Map R2 reads to the tag barcode.
+### mapping_tag
+- Assign tag to R2 reads.
 
+### count_tag
+- Assign tag to each cell barcode and summarize.
 
-### count
-
-
-### analysis
-
-
+### analysis_tag
+- Combine scRNA-Seq clustering infromation with tag assignment.
 
 ## Output files
 ### barcode
@@ -35,16 +46,17 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `cutadapt.log` Cutadapt output log file.
 - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
 
-### mapping
-- raw_read_count.json: TODO
+### mapping_tag
 
-### count
+- `{sample}_invalid_barcode.tsv` Reads count with invalid tag.
 
-- `{sample}_umi_tag.tsv` 
+- `{sample}_read_count.tsv` Reads count with effective tag in each barcode.
 
-- `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
+### count_tag
 
-### analysis
+- `{sample}_umi_tag.tsv` UMI count assigned to each barcode
+
+- `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -154,10 +166,12 @@ at least {overlap} bases match between adapter and read.
 `L` linker(common sequences)  
 `C` tag barcode.
 
-`--tag_barcode_fasta` Required. It will check the mismatches between tag barcode 
+`--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
+It will assign read to the tag with mismatch < threshold. 
 If no such tag exists, the read is classified as invalid.
+
+You can find the barcode fasta file under `celescope/data/sweetseq`.
 
 `--linker_fasta` Optional. If provided, it will check the mismatches between linker sequence in R2 reads 
 with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1, the read is classified as invalid.
