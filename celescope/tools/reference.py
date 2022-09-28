@@ -18,16 +18,24 @@ class GtfParser:
         self.id_name = {}
 
     def get_properties_dict(self, properties_str):
+        """
+        allow no space after semicolon
+        """
         
         if isinstance(properties_str, dict):
             return properties_str
 
         properties = collections.OrderedDict()
+        attrs = properties_str.split(';')
         pattern = re.compile(r'(\S+?)\s*"(.*?)"')
-        for m in re.finditer(pattern, properties_str):
-            key = m.group(1)
-            value = m.group(2)
-            properties[key] = value
+        for attr in attrs:
+            if attr:
+                m = re.search(pattern, attr)
+                key = m.group(1)
+                key = key.strip()
+                value = m.group(2)
+                value = value.strip()
+                properties[key] = value
 
         return properties
 
