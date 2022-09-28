@@ -23,8 +23,7 @@ multi_citeseq \
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
 ### mapping_tag
-- Align R2 reads to the tag barcode fasta.
-
+- Assign tag to R2 reads.
 
 ## Output files
 ### barcode
@@ -38,12 +37,9 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 
 ### mapping_tag
 
-- `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
+- `{sample}_invalid_barcode.tsv` Reads count with invalid tag.
 
-    `barcode` cell barcode  
-    `tag_name`  tag name in barcode_fasta  
-    `UMI`   UMI sequence  
-    `read_count` read count per UMI  
+- `{sample}_read_count.tsv` Reads count with effective tag in each barcode.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -155,7 +151,7 @@ at least {overlap} bases match between adapter and read.
 
 `--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < 2. 
+It will assign read to the tag with mismatch < threshold. 
 If no such tag exists, the read is classified as invalid.
 
 You can find the barcode fasta file under `celescope/data/Clindex`

@@ -91,7 +91,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [analysis_fusion](fusion/analysis_fusion.md)
 - [multi_fusion](fusion/multi_fusion.md)
 ## Single-cell citeseq
-- [mapping_tag](tag/mapping_tag.md)
+- [mapping_tag](citeseq/mapping_tag.md)
 - [count_cite](citeseq/count_cite.md)
 - [analysis_cite](citeseq/analysis_cite.md)
 - [multi_citeseq](citeseq/multi_citeseq.md)

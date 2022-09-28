@@ -1,16 +1,9 @@
 ## Features
-
-## Output
-
-- `{sample}_umi_tag.tsv` 
-
-- `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
+- Combine scRNA-Seq clustering infromation with tag assignment.
 ## Arguments
-`--read_count_file` Tag read count file.
+`--tsne_tag_file` `{sample}_tsne_tag.tsv` from count_tag.
 
 `--match_dir` Match celescope scRNA-Seq directory.
-
-`--matrix_dir` Match celescope scRNA-Seq matrix directory.
 
 `--tsne_file` match_dir t-SNE coord file. Do not required when `--match_dir` is provided.
 

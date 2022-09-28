@@ -1,4 +1,4 @@
-from celescope.tools.tag.mapping_tag import Mapping_tag, mapping_tag
+from celescope.tools.tag.mapping_tag import Mapping_tag
 from celescope.tools.step import s_common
 
 # L23C15, not L25C15 like Clindex
@@ -31,3 +31,19 @@ with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1,
     if sub_program:
         s_common(parser)
         parser.add_argument("--fq", help="R2 read fastq.", required=True)
+
+def mapping_tag(args):
+    with Mapping_tag_sweetseq(args) as runner:
+        runner.run()
+
+
+class Mapping_tag_sweetseq(Mapping_tag):
+    '''
+    ## Features
+    - Assign tag to R2 reads.
+    ## Output
+
+    - `{sample}_invalid_barcode.tsv` Reads count with invalid tag.
+
+    - `{sample}_read_count.tsv` Reads count with effective tag in each barcode.
+    '''
