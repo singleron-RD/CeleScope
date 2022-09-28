@@ -11,7 +11,9 @@
 
 `--split_vdj` If used, will split scRNA-Seq vdj count file according to tag assignment.
 
-`--vdj_dir` Match celescope vdj directory. Required when --split_vdj is specified.
+`--split_fl_vdj` If used, will split scRNA-Seq full-length vdj annotation, fasta, clonotypes file according to tag assignment.
+
+`--vdj_dir` Match celescope vdj directory. Required when --split_vdj or --split_fl_vdj is specified.
 
 `--umi_tag_file` UMI tag file.
 

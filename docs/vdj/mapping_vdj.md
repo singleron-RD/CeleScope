@@ -15,6 +15,8 @@ most VJ_pair UMI reads is kept.
 
 `--species` Default `hs`. `hs`(human) or `mmu`(mouse).
 
+`--mixcr_mem` Memory(in Gb) used by Java vitual machine.
+
 `--not_consensus` Input fastq is not consensused.
 
 `--fq` Required. Input fastq file.

@@ -7,6 +7,15 @@ class Mkref_rna(Mkref):
     ## Features
     - Create a genome reference directory.
 
+    ## Usage
+    ```
+    celescope utils mkgtf Homo_sapiens.GRCh38.99.gtf Homo_sapiens.GRCh38.99.filtered.gtf
+    celescope rna mkref \\
+    --genome_name Homo_sapiens_ensembl_99_filtered \\
+    --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \\
+    --gtf Homo_sapiens.GRCh38.99.filtered.gtf
+    ```
+
     ## Output
 
     - STAR genome index files

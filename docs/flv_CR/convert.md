@@ -12,6 +12,8 @@ Output
 ## Arguments
 `--soft_path` soft path for cellranger.
 
+`--tenX_chemistry` 10X chemistry version, V2 or V3 for scRNA, V2 for VDJ.
+
 `--outdir` Output diretory.
 
 `--sample` Sample name.

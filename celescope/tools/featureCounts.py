@@ -123,7 +123,7 @@ class FeatureCounts(Step):
         self.add_metric(
             name='Feature Type',
             value=self.args.gtf_type.capitalize(),
-            help_info='Specified by `--gtf_type`. For snRNA-seq, you need to add `--gtf_type gene` to include reads mapped to intronic regions.'
+            help_info='Specified by `--gtf_type`. For snRNA-seq, you need to add `--gtf_type gene` to include reads mapped to intronic regions. Staring from CeleScope v1.12.0, the default value of gtf_type is changed from `exon` to `gene`.'
         )
         self.add_metric(
             name='Reads Assigned To Exonic Regions',
