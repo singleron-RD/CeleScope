@@ -31,11 +31,12 @@ class GtfParser:
         for attr in attrs:
             if attr:
                 m = re.search(pattern, attr)
-                key = m.group(1)
-                key = key.strip()
-                value = m.group(2)
-                value = value.strip()
-                properties[key] = value
+                if m:
+                    key = m.group(1)
+                    key = key.strip()
+                    value = m.group(2)
+                    value = value.strip()
+                    properties[key] = value
 
         return properties
 

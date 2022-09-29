@@ -1,5 +1,5 @@
-Before running `multi_sweetseq`, you need to run scRNA-Seq data with CeleScope first.
 ## Usage
+Before running `multi_sweetseq`, you need to run scRNA-Seq data with CeleScope first.
 ```
 multi_sweetseq \
     --mapfile ./sweetseq.mapfile\

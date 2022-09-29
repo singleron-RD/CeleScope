@@ -10,7 +10,7 @@ from celescope.tools.step import Step, s_common
 from celescope.tools import reference
 from celescope.tools.matrix import CountMatrix
 
-class Count(Ct):
+class Count(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
         self.bam = args.bam
@@ -82,7 +82,7 @@ class Count(Ct):
                     gene_id = seg.get_tag('XT')
                     gene_umi_dict[gene_id][umi] += 1
                 for gene_id in gene_umi_dict:
-                    Count.correct_umi(gene_umi_dict[gene_id])
+                    Ct.correct_umi(gene_umi_dict[gene_id])
 
                 discard_umi, umi_gene_dict = Count.discard_read(gene_umi_dict)
 

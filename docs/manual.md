@@ -84,6 +84,8 @@ Currently, CeleScope includes the follwing pipelines:
 - [count_virus](capture_virus/count_virus.md)
 - [filter_virus](capture_virus/filter_virus.md)
 - [analysis_virus](capture_virus/analysis_virus.md)
+- [featureCounts](capture_virus/featureCounts.md)
+- [count](capture_virus/count.md)
 - [multi_capture_virus](capture_virus/multi_capture_virus.md)
 ## Single-cell fusion
 - [mkref](fusion/mkref.md)

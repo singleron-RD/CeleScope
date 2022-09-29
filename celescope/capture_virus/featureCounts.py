@@ -4,7 +4,7 @@ import collections
 import pandas as pd
 import pysam
 
-from celescope.tools.featureCounts import FeatureCounts as Fc, get_opts_featureCounts as super_opts
+from celescope.tools.featureCounts import FeatureCounts as Fc
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
