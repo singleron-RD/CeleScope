@@ -9,7 +9,10 @@
     `tag_name`  tag name in barcode_fasta  
     `UMI`   UMI sequence  
     `read_count` read count per UMI
-- `{sample}_invalid_barcode.tsv` 
+
+- `{sample}_invalid_barcode.tsv` tab-delimited text file with 2 columns.
+    `tag_barcode` tag barcodes that do not match with any sequence in `--barcode_fasta`.
+    `read_count` invalid tag barcode read counts
 ## Arguments
 `--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
 `L` linker(common sequences)  
