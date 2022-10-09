@@ -207,9 +207,6 @@ class Count(Step):
 
         return discard_umi, umi_gene_dict
 
-
-
-
     @utils.add_log
     def bam2table(self):
         """

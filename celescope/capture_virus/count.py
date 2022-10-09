@@ -34,33 +34,6 @@ class Count(Step):
         count_matrix.to_matrix_dir(self.matrix_dir)
 
 
-    @staticmethod
-    def discard_read(gene_umi_dict):
-        """
-        If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting, and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded, as the gene cannot be confidently assigned.
-        Returns:
-            discarded_umi: set. umi with tie read count
-            umi_gene_dict: {umi_seq: {gene_id: read_count}}
-        """
-
-        discard_umi = set()
-        umi_gene_dict = defaultdict(lambda: defaultdict(int))
-        for gene_id in gene_umi_dict:
-            for umi in gene_umi_dict[gene_id]:
-                umi_gene_dict[umi][gene_id] += gene_umi_dict[gene_id][umi]
-
-        for umi in umi_gene_dict:
-            max_read_count = max(umi_gene_dict[umi].values())
-            gene_id_max = [gene_id for gene_id, read_count in umi_gene_dict[umi].items() if read_count==max_read_count]
-
-            if len(gene_id_max) > 1:
-                discard_umi.add(umi)
-            else:
-                gene_id = gene_id_max[0]
-                umi_gene_dict[umi] = {gene_id: umi_gene_dict[umi][gene_id]}
-
-        return discard_umi, umi_gene_dict
-
     @utils.add_log
     def bam2table(self):
         """
@@ -84,7 +57,7 @@ class Count(Step):
                 for gene_id in gene_umi_dict:
                     Ct.correct_umi(gene_umi_dict[gene_id])
 
-                discard_umi, umi_gene_dict = Count.discard_read(gene_umi_dict)
+                discard_umi, umi_gene_dict = Ct.discard_read(gene_umi_dict)
 
                 # output
                 for umi in umi_gene_dict:
