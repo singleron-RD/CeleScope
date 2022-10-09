@@ -83,10 +83,10 @@ class FeatureCounts(Step):
             outdir = f'{self.outdir}/tmp/{gtf_type}'
             pathlib.Path(outdir).mkdir(parents=True,exist_ok=True)
             #out files
-            name_sorted_bam = f'{outdir}/{self.out_prefix.split("/")[-1]}_name_sorted.bam'
+            name_sorted_bam = f'{outdir}/{self.sample}_name_sorted.bam'
             input_basename = os.path.basename(self.args.input)
             featureCounts_bam = f'{outdir}/{input_basename}.featureCounts.bam'
-            log_file = f'{outdir}/{self.out_prefix.split("/")[-1]}.summary'
+            log_file = f'{outdir}/{self.sample}.summary'
 
             self.run_featureCounts(outdir,gtf_type)
             if gtf_type == self.args.gtf_type:
@@ -104,6 +104,8 @@ class FeatureCounts(Step):
                     by='name',
                 )
             self.feature_log_dict[gtf_type] = FeatureCounts.read_log(log_file)
+        self.add_metrics()
+        self.clean_tmp()
 
 
     @utils.add_log
@@ -165,8 +167,6 @@ class FeatureCounts(Step):
 def featureCounts(args):
     with FeatureCounts(args) as runner:
         runner.run()
-        runner.add_metrics()
-        runner.clean_tmp()
 
 
 def get_opts_featureCounts(parser, sub_program):

@@ -233,3 +233,5 @@ is higher than or equal to this value.
 
 `--otsu_log_base` raw counts are first log transformed before thresholding. This argument is the log base. Commonly used values are 2 and 10.
 
+`--gtf` Optional. Genome gtf file. Use absolute path or relative path to `genomeDir`.
+

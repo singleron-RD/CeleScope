@@ -25,5 +25,10 @@
     {% include "html/capture_virus/analysis_virus.html"%}
     {% endif %}
 
+    {% if featureCounts_summary is defined %}
+    {% set step_summary = featureCounts_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+
 
 {% include "html/utils/end.html"%}

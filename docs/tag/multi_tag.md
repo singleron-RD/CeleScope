@@ -59,7 +59,11 @@ the read name is `{barcode}_{UMI}_{read ID}`.
     `barcode` cell barcode  
     `tag_name`  tag name in barcode_fasta  
     `UMI`   UMI sequence  
-    `read_count` read count per UMI  
+    `read_count` read count per UMI
+
+- `{sample}_invalid_barcode.tsv` tab-delimited text file with 2 columns.
+    `tag_barcode` tag barcodes that do not match with any sequence in `--barcode_fasta`.
+    `read_count` invalid tag barcode read counts
 
 ### count_tag
 
@@ -187,7 +191,7 @@ at least {overlap} bases match between adapter and read.
 
 `--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < 2. 
+It will assign read to the tag with mismatch < threshold. 
 If no such tag exists, the read is classified as invalid.
 
 You can find the barcode fasta file under `celescope/data/Clindex`

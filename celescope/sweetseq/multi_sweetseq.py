@@ -3,9 +3,21 @@ from celescope.tools.multi import Multi
 
 
 class Multi_sweetseq(Multi):
+    """
+    ## Usage
+    Before running `multi_sweetseq`, you need to run scRNA-Seq data with CeleScope first.
+    ```
+    multi_sweetseq \\
+        --mapfile ./sweetseq.mapfile\\
+        --barcode_fasta celescope/data/sweetseq/sweet_tag_barcode.fasta\\
+        --linker_fasta celescope/data/sweetseq/sweet_tag_linker.fasta \\
+        --fq_pattern L23C15\\
+        --mod shell
+    ```
+    """
 
-    def mapping(self, sample):
-        step = 'mapping'
+    def mapping_tag(self, sample):
+        step = 'mapping_tag'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
@@ -15,9 +27,9 @@ class Multi_sweetseq(Multi):
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
-    def count(self, sample):
-        step = 'count'
-        read_count_file = f'{self.outdir_dic[sample]["mapping"]}/{sample}_raw_read_count.json'
+    def count_tag(self, sample):
+        step = 'count_tag'
+        read_count_file = f'{self.outdir_dic[sample]["mapping_tag"]}/{sample}_read_count.tsv'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
@@ -28,14 +40,14 @@ class Multi_sweetseq(Multi):
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
 
-    def analysis(self, sample):
-        step = 'analysis'
-        raw_read_count_file = f'{self.outdir_dic[sample]["mapping"]}/{sample}_raw_read_count.json'
+    def analysis_tag(self, sample):
+        step = 'analysis_tag'
         cmd_line = self.get_cmd_line(step, sample)
+        tsne_tag_file = f'{self.outdir_dic[sample]["count_tag"]}/{sample}_tsne_tag.tsv'
         cmd = (
             f'{cmd_line} '
-            f'--raw_read_count_file {raw_read_count_file} '
             f'--match_dir {self.col4_dict[sample]} '
+            f'--tsne_tag_file {tsne_tag_file} '
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
