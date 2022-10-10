@@ -6,6 +6,7 @@ import sys
 from celescope.tools import utils
 from celescope.tools.matrix import Features
 
+PATTERN = re.compile(r'(\S+?)\s*"(.*?)"')
 
 class GeneIdNotFound(Exception):
     pass
@@ -27,10 +28,9 @@ class GtfParser:
 
         properties = collections.OrderedDict()
         attrs = properties_str.split(';')
-        pattern = re.compile(r'(\S+?)\s*"(.*?)"')
         for attr in attrs:
             if attr:
-                m = re.search(pattern, attr)
+                m = re.search(PATTERN, attr)
                 if m:
                     key = m.group(1)
                     key = key.strip()
