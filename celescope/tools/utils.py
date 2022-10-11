@@ -20,7 +20,7 @@ import pysam
 import xopen
 
 import celescope.tools
-from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.tools.__init__ import PATTERN_DICT
 from celescope.__init__ import ROOT_PATH
 from celescope.capture_virus.otsu import array2hist, makePlot, threshold_otsu
 
@@ -120,7 +120,7 @@ def multi_opts(assay):
             4th col: Cell number or match_dir, optional;
         ''',
         required=True)
-    parser.add_argument('--chemistry', choices=list(__PATTERN_DICT__.keys()), help='chemistry version', default='auto')
+    parser.add_argument('--chemistry', choices=list(PATTERN_DICT.keys()), help='chemistry version', default='auto')
     parser.add_argument('--whitelist', help='cellbarcode list')
     parser.add_argument('--linker', help='linker')
     parser.add_argument('--pattern', help='read1 pattern')
