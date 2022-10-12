@@ -37,7 +37,7 @@ def get_opts_filter(parser, sub_program):
     )
     parser.add_argument(
         "--auto_coef",
-        help='int, threshold = top 1% positive cell count / auto_coef',
+        help='int, threshold = top 1 percent positive cell count / auto_coef',
         default=3,
     )
     parser.add_argument(
