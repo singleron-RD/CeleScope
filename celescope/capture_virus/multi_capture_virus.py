@@ -17,6 +17,20 @@ class Multi_capture_virus(Multi):
             f'--fq {fq} '
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+    
+    def featureCounts_capture_virus(self, sample):
+        step = 'featureCounts_capture_virus'
+        cmd_line = self.get_cmd_line(step, sample)
+        filter_umi_file = f'{self.outdir_dic[sample]["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
+        filter_read_count_json = f'{self.outdir_dic[sample]["count_capture_virus"]}/{sample}_filter_read_count.tsv'
+        bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        cmd = (
+            f'{cmd_line} '
+            f'--bam {bam} '
+            f'--filter_umi_file {filter_umi_file} '
+            f'--filter_read_count_json {filter_read_count_json} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)        
 
     def count_capture_virus(self, sample):
         step = 'count_capture_virus'
@@ -39,6 +53,18 @@ class Multi_capture_virus(Multi):
             f'--match_dir {self.col4_dict[sample]} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
+    
+    def count_capture_virus_mtx(self, sample):
+        step = 'count_capture_virus_mtx'
+        cmd_line = self.get_cmd_line(step, sample)
+        filter_umi_file = f'{self.outdir_dic[sample]["count_capture_virus"]}/{sample}_virus_UMI_count.tsv'
+        bam = f'{self.outdir_dic[sample]["featureCounts_capture_virus"]}/{sample}_filter_name_sorted.bam'
+        cmd = (
+            f'{cmd_line} '
+            f'--bam {bam} '
+            f'--filter_umi_file {filter_umi_file} '
+        )
+        self.process_cmd(cmd, step, sample)    
 
 
 def main():

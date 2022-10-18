@@ -2,6 +2,7 @@
 import os
 import re
 import subprocess
+import pandas  as pd
 
 import pysam
 from celescope.rna.mkref import parse_genomeDir_rna
@@ -44,6 +45,20 @@ class FeatureCounts(Step):
         self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
         self.name_sorted_bam = f'{self.out_prefix}_name_sorted.bam'
         self.featureCount_log_file = f'{self.out_prefix}.summary'
+
+    @staticmethod
+    def read_log(log_file):
+        """
+        Args:
+            log_file: featureCounts log summary file
+        Returns:
+            log_dict: {'Assigned': 123, ...}
+        """
+        # skip first line
+        df = pd.read_csv(log_file, sep='\t', header=None, names=['name', 'value'], skiprows=1)
+        log_dict = df.set_index('name')['value'].to_dict()
+        return log_dict
+
 
     def format_stat(self):
         tmp_arr = []
