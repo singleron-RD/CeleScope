@@ -4,6 +4,8 @@ import pandas as pd
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 
+__SUB_STEPS__ = ['sequencing', 'mapping', 'cells', 'targeting']
+
 """
 read1, barcode, read2, sample index are associated with R1, R2, R3, I1 respectively.
 R1: Read 1

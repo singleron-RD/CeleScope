@@ -1,5 +1,6 @@
-from celescope.tools.multi import Multi, get_read
+from celescope.tools.multi import Multi, TOOLS_DIR ,get_read
 from celescope.atac.__init__ import __ASSAY__
+from celescope.atac.atac import __SUB_STEPS__
 from collections import defaultdict
 from celescope.tools import utils
 from itertools import combinations
@@ -111,6 +112,23 @@ class Multi_atac(Multi):
             f'--fqs_dir {fqs_dir} '
         )
         self.process_cmd(cmd, step, sample, m=self.args.mem, x=self.args.thread)
+
+
+    def merge_report(self):
+        step = "merge_report"
+        _index = self.__STEPS__.index('atac') + 1
+        steps_str = ",".join(self.__STEPS__[:_index] + __SUB_STEPS__ + self.__STEPS__[_index:-1])
+        samples = ','.join(self.fq_dict.keys())
+        app = TOOLS_DIR + '/merge_table.py'
+        cmd = (
+            f'python {app} --samples {samples} '
+            f'--steps {steps_str} --outdir {self.args.outdir}'
+        )
+        if self.args.rm_files:
+            cmd += ' --rm_files'
+        self.generate_cmd(cmd, step, sample="")
+        for sample in self.fq_dict:
+            self.sjm_order += f'order {step} after {self.last_step}_{sample}\n'
 
 def main():
     multi = Multi_atac(__ASSAY__)
