@@ -557,6 +557,7 @@ def parse_annovar(annovar_file):
 
 
 def read_barcode_file(match_dir, return_file=False):
+    print(match_dir)
     '''
     multi version compatible
     '''
@@ -566,10 +567,13 @@ def read_barcode_file(match_dir, return_file=False):
         f"{match_dir}/*count*/*matrix_10X/*_cellbarcode.tsv")
     match_barcode_file3 = glob.glob(
         f"{match_dir}/*count*/*matrix_10X/*barcodes.tsv")
+    match_barcode_file4 = glob.glob(
+        f"{match_dir}/*count*/*filtered_feature_bc_matrix/*barcodes.tsv")
     match_barcode_file = (
         match_barcode_file1 +
         match_barcode_file2 +
-        match_barcode_file3)[0]
+        match_barcode_file3 + 
+        match_barcode_file4)[0]
     match_barcode, cell_total = read_one_col(match_barcode_file)
     if return_file:
         return match_barcode, (cell_total, match_barcode_file)
@@ -587,7 +591,11 @@ def parse_match_dir(match_dir):
     match_barcode, cell_total = read_barcode_file(match_dir)
     match_dict['match_barcode'] = match_barcode
     match_dict['cell_total'] = cell_total
-    match_dict['matrix_dir'] = glob.glob(f'{match_dir}/*count*/*matrix_10X')[0]
+    try:
+        match_dict['matrix_dir'] = glob.glob(f'{match_dir}/*count*/*matrix_10X')[0]
+    except IndexError:
+        match_dict['matrix_dir'] = glob.glob(f'{match_dir}/*count*/*filtered_feature_bc_matrix')[0]
+
     match_dict['tsne_coord'] = glob.glob(f'{match_dir}/*analysis*/*tsne_coord.tsv')[0]
     match_dict['markers'] = glob.glob(f'{match_dir}/*analysis*/*markers.tsv')[0]
     try:
@@ -699,14 +707,16 @@ def find_step_module_with_folder(assay, step):
     return step_module, folder
 
 
-def sort_bam(input_bam, output_bam, threads=1):
+def sort_bam(input_bam, output_bam, threads=1, by='coord'):
     cmd = (
         f'samtools sort {input_bam} '
         f'-o {output_bam} '
         f'--threads {threads} '
+        '2>&1 '
     )
+    if by == "name":
+        cmd += " -n"
     subprocess.check_call(cmd, shell=True)
-
 
 def index_bam(input_bam):
     cmd = f"samtools index {input_bam}"

@@ -20,6 +20,7 @@ class Count_capture_virus(Step):
         self.out_read_count_file = f'{self.out_prefix}_virus_read_count.tsv'
         self.out_umi_count_file = f'{self.out_prefix}_virus_UMI_count.tsv'
         self.otsu_plot = f'{self.out_prefix}_otsu.png'
+        self.out_filter_read_count = f'{self.out_prefix}_filter_read_count.tsv'
 
 
     def otsu_min_support_read(self, array):
@@ -48,7 +49,8 @@ class Count_capture_virus(Step):
             umi = attr[1]
             if (barcode in self.match_cell_barcodes) and (query_length >= self.min_query_length):
                 count_dic[barcode][tag][umi] += 1
-
+      
+              
         # write dic to pandas df
         rows = []
         array = []
@@ -58,6 +60,8 @@ class Count_capture_virus(Step):
                     read_count = count_dic[barcode][tag][umi]
                     rows.append([barcode, tag, umi, read_count])
                     array.append(read_count)
+        
+
 
         df_read = df_read = pd.DataFrame(
             rows,
@@ -72,6 +76,9 @@ class Count_capture_virus(Step):
             min_support_read = self.otsu_min_support_read(array)
         else:
             min_support_read = int(self.args.min_support_read)
+        
+        read_count_filter_valid = df_read[df_read["read_count"]>= min_support_read]
+
 
         df_valid = df_read[df_read["read_count"] >= min_support_read].groupby(
             ["barcode", "tag"]).agg({"UMI": "count"})
@@ -79,6 +86,7 @@ class Count_capture_virus(Step):
             self.sum_virus.logger.warning("No cell virus UMI found!")
 
         df_valid.to_csv(self.out_umi_count_file, sep="\t")
+        read_count_filter_valid.to_csv(self.out_filter_read_count, sep = "\t", index=None)
 
     def run(self):
         self.sum_virus()

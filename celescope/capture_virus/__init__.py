@@ -7,6 +7,8 @@ __STEPS__ = [
     "star_virus",
     "count_capture_virus",
     "analysis_capture_virus",
+    "featureCounts_capture_virus",
+    "count_capture_virus_mtx"
 ]
 __ASSAY__ = 'capture_virus'
 
