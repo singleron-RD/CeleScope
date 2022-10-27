@@ -1,6 +1,8 @@
 from collections import defaultdict
 import itertools
-
+from celescope.tools.analysis_mixin import AnalysisMixin
+from celescope.__init__ import ROOT_PATH, HELP_DICT
+import subprocess
 import pysam
 import pandas as pd
 from celescope.tools.step import Step
@@ -9,15 +11,19 @@ from celescope.tools.count import Count
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 
-
-class Count_capture_virus_mtx(Count):
+class Count_capture_virus_mtx(Count, AnalysisMixin):
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
+        AnalysisMixin.__init__(self, args)
         self.bam = args.bam
         self.gtf = args.gtf
-        self.filter_umi_file = args.filter_umi_file
+        self.otsu_umi_file = args.otsu_umi_file
         self.count_detail_file = f'{self.outdir}/{self.sample}_count_detail.txt'
         self.matrix_dir = f'{self.outdir}/{self.sample}_virus_matrix'
+        
+        self.out_tsne_file = f'{self.outdir}/{self.sample}_capture_virus_tsne.tsv'
+        self.out_ncell_virus_file = f'{self.outdir}/{self.sample}_capture_virus_ncell_count.tsv'
+        
         self.id_name = utils.get_id_name_dict(self.gtf)
 
     @staticmethod
@@ -84,15 +90,48 @@ class Count_capture_virus_mtx(Count):
                                                             umi_gene_dict[umi][gene_id]))
         samfile.close()
     
+    def get_umi_count_tsne(self, df):
+        umi = df.drop('count',axis = 1).drop_duplicates().groupby(
+            ['Barcode', 'geneID'], 
+            as_index = False).agg(
+                UMI = ('UMI', 'count'))
+        
+        umi = pd.pivot(umi, index='Barcode',columns='geneID',values='UMI').reset_index().fillna(0)
+        umi.rename(columns = {"Barcode":"barcode"}, inplace=True)
+        umi_tsne = pd.merge(self.tsne_df, umi, on = "barcode", how = "left").fillna(0)
+        umi_tsne.columns = list(map(lambda x:x.replace("-", "_"), umi_tsne.columns))
+        umi_tsne.to_csv(self.out_tsne_file ,sep = "\t", index = None)
     
+    def count_ncell_virus(self):
+        df = pd.read_table(self.out_tsne_file).drop(["tSNE_1", "tSNE_2", "Gene_Counts"], axis = 1)
+        df = df.melt(id_vars=["barcode", "cluster"],value_name="UMI",var_name="gene",ignore_index=True)
+        ncell_virus_count_df = df[df["UMI"] > 0].groupby(["cluster", "gene"], as_index=False).agg(ncell_with_virus_gene = ('barcode', "count"))
+        total_cell_df = self.tsne_df.groupby(["cluster"], as_index = False).agg(total_cell = ('barcode', "count"))
+        
+        res = pd.merge(ncell_virus_count_df, total_cell_df, on = "cluster", how = "left")
+        res = res.assign(
+            virus_percent = lambda x: round(100 * x.ncell_with_virus_gene / x.total_cell, 4)
+        )
+        res["virus_percent"] = res["virus_percent"].apply(lambda x: f"{str(x)}%")
+        res.to_csv(self.out_ncell_virus_file ,sep = "\t", index = None)
+    
+    def plot_viurs(self):
+        app = f'{ROOT_PATH}/capture_virus/plot_virus.r'
+        cmd = f"Rscript {app} --tsne_capture_virus {self.out_tsne_file} --outdir {self.outdir}"
+        subprocess.check_call(cmd, shell=True)
     
 
     def run(self):
         self.bam2table()
         df = pd.read_table(self.count_detail_file, header=0)
-        barcodes = Count_capture_virus_mtx.get_barcodes(self.args.filter_umi_file)
+        barcodes = Count_capture_virus_mtx.get_barcodes(self.otsu_umi_file)
         df_filter = df[df["Barcode"].isin(barcodes)]
-        df_filter.index = df["Barcode"].to_list()
+
+        self.get_umi_count_tsne(df_filter)
+        self.plot_viurs()
+        self.count_ncell_virus()
+        
+        df_filter.index = df_filter["Barcode"].to_list()
         self.write_matrix_10X(df_filter, self.matrix_dir)
 
 
@@ -108,6 +147,7 @@ def get_opts_count_capture_virus_mtx(parser, sub_program):
         help="Optional. Genome gtf file. Use absolute path or relative path to `genomeDir`.",
         )
     if sub_program:
-        parser.add_argument('--filter_umi_file', help='filter umi file', required=True)
+        parser.add_argument('--otsu_umi_file', help='filter umi file', required=True)
         parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
+        parser.add_argument('--match_dir', help='match_dir', required=True)
         s_common(parser)
