@@ -14,7 +14,7 @@
     `tag_barcode` tag barcodes that do not match with any sequence in `--barcode_fasta`.
     `read_count` invalid tag barcode read counts
 ## Arguments
-`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
+`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. CLindex is `L25C15` and sweetseq is `L23C15`
 `L` linker(common sequences)  
 `C` tag barcode.
 

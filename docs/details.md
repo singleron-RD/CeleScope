@@ -58,55 +58,6 @@ https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/l
 https://github.com/singleron-RD/CeleScope/blob/master/docs/CHANGELOG.md#rna-and-dynaseq-1
 
 
-## Saturation
-
-There is a difference in how CeleScope and CellRanger calculate saturation. CeleScope shows umi_saturation in the report, while CellRanger shows read_saturation in the report. 
-
-```
-umi_saturation = 1 - (n_deduped_reads / n_umis)
-read_saturation = 1 - (n_deduped_reads / n_reads)
-
-n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads.
-
-n_umis = Total number of (confidently mapped, valid cell-barcode, valid UMI) UMIs.
-
-n_reads = Total number of (confidently mapped, valid cell-barcode, valid UMI) reads.
-```
-
-You can find the saturation calculated in both ways in {sample}/.metrics.json
-
-```
-{
-    "count_summary": {
-        "Read Fraction 0.1 Read_saturation": 2.62,
-        "Read Fraction 0.1 Umi_saturation": 1.33,
-        "Read Fraction 0.2 Read_saturation": 6.81,
-        "Read Fraction 0.2 Umi_saturation": 3.47,
-        "Read Fraction 0.3 Read_saturation": 10.61,
-        "Read Fraction 0.3 Umi_saturation": 5.47,
-        "Read Fraction 0.4 Read_saturation": 13.47,
-        "Read Fraction 0.4 Umi_saturation": 7.0,
-        "Read Fraction 0.5 Read_saturation": 16.05,
-        "Read Fraction 0.5 Umi_saturation": 8.38,
-        "Read Fraction 0.6 Read_saturation": 18.99,
-        "Read Fraction 0.6 Umi_saturation": 10.06,
-        "Read Fraction 0.7 Read_saturation": 21.52,
-        "Read Fraction 0.7 Umi_saturation": 11.46,
-        "Read Fraction 0.8 Read_saturation": 24.13,
-        "Read Fraction 0.8 Umi_saturation": 12.99,
-        "Read Fraction 0.9 Read_saturation": 26.27,
-        "Read Fraction 0.9 Umi_saturation": 14.2,
-        "Read Fraction 1.0 Read_saturation": 29.27,
-        "Read Fraction 1.0 Umi_saturation": 16.07,
-        "Estimated Number of Cells": 167,
-        "Fraction Reads in Cells": 63.9,
-        "Median UMI per Cell": 37,
-        "Total Genes": 3321,
-        "Median Genes per Cell": 34,
-        "Saturation": 16.07
-    }
-}
-```
 
 ## Fraction Reads in Cells
 Low `Fraction Reads in Cells` value is usually caused by:

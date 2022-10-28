@@ -403,9 +403,6 @@ class Count(Step):
             display=f'{umi_saturation}%',
             help_info=(
                 'the fraction of UMI originating from an already-observed UMI. '
-                'There is a difference in how CeleScope and CellRanger calculate saturation. '
-                'CeleScope shows umi_saturation in the report, while CellRanger shows read_saturation in the report. '
-                'For details, see <a href="https://github.com/singleron-RD/CeleScope/blob/dev/docs/details.md#saturation">here</a>. '
                 f'read_saturation: {read_saturation}%'
             )
         )

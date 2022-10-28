@@ -1,3 +1,17 @@
+## [1.13.0] - 2022-10-28
+
+ ### `sweetseq`
+ - Added support for single cell data generated with ProMoSCOPE<sup>TM</sup> Single Cell Glycosylation Detection Kits.
+
+ ### `capture_virus`
+ - The `capture_virus` pipeline now supports adding gtf as an input file to generate an expression matrix of viral genes.
+
+ ### `rna`
+ - If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded. In previous versions, both read groups were preserved.
+ 
+ ### General improvments
+ - There are some gtf missing lines with annotation as gene. Such gtf will report an error when running featureCounts. The `celescope utils mkgtf` command can now add missing lines for such gtf.
+
 ## [1.12.1] - 2022-09-16
  ### General improvments
  - Fixed version of package `matplotlib`. The latest version of matplotlib 3.6.0 causes the error: `ModuleNotFoundError: No module named 'matplotlib._contour'`.
