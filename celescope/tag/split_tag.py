@@ -14,6 +14,7 @@ from celescope.tools.step import Step, s_common
 from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 from celescope.__init__ import HELP_DICT
 from celescope.tools.matrix import CountMatrix
+from celescope.flv_CR.match import gen_vj_annotation_metrics, gen_clonotypes_table
 
 
 def get_clonotypes_table(df):
@@ -206,30 +207,10 @@ class Split_tag(Step):
                 if 'clonotype_id' in df_temp.columns:
                     df_temp = df_temp[df_temp.clonotype_id != ''] # del clonotype for trust4
                 split_clonotypes = f'{self.fl_vdj_outdir}/{tag}_{seqtype}_clonotypes.csv'
-                self.get_fl_clonotypes_table(df_temp, split_clonotypes)
 
-    @staticmethod
-    def get_fl_clonotypes_table(df_temp, split_clonotypes):
-        df_match = df_temp[df_temp['productive'] == True]
-        df_match['chain_cdr3aa'] = df_match[['chain', 'cdr3']].apply(':'.join, axis=1)
-
-        match_clonotypes = open(split_clonotypes, 'w')
-        match_clonotypes.write('barcode\tcdr3s_aa\n')
-        for cb in set(df_match.barcode):
-            temp = df_match[df_match['barcode']==cb].sort_values(by='chain', ascending=True)
-            chain_pair = ';'.join(temp['chain_cdr3aa'].tolist())
-            match_clonotypes.write(f'{cb}\t{chain_pair}\n')
-        match_clonotypes.close()
-
-        df_match_clonetypes = pd.read_csv(split_clonotypes, sep='\t', index_col=None)
-        df_match_clonetypes = df_match_clonetypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
-        df_match_clonetypes.rename(columns={'barcode': 'frequency'}, inplace=True)
-        sum_f = df_match_clonetypes['frequency'].sum()
-        df_match_clonetypes['proportion'] = df_match_clonetypes['frequency'].apply(lambda x: x/sum_f)
-        df_match_clonetypes.sort_values(by='frequency', ascending=False, inplace=True)
-        df_match_clonetypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_match_clonetypes.shape[0]+1)]
-        df_match_clonetypes = df_match_clonetypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
-        df_match_clonetypes.to_csv(split_clonotypes, sep=',', index=False)
+                gen_clonotypes_table(df_temp, split_clonotypes)
+                metrics_dict = gen_vj_annotation_metrics(df_temp, seqtype)
+                utils.dump_dict_to_json(metrics_dict, f"{self.fl_vdj_outdir}/{tag}_metrics.json")
 
     @utils.add_log
     def run(self):
