@@ -114,6 +114,7 @@ sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.
 - `citeseq` Required, matched_dir.
 - `flv_CR` Required, matched_dir.
 - `flv_trust4` Required, matched_dir.
+- `sweetseq` Required, matched_dir.
  
 5th column:
 - `dynaseq` Required, background snp file.

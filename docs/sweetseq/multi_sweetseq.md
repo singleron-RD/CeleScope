@@ -86,6 +86,7 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `citeseq` Required, matched_dir.
 - `flv_CR` Required, matched_dir.
 - `flv_trust4` Required, matched_dir.
+- `sweetseq` Required, matched_dir.
  
 5th column:
 - `dynaseq` Required, background snp file.
@@ -172,7 +173,7 @@ at least {overlap} bases match between adapter and read.
 
 `--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
-`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
+`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. CLindex is `L25C15` and sweetseq is `L23C15`
 `L` linker(common sequences)  
 `C` tag barcode.
 

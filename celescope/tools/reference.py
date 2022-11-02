@@ -6,6 +6,7 @@ import sys
 from celescope.tools import utils
 from celescope.tools.matrix import Features
 
+PATTERN = re.compile(r'(\S+?)\s*"(.*?)"')
 
 class GeneIdNotFound(Exception):
     pass
@@ -27,10 +28,9 @@ class GtfParser:
 
         properties = collections.OrderedDict()
         attrs = properties_str.split(';')
-        pattern = re.compile(r'(\S+?)\s*"(.*?)"')
         for attr in attrs:
             if attr:
-                m = re.search(pattern, attr)
+                m = re.search(PATTERN, attr)
                 if m:
                     key = m.group(1)
                     key = key.strip()
@@ -125,14 +125,44 @@ class GtfBuilder:
 
     @utils.add_log
     def build_gtf(self):
+        """
+        Fix genes without gene annotation
+        Filter gene biotypes
+        """
         self.build_gtf.logger.info("Writing filtered GTF file...")
         gp = GtfParser(self.in_gtf_fn)
+
+        exons = collections.defaultdict(dict)
+        genes = set()
+
         with open(self.out_gtf_fn, 'w') as f:
             writer = csv.writer(f, delimiter='\t', quoting=csv.QUOTE_NONE, quotechar='')
-            for row, is_comment, _, properties in gp.gtf_reader_iter():
+            for row, is_comment, annotation, properties in gp.gtf_reader_iter():
                 if is_comment:
                     writer.writerow(row)
                     continue
+                
+                if annotation == 'gene':
+                    genes.add(properties['gene_id'])
+                elif annotation == 'exon':
+                    gene_id = properties['gene_id']
+                    if gene_id not in genes:
+                        seqID = row[0]
+                        start, end = int(row[3]), int(row[4])
+                        strand = row[6]
+                        if gene_id not in exons:
+                            exons[gene_id]['strand'] = strand
+                            exons[gene_id]['start'] = start
+                            exons[gene_id]['end'] = end
+                            exons[gene_id]['properties'] = row[8]
+                            exons[gene_id]['seqID'] = seqID
+                        else:
+                            if strand != exons[gene_id]['strand']:
+                                self.build_gtf.logger.warning(f'Error: gene {gene_id} is on both strand!\nline: {row}')
+                                continue
+                            exons[gene_id]['start'] = min(start, exons[gene_id]['start'])
+                            exons[gene_id]['end'] = max(end, exons[gene_id]['end'])
+
 
                 remove = False
                 for key, value in properties.items():
@@ -141,3 +171,17 @@ class GtfBuilder:
 
                 if not remove:
                     writer.writerow(row)
+
+
+            for gene_id, vals in exons.items():
+                if gene_id not in genes:
+                    seqID, strand, start, end, properties = vals['seqID'], vals['strand'], str(vals['start']), str(vals['end']),vals['properties']
+                    row = [seqID, 'added', 'gene', start, end, '.', strand, '.', properties]
+                    writer.writerow(row)
+
+
+
+
+
+        
+

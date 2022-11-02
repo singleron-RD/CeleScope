@@ -5,7 +5,7 @@ from celescope.tools.step import s_common
 def get_opts_mapping_tag(parser, sub_program):
     parser.add_argument(
         "--fq_pattern",
-        help="""R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
+        help="""R2 read pattern. The number after the letter represents the number of bases. CLindex is `L25C15` and sweetseq is `L23C15`
 `L` linker(common sequences)  
 `C` tag barcode  
 """,

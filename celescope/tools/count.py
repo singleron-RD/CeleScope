@@ -179,6 +179,34 @@ class Count(Step):
                     break
         return n_corrected_umi, n_corrected_read
 
+    @staticmethod
+    def discard_read(gene_umi_dict):
+        """
+        If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting, and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded, as the gene cannot be confidently assigned.
+
+        Returns:
+            discarded_umi: set. umi with tie read count
+            umi_gene_dict: {umi_seq: {gene_id: read_count}}
+        """
+
+        discard_umi = set()
+        umi_gene_dict = defaultdict(lambda: defaultdict(int))
+        for gene_id in gene_umi_dict:
+            for umi in gene_umi_dict[gene_id]:
+                umi_gene_dict[umi][gene_id] += gene_umi_dict[gene_id][umi]
+        
+        for umi in umi_gene_dict:
+            max_read_count = max(umi_gene_dict[umi].values())
+            gene_id_max = [gene_id for gene_id, read_count in umi_gene_dict[umi].items() if read_count==max_read_count]
+
+            if len(gene_id_max) > 1:
+                discard_umi.add(umi)
+            else:
+                gene_id = gene_id_max[0]
+                umi_gene_dict[umi] = {gene_id: umi_gene_dict[umi][gene_id]}
+
+        return discard_umi, umi_gene_dict
+
     @utils.add_log
     def bam2table(self):
         """
@@ -190,7 +218,7 @@ class Count(Step):
             fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
 
             def keyfunc(x):
-                return x.query_name.split('_', 1)[0]
+                return x.query_name.split('_', maxsplit=1)[0]
             for _, g in groupby(samfile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
                 for seg in g:
@@ -202,11 +230,14 @@ class Count(Step):
                 for gene_id in gene_umi_dict:
                     Count.correct_umi(gene_umi_dict[gene_id])
 
+                discard_umi, umi_gene_dict = Count.discard_read(gene_umi_dict)
+
                 # output
-                for gene_id in gene_umi_dict:
-                    for umi in gene_umi_dict[gene_id]:
-                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
-                                                        gene_umi_dict[gene_id][umi]))
+                for umi in umi_gene_dict:
+                    if umi not in discard_umi:
+                        for gene_id in umi_gene_dict[umi]:
+                            fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
+                                                            umi_gene_dict[umi][gene_id]))
         samfile.close()
 
     @utils.add_log
@@ -372,9 +403,6 @@ class Count(Step):
             display=f'{umi_saturation}%',
             help_info=(
                 'the fraction of UMI originating from an already-observed UMI. '
-                'There is a difference in how CeleScope and CellRanger calculate saturation. '
-                'CeleScope shows umi_saturation in the report, while CellRanger shows read_saturation in the report. '
-                'For details, see <a href="https://github.com/singleron-RD/CeleScope/blob/dev/docs/details.md#saturation">here</a>. '
                 f'read_saturation: {read_saturation}%'
             )
         )

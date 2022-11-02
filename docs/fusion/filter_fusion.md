@@ -21,7 +21,7 @@ There are three methods to determine the UMI threshold:
 
 `--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
 
-`--auto_coef` int, threshold = top 1% positive cell count / auto_coef.
+`--auto_coef` int, threshold = top 1 percent positive cell count / auto_coef.
 
 `--otsu_log_base` raw counts are first log transformed before thresholding. This argument is the log base. Commonly used values are 2 and 10.
 
