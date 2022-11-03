@@ -128,11 +128,7 @@ class Count_capture_virus_mtx(Count, AnalysisMixin):
     def run(self):
         self.bam2table()
         df = pd.read_table(self.count_detail_file, header=0)
-<<<<<<< HEAD
         barcodes = Count_capture_virus_mtx.get_barcodes(self.filter_umi_file)
-=======
-        barcodes = Count_capture_virus_mtx.get_barcodes(self.otsu_umi_file)
->>>>>>> 802310999b41dbf4a39e523ca72de96281fa77a0
         df_filter = df[df["Barcode"].isin(barcodes)]
 
         self.get_umi_count_tsne(df_filter)
@@ -155,11 +151,7 @@ def get_opts_count_capture_virus_mtx(parser, sub_program):
         help="Optional. Genome gtf file. Use absolute path or relative path to `genomeDir`.",
         )
     if sub_program:
-<<<<<<< HEAD
         parser.add_argument('--filter_umi_file', help='filter umi file', required=True)
-=======
-        parser.add_argument('--otsu_umi_file', help='filter umi file', required=True)
->>>>>>> 802310999b41dbf4a39e523ca72de96281fa77a0
         parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
         parser.add_argument('--match_dir', help='match_dir', required=True)
         s_common(parser)
