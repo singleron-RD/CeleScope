@@ -17,11 +17,7 @@ class Count_capture_virus_mtx(Count, AnalysisMixin):
         AnalysisMixin.__init__(self, args)
         self.bam = args.bam
         self.gtf = args.gtf
-<<<<<<< HEAD
         self.filter_umi_file = args.filter_umi_file
-=======
-        self.otsu_umi_file = args.otsu_umi_file
->>>>>>> 802310999b41dbf4a39e523ca72de96281fa77a0
         self.count_detail_file = f'{self.outdir}/{self.sample}_count_detail.txt'
         self.matrix_dir = f'{self.outdir}/{self.sample}_virus_matrix'
         
