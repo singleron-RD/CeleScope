@@ -58,10 +58,10 @@ class Multi_capture_virus(Multi):
         step = 'count_capture_virus_mtx'
         cmd_line = self.get_cmd_line(step, sample)
         
-        if self.args.umi_threshold == "auto": 
-            filter_umi_file = f'{self.outdir_dic[sample]["analysis_capture_virus"]}/{sample}_auto_UMI_count.tsv'
-        elif self.args.umi_threshold == "otsu":
+        if self.args.umi_threshold == "otsu":
             filter_umi_file = f'{self.outdir_dic[sample]["analysis_capture_virus"]}/{sample}_otsu_UMI_count.tsv'
+        elif self.args.umi_threshold == "auto":
+            filter_umi_file = f'{self.outdir_dic[sample]["analysis_capture_virus"]}/{sample}_auto_UMI_count.tsv'
 
         bam = f'{self.outdir_dic[sample]["featureCounts_capture_virus"]}/{sample}_filter_name_sorted.bam'
         cmd = (
