@@ -1,4 +1,8 @@
 {% include "html/utils/start.html"%}
+    {% if mapping_tag_summary is defined %}
+    {% set step_summary = mapping_tag_summary %}
+    {% include "html/utils/step.html" %}
+    {% endif %}
 
     {% if count_cite_summary is defined %}
     {% set step_summary = count_cite_summary %}
