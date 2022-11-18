@@ -7,8 +7,6 @@ Currently, CeleScope includes the follwing pipelines:
 
 - `celescope rna` for Single-cell RNA-seq data generated with GEXSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering and marker gene expression analysis.
 
-- `celescope vdj` for Single-cell Immune Repertoire data generated with GEXSCOPE<sup>TM</sup> IR kits. It performs preprocessing, UMI consensus, vdj sequence alignment, UMI filtering and clonetypes counting.
-
 - `celescope tag` for Single-cell Multiplexing data generated with CLindex<sup>TM</sup> Sample Multiplexing kits. It performs preprocessing, tag counting, tag assignment and multiplets identification.
 
 - `celescope dynaseq` for Single cell dynamic transcriptome data generated with DynaSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering, nucleotide substitution statistic and nascent RNA identification.
@@ -46,11 +44,6 @@ Currently, CeleScope includes the follwing pipelines:
 - [count](tools/count.md)
 - [analysis](rna/analysis.md)
 - [multi_rna](rna/multi_rna.md)
-## Single-cell vdj
-- [consensus](tools/consensus.md)
-- [mapping_vdj](vdj/mapping_vdj.md)
-- [count_vdj](vdj/count_vdj.md)
-- [multi_vdj](vdj/multi_vdj.md)
 ## Single-cell tag
 - [mapping_tag](tag/mapping_tag.md)
 - [count_tag](tag/count_tag.md)
