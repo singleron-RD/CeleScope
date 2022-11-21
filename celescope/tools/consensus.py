@@ -30,10 +30,21 @@ class Consensus(Step):
 
         # set
         self.min_consensus_read = int(self.args.min_consensus_read)
+        self._assay = self.get_slot_key(
+            slot='metrics',
+            step_name='sample',
+            key='Assay',
+        )
 
         # out files
         self.fq_tmp_file = f'{self.out_prefix}_sorted.fq.tmp'
-        self.consensus_fq = f'{self.out_prefix}_consensus.fq'
+
+        if "blast" in self._assay:
+            self.consensus_out = f'{self.out_prefix}_consensus.fasta'
+            self.out_fmt = "fasta"
+        else:
+            self.consensus_out = f'{self.out_prefix}_consensus.fq'
+            self.out_fmt = "fastq"
 
     @utils.add_log
     def run(self):
@@ -41,9 +52,10 @@ class Consensus(Step):
         sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
         n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
             fq=self.fq_tmp_file,
-            outfile=self.consensus_fq,
+            outfile=self.consensus_out,
             threshold=self.args.threshold,
             min_consensus_read=self.min_consensus_read,
+            out_fmt=self.out_fmt,
         )
 
         self.add_metric(
@@ -75,7 +87,7 @@ def sort_fastq(fq, fq_tmp_file, outdir):
 
 
 @utils.add_log
-def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read):
+def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read, out_fmt):
     '''
     consensus read in name-sorted fastq
     output (barcode,umi) consensus fastq
@@ -104,7 +116,10 @@ def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read):
             n_umi += 1
             prefix = "_".join([barcode, umi])
             read_name = f'{prefix}_{n_umi}'
-            out_h.write(utils.fastq_line(read_name, consensus_seq, consensus_qual))
+            if out_fmt == "fasta":
+                out_h.write(utils.fasta_line(read_name, consensus_seq))
+            else:
+                out_h.write(utils.fastq_line(read_name, consensus_seq, consensus_qual))
             if n_umi % 10000 == 0:
                 sorted_dumb_consensus.logger.info(f'{n_umi} UMI done.')
             total_ambiguous_base_n += ambiguous_base_n

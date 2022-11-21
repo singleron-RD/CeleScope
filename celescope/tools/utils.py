@@ -371,6 +371,10 @@ def fastq_line(name, seq, qual):
     return f'@{name}\n{seq}\n+\n{qual}\n'
 
 
+def fasta_line(name, seq):
+    return f'>{name}\n{seq}\n'
+
+
 def find_assay_init(assay):
     init_module = importlib.import_module(f"celescope.{assay}.__init__")
     return init_module
