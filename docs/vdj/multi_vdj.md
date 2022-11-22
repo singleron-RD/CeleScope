@@ -1,31 +1,31 @@
 ## Download and unpack igblast soft.
 
-Soft: IgBLAST v1.9.0 or higher is required.
-mkdir -p ~/biosoft/igblast
-cd ~/biosoft/igblast
-wget -c https://ftp.ncbi.nih.gov/blast/executables/igblast/release/LATEST/ncbi-igblast-1.20.0-x64-linux.tar.gz
-tar -xzf ncbi-igblast-1.20.0-x64-linux.tar.gz
+Soft: IgBLAST v1.9.0 or higher is required. \
+mkdir -p ~/biosoft/igblast \
+cd ~/biosoft/igblast \
+wget -c https://ftp.ncbi.nih.gov/blast/executables/igblast/release/LATEST/ncbi-igblast-1.20.0-x64-linux.tar.gz \
+tar -xzf ncbi-igblast-1.20.0-x64-linux.tar.gz \
 
 ## Download IMGT Reference from IMGT(http://www.imgt.org/) and build index for igblast
-mkdir -p ~/biosoft/imgt_ref
-cd ~/biosoft/imgt_ref
-wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TR{A,B}{V,J}.fasta
-wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta
+mkdir -p ~/biosoft/imgt_ref \
+cd ~/biosoft/imgt_ref \
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TR{A,B}{V,J}.fasta \
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta \
 
-Combine all V, all D and all J sequences, respectively, into separate files:
-cat TRAV.fasta TRBV.fasta > TRV.fasta
-cat TRAJ.fasta TRBJ.fasta > TRJ.fasta
-cat TRBD.fasta > TRD.fasta
+Combine all V, all D and all J sequences, respectively, into separate files: \
+cat TRAV.fasta TRBV.fasta > TRV.fasta \
+cat TRAJ.fasta TRBJ.fasta > TRJ.fasta \
+cat TRBD.fasta > TRD.fasta \
 
-Build Index for igblast:
-perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRV.fasta > TRV.fa
-~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in TRV.fa
+Build Index for igblast: \
+perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRV.fasta > TRV.fa \
+~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in TRV.fa \
 
-perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRD.fasta > TRD.fa
-~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in TRD.fa
+perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRD.fasta > TRD.fa \
+~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in TRD.fa \
 
-perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRBJ.fasta > TRJ.fa
-~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in human_TRJ.fa
+perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRBJ.fasta > TRJ.fa \
+~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in human_TRJ.fa \
 
 ## Usage
 ```
