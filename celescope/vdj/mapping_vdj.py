@@ -43,14 +43,14 @@ class Mapping_vdj(Step):
     def __call__(self):
         # run igblstn
         if self.seqtype == "TCR":
-            self.igblast("TR")
+            self.igblast(chain="TR", ig_seqtype="TCR")
         else:
-            self.igblast("IG")
+            self.igblast(chain="IG", ig_seqtype="Ig")
         self.mapping_summary()
 
 
     @utils.add_log
-    def igblast(self, chain):
+    def igblast(self, chain, ig_seqtype):
         cwd = os.getcwd()
         # Igblastn program expects the internal_data directory under current directory
         os.chdir(self.soft_path)
@@ -59,7 +59,7 @@ class Mapping_vdj(Step):
             f"./bin/igblastn "
             f"-query {self.fasta} "
             f"-organism {self.species} "
-            f"-ig_seqtype {self.seqtype} "
+            f"-ig_seqtype {ig_seqtype} "
             f"-auxiliary_data ./optional_file/{self.species}_gl.aux "
             f"-num_threads {self.args.thread} "
             f"-germline_db_V {self.ref_path}/{chain}V.fa "
