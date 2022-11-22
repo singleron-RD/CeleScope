@@ -30,16 +30,11 @@ class Consensus(Step):
 
         # set
         self.min_consensus_read = int(self.args.min_consensus_read)
-        self._assay = self.get_slot_key(
-            slot='metrics',
-            step_name='sample',
-            key='Assay',
-        )
 
         # out files
         self.fq_tmp_file = f'{self.out_prefix}_sorted.fq.tmp'
 
-        if "blast" in self._assay:
+        if self.args.out_fasta:
             self.consensus_out = f'{self.out_prefix}_consensus.fasta'
             self.out_fmt = "fasta"
         else:
@@ -223,6 +218,7 @@ def get_opts_consensus(parser, sub_program):
     parser.add_argument("--min_consensus_read", help="Minimum number of reads to support a base. ", default=1)
     if sub_program:
         parser.add_argument("--fq", help="Required. Fastq file.", required=True)
+        parser.add_argument("--out_fasta", default=False, help="output Fasta file or not", action='store_true')
         s_common(parser)
 
 
