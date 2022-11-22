@@ -99,7 +99,7 @@ class Mapping_vdj(Step):
         # UMIs with Correct CDR3
         df_correct_cdr3 = df_cdr3[~(df_cdr3["cdr3_aa"].str.contains(r"\*")) & ~(df_cdr3["cdr3_aa"].str.contains("X"))]
         self.add_metric(
-            name="with Correct CDR3",
+            name="UMIs with Correct CDR3",
             value=df_correct_cdr3.shape[0],
             total=total_reads,
             help_info=f"with CDR3 might have stop codon and these UMIs(or Reads) are classified as incorrect"
