@@ -29,7 +29,7 @@ perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRBJ.fasta > TRJ
 
 ## Usage
 ```
-multi_vdj_blast \
+multi_vdj \
     --mapfile ./vdj.mapfile \
     --soft_path /SGRNJ06/randd/USER/cjj/igblast/ncbi-igblast-1.20.0 \
     --ref_path /SGRNJ06/randd/USER/cjj/igblast/igblast_ref/hs_TR \
