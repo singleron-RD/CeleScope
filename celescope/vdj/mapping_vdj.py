@@ -40,7 +40,7 @@ class Mapping_vdj(Step):
         self.UMI_count_unfiltered_file = f'{self.out_prefix}_UMI_count_unfiltered.tsv'
         self.UMI_count_filtered_file = f'{self.out_prefix}_UMI_count_filtered.tsv'
 
-    def __call__(self):
+    def run(self):
         # run igblstn
         if self.seqtype == "TCR":
             self.igblast(chain="TR", ig_seqtype="TCR")
@@ -84,16 +84,16 @@ class Mapping_vdj(Step):
             name="UMIs Mapped to Any VDJ Gene",
             value=df.shape[0],
             total=total_reads,
-            help_info=f"UMI Mapped to any germline VDJ gene segments"
+            help_info="UMI Mapped to any germline VDJ gene segments"
         )
 
         # UMIs with CDR3
         df_cdr3 = df[df["cdr3_aa"]!=""]
         self.add_metric(
-            name=f"UMIs with CDR3",
+            name="UMIs with CDR3",
             value=df_cdr3.shape[0],
             total=total_reads,
-            help_info=f"UMIs with CDR3 sequence"
+            help_info="UMIs with CDR3 sequence"
         )
 
         # UMIs with Correct CDR3
@@ -102,16 +102,16 @@ class Mapping_vdj(Step):
             name="UMIs with Correct CDR3",
             value=df_correct_cdr3.shape[0],
             total=total_reads,
-            help_info=f"with CDR3 might have stop codon and these UMIs(or Reads) are classified as incorrect"
+            help_info="UMIs with CDR3 might have stop codon and these UMIs(or Reads) are classified as incorrect"
         )
         
         # UMIs Mapped Confidently To VJ Gene
         df_confident = df_correct_cdr3[df_correct_cdr3["productive"]=="T"]
         self.add_metric(
-            name=f"UMIs Mapped Confidently to VJ Gene",
+            name="UMIs Mapped Confidently to VJ Gene",
             value=df_confident.shape[0],
             total=total_reads,
-            help_info=f"UMIs mapped to VJ gene pairs and with correct CDR3"
+            help_info="UMIs mapped to VJ gene pairs and with correct CDR3"
         )
 
         # UMIs Mapped Confidently to each chain
@@ -171,7 +171,7 @@ class Mapping_vdj(Step):
 
 def mapping_vdj(args):
     with Mapping_vdj(args, display_title="Mapping") as runner:
-        runner()
+        runner.run()
 
 
 def get_opts_mapping_vdj(parser, sub_program):
