@@ -19,8 +19,8 @@ multi_flv_CR \
     --mapfile ./test.mapfile \
     --thread 8 \
     --seqtype TCR \
-    --ref_path "/soft/cellranger/vdj_ref/6.0.0/hs/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0" \
-    --soft_path "/soft/cellranger/cellranger-6.1.2/cellranger" \
+    --ref_path "/soft/cellranger/vdj_ref/6.0.0/hs/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.0.0" \
+    --soft_path "/soft/cellranger/cellranger-7.0.1/cellranger" \
     --mod shell
 ```
 ## Features

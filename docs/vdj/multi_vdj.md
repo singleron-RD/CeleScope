@@ -1,7 +1,38 @@
+## Download and unpack igblast soft.
+
+Soft: IgBLAST v1.9.0 or higher is required.
+mkdir -p ~/biosoft/igblast
+cd ~/biosoft/igblast
+wget -c https://ftp.ncbi.nih.gov/blast/executables/igblast/release/LATEST/ncbi-igblast-1.20.0-x64-linux.tar.gz
+tar -xzf ncbi-igblast-1.20.0-x64-linux.tar.gz
+
+## Download IMGT Reference from IMGT(http://www.imgt.org/) and build index for igblast
+mkdir -p ~/biosoft/imgt_ref
+cd ~/biosoft/imgt_ref
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TR{A,B}{V,J}.fasta
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta
+
+Combine all V, all D and all J sequences, respectively, into separate files:
+cat TRAV.fasta TRBV.fasta > TRV.fasta
+cat TRAJ.fasta TRBJ.fasta > TRJ.fasta
+cat TRBD.fasta > TRD.fasta
+
+Build Index for igblast:
+perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRV.fasta > TRV.fa
+~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in TRV.fa
+
+perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRD.fasta > TRD.fa
+~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in TRD.fa
+
+perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRBJ.fasta > TRJ.fa
+~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in human_TRJ.fa
+
 ## Usage
 ```
-multi_vdj \
+multi_vdj_blast \
     --mapfile ./vdj.mapfile \
+    --soft_path /SGRNJ06/randd/USER/cjj/igblast/ncbi-igblast-1.20.0 \
+    --ref_path /SGRNJ06/randd/USER/cjj/igblast/igblast_ref/hs_TR \
     --type TCR \
     --thread 8 \
     --mod shell
@@ -32,7 +63,7 @@ otherwise an ambiguous character(N) will be added.
 
 
 ### mapping_vdj
-- Align R2 reads to IGMT(http://www.imgt.org/) database sequences with mixcr.
+- Align R2 reads to IGMT(http://www.imgt.org/) database sequences with blast.
 
 
 ### count_vdj
@@ -54,14 +85,13 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `{sample}_consensus.fq` Fastq file after consensus.
 
 ### mapping_vdj
+- `{sample}_airr.tsv` The alignment result of each UMI.
+A tab-delimited file compliant with the AIRR Rearrangement schema(https://docs.airr-community.org/en/stable/datarep/rearrangements.html)
+
 - `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.
 
 - `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
 most VJ_pair UMI reads is kept.
-
-- `{sample}_align.txt` Result report.
-
-- `{sample}_alignments.txt` The alignment result of each UMI/read.
 
 ### count_vdj
 - `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, each chain occupies one line.
@@ -180,13 +210,15 @@ at least {overlap} bases match between adapter and read.
 
 `--threshold` Default 0.5. Valid base threshold.
 
+`--not_consensus` Skip the consensus step.
+
 `--min_consensus_read` Minimum number of reads to support a base.
 
-`--species` Default `hs`. `hs`(human) or `mmu`(mouse).
+`--soft_path` soft path for igblast.
 
-`--mixcr_mem` Memory(in Gb) used by Java vitual machine.
+`--ref_path` reference path for igblast.
 
-`--not_consensus` Input fastq is not consensused.
+`--species` Default human. human or mouse.
 
 `--type` Required. `TCR` or `BCR`.
 
