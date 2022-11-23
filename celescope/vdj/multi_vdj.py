@@ -6,7 +6,7 @@ class Multi_vdj(Multi):
     """
 
     ## Download IMGT Reference from IMGT(http://www.imgt.org/)
-    USE Human TR IMGT As Example:
+    Use Human TR IMGT As Example:
     ```
     mkdir -p ~/biosoft/imgt_ref \\
     cd ~/biosoft/imgt_ref \\
@@ -15,11 +15,11 @@ class Multi_vdj(Multi):
     ```
 
     ## Build Index for IMGT_ref
-    Make sure running this command in imgt_ref directory which contains all V,D,J of TRA/TRB or IGH/IGK/IGL reference downloaded from IMGT website.
+    Make sure running this command in imgt_ref directory which contains all V,D,J of TRA/TRB or IGH/IGK/IGL reference downloaded from IMGT website. \\
+    ~/biosoft/imgt_ref/human_TR will be generated.
     ```
     celescope vdj mkref human TR.
 
-    ~/biosoft/imgt_ref/human_TR will be generated.
     ```
 
     ## Usage
