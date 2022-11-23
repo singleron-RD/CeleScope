@@ -2,7 +2,6 @@
 vdj mapping
 '''
 import pandas as pd
-import os
 import subprocess
 
 from celescope.tools import utils
@@ -28,7 +27,6 @@ class Mapping_vdj(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
-        self.soft_path = args.soft_path
         self.ref_path = args.ref_path
         self.seqtype = args.type
         self.species = args.species
@@ -168,7 +166,6 @@ def mapping_vdj(args):
 
 
 def get_opts_mapping_vdj(parser, sub_program):
-    parser.add_argument('--soft_path', help='soft path for igblast')
     parser.add_argument('--ref_path', help='reference path for igblast')
     parser.add_argument("--type", help='TCR or BCR', required=True)
     parser.add_argument(
