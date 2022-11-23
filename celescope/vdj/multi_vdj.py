@@ -4,45 +4,35 @@ from celescope.vdj.__init__ import __ASSAY__
 
 class Multi_vdj(Multi):
     """
-    ## Download and unpack igblast soft.
 
-    Soft: IgBLAST v1.9.0 or higher is required. \\
-    mkdir -p ~/biosoft/igblast \\
-    cd ~/biosoft/igblast \\
-    wget -c https://ftp.ncbi.nih.gov/blast/executables/igblast/release/LATEST/ncbi-igblast-1.20.0-x64-linux.tar.gz \\
-    tar -xzf ncbi-igblast-1.20.0-x64-linux.tar.gz \\
-
-    ## Download IMGT Reference from IMGT(http://www.imgt.org/) and build index for igblast
+    ## Download IMGT Reference from IMGT(http://www.imgt.org/)
+    USE Human TR IMGT As Example:
+    ```
     mkdir -p ~/biosoft/imgt_ref \\
     cd ~/biosoft/imgt_ref \\
     wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TR{A,B}{V,J}.fasta \\
-    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta \\
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta
+    ```
 
-    Combine all V, all D and all J sequences, respectively, into separate files: \\
-    cat TRAV.fasta TRBV.fasta > TRV.fasta \\
-    cat TRAJ.fasta TRBJ.fasta > TRJ.fasta \\
-    cat TRBD.fasta > TRD.fasta \\
+    ## Build Index for IMGT_ref
+    Make sure running this command in imgt_ref directory which contains all V,D,J of TRA/TRB or IGH/IGK/IGL reference downloaded from IMGT website.
+    ```
+    celescope vdj mkref human TR.
 
-    Build Index for igblast: \\
-    perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRV.fasta > TRV.fa \\
-    ~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in TRV.fa \\
-
-    perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRD.fasta > TRD.fa \\
-    ~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in TRD.fa \\
-
-    perl ~biosoft/igblast/ncbi-igblast-1.20.0/bin/edit_imgt_file.pl TRBJ.fasta > TRJ.fa \\
-    ~biosoft/igblast/ncbi-igblast-1.20.0/bin/makeblastdb -parse_seqids -dbtype nucl -in human_TRJ.fa \\
+    ~/biosoft/imgt_ref/human_TR will be generated.
+    ```
 
     ## Usage
     ```
     multi_vdj \\
         --mapfile ./vdj.mapfile \\
-        --soft_path /SGRNJ06/randd/USER/cjj/igblast/ncbi-igblast-1.20.0 \\
-        --ref_path /SGRNJ06/randd/USER/cjj/igblast/igblast_ref/hs_TR \\
+        --ref_path ~/biosoft/imgt_ref/human_TR \\
+        --species human \\
         --type TCR \\
         --thread 8 \\
         --mod shell
     ``` 
+
     """
 
     def consensus(self, sample):

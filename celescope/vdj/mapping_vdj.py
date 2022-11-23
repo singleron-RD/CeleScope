@@ -33,10 +33,9 @@ class Mapping_vdj(Step):
         self.seqtype = args.type
         self.species = args.species
         self.chains = CHAINS[self.seqtype]
-        self.fasta = os.path.abspath(args.fasta)
 
         # out
-        self.airr_out = os.path.abspath(f"{self.out_prefix}_airr.tsv")
+        self.airr_out = f'{self.out_prefix}_airr.tsv'
         self.UMI_count_unfiltered_file = f'{self.out_prefix}_UMI_count_unfiltered.tsv'
         self.UMI_count_filtered_file = f'{self.out_prefix}_UMI_count_filtered.tsv'
 
@@ -51,16 +50,11 @@ class Mapping_vdj(Step):
 
     @utils.add_log
     def igblast(self, chain, ig_seqtype):
-        cwd = os.getcwd()
-        # Igblastn program expects the internal_data directory under current directory
-        os.chdir(self.soft_path)
-
         cmd = (
-            f"./bin/igblastn "
-            f"-query {self.fasta} "
+            f"igblastn -query {self.args.fasta} "
             f"-organism {self.species} "
             f"-ig_seqtype {ig_seqtype} "
-            f"-auxiliary_data ./optional_file/{self.species}_gl.aux "
+            f"-auxiliary_data optional_file/{self.species}_gl.aux "
             f"-num_threads {self.args.thread} "
             f"-germline_db_V {self.ref_path}/{chain}V.fa "
             f"-germline_db_D {self.ref_path}/{chain}D.fa "
@@ -71,7 +65,6 @@ class Mapping_vdj(Step):
 
         self.igblast.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
-        os.chdir(cwd)
 
     @utils.add_log
     def mapping_summary(self):
