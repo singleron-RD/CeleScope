@@ -47,6 +47,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [analysis](rna/analysis.md)
 - [multi_rna](rna/multi_rna.md)
 ## Single-cell vdj
+- [mkref](vdj/mkref.md)
 - [consensus](tools/consensus.md)
 - [mapping_vdj](vdj/mapping_vdj.md)
 - [count_vdj](vdj/count_vdj.md)
