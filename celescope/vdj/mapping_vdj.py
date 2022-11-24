@@ -102,7 +102,7 @@ class Mapping_vdj(Step):
             name="UMIs Mapped Confidently to VJ Gene",
             value=df_confident.shape[0],
             total=total_reads,
-            help_info="UMIs mapped to VJ gene pairs and with correct CDR3"
+            help_info="UMIs with productive rearrangement mapped to VJ gene pairs and with correct CDR3"
         )
 
         # UMIs Mapped Confidently to each chain
@@ -116,15 +116,15 @@ class Mapping_vdj(Step):
             )
 
         # output file
-        df_VJ = df_confident[["sequence_id","locus", "v_call", "d_call", "j_call", "cdr3", "cdr3_aa"]]
+        df_VJ = df_confident[["sequence_id","locus", "v_call", "d_call", "j_call", "junction", "junction_aa"]]
         df_VJ.rename(columns={
             "sequence_id": "readID",
             "locus": "chain",
             "v_call": "bestVGene",
             "d_call": "bestDGene",
             "j_call": "bestJGene",
-            "cdr3": "nSeqCDR3",
-            "cdr3_aa": "aaSeqCDR3"
+            "junction": "nSeqCDR3",
+            "junction_aa": "aaSeqCDR3"
         }, inplace=True)
         df_VJ["barcode"] = df_VJ["readID"].apply(lambda x: x.split("_")[0])
         df_VJ["UMI"] = df_VJ["readID"].apply(lambda x: x.split("_")[1])
