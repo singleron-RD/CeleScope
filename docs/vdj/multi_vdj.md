@@ -8,7 +8,7 @@ wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_
 ```
 
 ## Build Index for IMGT_ref
-Make sure running this command in imgt_ref directory which contains all V,D,J of TRA/TRB or IGH/IGK/IGL reference downloaded from IMGT website. \
+Make sure running this command in imgt_ref directory which contains all V,D,J of TRA/TRB downloaded from IMGT website. \
 ~/biosoft/imgt_ref/human_TR will be generated.
 ```
 celescope vdj mkref human TR.
@@ -22,6 +22,34 @@ multi_vdj \
     --ref_path ~/biosoft/imgt_ref/human_TR \
     --species human \
     --type TCR \
+    --thread 8 \
+    --mod shell
+``` 
+
+## Download IMGT Reference from IMGT(http://www.imgt.org/)
+Use Human IG IMGT As Example:
+```
+mkdir -p ~/biosoft/imgt_ref \
+cd ~/biosoft/imgt_ref \
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IG{H,K,L}{V,J}.fasta \
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IGHD.fasta
+```
+
+## Build Index for IMGT_ref
+Make sure running this command in imgt_ref directory which contains all V,D,J of IGH/IGK/IGL reference downloaded from IMGT website. \
+~/biosoft/imgt_ref/human_IG will be generated.
+```
+celescope vdj mkref human IG.
+
+```
+
+## Usage
+```
+multi_vdj \
+    --mapfile ./vdj.mapfile \
+    --ref_path ~/biosoft/imgt_ref/human_IG \
+    --species human \
+    --type BCR \
     --thread 8 \
     --mod shell
 ``` 
@@ -212,8 +240,6 @@ at least {overlap} bases match between adapter and read.
 `--not_consensus` Skip the consensus step.
 
 `--min_consensus_read` Minimum number of reads to support a base.
-
-`--soft_path` soft path for igblast.
 
 `--ref_path` reference path for igblast.
 

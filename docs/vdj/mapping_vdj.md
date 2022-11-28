@@ -10,8 +10,6 @@ A tab-delimited file compliant with the AIRR Rearrangement schema(https://docs.a
 - `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
 most VJ_pair UMI reads is kept.
 ## Arguments
-`--soft_path` soft path for igblast.
-
 `--ref_path` reference path for igblast.
 
 `--type` TCR or BCR.
