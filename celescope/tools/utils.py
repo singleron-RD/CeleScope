@@ -135,7 +135,7 @@ class Gtf_dict(dict):
                 if gtf_type == 'gene':
                     try:
                         gene_id = gene_id_pattern.findall(attributes)[-1]
-                    except:
+                    except IndexError:
                         print(line)
                     gene_names = gene_name_pattern.findall(attributes)
                     if not gene_names:
