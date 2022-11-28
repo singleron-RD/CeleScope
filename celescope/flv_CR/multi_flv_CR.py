@@ -8,15 +8,15 @@ class Multi_flv_CR(Multi):
 
     ## Download and unpack cellranger soft and reference file.
     ```
-    wget -O cellranger-6.1.2.tar.gz "https://cf.10xgenomics.com/releases/cell-vdj/cellranger-6.1.2.tar.gz?Expires=1646072261&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC12ZGovY2VsbHJhbmdlci02LjEuMi50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2NDYwNzIyNjF9fX1dfQ__&Signature=Z-2m906CV5Rb1snIAga-QDSXYSZ8cNqCj1EECGP4uloU3qH~uCMH42MHf4TNnDL2zAsKA7cXsCsQYz0A9yJdNh7dfRT8ohpuAzASFx5Pj-bkqfw4p2tql55IIaPN0zqxyUuyZ9sfKl5qTQX82LoVolRpiBUL8dF9nr~bA2P1gJZ~xg1QssS7icR5MmTzvKKS5NYkezG8vWaTiEdXU0nuKI2ciZSX5GOMeIRW-YYR7mJwHmBbTVxe0o-uBuUtqor0Y98jdIv8Z~dwMjujRjrEShdCGNixTSonGzeS2~9CXqWquCJIOolqFFkcFHgXkD7ZWNfSXWbTxuF57rCsub98pA__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA"
+    wget -O cellranger-7.0.1.tar.gz "https://cf.10xgenomics.com/releases/cell-vdj/cellranger-7.0.1.tar.gz?Expires=1668447380&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9jZi4xMHhnZW5vbWljcy5jb20vcmVsZWFzZXMvY2VsbC12ZGovY2VsbHJhbmdlci03LjAuMS50YXIuZ3oiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2Njg0NDczODB9fX1dfQ__&Signature=bZoM-0W1ExsZWYVhUJ80oSzKEaYTdlf1NoFiKLswTLWGveefjH1fJOkd1c4kMxCiTDfohyDpNWzk-xBMBme-u3r-0X7WFYSvfCdMyo2CSM4K~Ur73Sn30REr0kr7oC9byrlLMqG2mtO7DLfprDrAZGZDkfyDLpGJ8hb1qWSsWqRo8CxbqRzA69h0v65Qn86HMrHAeotdhxUVmBIvONwPmsC90J9K4gVDw1sDF39F4f89zguTGgSAY6mUdPG1cvHHZMeuLaJZDqRgODysOhsB-keYXW8cYa-R5chh9s1ASC4yA1QKSe-fBdB1-FLQdAwMjNEHdd7uGCWzLj4J~AXgJg__&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA"
 
     Reference: human and mouse
-    wget https://cf.10xgenomics.com/supp/cell-vdj/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0.tar.gz
-    wget https://cf.10xgenomics.com/supp/cell-vdj/refdata-cellranger-vdj-GRCm38-alts-ensembl-5.0.0.tar.gz
+    wget https://cf.10xgenomics.com/supp/cell-vdj/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.0.0.tar.gz
+    wget https://cf.10xgenomics.com/supp/cell-vdj/refdata-cellranger-vdj-GRCm38-alts-ensembl-7.0.0.tar.gz
 
-    tar -xzvf cellranger-6.1.2.tar.gz
-    tar -xzvf refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0.tar.gz
-    tar -xzvf refdata-cellranger-vdj-GRCm38-alts-ensembl-5.0.0.tar.gz
+    tar -xzvf cellranger-7.0.1.tar.gz
+    tar -xzvf refdata-cellranger-vdj-GRCh38-alts-ensembl-7.0.0.tar.gz
+    tar -xzvf refdata-cellranger-vdj-GRCm38-alts-ensembl-7.0.0.tar.gz
     ```
 
     ## Usage
@@ -27,8 +27,8 @@ class Multi_flv_CR(Multi):
         --mapfile ./test.mapfile \\
         --thread 8 \\
         --seqtype TCR \\
-        --ref_path "/soft/cellranger/vdj_ref/6.0.0/hs/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0" \\
-        --soft_path "/soft/cellranger/cellranger-6.1.2/cellranger" \\
+        --ref_path "/soft/cellranger/vdj_ref/6.0.0/hs/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.0.0" \\
+        --soft_path "/soft/cellranger/cellranger-7.0.1/cellranger" \\
         --mod shell
     ```
     """

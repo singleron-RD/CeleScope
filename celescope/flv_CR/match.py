@@ -1,11 +1,84 @@
 import pandas as pd
 import pysam
 
+from collections import OrderedDict
 from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
 from celescope.flv_CR.summarize import Summarize
 from celescope.tools import utils
 from celescope.tools.step import s_common, Step
 from celescope.tools.plotly_plot import Bar_plot
+
+
+def gen_vj_annotation_metrics(df, seqtype):
+    """
+    Generate vdj Annotation Metrics from contig annotations file.
+    """
+    def get_vj_spanning_pair():
+        """
+        Get Productive V-J Spanning_Pair metric from annotation file
+        Return productive chain pair number. eg: TRA/TRB or IGH/IGL, IGH/IGK.
+        """
+        df_productive = df[df['productive'] == True]
+        
+        if seqtype == "BCR":
+            df_chain_heavy = df_productive[(df_productive['chain'] == 'IGH')] 
+            df_chain_light = df_productive[(df_productive['chain'] == 'IGL') | (df_productive['chain'] =='IGK')]
+        else:
+            df_chain_heavy = df_productive[df_productive['chain'] == 'TRA']
+            df_chain_light = df_productive[df_productive['chain'] == 'TRB']
+
+        for _df in [df_chain_heavy, df_chain_light]:
+            _df.drop_duplicates(['barcode'], inplace=True)
+
+        VJ_Spanning_Pair_Cells = pd.merge(df_chain_heavy, df_chain_light, on='barcode', how='inner')
+        
+        return VJ_Spanning_Pair_Cells.shape[0]
+
+    metric_dict = OrderedDict()
+    chains, chain_pairs = CHAIN[seqtype], PAIRED_CHAIN[seqtype]
+
+    metric_dict["Cells match with scRNA-seq analysis"] = len(set(df.barcode))
+    metric_dict["Cells With Productive V-J Spanning Pair"] = get_vj_spanning_pair()
+
+    for pair in chain_pairs:
+        chain1, chain2 = pair.split('_')[0], pair.split('_')[1]
+        cbs1 = set(df[(df['productive']==True)&(df['chain']==chain1)].barcode)
+        cbs2 = set(df[(df['productive']==True)&(df['chain']==chain2)].barcode)
+        metric_dict[f"Cells With Productive V-J Spanning ({chain1}, {chain2}) Pair"] = len(cbs1.intersection(cbs2))
+
+    for chain in chains:
+        metric_dict[f"Cells With {chain} Contig"] = len(set(df[df['chain']==chain].barcode))
+        metric_dict[f"Cells With CDR3-annotated {chain} Contig"] = len(set(df[(df['chain']==chain)&(df['cdr3']!='None')].barcode))
+        metric_dict[f"Cells With V-J Spanning {chain} Contig"] = len(set(df[(df['full_length']==True)&(df['chain']==chain)].barcode))
+        metric_dict[f"Cells With Productive {chain} Contig"] =len(set(df[(df['productive']==True)&(df['chain'] == chain)].barcode))
+
+    return metric_dict
+
+
+def gen_clonotypes_table(df, out_clonotypes):
+    """
+    Generate clonotypes.csv file
+    """
+    df = df[df['productive'] == True]
+    df['chain_cdr3aa'] = df[['chain', 'cdr3']].apply(':'.join, axis=1)
+
+    match_clonotypes = open(out_clonotypes, 'w')
+    match_clonotypes.write('barcode\tcdr3s_aa\n')
+    for cb in set(df.barcode):
+        temp = df[df['barcode']==cb].sort_values(by='chain', ascending=True)
+        chain_pair = ';'.join(temp['chain_cdr3aa'].tolist())
+        match_clonotypes.write(f'{cb}\t{chain_pair}\n')
+    match_clonotypes.close()
+
+    df_clonetypes = pd.read_csv(out_clonotypes, sep='\t', index_col=None)
+    df_clonetypes = df_clonetypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
+    df_clonetypes.rename(columns={'barcode': 'frequency'}, inplace=True)
+    sum_f = df_clonetypes['frequency'].sum()
+    df_clonetypes['proportion'] = df_clonetypes['frequency'].apply(lambda x: x/sum_f)
+    df_clonetypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonetypes.shape[0]+1)]
+    df_clonetypes = df_clonetypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
+    df_clonetypes.sort_values(by='frequency', ascending=False, inplace=True)
+    df_clonetypes.to_csv(out_clonotypes, sep=',', index=False)
 
 
 class Match(Step):
@@ -78,102 +151,29 @@ class Match(Step):
         Generate clonotypes.csv file where barcodes match with scRNA
         """
         df_match = pd.read_csv(self.match_annotation)
-        df_match = df_match[df_match['productive'] == True]
-        df_match['chain_cdr3aa'] = df_match[['chain', 'cdr3']].apply(':'.join, axis=1)
-
-        match_clonotypes = open(self.match_clonotypes, 'w')
-        match_clonotypes.write('barcode\tcdr3s_aa\n')
-        for cb in set(df_match.barcode):
-            temp = df_match[df_match['barcode']==cb].sort_values(by='chain', ascending=True)
-            chain_pair = ';'.join(temp['chain_cdr3aa'].tolist())
-            match_clonotypes.write(f'{cb}\t{chain_pair}\n')
-        match_clonotypes.close()
-
-        df_match_clonetypes = pd.read_csv(self.match_clonotypes, sep='\t', index_col=None)
-        df_match_clonetypes = df_match_clonetypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
-        df_match_clonetypes.rename(columns={'barcode': 'frequency'}, inplace=True)
-        sum_f = df_match_clonetypes['frequency'].sum()
-        df_match_clonetypes['proportion'] = df_match_clonetypes['frequency'].apply(lambda x: x/sum_f)
-        df_match_clonetypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_match_clonetypes.shape[0]+1)]
-        df_match_clonetypes = df_match_clonetypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
-        df_match_clonetypes.sort_values(by='frequency', ascending=False, inplace=True)
-        df_match_clonetypes.to_csv(self.match_clonotypes, sep=',', index=False)
+        gen_clonotypes_table(df_match, self.match_clonotypes)
 
     @utils.add_log
     def gen_matched_metrics(self):
+        """
+        Generate Matched vdj Annotation Metrics.
+        """
         df_match = pd.read_csv(self.match_annotation)
+        metrics_dict = gen_vj_annotation_metrics(df_match, self.seqtype)
 
-        self.add_metric(
-            name="Cells match with scRNA-seq analysis",
-            value=len(set(df_match.barcode)),
-            help_info="The intersection between VDJ cell barcodes and scRNA-Seq barcodes. All the following metrics are based on this intersection."
-        )
-
-        cell_nums = len(set(df_match.barcode))
-
-        self.add_metric(
-            name='Cells With Productive V-J Spanning Pair',
-            value=Match.VJ_Spanning_Pair(df_match, self.seqtype),
-            total = cell_nums,
-        )
-
-        for pair in self.pairs:
-            chain1, chain2 = pair.split('_')[0], pair.split('_')[1]
-            cbs1 = set(df_match[(df_match['productive']==True)&(df_match['chain']==chain1)].barcode)
-            cbs2 = set(df_match[(df_match['productive']==True)&(df_match['chain']==chain2)].barcode)
-
-            self.add_metric(
-                name=f'Cells With Productive V-J Spanning ({chain1}, {chain2}) Pair',
-                value=len(cbs1.intersection(cbs2)),
-                total=cell_nums,
-            )
-
-        for chain in self.chains:
-            self.add_metric(
-                name=f'Cells With {chain} Contig',
-                value=len(set(df_match[df_match['chain']==chain].barcode)),
-                total=cell_nums,
-            )
-
-            self.add_metric(
-                name=f'Cells With CDR3-annotated {chain} Contig',
-                value=len(set(df_match[(df_match['chain']==chain)&(df_match['cdr3']!='None')].barcode)),
-                total=cell_nums,
-            )
-
-            self.add_metric(
-                name=f'Cells With V-J Spanning {chain} Contig',
-                value=len(set(df_match[(df_match['full_length']==True)&(df_match['chain']==chain)].barcode)),
-                total=cell_nums,
-            )
-
-            self.add_metric(
-                name=f'Cells With Productive {chain} Contig',
-                value=len(set(df_match[(df_match['productive']==True)&(df_match['chain'] == chain)].barcode)),
-                total=cell_nums,
-            )
-
-    @staticmethod
-    def VJ_Spanning_Pair(df_annotation, seqtype):
-        """
-        Get V-J Spanning_Pair metric from annotation file
-        Return productive chain pair. eg: TRA/TRB or IGH/IGL, IGH/IGK.
-        """
-        df_productive = df_annotation[df_annotation['productive'] == True]
-        
-        if seqtype == "BCR":
-            df_chain_heavy = df_productive[(df_productive['chain'] == 'IGH')] 
-            df_chain_light = df_productive[(df_productive['chain'] == 'IGL') | (df_productive['chain'] =='IGK')]
-        else:
-            df_chain_heavy = df_productive[df_productive['chain'] == 'TRA']
-            df_chain_light = df_productive[df_productive['chain'] == 'TRB']
-        
-        for _df in [df_chain_heavy, df_chain_light]:
-            _df.drop_duplicates(['barcode'], inplace=True)
-
-        VJ_Spanning_Pair_Cells = pd.merge(df_chain_heavy, df_chain_light, on='barcode', how='inner')
-        
-        return VJ_Spanning_Pair_Cells.shape[0]
+        for k, v in metrics_dict.items():
+            if k == "Cells match with scRNA-seq analysis":
+                self.add_metric(
+                    name = k,
+                    value = v,
+                    help_info="The intersection between VDJ cell barcodes and scRNA-Seq barcodes. All the following metrics are based on this intersection."
+                )
+            else:
+                self.add_metric(
+                    name = k,
+                    value = v,
+                    total = len(set(df_match.barcode))
+                )
 
     @utils.add_log
     def gen_clonotypes_table(self):
