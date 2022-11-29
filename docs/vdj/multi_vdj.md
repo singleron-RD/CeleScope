@@ -1,12 +1,66 @@
+## Download IMGT Reference from IMGT(http://www.imgt.org/)
+Use Human TR IMGT As Example:
+```
+mkdir -p ~/biosoft/imgt_ref \
+cd ~/biosoft/imgt_ref \
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TR{A,B}{V,J}.fasta \
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta
+```
+
+## Build Index for IMGT_ref
+Make sure running this command in imgt_ref directory which contains all V,D,J of TRA/TRB downloaded from IMGT website. \
+~/biosoft/imgt_ref/human_TR will be generated.
+```
+celescope vdj mkref human TR.
+
+```
+
 ## Usage
 ```
 multi_vdj \
     --mapfile ./vdj.mapfile \
+    --ref_path ~/biosoft/imgt_ref/human_TR \
+    --species human \
     --type TCR \
     --thread 8 \
     --mod shell
 ``` 
+
+## Download IMGT Reference from IMGT(http://www.imgt.org/)
+Use Human IG IMGT As Example:
+```
+mkdir -p ~/biosoft/imgt_ref \
+cd ~/biosoft/imgt_ref \
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IG{H,K,L}{V,J}.fasta \
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IGHD.fasta
+```
+
+## Build Index for IMGT_ref
+Make sure running this command in imgt_ref directory which contains all V,D,J of IGH/IGK/IGL reference downloaded from IMGT website. \
+~/biosoft/imgt_ref/human_IG will be generated.
+```
+celescope vdj mkref human IG.
+
+```
+
+## Usage
+```
+multi_vdj \
+    --mapfile ./vdj.mapfile \
+    --ref_path ~/biosoft/imgt_ref/human_IG \
+    --species human \
+    --type BCR \
+    --thread 8 \
+    --mod shell
+``` 
 ## Features
+### mkref
+
+- Build Index for IMGT_ref.
+
+- Make sure current directory contains all V,D,J of TRA/TRB or IGH/IGK/IGL reference downloaded from IMGT website.
+
+
 ### barcode
 
 - Demultiplex barcodes.
@@ -32,7 +86,7 @@ otherwise an ambiguous character(N) will be added.
 
 
 ### mapping_vdj
-- Align R2 reads to IGMT(http://www.imgt.org/) database sequences with mixcr.
+- Align R2 reads to IGMT(http://www.imgt.org/) database sequences with blast.
 
 
 ### count_vdj
@@ -41,6 +95,10 @@ otherwise an ambiguous character(N) will be added.
 
 
 ## Output files
+### mkref
+
+- VDJ IMGT reference with index files.
+
 ### barcode
 
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
@@ -54,14 +112,13 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `{sample}_consensus.fq` Fastq file after consensus.
 
 ### mapping_vdj
+- `{sample}_airr.tsv` The alignment result of each UMI.
+A tab-delimited file compliant with the AIRR Rearrangement schema(https://docs.airr-community.org/en/stable/datarep/rearrangements.html)
+
 - `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.
 
 - `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
 most VJ_pair UMI reads is kept.
-
-- `{sample}_align.txt` Result report.
-
-- `{sample}_alignments.txt` The alignment result of each UMI/read.
 
 ### count_vdj
 - `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, each chain occupies one line.
@@ -180,13 +237,13 @@ at least {overlap} bases match between adapter and read.
 
 `--threshold` Default 0.5. Valid base threshold.
 
+`--not_consensus` Skip the consensus step.
+
 `--min_consensus_read` Minimum number of reads to support a base.
 
-`--species` Default `hs`. `hs`(human) or `mmu`(mouse).
+`--ref_path` reference path for igblast.
 
-`--mixcr_mem` Memory(in Gb) used by Java vitual machine.
-
-`--not_consensus` Input fastq is not consensused.
+`--species` Default human. human or mouse.
 
 `--type` Required. `TCR` or `BCR`.
 

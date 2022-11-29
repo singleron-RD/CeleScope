@@ -4,26 +4,85 @@ from celescope.vdj.__init__ import __ASSAY__
 
 class Multi_vdj(Multi):
     """
+
+    ## Download IMGT Reference from IMGT(http://www.imgt.org/)
+    Use Human TR IMGT As Example:
+    ```
+    mkdir -p ~/biosoft/imgt_ref \\
+    cd ~/biosoft/imgt_ref \\
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TR{A,B}{V,J}.fasta \\
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta
+    ```
+
+    ## Build Index for IMGT_ref
+    Make sure running this command in imgt_ref directory which contains all V,D,J of TRA/TRB downloaded from IMGT website. \\
+    ~/biosoft/imgt_ref/human_TR will be generated.
+    ```
+    celescope vdj mkref human TR.
+
+    ```
+
     ## Usage
     ```
     multi_vdj \\
         --mapfile ./vdj.mapfile \\
+        --ref_path ~/biosoft/imgt_ref/human_TR \\
+        --species human \\
         --type TCR \\
         --thread 8 \\
         --mod shell
     ``` 
+
+    ## Download IMGT Reference from IMGT(http://www.imgt.org/)
+    Use Human IG IMGT As Example:
+    ```
+    mkdir -p ~/biosoft/imgt_ref \\
+    cd ~/biosoft/imgt_ref \\
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IG{H,K,L}{V,J}.fasta \\
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IGHD.fasta
+    ```
+
+    ## Build Index for IMGT_ref
+    Make sure running this command in imgt_ref directory which contains all V,D,J of IGH/IGK/IGL reference downloaded from IMGT website. \\
+    ~/biosoft/imgt_ref/human_IG will be generated.
+    ```
+    celescope vdj mkref human IG.
+
+    ```
+
+    ## Usage
+    ```
+    multi_vdj \\
+        --mapfile ./vdj.mapfile \\
+        --ref_path ~/biosoft/imgt_ref/human_IG \\
+        --species human \\
+        --type BCR \\
+        --thread 8 \\
+        --mod shell
+    ``` 
+
     """
+
+    def consensus(self, sample):
+        step = 'consensus'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--fq {fq} '
+            f'--out_fasta '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)
+        outfile = f'{self.outdir_dic[sample][step]}/{sample}_consensus.fasta'
+        return outfile
 
     def mapping_vdj(self, sample):
         step = 'mapping_vdj'
         cmd_line = self.get_cmd_line(step, sample)
-        if self.args.not_consensus:
-            fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
-        else:
-            fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'
+        fasta = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fasta'
         cmd = (
             f'{cmd_line} '
-            f'--fq {fq} '
+            f'--fasta {fasta} '
         )
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
 

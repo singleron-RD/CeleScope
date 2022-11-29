@@ -8,7 +8,8 @@ from celescope.vdj.__init__ import CHAINS, PAIRS
 from celescope.tools.capture.threshold import Auto
 from celescope.tools.emptydrop_cr import get_plot_elements
 
-# mixcr sequence header
+
+# Const
 SEQUENCES_HEADER = ["aaSeqCDR3", "nSeqCDR3"]
 # Auto filter percentitle
 PERCENTILE = {
