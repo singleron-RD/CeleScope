@@ -6,6 +6,11 @@ from celescope.tools.capture.threshold import Threshold
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
 
+# variant allele frequency (VAF) threshold
+VAF = 0.2
+# Minimum supporting reads
+MIN_SUPPORT_READS = 10
+
 class Filter_snp(Step):
     """
     ## Features
@@ -66,7 +71,13 @@ class Filter_snp(Step):
     @staticmethod
     def get_genotype(ref_count, alt_count):
         if ref_count > 0 and alt_count > 0:
-            return (0,1)
+            af = alt_count / (alt_count + ref_count)
+            if VAF <= af <= 1 - VAF:
+                return (0,1)
+            elif af < VAF:
+                return (0,0)
+            else:
+                return (1,1)
         elif ref_count > 0 and alt_count == 0:
             return (0,0)
         elif ref_count == 0 and alt_count > 0:
@@ -94,6 +105,8 @@ class Filter_snp(Step):
                     alt_threshold = self.get_threshold(alt_count_array)
                     ref_filtered_count_array = self.filter_array(ref_count_array, ref_threshold)
                     alt_filtered_count_array = self.filter_array(alt_count_array, alt_threshold)
+                    ref_threshold = max(ref_threshold, MIN_SUPPORT_READS)
+                    alt_threshold = max(alt_threshold, MIN_SUPPORT_READS)
 
                     new_record = record.copy()
                     new_record.info.__setitem__('REF_T', ref_threshold)

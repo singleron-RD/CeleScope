@@ -133,7 +133,10 @@ class Gtf_dict(dict):
                 tabs = line.split('\t')
                 gtf_type, attributes = tabs[2], tabs[-1]
                 if gtf_type == 'gene':
-                    gene_id = gene_id_pattern.findall(attributes)[-1]
+                    try:
+                        gene_id = gene_id_pattern.findall(attributes)[-1]
+                    except IndexError:
+                        print(line)
                     gene_names = gene_name_pattern.findall(attributes)
                     if not gene_names:
                         gene_name = gene_id

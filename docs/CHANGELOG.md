@@ -1,3 +1,8 @@
+## [1.14.0b0]
+ ### `snp`
+ - When using `otsu` or `auto` , two additional filtering conditions are added: Minimum variant allele frequency and Minimum supporting reads . This will remove some low-confidence heterozygous variants that cannot be filtered out by the `otsu` or `auto` algorithm.
+ - Some Splits reads (e.g. spanning splicing events in RNAseq data) will result in a small number of variants that are not in the target gene list. These variants are removed.
+
 ## [1.13.0] - 2022-10-28
 
  ### `sweetseq`
