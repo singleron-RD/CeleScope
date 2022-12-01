@@ -1,4 +1,7 @@
-## [1.14.0b0]
+## [1.14.0b0] - 2022-12-01
+ ### `vdj`
+ - Replace Mixcr with IgBlast.
+
  ### `snp`
  - When using `otsu` or `auto` , two additional filtering conditions are added: Minimum variant allele frequency and Minimum supporting reads . This will remove some low-confidence heterozygous variants that cannot be filtered out by the `otsu` or `auto` algorithm.
  - Some Splits reads (e.g. spanning splicing events in RNAseq data) will result in a small number of variants that are not in the target gene list. These variants are removed.

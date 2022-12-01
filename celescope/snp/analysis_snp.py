@@ -30,11 +30,13 @@ def parse_annovar(annovar_file, n_entry=None):
             if func == 'exonic':
                 changes = attrs[9]
                 cosmic = attrs[10]
+                split_char = ','
             else:
                 changes = attrs[7]
                 cosmic = attrs[8]
+                split_char = ';'
             change_list = list()
-            for change in changes.split(','):
+            for change in changes.split(split_char):
                 change_attrs = change.split(':')
                 mRNA = ''
                 protein = ''

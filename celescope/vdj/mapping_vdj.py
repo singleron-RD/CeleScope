@@ -69,6 +69,12 @@ class Mapping_vdj(Step):
         df = pd.read_csv(self.airr_out, sep='\t')
         df.fillna("", inplace=True)
         total_reads = df.shape[0]
+
+        self.add_metric(
+            name="Species",
+            value=self.species,
+            help_info="Human or Mouse"
+        )
         
         df = df[(df["v_call"]!="") | ((df["d_call"]!="")) | ((df["j_call"]!=""))]
         self.add_metric(
