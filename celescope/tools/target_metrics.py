@@ -128,6 +128,7 @@ class Target_metrics(Step):
             name="Number of Valid Cells",
             value=n_valid_cell,
             total=self.n_cell,
+            help_info='Cells with at least one read mapped to the target genes.'
         )
         self.add_metric(
             name="Enriched Reads",
