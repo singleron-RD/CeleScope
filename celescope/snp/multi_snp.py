@@ -11,23 +11,6 @@ class Multi_snp(Multi):
     1. Run `celescope rna mkref`. If you already have a rna genomeDir, you can use it and skip this step.
     2. Run `celescope snp mkref` under the rna genomeDir. Check [mkref.md](./mkref.md) for help.
 
-    ### Install ANNOVAR, download the annotation database and write a annovar config file.
-    https://annovar.openbioinformatics.org/en/latest/user-guide/download/
-
-    ```
-    perl /Public/Software/annovar/annotate_variation.pl -downdb -buildver hg38 -webfrom annovar cosmic70 humandb/
-    ```
-
-    annovar_config file
-    ```
-    [ANNOVAR]
-    dir = /Public/Software/annovar/  
-    db = /SGRNJ/Database/script/database/annovar/humandb  
-    buildver = hg38  
-    protocol = refGene,cosmic70  
-    operation = g,f  
-    ```
-
     ### Run multi_snp
     There are two ways to run `multi_snp`
 
@@ -40,7 +23,6 @@ class Multi_snp(Multi):
         --thread 4\\
         --mod shell\\
         --panel lung_1\\
-        --annovar_config annovar.config\\
         --not_consensus
     ```
 
@@ -53,7 +35,6 @@ class Multi_snp(Multi):
         --thread 4\\
         --mod shell\\
         --panel lung_1\\
-        --annovar_config annovar.config\\
     ```
 
     """

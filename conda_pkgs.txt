@@ -14,3 +14,4 @@ conda-forge::gcc
 bioconda::trust4=1.0.7
 conda-forge::r-argparse
 conda-forge::r-seurat=4.0.1
+bioconda::snpeff
