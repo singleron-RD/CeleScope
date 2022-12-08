@@ -85,7 +85,7 @@ otherwise an ambiguous character(N) will be added.
 
 
 ### analysis_snp
-- Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+- Annotate variants with [snpEff](http://pcingola.github.io/SnpEff/).
 
 
 ## Output files
@@ -154,7 +154,7 @@ Genotypes are changed accordingly.
 ### analysis_snp
 - `{sample}_gt.csv` Genotypes of variants of each cell. Rows are variants and columns are cells.
 - `{sample}_variant_ncell.csv` Number of cells with each genotype.
-- `{sample}_variant_table.csv` `{sample}_variant_ncell.csv` annotated with COSMIC(https://cancer.sanger.ac.uk/cosmic).
+- `{sample}_variant_table.csv` annotated with snpEff.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.

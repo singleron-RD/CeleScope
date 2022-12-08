@@ -1,10 +1,10 @@
 ## Features
-- Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+- Annotate variants with [snpEff](http://pcingola.github.io/SnpEff/).
 
 ## Output
 - `{sample}_gt.csv` Genotypes of variants of each cell. Rows are variants and columns are cells.
 - `{sample}_variant_ncell.csv` Number of cells with each genotype.
-- `{sample}_variant_table.csv` `{sample}_variant_ncell.csv` annotated with COSMIC(https://cancer.sanger.ac.uk/cosmic).
+- `{sample}_variant_table.csv` annotated with snpEff.
 ## Arguments
 `--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
 
