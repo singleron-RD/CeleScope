@@ -7,7 +7,7 @@ conda-forge::r-tidyverse
 conda-forge::r-deldir=1.0_6
 conda-forge::r-vcfr
 conda-forge::r-reshape2
-bioconda:igblast
+bioconda::igblast
 bioconda::bcftools=1.12
 bioconda::gatk4
 conda-forge::gcc
