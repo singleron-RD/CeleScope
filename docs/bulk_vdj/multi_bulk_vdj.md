@@ -25,7 +25,7 @@ celescope vdj mkref mouse IG
 
 ## Usage
 ```
-multi_vdj \
+multi_bulk_vdj \
     --mapfile ./vdj.mapfile \
     --ref_path /genome/vdj/human/human_TR \
     --species human \
