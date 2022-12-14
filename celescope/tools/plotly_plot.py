@@ -370,7 +370,7 @@ class Tsne_single_plot(Plotly_plot):
         for feature_name in self.feature_name_list:
             self._fig = go.Figure()
             name = feature_name[0].upper() + feature_name[1:]
-            self.title = f"t-SNE plot Colored by {name}"
+            title = f"t-SNE plot Colored by {name}"
             df_tmp =  self._df.loc[:,[self._str_coord1,self._str_coord2,feature_name]]
             df_tmp = df_tmp.loc[df_tmp[feature_name] != 0]
             self._fig.add_trace(go.Scatter(x=round_floats_in_list(df_tmp[self._str_coord1]),
@@ -391,6 +391,7 @@ class Tsne_single_plot(Plotly_plot):
                                                 ))
         
             self.update_fig()
+            self._fig.update_layout(title={"text": title, "x": 0.5, "y": 0.95, "font": {"size": 15}})
             self._fig.write_image(f"{self.analysis_dir}/{name}_tsne.png")
         
     def update_fig(self):
@@ -408,7 +409,6 @@ class Tsne_single_plot(Plotly_plot):
 
         self._fig.update_layout(
             self._layout,
-            title={"text": self.title, "x": 0.5, "y": 0.95, "font": {"size": 15}},
             plot_bgcolor='#FFFFFF',
             hovermode="closest"
         )
