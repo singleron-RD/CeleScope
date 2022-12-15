@@ -21,7 +21,6 @@ ASSAY_LIST = [
     'sweetseq',
     'rna_virus',
     'utils',
-    'bulk_vdj'
 ]
 
 ROOT_PATH = os.path.dirname(__file__)
