@@ -22,7 +22,6 @@ def filter_fun(df):
     df['filter_num'] = np.mean(df,axis=1)+np.std(df,axis=1)
     for index,_ in df.iterrows():
         df.loc[index] = df.loc[index].mask(df.loc[index]<df.loc[index]['filter_num'],0)
-        #df.loc[index].apply(lambda x: 0 if x>df.loc[index]['filter_num'] else x)
     df.drop(columns='filter_num',inplace=True)
     return df
 
@@ -100,26 +99,27 @@ class Count_cite(Step):
         df_UMI_cell_out = df_UMI_cell.T
         df_UMI_cell_out.to_csv(self.mtx, sep='\t', compression='gzip')
 
-
-        # filter_matrix
-        df_filtered = filter_fun(df_UMI_cell_out)
-        features_filtered = Features(df_filtered.index.to_list())
-        filtered_citeseq_matrix = CountMatrix2.from_dataframe2(df_filtered, features_filtered, barcodes=self.match_barcode)
-        filtered_merged_matrix = rna_matrix.concat_by_barcodes(filtered_citeseq_matrix)
-        filtered_merged_matrix.to_matrix_dir(self.filtered_matrix_dir)
-
-
-        # normalize citeseq date 
-        obs = pd.DataFrame(index=df_filtered.columns)
-        var = pd.DataFrame(df_filtered.index,index=df_filtered.index,columns=['ADT'])
-        mdata_citeseq = ad.AnnData(np.array(df_filtered.T),obs=obs,var=var)
+        
+        # fix
+        ## 1.normalize;2.filter
+        ### normalize
+        obs = pd.DataFrame(index=df_UMI_cell_out.columns)
+        var = pd.DataFrame(df_UMI_cell_out.index,index=df_UMI_cell_out.index,columns=['ADT'])
+        mdata_citeseq = ad.AnnData(np.array(df_UMI_cell_out.T),obs=obs,var=var)
         sc.pp.normalize_total(
                 mdata_citeseq,
                 target_sum=1e4,
                 inplace=True,
             )
         sc.pp.log1p(mdata_citeseq)
-
+        ### filter
+        df_filtered = filter_fun(mdata_citeseq.to_df().T)
+        features_filtered = Features(df_filtered.index.to_list())
+        filtered_citeseq_matrix = CountMatrix2.from_dataframe2(df_filtered, features_filtered, barcodes=self.match_barcode)
+        filtered_merged_matrix = rna_matrix.concat_by_barcodes(filtered_citeseq_matrix)
+        filtered_merged_matrix.to_matrix_dir(self.filtered_matrix_dir)
+        
+        
         # filtered_tsne.csv
         df_tsne = pd.read_csv(self.tsne_coord,sep="\t")
         if 'Unnamed: 0' in df_tsne.columns:
@@ -131,7 +131,6 @@ class Count_cite(Step):
         df_tsne.fillna(0,inplace=True)
         df_tsne.to_csv(self.filtered_tsne_coord,sep='\t')
 
-        
 
         # UMI
         UMIs = df_UMI_cell.apply(sum, axis=1)
