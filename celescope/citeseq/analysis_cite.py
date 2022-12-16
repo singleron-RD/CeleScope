@@ -37,6 +37,6 @@ class Analysis_cite(Step):
         # plot
         tsne_cluster = Tsne_plot(df_tsne, 'cluster').get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
-        tsne_citeseq = Tsne_dropdown_plot(df_tsne,'Citeseq',feature_name_list,self.tmp_dir).get_plotly_div()
+        tsne_citeseq = Tsne_dropdown_plot(df_tsne,'Citeseq',feature_name_list).get_plotly_div()
         self.add_data(tsne_citeseq=tsne_citeseq)
         Tsne_single_plot(df_tsne,feature_name_list,self.tmp_dir).get_plotly_div()

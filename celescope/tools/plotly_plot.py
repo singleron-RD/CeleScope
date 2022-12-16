@@ -176,17 +176,14 @@ class Tsne_plot(Plotly_plot):
 
 class Tsne_dropdown_plot(Plotly_plot):
 
-    def __init__(self, df_tsne,name, feature_name_list, tmp_dir,dropdown=True):
+    def __init__(self, df_tsne,name, feature_name_list, dropdown=True):
         super().__init__(df_tsne)
         
-        self._buttom_plot = None
         self.name = name
         self.feature_name_list = feature_name_list
         self.dropdown = dropdown
         self.title = f"t-SNE plot Colored by {self.name}"
-        self.tmp_dir = f'{tmp_dir}/tmp_dir'
-        pathlib.Path(self.tmp_dir).mkdir(parents=True,exist_ok=True)
-
+        
         self._layout = {}
         
         self._buttons=[]
@@ -210,33 +207,6 @@ class Tsne_dropdown_plot(Plotly_plot):
         
     def get_plotly_div(self):
 
-        # Draw the bottom diagram
-        self._buttom_plot = go.Figure()
-        self._buttom_plot.add_trace(go.Scatter(x=round_floats_in_list(self._df['tSNE_1']),y=round_floats_in_list(self._df['tSNE_2']),mode='markers',
-                                                    showlegend=False,
-                                                    marker=go.scatter.Marker(opacity=0.9,size=3,color='LightGrey')))
-        axes_config = {
-                    'visible':False,
-                    'showgrid': False,
-                    'gridcolor': '#F5F5F5',
-                    'showline': False,
-                    'ticks': None,
-                    'zeroline': True,
-                    'zerolinecolor': 'black',
-                    'zerolinewidth': 0.7,
-                }
-        self._buttom_plot.update_xaxes(range=self.x_range,**axes_config)
-        self._buttom_plot.update_yaxes(range=self.y_range,**axes_config)
-        self._buttom_plot.update_layout(plot_bgcolor='#FFFFFF', hovermode="closest")
-        self._buttom_plot.write_image(f"{self.tmp_dir}/tmp.png",width= 1340,height=580 ,engine='kaleido')
-
-        filename = f'{self.tmp_dir}/tmp.png'
-        with open(filename, "rb") as image_file:
-            image_show = image_file.read()
-            encoded_string = base64.b64encode(image_show).decode("utf-8")
-            encoded_string = "data:image/jpg;base64," + encoded_string
-    
-        
         if self.dropdown:
             self._fig = go.Figure()
             _num = len(self.feature_name_list)
@@ -248,17 +218,16 @@ class Tsne_dropdown_plot(Plotly_plot):
 
             for feature_name in self.feature_name_list:
                 df_tmp =  self._df.loc[:,[self._str_coord1,self._str_coord2,feature_name]]
-                df_tmp = df_tmp.loc[df_tmp[feature_name] != 0]
-                self._fig.add_trace(go.Scatter(x=round_floats_in_list(df_tmp[self._str_coord1]),
+                self._fig.add_trace(go.Scattergl(x=round_floats_in_list(df_tmp[self._str_coord1]),
                                                y=round_floats_in_list(df_tmp[self._str_coord2]),
                                                mode='markers',
                                                name = feature_name[0].upper() + feature_name[1:],
                                                showlegend=False,
-                                               marker=go.scatter.Marker(opacity=0.9,size=3,color=self._df[feature_name],
+                                               marker=go.scattergl.Marker(opacity=0.9,size=3,color=self._df[feature_name],
                                                                         cmax=max_num,
                                                                         cmin=0,
                                                                         colorscale=[[0,'LightGrey'],[1,'Red']],
-                                                                        colorbar=go.scatter.marker.ColorBar(
+                                                                        colorbar=go.scattergl.marker.ColorBar(
                                                                                                             tickmode='array',
                                                                                                             tickvals= tick_list,
                                                                                                             ticktext= tick_list,
@@ -278,21 +247,6 @@ class Tsne_dropdown_plot(Plotly_plot):
             pass
         self.update_fig()
         
-        self._fig.add_layout_image(
-        dict(
-            source=encoded_string,
-            xref="x",
-            yref="y",
-            x=-53,
-            y=61.2,
-            sizex=106,
-            sizey=118,
-            sizing="stretch",
-            opacity=1,
-            layer="below")
-)
-        pathlib.Path(f'{self.tmp_dir}/tmp.png').unlink()
-        pathlib.Path(f"{self.tmp_dir}").rmdir()
         return self.plotly_plot()
         
     def update_fig(self):
