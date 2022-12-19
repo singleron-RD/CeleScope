@@ -1,0 +1,24 @@
+
+{% include "html/utils/start.html"%}
+
+{% if sequencing_summary is defined %}
+{% set step_summary = sequencing_summary %}
+{% include "html/utils/step.html"%}
+{% endif %}
+
+{% if mapping_summary is defined %}
+{% set step_summary = mapping_summary %}
+{% include "html/utils/step.html"%}
+{% endif %}
+
+{% if cells_summary is defined %}
+{% set step_summary = cells_summary %}
+{% include "html/utils/step.html"%}
+{% endif %}
+
+{% if targeting_summary is defined %}
+{% set step_summary = targeting_summary %}
+{% include "html/utils/step.html"%}
+{% endif %}
+
+{% include "html/utils/end.html"%}
