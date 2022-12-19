@@ -2,8 +2,8 @@ from xopen import xopen
 
 from celescope.tools import barcode as super_barcode
 from celescope.tools import utils
-from celescope.tools.step import s_common
 from celescope.tools.__init__ import PATTERN_DICT
+from celescope.__init__ import HELP_DICT
 
 import pysam 
 
