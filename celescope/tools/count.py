@@ -218,7 +218,7 @@ class Count(Step):
             fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
 
             def keyfunc(x):
-                return x.query_name.split('_', maxsplit=1)[0]
+                return x.query_name.split('_', 1)[0]
             for _, g in groupby(samfile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
                 for seg in g:
@@ -230,16 +230,13 @@ class Count(Step):
                 for gene_id in gene_umi_dict:
                     Count.correct_umi(gene_umi_dict[gene_id])
 
-                discard_umi, umi_gene_dict = Count.discard_read(gene_umi_dict)
-
                 # output
-                for umi in umi_gene_dict:
-                    if umi not in discard_umi:
-                        for gene_id in umi_gene_dict[umi]:
-                            fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
-                                                            umi_gene_dict[umi][gene_id]))
+                for gene_id in gene_umi_dict:
+                    for umi in gene_umi_dict[gene_id]:
+                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
+                                                        gene_umi_dict[gene_id][umi]))
         samfile.close()
-
+        
     @utils.add_log
     def cell_calling(self, df_sum):
         cell_calling_method = self.cell_calling_method
