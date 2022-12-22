@@ -65,7 +65,7 @@ class Mapping_vdj(super_vdj.Mapping_vdj):
         )
 
         # Reads with CDR3
-        df_cdr3 = df[df["cdr3_aa"]!=""]
+        df_cdr3 = df[(df["cdr3_aa"]!="") & (df["junction_aa"]!="")]
         self.add_metric(
             name="Reads with CDR3",
             value=df_cdr3.shape[0],
