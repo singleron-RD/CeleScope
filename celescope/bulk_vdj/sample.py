@@ -35,6 +35,7 @@ class Sample(Step):
         else:
             self.suffix = ""
         self.out_fq2 = f'{self.out_prefix}_2.fq{self.suffix}'
+        #self.out_fq2 = f'{self.out_prefix}_clean_2.fa{self.suffix}'
         self.out_fq1 = f'{self.out_prefix}_1.fq{self.suffix}'
 
         self.open_files()
@@ -61,6 +62,7 @@ class Sample(Step):
                     self.total_num += 1
 
                     self.fh_fq2.write(f'@readId_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                    #self.fh_fq2.write(f'>readId_{self.total_num}\n{seq1}{seq2}\n')
                     if self.output_R1:
                         self.fh_fq1.write(f'@readId_{self.total_num}\n{seq1}\n+\n{qual1}\n')       
                 
