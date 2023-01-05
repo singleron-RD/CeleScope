@@ -48,10 +48,6 @@ def parse_variant_ann(variant_ann_file):
             if not line.startswith("#"):
                 info = line.split('\t')[7]
                 anns = info.split("|")
-                # try:
-                #     gene = anns[3]
-                # except:
-                #     gene = "none"
                 gene = anns[3]
                 gene_list.append(gene)
             
