@@ -61,7 +61,7 @@ def parse_variant_ann(variant_ann_file):
                             tmp1.append(exon)
 
                     if ann.startswith("p."):
-                        protein = ann.strip("p.")
+                        protein = ann[2:]
                         for i in AA_DICT:
                             protein = protein.replace(i, AA_DICT[i])
                         if protein not in tmp2:
@@ -159,7 +159,6 @@ class Analysis_snp(Step):
         # Filter -no-downstream -no-upstream -no-utr -no-intron -no-intergenic -no SPLICE_SITE_REGION
         cmd = (
             f"snpEff -Xmx8g -v GRCh38.99 {os.path.abspath(self.vcf_file)} > variants_ann.vcf "
-            "-no-downstream -no-upstream -no-utr -no-intron -no-intergenic -no SPLICE_SITE_REGION "
         )
         self.run_snpEff.logger.info(cmd)
 
