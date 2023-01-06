@@ -1,3 +1,10 @@
+## [1.14.1]
+ ### `snp`
+ - Add an argument `--database`. Data from non-human species can also be annotated with this argument.
+ - Change the default filtering method from `auto` to `otsu` to improve sensitivity.
+ - Fix an issue that could result in blank gene annotations.
+ - Fix an issue where amino acid names were not displaying correctly.
+
 ## [1.14.0] - 2022-12-20
  ### `rna`
  - Revert changes to the rna pipeline made in version 1.13.0. 
