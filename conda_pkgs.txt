@@ -1,14 +1,14 @@
 conda-forge::python=3.9
 bioconda::star=2.6.1b
 bioconda::subread=2.0.1
-bioconda::samtools=1.12
+bioconda::samtools=1.16
 conda-forge::r-argparser
 conda-forge::r-tidyverse
 conda-forge::r-deldir=1.0_6
 conda-forge::r-vcfr
 conda-forge::r-reshape2
 bioconda::igblast
-bioconda::bcftools=1.12
+bioconda::bcftools=1.16
 bioconda::gatk4
 conda-forge::gcc
 bioconda::trust4=1.0.7

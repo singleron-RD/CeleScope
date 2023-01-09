@@ -121,6 +121,7 @@ class Analysis_snp(Step):
 
         # parse
         self.gene_list, self.n_gene = get_gene_list(args)
+        self.database = args.database
 
         # data
         self.variant_table = None
@@ -156,9 +157,8 @@ class Analysis_snp(Step):
 
     @utils.add_log
     def run_snpEff(self):
-        # Filter -no-downstream -no-upstream -no-utr -no-intron -no-intergenic -no SPLICE_SITE_REGION
         cmd = (
-            f"snpEff -Xmx8g -v GRCh38.99 {os.path.abspath(self.vcf_file)} > variants_ann.vcf "
+            f"snpEff -Xmx8g -v {self.database} {os.path.abspath(self.vcf_file)} > variants_ann.vcf "
         )
         self.run_snpEff.logger.info(cmd)
 
@@ -272,6 +272,7 @@ def analysis_snp(args):
 
 def get_opts_analysis_snp(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
+    parser.add_argument("--database", help='snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse)', default='GRCh38.99')
     parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
     if sub_program:
         s_common(parser)
