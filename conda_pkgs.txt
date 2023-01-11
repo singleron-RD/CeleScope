@@ -1,7 +1,7 @@
 conda-forge::python=3.9
 bioconda::star=2.6.1b
 bioconda::subread=2.0.1
-bioconda::samtools=1.16
+bioconda::samtools=1.16.1
 conda-forge::r-argparser
 conda-forge::r-tidyverse
 conda-forge::r-deldir=1.0_6
