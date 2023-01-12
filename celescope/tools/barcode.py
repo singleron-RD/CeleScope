@@ -678,7 +678,7 @@ class Barcode(Step):
 
                     # barcode filter
                     seq_list = self.get_seq_list(seq1, pattern_dict, 'C')
-                    if chemistry == 'flv':
+                    if self.bool_flv:
                         seq_list = [utils.reverse_complement(seq) for seq in seq_list[::-1]]
                     if bool_whitelist:
                         bool_valid, bool_corrected, corrected_seq = Barcode.check_seq_mismatch(
