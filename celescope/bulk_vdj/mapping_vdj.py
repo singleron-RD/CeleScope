@@ -113,8 +113,9 @@ class Mapping_vdj(super_vdj.Mapping_vdj):
         for i in ["bestVGene", "bestDGene", "bestJGene"]:
             df_VJ[i] = df_VJ[i].apply(lambda x: x.split("*")[0])
 
-        # CDR3 sequence have at least 5 amino acids
+        # CDR3 sequence have at least 5 amino acids and start with a C
         df_VJ = df_VJ[df_VJ["aaSeqCDR3"].str.len()>5]
+        df_VJ = df_VJ[df_VJ["aaSeqCDR3"].str.startswith('C')]
         df_VJ.to_csv(self.productive_file, sep="\t", index=False)
 
     def run(self):
