@@ -75,7 +75,7 @@ class Multi_bulk_vdj(Multi):
     def count_vdj(self, sample):
         step = 'count_vdj'
         cmd_line = self.get_cmd_line(step, sample)
-        productive_file = f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_produtive.tsv'
+        productive_file = f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_productive.tsv'
         cmd = (
             f'{cmd_line} '
             f'--productive_file {productive_file} '

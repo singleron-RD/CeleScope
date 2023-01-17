@@ -12,19 +12,16 @@ class Mapping_vdj(super_vdj.Mapping_vdj):
     """
     ## Features
     - Align R2 reads to IGMT(http://www.imgt.org/) database sequences with blast.
-
     ## Output
     - `{sample}_airr.tsv` The alignment result of each read.
     A tab-delimited file compliant with the AIRR Rearrangement schema(https://docs.airr-community.org/en/stable/datarep/rearrangements.html)
-
-    - `{sample}_produtive.tsv` Including all productive chains for each readID.
-
+    - `{sample}_productive.tsv` Including all productive chains.
     """
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
         # out
-        self.productive_file = f'{self.out_prefix}_produtive.tsv'
+        self.productive_file = f'{self.out_prefix}_productive.tsv'
 
     @utils.add_log
     def igblast(self, chain, ig_seqtype):
@@ -116,6 +113,8 @@ class Mapping_vdj(super_vdj.Mapping_vdj):
         for i in ["bestVGene", "bestDGene", "bestJGene"]:
             df_VJ[i] = df_VJ[i].apply(lambda x: x.split("*")[0])
 
+        # CDR3 sequence have at least 5 amino acids
+        df_VJ = df_VJ[df_VJ["aaSeqCDR3"].str.len()>5]
         df_VJ.to_csv(self.productive_file, sep="\t", index=False)
 
     def run(self):
