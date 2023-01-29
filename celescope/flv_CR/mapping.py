@@ -39,11 +39,9 @@ class Mapping(Step):
             self.contig_file = glob.glob(f'{args.match_out}/matched_contig_annotations.csv')[0]
         self.celltype_set = CELL_TYPE_DICT[self.seqtype]
 
-        try:
-            self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
-            self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-        except IndexError:
-            pass
+        self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')
+        self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')
+
 
     @staticmethod
     @utils.add_log
@@ -64,7 +62,7 @@ class Mapping(Step):
         """Mapping result with matched scRNA.
         """
         Mapping.run_mapping(
-            self.rds, self.contig_file, self.sample, self.outdir, self.assign_file
+            self.rds[0], self.contig_file, self.sample, self.outdir, self.assign_file[0]
             )
 
         meta = pd.read_csv(f'{self.outdir}/{self.sample}_meta.csv')
@@ -90,13 +88,9 @@ class Mapping(Step):
             show=False)
 
     def run(self):
-        try:
-            if self.rds and self.assign_file:
-                self.process()
-        except AttributeError:
-            print("rds file and type file do not exist" + "\n" )
-        except ZeroDivisionError:
-            print("Not found auto-assigned T/B cell in matched sc-RNA")
+        if self.rds and self.assign_file:
+            self.process()
+
 
 def mapping(args):
     step_name = 'mapping'
