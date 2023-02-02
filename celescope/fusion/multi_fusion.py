@@ -4,8 +4,6 @@ from celescope.tools.multi import Multi
 
 class Multi_fusion(Multi):
     """
-    ## Features
-    - Generate multi-sample scripts.
 
     ## Usage
     ```
@@ -15,7 +13,14 @@ class Multi_fusion(Multi):
     --mod shell\\
     ```
 
-    Use `celescope fusion mkref` to generate the fusion genomeDir.
+    Use `celescope/data/fusion/{panel}/mkref.sh` to generate the fusion genomeDir. 
+    ```
+    source activate celescope
+    celescope fusion mkref \\
+    --genome_name BCR_ABL1_PML_RARA_all \\
+    --fasta BCR_ABL1_PML_RARA_all.fasta \\
+    --fusion_pos BCR_ABL1_PML_RARA_all_pos.txt\\
+    ```
 
     ## Main Output
     - `05.filter_fusion/{sample}_filtered_UMI.csv`: Filtered fusion UMI counts of each cell barcode.

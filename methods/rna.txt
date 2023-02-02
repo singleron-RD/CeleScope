@@ -1,10 +1,10 @@
 Single-cell transcriptomics and analysis
 
-Raw reads were processed to generate gene expression profiles using CeleScope v1.2.0(Singleron Biotechnologies) 
+Raw reads were processed to generate gene expression profiles using CeleScope v*.*.*(Singleron Biotechnologies) 
 with default parameters. Briefly, Barcodes and UMIs were extracted from R1 reads and corrected. Adapter sequences and poly A tails were trimmed from R2 reads and the trimmed R2 reads were aligned against the {GRCh38 (hg38)} {GRCm38 (mm10)} transcriptome 
 using STAR(v2.6.1b). Uniquely mapped reads were then assigned to exons with FeatureCounts(v2.0.1). Successfully Assigned Reads with the same cell barcode, UMI and gene were grouped together to generate the gene expression matrix for further analysis.
 
-Single-cell analyses were performed using the Seurat package(v4.0.1). All the variable genes selected by the FindVariableFeatures function were used to compute the PCs. The first 20 PCs and a resolution of 0.6 were used for clustering and tSNE visualization.
+Single-cell analyses were performed using the Seurat package(v4.0.1). All the variable genes selected by the FindVariableFeatures function were used to compute the PCs. The first 20 PCs and a resolution of 0.6 were used for clustering and tSNE(UMAP) visualization.
 
 
 

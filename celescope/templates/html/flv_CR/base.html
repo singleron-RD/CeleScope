@@ -1,0 +1,24 @@
+
+{% include "html/utils/start.html"%}
+
+    {% if mapping_summary is defined %}
+    {% set step_summary = mapping_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+
+    {% if cells_summary is defined %}
+    {% set step_summary = cells_summary %}
+    {% include "html/flv_CR/cells.html"%}
+    {% endif %}
+
+    {% if annotation_summary is defined %}
+    {% set step_summary = annotation_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+
+    {% if match_summary is defined %}
+    {% set step_summary = match_summary %}
+    {% include "html/flv_CR/match.html"%}
+    {% endif %}
+
+{% include "html/utils/end.html"%}

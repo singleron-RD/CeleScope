@@ -1,12 +1,46 @@
+## Reference
+- Human
+```
+mkdir -p /genome/vdj/human
+cd /genome/vdj/human
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TR{A,B}{V,J}.fasta
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IG{H,K,L}{V,J}.fasta
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IGHD.fasta
+celescope vdj mkref human TR
+celescope vdj mkref human IG
+```
+
+- Mouse
+```
+mkdir -p /genome/vdj/mouse
+cd /genome/vdj/mouse
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Mus_musculus/TR/TR{A,B}{V,J}.fasta
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Mus_musculus/TR/TRBD.fasta
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Mus_musculus/IG/IG{H,K,L}{V,J}.fasta
+wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Mus_musculus/IG/IGHD.fasta
+celescope vdj mkref mouse TR
+celescope vdj mkref mouse IG
+```
+
 ## Usage
 ```
 multi_vdj \
     --mapfile ./vdj.mapfile \
+    --ref_path /genome/vdj/human/human_TR \
+    --species human \
     --type TCR \
     --thread 8 \
     --mod shell
 ``` 
 ## Features
+### mkref
+
+- Build Index for IMGT_ref.
+
+- Make sure current directory contains all V,D,J of TRA/TRB or IGH/IGK/IGL reference downloaded from IMGT website.
+
+
 ### barcode
 
 - Demultiplex barcodes.
@@ -32,7 +66,7 @@ otherwise an ambiguous character(N) will be added.
 
 
 ### mapping_vdj
-- Align R2 reads to IGMT(http://www.imgt.org/) database sequences with mixcr.
+- Align R2 reads to IGMT(http://www.imgt.org/) database sequences with blast.
 
 
 ### count_vdj
@@ -41,6 +75,10 @@ otherwise an ambiguous character(N) will be added.
 
 
 ## Output files
+### mkref
+
+- VDJ IMGT reference with index files.
+
 ### barcode
 
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
@@ -54,16 +92,13 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `{sample}_consensus.fq` Fastq file after consensus.
 
 ### mapping_vdj
-- `{sample}_consensus.fasta` Fasta file after UMI consensus.
+- `{sample}_airr.tsv` The alignment result of each UMI.
+A tab-delimited file compliant with the AIRR Rearrangement schema(https://docs.airr-community.org/en/stable/datarep/rearrangements.html)
 
 - `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.
 
 - `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
 most VJ_pair UMI reads is kept.
-
-- `{sample}_align.txt` Result report.
-
-- `{sample}_alignments.txt` The alignment result of each UMI/read.
 
 ### count_vdj
 - `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, each chain occupies one line.
@@ -84,12 +119,17 @@ This file will only be produced when the `match_dir` parameter is provided.
 4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
 - `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
+- `vdj` Required, matched_dir.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
-
+- `fusion` Required, matched_dir.
+- `citeseq` Required, matched_dir.
+- `flv_CR` Required, matched_dir.
+- `flv_trust4` Required, matched_dir.
+- `sweetseq` Required, matched_dir.
+ 
 5th column:
 - `dynaseq` Required, background snp file.
 
@@ -125,11 +165,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
-- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
-- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
-- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
-same time.
+`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
 
 `--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
         of bases.  
@@ -150,7 +186,7 @@ same time.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 
@@ -181,16 +217,27 @@ at least {overlap} bases match between adapter and read.
 
 `--threshold` Default 0.5. Valid base threshold.
 
+`--not_consensus` Skip the consensus step.
+
 `--min_consensus_read` Minimum number of reads to support a base.
 
-`--species` Default `hs`. `hs`(human) or `mmu`(mouse).
+`--ref_path` reference path for igblast.
 
-`--not_consensus` Input fastq is not consensused.
+`--species` Default human. human or mouse.
 
 `--type` Required. `TCR` or `BCR`.
 
-`--UMI_min` Default `auto`. Minimum UMI number to filter. The barcode with UMI>=UMI_min is considered to be cell.
+`--UMI_min` minimum number of chain UMI to consider as as cell.
 
-`--iUMI` Default `1`. Minimum number of UMI of identical receptor type and CDR3. 
+`--BCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for BCR. 
 For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
+
+`--TCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for BCR. 
+For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
+
+`--expected_target_cell_num` Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.
+
+`--target_cell_barcode` Barcode of target cells. It is a plain text file with one barcode per line. If provided, `--expected_target_cell_num` is ignored.
+
+`--target_weight` UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.
 

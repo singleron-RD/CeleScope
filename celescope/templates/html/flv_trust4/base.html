@@ -1,0 +1,25 @@
+
+{% include "html/utils/start.html"%}
+
+    
+    {% if mapping_summary is defined %}
+    {% set step_summary = mapping_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+
+    {% if assemble_summary is defined %}
+    {% set step_summary = assemble_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+
+    {% if summarize_summary is defined %}
+    {% set step_summary = summarize_summary %}
+    {% include "html/flv_trust4/summarize.html"%}
+    {% endif %}
+
+    {% if annotation_summary is defined %}
+    {% set step_summary = annotation_summary %}
+    {% include "html/flv_trust4/annotation.html"%}
+    {% endif %}
+
+{% include "html/utils/end.html"%}

@@ -5,7 +5,7 @@ Each pipeline consists of several steps and they all have two identical pre-proc
 
 Currently, CeleScope includes the follwing pipelines:
 
-- `celescope rna` for Single-cell RNA-seq data generated with GEXSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering, marker gene expression analysis and cell type assignment(optional).
+- `celescope rna` for Single-cell RNA-seq data generated with GEXSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, expression matrix generation, clustering and marker gene expression analysis.
 
 - `celescope vdj` for Single-cell Immune Repertoire data generated with GEXSCOPE<sup>TM</sup> IR kits. It performs preprocessing, UMI consensus, vdj sequence alignment, UMI filtering and clonetypes counting.
 
@@ -16,6 +16,14 @@ Currently, CeleScope includes the follwing pipelines:
 - `celescope snp` for Single cell variant data generated with FocuSCOPE<sup>TM</sup> kits. It performs preprocessing, genome alignment, feature counting, variant calling, variant filtering and variant annotation.
 
 - `celescope capture_virus` for Single cell Epstein-Barr virus(EBV) data generated with FocuSCOPE<sup>TM</sup> Single Cell mRNA × EBV Library  kits. It performs preprocessing, genome alignment, UMI counting, filtering and analysis.
+
+- `celescope fusion` for Single cell fusion detection. For example, it can be used to detect known fusion events in blood cancer. It performs preprocessing, fusion site alignment, UMI counting, filtering and analysis.
+
+- `celescope flv_CR` for Single cell full Length TCR/BCR data generated with sCircle<sup>TM</sup> Kits. It performs preprocessing, barcode conversion, assemble, annotation and filtering.
+
+- `celescope flv_trust4` for Single cell full Length TCR/BCR data generated with sCircle<sup>TM</sup> Kits. It performs preprocessing, mapping, assemble, annotation and filtering.
+
+- `celescope sweetseq` for Single cell data generated with ProMoSCOPE<sup>TM</sup> Single Cell Glycosylation Detection Kits. It performs preprocessing, tag mapping and counting.
 
 ## [Installation](installation.md)
 
@@ -39,6 +47,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [analysis](rna/analysis.md)
 - [multi_rna](rna/multi_rna.md)
 ## Single-cell vdj
+- [mkref](vdj/mkref.md)
 - [consensus](tools/consensus.md)
 - [mapping_vdj](vdj/mapping_vdj.md)
 - [count_vdj](vdj/count_vdj.md)
@@ -76,6 +85,8 @@ Currently, CeleScope includes the follwing pipelines:
 - [count_virus](capture_virus/count_virus.md)
 - [filter_virus](capture_virus/filter_virus.md)
 - [analysis_virus](capture_virus/analysis_virus.md)
+- [featureCounts](capture_virus/featureCounts.md)
+- [count](capture_virus/count.md)
 - [multi_capture_virus](capture_virus/multi_capture_virus.md)
 ## Single-cell fusion
 - [mkref](fusion/mkref.md)
@@ -84,3 +95,26 @@ Currently, CeleScope includes the follwing pipelines:
 - [filter_fusion](fusion/filter_fusion.md)
 - [analysis_fusion](fusion/analysis_fusion.md)
 - [multi_fusion](fusion/multi_fusion.md)
+## Single-cell citeseq
+- [mapping_tag](citeseq/mapping_tag.md)
+- [count_cite](citeseq/count_cite.md)
+- [analysis_cite](citeseq/analysis_cite.md)
+- [multi_citeseq](citeseq/multi_citeseq.md)
+## Single-cell flv_CR
+- [convert](flv_CR/convert.md)
+- [assemble](flv_CR/assemble.md)
+- [summarize](flv_CR/summarize.md)
+- [match](flv_CR/match.md)
+- [mapping](flv_CR/mapping.md)
+- [multi_flv_CR](flv_CR/multi_flv_CR.md)
+## Single-cell flv_trust4
+- [mapping](flv_trust4/mapping.md)
+- [assemble](flv_trust4/assemble.md)
+- [summarize](flv_trust4/summarize.md)
+- [annotation](flv_trust4/annotation.md)
+- [multi_flv_trust4](flv_trust4/multi_flv_trust4.md)
+## Single-cell sweetseq
+- [mapping_tag](sweetseq/mapping_tag.md)
+- [count_tag](sweetseq/count_tag.md)
+- [analysis_tag](sweetseq/analysis_tag.md)
+- [multi_sweetseq](sweetseq/multi_sweetseq.md)

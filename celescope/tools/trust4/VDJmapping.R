@@ -26,7 +26,7 @@ filter_df <- filter(df, barcode %in% barcodes)
 res <- table(filter_df$seurat_clusters)
 res <- as.data.frame(res)
 
-out_csv = stringr::str_glue("{args$outdir}/{args$sample}_match_barcodes_celltypes_distribution.txt")
+out_csv = stringr::str_glue("{args$outdir}/{args$sample}_match_barcodes_distribution.txt")
 write_csv(res,file=out_csv)
 
 meta = rna@meta.data

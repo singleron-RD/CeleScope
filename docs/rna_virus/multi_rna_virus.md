@@ -1,4 +1,100 @@
+## Features
+### barcode
 
+- Demultiplex barcodes.
+- Filter invalid R1 reads, which includes:
+    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
+    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
+    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
+    - Low quality reads: low sequencing quality in barcode and UMI regions.
+
+
+### cutadapt
+- Trim adapters in R2 reads with cutadapt. Default adapters includes:
+    - polyT=A{18}, 18 A bases. 
+    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+
+### star
+- Align R2 reads to the reference genome with STAR.
+
+
+### star_virus
+- Map reads to the viral genome using STAR.
+
+
+### featureCounts
+- Assigning uniquely mapped reads to genomic features with FeatureCounts.
+
+### count
+- Cell-calling: Distinguish cell barcodes from background barcodes. 
+- Generate expression matrix.
+
+## Output files
+### barcode
+
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
+the read name is `{barcode}_{UMI}_{read ID}`.
+
+### cutadapt
+- `cutadapt.log` Cutadapt output log file.
+- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### star
+- `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
+
+- `{sample}_SJ.out.tab` SJ.out.tab contains high confidence collapsed splice junctions in tab-delimited format.
+
+- `{sample}_Log.out` Main log with a lot of detailed information about the run. 
+This is most useful for troubleshooting and debugging.
+
+- `{sample}_Log.progress.out` Report job progress statistics, such as the number of processed reads, 
+% of mapped reads etc. It is updated in 1 minute intervals.
+
+- `{sample}_Log.Log.final.out` Summary mapping statistics after mapping job is complete, 
+very useful for quality control. The statistics are calculated for each read (single- or paired-end) and 
+then summed or averaged over all reads. Note that STAR counts a paired-end read as one read, 
+(unlike the samtools agstat/idxstats, which count each mate separately). 
+Most of the information is collected about the UNIQUE mappers 
+(unlike samtools agstat/idxstats which does not separate unique or multi-mappers). 
+Each splicing is counted in the numbers of splices, which would correspond to 
+summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
+i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
+
+### star_virus
+- `{sample}_virus_Aligned.sortedByCoord.out.bam` : Aligned BAM sorted by coordinate.
+
+### featureCounts
+- `{sample}` Numbers of reads assigned to features (or meta-features).
+- `{sample}_summary` Stat info for the overall summrization results, including number of 
+successfully assigned reads and number of reads that failed to be assigned due to 
+various reasons (these reasons are included in the stat info).
+- `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
+sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
+    - CB cell barcode
+    - UB UMI
+    - GN gene name
+    - GX gene id
+- `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
+
+### count
+- `{sample}_raw_feature_bc_matrix` The expression matrix of all detected barcodes in [Matrix Market Exchange Formats](
+    https://math.nist.gov/MatrixMarket/formats.html). 
+- `{sample}_filtered_feature_bc_matrix` The expression matrix of cell barcodes in Matrix Market Exchange Formats. 
+- `{sample}_count_detail.txt.gz` 4 columns: 
+    - barcode  
+    - gene ID  
+    - UMI count  
+    - read_count  
+- `{sample}_counts.txt` 6 columns:
+    - Barcode: barcode sequence
+    - readcount: read count of each barcode
+    - UMI2: read count with reads per UMI >= 2 for each barcode
+    - UMI: UMI count for each barcode
+    - geneID: gene count for each barcode
+    - mark: cell barcode or backgound barcode.
+        `CB` cell  
+        `UB` background  
+- `{sample}_downsample.tsv` Subset a fraction of reads and calculate median gene number and sequencing saturation.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -9,12 +105,17 @@
 4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
 - `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
+- `vdj` Required, matched_dir.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
-
+- `fusion` Required, matched_dir.
+- `citeseq` Required, matched_dir.
+- `flv_CR` Required, matched_dir.
+- `flv_trust4` Required, matched_dir.
+- `sweetseq` Required, matched_dir.
+ 
 5th column:
 - `dynaseq` Required, background snp file.
 
@@ -37,9 +138,12 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--mod` Which type of script to generate, `sjm` or `shell`.
 
+`--queue` Only works if the `--mod` selects `sjm`.
+
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
+use `--steps_run barcode,cutadapt`.
 
 `--outdir` Output directory.
 
@@ -47,18 +151,14 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
-- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
-- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
-- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
-same time.
+`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
 
 `--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
         of bases.  
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
-- `T`: poly T
+- `T`: poly T.
 
 `--whitelist` Cell barcode whitelist file path, one cell barcode per line.
 
@@ -72,9 +172,11 @@ same time.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
+
+`--output_R1` Output valid R1 reads.
 
 `--gzip` Output gzipped fastq files.
 
@@ -97,42 +199,28 @@ at least {overlap} bases match between adapter and read.
 
 `--insert` Default `150`. Read2 insert length.
 
+`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
+
 `--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
 `--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Other STAR parameters.
+`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--virus_genomeDir` Virus genome dir.
+`--virus_genomeDir` Virus genome directory.
 
-`--gtf_type` Specify feature type in GTF annotation
+`--gtf_type` Specify feature type in GTF annotation.
 
-`--featureCounts_param` Other featureCounts parameters
+`--featureCounts_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
 `--expected_cell_num` Default `3000`. Expected cell number.
 
-`--cell_calling_method` Default `auto`. Cell calling methods. Choose from `auto` and `cellranger3`
+`--cell_calling_method` Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`].
 
-`--genomeDir` Required. Genome directory.
-
-`--save_rds` Write rds to disk.
-
-`--type_marker_tsv` A tsv file with header. If this parameter is provided, cell type will be annotated. Example:
-```
-cell_type	marker
-Alveolar	"CLDN18,FOLR1,AQP4,PEBP4"
-Endothelial	"CLDN5,FLT1,CDH5,RAMP2"
-Epithelial	"CAPS,TMEM190,PIFO,SNTN"
-Fibroblast	"COL1A1,DCN,COL1A2,C1R"
-B_cell	"CD79A,IGKC,IGLC3,IGHG3"
-Myeloid	"LYZ,MARCO,FCGR3A"
-T_cell	"CD3D,TRBC1,TRBC2,TRAC"
-LUAD	"NKX2-1,NAPSA,EPCAM"
-LUSC	"TP63,KRT5,KRT6A,KRT6B,EPCAM"
-```
+`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 

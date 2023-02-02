@@ -1,12 +1,13 @@
-from celescope.tools import utils
+import pandas as pd
+
 from celescope.tools.step import Step, s_common
-from celescope.__init__ import HELP_DICT, ROOT_PATH
+from celescope.tools.plotly_plot import Tsne_dropdown_plot,Tsne_single_plot,Tsne_plot
+
 
 
 def get_opts_analysis_cite(parser, sub_program):
     if sub_program:
-        parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
-        parser.add_argument('--citeseq_mtx', help='citeseq matrix .gz file', required=True)
+        parser.add_argument('--tsne_coord', help='tsne coord file', required=True)
         s_common(parser)
 
 
@@ -18,19 +19,24 @@ def analysis_cite(args):
 class Analysis_cite(Step):
     def __init__(self, args, display_title):
         super().__init__(args, display_title)
+        self.tmp_dir = self.args.outdir
 
-        # data
-        self.tsne_dict = utils.parse_match_dir(args.match_dir)
+        # input_file
+        self.tsne_coord = self.args.tsne_coord
 
     def run(self):
+        df_tsne = pd.read_csv(self.tsne_coord,sep="\t",index_col=0)
+        feature_name_list = df_tsne.columns[4:].to_list()
 
-        rds = self.tsne_dict['rds']
-        app = ROOT_PATH + "/citeseq/analysis_cite.R"
-        cmd = (
-            f'Rscript {app} '
-            f'--rds {rds} '
-            f'--citeseq_mtx {self.args.citeseq_mtx} '
-            f'--outdir {self.args.outdir} '
-            f'--sample {self.args.sample} '
-        )
-        self.debug_subprocess_call(cmd)
+        # accelerate
+        df_tsne['tSNE_1'] = df_tsne['tSNE_1'].astype('float16')
+        df_tsne['tSNE_2'] = df_tsne['tSNE_2'].astype('float16')
+        for col in feature_name_list:
+            df_tsne[col] = df_tsne[col].astype('float16')
+
+        # plot
+        tsne_cluster = Tsne_plot(df_tsne, 'cluster').get_plotly_div()
+        self.add_data(tsne_cluster=tsne_cluster)
+        tsne_citeseq = Tsne_dropdown_plot(df_tsne,'Citeseq',feature_name_list).get_plotly_div()
+        self.add_data(tsne_citeseq=tsne_citeseq)
+        Tsne_single_plot(df_tsne,feature_name_list,self.tmp_dir).get_plotly_div()

@@ -4,26 +4,65 @@ from celescope.vdj.__init__ import __ASSAY__
 
 class Multi_vdj(Multi):
     """
+
+    ## Reference
+    - Human
+    ```
+    mkdir -p /genome/vdj/human
+    cd /genome/vdj/human
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TR{A,B}{V,J}.fasta
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/TR/TRBD.fasta
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IG{H,K,L}{V,J}.fasta
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Homo_sapiens/IG/IGHD.fasta
+    celescope vdj mkref human TR
+    celescope vdj mkref human IG
+    ```
+
+    - Mouse
+    ```
+    mkdir -p /genome/vdj/mouse
+    cd /genome/vdj/mouse
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Mus_musculus/TR/TR{A,B}{V,J}.fasta
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Mus_musculus/TR/TRBD.fasta
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Mus_musculus/IG/IG{H,K,L}{V,J}.fasta
+    wget http://www.imgt.org/download/V-QUEST/IMGT_V-QUEST_reference_directory/Mus_musculus/IG/IGHD.fasta
+    celescope vdj mkref mouse TR
+    celescope vdj mkref mouse IG
+    ```
+ 
     ## Usage
     ```
     multi_vdj \\
         --mapfile ./vdj.mapfile \\
+        --ref_path /genome/vdj/human/human_TR \\
+        --species human \\
         --type TCR \\
         --thread 8 \\
         --mod shell
     ``` 
+
     """
+
+    def consensus(self, sample):
+        step = 'consensus'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--fq {fq} '
+            f'--out_fasta '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)
+        outfile = f'{self.outdir_dic[sample][step]}/{sample}_consensus.fasta'
+        return outfile
 
     def mapping_vdj(self, sample):
         step = 'mapping_vdj'
         cmd_line = self.get_cmd_line(step, sample)
-        if self.args.not_consensus:
-            fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
-        else:
-            fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'
+        fasta = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fasta'
         cmd = (
             f'{cmd_line} '
-            f'--fq {fq} '
+            f'--fasta {fasta} '
         )
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
 

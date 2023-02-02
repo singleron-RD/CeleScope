@@ -10,6 +10,18 @@ from celescope.__init__ import HELP_DICT
 from celescope.snp.__init__ import PANEL
 
 
+def get_gene_list(args):
+    if args.panel:
+        gene_list = utils.get_gene_region_from_bed(args.panel)[0]
+        n_gene = len(gene_list)
+    else:
+        gene_list, n_gene = utils.read_one_col(args.gene_list)
+    
+    return set(gene_list), n_gene
+        
+
+
+
 class Target_metrics(Step):
     """
     ## Features
@@ -30,11 +42,7 @@ class Target_metrics(Step):
         self.match_barcode_list, self.n_cell = utils.get_barcode_from_match_dir(args.match_dir)
         self.match_barcode = set(self.match_barcode_list)
 
-        if args.panel:
-            self.gene_list = utils.get_gene_region_from_bed(args.panel)[0]
-            self.n_gene = len(self.gene_list)
-        else:
-            self.gene_list, self.n_gene = utils.read_one_col(args.gene_list)
+        self.gene_list, self.n_gene = get_gene_list(args)
 
         if not self.gene_list:
             sys.exit("You must provide either --panel or --gene_list!")
@@ -120,6 +128,7 @@ class Target_metrics(Step):
             name="Number of Valid Cells",
             value=n_valid_cell,
             total=self.n_cell,
+            help_info='Cells with at least one read mapped to the target genes.'
         )
         self.add_metric(
             name="Enriched Reads",

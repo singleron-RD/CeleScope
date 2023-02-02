@@ -1,15 +1,11 @@
-
-
 ## Arguments
-`--outdir` output dir
+`--outdir` Output diretory.
 
-`--assay` assay
+`--sample` Sample name.
 
-`--sample` sample name
+`--thread` Thread to use.
 
-`--thread` None
-
-`--debug` debug
+`--debug` If this argument is used, celescope may output addtional file for debugging.
 
 `--virus_bam` None
 

@@ -1,6 +1,5 @@
 ## Features
 - Align R2 reads to the reference genome with STAR.
-- Collect Metrics with Picard.
 
 ## Output
 - `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
@@ -22,8 +21,6 @@ Most of the information is collected about the UNIQUE mappers
 Each splicing is counted in the numbers of splices, which would correspond to 
 summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
 i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
-
-- `{sample}_region.log` Picard CollectRnaSeqMetrics results.
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
