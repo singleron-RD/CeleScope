@@ -120,6 +120,7 @@ class Conversion(Step):
         #Chrom, Pos , ConvsPerPs, CoverofPosWithConvs
         Outputdf = pd.DataFrame(columns=['pos2', 'convs', 'covers', 'chrom', 'posratio'])
         for key in ConvsPerPos.keys():
+            if len(ConvsPerPos[key])==0: continue
             df = pd.DataFrame.from_dict(ConvsPerPos[key], orient='index')
             df1 = pd.DataFrame.from_dict(CoverofPosWithConvs[key], orient='index')
             df.index.name = 'pos'
@@ -167,6 +168,8 @@ class Conversion(Step):
             refseq = read.get_reference_sequence().lower()
         except (UnicodeDecodeError):
             refseq = ''
+        except (AssertionError):
+            return 0
 
         for base in total_content.keys():
             total_content[base] += refseq.count(base)
@@ -198,6 +201,7 @@ class Conversion(Step):
         for read in bamfile.fetch():
             try:
                 tags = self.convInRead(read)
+                if tags==0: continue
                 read.set_tag('SC', tags[0], 'Z')
                 read.set_tag('TC', tags[1], 'Z')
                 read.set_tag('TL', tags[2])
