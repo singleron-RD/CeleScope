@@ -177,7 +177,7 @@ class Analysis_snp(Step):
         df_vcf = pd.concat([df_vcf, df_ncell], axis=1)
 
         cols = ["Chrom", "Pos", "Alleles", "Gene", "0/0", "0/1", "1/1", "mRNA", "Protein"]
-        df_vcf = df_vcf[cols]
+        df_vcf = df_vcf.loc[:, df_vcf.columns.isin(cols)]
         df_vcf = df_vcf[df_vcf.Gene.isin(self.gene_list)]
 
         self.variant_table = df_vcf
