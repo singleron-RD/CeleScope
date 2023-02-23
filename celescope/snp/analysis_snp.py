@@ -55,6 +55,10 @@ def parse_variant_ann(variant_ann_file):
                 for ann in anns:
                     if ann.startswith("c."):
                         exon_loc = anns[anns.index(ann) - 1].split('/')[0]
+                        # WARNING_TRANSCRIPT_INCOMPLETE
+                        if not exon_loc:
+                            continue
+                        
                         exon = ann.strip("c.")
                         exon = f"exon{exon_loc}:{exon}"
                         if exon not in tmp1:
