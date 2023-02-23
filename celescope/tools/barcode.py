@@ -424,17 +424,29 @@ class Barcode(Step):
         return bool_valid, bool_corrected, corrected_seq
 
     @staticmethod
-    def parse_whitelist_file(whitelist_file, n_mismatch, n_repeat):
-        barcode_list, _ = utils.read_one_col(whitelist_file)
-        barcode_set = set(barcode_list)
-        barcode_mismatch_dict = Barcode.get_mismatch_dict(barcode_list, n_mismatch)
-        barcode_mismatch_list = [barcode_mismatch_dict] * n_repeat
-        barcode_set_list = [barcode_set] * n_repeat
-        return barcode_set_list, barcode_mismatch_list
+    def parse_whitelist_file(files: list, n_pattern: int, n_mismatch: int):
+        """
+        files: file paths
+        n_pattern: number of sections in pattern
+        n_mismatch: allowed number of mismatch bases
+        Returns:
+            white_set_list
+            mismatch_list
+        """
+        n_files = len(files)
+        if n_files == 1 and n_pattern > 1:
+            files = [files[0]] * n_pattern
+        elif n_files != n_pattern:
+            sys.exit(f'number of whitelist files({n_files} files:{files}) != n_pattern({n_pattern})')
+        
+        white_set_list, mismatch_list = [], []
+        for f in files:
+            barcodes, _ = utils.read_one_col(f)
+            white_set_list.append(set(barcodes))
+            barcode_mismatch_dict = Barcode.get_mismatch_dict(barcodes, n_mismatch)
+            mismatch_list.append(barcode_mismatch_dict)
 
-    @staticmethod
-    def parse_linker_file(linker_file):
-        return Barcode.parse_whitelist_file(linker_file, n_mismatch=2, n_repeat=1)
+        return white_set_list, mismatch_list
 
     @staticmethod
     def parse_chemistry(chemistry):
@@ -445,8 +457,8 @@ class Barcode(Step):
         pattern_dict = Barcode.parse_pattern(pattern)
         linker_file, whitelist_file = Barcode.get_scope_bc(chemistry)
 
-        barcode_set_list, barcode_mismatch_list = Barcode.parse_whitelist_file(whitelist_file, 1, len(pattern_dict['C']))
-        linker_set_list, linker_mismatch_list = Barcode.parse_linker_file(linker_file)
+        barcode_set_list, barcode_mismatch_list = Barcode.parse_whitelist_file([whitelist_file], n_pattern=len(pattern_dict['C']), n_mismatch=1)
+        linker_set_list, linker_mismatch_list = Barcode.parse_whitelist_file([linker_file],n_pattern=1, n_mismatch=2)
 
         return pattern_dict, barcode_set_list, barcode_mismatch_list, linker_set_list, linker_mismatch_list
 
@@ -615,10 +627,11 @@ class Barcode(Step):
             bc_pattern = PATTERN_DICT[chemistry]
             if (bc_pattern):
                 linker_file, whitelist_file = self.get_scope_bc(chemistry)
+                whitelist_files = [whitelist_file]
             else:
                 bc_pattern = self.pattern
                 linker_file = self.linker
-                whitelist_file = self.whitelist
+                whitelist_files = self.whitelist.split(',')
             if not bc_pattern:
                 raise Exception("invalid bc_pattern!")
 
@@ -630,10 +643,10 @@ class Barcode(Step):
             C_len = sum([item[1] - item[0] for item in pattern_dict['C']])
 
             if bool_whitelist:
-                barcode_set_list, barcode_mismatch_list = Barcode.parse_whitelist_file(whitelist_file,
-                                                                               n_mismatch=1, n_repeat=len(pattern_dict['C']))
+                barcode_set_list, barcode_mismatch_list = Barcode.parse_whitelist_file(whitelist_files,
+                                                n_pattern=len(pattern_dict['C']), n_mismatch=1)
             if bool_L:
-                linker_set_list, linker_mismatch_list = Barcode.parse_linker_file(linker_file)
+                linker_set_list, linker_mismatch_list = Barcode.parse_whitelist_file([linker_file],n_pattern=1, n_mismatch=2)
 
             with pysam.FastxFile(self.fq1_list[i], persist=False) as fq1, \
                     pysam.FastxFile(self.fq2_list[i], persist=False) as fq2:
