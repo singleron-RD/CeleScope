@@ -631,7 +631,8 @@ class Barcode(Step):
             else:
                 bc_pattern = self.pattern
                 linker_file = self.linker
-                whitelist_files = self.whitelist.split(',')
+                whitelist_file = self.whitelist
+                whitelist_files = whitelist_file.split(',')
             if not bc_pattern:
                 raise Exception("invalid bc_pattern!")
 
