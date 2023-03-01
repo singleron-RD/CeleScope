@@ -65,7 +65,7 @@ class Mapping_vdj(Step):
     def split_fasta_file(self):
         fh_tmp_fasta = [xopen(i, 'w') for i in self.tmp_fasta]
         umi_count = 0
-        chunk = self.UMI_number // 4
+        chunk = self.UMI_number // SPLIT_N_CHUNKS
         with pysam.FastxFile(self.args.fasta) as f:
             for read in f:
                 umi_count += 1
