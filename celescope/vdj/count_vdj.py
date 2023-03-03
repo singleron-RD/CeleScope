@@ -243,7 +243,7 @@ class Count_vdj(Step):
             multi_chain_num = df_tmp[(df_tmp["aaSeqCDR3_IGK"]!="NA") | (df_tmp["aaSeqCDR3_IGL"]!="NA")].shape[0]
             three_chain_num = df_tmp[(df_tmp["aaSeqCDR3_IGK"]!="NA") & (df_tmp["aaSeqCDR3_IGL"]!="NA")].shape[0]
             self.add_metric(
-                name=f"Cells with Single Heavy-Light chain pair",
+                name="Cells with Single Heavy-Light chain pair",
                 value=multi_chain_num - three_chain_num,
                 total=n_cell,
                 help_info=f"cells with as least {iUMI} UMI mapped to single heavy and single light chain"
