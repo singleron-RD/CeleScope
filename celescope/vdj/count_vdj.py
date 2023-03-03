@@ -246,7 +246,7 @@ class Count_vdj(Step):
                 name="Cells with Single Heavy-Light chain pair",
                 value=multi_chain_num - three_chain_num,
                 total=n_cell,
-                help_info=f"cells with as least {iUMI} UMI mapped to single heavy and single light chain"
+                help_info=f"cells with as least {iUMI} UMI mapped to single heavy chain and single light chain"
             )
             
 
