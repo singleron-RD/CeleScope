@@ -8,6 +8,8 @@
 ## Arguments
 `--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
 
+`--database` snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse).
+
 `--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
 
 `--outdir` Output diretory.

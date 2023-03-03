@@ -111,8 +111,6 @@ class Replacement(Step):
                 readinfo = '\t'.join([gene, cb, ub])
                 if readinfo not in countdict:
                     countdict[readinfo] = 1
-                else:
-                    countdict[readinfo] += 1
 
             except (ValueError, KeyError):
                 continue
@@ -120,7 +118,14 @@ class Replacement(Step):
 
         out1 = []
         for rid in countdict:
-            out1.append(rid.split('\t'))
+            checkt = rid.split('--T')
+            if len(checkt) == 2:
+                pairc = rid.replace('--T','--C')
+                if pairc not in countdict:
+                    out1.append(rid.split('\t'))
+            else:
+                out1.append(rid.split('\t'))
+
         outframe = pd.DataFrame(out1)
         outframe.columns=['geneID','Barcode','UMI']
         out1=[]

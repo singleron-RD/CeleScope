@@ -1,4 +1,4 @@
-## [1.14.1]
+## [1.14.1] - 2023-01-11
  ### `snp`
  - Add an argument `--database`. Data from non-human species can also be annotated with this argument.
  - Change the default filtering method from `auto` to `otsu` to improve sensitivity.

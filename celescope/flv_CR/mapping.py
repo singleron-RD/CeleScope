@@ -3,9 +3,14 @@ import glob
 import subprocess
 import os
 import celescope
+import scanpy as sc
+import matplotlib
+import matplotlib.pyplot as plt
+import warnings
 from celescope.tools import utils
 from celescope.tools.step import s_common, Step
-
+matplotlib.use('Agg')
+warnings.filterwarnings("ignore")
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
@@ -14,20 +19,15 @@ CELL_TYPE_DICT = {
     'BCR':['Plasma_cells', 'B_cells', 'Mature_B_cell', 'Plasma cells', 'B cells', 'Bcells'],
     }
 
+
 class Mapping(Step):
     """
     ## Features
 
-    - Output assembled T/B cells mapping to transcriptome if rds and auto-assign info exist in match directory.
+    - Output TSNE-plot of Assembled T/B Cells.
 
     ## Output
-    - `05.annotation/{sample}_assign.png` Umap plot of Auto-assigned celltype in transcriptome.
-
-    - `05.annotation/{sample}_cluster_umap.png` Umap plot of Cluster in transcriptome.
-
-    - `05.annotation/{sample}_umapplot.png` Umap plot of assembled barcodes marked as read color.
-    
-    - `05.annotation/{sample}_distribution.txt` Number of assembled barcodes in every clusters.
+    - `06.mapping/{sample}_mapping.pdf` TSNE-plot of Assembled Cells.
 
     """
     def __init__(self, args, display_title=None):
@@ -41,6 +41,7 @@ class Mapping(Step):
 
         self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')
         self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')
+        self.h5ad = glob.glob(f'{self.match_dir}/06.analysis/*.h5ad')
 
 
     @staticmethod
@@ -58,7 +59,7 @@ class Mapping(Step):
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
-    def process(self):
+    def process_rds(self):
         """Mapping result with matched scRNA.
         """
         Mapping.run_mapping(
@@ -87,9 +88,25 @@ class Mapping(Step):
             mappedmetaTB.shape[0],
             show=False)
 
+    @utils.add_log
+    def process_h5ad(self):
+        contig_file = pd.read_csv(self.contig_file)
+        assembled_cells = set(contig_file.barcode)
+        print(self.h5ad)
+        h5ad = sc.read_h5ad(self.h5ad[0])
+        h5ad.obs['status'] = 'None'
+        h5ad.obs.loc[h5ad.obs.index.isin(assembled_cells), "status"] = "T/BCR"
+        
+        sc.pl.tsne(h5ad, color='status', add_outline=True, legend_loc='on data',
+                legend_fontsize=12, legend_fontoutline=2,frameon=False,
+                title='Assembled Cells', palette=['C7','C3'])
+        plt.savefig(f"{self.outdir}/{self.sample}_mapping.pdf", dpi=300)
+
     def run(self):
         if self.rds and self.assign_file:
-            self.process()
+            self.process_rds()
+        if self.h5ad:
+            self.process_h5ad()
 
 
 def mapping(args):
