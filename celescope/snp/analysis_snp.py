@@ -40,6 +40,9 @@ def parse_variant_ann(variant_ann_file):
     """
     Args:
         variant_ann_file: variant annotation file from snpEff.
+    
+    Returns:
+        gene_list, mRNA_list, protein_list
     """
     gene_list, mRNA_list, protein_list = [], [], []
 
@@ -132,7 +135,8 @@ class Analysis_snp(Step):
 
         # out
         self.snpeff_outdir = f'{self.outdir}/snpEff/'
-        self.snpeff_ann = f'{self.snpeff_outdir}/variants_ann.vcf'
+        self.snpeff_ann_vcf_file = f'{self.snpeff_outdir}/variants_ann.vcf'
+        self.final_vcf_file = f'{self.out_prefix}_final.vcf'
         utils.check_mkdir(self.snpeff_outdir)
 
         self.gt_file = f'{self.out_prefix}_gt.csv'
@@ -144,7 +148,7 @@ class Analysis_snp(Step):
         app = f'{ROOT_PATH}/snp/vcfR.R'
         cmd = (
             f'Rscript {app} '
-            f'--vcf {self.vcf_file} '
+            f'--vcf {self.final_vcf_file} '
             f'--out {self.gt_file} '
             '2>&1 '
         )
@@ -172,22 +176,40 @@ class Analysis_snp(Step):
         # change dir back to avoid can not find '09.analysis_snp/stat.txt' error
         os.chdir(cwd)
 
-    def get_variant_table(self):
+    @utils.add_log
+    def keep_in_gene(self):
+        """
+        Output:
+            self.final_vcf_file
+        """
+        gene_list, _, _ = parse_variant_ann(self.snpeff_ann_vcf_file)
+        with pysam.VariantFile(self.snpeff_ann_vcf_file) as vcf_in:
+            with pysam.VariantFile(self.final_vcf_file, 'w', header=vcf_in.header) as vcf_out:
+                for i, record in enumerate(vcf_in.fetch()):
+                    if gene_list[i] in self.gene_list:
+                        vcf_out.write(record)              
 
-        df_vcf = parse_vcf_to_df(self.vcf_file, infos=[])
-        ann_result = parse_variant_ann(self.snpeff_ann)
-        df_vcf["Gene"], df_vcf["mRNA"], df_vcf["Protein"] = ann_result[0], ann_result[1], ann_result[2]
+
+    def get_variant_table(self):
+        """
+        Returns:
+            is_in_gene_list: if res[i] == True, line i is in gene_list
+        """
+
+        df_vcf = parse_vcf_to_df(self.final_vcf_file, infos=[])
+        df_vcf["Gene"], df_vcf["mRNA"], df_vcf["Protein"] =  parse_variant_ann(self.final_vcf_file)
         df_ncell = pd.read_csv(self.ncell_file)
         df_vcf = pd.concat([df_vcf, df_ncell], axis=1)
 
         cols = ["Chrom", "Pos", "Alleles", "Gene", "0/0", "0/1", "1/1", "mRNA", "Protein"]
         df_vcf = df_vcf.loc[:, df_vcf.columns.isin(cols)]
-        df_vcf = df_vcf[df_vcf.Gene.isin(self.gene_list)]
+        is_in_gene_list = df_vcf.Gene.isin(self.gene_list)
+        df_vcf = df_vcf[is_in_gene_list]
 
         self.variant_table = df_vcf
         self.variant_table.reset_index(drop=True, inplace=True)
         self.variant_table.to_csv(self.variant_table_file, index=False)
-    
+
 
     def get_venn_plot(self):
         df_top_5 = self.get_df_table().sort_values(by="ncell_alt", ascending=False).iloc[:5, :]
@@ -258,10 +280,11 @@ class Analysis_snp(Step):
         )
 
     def run(self):
+        self.run_snpEff()
+        self.keep_in_gene()
+        self.get_variant_table()
         self.write_gt()
         self.write_ncell()
-        self.run_snpEff()
-        self.get_variant_table()
         self.add_help()
         table_dict = self.get_table_dict(title='Variant table', table_id='variant', df_table=self.variant_table)
         self.add_data(table_dict=table_dict)
