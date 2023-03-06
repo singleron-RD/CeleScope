@@ -59,7 +59,11 @@ the read name is `{barcode}_{UMI}_{read ID}`.
     `barcode` cell barcode  
     `tag_name`  tag name in barcode_fasta  
     `UMI`   UMI sequence  
-    `read_count` read count per UMI  
+    `read_count` read count per UMI
+
+- `{sample}_invalid_barcode.tsv` tab-delimited text file with 2 columns.
+    `tag_barcode` tag barcodes that do not match with any sequence in `--barcode_fasta`.
+    `read_count` invalid tag barcode read counts
 
 ### count_tag
 
@@ -86,12 +90,17 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
 - `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
+- `vdj` Required, matched_dir.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
-
+- `fusion` Required, matched_dir.
+- `citeseq` Required, matched_dir.
+- `flv_CR` Required, matched_dir.
+- `flv_trust4` Required, matched_dir.
+- `sweetseq` Required, matched_dir.
+ 
 5th column:
 - `dynaseq` Required, background snp file.
 
@@ -127,11 +136,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
-- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
-- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
-- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
-same time.
+`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
 
 `--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
         of bases.  
@@ -152,7 +157,7 @@ same time.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 
@@ -187,7 +192,7 @@ at least {overlap} bases match between adapter and read.
 
 `--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
+It will assign read to the tag with mismatch < threshold. 
 If no such tag exists, the read is classified as invalid.
 
 You can find the barcode fasta file under `celescope/data/Clindex`
@@ -248,5 +253,7 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.
 
 `--split_vdj` If used, will split scRNA-Seq vdj count file according to tag assignment.
 
-`--vdj_dir` Match celescope vdj directory. Required when --split_vdj is specified.
+`--split_fl_vdj` If used, will split scRNA-Seq full-length vdj annotation, fasta, clonotypes file according to tag assignment.
+
+`--vdj_dir` Match celescope vdj directory. Required when --split_vdj or --split_fl_vdj is specified.
 

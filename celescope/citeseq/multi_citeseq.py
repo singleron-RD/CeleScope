@@ -4,6 +4,16 @@ from celescope.tools.multi import Multi
 
 
 class Multi_citeseq(Multi):
+    """
+    ## Usage
+    ```
+    multi_citeseq \\
+        --mapfile ./test.mapfile \\
+        --barcode_fasta ./CLindex_TAG.fasta \\
+        --fq_pattern L25C15 \\
+        --mod shell
+    ```
+    """
 
     def mapping_tag(self, sample):
         step = 'mapping_tag'
@@ -31,11 +41,10 @@ class Multi_citeseq(Multi):
 
         step = 'analysis_cite'
         cmd_line = self.get_cmd_line(step, sample)
-        citeseq_mtx = f'{self.outdir_dic[sample]["count_cite"]}/{sample}_citeseq.mtx.gz'
+        tsne_coord = f'{self.outdir_dic[sample]["count_cite"]}/{sample}_filtered_tsne_coord.tsv'
         cmd = (
             f'{cmd_line} '
-            f'--citeseq_mtx {citeseq_mtx} '
-            f'--match_dir {self.col4_dict[sample]} '
+            f'--tsne_coord {tsne_coord} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 

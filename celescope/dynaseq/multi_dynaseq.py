@@ -7,6 +7,7 @@ class Multi_dynaseq(Multi):
 
     """
     ## Usage
+
     ```
         multi_dynaseq\\
         --mapfile ./rna.mapfile\\
@@ -37,7 +38,7 @@ class Multi_dynaseq(Multi):
     def conversion(self, sample):
         step = 'conversion'
         bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam'
-        cell = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME[0]}'
+        cell = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

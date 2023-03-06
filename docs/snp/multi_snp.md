@@ -5,23 +5,6 @@
 1. Run `celescope rna mkref`. If you already have a rna genomeDir, you can use it and skip this step.
 2. Run `celescope snp mkref` under the rna genomeDir. Check [mkref.md](./mkref.md) for help.
 
-### Install ANNOVAR, download the annotation database and write a annovar config file.
-https://annovar.openbioinformatics.org/en/latest/user-guide/download/
-
-```
-perl /Public/Software/annovar/annotate_variation.pl -downdb -buildver hg38 -webfrom annovar cosmic70 humandb/
-```
-
-annovar_config file
-```
-[ANNOVAR]
-dir = /Public/Software/annovar/  
-db = /SGRNJ/Database/script/database/annovar/humandb  
-buildver = hg38  
-protocol = refGene,cosmic70  
-operation = g,f  
-```
-
 ### Run multi_snp
 There are two ways to run `multi_snp`
 
@@ -34,7 +17,6 @@ multi_snp\
     --thread 4\
     --mod shell\
     --panel lung_1\
-    --annovar_config annovar.config\
     --not_consensus
 ```
 
@@ -47,7 +29,6 @@ multi_snp\
     --thread 4\
     --mod shell\
     --panel lung_1\
-    --annovar_config annovar.config\
 ```
 ## Features
 ### mkref
@@ -82,7 +63,6 @@ otherwise an ambiguous character(N) will be added.
 
 ### star
 - Align R2 reads to the reference genome with STAR.
-- Collect Metrics with Picard.
 
 
 ### featureCounts
@@ -105,7 +85,7 @@ otherwise an ambiguous character(N) will be added.
 
 
 ### analysis_snp
-- Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+- Annotate variants with [snpEff](http://pcingola.github.io/SnpEff/).
 
 
 ## Output files
@@ -147,15 +127,13 @@ Each splicing is counted in the numbers of splices, which would correspond to
 summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
 i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
 
-- `{sample}_region.log` Picard CollectRnaSeqMetrics results.
-
 ### featureCounts
 - `{sample}` Numbers of reads assigned to features (or meta-features).
 - `{sample}_summary` Stat info for the overall summrization results, including number of 
 successfully assigned reads and number of reads that failed to be assigned due to 
 various reasons (these reasons are included in the stat info).
 - `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
-sorted by coordinates；BAM file contains tags as following(Software Version>=1.1.8):
+sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
     - CB cell barcode
     - UB UMI
     - GN gene name
@@ -176,7 +154,7 @@ Genotypes are changed accordingly.
 ### analysis_snp
 - `{sample}_gt.csv` Genotypes of variants of each cell. Rows are variants and columns are cells.
 - `{sample}_variant_ncell.csv` Number of cells with each genotype.
-- `{sample}_variant_table.csv` `{sample}_variant_ncell.csv` annotated with COSMIC(https://cancer.sanger.ac.uk/cosmic).
+- `{sample}_variant_table.csv` annotated with snpEff.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -187,12 +165,17 @@ Genotypes are changed accordingly.
 4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
 - `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
+- `vdj` Required, matched_dir.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
-
+- `fusion` Required, matched_dir.
+- `citeseq` Required, matched_dir.
+- `flv_CR` Required, matched_dir.
+- `flv_trust4` Required, matched_dir.
+- `sweetseq` Required, matched_dir.
+ 
 5th column:
 - `dynaseq` Required, background snp file.
 
@@ -228,11 +211,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
-- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
-- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
-- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
-same time.
+`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
 
 `--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
         of bases.  
@@ -253,7 +232,7 @@ same time.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 
@@ -303,15 +282,15 @@ is higher than or equal to this value.
 
 `--featureCounts_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
-`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
-
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
-
-`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
 
 `--threshold_method` One of [otsu, auto, hard, none].
 
 `--hard_threshold` int, use together with `--threshold_method hard`.
 
-`--annovar_config` ANNOVAR config file.
+`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
+
+`--database` snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse).
+
+`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
 

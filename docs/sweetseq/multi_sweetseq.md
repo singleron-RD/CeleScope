@@ -1,3 +1,13 @@
+## Usage
+Before running `multi_sweetseq`, you need to run scRNA-Seq data with CeleScope first.
+```
+multi_sweetseq \
+    --mapfile ./sweetseq.mapfile\
+    --barcode_fasta celescope/data/sweetseq/sweet_tag_barcode.fasta\
+    --linker_fasta celescope/data/sweetseq/sweet_tag_linker.fasta \
+    --fq_pattern L23C15\
+    --mod shell
+```
 ## Features
 ### barcode
 
@@ -14,13 +24,16 @@
     - polyT=A{18}, 18 A bases. 
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
-### mapping
-- Map R2 reads to the tag barcode.
+### mapping_tag
+- Align R2 reads to the tag barcode fasta.
 
 
-### analysis
+### count_tag
+- Assign tag to each cell barcode and summarize.
 
 
+### analysis_tag
+- Combine scRNA-Seq clustering infromation with tag assignment.
 
 ## Output files
 ### barcode
@@ -32,10 +45,28 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `cutadapt.log` Cutadapt output log file.
 - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
 
-### mapping
-- raw_read_count.json: TODO
+### mapping_tag
 
-### analysis
+- `{sample}_read_count.tsv` tab-delimited text file with 4 columns.
+
+    `barcode` cell barcode  
+    `tag_name`  tag name in barcode_fasta  
+    `UMI`   UMI sequence  
+    `read_count` read count per UMI
+
+- `{sample}_invalid_barcode.tsv` tab-delimited text file with 2 columns.
+    `tag_barcode` tag barcodes that do not match with any sequence in `--barcode_fasta`.
+    `read_count` invalid tag barcode read counts
+
+### count_tag
+
+- `{sample}_umi_tag.tsv` 
+
+    `first column` cell barcode  
+    `last column`  assigned tag  
+    `columns between first and last` UMI count for each tag 
+
+- `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -46,12 +77,17 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
 
 - `rna` Optional, forced cell number.
-- `vdj` Optional, matched_dir.
+- `vdj` Required, matched_dir.
 - `tag` Required, matched_dir.
 - `dynaseq` Optional, forced cell number.
 - `snp` Required, matched_dir.
 - `capture_virus` Required, matched_dir.
-
+- `fusion` Required, matched_dir.
+- `citeseq` Required, matched_dir.
+- `flv_CR` Required, matched_dir.
+- `flv_trust4` Required, matched_dir.
+- `sweetseq` Required, matched_dir.
+ 
 5th column:
 - `dynaseq` Required, background snp file.
 
@@ -87,11 +123,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
-`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. Can be one of:  
-- `auto` Default value. Used for Singleron GEXSCOPE libraries >= scopeV2 and automatically detects the combinations.  
-- `scopeV1` Used for legacy Singleron GEXSCOPE scopeV1 libraries.  
-- `customized` Used for user defined combinations. You need to provide `pattern`, `whitelist` and `linker` at the 
-same time.
+`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
 
 `--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
         of bases.  
@@ -112,7 +144,7 @@ same time.
 
 `--noLinker` Outputs R1 reads without correct linker.
 
-`--allowNoPolyT` Allow valid reads without polyT.
+`--filterNoPolyT` Filter reads without PolyT.
 
 `--allowNoLinker` Allow valid reads without correct linker.
 
@@ -141,14 +173,16 @@ at least {overlap} bases match between adapter and read.
 
 `--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
-`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. The `fq_pattern` of CLindex is `L25C15`
+`--fq_pattern` R2 read pattern. The number after the letter represents the number of bases. CLindex is `L25C15` and sweetseq is `L23C15`
 `L` linker(common sequences)  
 `C` tag barcode.
 
-`--tag_barcode_fasta` Required. It will check the mismatches between tag barcode 
+`--barcode_fasta` Required. Tag barcode fasta file. It will check the mismatches between tag barcode 
 sequence in R2 reads with all tag barcode sequence in barcode_fasta. 
-It will assign read to the tag with mismatch < len(tag barcode) / 10 + 1. 
+It will assign read to the tag with mismatch < threshold. 
 If no such tag exists, the read is classified as invalid.
+
+You can find the barcode fasta file under `celescope/data/sweetseq`.
 
 `--linker_fasta` Optional. If provided, it will check the mismatches between linker sequence in R2 reads 
 with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1, the read is classified as invalid.

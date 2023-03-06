@@ -12,18 +12,17 @@ from itertools import groupby
 import numpy as np
 import pandas as pd
 import pysam
-from scipy.io import mmwrite
-from scipy.sparse import coo_matrix
 
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
-from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME,
-    MATRIX_FILE_NAME, FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
+from celescope.tools.__init__ import (FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX)
 from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.emptydrop_cr.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.plotly_plot import Line_plot
+from celescope.tools.matrix import CountMatrix
+from celescope.tools import reference
 
 TOOLS_DIR = os.path.dirname(__file__)
 random.seed(0)
@@ -75,8 +74,10 @@ class Count(Step):
         self.bam = args.bam
 
         # set
-        self.gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
-        self.gtf_dict = utils.Gtf_dict(self.gtf_file)
+        gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
+        gp = reference.GtfParser(gtf_file)
+        gp.get_id_name()
+        self.features = gp.get_features()
         self.downsample_dict = {}
 
         # output files
@@ -104,7 +105,7 @@ class Count(Step):
         df_sum = Count.get_df_sum(df)
 
         # export all matrix
-        self.write_matrix_10X(df, self.raw_matrix_dir)
+        self.write_sparse_matrix(df, self.raw_matrix_dir)
 
         # call cells
         cell_bc, _threshold = self.cell_calling(df_sum)
@@ -114,7 +115,7 @@ class Count(Step):
 
         # export cell matrix
         df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
-        self.write_matrix_10X(df_cell, self.cell_matrix_dir)
+        self.write_sparse_matrix(df_cell, self.cell_matrix_dir)
         (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
             df, cell_bc)
 
@@ -178,6 +179,34 @@ class Count(Step):
                     break
         return n_corrected_umi, n_corrected_read
 
+    @staticmethod
+    def discard_read(gene_umi_dict):
+        """
+        If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting, and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded, as the gene cannot be confidently assigned.
+
+        Returns:
+            discarded_umi: set. umi with tie read count
+            umi_gene_dict: {umi_seq: {gene_id: read_count}}
+        """
+
+        discard_umi = set()
+        umi_gene_dict = defaultdict(lambda: defaultdict(int))
+        for gene_id in gene_umi_dict:
+            for umi in gene_umi_dict[gene_id]:
+                umi_gene_dict[umi][gene_id] += gene_umi_dict[gene_id][umi]
+        
+        for umi in umi_gene_dict:
+            max_read_count = max(umi_gene_dict[umi].values())
+            gene_id_max = [gene_id for gene_id, read_count in umi_gene_dict[umi].items() if read_count==max_read_count]
+
+            if len(gene_id_max) > 1:
+                discard_umi.add(umi)
+            else:
+                gene_id = gene_id_max[0]
+                umi_gene_dict[umi] = {gene_id: umi_gene_dict[umi][gene_id]}
+
+        return discard_umi, umi_gene_dict
+
     @utils.add_log
     def bam2table(self):
         """
@@ -207,7 +236,7 @@ class Count(Step):
                         fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
                                                         gene_umi_dict[gene_id][umi]))
         samfile.close()
-
+        
     @utils.add_log
     def cell_calling(self, df_sum):
         cell_calling_method = self.cell_calling_method
@@ -292,22 +321,10 @@ class Count(Step):
         return CB_describe
 
     @utils.add_log
-    def write_matrix_10X(self, df, matrix_dir):
-        if not os.path.exists(matrix_dir):
-            os.mkdir(matrix_dir)
+    def write_sparse_matrix(self, df, matrix_dir):
 
-        df_UMI = df.groupby(['geneID', 'Barcode']).agg({'UMI': 'count'})
-        mtx = coo_matrix((df_UMI.UMI, (df_UMI.index.codes[0], df_UMI.index.codes[1])))
-        gene_id = df_UMI.index.levels[0].to_series()
-        # add gene symbol
-        gene_name = gene_id.apply(lambda x: self.gtf_dict[x])
-        genes = pd.concat([gene_id, gene_name], axis=1)
-        genes.columns = ['gene_id', 'gene_name']
-
-        barcodes = df_UMI.index.levels[1].to_series()
-        genes.to_csv(f'{matrix_dir}/{FEATURE_FILE_NAME[0]}', index=False, sep='\t', header=False)
-        barcodes.to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME[0]}', index=False, sep='\t', header=False)
-        mmwrite(f'{matrix_dir}/{MATRIX_FILE_NAME[0]}', mtx)
+        count_matrix = CountMatrix.from_dataframe(df, self.features, value="UMI")
+        count_matrix.to_matrix_dir(matrix_dir)
 
     @utils.add_log
     def cell_summary(self, df, cell_bc):
@@ -383,9 +400,6 @@ class Count(Step):
             display=f'{umi_saturation}%',
             help_info=(
                 'the fraction of UMI originating from an already-observed UMI. '
-                'There is a difference in how CeleScope and CellRanger calculate saturation. '
-                'CeleScope shows umi_saturation in the report, while CellRanger shows read_saturation in the report. '
-                'For details, see <a href="https://github.com/singleron-RD/CeleScope/blob/dev/docs/details.md#saturation">here</a>. '
                 f'read_saturation: {read_saturation}%'
             )
         )

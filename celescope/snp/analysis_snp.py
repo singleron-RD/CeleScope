@@ -1,43 +1,135 @@
-import configparser
-
 import pandas as pd
+import pysam
+import subprocess
+import os
 from venn import generate_petal_labels, draw_venn, generate_colors
 
 from celescope.tools import utils
 from celescope.tools.step import Step
 from celescope.tools.step import s_common
+from celescope.tools.target_metrics import get_gene_list
 from celescope.__init__ import HELP_DICT, ROOT_PATH
+from celescope.snp.__init__ import PANEL
+
+
+AA_DICT = {
+    'Gly' : 'G',
+    'Ala' : 'A',
+    'Val' : 'V',
+    'Leu' : 'L',
+    'Ile' : 'I',
+    'Phe' : 'F',
+    'Trp' : 'W',
+    'Tyr' : 'Y',
+    'Asp' : 'D',
+    'Asn' : 'N',
+    'Glu' : 'E',
+    'Lys' : 'K',
+    'Gln' : 'Q',
+    'Met' : 'M',
+    'Ser' : 'S',
+    'Thr' : 'T',
+    'Cys' : 'C',
+    'Pro' : 'P',
+    'His' : 'H',
+    'Arg' : 'R',
+}
+
+
+def parse_variant_ann(variant_ann_file):
+    """
+    Args:
+        variant_ann_file: variant annotation file from snpEff.
+    """
+    gene_list, mRNA_list, protein_list = [], [], []
+
+    with open(variant_ann_file) as f:
+        for line in f.readlines():
+            if not line.startswith("#"):
+                info = line.split('\t')[7]
+                anns = info.split("|")
+                gene = anns[3]
+                gene_list.append(gene)
+            
+                tmp1, tmp2 = [], []
+                for ann in anns:
+                    if ann.startswith("c."):
+                        exon_loc = anns[anns.index(ann) - 1].split('/')[0]
+                        exon = ann.strip("c.")
+                        exon = f"exon{exon_loc}:{exon}"
+                        if exon not in tmp1:
+                            tmp1.append(exon)
+
+                    if ann.startswith("p."):
+                        protein = ann[2:]
+                        for i in AA_DICT:
+                            protein = protein.replace(i, AA_DICT[i])
+                        if protein not in tmp2:
+                            tmp2.append(protein)
+                        
+                mRNA_list.append(','.join(tmp1))
+                protein_list.append(','.join(tmp2))
+
+    return (gene_list, mRNA_list, protein_list)
+
+
+def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
+    """
+    Read cols and infos into pandas df
+    """
+    vcf = pysam.VariantFile(vcf_file)
+    df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
+    rec_dict = {}
+    for rec in vcf.fetch():
+
+        for col in cols:
+            rec_dict[col.capitalize()] = getattr(rec, col)
+            if col == 'alleles':
+                rec_dict['Alleles'] = '-'.join(rec_dict['Alleles'])
+
+        for info in infos:
+            rec_dict[info] = rec.info[info]
+
+        '''
+        rec_dict['GT'] = [s['GT'] for s in rec.samples.values()][0]
+        rec_dict['GT'] = [str(item) for item in rec_dict['GT']]
+        rec_dict['GT'] = '/'.join(rec_dict['GT'])
+        '''
+        df_new = pd.DataFrame(rec_dict, index=[0])
+        df = pd.concat([df, df_new])
+
+    vcf.close()
+    df.reset_index(drop=True, inplace=True)
+    return df
 
 
 class Analysis_snp(Step):
     """
     ## Features
-    - Annotate variants with [Annovar](https://annovar.openbioinformatics.org/en/latest/).
+    - Annotate variants with [snpEff](http://pcingola.github.io/SnpEff/).
 
     ## Output
     - `{sample}_gt.csv` Genotypes of variants of each cell. Rows are variants and columns are cells.
     - `{sample}_variant_ncell.csv` Number of cells with each genotype.
-    - `{sample}_variant_table.csv` `{sample}_variant_ncell.csv` annotated with COSMIC(https://cancer.sanger.ac.uk/cosmic).
+    - `{sample}_variant_table.csv` annotated with snpEff.
 
     """
 
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title)
         self.vcf_file = args.vcf
-        self.annovar_config = args.annovar_config
 
         # parse
-        self.annovar_section = self.read_annovar_config()
-        buildver = self.annovar_section['buildver']
+        self.gene_list, self.n_gene = get_gene_list(args)
+        self.database = args.database
 
         # data
         self.variant_table = None
 
         # out
-        self.annovar_outdir = f'{self.outdir}/annovar/'
-        utils.check_mkdir(self.annovar_outdir)
-        self.input_file = f'{self.annovar_outdir}/{self.sample}.input'
-        self.multianno_file = f'{self.annovar_outdir}/{self.sample}.{buildver}_multianno.txt'
+        self.snpeff_outdir = f'{self.outdir}/snpEff/'
+        self.snpeff_ann = f'{self.snpeff_outdir}/variants_ann.vcf'
+        utils.check_mkdir(self.snpeff_outdir)
 
         self.gt_file = f'{self.out_prefix}_gt.csv'
         self.ncell_file = f'{self.out_prefix}_variant_ncell.csv'
@@ -50,6 +142,7 @@ class Analysis_snp(Step):
             f'Rscript {app} '
             f'--vcf {self.vcf_file} '
             f'--out {self.gt_file} '
+            '2>&1 '
         )
         self.debug_subprocess_call(cmd)
 
@@ -63,49 +156,34 @@ class Analysis_snp(Step):
         df_ncell.to_csv(self.ncell_file, index=True)
 
     @utils.add_log
-    def run_annovar(self):
-
-        section = self.annovar_section
-        annovar_dir = section['dir']
-        db = section['db']
-        buildver = section['buildver']
-        protocol = section['protocol']
-        operation = section['operation']
-
-        # convert
+    def run_snpEff(self):
         cmd = (
-            f'perl {annovar_dir}/convert2annovar.pl '
-            f'--format vcf4old '
-            f'--includeinfo '
-            f'{self.vcf_file} > {self.input_file}'
+            f"snpEff -Xmx8g -v {self.database} {os.path.abspath(self.vcf_file)} > variants_ann.vcf "
         )
-        self.debug_subprocess_call(cmd)
+        self.run_snpEff.logger.info(cmd)
 
-        # annotate
-        cmd = (
-            f'perl {annovar_dir}/table_annovar.pl '
-            f'{self.input_file} '
-            f'{db} '
-            f'-buildver {buildver} '
-            f'-protocol {protocol} '
-            f'-operation {operation} '
-            f'-out {self.annovar_outdir}/{self.sample} '
-            f'--otherinfo '
-        )
-        self.debug_subprocess_call(cmd)
+        cwd = os.getcwd()
+        os.chdir(self.snpeff_outdir)
+        subprocess.check_call(cmd, shell=True)
+        # change dir back to avoid can not find '09.analysis_snp/stat.txt' error
+        os.chdir(cwd)
 
     def get_variant_table(self):
 
-        df_vcf = utils.parse_vcf_to_df(self.vcf_file, infos=[])
-        df_annovar = utils.parse_annovar(self.multianno_file)
-        df_vcf = pd.concat((df_vcf, df_annovar), axis=1)
+        df_vcf = parse_vcf_to_df(self.vcf_file, infos=[])
+        ann_result = parse_variant_ann(self.snpeff_ann)
+        df_vcf["Gene"], df_vcf["mRNA"], df_vcf["Protein"] = ann_result[0], ann_result[1], ann_result[2]
         df_ncell = pd.read_csv(self.ncell_file)
         df_vcf = pd.concat([df_vcf, df_ncell], axis=1)
 
-        cols = ['Chrom', 'Pos', 'Alleles', 'Gene', '0/0', "0/1", '1/1', 'mRNA', 'Protein', 'COSMIC']
+        cols = ["Chrom", "Pos", "Alleles", "Gene", "0/0", "0/1", "1/1", "mRNA", "Protein"]
         df_vcf = df_vcf[cols]
+        df_vcf = df_vcf[df_vcf.Gene.isin(self.gene_list)]
+
         self.variant_table = df_vcf
+        self.variant_table.reset_index(drop=True, inplace=True)
         self.variant_table.to_csv(self.variant_table_file, index=False)
+    
 
     def get_venn_plot(self):
         df_top_5 = self.get_df_table().sort_values(by="ncell_alt", ascending=False).iloc[:5, :]
@@ -145,7 +223,6 @@ class Analysis_snp(Step):
             <p> Gene : gene symbol.</p>
             <p> mRNA :  A standard nomenclature is used in specifying the sequence changes.</p>
             <p> Protein :  A standard nomenclature is used in specifying the sequence changes.</p>
-            <p> COSMIC : COSMIC annotation.</p>
         '''
         self.add_help_content(
             name='Chrom',
@@ -175,30 +252,16 @@ class Analysis_snp(Step):
             name='Protein',
             content='A standard nomenclature is used in specifying the sequence changes'
         )
-        self.add_help_content(
-            name='COSMIC',
-            content='COSMIC annotation'
-        )
 
     def run(self):
         self.write_gt()
         self.write_ncell()
-        self.run_annovar()
+        self.run_snpEff()
         self.get_variant_table()
-
         self.add_help()
         table_dict = self.get_table_dict(title='Variant table', table_id='variant', df_table=self.variant_table)
         self.add_data(table_dict=table_dict)
         # self.get_venn_plot()
-
-    def read_annovar_config(self):
-        '''
-        read annovar config file
-        '''
-        config = configparser.ConfigParser()
-        config.read(self.annovar_config)
-        section = config['ANNOVAR']
-        return section
 
 
 @utils.add_log
@@ -208,7 +271,9 @@ def analysis_snp(args):
 
 
 def get_opts_analysis_snp(parser, sub_program):
-    parser.add_argument('--annovar_config', help='ANNOVAR config file.', required=True)
+    parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
+    parser.add_argument("--database", help='snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse)', default='GRCh38.99')
+    parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)

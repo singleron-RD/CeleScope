@@ -392,7 +392,7 @@ class Report_runner(Step):
         """
         match_dict = utils.parse_match_dir(match_dir)
         df_tsne_file = match_dict['tsne_coord']
-        df_marker_file = match_dict['markers']
+        df_marker_file = match_dict.get('markers', None)
         return df_tsne_file, df_marker_file
 
     def get_df(self):
@@ -407,8 +407,11 @@ class Report_runner(Step):
         else:
             raise ValueError('match_dir or tsne_file must be specified')
         df_tsne = read_tsne(df_tsne_file)
-        df_marker = pd.read_csv(df_marker_file, sep="\t")
-        df_marker = format_df_marker(df_marker)
+        if df_marker_file:
+            df_marker = pd.read_csv(df_marker_file, sep="\t")
+            df_marker = format_df_marker(df_marker)
+        else:
+            df_marker = None
         return df_tsne, df_marker
 
     def run(self):

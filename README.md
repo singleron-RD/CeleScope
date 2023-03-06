@@ -14,7 +14,7 @@ Please use the issue tracker for questions and malfunctions.
 # About
 CeleScope is currently developed by Singleron Biotechnologies.
 
-[www.singleronbio.com](https://www.singleronbio.com)
+[www.singleron.bio](https://www.singleron.bio)
 
 
 

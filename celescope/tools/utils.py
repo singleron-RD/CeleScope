@@ -8,14 +8,16 @@ import resource
 import subprocess
 import time
 import unittest
+import json
+import sys
 from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps
 
+from Bio.Seq import Seq
 import pandas as pd
 import pysam
 
-import celescope.tools
 from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
 from celescope.__init__ import ROOT_PATH
 
@@ -32,7 +34,7 @@ def add_log(func):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
 
-    consoleHandler = logging.StreamHandler()
+    consoleHandler = logging.StreamHandler(sys.stdout)
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
 
@@ -82,7 +84,6 @@ def add_mem(func):
     return wrapper
 
 
-
 def generic_open(file_name, *args, **kwargs):
     if file_name.endswith('.gz'):
         file_obj = gzip.open(file_name, *args, **kwargs)
@@ -123,7 +124,7 @@ class Gtf_dict(dict):
         gene_name_pattern = re.compile(r'gene_name "(\S+)"')
         id_name = {}
         c = Counter()
-        with generic_open(self.gtf_file) as f:
+        with generic_open(self.gtf_file, mode='rt') as f:
             for line in f:
                 if not line.strip():
                     continue
@@ -132,7 +133,10 @@ class Gtf_dict(dict):
                 tabs = line.split('\t')
                 gtf_type, attributes = tabs[2], tabs[-1]
                 if gtf_type == 'gene':
-                    gene_id = gene_id_pattern.findall(attributes)[-1]
+                    try:
+                        gene_id = gene_id_pattern.findall(attributes)[-1]
+                    except IndexError:
+                        print(line)
                     gene_names = gene_name_pattern.findall(attributes)
                     if not gene_names:
                         gene_name = gene_id
@@ -200,7 +204,12 @@ def get_gene_region_from_bed(panel):
 
 
 def read_fasta(fasta_file, equal=False):
-    # seq must have equal length
+    """
+    Args:
+        equal: if True, seq in fasta must have equal length
+    Returns:
+        {seq_id: seq} dict
+    """
     fa_dict = {}
     length = None
     with pysam.FastxFile(fasta_file) as infile:
@@ -245,50 +254,6 @@ def genDict(dim=3, valType=int):
         return defaultdict(lambda: genDict(dim - 1, valType=valType))
 
 
-
-def parse_annovar(annovar_file):
-    df = pd.DataFrame(columns=['Gene', 'mRNA', 'Protein', 'COSMIC'])
-    with open(annovar_file, 'rt') as f:
-        index = 0
-        for line in f:
-            index += 1
-            if index == 1:
-                continue
-            attrs = line.split('\t')
-            gene = attrs[6]
-            func = attrs[5]
-            if func == 'exonic':
-                changes = attrs[9]
-                cosmic = attrs[10]
-            else:
-                changes = attrs[7]
-                cosmic = attrs[8]
-            change_list = list()
-            for change in changes.split(','):
-                change_attrs = change.split(':')
-                mRNA = ''
-                protein = ''
-                for change_index in range(len(change_attrs)):
-                    change_attr = change_attrs[change_index]
-                    if change_attr.startswith('c.'):
-                        base = change_attr.strip('c.')
-                        exon = change_attrs[change_index - 1]
-                        mRNA = f'{exon}:{base}'
-                    if change_attr.startswith('p.'):
-                        protein = change_attr.strip('p.')
-                if not (mRNA, protein) in change_list:
-                    change_list.append((mRNA, protein))
-            combine = [','.join(item) for item in list(zip(*change_list))]
-            mRNA = combine[0]
-            protein = combine[1]
-            df = df.append({
-                'Gene': gene,
-                'mRNA': mRNA,
-                'Protein': protein,
-                'COSMIC': cosmic,
-            }, ignore_index=True)
-    return df
-
 class MultipleFileFoundError(Exception):
     pass
 
@@ -323,6 +288,16 @@ def glob_file(pattern_list: list):
     return match_list[0]
 
 
+def get_matrix_file_path(matrix_dir, file_name):
+    """
+    compatible with gzip file
+    """
+    file_path_list = [f'{matrix_dir}/{file_name}', f'{matrix_dir}/{file_name}.gz']
+    for file_path in file_path_list:
+        if os.path.exists(file_path):
+            return file_path
+
+
 @add_log
 def get_barcode_from_matrix_dir(matrix_dir):
     """
@@ -330,12 +305,8 @@ def get_barcode_from_matrix_dir(matrix_dir):
         match_barcode: list
         no_match_barcode: int
     """
-    barcode_file_pattern_list = []
-    for barcode_file_name in BARCODE_FILE_NAME:
-        barcode_file_pattern_list.append(f"{matrix_dir}/{barcode_file_name}")
   
-    match_barcode_file = glob_file(barcode_file_pattern_list)
-    get_barcode_from_matrix_dir.logger.info(f"Barcode file:{match_barcode_file}")
+    match_barcode_file = get_matrix_file_path(matrix_dir, BARCODE_FILE_NAME)
     match_barcode, n_match_barcode = read_one_col(match_barcode_file)
 
     return match_barcode, n_match_barcode
@@ -399,17 +370,12 @@ def parse_match_dir(match_dir):
     return match_dict
 
 
-
-
-def get_scope_bc(bctype):
-    root_path = os.path.dirname(celescope.__file__)
-    linker_f = glob.glob(f'{root_path}/data/chemistry/{bctype}/linker*')[0]
-    whitelist_f = f'{root_path}/data/chemistry/{bctype}/bclist'
-    return linker_f, whitelist_f
-
-
 def fastq_line(name, seq, qual):
     return f'@{name}\n{seq}\n+\n{qual}\n'
+
+
+def fasta_line(name, seq):
+    return f'>{name}\n{seq}\n'
 
 
 def find_assay_init(assay):
@@ -418,15 +384,21 @@ def find_assay_init(assay):
 
 
 def find_step_module(assay, step):
+    file_path_dict = {
+        'assay': f'{ROOT_PATH}/{assay}/{step}.py',
+        'tools': f'{ROOT_PATH}/tools/{step}.py',
+    }
+
     init_module = find_assay_init(assay)
-    try:
+    if os.path.exists(file_path_dict['assay']):
         step_module = importlib.import_module(f"celescope.{assay}.{step}")
-    except ModuleNotFoundError:
-        try:
-            step_module = importlib.import_module(f"celescope.tools.{step}")
-        except ModuleNotFoundError:
-            module_path = init_module.IMPORT_DICT[step]
-            step_module = importlib.import_module(f"{module_path}.{step}")
+    elif hasattr(init_module, 'IMPORT_DICT') and step in init_module.IMPORT_DICT:
+        module_path = init_module.IMPORT_DICT[step]
+        step_module = importlib.import_module(f"{module_path}.{step}")
+    elif os.path.exists(file_path_dict['tools']):
+        step_module = importlib.import_module(f"celescope.tools.{step}")
+    else:
+        raise ModuleNotFoundError(f"No module found for {assay}.{step}")
 
     return step_module
 
@@ -449,17 +421,20 @@ def find_step_module_with_folder(assay, step):
     return step_module, folder
 
 
-def sort_bam(input_bam, output_bam, threads=1):
+def sort_bam(input_bam, output_bam, threads=1, by='coord'):
     cmd = (
         f'samtools sort {input_bam} '
         f'-o {output_bam} '
         f'--threads {threads} '
+        '2>&1 '
     )
+    if by == "name":
+        cmd += " -n"
     subprocess.check_call(cmd, shell=True)
 
 
 def index_bam(input_bam):
-    cmd = f"samtools index {input_bam}"
+    cmd = f"samtools index {input_bam} 2>&1 "
     subprocess.check_call(cmd, shell=True)
 
 
@@ -593,32 +568,28 @@ def check_arg_not_none(args, arg_name):
         return False
 
 
-def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'CID')):
+def reverse_complement(seq):
+    """Reverse complementary sequence
+
+    :param original seq
+    :return Reverse complementary sequence
     """
-    Read cols and infos into pandas df
+    return str(Seq(seq).reverse_complement())
+
+def get_fastx_read_number(fastx_file):
     """
-    vcf = pysam.VariantFile(vcf_file)
-    df = pd.DataFrame(columns=[col.capitalize() for col in cols] + infos)
-    rec_dict = {}
-    for rec in vcf.fetch():
+    get read number using pysam
+    """
+    n = 0
+    with pysam.FastxFile(fastx_file) as f:
+        for _ in f:
+            n += 1
+    return n
 
-        for col in cols:
-            rec_dict[col.capitalize()] = getattr(rec, col)
-            if col == 'alleles':
-                rec_dict['Alleles'] = '-'.join(rec_dict['Alleles'])
-
-        for info in infos:
-            rec_dict[info] = rec.info[info]
-
-        '''
-        rec_dict['GT'] = [s['GT'] for s in rec.samples.values()][0]
-        rec_dict['GT'] = [str(item) for item in rec_dict['GT']]
-        rec_dict['GT'] = '/'.join(rec_dict['GT'])
-        '''
-
-        df = df.append(pd.Series(rec_dict), ignore_index=True)
-    vcf.close()
-    return df
+@add_log
+def dump_dict_to_json(d, json_file):
+    with open(json_file, 'w') as f:
+        json.dump(d, f, indent=4)
 
 
 class Test_utils(unittest.TestCase):

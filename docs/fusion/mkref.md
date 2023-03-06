@@ -12,7 +12,6 @@ celescope fusion mkref \
 --genome_name {genome_name} \
 --fasta fusion.fasta \
 --fusion_pos fusion_pos.txt \
---genomeSAindexNbases 4
 ```
 ## Arguments
 `--thread` Default=6. Threads to use.
@@ -33,8 +32,4 @@ PML_3	183
 PML_4	254  
 PML_5	326  
 PML_6	204.
-
-`--genomeSAindexNbases` For small genomes, the parameter --genomeSAindexNbases must to be scaled down, with a typical 
-value of min(14, log2(GenomeLength)/2 - 1). For example, for 1 megaBase genome, this is equal 
-to 9, for 100 kiloBase genome, this is equal to 7.
 

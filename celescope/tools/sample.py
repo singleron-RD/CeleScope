@@ -2,7 +2,7 @@
 
 from celescope.tools import utils
 from celescope.__init__ import __VERSION__
-from celescope.tools.__init__ import __PATTERN_DICT__
+from celescope.tools.__init__ import PATTERN_DICT
 from celescope.tools.barcode import Chemistry
 from celescope.tools.step import Step, s_common
 
@@ -69,5 +69,5 @@ def get_opts_sample(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument('--fq1', help='read1 fq file')
-    parser.add_argument('--chemistry', choices=list(__PATTERN_DICT__.keys()), help='chemistry version', default='auto')
+    parser.add_argument('--chemistry', choices=list(PATTERN_DICT.keys()), help='chemistry version', default='auto')
     return parser

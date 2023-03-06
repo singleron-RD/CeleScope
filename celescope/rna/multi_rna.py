@@ -10,12 +10,9 @@ class Multi_rna(Multi):
         --mapfile ./rna.mapfile\\
         --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
         --thread 8\\
-        --allowNoPolyT\\
         --mod shell
     ```
-
-    If Single nuclei RNA-Seq is used, you need to add `--gtf_type gene` to include reads mapped to 
-    intronic regions.
+    Work for both single cell RNA-Seq and single nuclei RNA-Seq.
     """
 
 

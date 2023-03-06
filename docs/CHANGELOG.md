@@ -1,12 +1,98 @@
+## [1.14.1] - 2023-01-11
+ ### `snp`
+ - Add an argument `--database`. Data from non-human species can also be annotated with this argument.
+ - Change the default filtering method from `auto` to `otsu` to improve sensitivity.
+ - Fix an issue that could result in blank gene annotations.
+ - Fix an issue where amino acid names were not displaying correctly.
 
-## [Unreleased] 
+## [1.14.0] - 2022-12-20
+ ### `rna`
+ - Revert changes to the rna pipeline made in version 1.13.0. 
+ 
+ > If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded.
+
+ ### `snp`
+ - Replace ANNOVAR with SnpEff.
+
+ ### `citeseq`
+ - Optimize the display of images in HTML reports.
+
+## [1.14.0b0] - 2022-12-01
+ ### `vdj`
+ - Replace Mixcr with IgBlast.
+
+ ### `snp`
+ - When using `otsu` or `auto` , two additional filtering conditions are added: Minimum variant allele frequency and Minimum supporting reads . This will remove some low-confidence heterozygous variants that cannot be filtered out by the `otsu` or `auto` algorithm.
+ - Some Splits reads (e.g. spanning splicing events in RNAseq data) will result in a small number of variants that are not in the target gene list. These variants are removed.
+
+## [1.13.0] - 2022-10-28
+
+ ### `sweetseq`
+ - Added support for single cell data generated with ProMoSCOPE<sup>TM</sup> Single Cell Glycosylation Detection Kits.
+
+ ### `capture_virus`
+ - The `capture_virus` pipeline now supports adding gtf as an input file to generate an expression matrix of viral genes.
+
+ ### `rna`
+ - If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded. In previous versions, both read groups were kept.
+ 
+ ### General improvments
+ - There are some gtf missing lines with annotation as gene. Such gtf will report an error when running featureCounts. The `celescope utils mkgtf` command can now add missing lines for such gtf.
+
+## [1.12.1] - 2022-09-16
+ ### General improvments
+ - Fixed version of package `matplotlib`. The latest version of matplotlib 3.6.0 causes the error: `ModuleNotFoundError: No module named 'matplotlib._contour'`.
+
+## [1.12.0] - 2022-09-08
+ ### `rna`
+ - Introns will be included in the `rna` analysis by default.
+
+ ### `vdj`
+ - Add an argument `--mixcr_mem` to avoid the `Invalid maximum heap size` error reported by mixcr. https://github.com/milaboratory/mixcr/issues/588
+
+ ### General improvments
+ - `Reads without poly T` are not filtered by default. Remove the argument `--allowNoPolyT` and add a new argument `--filterNoPolyT`.
+ - Add a sub-command `celescope utils mkgtf` which is similar to `cellranger mkgtf`. After using this command, only the lines with gene_biotype as protein_coding, lncRNA, antisense and VDJ related genes will be kept in gtf. This removes 2 mitochondrial ribosomal RNAs (mt-rRNA) and 22 mitochondrial transfer RNAs (mt-tRNA) from gtf. The detected mitochondrial gene UMI is decreased.
+
+## [1.11.1] - 2022-08-10
+ ### General improvments
+ - When making a STAR index, `--genomeSAindexNbases` can be automatically inferred based on genome size.
+ - Fix an issue that `Reads Assigned To Intronic Regions` could have negative values.
+ - Fix the problem that the excel download button of the marker gene list was removed.
+
+ ### `snp`
+ - Fix an issue where Annovar could generate extra lines in multianno.txt file.
+
+## [1.11.0] - 2022-07-07
+ ### `rna`
+ - All genes from the gtf file will be written to `genes.tsv`. https://github.com/singleron-RD/CeleScope/issues/81
+ - The `celescope rna mkref` command no longer generates refflat files; removes the number of bases mapped to each region; adds the number of reads mapped to each region.
+ 
+ ### `flv_CR`
+ - fix a bug that `VJ Spanning (IGH, IGL) pair` will cause an KeyError if the order of [IGH, IGL] is not satisfied. https://github.com/singleron-RD/CeleScope/pull/145 
+
+
+## [1.11.0b0] - 2022-06-21
+ ### `flv_vdj`
+ - Chemistry `flv_rna`(full length VDJ matched mRNA) and `flv` can be auto-detected. 
+ - Remove assay `flv_trust4_split`.
+
  ### `snp`,`capture_virus` and `fusion`
  - Change the default `--umi_threshold_method` from `auto` to `otsu`.
+
+ ### `vdj`
+ - Use an improved cell-calling method that only match cell barcodes are considered. 
+ - Change how median IGH, IGK and IGL UMIs are calculated. Now all cells(include 0 UMI count cells) are taken into consideration.
+ - Add cell with chain pair metrics, e.g. "Cells with (IGH, IGK) pair".
+
+ ### `mkref`
+ - Change parameters for generating refFlat files to tolerate non-ensembl-compliant gtf.
+
  
 
-## [1.10.0] - 2021-04-22
+## [1.10.0] - 2022-04-22
  ### `fl_vdj`
- - Add 3 new assays: `fl_vdj_CR`, `fl_vdj_TRUST4` and `fl_vdj_TRUST4_split`.
+ - Add 3 new assays: `flv_CR`, `flv_trust4` and `flv_trust4_split`.
 
  ### `rna` and `dynaseq`
  - Limit the marker genes of each cluster in the HTML report to a maximum of 50 to avoid the slow opening of the report.
@@ -15,7 +101,7 @@
  ### `snp`
  - Add panel `blood_1`.
 
-## [1.9.0] - 2021-04-01
+## [1.9.0] - 2022-04-01
  ### `rna` and `dynaseq`
  - Rename the cell-calling method from `cellranger3` to `EmptyDrops_CR`. Make `EmptyDrops_CR` the default method.
  - Fix an issue that mitochondrial percent is not added to metrics.
@@ -23,11 +109,11 @@
  ### `snp`,`capture_virus` and `fusion`
  - When calculating the `auto` threshold, the default coefficient changes from 10 to 3. This will make the filtering more stringent.
 
-## [1.8.1] - 2021-03-23
+## [1.8.1] - 2022-03-23
  ### General improvments
  - Fix an issue where the matrix suffix `filtered_feature_bc_matrix` introduced in v1.8.0 is not recognized when parsing match_dir.
 
-## [1.8.0] - 2021-03-17
+## [1.8.0] - 2022-03-17
  ### `rna` and `dynaseq`
  - Replace `Seurat` with `scanpy`.
  - Add read_saturation to downsample file.
@@ -43,7 +129,7 @@
     - fitered_matrix: `matrix_10X`-> `filtered_feature_bc_matrix`
 
 
-## [1.7.2] - 2021-02-10
+## [1.7.2] - 2022-02-10
 
  ### `vdj`
  - "Cell with Barcode Match, TRA and TRB": When calculating the percentage, the denominator is `Cell with Barcode Match`. The denominator used previously was `Estimated Mumber of Cells`.
@@ -59,7 +145,7 @@
  - Remove the redundant `--assay` parameter.
  - Add the `--queue` argument for `sjm` job submission.
 
-## [1.7.1] - 2021-01-17
+## [1.7.1] - 2022-01-17
 
  ### `rna`
  - Fix a bug with mt_gene_list (#92)

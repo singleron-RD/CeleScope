@@ -40,7 +40,7 @@ class Step:
         '''
         display_title controls the section title in HTML report
         '''
-
+        print(f'Args: {args}')
         self.args = args
         self.outdir = args.outdir
         self.sample = args.sample
@@ -88,7 +88,7 @@ class Step:
         # out file
         self.__stat_file = f'{self.outdir}/stat.txt'
 
-    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True):
+    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True, print_log=True):
         '''
         add metric to metric_list
         
@@ -97,6 +97,7 @@ class Step:
             help_info: str, help info for metric in html report
             display: str, controls how to display the metric in HTML report.
             show: bool, whether to add to `.data.json` and `stat.txt`. `.data.json` is used for HTML report. `stat.txt` is used in house.
+            print_log: bool, whether to print metric to stdout
         '''
 
         name = cap_str_except_preposition(name)
@@ -124,6 +125,9 @@ class Step:
                 "show": show,
             }
         )
+
+        if print_log:
+            print(f'{name}: {display}')
 
     def _write_stat(self):
         with open(self.__stat_file, 'w') as writer:
@@ -231,7 +235,9 @@ class Step:
         '''
         debug subprocess call
         '''
-        self.debug_subprocess_call.logger.debug(cmd)
+        self.debug_subprocess_call.logger.info(cmd)
+        if cmd.find('2>&1') == -1:
+            cmd += ' 2>&1 '
         subprocess.check_call(cmd, shell=True)
 
     def get_metric_list(self):

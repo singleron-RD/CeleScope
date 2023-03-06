@@ -172,9 +172,10 @@ class Docs():
                 self.add_step_in_manual(step)
 
         # write multi last because multi need to collect output files from each step
-        self.write_step_doc(self.multi_step)
-        if self.release_bool:
-            self.add_step_in_manual(self.multi_step)
+        if self.assay != 'utils':
+            self.write_step_doc(self.multi_step)
+            if self.release_bool:
+                self.add_step_in_manual(self.multi_step)
 
         self.write_manual()
 

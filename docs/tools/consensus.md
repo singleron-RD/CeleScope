@@ -17,6 +17,8 @@ otherwise an ambiguous character(N) will be added.
 
 `--fq` Required. Fastq file.
 
+`--out_fasta` output Fasta file or not.
+
 `--outdir` Output diretory.
 
 `--sample` Sample name.
