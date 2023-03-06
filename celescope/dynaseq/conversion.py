@@ -225,7 +225,6 @@ class Conversion(Step):
 
                 tags = self.convInRead(read, qual)
                 if tags==0: 
-                    #print(read)
                     continue
                 read.set_tag('SC', tags[0], 'Z')
                 read.set_tag('TC', tags[1], 'Z')
