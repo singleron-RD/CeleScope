@@ -2,7 +2,7 @@
 # v1.0
 
 import pysam
-import os,sys
+import os
 import subprocess
 import numpy as np
 import pandas as pd
