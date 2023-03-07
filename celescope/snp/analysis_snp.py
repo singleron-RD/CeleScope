@@ -1,8 +1,12 @@
-import pandas as pd
-import pysam
 import subprocess
 import os
-from venn import generate_petal_labels, draw_venn, generate_colors
+import warnings
+
+import scanpy as sc
+import pandas as pd
+import pysam
+import matplotlib
+import matplotlib.pyplot as plt
 
 from celescope.tools import utils
 from celescope.tools.step import Step
@@ -11,6 +15,9 @@ from celescope.tools.target_metrics import get_gene_list
 from celescope.__init__ import HELP_DICT, ROOT_PATH
 from celescope.snp.__init__ import PANEL
 
+
+matplotlib.use('Agg')
+warnings.filterwarnings("ignore")
 
 AA_DICT = {
     'Gly' : 'G',
@@ -138,6 +145,7 @@ class Analysis_snp(Step):
         self.snpeff_ann_vcf_file = f'{self.snpeff_outdir}/variants_ann.vcf'
         self.final_vcf_file = f'{self.out_prefix}_final.vcf'
         utils.check_mkdir(self.snpeff_outdir)
+        self.plot_snp_dir = f'{self.outdir}/{self.sample}_plot_snp/'
 
         self.gt_file = f'{self.out_prefix}_gt.csv'
         self.ncell_file = f'{self.out_prefix}_variant_ncell.csv'
@@ -210,36 +218,6 @@ class Analysis_snp(Step):
         self.variant_table.reset_index(drop=True, inplace=True)
         self.variant_table.to_csv(self.variant_table_file, index=False)
 
-
-    def get_venn_plot(self):
-        df_top_5 = self.get_df_table().sort_values(by="ncell_alt", ascending=False).iloc[:5, :]
-        plot = {}
-        cid_lst = df_top_5.loc[:, "CID"].to_list()
-        vid_lst = df_top_5.loc[:, "VID"].to_list()
-        for cid, vid in zip(cid_lst, vid_lst):
-            plot[f"VID_{vid}"] = set(cid)
-        share_cid = list(set.intersection(*map(set, cid_lst)))
-        if share_cid == []:
-            share_cid.append("None")
-        # venn plot
-        set_cid = list(plot.values())
-        set_name = list(plot.keys())
-        labels = generate_petal_labels(set_cid)
-        plot = draw_venn(
-            petal_labels=labels,
-            dataset_labels=set_name,
-            hint_hidden=False,
-            colors=generate_colors(n_colors=5),
-            figsize=(8, 8),
-            fontsize=14,
-            legend_loc="best",
-            ax=None
-        )
-        fig = plot.get_figure()
-        fig.savefig(f'{self.outdir}/{self.sample}_variant_top5.jpg', dpi=600)
-        pd.DataFrame({"top5_variant_shared_cells": share_cid}).to_csv(
-            f'{self.outdir}/{self.sample}_top5_shared_cells.tsv', sep='\t', index=None)
-
     def add_help(self):
         '''
             <p> Chrom : chromosome name.</p>
@@ -279,6 +257,37 @@ class Analysis_snp(Step):
             content='A standard nomenclature is used in specifying the sequence changes'
         )
 
+    @utils.add_log
+    def plot_snp(self):
+        match_dict = utils.parse_match_dir(self.args.match_dir)
+        if 'h5ad' not in match_dict:
+            return
+
+        utils.check_mkdir(self.plot_snp_dir)
+        df_gt = pd.read_csv(self.gt_file, keep_default_na=False, index_col=0)
+        df_ncell = pd.read_csv(self.ncell_file, index_col=0)
+        df_ncell['n_variants'] = df_ncell['0/1'] + df_ncell['1/1']
+        df_top = df_gt.loc[df_ncell.nlargest(self.args.plot_top_n, 'n_variants').index,]
+        df_top = df_top.transpose()
+        variants = df_top.columns
+        for c in variants:
+            df_top[c] = df_top[c].astype('category')
+
+        gene_list, _mRNA_list, protein_list = parse_variant_ann(self.final_vcf_file)
+        indices = [int(x.split('_')[2])-1 for x in variants]
+
+        adata = sc.read_h5ad(match_dict['h5ad'])
+        adata.obs = pd.concat([adata.obs, df_top], axis=1)
+        pt_size = min(100, 120000 / len(adata.obs))
+        for i, v in enumerate(variants):
+            title = f'top{i+1}_{variants[i]}_{gene_list[indices[i]]}_{protein_list[indices[i]]}'
+            file_name = f'{self.plot_snp_dir}/{title}.pdf'
+            sc.pl.umap(adata, color=v, size=pt_size, 
+            palette={'0/0':'dimgray', '0/1':'orange', '1/1':'red','NA':'lightgray'},
+            title=title)
+            plt.savefig(file_name,dpi=300,bbox_inches="tight")
+
+
     def run(self):
         self.run_snpEff()
         self.keep_in_gene()
@@ -286,6 +295,7 @@ class Analysis_snp(Step):
         self.write_gt()
         self.write_ncell()
         self.add_help()
+        self.plot_snp()
         table_dict = self.get_table_dict(title='Variant table', table_id='variant', df_table=self.variant_table)
         self.add_data(table_dict=table_dict)
         # self.get_venn_plot()
@@ -301,6 +311,7 @@ def get_opts_analysis_snp(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
     parser.add_argument("--database", help='snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse)', default='GRCh38.99')
     parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
+    parser.add_argument("--plot_top_n", help='plot UMAP of at most n variants ', default=20)
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
