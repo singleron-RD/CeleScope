@@ -2,22 +2,22 @@
 # v1.0
 
 import pysam
-import os,sys
+import os
 import subprocess
 import numpy as np
 import pandas as pd
 from collections import Counter
 from celescope.tools.step import Step, s_common
-import celescope.tools.utils as utils
+from celescope.tools import utils
 
 
 class Conversion(Step):
     """
-    Features
+    ## Features
     - Get conversion pos in each read.
         - Get snp info. 
 
-    Output
+    ## Output
     - `{sample}.PosTag.bam` Bam file with conversion info.
     - `{sample}.PosTag.csv` SNP info in csv format.
     """
