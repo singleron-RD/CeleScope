@@ -118,6 +118,7 @@ class Conversion(Step):
         order_columns=['chrom', 'pos', 'convs', 'covers', 'posratio','gene_id']
         Outputdf = pd.DataFrame(columns=order_columns)
         for key in ConvsPerPos.keys():
+            if len(ConvsPerPos[key])==0: continue
             df = pd.DataFrame.from_dict(ConvsPerPos[key], orient='index')
             df1 = pd.DataFrame.from_dict(CoverofPosWithConvs[key], orient='index')
             df3 = pd.DataFrame.from_dict(AnnoteLocs[key], orient='index')

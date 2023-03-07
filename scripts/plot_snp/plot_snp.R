@@ -95,9 +95,9 @@ if (sample[length(sample)] == ""){
     sample <- sample[length(sample)]
 }
 
-tsne <- str_glue("{snp_dir}/08.analysis_snp/{sample}_tsne_coord.tsv")
-gt <- str_glue("{snp_dir}/08.analysis_snp/{sample}_gt.csv")
-variant <- str_glue("{snp_dir}/08.analysis_snp/{sample}_variant_table.csv")
+tsne <- str_glue("{snp_dir}/09.analysis_snp/{sample}_tsne_coord.tsv")
+gt <- str_glue("{snp_dir}/09.analysis_snp/{sample}_gt.csv")
+variant <- str_glue("{snp_dir}/09.analysis_snp/{sample}_variant_table.csv")
 
 protein <- str_split(argv$protein, ",")[[1]]
 position <- str_split(argv$position, ",")[[1]]

@@ -5,7 +5,7 @@ There are three states for each cell:
     - Multiplet: cells that are not Undetermined and stained with more than one tag.
     - Singlet: cells that are neither Undetermined nor Multiplet.
 
-Undetermined cells: cells with tag UMI count < UMI_min. UMI_min is calculated as the maximum of (5 percentile of UMI counts of all cells, median of UMI counts of all cells / 10, 1)
+Undetermined cells: cells with tag UMI count < UMI_min. UMI_min is calculated as max(min(5 percentile of UMI counts of all cells, median of UMI counts of all cells / 10), 1)
 
 Multiplet cells: cells with SNR(signal-to-noise-ratio) < SNR_min. SNR_min is calculated with the following algorithm:
     1. Calulate SNR of all cells. SNR = maximum tag UMI count / second maximum tag UMI count.

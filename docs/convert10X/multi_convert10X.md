@@ -1,52 +1,24 @@
-## Installation
-
-1. Clone repo
-```
-git clone -b convert_10X https://github.com/singleron-RD/CeleScope.git
-```
-
-2. Create conda environment and install conda packages
-```
-cd CeleScope
-conda create -n convert_10X -y --file conda_pkgs.txt
-```
-
-Alternatively, you can use [mamba](https://github.com/mamba-org/mamba) to improve speed.
-```
-conda install mamba
-mamba create -n convert_10X -y --file conda_pkgs.txt
-```
-
-3. Install celescope
-
-Make sure you have activated the conda environment before running `pip install Celescope`. 
-```
-conda activate convert_10X
-pip install .
-```
-
 ## Usage
-For rna data, create run.sh file as shown below:
+Running cellranger-count for sgr sc-RNA data:
 ```
-conda activate convert_10X
+conda activate celescope
 multi_convert10X \
     --mapfile  test.mapfile \
-    --chemistry flv_rna \
+    --thread 8 \
+    --ref_path "/soft/cellranger/refdata-gex-GRCh38-2020-A" \
+    --soft_path "/soft/cellranger/cellranger-6.1.2/cellranger" \
+    --mod shell 
+``` 
+Converting sgr data to 10X format:
 ```
-For vdj data, create run.sh file as shown below:
-```
-conda activate convert_10X
+conda activate celescope
 multi_convert10X \
     --mapfile  test.mapfile \
-    --chemistry flv \
-```
-Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
-1st column: Fastq file prefix.
-2nd column: Fastq file directory path.
-3rd column: Sample name, which is the prefix of all output files.
-```
-rna     /SGRNJ03/randd/cjj/celedev/TESTDATA/testcele/celescope_test_data/rna/fastqs/    test1
-```
+    --thread 8 \
+    --soft_path "/soft/cellranger/cellranger-6.1.2/cellranger" \
+    --steps_run sample,barcode,convert \
+    --mod shell 
+``` 
 ## Features
 ### barcode
 
