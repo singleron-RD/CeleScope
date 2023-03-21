@@ -48,6 +48,12 @@ class Mkref:
             cmd_V = f"cat TRAV.fasta TRBV.fasta > {self.outdir}/TRV.fasta"
             cmd_D = f"cat TRBD.fasta > {self.outdir}/TRD.fasta" 
             cmd_J = f"cat TRAJ.fasta TRBJ.fasta > {self.outdir}/TRJ.fasta"
+        elif self.type == "TRGD":
+            imgt_files = [i for i in imgt_files if i[:2]=="TR"]
+            assert len(imgt_files) == 5
+            cmd_V = f"cat TRDV.fasta TRGV.fasta > {self.outdir}/TRV.fasta"
+            cmd_D = f"cat TRDD.fasta > {self.outdir}/TRD.fasta" 
+            cmd_J = f"cat TRDJ.fasta TRGJ.fasta > {self.outdir}/TRJ.fasta"            
         else:
             imgt_files = [i for i in imgt_files if i[:2]=="IG"]
             assert len(imgt_files) == 7
