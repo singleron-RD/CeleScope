@@ -210,7 +210,8 @@ class Analysis_snp(Step):
         df_vcf = pd.concat([df_vcf, df_ncell], axis=1)
 
         cols = ["Chrom", "Pos", "Alleles", "Gene", "0/0", "0/1", "1/1", "mRNA", "Protein"]
-        df_vcf = df_vcf.loc[:, df_vcf.columns.isin(cols)]
+        cols = [col for col in cols if col in df_vcf.columns]
+        df_vcf = df_vcf.loc[:, cols]
         is_in_gene_list = df_vcf.Gene.isin(self.gene_list)
         df_vcf = df_vcf[is_in_gene_list]
 
@@ -298,7 +299,6 @@ class Analysis_snp(Step):
         self.plot_snp()
         table_dict = self.get_table_dict(title='Variant table', table_id='variant', df_table=self.variant_table)
         self.add_data(table_dict=table_dict)
-        # self.get_venn_plot()
 
 
 @utils.add_log
@@ -311,7 +311,7 @@ def get_opts_analysis_snp(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
     parser.add_argument("--database", help='snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse)', default='GRCh38.99')
     parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
-    parser.add_argument("--plot_top_n", help='plot UMAP of at most n variants ', default=20)
+    parser.add_argument("--plot_top_n", type=int, help='plot UMAP of at most n variants ', default=20)
     if sub_program:
         s_common(parser)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)
