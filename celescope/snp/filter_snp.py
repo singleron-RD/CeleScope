@@ -1,5 +1,4 @@
 import pysam
-import subprocess
 
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Threshold

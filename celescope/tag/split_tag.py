@@ -188,7 +188,7 @@ class Split_tag(Step):
             
             for seg in bam_in:
                 if not seg.has_tag('XT'):
-                        continue
+                    continue
                 barcode = seg.get_tag('CB')
                 if barcode in barcode_tag_dict:
                     tag = barcode_tag_dict[barcode]

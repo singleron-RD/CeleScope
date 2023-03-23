@@ -150,6 +150,7 @@ class Threshold():
 
         self.kwargs = kwargs
     
+    @utils.add_log
     def run(self):
         """
         return threshold
