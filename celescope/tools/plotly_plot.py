@@ -181,7 +181,7 @@ class Tsne_dropdown_plot(Plotly_plot):
         self.feature_name_list = feature_name_list
         self.discrete = discrete
         self.title = f"t-SNE plot Colored by {self.name}"
-        
+        self.x_pos = 1-(0.24/29)*int(max([len(x) for x in feature_name_list]))
         self._layout = {}
         
         self._buttons=[]
@@ -329,13 +329,13 @@ class Tsne_dropdown_plot(Plotly_plot):
                           'direction':'down',
                           'pad':{'r':8,'t':8},
                           'showactive':True,
-                          'x':0.9,
-                          'xanchor':'left',
+                          'x':1.1,
+                          'xanchor':'right',
                           'y':1.2,
                           'yanchor':'top'}],
             annotations=[{'text': 'TAG type:',
                           'showarrow': False,
-                          'x': 0.9,
+                          'x': self.x_pos,
                           'xref': 'paper',
                           'xanchor': 'right',
                           'y': 1.15,
