@@ -337,7 +337,7 @@ For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""",
     )
     parser.add_argument(
         '--TCR_iUMI',
-        help="""Minimum number of UMI of identical receptor type and CDR3 for CR. 
+        help="""Minimum number of UMI of identical receptor type and CDR3 for TCR. 
 For each (barcode, chain) combination, only UMI>=iUMI is considered valid.""",
         type=int,
         default=1,
