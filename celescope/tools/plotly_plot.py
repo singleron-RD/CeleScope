@@ -181,7 +181,7 @@ class Tsne_dropdown_plot(Plotly_plot):
         self.feature_name_list = feature_name_list
         self.discrete = discrete
         self.title = f"t-SNE plot Colored by {self.name}"
-        self.x_pos = 1-(0.24/29)*int(max([len(x) for x in feature_name_list]))
+        self.x_pos = max([len(x) for x in feature_name_list])*(-0.014508150115935647) + 0.9574696739953588
         self._layout = {}
         
         self._buttons=[]
