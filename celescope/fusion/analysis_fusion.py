@@ -20,8 +20,6 @@ class Analysis_fusion(Analysis):
     def __init__(self, args, display_title='Analysis'):
         super().__init__(args, display_title)
 
-        self.tmp_dir = self.args.outdir
-
         fusion_pos_file =  Mkref_fusion.parse_genomeDir(args.fusion_genomeDir)['fusion_pos']
         self.pos_dict = Count_fusion.read_pos_file(fusion_pos_file)
 
@@ -41,7 +39,7 @@ class Analysis_fusion(Analysis):
         self.add_data(tsne_cluster=tsne_cluster)
         tsne_citeseq = Tsne_dropdown_plot(df_tsne,'Fusion',feature_name_list).get_plotly_div()
         self.add_data(tsne_citeseq=tsne_citeseq)
-        Tsne_single_plot(df_tsne,feature_name_list,self.tmp_dir).get_plotly_div()
+        Tsne_single_plot(df_tsne,feature_name_list,self.args.outdir).get_plotly_div()
     
 
     def get_fusion_count_df(self):

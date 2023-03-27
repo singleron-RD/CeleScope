@@ -354,7 +354,7 @@ class Tsne_single_plot(Plotly_plot):
         super().__init__(df_tsne)
         
         self.feature_name_list = feature_name_list
-        self.analysis_dir = pathlib.Path(analysis_dir)
+        self.analysis_dir = analysis_dir
         
         self._layout = {}
         
