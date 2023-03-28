@@ -237,6 +237,18 @@ class Count_vdj(Step):
                 total=n_cell,
                 help_info=f"cells with as least {iUMI} UMI mapped to each chain"
             )
+        
+        if self.args.type == 'BCR':
+            df_tmp = df_valid_count[df_valid_count["aaSeqCDR3_IGH"]!="NA"]
+            multi_chain_num = df_tmp[(df_tmp["aaSeqCDR3_IGK"]!="NA") | (df_tmp["aaSeqCDR3_IGL"]!="NA")].shape[0]
+            three_chain_num = df_tmp[(df_tmp["aaSeqCDR3_IGK"]!="NA") & (df_tmp["aaSeqCDR3_IGL"]!="NA")].shape[0]
+            self.add_metric(
+                name="Cells with Single Heavy-Light chain pair",
+                value=multi_chain_num - three_chain_num,
+                total=n_cell,
+                help_info=f"cells with as least {iUMI} UMI mapped to single heavy chain and single light chain"
+            )
+            
 
     def write_cell_confident_count(self, df_valid_count, df_clonetypes, df_confident):
         df_mergeID = pd.merge(df_valid_count,

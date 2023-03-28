@@ -25,13 +25,14 @@ class Conversion(Step):
     def __init__(self, args):
         Step.__init__(self, args)
         # input files
-        self.ifile = os.path.join(args.outdir, args.sample+'.bam')
+        #self.ifile = os.path.join(args.outdir, args.sample+'.bam')
         self.sample = args.sample
         self.strandednessfile = args.strand
         self.inbam = args.bam
         self.bcfile = args.cell
         self.outdir = args.outdir
         self.thread = args.thread
+        self.qual = int(args.basequalilty)
 
         # output files
         self.outfile_bam = os.path.join(args.outdir, args.sample+'.PosTag.bam')
@@ -39,19 +40,15 @@ class Conversion(Step):
 
     @utils.add_log
     def run(self):
-        ##Filter and sort
-        self.fltSort(self.inbam, self.ifile, self.bcfile, self.thread)
-        cmd = ['samtools index', self.ifile]
-        self.run_cmd(cmd)
 
         # Adding tags
-        self.addTags(self.ifile, self.outfile_bam, self.strandednessfile)
+        ContigLocs, AnnoteLocs = self.addTags(self.inbam, self.outfile_bam, self.bcfile, self.strandednessfile, self.qual, self.thread)
         cmd = ['samtools index', self.outfile_bam]
         self.run_cmd(cmd)
 
         # Obtaining conversion positions
         bam = pysam.AlignmentFile(self.outfile_bam, 'rb')
-        ContigLocs, AnnoteLocs = self.CountConvperPos(bam)
+        #ContigLocs, AnnoteLocs = self.CountConvperPos(bam)
 
         # Obtaining coverage over conversion position
         ConvsPerPos, CoverofPosWithConvs = self.CountReadConverPerConvPos(bam, ContigLocs)
@@ -61,41 +58,41 @@ class Conversion(Step):
         A.to_csv(self.outfile_csv)
         bam.close()
 
-        cmd = ['rm', self.ifile]
-        self.run_cmd(cmd)
-        cmd = ['rm', self.ifile+'.bai']
-        self.run_cmd(cmd)
+        #cmd = ['rm', self.ifile]
+        #self.run_cmd(cmd)
+        #cmd = ['rm', self.ifile+'.bai']
+        #self.run_cmd(cmd)
 
     def run_cmd(self, cmd):
         subprocess.call(' '.join(cmd), shell=True)
 
-    @utils.add_log
-    def CountConvperPos(self, bamfile):
-        ContigLocs = {}
-        AnnoteLocs = {}
-        for read in bamfile.fetch():
-            try:
-                if read.get_tag('ST') == '+':
-                    locs = read.get_tag('TL')
+
+    #@utils.add_log
+    def CountConvperPos_read(self, read, ContigLocs, AnnoteLocs):
+        #ContigLocs = {}
+        #AnnoteLocs = {}
+        try:
+            if read.get_tag('ST') == '+':
+                locs = read.get_tag('TL')
+            else:
+                locs = read.get_tag('AL')
+            if locs[0] != 0:
+                if read.reference_name in ContigLocs:
+                    ContigLocs[read.reference_name].extend(locs)
                 else:
-                    locs = read.get_tag('AL')
-                if locs[0] != 0:
-                    if read.reference_name in ContigLocs:
-                        ContigLocs[read.reference_name].extend(locs)
-                    else:
-                        ContigLocs[read.reference_name] = list(locs)
-                    if read.reference_name not in AnnoteLocs:
-                        for i, each in enumerate(locs):
-                            if i == 0:
-                                AnnoteLocs[read.reference_name] = {each: read.get_tag('XT')}
-                            else:
-                                AnnoteLocs[read.reference_name][each] = read.get_tag('XT')
-                    else:
-                        for i, each in enumerate(locs):
-                            if each not in AnnoteLocs[read.reference_name]:
-                                AnnoteLocs[read.reference_name][each] = read.get_tag('XT')
-            except (ValueError, KeyError):
-                continue
+                    ContigLocs[read.reference_name] = list(locs)
+                if read.reference_name not in AnnoteLocs:
+                    for i, each in enumerate(locs):
+                        if i == 0:
+                            AnnoteLocs[read.reference_name] = {each: read.get_tag('GX')}
+                        else:
+                            AnnoteLocs[read.reference_name][each] = read.get_tag('GX')
+                else:
+                    for i, each in enumerate(locs):
+                        if each not in AnnoteLocs[read.reference_name]:
+                            AnnoteLocs[read.reference_name][each] = read.get_tag('GX')
+        except (ValueError, KeyError):
+            print("Reads Error {}".format(str(read.qurey_name)))
         return ContigLocs, AnnoteLocs
 
     @utils.add_log
@@ -118,24 +115,24 @@ class Conversion(Step):
     @utils.add_log
     def ExportasVcf(self, ConvsPerPos, CoverofPosWithConvs, AnnoteLocs):
         #Chrom, Pos , ConvsPerPs, CoverofPosWithConvs
-        Outputdf = pd.DataFrame(columns=['pos2', 'convs', 'covers', 'chrom', 'posratio'])
+        order_columns=['chrom', 'pos', 'convs', 'covers', 'posratio','gene_id']
+        Outputdf = pd.DataFrame(columns=order_columns)
         for key in ConvsPerPos.keys():
             if len(ConvsPerPos[key])==0: continue
             df = pd.DataFrame.from_dict(ConvsPerPos[key], orient='index')
             df1 = pd.DataFrame.from_dict(CoverofPosWithConvs[key], orient='index')
-            df.index.name = 'pos'
-            df1.index.name = 'pos'
+            df3 = pd.DataFrame.from_dict(AnnoteLocs[key], orient='index')
+            #df.index.name = 'pos'
+            #df1.index.name = 'pos'
             df.columns = ['convs']
             df1.columns = ['covers']
-            df2 = df.join(df1)
-            df2['pos2'] = df2.index
-            df2.index = np.arange(df2.shape[0])
+            df3.columns = ['gene_id']
+            df2 = pd.concat([df,df1,df3],axis=1)
+            df2['pos'] = df2.index
+            #df2.index = np.arange(df2.shape[0])
             df2['chrom'] = np.repeat(key, df2.shape[0])
             df2['posratio'] = df2['convs']/df2['covers']
-            df3 = pd.DataFrame.from_dict(AnnoteLocs[key], orient='index')
-            df3.columns = ['gene_id']
-            df2 = df2.join(df3, on='pos2')
-            Outputdf = Outputdf.append(df2)
+            Outputdf = pd.concat([Outputdf,df2[order_columns]])
         return Outputdf.reset_index(drop=True)
 
     def createTag(self, d):
@@ -193,44 +190,76 @@ class Conversion(Step):
             aG_loc.append(0)
         return SC_tag, TC_tag, tC_loc, aG_loc
 
-    @utils.add_log
-    def addTags(self, bamfilename, outputname, strandednessfile):
-        bamfile = pysam.AlignmentFile(bamfilename, 'rb')
-        mod_bamfile = pysam.AlignmentFile(outputname, mode='wb', template=bamfile)
-        strandedness = pd.read_csv(strandednessfile, header=None, index_col=0)
-        for read in bamfile.fetch():
-            try:
-                tags = self.convInRead(read)
-                if tags==0: continue
-                read.set_tag('SC', tags[0], 'Z')
-                read.set_tag('TC', tags[1], 'Z')
-                read.set_tag('TL', tags[2])
-                read.set_tag('AL', tags[3])
-                read.set_tag('ST', strandedness.loc[read.get_tag('XT')][1])
-                mod_bamfile.write(read)
-            except (ValueError, KeyError):
-                continue
-
-        bamfile.close()
-        mod_bamfile.close()
 
     @utils.add_log
-    def fltSort(self, bamfilename, outfile_bam, cellfile, thread=8):
+    def addTags(self, bamfilename, outfile_bam, cellfile, strandednessfile, qual=20, thread=8):
+        ContigLocs={}
+        AnnoteLocs={}
         bamfile = pysam.AlignmentFile(bamfilename, 'rb')
         mod_bamfile = pysam.AlignmentFile(outfile_bam, mode='wb', template=bamfile)
-        cells = {}
-        with open(cellfile) as f:
-            for i in f:
-                cells[i.strip()] = 1
+        tmpread={}
+        cellist = pd.read_csv(cellfile, header=None, index_col=0)
+        cells = cellist.index
+        strandedness = pd.read_csv(strandednessfile, header=None, index_col=0)
+        genes=strandedness.index
+        chrp=''
+
+        class GeneError(Exception):
+            pass
+
         for read in bamfile.fetch(until_eof=True):
             try:
                 if not read.has_tag('GX'):
                     continue
                 if read.get_tag("CB") not in cells:
                     continue
-                mod_bamfile.write(read)
+                if read.get_tag('GX') not in genes:
+                    raise GeneError
+                readid=read.get_tag("CB")+read.get_tag("UB")+read.get_tag("GX")
+                chr1=read.reference_name
+
+                if chr1!=chrp and chrp!='':
+                    for x in tmpread:
+                        mod_bamfile.write(tmpread[x][1])
+                        ContigLocs, AnnoteLocs=self.CountConvperPos_read(tmpread[x][1], ContigLocs, AnnoteLocs)
+                    tmpread={}
+
+                tags = self.convInRead(read, qual)
+                if tags==0: 
+                    continue
+                read.set_tag('SC', tags[0], 'Z')
+                read.set_tag('TC', tags[1], 'Z')
+                read.set_tag('TL', tags[2])
+                read.set_tag('AL', tags[3])
+                read.set_tag('ST', strandedness.loc[read.get_tag('XT')][1])
+                
+                if read.get_tag('ST') == '+':
+                    stag = read.get_tag('TL')
+                else:
+                    stag = read.get_tag('AL')
+                if len(stag) == 1 and stag[0] == 0:
+                    tc = 0
+                else:
+                    tc = len(stag)
+                if readid in tmpread:
+                    if tc>tmpread[readid][0]:
+                        tmpread[readid] = [tc,read]
+                else:
+                    tmpread[readid] = [tc,read]
+                
             except (ValueError, KeyError):
                 continue
+            except (GeneError):
+                print('{} is not in strand file, please check your files.'.format(read.get_tag("GX")))
+                continue
+            #except (Exception):
+            #    print("convert error")
+            #    sys.exit(1)
+        
+        for x in tmpread:
+            mod_bamfile.write(tmpread[x][1])
+            ContigLocs, AnnoteLocs=self.CountConvperPos_read(tmpread[x][1], ContigLocs, AnnoteLocs)
+
         bamfile.close()
         mod_bamfile.close()
 
@@ -238,6 +267,7 @@ class Conversion(Step):
         self.run_cmd(cmd)
         cmd = ['mv', outfile_bam+'.bam', outfile_bam]
         self.run_cmd(cmd)
+        return ContigLocs,AnnoteLocs
 
 
 @utils.add_log
@@ -249,9 +279,12 @@ def conversion(args):
 
 def get_opts_conversion(parser, sub_program):
     parser.add_argument('--strand', help='gene strand file, the format is "geneID,+/-"', required=True)
+    parser.add_argument('--basequalilty', default=20, type=int ,help='min base quality of the read sequence', required=False)
     if sub_program:
         parser.add_argument(
             "--bam", help='featureCount bam(sortedByCoord), must have "MD" tag, set in star step', required=True)
         parser.add_argument("--cell", help='barcode cell list', required=True)
         parser = s_common(parser)
     return parser
+
+
