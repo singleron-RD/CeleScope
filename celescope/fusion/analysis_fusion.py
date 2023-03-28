@@ -1,8 +1,9 @@
-import plotnine as p9
+import pandas as pd
 
 from celescope.tools.capture.analysis import Analysis, get_opts_analysis
 from celescope.fusion.count_fusion import Count_fusion
 from celescope.fusion.mkref import Mkref_fusion
+from celescope.tools.plotly_plot import Tsne_dropdown_plot,Tsne_single_plot,Tsne_plot
 
 def analysis_fusion(args):
 
@@ -22,34 +23,25 @@ class Analysis_fusion(Analysis):
         fusion_pos_file =  Mkref_fusion.parse_genomeDir(args.fusion_genomeDir)['fusion_pos']
         self.pos_dict = Count_fusion.read_pos_file(fusion_pos_file)
 
-        self.p9_theme = {    
-            'axis_line_x': p9.element_line(size=2, colour="black"),
-            'axis_line_y':p9.element_line(size=2, colour="black"),
-            'panel_grid_major':p9.element_blank(),
-            'panel_grid_minor':p9.element_blank(),
-            'panel_border':p9.element_blank(),
-            'panel_background':p9.element_blank(),
-            'axis_text_x':p9.element_text(colour="black"),
-            'axis_text_y':p9.element_text(colour="black"),
-        }
         self.count_fusion_df = None
         self.count_fusion_out = f'{self.out_prefix}_fusion_count.csv'
 
+    
     def plot_fusion(self):
         """
         plot fusion count
         """
-        
-        p9.theme_set(p9.theme_void())
-        for ref in self.pos_dict:
-            if ref in self.df_tsne.columns:
-                out_plot_file = f'{self.out_prefix}_{ref}_fusion.pdf'
-                plot = p9.ggplot(self.df_tsne, p9.aes(x="tSNE_1", y="tSNE_2", color=ref)) + \
-                    p9.geom_point(size=0.2) + \
-                    p9.theme_bw() + \
-                    p9.scale_color_gradient(low="lightgrey",high="blue")
-                plot.save(out_plot_file)
+        df_tsne_file = f'{self.out_prefix}_UMI_tsne.csv'
+        df_tsne = pd.read_csv(df_tsne_file,sep=",",index_col=0)
+        feature_name_list = df_tsne.columns[4:-1].to_list()
+        # plot
+        tsne_cluster = Tsne_plot(df_tsne, 'cluster').get_plotly_div()
+        self.add_data(tsne_cluster=tsne_cluster)
+        tsne_citeseq = Tsne_dropdown_plot(df_tsne,'Fusion',feature_name_list).get_plotly_div()
+        self.add_data(tsne_citeseq=tsne_citeseq)
+        Tsne_single_plot(df_tsne,feature_name_list,self.args.outdir).get_plotly_div()
     
+
     def get_fusion_count_df(self):
         fusion_df = self.df_tsne.reset_index().filter(list(self.pos_dict.keys()) + ["barcode"])
         fusion_df = fusion_df.melt(id_vars=["barcode"],value_name="UMI",var_name="fusion",ignore_index=True)
