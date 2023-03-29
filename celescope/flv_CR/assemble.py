@@ -208,7 +208,7 @@ class Cells(cellranger_metrics):
         df_umi['barcode'] = df_umi['barcode'].apply(lambda x : self.tenX_sgr[x.split('-')[0]])
 
         df_umi.to_csv(self.count_file, sep='\t', index=False)
-        self.add_data(chart=get_plot_elements.plot_barcode_rank(self.count_file))
+        self.add_data(chart=get_plot_elements.plot_barcode_rank(self.count_file, log_uniform=True))
 
     def run(self):
         self.add_metrics()
