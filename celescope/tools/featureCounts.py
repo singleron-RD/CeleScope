@@ -96,6 +96,7 @@ class FeatureCounts(Step):
                     threads=self.thread,
                     debug=self.debug
                 )
+                samtools_runner.samtools_index(featureCounts_bam)
                 samtools_runner.add_tag(self.gtf)
                 samtools_runner.temp_sam2bam(by='coord')
                 samtools_runner.samtools_sort(

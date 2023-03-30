@@ -31,6 +31,9 @@ class Multi_vdj(Multi):
     ```
  
     ## Usage
+
+    Please note `multi_vdj` is only used for CDR3 vdj data(not full length). For full length vdj data, please use `multi_flv_CR` or  `multi_flv_trust4`.
+    
     ```
     multi_vdj \\
         --mapfile ./vdj.mapfile \\

@@ -12,6 +12,8 @@
 
 `--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
 
+`--plot_top_n` plot UMAP of at most n variants.
+
 `--outdir` Output diretory.
 
 `--sample` Sample name.

@@ -1,5 +1,4 @@
 import pysam
-import subprocess
 
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Threshold
@@ -8,8 +7,7 @@ from celescope.__init__ import HELP_DICT
 
 # variant allele frequency (VAF) threshold
 VAF = 0.2
-# Minimum supporting reads
-MIN_SUPPORT_READS = 10
+
 
 class Filter_snp(Step):
     """
@@ -23,12 +21,15 @@ class Filter_snp(Step):
     def __init__(self, args, display_title='Filtering'):
         super().__init__(args, display_title)
         self.vcf = args.vcf
-        self.threshold_method = args.threshold_method
-        self.hard_threshold = args.hard_threshold
 
         self.add_metric(
-            'threshold method',
-            self.threshold_method,
+            'reference allele threshold method',
+            self.args.ref_threshold_method,
+        )
+
+        self.add_metric(
+            'alternate allele threshold method',
+            self.args.alt_threshold_method,
         )
 
         # out
@@ -55,11 +56,11 @@ class Filter_snp(Step):
 
         return ref_count_array, alt_count_array
 
-    def get_threshold(self, count_array):
+    def get_threshold(self, count_array, threshold_method, otsu_plot_path=None):
         runner = Threshold(
             count_array,
-            threshold_method=self.threshold_method,
-            hard_threshold=self.hard_threshold,
+            threshold_method=threshold_method,
+            otsu_plot_path=otsu_plot_path
         )
         threshold = runner.run()
         return threshold
@@ -87,26 +88,33 @@ class Filter_snp(Step):
 
     @utils.add_log
     def run(self):
-        if self.threshold_method == 'none':
-
-            cmd = f'cp {self.vcf} {self.out_vcf_file}'
-            subprocess.check_call(cmd, shell=True)
-            return
+        
+        if self.args.ref_threshold_method == 'otsu':
+            ref_otsu_plot_dir = f'{self.outdir}/ref_otsu_plots/'
+            utils.check_mkdir(ref_otsu_plot_dir)
+        
+        if self.args.alt_threshold_method == 'otsu':
+            alt_otsu_plot_dir = f'{self.outdir}/alt_otsu_plots/'
+            utils.check_mkdir(alt_otsu_plot_dir)
 
         with pysam.VariantFile(self.vcf) as vcf_in:
             header = vcf_in.header
-            header.add_meta('threshold_method', value=self.threshold_method)
+            header.add_meta('ref_threshold_method', value=self.args.ref_threshold_method)
+            header.add_meta('alt_threshold_method', value=self.args.alt_threshold_method)
             header.add_meta('INFO', items=[('ID',"REF_T"), ('Number',1), ('Type','Integer'), ('Description','Reference allele count threshold')])
             header.add_meta('INFO', items=[('ID',"ALT_T"), ('Number',1), ('Type','Integer'), ('Description','Alternate allele count threshold')])
             with pysam.VariantFile(self.out_vcf_file, 'w', header=vcf_in.header) as vcf_out:
                 for record in vcf_in.fetch():
+                    name = f'{record.chrom}_{record.pos}'
                     ref_count_array, alt_count_array = self.get_count_array(record)
-                    ref_threshold = self.get_threshold(ref_count_array)
-                    alt_threshold = self.get_threshold(alt_count_array)
+                    ref_otsu_plot_path = f'{ref_otsu_plot_dir}/{name}_ref.pdf' if self.args.ref_threshold_method == 'otsu' else None
+                    ref_threshold = self.get_threshold(ref_count_array, self.args.ref_threshold_method, ref_otsu_plot_path)
+                    alt_otsu_plot_path = f'{alt_otsu_plot_dir}/{name}_alt.pdf' if self.args.alt_threshold_method == 'otsu' else None
+                    alt_threshold = self.get_threshold(alt_count_array, self.args.alt_threshold_method, alt_otsu_plot_path)
+                    ref_threshold = max(ref_threshold, self.args.ref_min_support_read)
+                    alt_threshold = max(alt_threshold, self.args.alt_min_support_read)
                     ref_filtered_count_array = self.filter_array(ref_count_array, ref_threshold)
                     alt_filtered_count_array = self.filter_array(alt_count_array, alt_threshold)
-                    ref_threshold = max(ref_threshold, MIN_SUPPORT_READS)
-                    alt_threshold = max(alt_threshold, MIN_SUPPORT_READS)
 
                     new_record = record.copy()
                     new_record.info.__setitem__('REF_T', ref_threshold)
@@ -127,10 +135,19 @@ def filter_snp(args):
 
 
 def get_opts_filter_snp(parser, sub_program):
-    parser.add_argument('--threshold_method', default='otsu', choices=['otsu', 'auto', 'hard', 'none'], help=HELP_DICT['threshold_method'])
+    parser.add_argument('--ref_threshold_method', default='otsu', choices=['otsu', 'auto', 'none'], help=HELP_DICT['threshold_method'])
+    parser.add_argument('--alt_threshold_method', default='otsu', choices=['otsu', 'auto', 'none'], help=HELP_DICT['threshold_method'])
     parser.add_argument(
-        "--hard_threshold",
-        help='int, use together with `--threshold_method hard`',
+        "--ref_min_support_read",
+        type=int,
+        help='minimum supporting read number for ref.', 
+        default=2,
+    )
+    parser.add_argument(
+        "--alt_min_support_read",
+        type=int,
+        help='minimum supporting read number for alt.', 
+        default=2,
     )
     if sub_program:
         parser.add_argument("--vcf", help="norm vcf file")

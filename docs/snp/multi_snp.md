@@ -242,22 +242,22 @@ use `--steps_run barcode,cutadapt`.
 
 `--adapter_fasta` Addtional adapter fasta file.
 
-`--minimum_length` Default `20`. Discard processed reads that are shorter than LENGTH.
+`--minimum_length` Discard processed reads that are shorter than LENGTH.
 
-`--nextseq_trim` Default `20`. Quality trimming of reads using two-color chemistry (NextSeq). 
+`--nextseq_trim` Quality trimming of reads using two-color chemistry (NextSeq). 
 Some Illumina instruments use a two-color chemistry to encode the four bases. 
 This includes the NextSeq and the NovaSeq. 
 In those instruments, a ‘dark cycle’ (with no detected color) encodes a G. 
 However, dark cycles also occur when sequencing “falls off” the end of the fragment.
 The read then contains a run of high-quality, but incorrect “G” calls at its 3’ end.
 
-`--overlap` Default `10`. Since Cutadapt allows partial matches between the read and the adapter sequence,
+`--overlap` Since Cutadapt allows partial matches between the read and the adapter sequence,
 short matches can occur by chance, leading to erroneously trimmed bases. 
 For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. 
 To reduce the number of falsely trimmed bases, the alignment algorithm requires that 
 at least {overlap} bases match between adapter and read.
 
-`--insert` Default `150`. Read2 insert length.
+`--insert` Read2 insert length.
 
 `--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
@@ -284,13 +284,19 @@ is higher than or equal to this value.
 
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
-`--threshold_method` One of [otsu, auto, hard, none].
+`--ref_threshold_method` One of [otsu, auto, none].
 
-`--hard_threshold` int, use together with `--threshold_method hard`.
+`--alt_threshold_method` One of [otsu, auto, none].
+
+`--ref_min_support_read` minimum supporting read number for ref.
+
+`--alt_min_support_read` minimum supporting read number for alt.
 
 `--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
 
 `--database` snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse).
 
 `--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
+
+`--plot_top_n` plot UMAP of at most n variants.
 

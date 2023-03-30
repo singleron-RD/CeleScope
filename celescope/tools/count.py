@@ -213,7 +213,9 @@ class Count(Step):
         bam to detail table
         must be used on name_sorted bam
         """
+        save = pysam.set_verbosity(0)
         samfile = pysam.AlignmentFile(self.bam, "rb")
+        pysam.set_verbosity(save)
         with open(self.count_detail_file, 'wt') as fh1:
             fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
 

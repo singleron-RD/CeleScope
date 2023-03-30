@@ -171,12 +171,12 @@ def get_opts_cutadapt(parser, sub_program):
     parser.add_argument('--adapter_fasta', help='Addtional adapter fasta file.')
     parser.add_argument(
         '--minimum_length',
-        help='Default `20`. Discard processed reads that are shorter than LENGTH.',
+        help='Discard processed reads that are shorter than LENGTH.',
         default=20
     )
     parser.add_argument(
         '--nextseq_trim',
-        help="""Default `20`. Quality trimming of reads using two-color chemistry (NextSeq). 
+        help="""Quality trimming of reads using two-color chemistry (NextSeq). 
 Some Illumina instruments use a two-color chemistry to encode the four bases. 
 This includes the NextSeq and the NovaSeq. 
 In those instruments, a ‘dark cycle’ (with no detected color) encodes a G. 
@@ -186,7 +186,7 @@ The read then contains a run of high-quality, but incorrect “G” calls at its
     )
     parser.add_argument(
         '--overlap',
-        help="""Default `10`. Since Cutadapt allows partial matches between the read and the adapter sequence,
+        help="""Since Cutadapt allows partial matches between the read and the adapter sequence,
 short matches can occur by chance, leading to erroneously trimmed bases. 
 For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. 
 To reduce the number of falsely trimmed bases, the alignment algorithm requires that 
@@ -195,7 +195,7 @@ at least {overlap} bases match between adapter and read. """,
     )
     parser.add_argument(
         '--insert',
-        help="Default `150`. Read2 insert length.",
+        help="Read2 insert length.",
         default=150
     )
     parser.add_argument('--cutadapt_param', help='Other cutadapt parameters. For example, --cutadapt_param "-g AAA" ', default="")

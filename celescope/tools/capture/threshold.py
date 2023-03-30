@@ -70,13 +70,10 @@ class Otsu():
     def _array2hist(self, binWidth=0.2):
         self.counts, self.bins = np.histogram(self.array, bins=np.arange(0, max(self.array)+binWidth, binWidth))
 
-    @utils.add_log
     def _make_plot(self):
-        if not self.otsu_plot_path:
-            return 
         plt.hist(x=self.bins[:-1], bins=self.bins, weights=self.counts)
         plt.axvline(self.threshold, color='r')
-        plt.xlabel(f'log{self.log_base} observed read/UMI counts')
+        plt.xlabel(f'log{self.log_base} observed counts')
         plt.ylabel('Frequency')
         plt.savefig(self.otsu_plot_path)
         plt.close()
@@ -89,7 +86,8 @@ class Otsu():
             return 1
         self._array2hist()
         self._threshold_otsu()
-        self._make_plot()
+        if self.otsu_plot_path:
+            self._make_plot()
         return_threshold = math.ceil(self.log_base ** self.threshold)
 
         return return_threshold
@@ -140,7 +138,7 @@ class Threshold():
     """
     Args:
         array: array-like
-        threshold_method: ['otsu', 'auto', 'hard']
+        threshold_method: ['otsu', 'auto', 'hard', 'none']
         otsu_plot_path: str
         hard_threshold: int
     """
@@ -152,6 +150,7 @@ class Threshold():
 
         self.kwargs = kwargs
     
+    @utils.add_log
     def run(self):
         """
         return threshold
