@@ -146,7 +146,8 @@ def segment_log_plot_by_length_log_uniform(x_start, x_end):
         span = MIN_X_LOG10_SPAN
         
     span_sum = 1
-    for i in range(MAX_N+1):
+    idx = x_start
+    while True:
         span_sum += span
         idx = int(x_start + 10 ** span_sum)
         if idx - segment_idx[-1] < MIN_BARCODE:
