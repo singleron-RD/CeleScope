@@ -292,9 +292,9 @@ class Analysis_snp(Step):
     def run(self):
         self.run_snpEff()
         self.keep_in_gene()
-        self.get_variant_table()
         self.write_gt()
         self.write_ncell()
+        self.get_variant_table()
         self.add_help()
         self.plot_snp()
         table_dict = self.get_table_dict(title='Variant table', table_id='variant', df_table=self.variant_table)

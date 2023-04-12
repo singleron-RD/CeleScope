@@ -682,9 +682,9 @@ class Barcode(Step):
                         if not bool_valid:
                             self.no_linker_num += 1
                             if self.noLinker:
-                                self.fh_noLinker_fq1(
-                                    '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                                self.fh_noLinker_fq2(
+                                self.fh_nolinker_fq1.write(
+                                    f'@{header1}\n{seq1}\n{seq_str}\n{qual1}\n')
+                                self.fh_nolinker_fq2.write(
                                     '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                             continue
                         elif bool_corrected:
