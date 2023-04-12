@@ -1,4 +1,3 @@
-from celescope.tools import utils
 from celescope.flv_trust4.__init__ import REF_DIR
 from concurrent.futures import ProcessPoolExecutor
 from celescope.tools import utils
