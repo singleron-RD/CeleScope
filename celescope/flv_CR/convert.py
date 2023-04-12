@@ -45,10 +45,15 @@ class Convert(Step):
         self.fq2 = args.fq2
         self.whitelist_suffix = CHEMISTRY_DICT[args.tenX_chemistry][0]
         self.UMI_10X_LEN = CHEMISTRY_DICT[args.tenX_chemistry][-1]
+        
+        if not os.path.islink(args.soft_path):
+            raise Exception("Error soft_path\nCorrect Format:\n/home/soft/cellranger-7.1.0/cellranger")
 
-        self.whitelist_10X_file = os.path.dirname(args.soft_path) + f'{WHITELIST_10X_PATH[0]}/{self.whitelist_suffix}'
-        if not os.path.exists(self.whitelist_10X_file):
+        self.version = os.path.dirname(args.soft_path).split('/')[-1].split('-')[-1]
+        if int(self.version.split('.')[0]) < 4:
             self.whitelist_10X_file = os.path.dirname(args.soft_path) + f'{WHITELIST_10X_PATH[1]}/{self.whitelist_suffix}'
+        else:
+            self.whitelist_10X_file = os.path.dirname(args.soft_path) + f'{WHITELIST_10X_PATH[0]}/{self.whitelist_suffix}'
 
         self.whitelist_10X_fh = xopen(self.whitelist_10X_file, 'r')
         self.sgr_tenX = {}
