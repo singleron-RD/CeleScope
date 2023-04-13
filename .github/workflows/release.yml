@@ -10,7 +10,7 @@ jobs:
   setup_and_lint:
     strategy:
       matrix:
-        os: [ubuntu-18.04]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
