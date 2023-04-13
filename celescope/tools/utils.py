@@ -548,7 +548,9 @@ def read_CID(CID_file):
 
 def get_assay_text(assay):
     """
+    Deprecated
     add sinlge cell prefix
+    deprecated
     """
     return 'Single-cell ' + assay
 
