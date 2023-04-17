@@ -51,7 +51,7 @@ class Filter_noise:
             self.df = self.not_filter(self.df, self.seqtype)
         
         else:
-            bc_chain_dict = self.df.groupby("barcode")["chain"].apply(lambda x: set(x)).to_dict()
+            bc_chain_dict = self.df.groupby("barcode")["chain"].apply(set).to_dict()
             if self.seqtype == "TCR":
                 pair_chain_dict = {key: value for key, value in bc_chain_dict.items() if len(value)==2}
             else:
@@ -269,7 +269,7 @@ class Refine_vdj(Step):
             data["cells_summary"]["metric_list"][5]["display"] = np.median(df_merge[df_merge["chain"]=="IGL"].umis)
             data["cells_summary"]["metric_list"][6]["display"] = np.median(df_merge[df_merge["chain"]=="IGK"].umis)
             
-        data["cells_summary"]["chart"] = get_plot_elements.plot_barcode_rank(f"{self.outdir}/count.txt",  log_uniform=True)
+        data["cells_summary"]["chart"] = get_plot_elements.plot_barcode_rank(f"{self.outdir}/count.txt", log_uniform=True)
 
 
         """
