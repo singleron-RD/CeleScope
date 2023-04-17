@@ -53,7 +53,7 @@ class Multi_flv_CR(Multi):
         )
         self.process_cmd(cmd, step, sample, m=self.args.mem, x=self.args.thread)
 
-    def summarize(self,sample):
+    def summarize(self, sample):
         step = 'summarize'
         cmd_line = self.get_cmd_line(step, sample)
         barcode_convert_json = f'{self.outdir_dic[sample]["convert"]}/barcode_convert.json'
@@ -65,7 +65,7 @@ class Multi_flv_CR(Multi):
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
-    def match(self,sample):
+    def match(self, sample):
         step = 'match'
         cmd_line = self.get_cmd_line(step, sample)
         summarize_out = f'{self.outdir_dic[sample]["summarize"]}'
@@ -79,7 +79,7 @@ class Multi_flv_CR(Multi):
     
     def mapping(self,sample):
         step = 'mapping'
-        cmd_line = self.get_cmd_line(step,sample)
+        cmd_line = self.get_cmd_line(step, sample)
         match_dir = f'{self.col4_dict[sample]}'
         match_out = f'{self.outdir_dic[sample]["match"]}'
         cmd = (
@@ -89,6 +89,20 @@ class Multi_flv_CR(Multi):
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
     
+    def refine_vdj(self, sample):
+        step = 'refine_vdj'
+        cmd_line = self.get_cmd_line(step, sample)
+        match_dir = f'{self.col4_dict[sample]}'
+        barcode_convert_json = f'{self.outdir_dic[sample]["convert"]}/barcode_convert.json'
+        assemble_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}/outs'
+        cmd = (
+            f'{cmd_line} '
+            f'--match_dir {match_dir} '
+            f'--assemble_out {assemble_out} '
+            f'--barcode_convert_json {barcode_convert_json} '
+        )
+        self.process_cmd(cmd, step, sample, m=5, x=1)
+            
     def merge_report(self):
         step = "merge_report"
         _index = self.__STEPS__.index('assemble') + 1
