@@ -75,7 +75,11 @@ class Step:
                 self.__content_dict[slot] = {}
             else:
                 with open(path) as f:
-                    self.__content_dict[slot] = json.load(f)
+                    try:
+                        self.__content_dict[slot] = json.load(f)
+                    except ValueError:
+                        print(f'WARNING: Decoding "{path}" as json has failed. Will create empty json file.')
+                        self.__content_dict[slot] = {}
             # clear step_summary
             self.__content_dict[slot][self._step_summary_name] = {}
 
