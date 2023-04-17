@@ -16,8 +16,7 @@ def main():
     subparsers = parser.add_subparsers(dest='subparser_assay')
 
     for assay in ASSAY_LIST:
-        text = utils.get_assay_text(assay)
-        subparser_1st = subparsers.add_parser(assay, description=text)
+        subparser_1st = subparsers.add_parser(assay)
 
         # add 2ed subparser
         subparser_2nd = subparser_1st.add_subparsers()

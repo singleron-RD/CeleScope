@@ -24,7 +24,6 @@ def add_kit_version(chemistry):
 class Sample(Step):
     def __init__(self, args):
         Step.__init__(self, args)
-        self.assay_description = utils.get_assay_text(self.assay)
         self.version = __VERSION__
         self.chemistry = args.chemistry
 
@@ -44,7 +43,7 @@ class Sample(Step):
         )
         self.add_metric(
             name='Assay',
-            value=self.assay_description,
+            value=self.assay,
         )
         self.add_metric(
             name='Chemistry',

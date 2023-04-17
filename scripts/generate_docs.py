@@ -163,8 +163,7 @@ class Docs():
 
     def run(self):
         if self.release_bool:
-            assay_text = utils.get_assay_text(self.assay)
-            self.manual_lines.append(f'## {assay_text}\n')       
+            self.manual_lines.append(f'## {self.assay}\n')       
 
         for step in self.steps:
             self.write_step_doc(step)
