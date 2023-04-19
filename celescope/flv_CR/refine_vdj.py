@@ -92,6 +92,9 @@ class Filter_noise:
                 # snr value >= coeff
                 filter_noise_light = self.snr_filter(light_dict, self.coeff)
                 filter_noise_heavy = self.snr_filter(heavy_dict, self.coeff)
+            
+            else:
+                raise ValueError("Invalid filter method")
                         
             filter_noise_barcode = filter_noise_light & filter_noise_heavy | set(df_pair_chain.barcode)
             self.df = self.df[self.df["barcode"].isin(filter_noise_barcode)]
