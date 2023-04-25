@@ -16,9 +16,7 @@ RESOLUTION = 1.2
 N_PCS = 25
 MITO_GENE_PERCENT_LIST = [5, 10, 15, 20, 50]
 # output marker top n in html
-MARKER_TOP_N = 50
-# marker sort by
-MARKER_SORT_BY = 'p_val_adj'
+MARKER_TOP_N = 100
 
 
 def read_tsne(tsne_file):
@@ -292,7 +290,7 @@ class Scanpy_wrapper(Step):
         df_markers = df_markers.loc[df_markers['p_val_adj'] < PVAL_CUTOFF, ]
         df_markers.to_csv(self.df_marker_raw_file, index=None, sep='\t')
 
-        df_markers_filter = df_markers.loc[df_markers['avg_log2FC'] > 0].sort_values(MARKER_SORT_BY, ascending=False).groupby('cluster').head(50)
+        df_markers_filter = df_markers.loc[df_markers['avg_log2FC'] > 0].sort_values('p_val_adj').groupby('cluster').head(100)
         df_markers_filter = df_markers_filter.round({
             'avg_log2FC':3,
             'pct.1':3,
