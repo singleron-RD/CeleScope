@@ -73,11 +73,11 @@ def gen_clonotypes_table(df, out_clonotypes):
     df_clonetypes = pd.read_csv(out_clonotypes, sep='\t', index_col=None)
     df_clonetypes = df_clonetypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
     df_clonetypes.rename(columns={'barcode': 'frequency'}, inplace=True)
+    df_clonetypes = df_clonetypes.sort_values("frequency", ascending=False)
     sum_f = df_clonetypes['frequency'].sum()
     df_clonetypes['proportion'] = df_clonetypes['frequency'].apply(lambda x: x/sum_f)
     df_clonetypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonetypes.shape[0]+1)]
     df_clonetypes = df_clonetypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
-    df_clonetypes.sort_values(by='frequency', ascending=False, inplace=True)
     df_clonetypes.to_csv(out_clonotypes, sep=',', index=False)
 
 
