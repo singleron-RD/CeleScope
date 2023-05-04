@@ -106,7 +106,7 @@ class Multi_flv_CR(Multi):
     def merge_report(self):
         step = "merge_report"
         _index = self.__STEPS__.index('assemble') + 1
-        steps_str = ",".join(self.__STEPS__[:_index] + __SUB_STEPS__ + self.__STEPS__[_index:-1])
+        steps_str = ",".join(self.__STEPS__[:_index] + __SUB_STEPS__ + self.__STEPS__[_index:-2])
         samples = ','.join(self.fq_dict.keys())
         app = TOOLS_DIR + '/merge_table.py'
         cmd = (
