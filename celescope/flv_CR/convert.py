@@ -77,8 +77,7 @@ class Convert(Step):
         count_dict = dict(sorted(count_dict.items(), key=operator.itemgetter(1), reverse=True))
         
         for sgr_barcode in count_dict:
-            if sgr_barcode not in self.sgr_tenX:
-                self.sgr_tenX[sgr_barcode] = self.whitelist_10X_fh.readline().strip()
+            self.sgr_tenX[sgr_barcode] = self.whitelist_10X_fh.readline().strip()
 
         # Add invalid barcode
         for sgr_barcode, barcode_10X in self.sgr_tenX.items():
