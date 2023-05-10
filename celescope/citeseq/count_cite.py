@@ -148,7 +148,7 @@ class Count_cite(Step):
         ## 1.normalize;2.filter
         ### normalize
         # fix fun
-        df_UMI_cell_out = clr_trans(df_UMI_cell_out)
+        df_UMI_cell_out = geometric_trans(df_UMI_cell_out)
         obs = pd.DataFrame(index=df_UMI_cell_out.columns)
         var = pd.DataFrame(df_UMI_cell_out.index,index=df_UMI_cell_out.index,columns=['ADT'])
         mdata_citeseq = ad.AnnData(np.array(df_UMI_cell_out.T),obs=obs,var=var)
