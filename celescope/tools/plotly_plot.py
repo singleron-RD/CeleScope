@@ -54,7 +54,7 @@ class Plotly_plot:
 
     def plotly_plot(self):
         return plotly.offline.plot(
-            self._fig, include_plotlyjs=True, output_type="div", config=PLOTLY_CONFIG
+            self._fig, include_plotlyjs=False, output_type="div", config=PLOTLY_CONFIG
         )
 
     def get_plotly_div(self):
