@@ -1,3 +1,20 @@
+## [1.15.0] - 2023-04-11
+ ### `snp`
+ - Added image output of Otsu's method and genotype mapping on UMAP graph.
+ - Updated genes in the panel.
+
+ ### `citeseq`
+ - Fixed the problem that the T-SNE graph was shrunk when the protein name was too long.
+
+ ### `flv_CR` and `flv_trust4`
+ - Fixed the problem that the color of barcode rank plot in HTML report could not be displayed correctly when the cell density is low.
+
+ ### General improvments
+
+ - Fixed the version of pandas to 1.4.2 to avoid compatibility issues caused by pandas 2.0.0.
+ - Change the default value of STAR --outFilterMatchNmin from 0 to 50 to avoid the interference of short fragments (especially probe sequences in FocuScope) on gene quantification.
+ - Multiple barcode whitelists are allowed.
+
 ## [1.14.1] - 2023-01-11
  ### `snp`
  - Add an argument `--database`. Data from non-human species can also be annotated with this argument.

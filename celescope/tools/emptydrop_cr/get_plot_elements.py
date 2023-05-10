@@ -129,6 +129,39 @@ def segment_log_plot_by_length(y_data, x_start, x_end):
     return segment_idx
 
 
+def segment_log_plot_by_length_log_uniform(x_start, x_end):
+    """
+    vdj usually have very large x_end
+    """
+
+    if x_end <= x_start:
+        return []
+
+    MIN_X_LOG10_SPAN = 0.03
+    MIN_BARCODE = 20
+    MAX_N = 100
+    segment_idx = [x_start]
+    span = np.log10(x_end-x_start) / MAX_N
+    if span < MIN_X_LOG10_SPAN:
+        span = MIN_X_LOG10_SPAN
+        
+    span_sum = 1
+    idx = x_start
+    while True:
+        span_sum += span
+        idx = int(x_start + 10 ** span_sum)
+        if idx - segment_idx[-1] < MIN_BARCODE:
+            continue
+        if idx > x_end:
+            break
+        segment_idx.append(idx)
+
+    if segment_idx[-1] != x_end:
+        segment_idx.append(x_end)
+
+    return segment_idx
+
+
 def convert_numpy_array_to_line_chart(array, ntype):
     array = np.sort(array)[::-1]
 
@@ -147,7 +180,7 @@ def convert_numpy_array_to_line_chart(array, ntype):
 
 
 @add_log
-def counter_barcode_rank_plot_data(count_data_path):
+def counter_barcode_rank_plot_data(count_data_path, log_uniform=False):
     """
     get cell density for each plot_segments
     :param count_data_path:
@@ -178,7 +211,10 @@ def counter_barcode_rank_plot_data(count_data_path):
     plot_segments.append(BarcodeRankPlotSegment(start=0, end=ranges[1], cell_density=1.0, legend=True))
     plot_segments.append(BarcodeRankPlotSegment(start=ranges[2], end=ranges[3], cell_density=0.0, legend=True))
 
-    mixed_segments = segment_log_plot_by_length(sorted_counts, ranges[1], ranges[2])
+    if not log_uniform:
+        mixed_segments = segment_log_plot_by_length(sorted_counts, ranges[1], ranges[2])
+    else:
+        mixed_segments = segment_log_plot_by_length_log_uniform(ranges[1], ranges[2])
     for i in range(len(mixed_segments) - 1):
         plot_segments.append(
             get_plot_segment(mixed_segments[i], mixed_segments[i + 1], sorted_bc, cell_bc, legend=False))
@@ -287,8 +323,8 @@ def get_plot_data(plot_segments, counts):
     return plot_data
 
 
-def plot_barcode_rank(count_file_path):
-    sorted_counts, plot_segments, _cell_nums = counter_barcode_rank_plot_data(count_file_path)
+def plot_barcode_rank(count_file_path, log_uniform=False):
+    sorted_counts, plot_segments, _cell_nums = counter_barcode_rank_plot_data(count_file_path, log_uniform=log_uniform)
     plot_data = get_plot_data(plot_segments, sorted_counts)
 
     plotly_data = [go.Scatter(x=dat['x'], y=dat['y'], name=dat['name'], mode=dat['mode'], showlegend=dat['showlegend'],

@@ -5,9 +5,13 @@
 - `{sample}_test1_filtered.vcf` VCF file after filtering. Alleles read counts that do not have enough reads to support are set to zero. 
 Genotypes are changed accordingly.
 ## Arguments
-`--threshold_method` One of [otsu, auto, hard, none].
+`--ref_threshold_method` One of [otsu, auto, none].
 
-`--hard_threshold` int, use together with `--threshold_method hard`.
+`--alt_threshold_method` One of [otsu, auto, none].
+
+`--ref_min_support_read` minimum supporting read number for ref.
+
+`--alt_min_support_read` minimum supporting read number for alt.
 
 `--vcf` norm vcf file.
 

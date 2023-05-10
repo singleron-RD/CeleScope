@@ -9,6 +9,10 @@
 
 `--split_matrix` If used, will split scRNA-Seq matrix file according to tag assignment.
 
+`--split_bam` If used, will split scRNA-Seq featureCounts bam file according to tag assignment. Use together with --bam_file.
+
+`--bam_file` scRNA-Seq bam file to split.
+
 `--split_vdj` If used, will split scRNA-Seq vdj count file according to tag assignment.
 
 `--split_fl_vdj` If used, will split scRNA-Seq full-length vdj annotation, fasta, clonotypes file according to tag assignment.

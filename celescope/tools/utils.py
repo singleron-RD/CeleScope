@@ -351,6 +351,7 @@ def parse_match_dir(match_dir):
     pattern_dict = {
         'tsne_coord': [f'{match_dir}/*analysis*/*tsne_coord.tsv'],
         'markers': [f'{match_dir}/*analysis*/*markers.tsv'],
+        'h5ad': [f'{match_dir}/*analysis*/*.h5ad'],
     }
 
     for file_key in pattern_dict:
@@ -547,7 +548,9 @@ def read_CID(CID_file):
 
 def get_assay_text(assay):
     """
+    Deprecated
     add sinlge cell prefix
+    deprecated
     """
     return 'Single-cell ' + assay
 

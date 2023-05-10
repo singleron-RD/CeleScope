@@ -197,17 +197,12 @@ class Barcode(Step):
         self.output_R1 = args.output_R1
         self.bool_flv = False
 
-        self._assay = self.get_slot_key(
-            slot='metrics',
-            step_name='sample',
-            key='Assay',
-        )
-        self._assay = self._assay.split(' ')[-1]
+
         # flv_trust4, flv_CR
-        if 'flv' in self._assay:
+        if self.assay in ('flv_CR', 'flv_trust4'):
             self.bool_flv = True
             self.barcode_read_Counter = Counter()
-            if self._assay == 'flv_trust4':
+            if self.assay == 'flv_trust4':
                 if args.match_dir == 'None':
                     raise FileNotFoundError('Match_dir required when running flv_trust4')
                 self.match_barcodes = set(utils.get_barcode_from_match_dir(args.match_dir)[0]) # barcode set of flv_rna.
@@ -582,7 +577,7 @@ class Barcode(Step):
         if self.clean_num == 0:
             raise Exception('no valid reads found! please check the --chemistry parameter.' + HELP_DICT['chemistry'])
         
-        if self._assay == 'flv_trust4':
+        if self.assay == 'flv_trust4':
             self.add_metric(
                 name='Valid Matched Reads',
                 value=self.match_num,
@@ -682,9 +677,9 @@ class Barcode(Step):
                         if not bool_valid:
                             self.no_linker_num += 1
                             if self.noLinker:
-                                self.fh_noLinker_fq1(
-                                    '@%s\n%s\n+\n%s\n' % (header1, seq1, qual1))
-                                self.fh_noLinker_fq2(
+                                self.fh_nolinker_fq1.write(
+                                    f'@{header1}\n{seq1}\n{seq_str}\n{qual1}\n')
+                                self.fh_nolinker_fq2.write(
                                     '@%s\n%s\n+\n%s\n' % (header2, seq2, qual2))
                             continue
                         elif bool_corrected:
@@ -716,13 +711,13 @@ class Barcode(Step):
                     if self.bool_flv:
                         qual1 = 'F' * len(cb + umi)
                         self.barcode_read_Counter.update(cb)
-                        if self._assay == 'flv_trust4' and cb in self.match_barcodes:
+                        if self.assay == 'flv_trust4' and cb in self.match_barcodes:
                             self.match_num += 1
                             self.match_cbs.add(cb)
                             if self.barcode_read_Counter[cb] <= 80000:
                                 self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
                                 self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual1}\n')
-                        elif self._assay == 'flv_CR':
+                        elif self.assay == 'flv_CR':
                             self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
                             self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual1}\n')
 

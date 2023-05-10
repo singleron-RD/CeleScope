@@ -19,7 +19,7 @@ This file will only be produced when the `match_dir` parameter is provided.
 `--BCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for BCR. 
 For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
 
-`--TCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for BCR. 
+`--TCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for TCR. 
 For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
 
 `--expected_target_cell_num` Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.

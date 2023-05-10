@@ -1,9 +1,14 @@
-# syntax=docker/dockerfile:1
-
-FROM continuumio/miniconda3
-
-WORKDIR /app
+FROM mambaorg/micromamba:0.22.0 AS build
 COPY conda_pkgs.txt conda_pkgs.txt
-RUN mkdir -p /opt/conda/pkgs/cache && conda clean --packages && conda clean --all \
-&& conda install -c conda-forge mamba &&  mamba install -y --file conda_pkgs.txt && pip install celescope
+USER root
+RUN micromamba create --name runtime --always-copy --file conda_pkgs.txt
+
+FROM mambaorg/micromamba:0.22.0 AS runtime
+USER root
+LABEL version="1.1"
+ENV ENV_NAME=runtime PATH="/opt/conda/envs/runtime/bin:${PATH}"
+COPY --from=build --chown=$MAMBA_USER:$MAMBA_USER /opt/conda/envs/runtime /opt/conda/envs/runtime
+RUN pip install celescope  -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils less procps && rm -rf /var/lib/apt/lists/*
+
 

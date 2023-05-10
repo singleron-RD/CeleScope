@@ -5,6 +5,7 @@ import glob
 import os
 import itertools
 from collections import defaultdict
+import sys
 
 import pysam
 import pandas as pd
@@ -53,7 +54,7 @@ class Split_tag(Step):
 
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
-        if not (args.split_matrix or args.split_fastq or args.split_vdj or args.split_fl_vdj):
+        if not (args.split_matrix or args.split_bam or args.split_fastq or args.split_vdj or args.split_fl_vdj):
             return
 
         # set
@@ -70,6 +71,12 @@ class Split_tag(Step):
             else:
                 raise ValueError("--match_dir or --matrix_dir is required.")
             self.count_matrix = CountMatrix.from_matrix_dir(matrix_dir)
+
+        if args.split_bam:
+            if not utils.check_arg_not_none(args, 'bam_file'):
+                sys.exit('must provide --bam_file to use --split_bam')
+            self.bam_outdir = f'{args.outdir}/bam/'
+            utils.check_mkdir(self.bam_outdir)
 
         if args.split_fastq:
             self.rna_fq_file = glob.glob(f'{args.match_dir}/*barcode/*_2.fq*')[0]
@@ -166,6 +173,31 @@ class Split_tag(Step):
             slice_matrix.to_matrix_dir(tag_matrix_dir)
 
     @utils.add_log
+    def split_bam(self):
+        barcode_tag_dict = {}
+        tags = self.tag_barcode_dict.keys()
+        for tag in tags:
+            for barcode in self.tag_barcode_dict[tag]:
+                barcode_tag_dict[barcode] = tag
+
+        with pysam.AlignmentFile(self.args.bam_file, 'r') as bam_in:
+            bam_handle_dict = {}
+            for tag in tags:
+                bam_file = f'{self.bam_outdir}/{tag}.bam'
+                bam_handle_dict[tag] = pysam.AlignmentFile(bam_file, "wb", header=bam_in.header)
+            
+            for seg in bam_in:
+                if not seg.has_tag('XT'):
+                    continue
+                barcode = seg.get_tag('CB')
+                if barcode in barcode_tag_dict:
+                    tag = barcode_tag_dict[barcode]
+                    bam_handle_dict[tag].write(seg)
+
+        for h in bam_handle_dict.values():
+            h.close()
+            
+    @utils.add_log
     def split_vdj(self):
 
         df_vdj = pd.read_csv(self.cell_confident_vdj, sep='\t')
@@ -216,6 +248,8 @@ class Split_tag(Step):
     def run(self):
         if self.args.split_matrix:
             self.split_matrix()
+        if self.args.split_bam:
+            self.split_bam()
         if self.args.split_fastq:
             self.write_r2_fastq_files()
             self.write_r1_fastq_files()
@@ -241,6 +275,12 @@ def get_opts_split_tag(parser, sub_program):
         help="If used, will split scRNA-Seq matrix file according to tag assignment.",
         action='store_true',
     )
+    parser.add_argument(
+        "--split_bam",
+        help="If used, will split scRNA-Seq featureCounts bam file according to tag assignment. Use together with --bam_file",
+        action='store_true',
+    )
+    parser.add_argument("--bam_file", help='scRNA-Seq bam file to split.')
     parser.add_argument(
         "--split_vdj",
         help="If used, will split scRNA-Seq vdj count file according to tag assignment.",
