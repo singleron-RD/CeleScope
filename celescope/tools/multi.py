@@ -114,6 +114,7 @@ use `--steps_run barcode,cutadapt`
         # sub_program parser do not have
         parser.add_argument('--outdir', help='Output directory.', default="./")
         parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
+        parser.add_argument('--use_R3', help='ATAC libraries use R3 reads instead of R2.', action='store_true')
         parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
         self.parser = parser
         return parser
@@ -126,7 +127,7 @@ use `--steps_run barcode,cutadapt`
 
     @staticmethod
     @utils.add_log
-    def parse_mapfile(mapfile, default_val):
+    def parse_mapfile(mapfile, default_val, use_R3=False):
         fq_dict = defaultdict(list)
         col4_dict = {}
         col5_dict = {}
@@ -141,7 +142,7 @@ use `--steps_run barcode,cutadapt`
                     col4 = line_split[3]
                 else:
                     col4 = default_val
-                fq1, fq2 = get_fq(library_id, library_path)
+                fq1, fq2 = get_fq(library_id, library_path, use_R3)
 
                 if sample_name in fq_dict:
                     fq_dict[sample_name][0].append(fq1)
@@ -192,7 +193,7 @@ use `--steps_run barcode,cutadapt`
             self.sjm_cmd = f'log_dir {self.logdir}\n'
 
         # parse_mapfile
-        self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(self.args.mapfile, self.col4_default)
+        self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(self.args.mapfile, self.col4_default, self.args.use_R3)
 
         for sample in self.fq_dict:
             self.outdir_dic[sample] = {}
@@ -419,9 +420,12 @@ def get_read(library_id, library_path, read='1'):
     return fq_list
 
 
-def get_fq(library_id, library_path):
+def get_fq(library_id, library_path, use_R3=False):
     fq1_list = get_read(library_id, library_path, read='1')
-    fq2_list = get_read(library_id, library_path, read='2')
+    if use_R3:
+        fq2_list = get_read(library_id, library_path, read='3')
+    else:
+        fq2_list = get_read(library_id, library_path, read='2')
     if len(fq1_list) != len(fq2_list):
         raise Exception("Read1 and Read2 fastq number do not match!")
     fq1 = ",".join(fq1_list)
