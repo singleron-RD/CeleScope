@@ -26,52 +26,6 @@ def filter_fun(df):
     return df
 
 
-def geometric_trans(df,target_sum=1e4):
-    '''
-    Geometric mean conversion of original composition data
-
-    : param df: Raw composition data, with each row representing a component and each column representing a sample
-
-    : return: Converted composition df
-    '''
-    T_geometric = df/np.exp(np.log1p(df).sum(axis=0)/df.shape[1]*target_sum)
-    
-    return T_geometric
-
-
-def scanpy_trans(df,target_sum=1e4):
-    '''
-    scanpy.pp.normalize_total()
-
-    : param df: Raw composition data, with each row representing a component and each column representing a sample
-
-    : return: Converted composition df
-    '''
-    T_sc = np.log1p(df/df.sum(axis=0)*target_sum)
-    
-    return T_sc
-
-
-def clr_trans(df):
-    '''
-    implements the CLR transform used in CITEseq
-    https://doi.org/10.1038/nmeth.4380
-    '''
-    T_clr = np.log1p(df/np.exp(np.mean(np.log1p(df),axis = 0)))
-    
-    return T_clr
-
-
-def asinh_trans(df, cofactor=5):
-    '''
-    implements the hyperbolic arcsin transform used in CyTOF/mass cytometry
-    https://doi.org/10.1038/nmeth.4380
-    '''
-    T_cytof = np.arcsinh(df/cofactor)
-    
-    return T_cytof
-
-
 
 class CountMatrix2(CountMatrix):
     @classmethod
@@ -149,12 +103,15 @@ class Count_cite(Step):
         # fix
         ## 1.normalize;2.filter
         ### normalize
-        # fix fun
-        df_UMI_cell_out = clr_trans(df_UMI_cell_out)
         obs = pd.DataFrame(index=df_UMI_cell_out.columns)
         var = pd.DataFrame(df_UMI_cell_out.index,index=df_UMI_cell_out.index,columns=['ADT'])
         mdata_citeseq = ad.AnnData(np.array(df_UMI_cell_out.T),obs=obs,var=var)
-        
+        sc.pp.normalize_total(
+                mdata_citeseq,
+                target_sum=1e4,
+                inplace=True,
+            )
+        sc.pp.log1p(mdata_citeseq)
         ### filter
         df_filtered = filter_fun(mdata_citeseq.to_df().T)
         features_filtered = Features(df_filtered.index.to_list())
