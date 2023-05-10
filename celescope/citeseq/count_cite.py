@@ -3,7 +3,6 @@ import pandas as pd
 import scipy.io
 import scipy.sparse
 import glob
-import scanpy as sc
 import anndata as ad
 
 from celescope.tools import utils
