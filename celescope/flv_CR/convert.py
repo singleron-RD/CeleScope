@@ -1,8 +1,10 @@
 import os
 import subprocess
-
 import pysam
+import operator
+import random
 from xopen import xopen
+from collections import defaultdict
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
@@ -64,6 +66,25 @@ class Convert(Step):
         self.barcode_convert_json = f'{self.outdir}/barcode_convert.json'
 
     @utils.add_log
+    def gen_sgr_tenX_dict(self):
+        count_dict = defaultdict(int)
+        
+        with pysam.FastxFile(self.fq2) as fq2_fh:
+            for entry in fq2_fh:
+                sgr_barcode = entry.name.split('_')[0]
+                count_dict[sgr_barcode] += 1
+
+        count_dict = dict(sorted(count_dict.items(), key=operator.itemgetter(1), reverse=True))
+        
+        for sgr_barcode in count_dict:
+            self.sgr_tenX[sgr_barcode] = self.whitelist_10X_fh.readline().strip()
+
+        # Add invalid barcode
+        for sgr_barcode, barcode_10X in self.sgr_tenX.items():
+            if barcode_10X == '':
+                self.sgr_tenX[sgr_barcode] = "AAAA" + ''.join(random.choice("ATCG") for _ in range(12))
+        
+    @utils.add_log
     def write_fq1(self):      
         out_fq1 = xopen(self.out_fq1_file, 'w')
 
@@ -93,13 +114,7 @@ class Convert(Step):
             new_seq1: str
             new_qual1: str
         """
-
-        if barcode_sgr in self.sgr_tenX:
-            barcode_10X = self.sgr_tenX[barcode_sgr]
-        else:
-            # new barcode from whitelist
-            barcode_10X = self.whitelist_10X_fh.readline().strip()
-            self.sgr_tenX[barcode_sgr] = barcode_10X
+        barcode_10X = self.sgr_tenX[barcode_sgr]
 
         umi_len_sgr = len(umi_sgr)
         if umi_len_sgr > self.UMI_10X_LEN:
@@ -123,6 +138,7 @@ class Convert(Step):
         utils.dump_dict_to_json(tenX_sgr, self.barcode_convert_json)
 
     def run(self):
+        self.gen_sgr_tenX_dict()
         self.write_fq1()
         self.gzip_fq2()
         self.dump_tenX_sgr_barcode_json()
