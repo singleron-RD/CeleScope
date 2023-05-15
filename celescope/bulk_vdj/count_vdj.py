@@ -119,8 +119,7 @@ class Count_vdj(Step):
             clonetypes["ClonotypeID"] = pd.Series(clonetypes.index) + 1
             clonetypes = clonetypes.rename(columns={"umi": "Frequency"})
 
-            sum_frequency = sum(clonetypes["Frequency"])
-            clonetypes["Proportion"] = clonetypes["Frequency"].apply(lambda x : x / sum_frequency)
+            clonetypes["Proportion"] = clonetypes["Frequency"].apply(lambda x : x / sum(clonetypes["Frequency"]))
             proportion_list = clonetypes["Proportion"].tolist()
             clonetypes["Proportion"] = clonetypes["Proportion"].apply(lambda x: str(round(x*100, 2)) + '%' )
             clonetypes = clonetypes[["ClonotypeID", seq, "Frequency", "Proportion"]]
