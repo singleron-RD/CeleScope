@@ -20,7 +20,8 @@ ASSAY_LIST = [
     'flv_trust4',
     'sweetseq',
     'rna_virus',
-    'utils'
+    'utils',
+    'bulk_vdj'
 ]
 
 ROOT_PATH = os.path.dirname(__file__)
