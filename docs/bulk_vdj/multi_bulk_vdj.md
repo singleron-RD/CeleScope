@@ -29,6 +29,8 @@ multi_bulk_vdj \
     --ref_path /genome/vdj/human/human_TR \
     --species human \
     --type TCR \
+    --min_consensus_read 2 \
+    --allowNoLinker \
     --thread 8 \
     --mod shell
 ``` 
