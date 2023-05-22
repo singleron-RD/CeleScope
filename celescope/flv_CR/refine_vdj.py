@@ -117,6 +117,7 @@ class Refine_vdj(Step):
     def refine(self):
         df_productive = self.all_contig_anno[self.all_contig_anno["productive"] == True]
         df_refine = df_productive[df_productive["is_cell"] == False]
+        df_refine = df_refine.groupby("barcode").filter(lambda x: (len(x) > 4))
         df_refine = Filter_noise(df_refine, self.coeff, self.seqtype)()
         
         df_merge = pd.concat([self.filter_contig_anno, df_refine])
@@ -227,12 +228,12 @@ class Refine_vdj(Step):
                     if i["name"] == k:
                         i["display"] = f'{round(v / len(set(df_match.barcode)) * 100, 2)}%'
 
-            gen_clonotypes_table(df_match, f"{self.outdir}/matched_clonotypes.csv")
+            gen_clonotypes_table(df_match, f"{self.outdir}/matched_clonotypes.csv", self.seqtype)
 
         """
         Clonotypes table
         """
-        gen_clonotypes_table(df_merge, f"{self.outdir}/clonotypes.csv")
+        gen_clonotypes_table(df_merge, f"{self.outdir}/clonotypes.csv", self.seqtype)
         title = 'Clonetypes'
         raw_clonotypes = pd.read_csv(f"{self.outdir}/clonotypes.csv", sep=',', index_col=None)
         raw_clonotypes['ClonotypeID'] = raw_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
