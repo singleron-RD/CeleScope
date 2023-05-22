@@ -65,8 +65,8 @@ def gen_clonotypes_table(df, out_clonotypes, seqtype):
     df = df.sort_values("clonotype_id", key=lambda x: x.str.lstrip("clonotype").astype(int))
     
     sort_method = {"TCR": True, "BCR": False}
-    cdr3_aa_dict = df.groupby("clonotype_id")["cdr3s_aa"].apply(lambda x: set(x)).to_dict()
-    cdr3_aa_dict = {key: ';'.join(sorted(list(value), reverse=sort_method["TCR"])) for key, value in cdr3_aa_dict.items()}
+    cdr3_aa_dict = df.groupby("clonotype_id")["cdr3s_aa"].apply(set).to_dict()
+    cdr3_aa_dict = {key: ';'.join(sorted(list(value), reverse=sort_method[seqtype])) for key, value in cdr3_aa_dict.items()}
     count_dict = df.groupby("clonotype_id")["barcode"].nunique().to_dict()
     
     df["frequency"] = df["clonotype_id"].apply(lambda x: count_dict[x])
