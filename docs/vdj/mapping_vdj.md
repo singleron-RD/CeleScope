@@ -16,6 +16,8 @@ most VJ_pair UMI reads is kept.
 
 `--species` Default human. human or mouse.
 
+`--split_fasta` split fasta file to map to avoid running out of memory.
+
 `--fasta` Required. Input fasta file.
 
 `--outdir` Output diretory.

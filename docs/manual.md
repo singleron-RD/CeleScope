@@ -106,6 +106,7 @@ Currently, CeleScope includes the follwing pipelines:
 - [summarize](flv_CR/summarize.md)
 - [match](flv_CR/match.md)
 - [mapping](flv_CR/mapping.md)
+- [refine_vdj](flv_CR/refine_vdj.md)
 - [multi_flv_CR](flv_CR/multi_flv_CR.md)
 ## Single-cell flv_trust4
 - [mapping](flv_trust4/mapping.md)

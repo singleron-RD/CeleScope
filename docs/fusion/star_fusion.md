@@ -4,7 +4,7 @@ Please note that [STAR-Fusion](https://github.com/STAR-Fusion/STAR-Fusion/wiki) 
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
-`--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
+`--outFilterMatchNmin` Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
 `--out_unmapped` Output unmapped reads.
