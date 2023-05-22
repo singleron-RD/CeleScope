@@ -1,3 +1,8 @@
+## [unreleased]
+ ### `vdj`
+ - Allows a chain to be missing in all cells (e.g. all cells have no IGL chain); previous versions reported an error.
+ - When reporting UMI number mapping to each chain, use mean instead of the previous median. This makes it easier to understand in the presence of multiple light chains.
+
 ## [1.15.0] - 2023-04-11
  ### `snp`
  - Added image output of Otsu's method and genotype mapping on UMAP graph.
