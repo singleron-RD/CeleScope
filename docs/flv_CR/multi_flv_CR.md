@@ -71,8 +71,14 @@ Output
 
 ### mapping
 
-- Output assembled T/B cells mapping to transcriptome if rds and auto-assign info exist in match directory.
+- Output TSNE-plot of Assembled T/B Cells.
 
+
+### refine_vdj
+
+- Refine barcodes where "is_cell=False" and have multi productive chains.
+
+- There are three methods to filter noise: SNR, AUTO, NOT_FILTER
 
 ## Output files
 ### barcode
@@ -109,13 +115,7 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `clonotypes.csv` High-level descriptions of each clonotype where barcodes match with scRNA-Seq.
 
 ### mapping
-- `05.annotation/{sample}_assign.png` Umap plot of Auto-assigned celltype in transcriptome.
-
-- `05.annotation/{sample}_cluster_umap.png` Umap plot of Cluster in transcriptome.
-
-- `05.annotation/{sample}_umapplot.png` Umap plot of assembled barcodes marked as read color.
-
-- `05.annotation/{sample}_distribution.txt` Number of assembled barcodes in every clusters.
+- `06.mapping/{sample}_mapping.pdf` TSNE-plot of Assembled Cells.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -170,6 +170,8 @@ use `--steps_run barcode,cutadapt`.
 
 `--thread` Thread to use.
 
+`--use_R3` ATAC libraries use R3 reads instead of R2.
+
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
 `--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
@@ -210,6 +212,12 @@ use `--steps_run barcode,cutadapt`.
 `--mem` memory(G).
 
 `--soft_path` soft path for cellranger.
+
+`--not_refine` Run the VDJ refine step.
+
+`--filter_method` filter noise method.
+
+`--coeff` coefficient will affect auto and snr noise filter, recommend 1.5 for auto, 10 for snr.
 
 `--seqtype` TCR or BCR.
 
