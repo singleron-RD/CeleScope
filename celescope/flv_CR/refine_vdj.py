@@ -320,8 +320,11 @@ class Refine_vdj(Step):
         Barplot = Bar_plot(df_bar=raw_clonotypes).get_plotly_div()
         data["match_summary"]["Barplot"] = Barplot
 
+        raw_report_html = f"{self.outdir}/../.{self.sample}_raw_report.html"
+        report_html = f"{self.outdir}/../{self.sample}_report.html"
+        os.system(f"mv {report_html} {raw_report_html}")
+        
         template = env.get_template(f'html/{self.assay}/base.html')
-        report_html = f"{self.outdir}/{self.sample}_refine_report.html"
         with io.open(report_html, 'w', encoding='utf8') as fh:
             html = template.render(data)
             fh.write(html)
