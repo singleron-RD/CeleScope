@@ -10,8 +10,7 @@ from collections import defaultdict
 from celescope.tools import utils
 from celescope.tools.step import s_common, Step
 from celescope.tools.emptydrop_cr import get_plot_elements
-from celescope.tools.plotly_plot import Bar_plot
-from celescope.flv_CR.match import gen_clonotypes_table, gen_vj_annotation_metrics
+from celescope.flv_CR.match import gen_vj_annotation_metrics
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
@@ -19,6 +18,74 @@ env = Environment(
         loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
         autoescape=select_autoescape(['html', 'xml'])
     )
+
+
+def get_cltypes(df_contig):
+    """
+    有一个pandas dataframe,名称为df_contig, 包含如下column：['barcode','chain','cdr3','cdr3_nt']，进行如下操作：
+    groupby barcode, 生成一个新的dataframe叫做df_chain，包含新的两列：'cdr3_aa'是{chain}:{cdr3},多个值用分号分隔；‘'cdr3_nt’是{chain}:{cdr3_nt},多个值用分号分隔。
+    将df_chain按照cdr3_aa进行groupby, agg生成一个新的dataframe叫做df_cl,barcode这一列进行计数，这一列叫做'frequency'。cdr3_nt这一列如果相同，则保留一个，如果不同，则用分号连接。
+    将df_cl按照frequency降序排列。
+    """
+    grouped = df_contig.groupby('barcode')
+
+    def concatenate_values(x):
+        cdr3_aa = ';'.join(f"{chain}:{cdr3}" for chain, cdr3 in zip(x['chain'], x['cdr3']))
+        cdr3_nt = ';'.join(f"{chain}:{cdr3_nt}" for chain, cdr3_nt in zip(x['chain'], x['cdr3_nt']))
+        return pd.Series({'cdr3s_aa': cdr3_aa, 'cdr3s_nt': cdr3_nt})
+
+    df_chain = grouped.apply(concatenate_values).reset_index()
+    barcode_cdr3s_aa_dic = {}
+    for _, row in df_chain.iterrows():
+        barcode_cdr3s_aa_dic[row['barcode']] = row['cdr3s_aa']
+
+    df_cl = df_chain.groupby('cdr3s_aa').agg({'barcode': 'count', 'cdr3s_nt': lambda x: ';'.join(x.unique())}).reset_index()
+    df_cl.rename(columns={'barcode': 'frequency'},inplace=True)
+    df_cl = df_cl.sort_values('frequency', ascending=False)
+
+    return df_cl, barcode_cdr3s_aa_dic
+
+def merge_cltypes(cl_origin, cl_refine):
+    """
+    有两个pandas dataframe：cl_origin和cl_refine,cl_origin包含column：[clonotype_id,frequency,cdr3s_aa,cdr3s_nt], cl_refine包含column:[frequency,cdr3s_aa,cdr3s_nt]
+    对cl_refine的每一行做如下处理：如果cdr3s_aa在cl_origin的cdr3s_aa中出现，则将这一行的frequency加在cl_origin第一次出现位置的frequency上，然后从cl_refine中去掉这一行
+    将cl_origin和cl_refine合并为df_merge
+    为df_merge新生成一列proportion, 值为每一行frequency除以frequncy的sum，保留六位小数。
+    将df_merge clonotype为NA的行设为"refine_{num}", num从1开始递增
+    """
+    cl_origin_copy = cl_origin.copy()
+    cl_refine_copy = cl_refine.copy()
+
+    # 遍历cl_refine的每一行
+    for index, row in cl_refine_copy.iterrows():
+        cdr3s_aa = row['cdr3s_aa']
+        mask = cl_origin_copy['cdr3s_aa'] == cdr3s_aa
+        
+        # 如果cdr3s_aa在cl_origin的cdr3s_aa中出现，则将frequency相加
+        if mask.any():
+            first_occurrence_index = cl_origin_copy.loc[mask].index[0]
+            cl_origin_copy.loc[first_occurrence_index, 'frequency'] += row['frequency']
+        
+        # 从cl_refine中去掉相应行
+            cl_refine_copy.drop(index, inplace=True)
+
+    df_merge = pd.concat([cl_origin_copy, cl_refine_copy])
+    df_merge.sort_values(['frequency'], ascending=[False], inplace=True)
+
+    # 计算proportion列
+    df_merge['proportion'] = df_merge['frequency'] / df_merge['frequency'].sum()
+    df_merge['proportion'] = df_merge['proportion'].round(6)
+
+
+    # 将clonotype_id为NA的行设为"refine_{num}"
+    na_rows = df_merge['clonotype_id'].isna()
+    df_merge.loc[na_rows, 'clonotype_id'] = df_merge[na_rows].index.to_series().apply(lambda x: f"refine_{x+1}")
+
+    cdr3s_aa_cl_dic = {}
+    for _, row in df_merge.iterrows():
+        cdr3s_aa_cl_dic[row['cdr3s_aa']] = row['clonotype_id']
+
+    return df_merge,cdr3s_aa_cl_dic
 
 
 class Filter_noise:
@@ -47,7 +114,7 @@ class Filter_noise:
         filtered_data = pd.DataFrame(columns=df_sorted.columns)  # 创建一个空的DataFrame来存储过滤后的数据
         contig_id_set = set()  # 用于记录需要保留的contig_id
 
-        for group_name, group_data in grouped:
+        for _group_name, group_data in grouped:
             if len(group_data) == 1:
                 contig_id_set.add(group_data['contig_id'].values[0])  
             else:
@@ -63,7 +130,7 @@ class Filter_noise:
         final_filtered_data = pd.DataFrame(columns=filtered_data.columns)
         contig_id_set = set()
 
-        for group_name, group_data in grouped_barcode:
+        for _group_name, group_data in grouped_barcode:
             if len(group_data['chain'].unique()) == 2:
                 if self.seqtype == 'BCR' and 'IGH' not in group_data['chain']:
                     continue
@@ -76,13 +143,12 @@ class Filter_noise:
         return final_filtered_data
 
 
+
 class Refine_vdj(Step):
     """
     ## Features
     
     - Refine barcodes where "is_cell=False" and have multi productive chains.
-    
-    - There are three methods to filter noise: SNR, AUTO, NOT_FILTER
 
     """
 
@@ -95,6 +161,8 @@ class Refine_vdj(Step):
         self.all_contig_fasta = glob.glob(f"{self.assemble_out}/all_contig.fasta")[0]
         self.filter_contig_fasta = glob.glob(f"{self.assemble_out}/filtered_contig.fasta")[0]
         self.all_bam = glob.glob(f"{self.assemble_out}/all_contig.bam")[0]
+        self.cl_types = f"{self.assemble_out}/clonotypes.csv"
+        self.df_cl_origin = pd.read_csv(self.cl_types)
         
         self.seqtype = args.seqtype
         self.coeff = float(args.coeff)
@@ -105,6 +173,9 @@ class Refine_vdj(Step):
 
         with open(args.barcode_convert_json, 'r') as f:
             self.tenX_sgr = json.load(f)
+
+        # out files
+        self.out_cl_file = f'{self.outdir}/clonotypes.csv'
 
 
     def run(self):
@@ -119,7 +190,18 @@ class Refine_vdj(Step):
         df_refine = df_productive[df_productive["is_cell"] == False]
         df_refine = df_refine.groupby("barcode").filter(lambda x: (len(x) > 4))
         df_refine = Filter_noise(df_refine, self.coeff, self.seqtype)()
+
+        # clonotypes
+        df_cl_refine,barcode_cdr3s_aa_dic = get_cltypes(df_refine)
+        df_cl_merge,cdr3s_aa_cl_dic = merge_cltypes(self.df_cl_origin,df_cl_refine)
+        df_cl_merge.to_csv(self.out_cl_file, index=False)
+        bc_cl_dic = {}
+        for bc in barcode_cdr3s_aa_dic:
+            bc_cl_dic[bc] = cdr3s_aa_cl_dic[barcode_cdr3s_aa_dic[bc]]        
         
+        # add clonotypes
+        df_refine['raw_clonotype_id'] = df_refine['barcode'].replace(bc_cl_dic)
+
         df_merge = pd.concat([self.filter_contig_anno, df_refine])
         refine_cells = set(df_merge.barcode)
         refine_contigs = set(df_merge.contig_id)
@@ -228,30 +310,20 @@ class Refine_vdj(Step):
                     if i["name"] == k:
                         i["display"] = f'{round(v / len(set(df_match.barcode)) * 100, 2)}%'
 
-            gen_clonotypes_table(df_match, f"{self.outdir}/matched_clonotypes.csv", self.seqtype)
 
         """
         Clonotypes table
         """
-        gen_clonotypes_table(df_merge, f"{self.outdir}/clonotypes.csv", self.seqtype)
+        df_cl = pd.read_csv(self.out_cl_file)
         title = 'Clonetypes'
-        raw_clonotypes = pd.read_csv(f"{self.outdir}/clonotypes.csv", sep=',', index_col=None)
-        raw_clonotypes['ClonotypeID'] = raw_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
-        raw_clonotypes['Frequency'] = raw_clonotypes['frequency']
-        raw_clonotypes['Proportion'] = raw_clonotypes['proportion'].apply(lambda x: f'{round(x*100, 2)}%')
-        raw_clonotypes['CDR3_aa'] = raw_clonotypes['cdr3s_aa'].apply(lambda x: x.replace(';', '<br>'))
 
         table_dict = self.get_table_dict(
             title=title,
             table_id='clonetypes',
-            df_table=raw_clonotypes[['ClonotypeID', 'CDR3_aa', 'Frequency', 'Proportion']]
+            df_table=df_cl[['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion']]
         )
         data["match_summary"]["table_dict"] = table_dict
 
-        raw_clonotypes['ClonotypeID'] = raw_clonotypes['ClonotypeID'].astype("int")
-        raw_clonotypes.sort_values(by=['ClonotypeID'], inplace=True)
-        Barplot = Bar_plot(df_bar=raw_clonotypes).get_plotly_div()
-        data["match_summary"]["Barplot"] = Barplot
 
         raw_report_html = f"{self.outdir}/../.{self.sample}_raw_report.html"
         report_html = f"{self.outdir}/../{self.sample}_report.html"
