@@ -228,12 +228,12 @@ class Refine_vdj(Step):
                     if i["name"] == k:
                         i["display"] = f'{round(v / len(set(df_match.barcode)) * 100, 2)}%'
 
-            gen_clonotypes_table(df_match, f"{self.outdir}/matched_clonotypes.csv", self.seqtype)
+            gen_clonotypes_table(df_match, f"{self.outdir}/matched_clonotypes.csv")
 
         """
         Clonotypes table
         """
-        gen_clonotypes_table(df_merge, f"{self.outdir}/clonotypes.csv", self.seqtype)
+        gen_clonotypes_table(df_merge, f"{self.outdir}/clonotypes.csv")
         title = 'Clonetypes'
         raw_clonotypes = pd.read_csv(f"{self.outdir}/clonotypes.csv", sep=',', index_col=None)
         raw_clonotypes['ClonotypeID'] = raw_clonotypes['clonotype_id'].apply(lambda x: x.strip('clonetype'))
