@@ -240,7 +240,7 @@ class Split_tag(Step):
                     df_temp = df_temp[df_temp.clonotype_id != ''] # del clonotype for trust4
                 split_clonotypes = f'{self.fl_vdj_outdir}/{tag}_{seqtype}_clonotypes.csv'
 
-                gen_clonotypes_table(df_temp, split_clonotypes)
+                gen_clonotypes_table(df_temp, split_clonotypes, seqtype)
                 metrics_dict = gen_vj_annotation_metrics(df_temp, seqtype)
                 utils.dump_dict_to_json(metrics_dict, f"{self.fl_vdj_outdir}/{tag}_metrics.json")
 

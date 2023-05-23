@@ -310,6 +310,7 @@ class Refine_vdj(Step):
                     if i["name"] == k:
                         i["display"] = f'{round(v / len(set(df_match.barcode)) * 100, 2)}%'
 
+
         """
         Clonotypes table
         """
