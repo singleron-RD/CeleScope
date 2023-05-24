@@ -132,7 +132,7 @@ class Filter_noise:
 
         for _group_name, group_data in grouped_barcode:
             if len(group_data['chain'].unique()) == 2:
-                if self.seqtype == 'BCR' and 'IGH' not in group_data['chain']:
+                if self.seqtype == 'BCR' and 'IGH' not in group_data['chain'].unique():
                     continue
                 contig_id_set.update(set(group_data['contig_id']))  # 记录保留的contig_id
 
