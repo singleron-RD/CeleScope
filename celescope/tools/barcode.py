@@ -241,16 +241,12 @@ class Barcode(Step):
 
         Returns:
             str
-
-        Raise:
-            IndexError: if sequence length is not enough
+            if sequence length is not enough, return ""
 
         >>> sub_pattern_dict = [[0, 8]]
         >>> seq = "A" * 7
         >>> Barcode.get_seq_str(seq, sub_pattern_dict)
-        Traceback (most recent call last):
-        ...
-        IndexError: sequence length is not enough in R1 read: AAAAAAA
+        ""
         >>> seq = "A" * 8
         >>> Barcode.get_seq_str(seq, sub_pattern_dict)
         'AAAAAAAA'
@@ -707,6 +703,8 @@ class Barcode(Step):
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
                     umi = Barcode.get_seq_str(seq1, pattern_dict['U'])
+                    if not umi:
+                        continue
 
                     if self.bool_flv:
                         qual1 = 'F' * len(cb + umi)
