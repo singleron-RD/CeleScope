@@ -1,7 +1,10 @@
+## [unrelease]
+ ### `snp`
+ - Use [MANE](https://www.ncbi.nlm.nih.gov/refseq/MANE/) to reduce the number of transcripts of each human gene.
+
 ## [1.15.2] - 2023-05-24
  ### `flv_CR`
  - Fixed a bug when running the refine step on BCR data.
- - 
 
 ## [1.15.1] - 2023-05-22
  ### `flv_CR`

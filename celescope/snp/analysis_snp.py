@@ -309,7 +309,7 @@ def analysis_snp(args):
 
 def get_opts_analysis_snp(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
-    parser.add_argument("--database", help='snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse)', default='GRCh38.99')
+    parser.add_argument("--database", help='snpEff database. Common choices are GRCh38.mane.1.0.ensembl(human) and GRCm38.99(mouse)', default='GRCh38.mane.1.0.ensembl')
     parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
     parser.add_argument("--plot_top_n", type=int, help='plot UMAP of at most n variants ', default=20)
     if sub_program:
