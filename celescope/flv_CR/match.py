@@ -62,6 +62,7 @@ def gen_clonotypes_table(df, out_clonotypes, seqtype):
     df = df[df['productive'] == True]
     df['chain_cdr3aa'] = df[['chain', 'cdr3']].apply(':'.join, axis=1)
     df = df.rename(columns={"chain_cdr3aa":"cdr3s_aa", "raw_clonotype_id":"clonotype_id"})
+    df = df.dropna(subset=["clonotype_id"])
     df = df.sort_values("clonotype_id", key=lambda x: x.str.lstrip("clonotype").astype(int))
     
     sort_method = {"TCR": True, "BCR": False}

@@ -10,6 +10,7 @@ from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from celescope.flv_trust4.__init__ import CHAIN, PAIRED_CHAIN
+from celescope.flv_CR.refine_assemble import Refine_assemble
 
 
 __SUB_STEPS__ = ['mapping', 'cells', 'annotation']
@@ -69,6 +70,9 @@ class Assemble(Step):
 
     def run(self):
         self.assemble()
+        if not self.args.not_refine:
+            refine_aseemble = Refine_assemble(self.args)
+            refine_aseemble.run()
 
 def assemble(args):
     with Assemble(args) as runner:
@@ -88,7 +92,12 @@ class cellranger_metrics(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-        cellranger_metrics_csv = f'{self.outdir}/{self.sample}/outs/metrics_summary.csv'
+        if self.args.not_refine:
+            self.out_name = self.sample
+        else:
+            self.out_name = self.sample + "_refine"
+
+        cellranger_metrics_csv = f'{self.outdir}/{self.out_name}/outs/metrics_summary.csv'
         df = pd.read_csv(cellranger_metrics_csv, index_col=None)
         self.metrics_dict = df.T.to_dict()[0]
 
@@ -131,8 +140,8 @@ class Cells(cellranger_metrics):
         with open(self.barcode_convert_json, 'r') as f:
             self.tenX_sgr = json.load(f)
 
-        self.all_bam = f'{self.outdir}/{self.sample}/outs/all_contig.bam'
-        self.filter_contig_file = pd.read_csv(f'{self.outdir}/{self.sample}/outs/filtered_contig_annotations.csv')
+        self.all_bam = f'{self.outdir}/{self.out_name}/outs/all_contig.bam'
+        self.filter_contig_file = pd.read_csv(f'{self.outdir}/{self.out_name}/outs/filtered_contig_annotations.csv')
         
         # out
         self.count_file = f'{self.outdir}/count.txt'
@@ -272,6 +281,10 @@ def get_opts_assemble(parser, sub_program):
     parser.add_argument('--other_param', help='Other cellranger parameters.', default="")
     parser.add_argument('--mem', help='memory(G)', default=10)
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
+    parser.add_argument("--not_refine", help="Do not perform the refine step. ", action="store_true")
+    parser.add_argument("--coeff",
+        help="coefficient will affect auto and snr noise filter, recommend 1.5 for auto", 
+        type=float, default=1.5)
     if sub_program:
         s_common(parser)
         parser.add_argument('--fqs_dir', help='fastq dir after convert', required=True)
