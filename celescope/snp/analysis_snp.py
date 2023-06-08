@@ -274,13 +274,14 @@ class Analysis_snp(Step):
         for c in variants:
             df_top[c] = df_top[c].astype('category')
 
-        self.variant_table['Chrom'] = self.variant_table['Chrom'].astype(str)
-        self.variant_table['Pos'] = self.variant_table['Pos'].astype(str)
-        self.variant_table['Chrom_Pos'] = self.variant_table[['Chrom', 'Pos']].apply('_'.join, axis=1)
+        variant_table = self.variant_table.copy()
+        variant_table['Chrom'] = variant_table['Chrom'].astype(str)
+        variant_table['Pos'] = variant_table['Pos'].astype(str)
+        variant_table['Chrom_Pos'] = variant_table[['Chrom', 'Pos']].apply('_'.join, axis=1)
 
-        self.variant_table = self.variant_table.fillna('None')
-        gene_dict = self.variant_table.set_index("Chrom_Pos").to_dict(orient="dict")["Gene"]
-        protein_dict = self.variant_table.set_index("Chrom_Pos").to_dict(orient="dict")["Protein"]
+        variant_table = variant_table.fillna('None')
+        gene_dict = variant_table.set_index("Chrom_Pos").to_dict(orient="dict")["Gene"]
+        protein_dict = variant_table.set_index("Chrom_Pos").to_dict(orient="dict")["Protein"]
 
         adata = sc.read_h5ad(match_dict['h5ad'])
         adata.obs = pd.concat([adata.obs, df_top], axis=1)
