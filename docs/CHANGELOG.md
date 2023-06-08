@@ -1,3 +1,19 @@
+## [1.15.2] - 2023-05-24
+ ### `flv_CR`
+ - Fixed a bug when running the refine step on BCR data.
+ - 
+
+## [1.15.1] - 2023-05-22
+ ### `flv_CR`
+ - An additional refine step is added to rescue some cells from cells assembling multiple chains (possibly due to background contamination).
+
+ ### `vdj`
+ - Allows a chain to be missing in all cells (e.g. all cells have no IGL chain); previous versions reported an error.
+ - When reporting UMI number mapping to each chain, use mean instead of the previous median. This makes it easier to understand in the presence of multiple light chains.
+
+ ### General improvments
+ - Reduce the size of HTML reports.
+
 ## [1.15.0] - 2023-04-11
  ### `snp`
  - Added image output of Otsu's method and genotype mapping on UMAP graph.

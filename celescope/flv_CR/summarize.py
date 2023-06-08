@@ -42,7 +42,10 @@ class Summarize(Step):
             self.tenX_sgr = json.load(f)
 
         # assemble result directory in 10X barcode.
-        self.assemble_out = args.assemble_out
+        if args.not_refine:
+            self.assemble_out = args.assemble_out
+        else:
+            self.assemble_out = args.assemble_out.replace('/outs', '_refine/outs')
 
         # in files
         annotation_file = f'{self.assemble_out}/filtered_contig_annotations.csv'
@@ -110,6 +113,7 @@ def summarize(args):
 def get_opts_summarize(parser, sub_program):
     parser.add_argument('--seqtype', help='TCR or BCR', choices=['TCR', 'BCR'], required=True)
     parser.add_argument('--soft_path', help='soft path for cellranger')
+    parser.add_argument("--not_refine", help="Do not perform the refine step. ", action="store_true")
     if sub_program:
         s_common(parser)
         parser.add_argument('--barcode_convert_json', help='json file', required=True)

@@ -8,6 +8,8 @@
 ## Arguments
 `--strand` gene strand file, the format is "geneID,+/-".
 
+`--basequalilty` min base quality of the read sequence.
+
 `--bam` featureCount bam(sortedByCoord), must have "MD" tag, set in star step.
 
 `--cell` barcode cell list.

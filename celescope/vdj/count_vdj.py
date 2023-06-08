@@ -171,6 +171,7 @@ class Count_vdj(Step):
         """
 
         df_clonetypes = df_valid_count.copy()
+        self.cols = [x for x in self.cols if x in df_clonetypes.columns]
         df_clonetypes = df_clonetypes.groupby(self.cols, as_index=False).agg({
             "barcode": "count"})
         # put na last
@@ -207,14 +208,12 @@ class Count_vdj(Step):
             UMI_col_name = "UMI_" + chain
             if UMI_col_name in df_valid_count.columns:
                 df_valid_count[UMI_col_name].replace("NA", 0, inplace=True)
-                Median_chain_UMIs_per_Cell = np.median(df_valid_count[UMI_col_name])
-            else:
-                Median_chain_UMIs_per_Cell = 0
+                Mean_chain_UMIs_per_Cell = round(np.mean(df_valid_count[UMI_col_name]),1)
 
             self.add_metric(
-                name=f"Median {chain} UMIs per Cell",
-                value=Median_chain_UMIs_per_Cell,
-                help_info=f"median number of UMI mapped to {chain} per cell"
+                name=f"Mean {chain} UMIs per Cell",
+                value=Mean_chain_UMIs_per_Cell,
+                help_info=f"mean number of UMI mapped to {chain} per cell"
             )
 
         if self.args.type == 'TCR':
@@ -226,7 +225,11 @@ class Count_vdj(Step):
             df_pair = df_valid_count.copy()
             for chain in pair:
                 cdr3_col_name = "aaSeqCDR3_" + chain
-                df_pair = df_pair[df_pair[cdr3_col_name] != "NA"]
+                if cdr3_col_name not in df_pair.columns:
+                    df_pair = pd.DataFrame({'barcode':[]})
+                    break
+                else:
+                    df_pair = df_pair[df_pair[cdr3_col_name] != "NA"]
             
             n_cell_pair = len(df_pair.barcode.unique())
 
@@ -237,18 +240,6 @@ class Count_vdj(Step):
                 total=n_cell,
                 help_info=f"cells with as least {iUMI} UMI mapped to each chain"
             )
-        
-        if self.args.type == 'BCR':
-            df_tmp = df_valid_count[df_valid_count["aaSeqCDR3_IGH"]!="NA"]
-            multi_chain_num = df_tmp[(df_tmp["aaSeqCDR3_IGK"]!="NA") | (df_tmp["aaSeqCDR3_IGL"]!="NA")].shape[0]
-            three_chain_num = df_tmp[(df_tmp["aaSeqCDR3_IGK"]!="NA") & (df_tmp["aaSeqCDR3_IGL"]!="NA")].shape[0]
-            self.add_metric(
-                name="Cells with Single Heavy-Light chain pair",
-                value=multi_chain_num - three_chain_num,
-                total=n_cell,
-                help_info=f"cells with as least {iUMI} UMI mapped to single heavy chain and single light chain"
-            )
-            
 
     def write_cell_confident_count(self, df_valid_count, df_clonetypes, df_confident):
         df_mergeID = pd.merge(df_valid_count,
@@ -279,6 +270,7 @@ class Count_vdj(Step):
                     cols.append("_".join([seq, chain]))
             df_table_cols = ["clonetype_ID"] + \
                 cols + ["barcode_count", "percent"]
+            df_table_cols = [x for x in df_table_cols if x in df_table.columns]
             df_table = df_table[df_table_cols]
             table_header = ["Clonetype_ID"] + cols + ["Frequency", "Percent"]
             return df_table, table_header

@@ -145,6 +145,8 @@ use `--steps_run barcode,cutadapt`.
 
 `--thread` Thread to use.
 
+`--use_R3` ATAC libraries use R3 reads instead of R2.
+
 `--debug` If this argument is used, celescope may output addtional file for debugging.
 
 `--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
@@ -205,7 +207,7 @@ at least {overlap} bases match between adapter and read.
 
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
-`--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
+`--outFilterMatchNmin` Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
 `--out_unmapped` Output unmapped reads.

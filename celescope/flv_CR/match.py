@@ -55,30 +55,30 @@ def gen_vj_annotation_metrics(df, seqtype):
     return metric_dict
 
 
-def gen_clonotypes_table(df, out_clonotypes):
+def gen_clonotypes_table(df, out_clonotypes, seqtype):
     """
     Generate clonotypes.csv file
     """
     df = df[df['productive'] == True]
     df['chain_cdr3aa'] = df[['chain', 'cdr3']].apply(':'.join, axis=1)
+    df = df.rename(columns={"chain_cdr3aa":"cdr3s_aa", "raw_clonotype_id":"clonotype_id"})
+    df = df.dropna(subset=["clonotype_id"])
+    df = df.sort_values("clonotype_id", key=lambda x: x.str.lstrip("clonotype").astype(int))
+    
+    sort_method = {"TCR": True, "BCR": False}
+    cdr3_aa_dict = df.groupby("clonotype_id")["cdr3s_aa"].apply(set).to_dict()
+    cdr3_aa_dict = {key: ';'.join(sorted(list(value), reverse=sort_method[seqtype])) for key, value in cdr3_aa_dict.items()}
+    count_dict = df.groupby("clonotype_id")["barcode"].nunique().to_dict()
+    
+    df["frequency"] = df["clonotype_id"].apply(lambda x: count_dict[x])
+    df["cdr3s_aa"] = df["clonotype_id"].apply(lambda x: cdr3_aa_dict[x])
+    df = df.drop_duplicates("clonotype_id")
+    df = df[["clonotype_id", "cdr3s_aa", "frequency"]]
+    
+    sum_frequency = df['frequency'].sum()
+    df['proportion'] = df['frequency'].apply(lambda x: x/sum_frequency)
 
-    match_clonotypes = open(out_clonotypes, 'w')
-    match_clonotypes.write('barcode\tcdr3s_aa\n')
-    for cb in set(df.barcode):
-        temp = df[df['barcode']==cb].sort_values(by='chain', ascending=True)
-        chain_pair = ';'.join(temp['chain_cdr3aa'].tolist())
-        match_clonotypes.write(f'{cb}\t{chain_pair}\n')
-    match_clonotypes.close()
-
-    df_clonetypes = pd.read_csv(out_clonotypes, sep='\t', index_col=None)
-    df_clonetypes = df_clonetypes.groupby('cdr3s_aa', as_index=False).agg({'barcode': 'count'})
-    df_clonetypes.rename(columns={'barcode': 'frequency'}, inplace=True)
-    df_clonetypes = df_clonetypes.sort_values("frequency", ascending=False)
-    sum_f = df_clonetypes['frequency'].sum()
-    df_clonetypes['proportion'] = df_clonetypes['frequency'].apply(lambda x: x/sum_f)
-    df_clonetypes['clonotype_id'] = [f'clonotype{i}' for i in range(1, df_clonetypes.shape[0]+1)]
-    df_clonetypes = df_clonetypes.reindex(columns=['clonotype_id', 'cdr3s_aa', 'frequency', 'proportion'])
-    df_clonetypes.to_csv(out_clonotypes, sep=',', index=False)
+    df.to_csv(out_clonotypes, sep=',', index=False)
 
 
 class Match(Step):
@@ -151,7 +151,7 @@ class Match(Step):
         Generate clonotypes.csv file where barcodes match with scRNA
         """
         df_match = pd.read_csv(self.match_annotation)
-        gen_clonotypes_table(df_match, self.match_clonotypes)
+        gen_clonotypes_table(df_match, self.match_clonotypes, self.seqtype)
 
     @utils.add_log
     def gen_matched_metrics(self):

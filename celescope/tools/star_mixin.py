@@ -127,7 +127,7 @@ def get_opts_star_mixin(parser, sub_program):
     )
     parser.add_argument(
         '--outFilterMatchNmin',
-        help="""Default `0`. Alignment will be output only if the number of matched bases 
+        help="""Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.""",
         default=50,
     )

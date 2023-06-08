@@ -24,7 +24,7 @@ i.e. as total number of mismatches/indels in all unique mappers divided by the t
 ## Arguments
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
-`--outFilterMatchNmin` Default `0`. Alignment will be output only if the number of matched bases 
+`--outFilterMatchNmin` Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
 `--out_unmapped` Output unmapped reads.
