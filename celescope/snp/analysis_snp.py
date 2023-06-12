@@ -288,6 +288,7 @@ class Analysis_snp(Step):
             plt.savefig(file_name,dpi=300,bbox_inches="tight")
 
 
+
     def run(self):
         self.run_snpEff()
         self.keep_in_gene()
