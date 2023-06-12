@@ -266,20 +266,19 @@ class Analysis_snp(Step):
 
         utils.check_mkdir(self.plot_snp_dir)
         df_gt = pd.read_csv(self.gt_file, keep_default_na=False, index_col=0)
-        df_ncell = pd.read_csv(self.ncell_file, index_col=0)
-        df_ncell['n_variants'] = df_ncell['0/1'] + df_ncell['1/1']
-        df_top = df_gt.loc[df_ncell.nlargest(self.args.plot_top_n, 'n_variants').index,]
+        df_v = self.variant_table.copy()
+        df_v['n_variants'] = df_v['0/1'] + df_v['1/1']
+        indices = df_v.nlargest(self.args.plot_top_n, 'n_variants').index
+        df_top = df_gt.iloc[indices,]
         df_top = df_top.transpose()
         variants = df_top.columns
         for c in variants:
             df_top[c] = df_top[c].astype('category')
 
-        gene_list, _mRNA_list, protein_list = parse_variant_ann(self.final_vcf_file)
-        indices = [int(x.split('_')[2])-1 for x in variants]
-
         adata = sc.read_h5ad(match_dict['h5ad'])
         adata.obs = pd.concat([adata.obs, df_top], axis=1)
         pt_size = min(100, 120000 / len(adata.obs))
+        gene_list, protein_list = df_v['Gene'], df_v['Protein']
         for i, v in enumerate(variants):
             title = f'top{i+1}_{variants[i]}_{gene_list[indices[i]]}_{protein_list[indices[i]]}'
             file_name = f'{self.plot_snp_dir}/{title}.pdf'
