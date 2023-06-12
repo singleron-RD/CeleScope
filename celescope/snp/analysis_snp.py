@@ -274,14 +274,20 @@ class Analysis_snp(Step):
         for c in variants:
             df_top[c] = df_top[c].astype('category')
 
-        gene_list, _mRNA_list, protein_list = parse_variant_ann(self.final_vcf_file)
-        indices = [int(x.split('_')[2])-1 for x in variants]
+        variant_table = self.variant_table.copy()
+        variant_table['Chrom'] = variant_table['Chrom'].astype(str)
+        variant_table['Pos'] = variant_table['Pos'].astype(str)
+        variant_table['Chrom_Pos'] = variant_table[['Chrom', 'Pos']].apply('_'.join, axis=1)
+
+        variant_table = variant_table.fillna('None')
+        gene_dict = variant_table.set_index("Chrom_Pos").to_dict(orient="dict")["Gene"]
+        protein_dict = variant_table.set_index("Chrom_Pos").to_dict(orient="dict")["Protein"]
 
         adata = sc.read_h5ad(match_dict['h5ad'])
         adata.obs = pd.concat([adata.obs, df_top], axis=1)
         pt_size = min(100, 120000 / len(adata.obs))
         for i, v in enumerate(variants):
-            title = f'top{i+1}_{variants[i]}_{gene_list[indices[i]]}_{protein_list[indices[i]]}'
+            title = f'top{i+1}_{variants[i]}_{gene_dict[variants[i]]}_{protein_dict[variants[i]]}'
             file_name = f'{self.plot_snp_dir}/{title}.pdf'
             sc.pl.umap(adata, color=v, size=pt_size, 
             palette={'0/0':'dimgray', '0/1':'orange', '1/1':'red','NA':'lightgray'},
