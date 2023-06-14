@@ -9,24 +9,14 @@ from celescope.flv_trust4.__init__ import TOOLS_DIR
 from celescope.tools.plotly_plot import Bar_plot
 
 
-CELL_TYPE_DICT = {
-    'TCR':['T_cells', 'NKT_cells', 'T cells', 'NK T cells', 'Tcells'],
-    'BCR':['Plasma_cells', 'B_cells', 'Mature_B_cell', 'Plasma cells', 'B cells', 'Bcells'],
-    }
-
-
 class Annotation(Step):
     """
     ## Features
 
-    - Output assembled T/B cells mapping to transcriptome if rds and auto-assign info exist in match directory.
-    - Generate VDJ annotation info, clonetypes table and bar-plot of clonetypes distribution in html.
+    - Output TSNE-plot of Assembled T/B Cells.
 
     ## Output
-    - `05.annotation/{sample}_assign.png` Umap plot of Auto-assigned celltype in transcriptome.
-    - `05.annotation/{sample}_cluster_umap.png` Umap plot of Cluster in transcriptome.
-    - `05.annotation/{sample}_umapplot.png` Umap plot of assembled barcodes marked as read color.
-    - `05.annotation/{sample}_distribution.txt` Number of assembled barcodes in every clusters.
+    - `05.annotation/{sample}_mapping.pdf` TSNE-plot of Assembled Cells.
 
     """
     def __init__(self, args, display_title=None):
@@ -37,13 +27,7 @@ class Annotation(Step):
         self.chains, self.paired_groups = Summarize._parse_seqtype(self.seqtype)
         self.contig_file = f'{args.summarize_out}/{self.sample}_filtered_contig.csv'
         self.clonotype_file = f'{args.summarize_out}/clonotypes.csv'        
-        self.celltype_set = CELL_TYPE_DICT[self.seqtype]
 
-        try:
-            self.rds = glob.glob(f'{self.match_dir}/06.analysis/*.rds')[0]
-            self.assign_file = glob.glob(f'{self.match_dir}/06.analysis/*_auto_assign/*_auto_cluster_type.tsv')[0]
-        except IndexError:
-            pass
 
     def parse_clonotype(self):
         """Generate clonotypes table in html.
@@ -137,62 +121,10 @@ class Annotation(Step):
         df_clonotypes.sort_values(by=['ClonotypeID'], inplace=True)
         Barplot = Bar_plot(df_bar=df_clonotypes).get_plotly_div()
         self.add_data(Barplot=Barplot)
-
-    @staticmethod
-    @utils.add_log
-    def run_mapping(rds, contig, sample, outdir, assign):
-        cmd = (
-            f'Rscript {TOOLS_DIR}/VDJmapping.R '
-            f'--rds {rds} '
-            f'--VDJ {contig} '
-            f'--sample {sample} '
-            f'--outdir {outdir} '
-            f'--assign_file {assign} '
-            '2>&1 '
-        )
-        subprocess.check_call(cmd, shell=True)
-
-    @utils.add_log
-    def mapping_process(self):
-        """Mapping result with matched scRNA.
-        """
-        Annotation.run_mapping(
-            self.rds, self.contig_file, self.sample, self.outdir, self.assign_file
-            )
-
-        meta = pd.read_csv(f'{self.outdir}/{self.sample}_meta.csv')
-        metaTB = meta[meta['CellTypes'].isin(self.celltype_set)]
-        mappedmeta = meta[meta['Class']=='T/BCR']
-        mappedmetaTB = mappedmeta[mappedmeta['CellTypes'].isin(self.celltype_set)]
-        
-        self.add_metric(
-            'Total Cell Number in Matched transcriptome',
-            meta.shape[0],
-            show=False)
-        self.add_metric(
-            'Cell Number Successfully Mapped to transcriptome',
-            mappedmeta.shape[0],
-            show=False)
-        self.add_metric(
-            'T/B cell Number in Matched transcriptome',
-            metaTB.shape[0],
-            show=False)
-        self.add_metric(
-            'Cell Number Successfully Mapped to T/B cell in transcriptome',
-            mappedmetaTB.shape[0],
-            show=False)
     
     def run(self):
         self.annotation_process()
-
-        try:
-            if self.rds and self.assign_file:
-                self.mapping_process()
-        except AttributeError:
-            print("rds file and type file do not exist" + "\n" )
-        except ZeroDivisionError:
-            print("Not found auto-assigned T/B cell in matched sc-RNA")
-
+        
 
 @utils.add_log
 def annotation(args):
