@@ -266,33 +266,27 @@ class Analysis_snp(Step):
 
         utils.check_mkdir(self.plot_snp_dir)
         df_gt = pd.read_csv(self.gt_file, keep_default_na=False, index_col=0)
-        df_ncell = pd.read_csv(self.ncell_file, index_col=0)
-        df_ncell['n_variants'] = df_ncell['0/1'] + df_ncell['1/1']
-        df_top = df_gt.loc[df_ncell.nlargest(self.args.plot_top_n, 'n_variants').index,]
+        df_v = self.variant_table.copy()
+        df_v['n_variants'] = df_v['0/1'] + df_v['1/1']
+        indices = df_v.nlargest(self.args.plot_top_n, 'n_variants').index
+        df_top = df_gt.iloc[indices,]
         df_top = df_top.transpose()
         variants = df_top.columns
         for c in variants:
             df_top[c] = df_top[c].astype('category')
 
-        variant_table = self.variant_table.copy()
-        variant_table['Chrom'] = variant_table['Chrom'].astype(str)
-        variant_table['Pos'] = variant_table['Pos'].astype(str)
-        variant_table['Chrom_Pos'] = variant_table[['Chrom', 'Pos']].apply('_'.join, axis=1)
-
-        variant_table = variant_table.fillna('None')
-        gene_dict = variant_table.set_index("Chrom_Pos").to_dict(orient="dict")["Gene"]
-        protein_dict = variant_table.set_index("Chrom_Pos").to_dict(orient="dict")["Protein"]
-
         adata = sc.read_h5ad(match_dict['h5ad'])
         adata.obs = pd.concat([adata.obs, df_top], axis=1)
         pt_size = min(100, 120000 / len(adata.obs))
+        gene_list, protein_list = df_v['Gene'], df_v['Protein']
         for i, v in enumerate(variants):
-            title = f'top{i+1}_{variants[i]}_{gene_dict[variants[i]]}_{protein_dict[variants[i]]}'
+            title = f'top{i+1}_{variants[i]}_{gene_list[indices[i]]}_{protein_list[indices[i]]}'
             file_name = f'{self.plot_snp_dir}/{title}.pdf'
             sc.pl.umap(adata, color=v, size=pt_size, 
             palette={'0/0':'dimgray', '0/1':'orange', '1/1':'red','NA':'lightgray'},
             title=title)
             plt.savefig(file_name,dpi=300,bbox_inches="tight")
+
 
 
     def run(self):
@@ -315,7 +309,7 @@ def analysis_snp(args):
 
 def get_opts_analysis_snp(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
-    parser.add_argument("--database", help='snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse)', default='GRCh38.99')
+    parser.add_argument("--database", help='snpEff database. Common choices are GRCh38.mane.1.0.ensembl(human) and GRCm38.99(mouse)', default='GRCh38.mane.1.0.ensembl')
     parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
     parser.add_argument("--plot_top_n", type=int, help='plot UMAP of at most n variants ', default=20)
     if sub_program:

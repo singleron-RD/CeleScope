@@ -19,7 +19,11 @@ class Multi():
         self.__ASSAY__ = assay
         init_module = utils.find_assay_init(assay)
         self.__STEPS__ = init_module.__STEPS__
-        self.__CONDA__ = os.path.basename(os.environ['CONDA_DEFAULT_ENV'])
+        try:
+            self.__CONDA__ = os.path.basename(os.environ['CONDA_DEFAULT_ENV'])
+        except KeyError:
+            print('CONDA_DEFAULT_ENV is not set. sjm mode may not available.')
+            self.__CONDA__ = 'celescope'
         self.__APP__ = 'celescope'
         self.steps_not_run = ['mkref']
 

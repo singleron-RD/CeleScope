@@ -1,5 +1,16 @@
 import argparse
 
+# On some system, import scanpy will report "ImportError: dlopen: cannot load any more object with static TLS" when scanpy import sklearn
+# as described in 
+# https://github.com/singleron-RD/CeleScope/issues/127
+# https://github.com/scikit-learn/scikit-learn/issues/14485
+# https://github.com/scverse/scanpy/issues/1121
+# https://github.com/pytorch/pytorch/issues/2575
+# After testing, the version of glibc and sklearn is not the reason
+# Import scanpy before scipy.stats(used in tools/count.py) will do the trick.
+# However, this approach is only tested on one system.
+import scanpy # noqa # pylint: disable=unused-import
+
 from celescope.tools import utils
 from celescope.__init__ import __VERSION__, ASSAY_LIST
 
