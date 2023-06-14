@@ -1,6 +1,5 @@
 import pandas as pd
 import glob
-import subprocess
 import os
 import celescope
 import scanpy as sc
