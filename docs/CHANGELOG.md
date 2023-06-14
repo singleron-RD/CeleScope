@@ -2,6 +2,9 @@
  ### `snp`
  - Use [MANE](https://www.ncbi.nlm.nih.gov/refseq/MANE/) to reduce the number of transcripts of each human gene.
 
+ ### `tag`
+ - When `--split_bam` is used, reads mapped to intergenic regions will also be written to each split bam.
+
 ## [1.15.2] - 2023-05-24
  ### `flv_CR`
  - Fixed a bug when running the refine step on BCR data.
