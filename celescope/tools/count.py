@@ -99,7 +99,7 @@ class Count(Step):
 
     def run(self):
         self.bam2table()
-        df = pd.read_table(self.count_detail_file, header=0)
+        df = pd.read_table(self.count_detail_file, header=0, dtype={'geneID':str})
 
         # df_sum
         df_sum = Count.get_df_sum(df)

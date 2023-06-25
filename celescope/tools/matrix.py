@@ -23,7 +23,7 @@ class Features:
 
     @classmethod
     def from_tsv(cls, tsv_file):
-        df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'])
+        df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'], dtype=str)
         gene_id = df['gene_id'].tolist()
         gene_name = df['gene_name'].tolist()
         # avoid adding extra \t to genes.tsv when all the gene_type are Nan
@@ -88,6 +88,7 @@ class CountMatrix:
             type: type of features, e.g. [gene, protein]
         """
 
+        df[row] = df[row].astype(str)
         df = df.groupby([row, column]).agg({value: 'count'})
         if not barcodes:
             barcodes = df.index.levels[1].tolist()
