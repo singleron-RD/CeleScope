@@ -12,7 +12,7 @@ from celescope.tools import utils
 from celescope.tools.step import Step
 from celescope.tools.step import s_common
 from celescope.tools.target_metrics import get_gene_list
-from celescope.__init__ import HELP_DICT, ROOT_PATH
+from celescope.__init__ import HELP_DICT
 from celescope.snp.__init__ import PANEL
 
 
@@ -116,7 +116,6 @@ def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'C
     df.reset_index(drop=True, inplace=True)
     return df
 
-import pysam
 
 def vcf_to_gt_csv(vcf_file, csv_file):
     vcf = pysam.VariantFile(vcf_file)
