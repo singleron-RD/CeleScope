@@ -11,14 +11,11 @@ plotnine==0.9.0
 matplotlib==3.5.3
 cython
 pytest
-venn
-pyranges
 scanpy==1.8.2
 statsmodels
 leidenalg
 igraph
 pandas==1.4.2
 biopython
-xlwt
 anndata==0.7.6
 kaleido

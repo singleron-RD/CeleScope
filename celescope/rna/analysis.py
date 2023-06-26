@@ -8,7 +8,6 @@ from celescope.tools.step import Step
 class Analysis(Step):
     """
     ## Features
-    - Cell clustering with Seurat.
 
     - Calculate the marker gene of each cluster.
 
