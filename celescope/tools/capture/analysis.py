@@ -1,11 +1,10 @@
 import pandas as pd
+import numpy as np
 
 from celescope.tools.plotly_plot import Tsne_plot
 from celescope.tools.step import Step
-from celescope.tools.capture.__init__ import SUM_UMI_COLNAME
+from celescope.tools.capture.__init__ import SUM_UMI_COLNAME, LOG2_COLNAME
 from celescope.tools import analysis_wrapper
-
-
 
 def get_opts_analysis(parser, sub_program):
     if sub_program:
@@ -24,10 +23,13 @@ class Analysis(Step):
         self.df_tsne = None
 
     def add_tsne_info(self):
-
+        """
+        add tsne coord and log2 column
+        """
         report_runner = analysis_wrapper.Report_runner(self.args)
         df_tsne, _df_marker = report_runner.get_df()
         self.df_tsne = pd.merge(df_tsne, self.df_filter_umi, left_index=True, right_index=True)
+        self.df_tsne[LOG2_COLNAME] = np.log2(self.df_tsne[SUM_UMI_COLNAME] + 1)
         self.df_tsne.to_csv(self.df_tsne_file)
 
     def add_cluster_metrics(self):
@@ -52,7 +54,7 @@ class Analysis(Step):
         tsne_cluster = Tsne_plot(self.df_tsne, 'cluster').get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
 
-        tsne_plot = Tsne_plot(self.df_tsne, SUM_UMI_COLNAME, discrete=False)
+        tsne_plot = Tsne_plot(self.df_tsne, LOG2_COLNAME, discrete=False)
         tsne_plot.set_color_scale(['LightGrey', 'Orange', 'Red'])
         tsne_feature = tsne_plot.get_plotly_div()
         self.add_data(tsne_feature=tsne_feature)

@@ -23,10 +23,15 @@ class Features:
 
     @classmethod
     def from_tsv(cls, tsv_file):
-        df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'])
+        df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'], dtype=str)
         gene_id = df['gene_id'].tolist()
         gene_name = df['gene_name'].tolist()
-        gene_type = df['type'].tolist()
+        # avoid adding extra \t to genes.tsv when all the gene_type are Nan
+        # if gene_type is None and add to dataframe, will cause Seurat::Read10X error: Error in FUN(X[[i]], ...) : # # subscript out of bounds
+        if df['type'].isnull().sum() == len(df['type']):
+            gene_type = None
+        else:
+            gene_type = df['type'].tolist()
         return cls(gene_id, gene_name, gene_type)
 
     def to_tsv(self, tsv_file):
@@ -83,6 +88,7 @@ class CountMatrix:
             type: type of features, e.g. [gene, protein]
         """
 
+        df[row] = df[row].astype(str)
         df = df.groupby([row, column]).agg({value: 'count'})
         if not barcodes:
             barcodes = df.index.levels[1].tolist()

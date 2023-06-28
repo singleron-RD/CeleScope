@@ -39,6 +39,7 @@ class Step:
     def __init__(self, args, display_title=None):
         '''
         display_title controls the section title in HTML report
+        force thread <=20
         '''
         print(f'Args: {args}')
         self.args = args
@@ -46,6 +47,7 @@ class Step:
         self.sample = args.sample
         self.assay = args.subparser_assay
         self.thread = int(args.thread)
+        self.thread = min(self.thread, 20)
         self.debug = args.debug
         self.out_prefix = f'{self.outdir}/{self.sample}'
         self.display_title = display_title

@@ -121,7 +121,7 @@ class Summarize(Step):
     @utils.add_log
     def convert_barcode_report(barcode_report, outdir):
         cmd = (
-            f'{TOOLS_DIR}/trust-barcoderep-to-10X.pl '
+            f'perl {TOOLS_DIR}/trust-barcoderep-to-10X.pl '
             f'{barcode_report} '
             f'{outdir} '
         )

@@ -12,7 +12,7 @@ from celescope.tools import utils
 from celescope.tools.step import Step
 from celescope.tools.step import s_common
 from celescope.tools.target_metrics import get_gene_list
-from celescope.__init__ import HELP_DICT, ROOT_PATH
+from celescope.__init__ import HELP_DICT
 from celescope.snp.__init__ import PANEL
 
 
@@ -117,6 +117,34 @@ def parse_vcf_to_df(vcf_file, cols=('chrom', 'pos', 'alleles'), infos=('VID', 'C
     return df
 
 
+def vcf_to_gt_csv(vcf_file, csv_file):
+    vcf = pysam.VariantFile(vcf_file)
+    
+    samples = vcf.header.samples
+    
+    with open(csv_file, 'w') as f:
+        header = ['variant'] + list(samples)
+        f.write(','.join(header) + '\n')
+        
+        for record in vcf:
+            mutation_name = f"{record.chrom}_{record.pos}"
+            genotypes = []
+            
+            for sample in samples:
+                genotype = record.samples[sample]['GT']
+                g1, g2 = genotype
+                
+                if g1 is None:
+                    genotype_str = "NA"
+                else:
+                    genotype_str = '/'.join([str(g1),str(g2)])
+                
+                genotypes.append(genotype_str)
+            
+            line = [mutation_name] + genotypes
+            f.write(','.join(line) + '\n')
+
+
 class Analysis_snp(Step):
     """
     ## Features
@@ -153,14 +181,7 @@ class Analysis_snp(Step):
 
     @utils.add_log
     def write_gt(self):
-        app = f'{ROOT_PATH}/snp/vcfR.R'
-        cmd = (
-            f'Rscript {app} '
-            f'--vcf {self.final_vcf_file} '
-            f'--out {self.gt_file} '
-            '2>&1 '
-        )
-        self.debug_subprocess_call(cmd)
+        vcf_to_gt_csv(self.final_vcf_file, self.gt_file)
 
     @utils.add_log
     def write_ncell(self):
