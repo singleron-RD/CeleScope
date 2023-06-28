@@ -310,19 +310,3 @@ class Count_tag(Step):
                 total=self.n_match_barcode,
             )
 
-        # seurat hashtag
-        if self.debug:
-            self.seurat_hashtag()
-
-    @utils.add_log
-    def seurat_hashtag(self):
-        app = f'{ROOT_PATH}/tag/seurat_hashtag.R'
-        cmd = (
-            f'Rscript {app} '
-            f'--outdir {self.outdir} '
-            f'--sample {self.sample} '
-            f'--umi_tag {self.UMI_tag_file} '
-            f'--matrix_10X {self.matrix_dir} '
-            '2>&1 '
-        )
-        self.debug_subprocess_call(cmd)

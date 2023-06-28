@@ -1,9 +1,17 @@
-## [unrelease]
+## [1.16.0]
  ### `snp`
- - Use [MANE](https://www.ncbi.nlm.nih.gov/refseq/MANE/) to reduce the number of transcripts of each human gene.
+ - When annotating human variants, [MANE](https://www.ncbi.nlm.nih.gov/refseq/MANE/) is used by default instead of the original ensembl 99. This helps to improve annotation quality.
 
  ### `tag`
- - When `--split_bam` is used, reads mapped to intergenic regions will also be written to each split bam.
+- When using `--split_bam`, reads that map to intergenic regions will also be written to each split bam.
+
+ ### `rna`
+ - Allow all numeric "gene_id" in gtf files. In previous versions, all numeric "gene_id" would cause an error in the `count` step.
+ - Enforce a maximum number of threads of 20. The number of threads greater than 20 will not bring benefits during STAR mapping, and may cause disk errors during samtools sort bam.
+
+ ### General improvements
+ - fix #127.
+ - Remove redundant conda and python packages to improve installation speed.
 
 ## [1.15.2] - 2023-05-24
  ### `flv_CR`
