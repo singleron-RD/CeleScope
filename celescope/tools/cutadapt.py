@@ -35,9 +35,8 @@ def get_cutadapt_cmd(args, input_file, output_file):
 class Cutadapt(Step):
     """
     ## Features
-    - Trim adapters in R2 reads with cutadapt. Default adapters includes:
-        - polyT=A{18}, 18 A bases. 
-        - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+    - Trim poly A tails and user-provided adapters in R2 reads with cutadapt.
+
     ## Output
     - `cutadapt.log` Cutadapt output log file.
     - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
@@ -65,13 +64,13 @@ class Cutadapt(Step):
             name='Reads with Adapters',
             value=reads_with_adapters,
             total=total_reads,
-            help_info='R2 reads with poly A(read-through adpaters) or sequencing adapters'
+            help_info='reads with poly A tails and user-provided adapters(if any) are trimmed'
         )
         self.add_metric(
             name='Reads too Short',
             value=reads_too_short,
             total=total_reads,
-            help_info='reads with read length less than 20bp after trimming'
+            help_info=f'reads with read length less than {self.args.minimum_length} bp after trimming'
         )
         self.add_metric(
             name='Base Pairs Quality-Trimmed',

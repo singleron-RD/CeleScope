@@ -4,7 +4,7 @@ STEPS = [
     'barcode',
     'cutadapt',
     'star',
-    'prep',
+    'prep_map',
     "featureCounts",
     "count",
     'analysis']

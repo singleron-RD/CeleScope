@@ -12,14 +12,13 @@ from celescope.tools.step import Step
 def get_star_cmd(args, input_file, output_prefix):
     """
     output sam format to improve speed
-    remove the sam after sort by coord
     """
     cmd = (
         f'STAR '
         f'--runThreadN {args.thread} '
         f'--genomeDir {args.genomeDir} '
         f'--outFilterMultimapNmax {args.outFilterMultimapNmax} '
-        f'--outSAMtype SAM '
+        f'--outSAMtype BAM Unsorted '
         f'--outFilterMatchNmin {args.outFilterMatchNmin} '
         f'--readFilesIn {input_file} '
         f'--outFileNamePrefix {output_prefix}_ '
@@ -45,7 +44,7 @@ class Star_mixin(Step):
         if add_prefix:
             self.out_prefix += add_prefix + '_'
         self.STAR_map_log = f'{self.out_prefix}_Log.final.out'
-        self.unsort_STAR_sam = f'{self.out_prefix}_Aligned.out.sam'
+        self.unsort_STAR_bam = f'{self.out_prefix}_Aligned.out.bam'
         self.STAR_bam = f'{self.out_prefix}_Aligned.sortedByCoord.out.bam'
 
     @utils.add_log
@@ -69,17 +68,12 @@ class Star_mixin(Step):
         self.add_star_metrics()
         self.sort_bam()
         self.index_bam()
-        self.remove_sam()
-
-    @utils.add_log
-    def remove_sam(self):
-        os.remove(self.unsort_STAR_sam)
-
+        self.remove_unsort_bam()
 
     @utils.add_log
     def sort_bam(self):
         utils.sort_bam(
-            self.unsort_STAR_sam,
+            self.unsort_STAR_bam,
             self.STAR_bam,
             threads=self.thread,
         )
@@ -87,6 +81,10 @@ class Star_mixin(Step):
     @utils.add_log
     def index_bam(self):
         utils.index_bam(self.STAR_bam)
+
+    @utils.add_log
+    def remove_unsort_bam(self):
+        os.remove(self.unsort_STAR_bam)
 
     def add_star_metrics(self):
         """

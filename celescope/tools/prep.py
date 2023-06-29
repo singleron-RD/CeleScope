@@ -69,7 +69,7 @@ class Star(Star_mixin):
     def run(self):
         self.sort_bam()
         self.index_bam()
-        self.remove_sam()
+        self.remove_unsort_bam()
         self.add_star_metrics()
 
 
