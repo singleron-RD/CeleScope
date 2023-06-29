@@ -1,4 +1,4 @@
-__STEPS__ = ['sample', 'barcode', 'convert', 'cellranger'] 
+STEPS = ['sample', 'barcode', 'convert', 'cellranger'] 
 __ASSAY__ = 'convert10X'
 
 IMPORT_DICT = {

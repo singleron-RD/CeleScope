@@ -1,12 +1,10 @@
-import re
 import subprocess
-
-import pysam
+import json
 
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 
-ADAPTER = ['polyT=A{18}', 'p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC']
+POLY_A = '-a polyA=A{18} '
 
 LOG_METRICS_TITLE = (
     'Total reads processed',
@@ -18,31 +16,21 @@ LOG_METRICS_TITLE = (
     'Total written (filtered)',
 )
 
-def read_cutadapt_log(cutadapt_log):
-    """
-    Returns:
-        dict: {
-            'Total reads processed': int, 'Reads with adapters': int, 'Reads that were too short': int, 
-            'Reads written (passing filters)': int, 'Total basepairs processed': int, 
-            'Quality-trimmed': int, 'Total written (filtered)': int
-        }
-    """
-    metrics_dict = {}
-    remove_strs = [r',', r' bp', r'\(.*\)']
 
-    for _line_index, line in enumerate(cutadapt_log.split('\n')):
-        line = line.strip()
-        if not line:
-            continue
-        attr = line.split(":")
-        if attr[0] in LOG_METRICS_TITLE:
-            title, number = attr[0], attr[1]                
-            number = attr[1].strip()
-            for remove_str in remove_strs:
-                number = re.sub(pattern=remove_str, repl='', string=number)
-            metrics_dict[title] = int(number)
-
-    return metrics_dict
+def get_cutadapt_cmd(args, input_file, output_file):
+    cmd = (
+        'cutadapt '
+        f'{POLY_A} '
+        f'-j {args.thread} '
+        f'-m {args.minimum_length} '
+        f'--nextseq-trim={args.nextseq_trim} '
+        f'--overlap {args.overlap} '
+        f'{args.cutadapt_param} '
+        f'--json {args.outdir}/{args.sample}_cutadapt.json '
+        f'-o {output_file} '
+        f'{input_file} '
+        )
+    return cmd
 
 class Cutadapt(Step):
     """
@@ -58,43 +46,20 @@ class Cutadapt(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-        # set
-        self.adapter_args = self.read_adapter_fasta(args.adapter_fasta)
-        self.adapter_args += ADAPTER
-
         # out files
-        if args.gzip:
-            suffix = ".gz"
-        else:
-            suffix = ""
-        self.out_fq2 = f'{self.outdir}/{self.sample}_clean_2.fq{suffix}'
-        self.cutadapt_log_file = f'{self.outdir}/cutadapt.log'
-
-    @staticmethod
-    def read_adapter_fasta(adapter_fasta):
-        '''
-        return ['adapter1=AAA','adapter2=BBB']
-        '''
-        adapter_args = []
-        if adapter_fasta and adapter_fasta != 'None':
-            with pysam.FastxFile(adapter_fasta) as fh:
-                for read in fh:
-                    adapter_args.append(f'{read.name}={read.sequence}')
-        return adapter_args
+        self.out_fq2 = f'{self.outdir}/{self.sample}_clean_2.fq'
+        self.json_log = f'{self.outdir}/{self.sample}_cutadapt.json'
 
 
+    def add_cutadapt_metrics(self):
+        with open(self.json_log) as f:
+            log_dict = json.load(f)
 
-    def add_cutadapt_metrics(self, cutadapt_log):
-        # Total reads processed:...Total written (filtered):
-        metrics_dict = read_cutadapt_log(cutadapt_log)
-
-        total_reads = metrics_dict['Total reads processed']
-        reads_with_adapters = metrics_dict['Reads with adapters']
-        reads_too_short = metrics_dict['Reads that were too short']
-        reads_written = metrics_dict['Reads written (passing filters)']
-        total_base_pairs = metrics_dict['Total basepairs processed']
-        quality_trimmed = metrics_dict['Quality-trimmed']
-        base_pairs_written = metrics_dict['Total written (filtered)']
+        total_reads = log_dict['read_counts']['input']
+        reads_with_adapters = log_dict['read_counts']['read1_with_adapter']
+        reads_too_short = log_dict['read_counts']['filtered']['too_short']
+        total_base_pairs = log_dict['basepair_counts']['input']
+        quality_trimmed = log_dict['basepair_counts']['quality_trimmed']
 
         self.add_metric(
             name='Reads with Adapters',
@@ -109,55 +74,20 @@ class Cutadapt(Step):
             help_info='reads with read length less than 20bp after trimming'
         )
         self.add_metric(
-            name='Reads Written',
-            value=reads_written,
-            total=total_reads,
-            help_info='reads pass filtering'
-        )
-        self.add_metric(
-            name='Base Pairs Processed',
-            value=total_base_pairs,
-            help_info='total processed base pairs'
-        )
-        self.add_metric(
             name='Base Pairs Quality-Trimmed',
             value=quality_trimmed,
             total=total_base_pairs,
             help_info='bases pairs removed from the end of the read whose quality is smaller than the given threshold'
         )
-        self.add_metric(
-            name='Base Pairs Written',
-            value=base_pairs_written,
-            total=total_base_pairs,
-            help_info='base pairs pass filtering'
-        )
 
     @utils.add_log
     def run(self):
-        adapter_args_str = " ".join(['-a ' + adapter for adapter in self.adapter_args])
-        cmd = (
-            'cutadapt '
-            f'{adapter_args_str} '
-            f'-n {len(self.adapter_args)} '
-            f'-j {self.thread} '
-            f'-m {self.args.minimum_length} '
-            f'--nextseq-trim={self.args.nextseq_trim} '
-            f'--overlap {self.args.overlap} '
-            f'-l {self.args.insert} '
-            f'-o {self.out_fq2} '
-            f'{self.args.cutadapt_param} '
-            f'{self.args.fq} '
-        )
+        input_file = self.args.fastq
+        output_file = self.args.out_fq2
+        cmd = get_cutadapt_cmd(self.args, input_file, output_file)
         self.run.logger.info(cmd)
-        # need encoding argument to return str
-        results = subprocess.run(
-            cmd, stdout=subprocess.PIPE,
-            encoding='utf-8', check=True, shell=True
-        )
-        cutadapt_log = results.stdout
-        with open(self.cutadapt_log_file, 'w') as f:
-            f.write(cutadapt_log)
-        self.add_cutadapt_metrics(cutadapt_log)
+        subprocess.check_call(cmd, shell=True)
+        self.add_cutadapt_metrics()
 
 
 @utils.add_log
@@ -167,8 +97,6 @@ def cutadapt(args):
 
 
 def get_opts_cutadapt(parser, sub_program):
-    parser.add_argument('--gzip', help="Output gzipped fastq files.", action='store_true')
-    parser.add_argument('--adapter_fasta', help='Addtional adapter fasta file.')
     parser.add_argument(
         '--minimum_length',
         help='Discard processed reads that are shorter than LENGTH.',
@@ -193,12 +121,7 @@ To reduce the number of falsely trimmed bases, the alignment algorithm requires 
 at least {overlap} bases match between adapter and read. """,
         default=10
     )
-    parser.add_argument(
-        '--insert',
-        help="Read2 insert length.",
-        default=150
-    )
-    parser.add_argument('--cutadapt_param', help='Other cutadapt parameters. For example, --cutadapt_param "-g AAA" ', default="")
+    parser.add_argument('--cutadapt_param', help='Other cutadapt parameters. For example, --cutadapt_param "-a p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA" ', default="")
     if sub_program:
         parser.add_argument('--fq', help='Required. R2 reads from step Barcode.', required=True)
         parser = s_common(parser)

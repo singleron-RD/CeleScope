@@ -46,7 +46,7 @@ class Chemistry():
         """check chemistry in the fq1_list"""
         chemistry_list = []
         for fastq1 in self.fq1_list:
-            print(fastq1)
+            self.check_chemistry.logger.info(fastq1)
             chemistry = self.get_chemistry(fastq1)
             chemistry_list.append(chemistry)
         if len(set(chemistry_list)) != 1:
@@ -468,7 +468,8 @@ class Barcode(Step):
     def open_files(self):
         if self.output_R1 or self.bool_flv:
             self.fh_fq1 = xopen(self.out_fq1, 'w')
-        self.fh_fq2 = xopen(self.out_fq2, 'w')
+        if not self.args.stdout:
+            self.fh_fq2 = xopen(self.out_fq2, 'w')
 
         if self.nopolyT:
             self.fh_nopolyT_fq1 = xopen(self.nopolyT_1, 'w')
@@ -481,7 +482,8 @@ class Barcode(Step):
     def close_files(self):
         if self.output_R1 or self.bool_flv:
             self.fh_fq1.close()
-        self.fh_fq2.close()
+        if not self.args.stdout:
+            self.fh_fq2.close()
 
         if self.nopolyT:
             self.fh_nopolyT_fq1.close()
@@ -720,7 +722,10 @@ class Barcode(Step):
                             self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual1}\n')
 
                     else:
-                        self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                        if self.args.stdout:
+                            print(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}')
+                        else:
+                            self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
                         if self.output_R1:
                             self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')                   
             
@@ -801,6 +806,11 @@ lowQual will be regarded as low-quality bases.',
     parser.add_argument(
         '--output_R1',
         help="Output valid R1 reads.",
+        action='store_true'
+    )
+    parser.add_argument(
+        '--stdout',
+        help="Write output to standard output",
         action='store_true'
     )
     if sub_program:

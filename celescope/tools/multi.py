@@ -18,19 +18,20 @@ class Multi():
     def __init__(self, assay):
         self.__ASSAY__ = assay
         init_module = utils.find_assay_init(assay)
-        self.__STEPS__ = init_module.__STEPS__
+        self.STEPS = init_module.STEPS
+        self.REMOVE_FROM_MULTI = init_module.REMOVE_FROM_MULTI
+        self.REMOVE_FROM_MULTI.add('mkref')
         try:
             self.__CONDA__ = os.path.basename(os.environ['CONDA_DEFAULT_ENV'])
         except KeyError:
             print('CONDA_DEFAULT_ENV is not set. sjm mode may not available.')
             self.__CONDA__ = 'celescope'
         self.__APP__ = 'celescope'
-        self.steps_not_run = ['mkref']
 
         # remove
-        for step in self.steps_not_run:
-            if step in self.__STEPS__:
-                self.__STEPS__.remove(step)
+        for step in self.REMOVE_FROM_MULTI:
+            if step in self.STEPS:
+                self.STEPS.remove(step)
 
         # add args
         self.parser = None
@@ -42,7 +43,7 @@ class Multi():
         self.col4_default = None
         self.last_step = ''
         self.fq_suffix = ""
-        self.steps_run = self.__STEPS__
+        self.steps_run = self.STEPS
         self.fq_dict = {}
         self.col4_dict = {}
         self.col5_dict = {}
@@ -124,7 +125,7 @@ use `--steps_run barcode,cutadapt`
         return parser
 
     def step_args(self):
-        for step in self.__STEPS__:
+        for step in self.STEPS:
             step_module = utils.find_step_module(self.__ASSAY__, step)
             func_opts = getattr(step_module, f"get_opts_{step}")
             func_opts(self.parser, sub_program=False)
@@ -181,8 +182,7 @@ use `--steps_run barcode,cutadapt`
         """
         self.args = self.parser.parse_args()
 
-        if self.args.gzip:
-            self.fq_suffix = ".gz"
+
         if self.args.steps_run != 'all':
             self.steps_run = self.args.steps_run.strip().split(',')
         
@@ -202,7 +202,7 @@ use `--steps_run barcode,cutadapt`
         for sample in self.fq_dict:
             self.outdir_dic[sample] = {}
             index = 0
-            for step in self.__STEPS__:
+            for step in self.STEPS:
                 step_outdir = f"{self.args.outdir}/{sample}/{index:02d}.{step}"
                 self.outdir_dic[sample].update({step: step_outdir})
                 index += 1
@@ -231,7 +231,7 @@ job_end
     def parse_step_args(self, step):
         step_module = utils.find_step_module(self.__ASSAY__, step)
         func_opts = getattr(step_module, f"get_opts_{step}")
-        step_parser = argparse.ArgumentParser(step_module)
+        step_parser = argparse.ArgumentParser()
         func_opts(step_parser, sub_program=False)
         args = step_parser.parse_known_args()
         return args
@@ -307,9 +307,26 @@ job_end
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
+
+    def prep(self, sample):
+        step = 'prep'
+        arr = self.fq_dict[sample]
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--fq1 {arr[0]} --fq2 {arr[1]} '
+        )
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.starMem)
+
     def featureCounts(self, sample):
         step = 'featureCounts'
-        input_bam = f'{self.outdir_dic[sample]["star"]}/{sample}_Aligned.sortedByCoord.out.bam'
+        if "star" in self.STEPS:
+            prev = 'star'
+        elif "prep" in self.STEPS:
+            prev = 'prep'
+        else:
+            sys.exit('To use featureCounts, star or prep must in the steps!')
+        input_bam = f'{self.outdir_dic[sample][prev]}/{sample}_Aligned.sortedByCoord.out.bam'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
@@ -355,8 +372,6 @@ job_end
         for sample in self.fq_dict:
             self.last_step = ''
             for step in self.steps_run:
-                if step in self.steps_not_run:
-                    continue
                 try:
                     method_to_call = getattr(self, step)
                 except AttributeError as attr_not_exist:
@@ -367,7 +382,7 @@ job_end
 
     def merge_report(self):
         step = "merge_report"
-        steps_str = ",".join(self.__STEPS__)
+        steps_str = ",".join(self.STEPS)
         samples = ','.join(self.fq_dict.keys())
         app = TOOLS_DIR + '/merge_table.py'
         cmd = (

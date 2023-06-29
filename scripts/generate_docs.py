@@ -84,7 +84,7 @@ class Docs():
         self.assay = assay
 
         init_module = utils.find_assay_init(assay)
-        self.steps = init_module.__STEPS__.copy()
+        self.steps = init_module.STEPS.copy()
         self.multi_step = f'multi_{assay}'
 
         self.out_md_dict = {}

@@ -1,11 +1,30 @@
 import re
 import subprocess
+import os
 
 from celescope.tools import utils
 from celescope.tools.mkref import Mkref
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step
+
+
+def get_star_cmd(args, input_file, output_prefix):
+    """
+    output sam format to improve speed
+    remove the sam after sort by coord
+    """
+    cmd = (
+        f'STAR '
+        f'--runThreadN {args.thread} '
+        f'--genomeDir {args.genomeDir} '
+        f'--outFilterMultimapNmax {args.outFilterMultimapNmax} '
+        f'--outSAMtype SAM '
+        f'--outFilterMatchNmin {args.outFilterMatchNmin} '
+        f'--readFilesIn {input_file} '
+        f'--outFileNamePrefix {output_prefix}_ '
+    )
+    return cmd
 
 
 class Star_mixin(Step):
@@ -16,61 +35,51 @@ class Star_mixin(Step):
     def __init__(self, args, add_prefix=None, display_title=None):
         super().__init__(args, display_title)
 
-        self.fq = args.fq
-        self.genomeDir = args.genomeDir
-        self.out_unmapped = args.out_unmapped
-        self.debug = args.debug
-        self.outFilterMatchNmin = int(args.outFilterMatchNmin)
-        self.multi_max = int(args.outFilterMultimapNmax)
-        self.STAR_param = args.STAR_param
-        self.consensus_fq = args.consensus_fq
-
         # parse
-        self.genome = Mkref.parse_genomeDir(self.genomeDir)
+        self.genome = Mkref.parse_genomeDir(args.genomeDir)
         self.stat_prefix = 'Reads'
-        if self.consensus_fq:
+        if getattr(args, "consensus_fq", False):
             self.stat_prefix = 'UMIs'
 
         # out
-        self.outPrefix = f'{self.outdir}/{self.sample}_'
         if add_prefix:
-            self.outPrefix += add_prefix + '_'
-        self.STAR_map_log = f'{self.outPrefix}Log.final.out'
-        self.unsort_STAR_bam = f'{self.outPrefix}Aligned.out.bam'
-        self.STAR_bam = f'{self.outPrefix}Aligned.sortedByCoord.out.bam'
+            self.out_prefix += add_prefix + '_'
+        self.STAR_map_log = f'{self.out_prefix}_Log.final.out'
+        self.unsort_STAR_sam = f'{self.out_prefix}_Aligned.out.sam'
+        self.STAR_bam = f'{self.out_prefix}_Aligned.sortedByCoord.out.bam'
 
     @utils.add_log
     def STAR(self):
-        cmd = [
-            'STAR',
-            '--runThreadN', str(self.thread),
-            '--genomeDir', self.genomeDir,
-            '--readFilesIn', self.fq,
-            '--outFilterMultimapNmax', str(self.multi_max),
-            '--outFileNamePrefix', self.outPrefix,
-            '--outSAMtype', 'BAM', 'Unsorted',  # controls sort by Coordinate or not
-            '--outFilterMatchNmin', str(self.outFilterMatchNmin)
-        ]
-        if self.out_unmapped:
+        input_file = self.args.fq
+        output_prefix = self.out_prefix
+        cmd = get_star_cmd(self.args, input_file, output_prefix)
+
+        if self.args.out_unmapped:
             cmd += ['--outReadsUnmapped', 'Fastx']
-        if self.fq[-3:] == ".gz":
+        if self.args.fq[-3:] == ".gz":
             cmd += ['--readFilesCommand', 'zcat']
         cmd = ' '.join(cmd)
-        if self.STAR_param:
+        if self.args.STAR_param:
             cmd += (" " + self.STAR_param)
         self.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     def run(self):
         self.STAR()
-        self.get_star_metrics()
+        self.add_star_metrics()
         self.sort_bam()
         self.index_bam()
+        self.remove_sam()
+
+    @utils.add_log
+    def remove_sam(self):
+        os.remove(self.unsort_STAR_sam)
+
 
     @utils.add_log
     def sort_bam(self):
         utils.sort_bam(
-            self.unsort_STAR_bam,
+            self.unsort_STAR_sam,
             self.STAR_bam,
             threads=self.thread,
         )
@@ -79,7 +88,7 @@ class Star_mixin(Step):
     def index_bam(self):
         utils.index_bam(self.STAR_bam)
 
-    def get_star_metrics(self):
+    def add_star_metrics(self):
         """
         step metrics
         """

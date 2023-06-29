@@ -85,11 +85,11 @@ def get_opts_cutadapt(parser, sub_program):
 ```
 
 ## Reusable steps
-All the steps under `celescope/tools` are reusable. For example, all the assays uses the `sample`, `barcode` and `cutadapt` . You don't need to copy the code into each assay. Just put them in  `celescope.{assay}.__init__.__STEPS__`
+All the steps under `celescope/tools` are reusable. For example, all the assays uses the `sample`, `barcode` and `cutadapt` . You don't need to copy the code into each assay. Just put them in  `celescope.{assay}.__init__.STEPS`
 
 celescope/rna/__init__.py
 ```
-__STEPS__ = [
+STEPS = [
     'mkref',
     'sample',
     'barcode',
