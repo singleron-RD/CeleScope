@@ -172,14 +172,13 @@ Note that the `./shell/{sample}.sh` must be run under the working directory(You 
 - [dynaseq](./assay/multi_dynaseq.md)
 - [tag](./assay/multi_tag.md)
 - [vdj](./assay/multi_vdj.md)
-- [flv_CR](./flv_CR/multi_flv_CR.md)
-- [flv_trust4](./flv_trust4/multi_flv_trust4.md)
-- [capture_virus](./capture_virus/multi_capture_virus.md)
-- [snp](./snp/multi_snp.md)
-- [fusion](./fusion/multi_fusion.md)
-- [citeseq](citeseq/multi_citeseq.md)
-- [sweetseq](citeseq/multi_citeseq.md)
-- [citeseq](citeseq/multi_citeseq.md)
+- [flv_CR](./assay/multi_flv_CR.md)
+- [flv_trust4](./assay/multi_flv_trust4.md)
+- [capture_virus](./assay/multi_capture_virus.md)
+- [snp](./assay/multi_snp.md)
+- [fusion](./assay/multi_fusion.md)
+- [citeseq](assay/multi_citeseq.md)
+- [sweetseq](assay/multi_citeseq.md)
 
 
 ## Test scripts and data
