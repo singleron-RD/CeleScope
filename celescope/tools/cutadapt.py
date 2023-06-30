@@ -81,8 +81,8 @@ class Cutadapt(Step):
 
     @utils.add_log
     def run(self):
-        input_file = self.args.fastq
-        output_file = self.args.out_fq2
+        input_file = self.args.fq
+        output_file = self.out_fq2
         cmd = get_cutadapt_cmd(self.args, input_file, output_file)
         self.run.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)

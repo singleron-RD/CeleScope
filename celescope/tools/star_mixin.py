@@ -42,7 +42,7 @@ class Star_mixin(Step):
 
         # out
         if add_prefix:
-            self.out_prefix += add_prefix + '_'
+            self.out_prefix += f'_{add_prefix}'
         self.STAR_map_log = f'{self.out_prefix}_Log.final.out'
         self.unsort_STAR_bam = f'{self.out_prefix}_Aligned.out.bam'
         self.STAR_bam = f'{self.out_prefix}_Aligned.sortedByCoord.out.bam'
@@ -54,12 +54,11 @@ class Star_mixin(Step):
         cmd = get_star_cmd(self.args, input_file, output_prefix)
 
         if self.args.out_unmapped:
-            cmd += ['--outReadsUnmapped', 'Fastx']
+            cmd += '--outReadsUnmapped Fastx'
         if self.args.fq[-3:] == ".gz":
-            cmd += ['--readFilesCommand', 'zcat']
-        cmd = ' '.join(cmd)
+            cmd += '--readFilesCommand zcat'
         if self.args.STAR_param:
-            cmd += (" " + self.STAR_param)
+            cmd += (" " + self.args.STAR_param)
         self.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 

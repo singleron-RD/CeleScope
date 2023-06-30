@@ -19,7 +19,7 @@ class Multi():
         self.__ASSAY__ = assay
         init_module = utils.find_assay_init(assay)
         self.STEPS = init_module.STEPS
-        self.REMOVE_FROM_MULTI = init_module.REMOVE_FROM_MULTI
+        self.REMOVE_FROM_MULTI = getattr(init_module, 'REMOVE_FROM_MULTI', set())
         self.REMOVE_FROM_MULTI.add('mkref')
         try:
             self.__CONDA__ = os.path.basename(os.environ['CONDA_DEFAULT_ENV'])

@@ -17,7 +17,7 @@ class Star_virus(Star_mixin):
         args.genomeDir = args.virus_genomeDir
 
         super().__init__(args, add_prefix='virus', display_title=display_title)
-        self.genome = Mkref_virus.parse_genomeDir(self.genomeDir)
+        self.genome = Mkref_virus.parse_genomeDir(args.genomeDir)
 
 
 @utils.add_log

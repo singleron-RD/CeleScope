@@ -9,6 +9,7 @@ import time
 import unittest
 import json
 import sys
+from datetime import date
 from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps
@@ -34,6 +35,12 @@ def add_log(func):
     logger.setLevel(logging.INFO)
 
     consoleHandler = logging.StreamHandler(sys.stderr)
+    consoleHandler.setFormatter(logFormatter)
+    logger.addHandler(consoleHandler)
+
+    today = str(date.today())
+    log_file = f'log/{today}_log.txt'
+    consoleHandler = logging.FileHandler(log_file)
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
 
