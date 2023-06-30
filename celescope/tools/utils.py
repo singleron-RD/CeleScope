@@ -9,7 +9,6 @@ import time
 import unittest
 import json
 import sys
-from datetime import date
 from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps

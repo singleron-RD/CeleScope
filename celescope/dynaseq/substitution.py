@@ -153,7 +153,7 @@ class Substitution(Step):
         per = 1/(num4x+1)
         gap4bar = per/len(df['sample'].unique())
         num4x = 0
-        for typeB in df['sample'].unique():
+        for _ in df['sample'].unique():
             if num4x == 0:
                 flag_x = 'xaxis'
             else:
