@@ -9,6 +9,7 @@ from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step
 
 
+@utils.add_log
 def get_star_cmd(args, input_file, output_prefix):
     """
     output sam format to improve speed
@@ -20,9 +21,11 @@ def get_star_cmd(args, input_file, output_prefix):
         f'--outFilterMultimapNmax {args.outFilterMultimapNmax} '
         f'--outSAMtype BAM Unsorted '
         f'--outFilterMatchNmin {args.outFilterMatchNmin} '
+        f'{args.STAR_param} '
         f'--readFilesIn {input_file} '
         f'--outFileNamePrefix {output_prefix}_ '
     )
+    get_star_cmd.logger.info(cmd)
     return cmd
 
 

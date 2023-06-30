@@ -1,6 +1,7 @@
 import argparse
 import sys
 import subprocess
+import os
 
 from celescope.tools.step import Step
 from celescope.tools.barcode import get_opts_barcode
@@ -43,11 +44,12 @@ class Prep_map(Step):
     """
     def __init__(self, args):
         super().__init__(args)
+        self.bc2 = f'{self.out_prefix}_bc2.FIFO'
+        self.ct2 = f'{self.out_prefix}_ct2.FIFO'
 
     @utils.add_log
     def run(self):
-        bc2 = f'{self.out_prefix}_bc2.FIFO'
-        ct2 = f'{self.out_prefix}_ct2.FIFO'
+        bc2, ct2 = self.bc2, self.ct2
         bc_args_str = get_step_args_str(self.args, get_opts_barcode)
         ct_cmd = get_cutadapt_cmd(self.args, bc2, ct2)
         star_cmd = get_star_cmd(self.args, ct2, self.out_prefix)
@@ -60,6 +62,15 @@ class Prep_map(Step):
         )
         sys.stderr.write(cmd + '\n')
         subprocess.check_call(cmd, shell=True)
+
+    def __exit__(self, *args, **kwargs):
+        """
+        make sure fifo are removed
+        """
+        for fifo in (self.bc2, self.ct2):
+            if os.path.exists(fifo):
+                os.remove(fifo)
+
 
 
 class Cutadapt(Ct):
@@ -82,8 +93,8 @@ class Star(Star_mixin):
 
 @utils.add_log
 def prep_map(args):
-    runner = Prep_map(args)
-    runner.run()
+    with Prep_map(args) as runner:
+        runner.run()
 
     with Cutadapt(args, display_title="Trimming") as runner:
         runner.run()

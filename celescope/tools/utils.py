@@ -38,12 +38,6 @@ def add_log(func):
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
 
-    today = str(date.today())
-    log_file = f'log/{today}_log.txt'
-    consoleHandler = logging.FileHandler(log_file)
-    consoleHandler.setFormatter(logFormatter)
-    logger.addHandler(consoleHandler)
-
     @wraps(func)
     def wrapper(*args, **kwargs):
 

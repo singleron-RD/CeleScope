@@ -98,6 +98,7 @@ class FeatureCounts(Step):
                 )
                 samtools_runner.add_tag(self.gtf)
                 samtools_runner.temp_sam2bam(by='coord')
+                samtools_runner.index_bam()
                 samtools_runner.samtools_sort(
                     in_file=featureCounts_bam,
                     out_file=name_sorted_bam,

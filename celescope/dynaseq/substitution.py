@@ -160,7 +160,7 @@ class Substitution(Step):
                 flag_x = 'xaxis' + str(num4x+1)
             anchor_x = 'x'+str(num4x+1)
             num4x += 1
-            fig['layout'][flag_x] = dict(domain=[per*num4x, per*(num4x+1)-gap4bar], anchor=anchor_x, title=typeB)
+            fig['layout'][flag_x] = dict(domain=[per*num4x, per*(num4x+1)-gap4bar], anchor=anchor_x, title="")
 
         fig.update_layout(plot_bgcolor='#FFFFFF')
         fig.update_xaxes(showgrid=False, linecolor='black', showline=True, ticks='outside', showticklabels=False)

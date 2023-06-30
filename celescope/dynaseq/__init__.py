@@ -3,6 +3,7 @@ STEPS = [
     'barcode',
     'cutadapt',
     'star',
+    'prep_map',
     "featureCounts",
     "count",
     'analysis',
@@ -19,3 +20,8 @@ IMPORT_DICT = {
 }
 
 
+REMOVE_FROM_MULTI = {
+    'barcode',
+    'cutadapt',
+    'star',
+}

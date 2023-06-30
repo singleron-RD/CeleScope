@@ -273,7 +273,6 @@ class Barcode(Step):
         return [seq[item[0]: item[1]] for item in pattern_dict[abbr]]
 
     @staticmethod
-    @utils.add_log
     def parse_pattern(pattern):
         """
         >>> pattern_dict = Barcode.parse_pattern("C8L16C8L16C8L1U12T18")
@@ -286,8 +285,7 @@ class Barcode(Step):
         p = re.compile(r'([CLUNT])(\d+)')
         tmp = p.findall(pattern)
         if not tmp:
-            Barcode.parse_pattern.logger.error(f'Invalid pattern: {pattern}')
-            sys.exit()
+            sys.exit()(f'Invalid pattern: {pattern}')
         start = 0
         for item in tmp:
             end = start + int(item[1])
@@ -361,7 +359,6 @@ class Barcode(Step):
         return seq_set
 
     @staticmethod
-    @utils.add_log
     def get_mismatch_dict(seq_list, n_mismatch=1):
         """
         Return:
