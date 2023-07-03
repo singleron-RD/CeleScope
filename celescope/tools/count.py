@@ -5,13 +5,10 @@ count step
 import os
 import random
 import sys
-import unittest
 from collections import defaultdict
-from itertools import groupby
 
 import numpy as np
 import pandas as pd
-import pysam
 
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
@@ -71,17 +68,15 @@ class Count(Step):
         self.force_cell_num = args.force_cell_num
         self.cell_calling_method = args.cell_calling_method
         self.expected_cell_num = int(args.expected_cell_num)
-        self.bam = args.bam
 
         # set
         gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
         gp = reference.GtfParser(gtf_file)
-        gp.get_id_name()
+        self.id_name = gp.get_id_name()
         self.features = gp.get_features()
         self.downsample_dict = {}
 
         # output files
-        self.count_detail_file = f'{self.outdir}/{self.sample}_count_detail.txt'
         self.marked_count_file = f'{self.outdir}/{self.sample}_counts.txt'
         self.raw_matrix_dir = f'{self.outdir}/{self.sample}_{RAW_MATRIX_DIR_SUFFIX[0]}'
         self.cell_matrix_dir = f'{self.outdir}/{self.sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
@@ -98,8 +93,7 @@ class Count(Step):
         return df_line
 
     def run(self):
-        self.bam2table()
-        df = pd.read_table(self.count_detail_file, header=0, dtype={'geneID':str})
+        df = pd.read_table(self.args.count_detail, header=0, dtype={'geneID':str})
 
         # df_sum
         df_sum = Count.get_df_sum(df)
@@ -138,107 +132,8 @@ class Count(Step):
 
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.marked_count_file))
 
-    @staticmethod
-    def correct_umi(umi_dict, percent=0.1):
-        """
-        Correct umi_dict in place.
-        Args:
-            umi_dict: {umi_seq: umi_count}
-            percent: if hamming_distance(low_seq, high_seq) == 1 and
-                low_count / high_count < percent, merge low to high.
-        Returns:
-            n_corrected_umi: int
-            n_corrected_read: int
-        """
-        n_corrected_umi = 0
-        n_corrected_read = 0
 
-        # sort by value(UMI count) first, then key(UMI sequence)
-        umi_arr = sorted(
-            umi_dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
-        while True:
-            # break when only highest in umi_arr
-            if len(umi_arr) == 1:
-                break
-            umi_low = umi_arr.pop()
-            low_seq = umi_low[0]
-            low_count = umi_low[1]
-
-            for umi_kv in umi_arr:
-                high_seq = umi_kv[0]
-                high_count = umi_kv[1]
-                if float(low_count / high_count) > percent:
-                    break
-                if utils.hamming_distance(low_seq, high_seq) == 1:
-                    n_low = umi_dict[low_seq]
-                    n_corrected_umi += 1
-                    n_corrected_read += n_low
-                    # merge
-                    umi_dict[high_seq] += n_low
-                    del (umi_dict[low_seq])
-                    break
-        return n_corrected_umi, n_corrected_read
-
-    @staticmethod
-    def discard_read(gene_umi_dict):
-        """
-        If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting, and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded, as the gene cannot be confidently assigned.
-
-        Returns:
-            discarded_umi: set. umi with tie read count
-            umi_gene_dict: {umi_seq: {gene_id: read_count}}
-        """
-
-        discard_umi = set()
-        umi_gene_dict = defaultdict(lambda: defaultdict(int))
-        for gene_id in gene_umi_dict:
-            for umi in gene_umi_dict[gene_id]:
-                umi_gene_dict[umi][gene_id] += gene_umi_dict[gene_id][umi]
-        
-        for umi in umi_gene_dict:
-            max_read_count = max(umi_gene_dict[umi].values())
-            gene_id_max = [gene_id for gene_id, read_count in umi_gene_dict[umi].items() if read_count==max_read_count]
-
-            if len(gene_id_max) > 1:
-                discard_umi.add(umi)
-            else:
-                gene_id = gene_id_max[0]
-                umi_gene_dict[umi] = {gene_id: umi_gene_dict[umi][gene_id]}
-
-        return discard_umi, umi_gene_dict
-
-    @utils.add_log
-    def bam2table(self):
-        """
-        bam to detail table
-        must be used on name_sorted bam
-        """
-        save = pysam.set_verbosity(0)
-        samfile = pysam.AlignmentFile(self.bam, "rb")
-        pysam.set_verbosity(save)
-        with open(self.count_detail_file, 'wt') as fh1:
-            fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
-
-            def keyfunc(x):
-                return x.query_name.split('_', 1)[0]
-            for _, g in groupby(samfile, keyfunc):
-                gene_umi_dict = defaultdict(lambda: defaultdict(int))
-                for seg in g:
-                    (barcode, umi) = seg.query_name.split('_')[:2]
-                    if not seg.has_tag('XT'):
-                        continue
-                    gene_id = seg.get_tag('XT')
-                    gene_umi_dict[gene_id][umi] += 1
-                for gene_id in gene_umi_dict:
-                    Count.correct_umi(gene_umi_dict[gene_id])
-
-                # output
-                for gene_id in gene_umi_dict:
-                    for umi in gene_umi_dict[gene_id]:
-                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
-                                                        gene_umi_dict[gene_id][umi]))
-        samfile.close()
-        
+    
     @utils.add_log
     def cell_calling(self, df_sum):
         cell_calling_method = self.cell_calling_method
@@ -498,35 +393,8 @@ def get_opts_count(parser, sub_program):
     )
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
+        parser.add_argument('--count_detail', help='Required. File from featureCounts.', required=True)
         parser.add_argument(
             '--force_cell_num',
             help='Default `None`. Force the cell number to be this number. ',
         )
-
-
-class Count_test(unittest.TestCase):
-    def test_correct_umi(self):
-        dic = {
-            "apple1": 2,
-            "apple2": 30,
-            "bears1": 5,
-            "bears2": 10,
-            "bears3": 100,
-            "ccccc1": 20,
-            "ccccc2": 199,
-        }
-        n_corrected_umi, n_corrected_read = Count.correct_umi(dic)
-        dic_after_correct = {
-            'ccccc1': 20,
-            'apple2': 32,
-            'bears3': 115,
-            'ccccc2': 199,
-        }
-        self.assertEqual(dic, dic_after_correct)
-        self.assertEqual(n_corrected_umi, 3)
-        self.assertEqual(n_corrected_read, 2 + 5 + 10)
-
-
-if __name__ == "__main__":
-    unittest.main()

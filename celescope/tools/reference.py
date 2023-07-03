@@ -106,6 +106,8 @@ class GtfParser:
                     self.gene_name.append(gene_name)
                     self.id_name[gene_id] = gene_name
                     
+        return self.id_name
+                    
     def get_features(self):
         """
         Returns:

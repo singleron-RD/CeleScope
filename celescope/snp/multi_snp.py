@@ -57,7 +57,7 @@ class Multi_snp(Multi):
     def target_metrics(self, sample):
         step = 'target_metrics'
         cmd_line = self.get_cmd_line(step, sample)
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam'
+        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_aligned_sortedByCoord_addTag.bam'
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '

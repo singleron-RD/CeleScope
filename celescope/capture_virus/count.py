@@ -4,7 +4,7 @@ import itertools
 import pysam
 import pandas as pd
 
-from celescope.tools.count import Count as Ct
+from celescope.tools.featureCounts import correct_umi, discard_read
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.tools import reference
@@ -55,9 +55,9 @@ class Count(Step):
                     gene_id = seg.get_tag('XT')
                     gene_umi_dict[gene_id][umi] += 1
                 for gene_id in gene_umi_dict:
-                    Ct.correct_umi(gene_umi_dict[gene_id])
+                    correct_umi(gene_umi_dict[gene_id])
 
-                discard_umi, umi_gene_dict = Ct.discard_read(gene_umi_dict)
+                discard_umi, umi_gene_dict = discard_read(gene_umi_dict)
 
                 # output
                 for umi in umi_gene_dict:

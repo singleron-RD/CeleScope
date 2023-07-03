@@ -3,7 +3,7 @@ import json
 import pandas as pd
 
 from celescope.tools import utils
-from celescope.tools.count import Count
+from celescope.tools.featureCounts import correct_umi
 from celescope.tools.step import Step, s_common
 from celescope.tools.capture.threshold import Threshold
 from celescope.__init__ import HELP_DICT
@@ -100,7 +100,7 @@ class Filter(Step):
         for barcode in self.count_dict:
             for ref in self.count_dict[barcode]:
                 self.raw_umi += len(self.count_dict[barcode][ref])
-                n_corrected_umi, _n_corrected_read = Count.correct_umi(self.count_dict[barcode][ref])
+                n_corrected_umi, _n_corrected_read, _ = correct_umi(self.count_dict[barcode][ref])
                 if self.debug:
                     print(f'{barcode} {ref} {n_corrected_umi}')
                 self.total_corrected_umi += n_corrected_umi

@@ -99,7 +99,7 @@ i.e. as total number of mismatches/indels in all unique mappers divided by the t
 - `{sample}_summary` Stat info for the overall summrization results, including number of 
 successfully assigned reads and number of reads that failed to be assigned due to 
 various reasons (these reasons are included in the stat info).
-- `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
+- `{sample}_aligned_sortedByCoord_addTag.bam` featureCounts output BAM, 
 sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
     - CB cell barcode
     - UB UMI

@@ -1,19 +1,140 @@
 
 import os
 import pathlib
-
 from collections import defaultdict
+from itertools import groupby
+import subprocess
+import unittest
 
 import pandas as pd
+import pysam
 
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
+from celescope.tools import reference
 
+
+GTF_TYPES = ['exon','gene']
+
+def add_tag(seg, id_name, correct_dict):
+    """
+    Args:
+        seg: pysam bam segment
+        id_name: {gene_id: gene_name}
+        correct_dict: {low_seq: high_seq}
+
+    Returns:
+        seg with tag added
+
+    Tags:
+        CB: cell barcode
+        UB: error-corrected UMI
+        UR: original UMI
+        GN: gene name
+        GX: gene_id
+
+    """
+    attr = seg.query_name.split('_')
+    barcode = attr[0]
+    ur = ub = attr[1]
+    seg.set_tag(tag='CB', value=barcode, value_type='Z')
+    if ur in correct_dict:
+        ub = correct_dict[ur]
+    seg.set_tag(tag='UB', value=ub, value_type='Z')
+    seg.set_tag(tag='UR', value=ur, value_type='Z')
+    # assign to some gene
+    if seg.has_tag('XT'):
+        gene_id = seg.get_tag('XT')
+        # if multi-mapping reads are included in original bam,
+        # there are multiple gene_ids
+        if ',' in gene_id:
+            gene_name = [id_name[i] for i in gene_id.split(',')]
+            gene_name = ','.join(gene_name)
+        else:
+            gene_name = id_name[gene_id]
+        seg.set_tag(tag='GN', value=gene_name, value_type='Z')
+        seg.set_tag(tag='GX', value=gene_id, value_type='Z')
+
+    return seg
+
+
+def correct_umi(umi_dict, percent=0.1):
+    """
+    Correct umi_dict in place.
+    Args:
+        umi_dict: {umi_seq: umi_count}
+        percent: if hamming_distance(low_seq, high_seq) == 1 and
+            low_count / high_count < percent, merge low to high.
+        return_dict: if set, return correct_dict = {low_seq:high_seq}
+    Returns:
+        n_corrected_umi: int
+        n_corrected_read: int
+    """
+    n_corrected_umi = 0
+    n_corrected_read = 0
+    dic = {}
+
+    # sort by value(UMI count) first, then key(UMI sequence)
+    umi_arr = sorted(
+        umi_dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
+    while True:
+        # break when only highest in umi_arr
+        if len(umi_arr) == 1:
+            break
+        umi_low = umi_arr.pop()
+        low_seq = umi_low[0]
+        low_count = umi_low[1]
+
+        for umi_kv in umi_arr:
+            high_seq = umi_kv[0]
+            high_count = umi_kv[1]
+            if float(low_count / high_count) > percent:
+                break
+            if utils.hamming_distance(low_seq, high_seq) == 1:
+                n_low = umi_dict[low_seq]
+                n_corrected_umi += 1
+                n_corrected_read += n_low
+                # merge
+                umi_dict[high_seq] += n_low
+                dic[low_seq] = high_seq
+                del (umi_dict[low_seq])
+                break
+
+    return n_corrected_umi, n_corrected_read, dic
+
+
+def discard_read(gene_umi_dict):
+    """
+    If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting, and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded, as the gene cannot be confidently assigned.
+
+    Returns:
+        discarded_umi: set. umi with tie read count
+        umi_gene_dict: {umi_seq: {gene_id: read_count}}
+    """
+
+    discard_umi = set()
+    umi_gene_dict = defaultdict(lambda: defaultdict(int))
+    for gene_id in gene_umi_dict:
+        for umi in gene_umi_dict[gene_id]:
+            umi_gene_dict[umi][gene_id] += gene_umi_dict[gene_id][umi]
+    
+    for umi in umi_gene_dict:
+        max_read_count = max(umi_gene_dict[umi].values())
+        gene_id_max = [gene_id for gene_id, read_count in umi_gene_dict[umi].items() if read_count==max_read_count]
+
+        if len(gene_id_max) > 1:
+            discard_umi.add(umi)
+        else:
+            gene_id = gene_id_max[0]
+            umi_gene_dict[umi] = {gene_id: umi_gene_dict[umi][gene_id]}
+
+    return discard_umi, umi_gene_dict
 
 
 class FeatureCounts(Step):
+
     """
     ## Features
     - Assigning uniquely mapped reads to genomic features with FeatureCounts.
@@ -22,7 +143,7 @@ class FeatureCounts(Step):
     - `{sample}_summary` Stat info for the overall summrization results, including number of 
     successfully assigned reads and number of reads that failed to be assigned due to 
     various reasons (these reasons are included in the stat info).
-    - `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
+    - `{sample}_aligned_sortedByCoord_addTag.bam` featureCounts output BAM, 
     sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
         - CB cell barcode
         - UB UMI
@@ -36,13 +157,19 @@ class FeatureCounts(Step):
 
         # set
         self.gtf = Mkref_rna.parse_genomeDir(self.args.genomeDir)['gtf']
-        self.featureCounts_param = args.featureCounts_param
+        gp = reference.GtfParser(self.gtf)
+        self.id_name = gp.get_id_name()
 
-        #gtf_type
-        self.gtf_types = ['exon','gene']
-
-        #stats
+        # stats
         self.feature_log_dict = defaultdict(dict)
+
+        # out
+        self.count_detail_file = f'{self.out_prefix}_count_detail.txt'
+        input_basename = os.path.basename(self.args.input)
+        self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
+        self.name_sorted_bam = f'{self.out_prefix}_name_sorted.bam'
+        self.add_tag_sam = f'{self.out_prefix}_addTag.sam'
+        self.out_bam = f'{self.out_prefix}_aligned_sortedByCoord_addTag.bam'
 
 
     @staticmethod
@@ -60,54 +187,58 @@ class FeatureCounts(Step):
 
 
     @utils.add_log
-    def run_featureCounts(self,outdir,gtf_type):
+    def run_featureCounts(self, outdir, gtf_type):
         cmd = (
             'featureCounts '
             '-s 1 '
             f'-a {self.gtf} '
-            f'-o {outdir}/{self.out_prefix.split("/")[-1]} '  # not bam
+            f'-o {outdir}/{self.sample} '  
             '-R BAM '
-            f'-T {self.thread} '
+            f'-T {self.args.thread} '
             f'-t {gtf_type} '
             f'{self.args.input} '
             '2>&1 '
         )
-        if self.featureCounts_param:
-            cmd += (" " + self.featureCounts_param)
-        self.debug_subprocess_call(cmd)
+        if self.args.featureCounts_param:
+            cmd += (" " + self.args.featureCounts_param)
+        self.run_featureCounts.logger.info(cmd)
+        subprocess.check_call(cmd, shell=True)
+
+    def run_get_log(self):
+        tmp_dir = f'{self.outdir}/tmp/'
+        for gtf_type in GTF_TYPES:
+            outdir = f'{tmp_dir}/{gtf_type}'
+            pathlib.Path(outdir).mkdir(parents=True, exist_ok=True)
+            log_file = f'{outdir}/{self.sample}.summary'
+            
+            self.run_featureCounts(outdir, gtf_type)
+            self.feature_log_dict[gtf_type] = FeatureCounts.read_log(log_file)
+
+            if gtf_type == self.args.gtf_type:
+                cmd = f'mv {outdir}/* {self.outdir}/ '
+                subprocess.check_call(cmd, shell=True)
+
+        cmd = f'rm -r {tmp_dir} '
+        subprocess.check_call(cmd, shell=True)
 
 
+    def remove_temp_file(self):
+        os.remove(self.name_sorted_bam)
+        os.remove(self.add_tag_sam)
+        os.remove(self.featureCounts_bam)
 
     def run(self):
-        for gtf_type in self.gtf_types:
-            outdir = f'{self.outdir}/tmp/{gtf_type}'
-            pathlib.Path(outdir).mkdir(parents=True,exist_ok=True)
-            #out files
-            name_sorted_bam = f'{outdir}/{self.sample}_name_sorted.bam'
-            input_basename = os.path.basename(self.args.input)
-            featureCounts_bam = f'{outdir}/{input_basename}.featureCounts.bam'
-            log_file = f'{outdir}/{self.sample}.summary'
-
-            self.run_featureCounts(outdir,gtf_type)
-            if gtf_type == self.args.gtf_type:
-                samtools_runner = utils.Samtools(
-                    in_bam=featureCounts_bam,
-                    out_bam=featureCounts_bam,
-                    threads=self.thread,
-                    debug=self.debug
-                )
-                samtools_runner.add_tag(self.gtf)
-                samtools_runner.temp_sam2bam(by='coord')
-                samtools_runner.index_bam()
-                samtools_runner.samtools_sort(
-                    in_file=featureCounts_bam,
-                    out_file=name_sorted_bam,
-                    by='name',
-                )
-            self.feature_log_dict[gtf_type] = FeatureCounts.read_log(log_file)
+        self.run_get_log()
         self.add_metrics()
-        self.clean_tmp()
-
+        utils.sort_bam(
+            input_bam=self.featureCounts_bam,
+            output_bam=self.name_sorted_bam, 
+            by='name')
+        self.get_count_detail_add_tag()
+        utils.sort_bam(
+            input_bam=self.add_tag_sam,
+            output_bam=self.out_bam)
+        self.remove_temp_file()
 
     @utils.add_log
     def add_metrics(self):
@@ -153,15 +284,49 @@ class FeatureCounts(Step):
             help_info='Alignments that overlap two or more features'
         )
 
+    @utils.add_log
+    def get_count_detail_add_tag(self):
+        """
+        bam to detail table
+        must be used on name_sorted bam
+        Output file:
+            - count_detail_file
+            - bam with tag(remain name sorted)
+        """
+        save = pysam.set_verbosity(0)
+        inputFile = pysam.AlignmentFile(self.name_sorted_bam, "rb")
+        outputFile = pysam.AlignmentFile(self.add_tag_sam, 'w', header=inputFile.header)
+        pysam.set_verbosity(save)
 
-    def clean_tmp(self):
-        """
-        remove tmp dir
-        """
-        use_gt = self.args.gtf_type
-        retain_dir = f'{self.outdir}/tmp/{use_gt}'
-        cmd = (f'mv {retain_dir}/* {self.outdir};rm -rf {self.outdir}/tmp')
-        self.debug_subprocess_call(cmd)
+        with open(self.count_detail_file, 'wt') as fh1:
+            fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
+
+            def keyfunc(x):
+                return x.query_name.split('_', 1)[0]
+            for _, g in groupby(inputFile, keyfunc):
+                gene_umi_dict = defaultdict(lambda: defaultdict(int))
+                segs = []
+                for seg in g:
+                    segs.append(seg)
+                    (barcode, umi) = seg.query_name.split('_')[:2]
+                    if not seg.has_tag('XT'):
+                        continue
+                    gene_id = seg.get_tag('XT')
+                    gene_umi_dict[gene_id][umi] += 1
+                for gene_id in gene_umi_dict:
+                    _, _, coorect_dict = correct_umi(gene_umi_dict[gene_id])
+
+                # output
+                for gene_id in gene_umi_dict:
+                    for umi in gene_umi_dict[gene_id]:
+                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
+                                                        gene_umi_dict[gene_id][umi]))
+
+                for seg in segs:
+                    outputFile.write(add_tag(seg, self.id_name, coorect_dict))
+
+        inputFile.close()
+        outputFile.close()
 
 
 @utils.add_log
@@ -184,3 +349,29 @@ def get_opts_featureCounts(parser, sub_program):
         parser.add_argument('--input', help='Required. BAM file path.', required=True)
         parser = s_common(parser)
     return parser
+
+
+class featureCounts_test(unittest.TestCase):
+    def test_correct_umi(self):
+        dic = {
+            "apple1": 2,
+            "apple2": 30,
+            "bears1": 5,
+            "bears2": 10,
+            "bears3": 100,
+            "ccccc1": 20,
+            "ccccc2": 199,
+        }
+        n_corrected_umi, n_corrected_read, _ = correct_umi(dic)
+        dic_after_correct = {
+            'ccccc1': 20,
+            'apple2': 32,
+            'bears3': 115,
+            'ccccc2': 199,
+        }
+        self.assertEqual(dic, dic_after_correct)
+        self.assertEqual(n_corrected_umi, 3)
+        self.assertEqual(n_corrected_read, 2 + 5 + 10)
+
+if __name__ == "__main__":
+    unittest.main()

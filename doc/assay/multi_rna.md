@@ -92,6 +92,15 @@ sh ./shell/{sample}.sh
 Note that the `./shell/{sample}.sh` must be run under the working directory(You shouldn't run them under the `shell` directory)
 
 ## Main output
-- `featureCounts/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` Coordinate-sorted bam file. This bam can be used as input file for downstream analysis like[velocyto](http://velocyto.org/)
+- `featureCounts/{sample}_aligned_sortedByCoord_addTag.bam` This bam file contains coordinate-sorted reads aligned to the genome. This bam can be used as input file for downstream analysis like[velocyto](http://velocyto.org/). It contains the following `tag` fields:
+
+|Tag|Description|
+|--|--|
+|CB|cell barcode|
+|UB|error-corrected UMI|
+|UR|original UMI|
+|GN|gene name|
+|GX|gene_id |
+
 - `count/{sample}_raw_feature_bc_matrix` Gene expression matrix file contains all barcodes(background + cell) from the barcode whitelist.
 - `count/{sample}_filtered_feature_bc_matrix` Gene expression matrix file contains only cell barcodes.

@@ -337,11 +337,11 @@ job_end
 
     def count(self, sample):
         step = 'count'
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
+        count_detail = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_count_detail.txt'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--bam {bam} '
+            f'--count_detail {count_detail} '
             f'--force_cell_num {self.col4_dict[sample]} '
         )
 

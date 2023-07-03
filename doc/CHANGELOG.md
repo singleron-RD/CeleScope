@@ -1,12 +1,13 @@
-## [1.16.0]
+## [1.16.0] - 2023-07-03
+ ### `rna` and `dynaseq`
+ - Allow all numeric "gene_id" in gtf files. In previous versions, all numeric "gene_id" would cause an error in the `count` step.
+ - Merge `barcode`, `cutadapt`, `STAR` into one step `prep_map`. Intermediate fastqs are no longer output.
+
  ### `snp`
  - When annotating human variants, [MANE](https://www.ncbi.nlm.nih.gov/refseq/MANE/) is used by default instead of the original ensembl 99. This helps to improve annotation quality.
 
  ### `tag`
 - When using `--split_bam`, reads that map to intergenic regions will also be written to each split bam.
-
- ### `rna`
- - Allow all numeric "gene_id" in gtf files. In previous versions, all numeric "gene_id" would cause an error in the `count` step.
 
  ### General improvements
  - fix #127.
