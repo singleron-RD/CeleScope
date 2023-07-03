@@ -7,11 +7,11 @@
 
  ### `rna`
  - Allow all numeric "gene_id" in gtf files. In previous versions, all numeric "gene_id" would cause an error in the `count` step.
- - Enforce a maximum number of threads of 20. The number of threads greater than 20 will not bring benefits during STAR mapping, and may cause disk errors during samtools sort bam.
 
  ### General improvements
  - fix #127.
  - Remove redundant conda and python packages to improve installation speed.
+ - Enforce a maximum number of threads of 20. The number of threads greater than 20 will not bring benefits during STAR mapping, and may cause disk errors during samtools sort bam.
 
 ## [1.15.2] - 2023-05-24
  ### `flv_CR`
