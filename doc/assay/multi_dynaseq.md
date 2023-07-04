@@ -118,8 +118,7 @@ sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.
     - read_count  
 - `{sample}_counts.txt` 6 columns:
     - Barcode: barcode sequence
-    - readcount: read count of each barcode
-    - UMI2: read count with reads per UMI >= 2 for each barcode
+    - read: read count of each barcode
     - UMI: UMI count for each barcode
     - geneID: gene count for each barcode
     - mark: cell barcode or backgound barcode.
