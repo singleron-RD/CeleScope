@@ -18,7 +18,7 @@ from celescope.tools import reference
 
 GTF_TYPES = ['exon','gene']
 
-def add_tag(seg, id_name, correct_dict):
+def add_tag(seg, id_name, gene_correct_umi):
     """
     Args:
         seg: pysam bam segment
@@ -39,11 +39,7 @@ def add_tag(seg, id_name, correct_dict):
     attr = seg.query_name.split('_')
     barcode = attr[0]
     ur = ub = attr[1]
-    seg.set_tag(tag='CB', value=barcode, value_type='Z')
-    if ur in correct_dict:
-        ub = correct_dict[ur]
-    seg.set_tag(tag='UB', value=ub, value_type='Z')
-    seg.set_tag(tag='UR', value=ur, value_type='Z')
+
     # assign to some gene
     if seg.has_tag('XT'):
         gene_id = seg.get_tag('XT')
@@ -56,6 +52,13 @@ def add_tag(seg, id_name, correct_dict):
             gene_name = id_name[gene_id]
         seg.set_tag(tag='GN', value=gene_name, value_type='Z')
         seg.set_tag(tag='GX', value=gene_id, value_type='Z')
+
+        if gene_id in gene_correct_umi and ur in gene_correct_umi[gene_id]:
+            ub = gene_correct_umi[gene_id][ur]
+    
+    seg.set_tag(tag='CB', value=barcode, value_type='Z')
+    seg.set_tag(tag='UB', value=ub, value_type='Z')
+    seg.set_tag(tag='UR', value=ur, value_type='Z')
 
     return seg
 
@@ -162,6 +165,8 @@ class FeatureCounts(Step):
 
         # stats
         self.feature_log_dict = defaultdict(dict)
+        self.n_corrected_read = 0
+        self.n_corrected_umi = 0
 
         # out
         self.count_detail_file = f'{self.out_prefix}_count_detail.txt'
@@ -299,12 +304,13 @@ class FeatureCounts(Step):
         pysam.set_verbosity(save)
 
         with open(self.count_detail_file, 'wt') as fh1:
-            fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
+            fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'read', 'duplicate']) + '\n')
 
             def keyfunc(x):
                 return x.query_name.split('_', 1)[0]
             for _, g in groupby(inputFile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
+                gene_umi_pos_cigar = utils.genDict(dim=4, valType=int)
                 segs = []
                 for seg in g:
                     segs.append(seg)
@@ -313,17 +319,37 @@ class FeatureCounts(Step):
                         continue
                     gene_id = seg.get_tag('XT')
                     gene_umi_dict[gene_id][umi] += 1
+                    gene_umi_pos_cigar[gene_id][umi][seg.reference_start][seg.cigarstring] += 1
+
+                gene_correct_umi = dict()
                 for gene_id in gene_umi_dict:
-                    _, _, coorect_dict = correct_umi(gene_umi_dict[gene_id])
+                    n_corrected_umi, n_corrected_read, correct_dict = correct_umi(gene_umi_dict[gene_id])
+                    gene_correct_umi[gene_id] = correct_dict
+                    self.n_corrected_read += n_corrected_read
+                    self.n_corrected_umi += n_corrected_umi
+
+                    # also correct umi in gene_umi_pos_cigar
+                    for low_seq, high_seq in correct_dict.items():
+                        for ref_start in gene_umi_pos_cigar[gene_id][low_seq]:
+                            for cigar in gene_umi_pos_cigar[gene_id][low_seq][ref_start]:
+                                gene_umi_pos_cigar[gene_id][high_seq][ref_start][cigar] += 1
+                        del gene_umi_pos_cigar[gene_id][low_seq]                    
 
                 # output
                 for gene_id in gene_umi_dict:
                     for umi in gene_umi_dict[gene_id]:
-                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
-                                                        gene_umi_dict[gene_id][umi]))
+                        dup_list = []
+                        for pos in gene_umi_pos_cigar[gene_id][umi]:
+                            for cigar in gene_umi_pos_cigar[gene_id][umi][pos]:
+                                dup_list.append(str(gene_umi_pos_cigar[gene_id][umi][pos][cigar]))
+                        duplicate = ','.join(dup_list)
+                        fh1.write(f'{barcode}\t{gene_id}\t{umi}\t{gene_umi_dict[gene_id][umi]}\t{duplicate}\n')
 
                 for seg in segs:
-                    outputFile.write(add_tag(seg, self.id_name, coorect_dict))
+                    outputFile.write(add_tag(seg, self.id_name, gene_correct_umi))
+
+        self.add_metric('n_corrected_read', n_corrected_read, show=False)
+        self.add_metric('n_corrected_umi', n_corrected_umi, show=False)
 
         inputFile.close()
         outputFile.close()

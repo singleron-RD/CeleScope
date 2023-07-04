@@ -317,7 +317,7 @@ job_end
             f'{cmd_line} '
             f'--fq1 {arr[0]} --fq2 {arr[1]} '
         )
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.starMem)
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def featureCounts(self, sample):
         step = 'featureCounts'
