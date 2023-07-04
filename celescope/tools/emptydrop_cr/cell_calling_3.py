@@ -183,9 +183,7 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
         eval_mat = raw_mat.tocsc()[eval_features, :][:, eval_bcs]
 
         if len(ambient_profile_p) == 0:
-            obs_loglk = np.repeat(np.nan, len(eval_bcs))
-            pvalues = np.repeat(1, len(eval_bcs))
-            sim_loglk = np.repeat(np.nan, len(eval_bcs))
+            return orig_cells, gg_filtered_metrics, None
 
         # Compute observed log-likelihood of barcodes being generated from ambient RNA
         obs_loglk = cr_stats.eval_multinomial_loglikelihoods(eval_mat, ambient_profile_p)

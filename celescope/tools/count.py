@@ -5,7 +5,6 @@ count step
 import os
 import random
 import sys
-from collections import defaultdict
 
 import numpy as np
 import pandas as pd
