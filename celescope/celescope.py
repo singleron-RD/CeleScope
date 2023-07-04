@@ -32,11 +32,11 @@ def main():
         # add 2ed subparser
         subparser_2nd = subparser_1st.add_subparsers()
 
-        # import __STEPS__
+        # import STEPS
         init_module = utils.find_assay_init(assay)
-        __STEPS__ = init_module.__STEPS__
+        STEPS = init_module.STEPS
 
-        for step in __STEPS__:
+        for step in STEPS:
             # import function and opts
             step_module = utils.find_step_module(assay, step)
             func = getattr(step_module, step)

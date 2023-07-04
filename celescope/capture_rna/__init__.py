@@ -1,6 +1,6 @@
 __ASSAY__ = 'capture_rna'
 
-__STEPS__ = [
+STEPS = [
     'sample',
     'barcode',
     'cutadapt',

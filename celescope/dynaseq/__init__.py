@@ -1,8 +1,9 @@
-__STEPS__ = [
+STEPS = [
     'sample',
     'barcode',
     'cutadapt',
     'star',
+    'prep_map',
     "featureCounts",
     "count",
     'analysis',
@@ -18,11 +19,9 @@ IMPORT_DICT = {
     'analysis': 'celescope.rna',
 }
 
-# m: memory
-# x: thread
-RESOURCE = {
-    'sample': {'m': 1, 'x': 1},
-    'barcode': {'m': 5, 'x': 1},
-    'cutadapt': {'m': 5, 'x': 1},
-    'star': {'m': 30, 'x': 1},
+
+REMOVE_FROM_MULTI = {
+    'barcode',
+    'cutadapt',
+    'star',
 }

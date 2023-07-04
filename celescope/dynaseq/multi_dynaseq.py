@@ -25,6 +25,8 @@ class Multi_dynaseq(Multi):
     """
 
     def star(self, sample):
+        """
+        """
         step = 'star'
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         cmd_line = self.get_cmd_line(step, sample)
@@ -34,6 +36,17 @@ class Multi_dynaseq(Multi):
             f'--STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 --outSAMattributes MD NH HI AS nM" '
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+
+    def prep_map(self, sample):
+        step = 'prep_map'
+        arr = self.fq_dict[sample]
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--fq1 {arr[0]} --fq2 {arr[1]} '
+            f'--STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 --outSAMattributes MD NH HI AS nM"'
+        )
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.starMem)
 
     def conversion(self, sample):
         step = 'conversion'

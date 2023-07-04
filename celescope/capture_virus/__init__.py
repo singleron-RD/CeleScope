@@ -1,4 +1,4 @@
-__STEPS__ = [
+STEPS = [
     'mkref',
     'sample',
     'barcode',

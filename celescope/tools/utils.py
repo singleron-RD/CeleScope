@@ -33,7 +33,7 @@ def add_log(func):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
 
-    consoleHandler = logging.StreamHandler(sys.stdout)
+    consoleHandler = logging.StreamHandler(sys.stderr)
     consoleHandler.setFormatter(logFormatter)
     logger.addHandler(consoleHandler)
 

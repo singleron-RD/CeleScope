@@ -41,7 +41,7 @@ class Step:
         display_title controls the section title in HTML report
         force thread <=20
         '''
-        print(f'Args: {args}')
+        sys.stderr.write(f'Args: {args}\n')
         self.args = args
         self.outdir = args.outdir
         self.sample = args.sample
@@ -133,7 +133,7 @@ class Step:
         )
 
         if print_log:
-            print(f'{name}: {display}')
+            sys.stderr.write(f'{name}: {display}\n')
 
     def _write_stat(self):
         with open(self.__stat_file, 'w') as writer:

@@ -153,14 +153,14 @@ class Substitution(Step):
         per = 1/(num4x+1)
         gap4bar = per/len(df['sample'].unique())
         num4x = 0
-        for typeB in df['sample'].unique():
+        for _ in df['sample'].unique():
             if num4x == 0:
                 flag_x = 'xaxis'
             else:
                 flag_x = 'xaxis' + str(num4x+1)
             anchor_x = 'x'+str(num4x+1)
             num4x += 1
-            fig['layout'][flag_x] = dict(domain=[per*num4x, per*(num4x+1)-gap4bar], anchor=anchor_x, title=typeB)
+            fig['layout'][flag_x] = dict(domain=[per*num4x, per*(num4x+1)-gap4bar], anchor=anchor_x, title="")
 
         fig.update_layout(plot_bgcolor='#FFFFFF')
         fig.update_xaxes(showgrid=False, linecolor='black', showline=True, ticks='outside', showticklabels=False)
