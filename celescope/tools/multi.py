@@ -345,7 +345,7 @@ job_end
             f'--force_cell_num {self.col4_dict[sample]} '
         )
 
-        self.process_cmd(cmd, step, sample, m=10, x=1)
+        self.process_cmd(cmd, step, sample, m=20, x=1)
 
     def analysis(self, sample):
         step = 'analysis'

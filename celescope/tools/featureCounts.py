@@ -348,8 +348,8 @@ class FeatureCounts(Step):
                 for seg in segs:
                     outputFile.write(add_tag(seg, self.id_name, gene_correct_umi))
 
-        self.add_metric('n_corrected_read', n_corrected_read, show=False)
-        self.add_metric('n_corrected_umi', n_corrected_umi, show=False)
+        self.add_metric('n_corrected_read', self.n_corrected_read, show=False)
+        self.add_metric('n_corrected_umi', self.n_corrected_umi, show=False)
 
         inputFile.close()
         outputFile.close()
