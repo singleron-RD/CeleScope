@@ -92,7 +92,7 @@ sh ./shell/{sample}.sh
 Note that the `./shell/{sample}.sh` must be run under the working directory(You shouldn't run them under the `shell` directory)
 
 ## Main output
-- `featureCounts/{sample}_aligned_sortedByCoord_addTag.bam` This bam file contains coordinate-sorted reads aligned to the genome. This bam can be used as input file for downstream analysis like[velocyto](http://velocyto.org/). It contains the following `tag` fields:
+- `featureCounts/{sample}_aligned_sortedByCoord_addTag.bam` This bam file contains coordinate-sorted reads aligned to the genome. This bam can be used as input file for downstream analysis like [velocyto](http://velocyto.org/). It contains the following `tag` fields:
 
 |Tag|Description|
 |--|--|
