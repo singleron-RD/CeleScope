@@ -1,4 +1,4 @@
-## [1.16.0] - 2023-07-03
+## [1.16.0] - 2023-07-05
  ### `rna` and `dynaseq`
  - Allow all numeric "gene_id" in gtf files. In previous versions, all numeric "gene_id" would cause an error in the `count` step.
  - Merge `barcode`, `cutadapt`, `STAR` into one step `prep_map`. Intermediate fastqs are no longer output.
