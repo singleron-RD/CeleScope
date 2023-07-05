@@ -5,13 +5,9 @@ count step
 import os
 import random
 import sys
-import unittest
-from collections import defaultdict
-from itertools import groupby
 
 import numpy as np
 import pandas as pd
-import pysam
 
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
@@ -31,8 +27,7 @@ np.random.seed(0)
 # downsample.csv
 READ_FRACTION = 'read_fraction'
 MEDIAN_GENE_NUMBER = 'median_gene_number'
-READ_SATURATION = 'read_saturation'
-UMI_SATURATION = 'umi_saturation'
+SATURATION = 'saturation'
 
 # Plot axis title in HTML
 X_TITLE = 'Read Fraction'
@@ -56,8 +51,7 @@ class Count(Step):
         - read_count  
     - `{sample}_counts.txt` 6 columns:
         - Barcode: barcode sequence
-        - readcount: read count of each barcode
-        - UMI2: read count with reads per UMI >= 2 for each barcode
+        - read: read count of each barcode
         - UMI: UMI count for each barcode
         - geneID: gene count for each barcode
         - mark: cell barcode or backgound barcode.
@@ -71,7 +65,6 @@ class Count(Step):
         self.force_cell_num = args.force_cell_num
         self.cell_calling_method = args.cell_calling_method
         self.expected_cell_num = int(args.expected_cell_num)
-        self.bam = args.bam
 
         # set
         gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
@@ -81,7 +74,6 @@ class Count(Step):
         self.downsample_dict = {}
 
         # output files
-        self.count_detail_file = f'{self.outdir}/{self.sample}_count_detail.txt'
         self.marked_count_file = f'{self.outdir}/{self.sample}_counts.txt'
         self.raw_matrix_dir = f'{self.outdir}/{self.sample}_{RAW_MATRIX_DIR_SUFFIX[0]}'
         self.cell_matrix_dir = f'{self.outdir}/{self.sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
@@ -92,40 +84,103 @@ class Count(Step):
         df_line.rename(columns={
             READ_FRACTION: X_TITLE,
             MEDIAN_GENE_NUMBER: MEDIAN_GENE_Y_TITLE,
-            UMI_SATURATION: SATURATION_Y_TITLE,
+            SATURATION: SATURATION_Y_TITLE,
         }, inplace=True)
 
         return df_line
 
+    @staticmethod
+    def get_df_cell(df, cell_bc):
+        return df.loc[df['Barcode'].isin(cell_bc), :]
+
+    @utils.add_log
     def run(self):
-        self.bam2table()
-        df = pd.read_table(self.count_detail_file, header=0, dtype={'geneID':str})
+        df = pd.read_table(self.args.count_detail, header=0, dtype={'geneID':str})
 
-        # df_sum
-        df_sum = Count.get_df_sum(df)
-
-        # export all matrix
+        # write all matrix
         self.write_sparse_matrix(df, self.raw_matrix_dir)
-
+        df_sum = self.get_df_sum(df)
+        total_reads = sum(df_sum['read'])
         # call cells
         cell_bc, _threshold = self.cell_calling(df_sum)
-
-        # get cell stats
-        CB_describe = self.get_cell_stats(df_sum, cell_bc)
-
+        # write marked_df_sum
+        self.write_marked_df_sum(df_sum, cell_bc)
         # export cell matrix
-        df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
+        df_cell = self.get_df_cell(df, cell_bc)
         self.write_sparse_matrix(df_cell, self.cell_matrix_dir)
-        (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
-            df, cell_bc)
+        total_cell_gene = len(np.unique(df_cell['geneID']))
+        del df
+        df_sum_cell = self.get_df_sum(df_cell)
+        del df_sum
+        # downsample
+        downsample_dict = self.downsample(df_cell)
+        # metrics
+        self.add_count_metrics(total_reads, total_cell_gene, cell_bc, df_sum_cell, downsample_dict)
+        # plot
+        self.add_plot_data()
 
-        # downsampling
-        cell_bc = set(cell_bc)
-        self.downsample(df_cell)
+    def add_count_metrics(self, total_reads, total_cell_gene, cell_bc, df_sum_cell, downsample_dict):
+        n_cells = len(cell_bc)
+        self.add_metric(
+            name='Estimated Number of Cells',
+            value=n_cells,
+            help_info=f'the number of barcodes considered as cell-associated. The cell calling method used for this sample is {self.cell_calling_method}.'
+        )
 
-        # summary
-        self.get_summary(CB_describe, CB_total_Genes,
-                         CB_reads_count, reads_mapped_to_transcriptome)
+        cell_reads = sum(df_sum_cell['read'])
+        fraction_reads_in_cells = round(float(cell_reads) / total_reads * 100, 2)
+        self.add_metric(
+            name='Fraction Reads in Cells',
+            value=fraction_reads_in_cells,
+            display=f'{fraction_reads_in_cells}%',
+            help_info='the fraction of uniquely-mapped-to-transcriptome reads with cell-associated barcodes'
+        )
+
+        try:
+            valid_read_number = self.get_slot_key(
+                slot='metrics',
+                step_name='barcode',
+                key='Valid Reads',
+            )
+        except KeyError:
+            self.add_count_metrics.logger.warning('Will not output `Mean Reads per Cell`')
+        else:
+            mean_reads_per_cell = int(valid_read_number / n_cells)
+            self.add_metric(
+                name='Mean Reads per Cell',
+                value=mean_reads_per_cell,
+                help_info='the number of valid reads divided by the estimated number of cells'
+            )
+
+        median_umi_per_cell = int(np.median(df_sum_cell['UMI']))
+        self.add_metric(
+            name='Median UMI per Cell',
+            value=median_umi_per_cell,
+            help_info='the median number of UMI counts per cell-associated barcode'
+        )
+
+        self.add_metric(
+            name='Total Genes',
+            value=total_cell_gene,
+            help_info='the number of genes with at least one UMI count in any cell'
+        )
+
+        self.add_metric(
+            name='Median Genes per Cell',
+            value=downsample_dict[MEDIAN_GENE_NUMBER][-1],
+            help_info='the median number of genes detected per cell-associated barcode'
+        )
+
+        saturation = downsample_dict[SATURATION][-1]
+        self.add_metric(
+            name='Saturation',
+            value=saturation,
+            display=f'{saturation}%',
+            help_info='the fraction of UMI originating from an already-observed UMI. '
+        )
+
+
+    def add_plot_data(self):
 
         df_line = self.get_df_line()
 
@@ -138,109 +193,15 @@ class Count(Step):
 
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.marked_count_file))
 
-    @staticmethod
-    def correct_umi(umi_dict, percent=0.1):
-        """
-        Correct umi_dict in place.
-        Args:
-            umi_dict: {umi_seq: umi_count}
-            percent: if hamming_distance(low_seq, high_seq) == 1 and
-                low_count / high_count < percent, merge low to high.
-        Returns:
-            n_corrected_umi: int
-            n_corrected_read: int
-        """
-        n_corrected_umi = 0
-        n_corrected_read = 0
 
-        # sort by value(UMI count) first, then key(UMI sequence)
-        umi_arr = sorted(
-            umi_dict.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
-        while True:
-            # break when only highest in umi_arr
-            if len(umi_arr) == 1:
-                break
-            umi_low = umi_arr.pop()
-            low_seq = umi_low[0]
-            low_count = umi_low[1]
-
-            for umi_kv in umi_arr:
-                high_seq = umi_kv[0]
-                high_count = umi_kv[1]
-                if float(low_count / high_count) > percent:
-                    break
-                if utils.hamming_distance(low_seq, high_seq) == 1:
-                    n_low = umi_dict[low_seq]
-                    n_corrected_umi += 1
-                    n_corrected_read += n_low
-                    # merge
-                    umi_dict[high_seq] += n_low
-                    del (umi_dict[low_seq])
-                    break
-        return n_corrected_umi, n_corrected_read
-
-    @staticmethod
-    def discard_read(gene_umi_dict):
-        """
-        If two or more groups of reads have the same barcode and UMI, but different gene annotations, the gene annotation with the most supporting reads is kept for UMI counting, and the other read groups are discarded. In case of a tie for maximal read support, all read groups are discarded, as the gene cannot be confidently assigned.
-
-        Returns:
-            discarded_umi: set. umi with tie read count
-            umi_gene_dict: {umi_seq: {gene_id: read_count}}
-        """
-
-        discard_umi = set()
-        umi_gene_dict = defaultdict(lambda: defaultdict(int))
-        for gene_id in gene_umi_dict:
-            for umi in gene_umi_dict[gene_id]:
-                umi_gene_dict[umi][gene_id] += gene_umi_dict[gene_id][umi]
-        
-        for umi in umi_gene_dict:
-            max_read_count = max(umi_gene_dict[umi].values())
-            gene_id_max = [gene_id for gene_id, read_count in umi_gene_dict[umi].items() if read_count==max_read_count]
-
-            if len(gene_id_max) > 1:
-                discard_umi.add(umi)
-            else:
-                gene_id = gene_id_max[0]
-                umi_gene_dict[umi] = {gene_id: umi_gene_dict[umi][gene_id]}
-
-        return discard_umi, umi_gene_dict
-
-    @utils.add_log
-    def bam2table(self):
-        """
-        bam to detail table
-        must be used on name_sorted bam
-        """
-        save = pysam.set_verbosity(0)
-        samfile = pysam.AlignmentFile(self.bam, "rb")
-        pysam.set_verbosity(save)
-        with open(self.count_detail_file, 'wt') as fh1:
-            fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
-
-            def keyfunc(x):
-                return x.query_name.split('_', 1)[0]
-            for _, g in groupby(samfile, keyfunc):
-                gene_umi_dict = defaultdict(lambda: defaultdict(int))
-                for seg in g:
-                    (barcode, umi) = seg.query_name.split('_')[:2]
-                    if not seg.has_tag('XT'):
-                        continue
-                    gene_id = seg.get_tag('XT')
-                    gene_umi_dict[gene_id][umi] += 1
-                for gene_id in gene_umi_dict:
-                    Count.correct_umi(gene_umi_dict[gene_id])
-
-                # output
-                for gene_id in gene_umi_dict:
-                    for umi in gene_umi_dict[gene_id]:
-                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
-                                                        gene_umi_dict[gene_id][umi]))
-        samfile.close()
-        
+    
     @utils.add_log
     def cell_calling(self, df_sum):
+        """
+        Returns:
+            cell_bc: set
+            UMI_threshold: int
+        """
         cell_calling_method = self.cell_calling_method
 
         if (self.force_cell_num is not None) and (self.force_cell_num != 'None'):
@@ -249,6 +210,7 @@ class Count(Step):
             cell_bc, UMI_threshold = self.auto_cell(df_sum)
         elif cell_calling_method == 'EmptyDrops_CR':
             cell_bc, UMI_threshold = self.emptydrop_cr_cell(df_sum)
+        cell_bc = set(cell_bc)
         return cell_bc, UMI_threshold
 
     @utils.add_log
@@ -302,25 +264,27 @@ class Count(Step):
         return cell_bc, threshold
 
     @staticmethod
-    def get_df_sum(df, col='UMI'):
-        def num_gt2(x):
-            return pd.Series.sum(x[x > 1])
+    def get_df_sum(df, sort_by='UMI'):
+        '''
+        Returns:
+            df_sum: 3 cols
+                read: int
+                UMI: int
+                geneID: str
+        '''
 
         df_sum = df.groupby('Barcode').agg({
-            'count': ['sum', num_gt2],
+            'read': 'sum',
             'UMI': 'count',
             'geneID': 'nunique'
         })
-        df_sum.columns = ['readcount', 'UMI2', 'UMI', 'geneID']
-        df_sum = df_sum.sort_values(col, ascending=False)
+        df_sum = df_sum.sort_values(sort_by, ascending=False)
         return df_sum
 
-    def get_cell_stats(self, df_sum, cell_bc):
+    def write_marked_df_sum(self, df_sum, cell_bc):
         df_sum.loc[:, 'mark'] = 'UB'
         df_sum.loc[df_sum.index.isin(cell_bc), 'mark'] = 'CB'
         df_sum.to_csv(self.marked_count_file, sep='\t')
-        CB_describe = df_sum.loc[df_sum['mark'] == 'CB', :].describe()
-        return CB_describe
 
     @utils.add_log
     def write_sparse_matrix(self, df, matrix_dir):
@@ -338,147 +302,74 @@ class Count(Step):
         reads_mapped_to_transcriptome = df['count'].sum()
         return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome)
 
-    @utils.add_log
-    def get_summary(self, CB_describe, CB_total_Genes,
-                    CB_reads_count, reads_mapped_to_transcriptome):
-
-        estimated_cells = int(CB_describe.loc['count', 'readcount'])
-        self.add_metric(
-            name='Estimated Number of Cells',
-            value=estimated_cells,
-            help_info=f'the number of barcodes considered as cell-associated. The cell calling method used for this sample is {self.cell_calling_method}.'
-        )
-
-        fraction_reads_in_cells = round(float(CB_reads_count) / reads_mapped_to_transcriptome * 100, 2)
-        self.add_metric(
-            name='Fraction Reads in Cells',
-            value=fraction_reads_in_cells,
-            display=f'{fraction_reads_in_cells}%',
-            help_info='the fraction of uniquely-mapped-to-transcriptome reads with cell-associated barcodes'
-        )
-
-        try:
-            valid_read_number = self.get_slot_key(
-                slot='metrics',
-                step_name='barcode',
-                key='Valid Reads',
-            )
-        except KeyError:
-            self.get_summary.logger.warning('Will not output `Mean Reads per Cell`')
-        else:
-            mean_reads_per_cell = int(valid_read_number / estimated_cells)
-            self.add_metric(
-                name='Mean Reads per Cell',
-                value=mean_reads_per_cell,
-                help_info='the number of valid reads divided by the estimated number of cells'
-            )
-
-        median_umi_per_cell = int(CB_describe.loc['50%', 'UMI'])
-        self.add_metric(
-            name='Median UMI per Cell',
-            value=median_umi_per_cell,
-            help_info='the median number of UMI counts per cell-associated barcode'
-        )
-
-        total_genes = int(CB_total_Genes)
-        self.add_metric(
-            name='Total Genes',
-            value=total_genes,
-            help_info='the number of genes with at least one UMI count in any cell'
-        )
-
-        median_genes_per_cell = int(CB_describe.loc['50%', 'geneID'])
-        self.add_metric(
-            name='Median Genes per Cell',
-            value=median_genes_per_cell,
-            help_info='the median number of genes detected per cell-associated barcode'
-        )
-
-        umi_saturation = round(self.downsample_dict['umi_saturation'][-1], 2)
-        read_saturation = round(self.downsample_dict['read_saturation'][-1], 2)
-        self.add_metric(
-            name='Saturation',
-            value=umi_saturation,
-            display=f'{umi_saturation}%',
-            help_info=(
-                'the fraction of UMI originating from an already-observed UMI. '
-                f'read_saturation: {read_saturation}%'
-            )
-        )
-
     @staticmethod
-    def sub_sample(fraction, df_cell, cell_read_index):
+    def sub_sample(fraction, df_cell, new_df, cell_read_index):
         """
-        umi_saturation = 1 - n_deduped_reads / n_umis
-        read_saturation = 1 - n_deduped_reads / n_reads
-        Currently the html report shows umi_saturation.
+        saturation = 1 - n_deduped_reads / n_reads
 
-        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads.
-        n_umis = Total number of (confidently mapped, valid cell-barcode, valid UMI) UMIs.
+        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads. If a UMI has two reads mapped to one gene, but mapped to different locations of the gene, these two reads are
+        considered unique.
         n_reads = Total number of (confidently mapped, valid cell-barcode, valid UMI) reads.
         Args:
             fration: subsmaple fration
             df_cell: in cell df with (Barcode geneID UMI count) 
+            new_df: two columns: [original df_cell index, duplicate count]
             cell_read_index: df_cell repeat index
         """
-        cell_read = df_cell['count'].sum()
+
+        cell_read = new_df['dcount'].sum()
         frac_n_read = int(cell_read * fraction)
         subsample_read_index = cell_read_index[:frac_n_read]
         index_dedup, counts = np.unique(subsample_read_index, return_counts=True)
         n_count_once = np.sum(counts == 1)
-        # total = UMI
-        umi_total = len(index_dedup)
-        umi_saturation = round((1 - n_count_once / umi_total) * 100, 2)
         read_total = frac_n_read
-        read_saturation = round((1 - n_count_once / read_total) * 100, 2)
-
-        # gene median
-        df_cell_subsample = df_cell.loc[index_dedup, ]
+        saturation = round((1 - n_count_once / read_total) * 100, 2)
+        df_cell_subsample = df_cell.loc[new_df.loc[index_dedup,]['oindex']]
         geneNum_median = float(df_cell_subsample.groupby(
-            'Barcode').agg({'geneID': 'nunique'}).median())
+        'Barcode').agg({'geneID': 'nunique'}).median())
 
-        return umi_saturation, read_saturation, geneNum_median
+        return saturation, geneNum_median
 
     @utils.add_log
     def downsample(self, df_cell):
         """saturation and median gene
+        Returns:
+            downsample dict             
+                READ_FRACTION: float
+                SATURATION: float
+                MEDIAN_GENE_NUMBER: float
         """
-        cell_read_index = np.array(df_cell.index.repeat(df_cell['count']), dtype='int32')
+        oindexList = []
+        dcountList = []
+
+        for row in df_cell.itertuples():
+            duplicates = row.duplicate.split(',')
+            ds = [int(d) for d in duplicates]
+            for d in ds:
+                oindexList.append(row.Index)
+                dcountList.append(d)
+
+        new_df = pd.DataFrame({'oindex':oindexList, 'dcount':dcountList})
+
+        cell_read_index = np.array(new_df.index.repeat(new_df['dcount']), dtype='int32')
         np.random.shuffle(cell_read_index)
 
         downsample_dict = {
             READ_FRACTION: [0],
-            UMI_SATURATION: [0],
-            READ_SATURATION: [0],
+            SATURATION: [0],
             MEDIAN_GENE_NUMBER: [0],
         }
 
         for fraction in np.arange(0.1, 1.1, 0.1):
-            umi_saturation, read_saturation, geneNum_median = Count.sub_sample(
-                fraction, df_cell, cell_read_index)
+            saturation, geneNum_median = Count.sub_sample(fraction, df_cell, new_df, cell_read_index)
             fraction = round(fraction,1)
-            umi_saturation = round(umi_saturation, 2)
-            read_saturation = round(read_saturation, 2)
             downsample_dict[READ_FRACTION].append(fraction)
-            downsample_dict[UMI_SATURATION].append(umi_saturation)
-            downsample_dict[READ_SATURATION].append(read_saturation)
+            downsample_dict[SATURATION].append(saturation)
             downsample_dict[MEDIAN_GENE_NUMBER].append(geneNum_median)
-        
-            self.add_metric(
-                name=f'Read Fraction {fraction} read_saturation',
-                value=read_saturation,
-                show=False,
-            )
 
-            self.add_metric(
-                name=f'Read Fraction {fraction} umi_saturation',
-                value=umi_saturation,
-                show=False,
-            )
-
-        df_downsample = pd.DataFrame(downsample_dict, columns=[READ_FRACTION, MEDIAN_GENE_NUMBER, UMI_SATURATION, READ_SATURATION])
+        df_downsample = pd.DataFrame(downsample_dict, columns=[READ_FRACTION, MEDIAN_GENE_NUMBER, SATURATION,])
         df_downsample.to_csv(self.downsample_file, index=False, sep='\t')
-        self.downsample_dict = downsample_dict
+        return downsample_dict
 
 
 @utils.add_log
@@ -498,35 +389,8 @@ def get_opts_count(parser, sub_program):
     )
     if sub_program:
         parser = s_common(parser)
-        parser.add_argument('--bam', help='Required. BAM file from featureCounts.', required=True)
+        parser.add_argument('--count_detail', help='Required. File from featureCounts.', required=True)
         parser.add_argument(
             '--force_cell_num',
             help='Default `None`. Force the cell number to be this number. ',
         )
-
-
-class Count_test(unittest.TestCase):
-    def test_correct_umi(self):
-        dic = {
-            "apple1": 2,
-            "apple2": 30,
-            "bears1": 5,
-            "bears2": 10,
-            "bears3": 100,
-            "ccccc1": 20,
-            "ccccc2": 199,
-        }
-        n_corrected_umi, n_corrected_read = Count.correct_umi(dic)
-        dic_after_correct = {
-            'ccccc1': 20,
-            'apple2': 32,
-            'bears3': 115,
-            'ccccc2': 199,
-        }
-        self.assertEqual(dic, dic_after_correct)
-        self.assertEqual(n_corrected_umi, 3)
-        self.assertEqual(n_corrected_read, 2 + 5 + 10)
-
-
-if __name__ == "__main__":
-    unittest.main()

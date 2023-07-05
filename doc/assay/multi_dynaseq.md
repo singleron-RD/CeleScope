@@ -1,3 +1,19 @@
+## Usage
+
+```
+    multi_dynaseq\
+    --mapfile ./rna.mapfile\
+    --genomeDir /SGRNJ/Public/Database/genome/homo_mus\
+    --strand /SGRNJ03/Public/Database/genome/gene.strandedness.csv
+```
+
+You need to generate strandness-file from gtf file. 
+The format is "geneID,strand", eg:
+```
+ENSG00000223972,+
+ENSG00000227232,-
+ENSG00000278267,-
+```
 ## Features
 ### barcode
 
@@ -18,16 +34,34 @@
 - Align R2 reads to the reference genome with STAR.
 
 
-### star_virus
-- Map reads to the viral genome using STAR.
-
-
 ### featureCounts
 - Assigning uniquely mapped reads to genomic features with FeatureCounts.
 
 ### count
 - Cell-calling: Distinguish cell barcodes from background barcodes. 
 - Generate expression matrix.
+
+### analysis
+- Cell clustering with Seurat.
+
+- Calculate the marker gene of each cluster.
+
+- Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
+
+
+### conversion
+- Get conversion pos in each read.
+    - Get snp info. 
+
+
+### substitution
+- Computes the overall conversion rates in reads and plots a barplot.
+
+
+### replace_tsne
+- Replace rate in each cluster
+- Top replace genes in each cluster
+
 
 ## Output files
 ### barcode
@@ -60,15 +94,12 @@ Each splicing is counted in the numbers of splices, which would correspond to
 summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
 i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
 
-### star_virus
-- `{sample}_virus_Aligned.sortedByCoord.out.bam` : Aligned BAM sorted by coordinate.
-
 ### featureCounts
 - `{sample}` Numbers of reads assigned to features (or meta-features).
 - `{sample}_summary` Stat info for the overall summrization results, including number of 
 successfully assigned reads and number of reads that failed to be assigned due to 
 various reasons (these reasons are included in the stat info).
-- `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
+- `{sample}_aligned_sortedByCoord_addTag.bam` featureCounts output BAM, 
 sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
     - CB cell barcode
     - UB UMI
@@ -87,14 +118,36 @@ sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.
     - read_count  
 - `{sample}_counts.txt` 6 columns:
     - Barcode: barcode sequence
-    - readcount: read count of each barcode
-    - UMI2: read count with reads per UMI >= 2 for each barcode
+    - read: read count of each barcode
     - UMI: UMI count for each barcode
     - geneID: gene count for each barcode
     - mark: cell barcode or backgound barcode.
         `CB` cell  
         `UB` background  
 - `{sample}_downsample.tsv` Subset a fraction of reads and calculate median gene number and sequencing saturation.
+
+### analysis
+- `markers.tsv` Marker genes of each cluster.
+
+- `tsne_coord.tsv` t-SNE coordinates and clustering information.
+
+- `{sample}/06.analsis/{sample}_auto_assign/` This result will only be obtained when `--type_marker_tsv` 
+parameter is provided. The result contains 3 files:
+    - `{sample}_auto_cluster_type.tsv` The cell type of each cluster; if cell_type is "NA", 
+it means that the given marker is not enough to identify the cluster.
+    - `{sample}_png/{cluster}_pctdiff.png` Percentage of marker gene expression in this cluster - percentage in all other clusters.
+    - `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
+
+### conversion
+- `{sample}.PosTag.bam` Bam file with conversion info.
+- `{sample}.PosTag.csv` SNP info in csv format.
+
+### substitution
+- `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
+
+### replace_tsne
+- `{sample}.rep_in_tsne.txt` Replace rate in each cluster.
+- `{sample}.rep_in_tsne_top10` Top 10 replace genes in each cluster.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -214,8 +267,6 @@ is higher than or equal to this value.
 
 `--starMem` Default `30`. Maximum memory that STAR can use.
 
-`--virus_genomeDir` Virus genome directory.
-
 `--gtf_type` Specify feature type in GTF annotation.
 
 `--featureCounts_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
@@ -225,4 +276,12 @@ is higher than or equal to this value.
 `--cell_calling_method` Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`].
 
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
+
+`--strand` gene strand file, the format is "geneID,+/-".
+
+`--basequalilty` min base quality of the read sequence.
+
+`--bg_cov` background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format.
+
+`--snp_threshold` snp threshold filter, greater than snp_threshold will be recognized as snp. Only valid in csv format.
 

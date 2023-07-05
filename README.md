@@ -4,9 +4,7 @@ CeleScope is a collection of bioinfomatics analysis pipelines to process single 
 
 # Documentation
 
-[Quick start](./docs/quick_start.md)
-
-Detailed docs can be found in [manual](./docs/manual.md).
+[User guide](./doc/user_guide.md)
 
 # Support
 Please use the issue tracker for questions and malfunctions.

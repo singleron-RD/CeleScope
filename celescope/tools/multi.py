@@ -317,7 +317,7 @@ job_end
             f'{cmd_line} '
             f'--fq1 {arr[0]} --fq2 {arr[1]} '
         )
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.starMem)
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def featureCounts(self, sample):
         step = 'featureCounts'
@@ -337,15 +337,15 @@ job_end
 
     def count(self, sample):
         step = 'count'
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_name_sorted.bam'
+        count_detail = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_count_detail.txt'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--bam {bam} '
+            f'--count_detail {count_detail} '
             f'--force_cell_num {self.col4_dict[sample]} '
         )
 
-        self.process_cmd(cmd, step, sample, m=10, x=1)
+        self.process_cmd(cmd, step, sample, m=20, x=1)
 
     def analysis(self, sample):
         step = 'analysis'

@@ -50,7 +50,7 @@ class Multi_dynaseq(Multi):
 
     def conversion(self, sample):
         step = 'conversion'
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam'
+        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_aligned_sortedByCoord_addTag.bam'
         cell = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (

@@ -1,4 +1,42 @@
+## Usage
+
+### Make a snp reference genomeDir
+
+1. Run `celescope rna mkref`. If you already have a rna genomeDir, you can use it and skip this step.
+2. Run `celescope snp mkref` under the rna genomeDir. Check [mkref.md](./mkref.md) for help.
+
+### Run multi_snp
+There are two ways to run `multi_snp`
+
+1. Do not perform consensus before alignment and report read count(recommended for data generated with FocuSCOPE kit).
+
+```
+multi_snp\
+    --mapfile ./test1.mapfile\
+    --genomeDir {genomeDir after running celescope snp mkref}\
+    --thread 4\
+    --mod shell\
+    --panel lung_1\
+    --not_consensus
+```
+
+2. Do consensus before alignment and report UMI count. 
+
+```
+multi_snp\
+    --mapfile ./test1.mapfile\
+    --genomeDir {genomeDir after running celescope snp mkref}\
+    --thread 4\
+    --mod shell\
+    --panel lung_1\
+```
 ## Features
+### mkref
+- Create dictionary file and fasta index for gatk SplitNCigarReads.
+(https://gatk.broadinstitute.org/hc/en-us/articles/360035531652-FASTA-Reference-genome-format) 
+Need to run `celescope rna mkref` first
+
+
 ### barcode
 
 - Demultiplex barcodes.
@@ -14,6 +52,15 @@
     - polyT=A{18}, 18 A bases. 
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
+### consensus
+- Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and 
+count up the number of each type of residue (ie. A or G or T or C for DNA) in all sequences in the
+alignment. If the following conditions are met, the consensus sequence will be the most common residue in the alignment:
+1. the percentage of the most common residue type > threshold(default: 0.5);
+2. most common residue reads >= min_consensus_read;
+otherwise an ambiguous character(N) will be added.
+
+
 ### star
 - Align R2 reads to the reference genome with STAR.
 
@@ -21,19 +68,32 @@
 ### featureCounts
 - Assigning uniquely mapped reads to genomic features with FeatureCounts.
 
-### count_capture_rna
-- Cell-calling: Distinguish cell barcodes from background barcodes. 
-- Generate expression matrix.
+### target_metrics
+- Filter bam file
+    - Filter reads that are not cell-associated.
+    - Filter reads that are not mapped to target genes. 
 
-### analysis
-- Cell clustering with Seurat.
+- Collect enrichment metrics.
 
-- Calculate the marker gene of each cluster.
 
-- Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
+### variant_calling
+- Perform variant calling at single cell level.
+
+
+### filter_snp
+- Filter out `ref` and `alt` alleles that do not have enough reads to support.
+
+
+### analysis_snp
+- Annotate variants with [snpEff](http://pcingola.github.io/SnpEff/).
 
 
 ## Output files
+### mkref
+- fasta index
+- gatk dictionary file
+
+
 ### barcode
 
 - `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
@@ -42,6 +102,9 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 ### cutadapt
 - `cutadapt.log` Cutadapt output log file.
 - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
+
+### consensus
+- `{sample}_consensus.fq` Fastq file after consensus.
 
 ### star
 - `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
@@ -69,7 +132,7 @@ i.e. as total number of mismatches/indels in all unique mappers divided by the t
 - `{sample}_summary` Stat info for the overall summrization results, including number of 
 successfully assigned reads and number of reads that failed to be assigned due to 
 various reasons (these reasons are included in the stat info).
-- `{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam` featureCounts output BAM, 
+- `{sample}_aligned_sortedByCoord_addTag.bam` featureCounts output BAM, 
 sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
     - CB cell barcode
     - UB UMI
@@ -77,37 +140,21 @@ sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.
     - GX gene id
 - `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
 
-### count_capture_rna
-- `{sample}_raw_feature_bc_matrix` The expression matrix of all detected barcodes in [Matrix Market Exchange Formats](
-    https://math.nist.gov/MatrixMarket/formats.html). 
-- `{sample}_filtered_feature_bc_matrix` The expression matrix of cell barcodes in Matrix Market Exchange Formats. 
-- `{sample}_count_detail.txt.gz` 4 columns: 
-    - barcode  
-    - gene ID  
-    - UMI count  
-    - read_count  
-- `{sample}_counts.txt` 6 columns:
-    - Barcode: barcode sequence
-    - readcount: read count of each barcode
-    - UMI2: read count with reads per UMI >= 2 for each barcode
-    - UMI: UMI count for each barcode
-    - geneID: gene count for each barcode
-    - mark: cell barcode or backgound barcode.
-        `CB` cell  
-        `UB` background  
-- `{sample}_downsample.tsv` Subset a fraction of reads and calculate median gene number and sequencing saturation.
+### target_metrics
+- `filtered.bam` BAM file after filtering. Reads that are not cell-associated or not mapped to target genes are filtered.
 
-### analysis
-- `markers.tsv` Marker genes of each cluster.
+### variant_calling
+- `{sample}_raw.vcf` Variants are called with bcftools default settings.
+- `{sample}_norm.vcf` Indels are left-aligned and normalized. See https://samtools.github.io/bcftools/bcftools.html#norm for more details.
 
-- `tsne_coord.tsv` t-SNE coordinates and clustering information.
+### filter_snp
+- `{sample}_test1_filtered.vcf` VCF file after filtering. Alleles read counts that do not have enough reads to support are set to zero. 
+Genotypes are changed accordingly.
 
-- `{sample}/06.analsis/{sample}_auto_assign/` This result will only be obtained when `--type_marker_tsv` 
-parameter is provided. The result contains 3 files:
-    - `{sample}_auto_cluster_type.tsv` The cell type of each cluster; if cell_type is "NA", 
-it means that the given marker is not enough to identify the cluster.
-    - `{sample}_png/{cluster}_pctdiff.png` Percentage of marker gene expression in this cluster - percentage in all other clusters.
-    - `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
+### analysis_snp
+- `{sample}_gt.csv` Genotypes of variants of each cell. Rows are variants and columns are cells.
+- `{sample}_variant_ncell.csv` Number of cells with each genotype.
+- `{sample}_variant_table.csv` annotated with snpEff.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -216,6 +263,12 @@ at least {overlap} bases match between adapter and read.
 
 `--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
+`--threshold` Default 0.5. Valid base threshold.
+
+`--not_consensus` Skip the consensus step.
+
+`--min_consensus_read` Minimum number of reads to support a base.
+
 `--outFilterMatchNmin` Alignment will be output only if the number of matched bases 
 is higher than or equal to this value.
 
@@ -231,9 +284,21 @@ is higher than or equal to this value.
 
 `--featureCounts_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
 
-`--expected_cell_num` Default `3000`. Expected cell number.
-
-`--cell_calling_method` Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`].
-
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
+
+`--ref_threshold_method` One of [otsu, auto, hard, none].
+
+`--alt_threshold_method` One of [otsu, auto, hard, none].
+
+`--ref_min_support_read` minimum supporting read number for ref.
+
+`--alt_min_support_read` minimum supporting read number for alt.
+
+`--gene_list` Required. Gene list file, one gene symbol per line. Only results of these genes are reported. Conflict with `--panel`.
+
+`--database` snpEff database. Common choices are GRCh38.99(human) and GRCm38.99(mouse).
+
+`--panel` The prefix of bed file in `celescope/data/snp/panel/`, such as `lung_1`. Conflict with `--gene_list`.
+
+`--plot_top_n` plot UMAP of at most n variants.
 

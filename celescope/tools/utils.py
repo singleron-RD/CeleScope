@@ -406,6 +406,40 @@ def index_bam(input_bam):
     subprocess.check_call(cmd, shell=True)
 
 
+def add_tag(seg, id_name, correct_dict):
+    """
+    Args:
+        seg: pysam bam segment
+        id_name: {gene_id: gene_name}
+        correct_dict: {low_seq: high_seq}
+
+    Returns:
+        seg with tag added
+
+    """
+    attr = seg.query_name.split('_')
+    barcode = attr[0]
+    umi = attr[1]
+    seg.set_tag(tag='CB', value=barcode, value_type='Z')
+    if umi in correct_dict:
+        umi = correct_dict[umi]
+    seg.set_tag(tag='UB', value=umi, value_type='Z')
+    # assign to some gene
+    if seg.has_tag('XT'):
+        gene_id = seg.get_tag('XT')
+        # if multi-mapping reads are included in original bam,
+        # there are multiple gene_ids
+        if ',' in gene_id:
+            gene_name = [id_name[i] for i in gene_id.split(',')]
+            gene_name = ','.join(gene_name)
+        else:
+            gene_name = id_name[gene_id]
+        seg.set_tag(tag='GN', value=gene_name, value_type='Z')
+        seg.set_tag(tag='GX', value=gene_id, value_type='Z')
+
+    return seg
+
+
 def check_mkdir(dir_name):
     """if dir_name is not exist, make one"""
     if not os.path.exists(dir_name):

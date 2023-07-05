@@ -7,6 +7,7 @@ import numpy.ma as ma
 import celescope.tools.emptydrop_cr.sgt as cr_sgt  # # modified sgt.py
 import celescope.tools.emptydrop_cr.stats as cr_stats  # # modified stats.py
 from celescope.tools.matrix import CountMatrix
+from celescope.tools import utils
 
 
 # Set random seed
@@ -89,7 +90,7 @@ def est_background_profile_sgt(matrix, use_bcs):
 
     return (use_feats, bg_profile_p)
 
-
+@utils.add_log
 def find_nonambient_barcodes(raw_mat, recovered_cells,
                              min_umi_frac_of_median=MIN_UMI_FRAC_OF_MEDIAN,
                              min_umis_nonambient=MIN_UMIS,
@@ -141,9 +142,6 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
     gg_filtered_indices, gg_filtered_metrics, _msg = cr_stats.filter_cellular_barcodes_ordmag(
         umis_per_bc, recovered_cells=recovered_cells)
 
-    print('Cell-called barcodes metrics:')
-    print('\n'.join(list(map(lambda x: '{}: {}'.format(*x), list(gg_filtered_metrics.items())))))
-    print('==============================')
 
     orig_cell_bc_set = set(gg_filtered_indices)
     orig_cells = np.flatnonzero(np.fromiter((bc in orig_cell_bc_set for bc in range(raw_mat.shape[1])), dtype=bool))
@@ -161,9 +159,6 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
 
     min_umis = int(max(min_umis_nonambient, round(np.ceil(median_initial_umis * min_umi_frac_of_median))))
 
-    print('Median UMIs of initial cell calls: {}'.format(median_initial_umis))
-    print('Min UMIs: {}'.format(min_umis))
-
     eval_bcs[umis_per_bc < min_umis] = ma.masked
     n_unmasked_bcs = len(eval_bcs) - eval_bcs.mask.sum()
 
@@ -172,20 +167,15 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
     eval_bcs = np.argsort(ma.masked_array(umis_per_bc, mask=eval_bcs.mask))[:n_unmasked_bcs][-N_CANDIDATE_BARCODES:]
 
     if len(eval_bcs) == 0:
-        print('Warning: no eval bcs are selected to evaluate non-empty bcs from SGT results!')
-        print('Output bcs from 1st round cell calling ONLY.')
+        find_nonambient_barcodes.logger.warning('no eval bcs are selected to evaluate non-empty bcs from SGT results!')
         return orig_cells, gg_filtered_metrics, None
     else:
         assert not np.any(np.isin(eval_bcs, orig_cells))
-        print('Number of candidate bcs: {}'.format(len(eval_bcs)))
-        print('Range candidate bc umis: {}, {}'.format(umis_per_bc[eval_bcs].min(), umis_per_bc[eval_bcs].max()))
 
         eval_mat = raw_mat.tocsc()[eval_features, :][:, eval_bcs]
 
         if len(ambient_profile_p) == 0:
-            obs_loglk = np.repeat(np.nan, len(eval_bcs))
-            pvalues = np.repeat(1, len(eval_bcs))
-            sim_loglk = np.repeat(np.nan, len(eval_bcs))
+            return orig_cells, gg_filtered_metrics, None
 
         # Compute observed log-likelihood of barcodes being generated from ambient RNA
         obs_loglk = cr_stats.eval_multinomial_loglikelihoods(eval_mat, ambient_profile_p)
@@ -200,11 +190,6 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
         pvalues_adj = adjust_pvalue_bh(pvalues)
         max_adj_pvalue = 0.01
         is_nonambient = pvalues_adj <= max_adj_pvalue
-
-        print('Number of non-ambient barcodes from SGT:', len(eval_bcs[is_nonambient]))
-
-        # Runxi's filtering
-        print('Identify {} cell-associated barcodes'.format(len(orig_cells)+len(eval_bcs[is_nonambient])))
 
         # of barcodes overlapped w/ the cellranger results
         filtered_bc_indices = np.concatenate((orig_cells, eval_bcs[is_nonambient]), axis=None)
