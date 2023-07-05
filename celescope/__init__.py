@@ -12,14 +12,11 @@ ASSAY_LIST = [
     'snp',
     'capture_virus',
     'fusion',
-    'hla',
-    'capture_rna',
     'citeseq',
     'flv_CR',
     'convert10X',
     'flv_trust4',
     'sweetseq',
-    'rna_virus',
     'utils'
 ]
 
