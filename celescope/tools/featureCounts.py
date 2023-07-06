@@ -173,7 +173,7 @@ class FeatureCounts(Step):
         input_basename = os.path.basename(self.args.input)
         self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
         self.name_sorted_bam = f'{self.out_prefix}_name_sorted.bam'
-        self.add_tag_sam = f'{self.out_prefix}_addTag.sam'
+        self.add_tag_bam = f'{self.out_prefix}_addTag.bam'
         self.out_bam = f'{self.out_prefix}_aligned_sortedByCoord_addTag.bam'
 
 
@@ -193,9 +193,14 @@ class FeatureCounts(Step):
 
     @utils.add_log
     def run_featureCounts(self, outdir, gtf_type):
+        '''
+        allow multimapping with -M; but each multi-mapped reads only have one alignment because of --outSAMmultNmax 1
+        '''
         cmd = (
             'featureCounts '
-            '-s 1 '
+            f'-s 1 '
+            f'--largestOverlap '
+            f'-M '
             f'-a {self.gtf} '
             f'-o {outdir}/{self.sample} '  
             '-R BAM '
@@ -229,7 +234,7 @@ class FeatureCounts(Step):
 
     def remove_temp_file(self):
         os.remove(self.name_sorted_bam)
-        os.remove(self.add_tag_sam)
+        os.remove(self.add_tag_bam)
         os.remove(self.featureCounts_bam)
 
     def run(self):
@@ -241,7 +246,7 @@ class FeatureCounts(Step):
             by='name')
         self.get_count_detail_add_tag()
         utils.sort_bam(
-            input_bam=self.add_tag_sam,
+            input_bam=self.add_tag_bam,
             output_bam=self.out_bam)
         self.remove_temp_file()
 
@@ -300,7 +305,7 @@ class FeatureCounts(Step):
         """
         save = pysam.set_verbosity(0)
         inputFile = pysam.AlignmentFile(self.name_sorted_bam, "rb")
-        outputFile = pysam.AlignmentFile(self.add_tag_sam, 'w', header=inputFile.header)
+        outputFile = pysam.AlignmentFile(self.add_tag_bam, 'w', header=inputFile.header)
         pysam.set_verbosity(save)
 
         with open(self.count_detail_file, 'wt') as fh1:
