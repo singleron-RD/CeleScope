@@ -389,7 +389,7 @@ def find_step_module_with_folder(assay, step):
     return step_module, folder
 
 
-def sort_bam(input_bam, output_bam, threads=1, by='coord'):
+def sort_bam(input_bam, output_bam, threads=1, by='pos'):
     cmd = (
         f'samtools sort {input_bam} '
         f'-o {output_bam} '
@@ -455,7 +455,7 @@ class Samtools():
         self.debug = debug
 
     @add_log
-    def samtools_sort(self, in_file, out_file, by='coord'):
+    def samtools_sort(self, in_file, out_file, by='pos'):
         cmd = f"samtools sort {in_file} -o {out_file} --threads {self.threads}"
         if by == "name":
             cmd += " -n"

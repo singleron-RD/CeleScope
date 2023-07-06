@@ -327,7 +327,7 @@ job_end
             prev = 'prep_map'
         else:
             sys.exit('To use featureCounts, star or prep must in the steps!')
-        input_bam = f'{self.outdir_dic[sample][prev]}/{sample}_Aligned.sortedByCoord.out.bam'
+        input_bam = f'{self.outdir_dic[sample][prev]}/{sample}_aligned_nameSorted.bam'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

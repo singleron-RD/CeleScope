@@ -152,7 +152,6 @@ class FeatureCounts(Step):
         - UB UMI
         - GN gene name
         - GX gene id
-    - `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
     """
 
     def __init__(self, args, display_title=None):
@@ -172,9 +171,8 @@ class FeatureCounts(Step):
         self.count_detail_file = f'{self.out_prefix}_count_detail.txt'
         input_basename = os.path.basename(self.args.input)
         self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
-        self.name_sorted_bam = f'{self.out_prefix}_name_sorted.bam'
         self.add_tag_bam = f'{self.out_prefix}_addTag.bam'
-        self.out_bam = f'{self.out_prefix}_aligned_sortedByCoord_addTag.bam'
+        self.out_bam = f'{self.out_prefix}_aligned_posSorted_addTag.bam'
 
 
     @staticmethod
@@ -233,17 +231,12 @@ class FeatureCounts(Step):
 
 
     def remove_temp_file(self):
-        os.remove(self.name_sorted_bam)
-        os.remove(self.add_tag_bam)
         os.remove(self.featureCounts_bam)
+        os.remove(self.add_tag_bam)
 
     def run(self):
         self.run_get_log()
         self.add_metrics()
-        utils.sort_bam(
-            input_bam=self.featureCounts_bam,
-            output_bam=self.name_sorted_bam, 
-            by='name')
         self.get_count_detail_add_tag()
         utils.sort_bam(
             input_bam=self.add_tag_bam,
@@ -304,7 +297,7 @@ class FeatureCounts(Step):
             - bam with tag(remain name sorted)
         """
         save = pysam.set_verbosity(0)
-        inputFile = pysam.AlignmentFile(self.name_sorted_bam, "rb")
+        inputFile = pysam.AlignmentFile(self.featureCounts_bam, "rb")
         outputFile = pysam.AlignmentFile(self.add_tag_bam, 'w', header=inputFile.header)
         pysam.set_verbosity(save)
 

@@ -59,7 +59,7 @@ class Star_mixin(Step):
             self.out_prefix += f'_{add_prefix}'
         self.logPath = f'{self.out_prefix}_Log.final.out'
         self.unsort_STAR_bam = f'{self.out_prefix}_Aligned.out.bam'
-        self.STAR_bam = f'{self.out_prefix}_Aligned.sortedByCoord.out.bam'
+        self.STAR_bam = f'{self.out_prefix}_aligned_{self.args.sortBy}Sorted.bam'
 
     @utils.add_log
     def STAR(self):
@@ -76,12 +76,11 @@ class Star_mixin(Step):
         self.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
+    @utils.add_log
     def run(self):
         self.STAR()
         self.add_star_metrics()
         self.sort_bam()
-        self.index_bam()
-        self.remove_unsort_bam()
 
     @utils.add_log
     def sort_bam(self):
@@ -89,15 +88,10 @@ class Star_mixin(Step):
             self.unsort_STAR_bam,
             self.STAR_bam,
             threads=self.thread,
+            by=self.args.sortBy,
         )
-
-    @utils.add_log
-    def index_bam(self):
-        utils.index_bam(self.STAR_bam)
-
-    @utils.add_log
-    def remove_unsort_bam(self):
         os.remove(self.unsort_STAR_bam)
+
 
     def add_star_metrics(self):
         """
@@ -158,6 +152,11 @@ is higher than or equal to this value.""",
         '--starMem',
         help='Default `30`. Maximum memory that STAR can use.',
         default=30
+    )
+    parser.add_argument(
+        '--sortBy',
+        help='can be one of ["pos", "name"]. output position or name sorted bam. Please note `celescope rna featureCounts` only accept name sorted bam.',
+        default='name'
     )
     if sub_program:
         parser.add_argument('--fq', help="Required. R2 fastq file.", required=True)
