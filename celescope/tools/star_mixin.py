@@ -146,7 +146,7 @@ is higher than or equal to this value.""",
             'How many places are allowed to match a read at most. Please note that even if this value is greater than 1, '
             'at most 1 alignment(with the highest score) will be output in the bam file.'
         ),
-        default=20,
+        default=1,
     )
     parser.add_argument(
         '--starMem',

@@ -5,6 +5,9 @@ import pandas as pd
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME, MATRIX_FILE_NAME)
 from celescope.tools import utils
 
+ROW = 'geneID'
+COLUMN = 'Barcode'
+
   
 class Features:
     def __init__(self, gene_id: list, gene_name=None, gene_type=None):
@@ -78,20 +81,17 @@ class CountMatrix:
         scipy.io.mmwrite(matrix_path, self.__matrix)
 
     @classmethod
-    def from_dataframe(cls, df, features: Features, barcodes=None, row='geneID', column='Barcode', value="UMI"):
+    def from_dataframe(cls, df, features: Features, barcodes=None, value="UMI"):
         """
         Use all gene_id from features even if it is not in df
         Args:
-            df: dataframe with columns: [row, column, value]. Will be grouped by row and column and count lines of value.
+            df: count details dataframe with columns UMI and multi-index (column, row).
             value: value name in df, UMI
             features: Features
             type: type of features, e.g. [gene, protein]
         """
-
-        df[row] = df[row].astype(str)
-        df = df.groupby([row, column]).agg({value: 'count'})
         if not barcodes:
-            barcodes = df.index.levels[1].tolist()
+            barcodes = df.index.levels[0].tolist()
         
         feature_index_dict = {}
         for index, gene_id in enumerate(features.gene_id):
@@ -102,9 +102,9 @@ class CountMatrix:
             barcode_index_dict[barcode] = index
 
         # use all barcodes
-        barcode_codes = [barcode_index_dict[barcode] for barcode in df.index.get_level_values(level=1)]
+        barcode_codes = [barcode_index_dict[barcode] for barcode in df.index.get_level_values(level=0)]
         # use all gene_id from features even if it is not in df
-        gene_id_codes = [feature_index_dict[gene_id] for gene_id in df.index.get_level_values(level=0)]
+        gene_id_codes = [feature_index_dict[gene_id] for gene_id in df.index.get_level_values(level=1)]
         mtx = scipy.sparse.coo_matrix((df[value], (gene_id_codes, barcode_codes)), 
             shape=(len(features.gene_id), len(barcodes)))
 

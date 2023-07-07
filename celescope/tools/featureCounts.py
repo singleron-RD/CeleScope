@@ -14,11 +14,12 @@ from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.tools import reference
+from celescope.tools.__init__ import TAG_BAM_SUFFIX
 
 
 GTF_TYPES = ['exon','gene']
 
-def add_tag(seg, id_name, gene_correct_umi):
+def add_tag(seg, id_name, gene_correct_umi=None):
     """
     Args:
         seg: pysam bam segment
@@ -53,8 +54,9 @@ def add_tag(seg, id_name, gene_correct_umi):
         seg.set_tag(tag='GN', value=gene_name, value_type='Z')
         seg.set_tag(tag='GX', value=gene_id, value_type='Z')
 
-        if gene_id in gene_correct_umi and ur in gene_correct_umi[gene_id]:
-            ub = gene_correct_umi[gene_id][ur]
+        if gene_correct_umi:
+            if gene_id in gene_correct_umi and ur in gene_correct_umi[gene_id]:
+                ub = gene_correct_umi[gene_id][ur]
     
     seg.set_tag(tag='CB', value=barcode, value_type='Z')
     seg.set_tag(tag='UB', value=ub, value_type='Z')
@@ -148,10 +150,6 @@ class FeatureCounts(Step):
     various reasons (these reasons are included in the stat info).
     - `{sample}_aligned_sortedByCoord_addTag.bam` featureCounts output BAM, 
     sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
-        - CB cell barcode
-        - UB UMI
-        - GN gene name
-        - GX gene id
     """
 
     def __init__(self, args, display_title=None):
@@ -172,7 +170,7 @@ class FeatureCounts(Step):
         input_basename = os.path.basename(self.args.input)
         self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
         self.add_tag_bam = f'{self.out_prefix}_addTag.bam'
-        self.out_bam = f'{self.out_prefix}_aligned_posSorted_addTag.bam'
+        self.out_bam = f'{self.out_prefix}_{TAG_BAM_SUFFIX}'
 
 
     @staticmethod
@@ -298,7 +296,7 @@ class FeatureCounts(Step):
         """
         save = pysam.set_verbosity(0)
         inputFile = pysam.AlignmentFile(self.featureCounts_bam, "rb")
-        outputFile = pysam.AlignmentFile(self.add_tag_bam, 'w', header=inputFile.header)
+        outputFile = pysam.AlignmentFile(self.add_tag_bam, 'wb', header=inputFile.header)
         pysam.set_verbosity(save)
 
         with open(self.count_detail_file, 'wt') as fh1:
@@ -319,29 +317,34 @@ class FeatureCounts(Step):
                     gene_umi_dict[gene_id][umi] += 1
                     gene_umi_pos_cigar[gene_id][umi][seg.reference_start][seg.cigarstring] += 1
 
-                gene_correct_umi = dict()
-                for gene_id in gene_umi_dict:
-                    n_corrected_umi, n_corrected_read, correct_dict = correct_umi(gene_umi_dict[gene_id])
-                    gene_correct_umi[gene_id] = correct_dict
-                    self.n_corrected_read += n_corrected_read
-                    self.n_corrected_umi += n_corrected_umi
+                gene_correct_umi = None
+                if self.args.correct_UMI:
+                    gene_correct_umi = dict()
+                    for gene_id in gene_umi_dict:
+                        n_corrected_umi, n_corrected_read, correct_dict = correct_umi(gene_umi_dict[gene_id])
+                        gene_correct_umi[gene_id] = correct_dict
+                        self.n_corrected_read += n_corrected_read
+                        self.n_corrected_umi += n_corrected_umi
 
-                    # also correct umi in gene_umi_pos_cigar
-                    for low_seq, high_seq in correct_dict.items():
-                        for ref_start in gene_umi_pos_cigar[gene_id][low_seq]:
-                            for cigar in gene_umi_pos_cigar[gene_id][low_seq][ref_start]:
-                                gene_umi_pos_cigar[gene_id][high_seq][ref_start][cigar] += 1
-                        del gene_umi_pos_cigar[gene_id][low_seq]                    
+                        # also correct umi in gene_umi_pos_cigar
+                        for low_seq, high_seq in correct_dict.items():
+                            for ref_start in gene_umi_pos_cigar[gene_id][low_seq]:
+                                for cigar in gene_umi_pos_cigar[gene_id][low_seq][ref_start]:
+                                    gene_umi_pos_cigar[gene_id][high_seq][ref_start][cigar] += 1
+                            del gene_umi_pos_cigar[gene_id][low_seq]                    
 
                 # output
                 for gene_id in gene_umi_dict:
+                    n_umi = len(gene_umi_dict[gene_id])
+                    dup_list = []
+                    n_read = 0
                     for umi in gene_umi_dict[gene_id]:
-                        dup_list = []
+                        n_read += gene_umi_dict[gene_id][umi]
                         for pos in gene_umi_pos_cigar[gene_id][umi]:
                             for cigar in gene_umi_pos_cigar[gene_id][umi][pos]:
                                 dup_list.append(str(gene_umi_pos_cigar[gene_id][umi][pos][cigar]))
-                        duplicate = ','.join(dup_list)
-                        fh1.write(f'{barcode}\t{gene_id}\t{umi}\t{gene_umi_dict[gene_id][umi]}\t{duplicate}\n')
+                    duplicate = ','.join(dup_list)
+                    fh1.write(f'{barcode}\t{gene_id}\t{n_umi}\t{n_read}\t{duplicate}\n')
 
                 for seg in segs:
                     outputFile.write(add_tag(seg, self.id_name, gene_correct_umi))
@@ -368,6 +371,7 @@ def get_opts_featureCounts(parser, sub_program):
     )
     parser.add_argument('--genomeDir', help=HELP_DICT['genomeDir'])
     parser.add_argument('--featureCounts_param', help=HELP_DICT['additional_param'], default="")
+    parser.add_argument('--correct_UMI', help='perform UMI correction.')
 
     if sub_program:
         parser.add_argument('--input', help='Required. BAM file path.', required=True)

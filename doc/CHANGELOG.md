@@ -1,7 +1,12 @@
+## [1.16.1] - 2023-07-07
+ ### `rna` and `dynaseq`
+ - Reduce the memory consumption of `count`; improve speed of `featureCounts`.
+
 ## [1.16.0] - 2023-07-05
  ### `rna` and `dynaseq`
  - Allow all numeric "gene_id" in gtf files. In previous versions, all numeric "gene_id" would cause an error in the `count` step.
  - Merge `barcode`, `cutadapt`, `STAR` into one step `prep_map`. Intermediate fastqs are no longer output.
+ - Change the algorithm of sequencing saturation: Calculate the percentage of PCR duplicate reads instead of the percentage of duplicate UMI. 
 
  ### `snp`
  - When annotating human variants, [MANE](https://www.ncbi.nlm.nih.gov/refseq/MANE/) is used by default instead of the original ensembl 99. This helps to improve annotation quality.

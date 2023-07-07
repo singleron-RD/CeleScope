@@ -1,6 +1,6 @@
 from celescope.dynaseq.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME, TAG_BAM_SUFFIX
 
 
 class Multi_dynaseq(Multi):
@@ -50,7 +50,7 @@ class Multi_dynaseq(Multi):
 
     def conversion(self, sample):
         step = 'conversion'
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_aligned_sortedByCoord_addTag.bam'
+        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_{TAG_BAM_SUFFIX}'
         cell = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (

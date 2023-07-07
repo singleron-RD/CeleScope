@@ -1,7 +1,6 @@
 from celescope.fusion.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
 
-
 class Multi_fusion(Multi):
     """
 
@@ -33,13 +32,14 @@ class Multi_fusion(Multi):
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '
+            f'--sortBy pos'
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def count_fusion(self, sample):
         step = 'count_fusion'
         cmd_line = self.get_cmd_line(step, sample)
-        capture_bam = f'{self.outdir_dic[sample]["star_fusion"]}/{sample}_Aligned.sortedByCoord.out.bam'
+        capture_bam = f'{self.outdir_dic[sample]["star_fusion"]}/{sample}_aligned_posSorted.bam'
         cmd = (
             f'{cmd_line} '
             f'--capture_bam {capture_bam} '

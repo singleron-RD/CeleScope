@@ -17,7 +17,7 @@ from celescope.tools.emptydrop_cr.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.plotly_plot import Line_plot
-from celescope.tools.matrix import CountMatrix
+from celescope.tools.matrix import CountMatrix, ROW, COLUMN
 from celescope.tools import reference
 
 TOOLS_DIR = os.path.dirname(__file__)
@@ -91,31 +91,35 @@ class Count(Step):
 
     @staticmethod
     def get_df_cell(df, cell_bc):
-        return df.loc[df['Barcode'].isin(cell_bc), :]
+        """
+        reset index in a must. otherwise the index remains the same with the raw matrix
+        """
+        df_cell = df.loc[df.index.isin(cell_bc, level=0)]
+        df_cell = df_cell.reset_index().set_index([COLUMN, ROW])
+        return df_cell
 
     @utils.add_log
     def run(self):
-        df = pd.read_table(self.args.count_detail, header=0, dtype={'geneID':str})
-
-        # write all matrix
+        # index use less than >50% mem than int index
+        df = pd.read_table(self.args.count_detail, header=0, dtype={'geneID':str}, index_col=[0,1])
+        total_reads = sum(df['read'])
         self.write_sparse_matrix(df, self.raw_matrix_dir)
-        df_sum = self.get_df_sum(df)
-        total_reads = sum(df_sum['read'])
+        df_bc = self.get_df_bc(df)
         # call cells
-        cell_bc, _threshold = self.cell_calling(df_sum)
+        cell_bc, _threshold = self.cell_calling(df_bc)
         # write marked_df_sum
-        self.write_marked_df_sum(df_sum, cell_bc)
+        self.write_marked_df_bc(df_bc, cell_bc)
         # export cell matrix
         df_cell = self.get_df_cell(df, cell_bc)
-        self.write_sparse_matrix(df_cell, self.cell_matrix_dir)
-        total_cell_gene = len(np.unique(df_cell['geneID']))
         del df
-        df_sum_cell = self.get_df_sum(df_cell)
-        del df_sum
+        self.write_sparse_matrix(df_cell, self.cell_matrix_dir)
+        total_cell_gene = len(df_cell.index.levels[1])
+        df_bc_cell = self.get_df_bc(df_cell)
+        del df_bc
         # downsample
         downsample_dict = self.downsample(df_cell)
         # metrics
-        self.add_count_metrics(total_reads, total_cell_gene, cell_bc, df_sum_cell, downsample_dict)
+        self.add_count_metrics(total_reads, total_cell_gene, cell_bc, df_bc_cell, downsample_dict)
         # plot
         self.add_plot_data()
 
@@ -167,7 +171,7 @@ class Count(Step):
 
         self.add_metric(
             name='Median Genes per Cell',
-            value=downsample_dict[MEDIAN_GENE_NUMBER][-1],
+            value=int(downsample_dict[MEDIAN_GENE_NUMBER][-1]),
             help_info='the median number of genes detected per cell-associated barcode'
         )
 
@@ -264,24 +268,23 @@ class Count(Step):
         return cell_bc, threshold
 
     @staticmethod
-    def get_df_sum(df, sort_by='UMI'):
+    def get_df_bc(df, sort_by='UMI'):
         '''
         Returns:
-            df_sum: 3 cols
+            df with 3 cols sort by UMI(default)
                 read: int
                 UMI: int
                 geneID: str
         '''
 
-        df_sum = df.groupby('Barcode').agg({
+        df_bc = df.groupby('Barcode').agg({
+            'UMI': 'sum',
             'read': 'sum',
-            'UMI': 'count',
-            'geneID': 'nunique'
         })
-        df_sum = df_sum.sort_values(sort_by, ascending=False)
-        return df_sum
+        df_bc[ROW] = df.groupby(level=[0]).size()
+        return df_bc.sort_values(sort_by, ascending=False)
 
-    def write_marked_df_sum(self, df_sum, cell_bc):
+    def write_marked_df_bc(self, df_sum, cell_bc):
         df_sum.loc[:, 'mark'] = 'UB'
         df_sum.loc[df_sum.index.isin(cell_bc), 'mark'] = 'CB'
         df_sum.to_csv(self.marked_count_file, sep='\t')
@@ -341,6 +344,7 @@ class Count(Step):
         """
         oindexList = []
         dcountList = []
+        df_cell = df_cell.reset_index()
 
         for row in df_cell.itertuples():
             duplicates = row.duplicate.split(',')

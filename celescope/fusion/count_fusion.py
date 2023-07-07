@@ -4,6 +4,7 @@ import pandas as pd
 
 from celescope.tools.capture.count_bam import Count_bam, get_opts_count_bam
 from celescope.fusion.mkref import Mkref_fusion
+from celescope.tools import utils
 
 
 
@@ -65,6 +66,9 @@ class Count_fusion(Count_bam):
                             fusion_bam.write(read)
                             self.count_dict[barcode][ref][umi] += 1
 
+    def run(self):
+        utils.index_bam(self.args.capture_bam)
+        super().run()
 
 def count_fusion(args):
     with Count_fusion(args) as runner:

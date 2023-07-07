@@ -30,6 +30,8 @@ class Count(Step):
         self.bam2table()
         df = pd.read_table(self.count_detail_file, header=0)
         barcodes = Count.get_barcodes(self.args.filter_umi_file)
+        df = df.groupby(['Barcode', 'geneID']).agg({"UMI":"count"})
+
         count_matrix = CountMatrix.from_dataframe(df, self.features, barcodes=barcodes, value="UMI")
         count_matrix.to_matrix_dir(self.matrix_dir)
 

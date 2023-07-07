@@ -1,5 +1,6 @@
 from celescope.snp.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
+from celescope.tools.__init__ import TAG_BAM_SUFFIX
 
 
 class Multi_snp(Multi):
@@ -57,7 +58,7 @@ class Multi_snp(Multi):
     def target_metrics(self, sample):
         step = 'target_metrics'
         cmd_line = self.get_cmd_line(step, sample)
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_aligned_sortedByCoord_addTag.bam'
+        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_{TAG_BAM_SUFFIX}'
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
