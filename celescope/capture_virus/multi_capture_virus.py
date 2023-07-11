@@ -1,4 +1,5 @@
 from celescope.capture_virus.__init__ import __ASSAY__
+from celescope.tools.__init__ import STAR_BAM_SUFFIX
 from celescope.tools.multi import Multi
 
 
@@ -40,7 +41,7 @@ class Multi_capture_virus(Multi):
     def count_virus(self, sample):
         step = 'count_virus'
         cmd_line = self.get_cmd_line(step, sample)
-        capture_bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        capture_bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_{STAR_BAM_SUFFIX}'
         cmd = (
             f'{cmd_line} '
             f'--capture_bam {capture_bam} '
@@ -75,7 +76,7 @@ class Multi_capture_virus(Multi):
         cmd_line = self.get_cmd_line(step, sample)
         filter_umi_file = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_UMI.csv'
         filter_read_count_json = f'{self.outdir_dic[sample]["filter_virus"]}/{sample}_filtered_read_count.json'
-        bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_Aligned.sortedByCoord.out.bam'
+        bam = f'{self.outdir_dic[sample]["star_virus"]}/{sample}_virus_{STAR_BAM_SUFFIX}'
         cmd = (
             f'{cmd_line} '
             f'--filter_umi_file {filter_umi_file} '

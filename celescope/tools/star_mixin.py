@@ -1,6 +1,7 @@
-import re
 import subprocess
 import os
+
+import pandas as pd
 
 from celescope.tools import utils
 from celescope.tools.mkref import Mkref
@@ -18,6 +19,7 @@ def get_star_cmd(args, input_file, output_prefix):
         f'STAR '
         f'--runThreadN {args.thread} '
         f'--genomeDir {args.genomeDir} '
+        f'--outSAMmultNmax 1 '
         f'--outFilterMultimapNmax {args.outFilterMultimapNmax} '
         f'--outSAMtype BAM Unsorted '
         f'--outFilterMatchNmin {args.outFilterMatchNmin} '
@@ -28,6 +30,15 @@ def get_star_cmd(args, input_file, output_prefix):
     get_star_cmd.logger.info(cmd)
     return cmd
 
+
+def get_star_log(logPath):
+    df = pd.read_csv(logPath, sep='\t',header=None, names=['name','value'])
+    log_dict = {}
+    for t in df.itertuples():
+        name = t.name.strip('|').strip()
+        log_dict[name] = t.value
+
+    return log_dict
 
 class Star_mixin(Step):
     """
@@ -46,9 +57,9 @@ class Star_mixin(Step):
         # out
         if add_prefix:
             self.out_prefix += f'_{add_prefix}'
-        self.STAR_map_log = f'{self.out_prefix}_Log.final.out'
+        self.logPath = f'{self.out_prefix}_Log.final.out'
         self.unsort_STAR_bam = f'{self.out_prefix}_Aligned.out.bam'
-        self.STAR_bam = f'{self.out_prefix}_Aligned.sortedByCoord.out.bam'
+        self.STAR_bam = f'{self.out_prefix}_aligned_{self.args.sortBy}Sorted.bam'
 
     @utils.add_log
     def STAR(self):
@@ -65,12 +76,11 @@ class Star_mixin(Step):
         self.STAR.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
+    @utils.add_log
     def run(self):
         self.STAR()
         self.add_star_metrics()
         self.sort_bam()
-        self.index_bam()
-        self.remove_unsort_bam()
 
     @utils.add_log
     def sort_bam(self):
@@ -78,38 +88,22 @@ class Star_mixin(Step):
             self.unsort_STAR_bam,
             self.STAR_bam,
             threads=self.thread,
+            by=self.args.sortBy,
         )
-
-    @utils.add_log
-    def index_bam(self):
-        utils.index_bam(self.STAR_bam)
-
-    @utils.add_log
-    def remove_unsort_bam(self):
         os.remove(self.unsort_STAR_bam)
+
 
     def add_star_metrics(self):
         """
         step metrics
         """
+        log_dict = get_star_log(self.logPath)
 
-        with open(self.STAR_map_log, 'r') as map_log:
-            # number amd percent
-            unique_reads_list = []
-            multi_reads_list = []
-            total_reads = 0
-            for line in map_log:
-                if line.strip() == '':
-                    continue
-                if re.search(r'Uniquely mapped reads', line):
-                    unique_reads_list.append(line.strip().split()[-1])
-                if re.search(r'of reads mapped to too many loci', line):
-                    multi_reads_list.append(line.strip().split()[-1])
-                if re.search(r'Number of input reads', line):
-                    total_reads = int(line.strip().split()[-1])
-
-        unique_reads = int(unique_reads_list[0])
-        multi_reads = int(multi_reads_list[0])
+        unique_reads = int(log_dict['Uniquely mapped reads number'])
+        multiple_loci_reads = int(log_dict['Number of reads mapped to multiple loci'])
+        too_many_loci_reads = int(log_dict['Number of reads mapped to too many loci'])
+        total_reads = int(log_dict['Number of input reads'])
+        multi_reads = multiple_loci_reads + too_many_loci_reads
 
         self.add_metric(
             name='Genome',
@@ -148,13 +142,21 @@ is higher than or equal to this value.""",
     parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], default="")
     parser.add_argument(
         '--outFilterMultimapNmax',
-        help='Default `1`. How many places are allowed to match a read at most.',
-        default=1
+        help=(
+            'How many places are allowed to match a read at most. Please note that even if this value is greater than 1, '
+            'at most 1 alignment(with the highest score) will be output in the bam file.'
+        ),
+        default=1,
     )
     parser.add_argument(
         '--starMem',
         help='Default `30`. Maximum memory that STAR can use.',
         default=30
+    )
+    parser.add_argument(
+        '--sortBy',
+        help='can be one of ["pos", "name"]. output position or name sorted bam. Please note `celescope rna featureCounts` only accept name sorted bam.',
+        default='name'
     )
     if sub_program:
         parser.add_argument('--fq', help="Required. R2 fastq file.", required=True)

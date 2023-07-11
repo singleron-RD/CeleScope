@@ -4,7 +4,6 @@ scipy>=1.5.0
 numpy>=1.21.0
 jinja2>=2.10
 xopen>=0.5.0
-editdistance>=0.5.3
 scikit-learn==1.2.2
 plotly>=4.14.3
 plotnine==0.9.0

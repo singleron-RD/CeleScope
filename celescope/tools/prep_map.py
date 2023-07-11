@@ -85,10 +85,8 @@ class Star(Star_mixin):
         super().__init__(args, display_title=display_title)
 
     def run(self):
-        self.sort_bam()
-        self.index_bam()
-        self.remove_unsort_bam()
         self.add_star_metrics()
+        self.sort_bam()
 
 
 @utils.add_log
