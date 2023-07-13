@@ -150,8 +150,20 @@ class Match(Step):
         """
         Generate clonotypes.csv file where barcodes match with scRNA
         """
+        raw_clonotypes= pd.read_csv(self.clonotypes, sep=',', index_col=None)
+        raw_clonotypes.drop(["frequency", "proportion"], axis=1, inplace=True)
         df_match = pd.read_csv(self.match_annotation)
-        gen_clonotypes_table(df_match, self.match_clonotypes, self.seqtype)
+        df_match = df_match[df_match['productive'] == True]
+        
+        # Count frequency and proportion
+        df_match = df_match.rename(columns={"raw_clonotype_id":"clonotype_id"})\
+            .dropna(subset=["clonotype_id"]).groupby("clonotype_id")["barcode"].nunique().to_frame()\
+                .reset_index().rename(columns={"barcode": "frequency"})\
+                    .sort_values("clonotype_id", key=lambda x: x.str.lstrip("clonotype").astype(int))
+        df_match['proportion'] = df_match['frequency'] / df_match['frequency'].sum()
+        
+        df_match = pd.merge(df_match, raw_clonotypes, on="clonotype_id")
+        df_match.to_csv(self.match_clonotypes, sep=',', index=False)
 
     @utils.add_log
     def gen_matched_metrics(self):
