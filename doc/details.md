@@ -48,12 +48,6 @@ multi_rna \
 - pattern: https://github.com/singleron-RD/CeleScope/blob/master/celescope/tools/__init__.py
 - whitelist and linker:  https://github.com/singleron-RD/CeleScope/tree/master/celescope/data/chemistry/ . `bclist` is the barcode whitelist.
 
-## Fraction Reads in Cells
-Low `Fraction Reads in Cells` value is usually caused by:
-1. High amount of ambient RNA which indicates high fraction of lysed/dead cells in the sample.
-2. The cell-calling method does not apply. If you are using `--cell_calling_method auto`, try to change it to `--cell_calling_method cellranger3`(Celescope < v1.9.0) or `--cell_calling_method EmptyDrops_CR`(Celescope >= v1.9.0).
-
-
 # Clindex
 
 ## Tag assignment

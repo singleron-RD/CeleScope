@@ -86,7 +86,6 @@ class Star(Star_mixin):
 
     def run(self):
         self.add_star_metrics()
-        self.sort_bam()
 
 
 @utils.add_log

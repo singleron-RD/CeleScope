@@ -21,6 +21,7 @@ class Count_fusion(Count_bam):
         self.flanking_base = int(args.flanking_base)
         fusion_pos_file = Mkref_fusion.parse_genomeDir(args.fusion_genomeDir)['fusion_pos']
         self.pos_dict = self.read_pos_file(fusion_pos_file)
+        self.posSorted_bam = f'{self.out_prefix}_posSorted.bam'
         self.fusion_bam = f'{self.out_prefix}_raw_fusion.bam'
  
     @staticmethod
@@ -43,7 +44,7 @@ class Count_fusion(Count_bam):
             2. match barcode
         """
 
-        with pysam.AlignmentFile(self.capture_bam, "rb") as bam:
+        with pysam.AlignmentFile(self.posSorted_bam, "rb") as bam:
             header = bam.header
             with pysam.AlignmentFile(self.fusion_bam, "wb", header=header) as fusion_bam:
                 for ref in self.pos_dict:
@@ -67,7 +68,12 @@ class Count_fusion(Count_bam):
                             self.count_dict[barcode][ref][umi] += 1
 
     def run(self):
-        utils.index_bam(self.args.capture_bam)
+        utils.sort_bam(
+            self.args.capture_bam,
+            self.posSorted_bam,
+            threads=self.thread,
+        )
+        utils.index_bam(self.posSorted_bam)
         super().run()
 
 def count_fusion(args):

@@ -6,7 +6,7 @@ import sys
 from collections import defaultdict
 
 import celescope
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, STAR_BAM_SUFFIX
 from celescope.tools import utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
@@ -327,7 +327,7 @@ job_end
             prev = 'prep_map'
         else:
             sys.exit('To use featureCounts, star or prep must in the steps!')
-        input_bam = f'{self.outdir_dic[sample][prev]}/{sample}_aligned_nameSorted.bam'
+        input_bam = f'{self.outdir_dic[sample][prev]}/{sample}_{STAR_BAM_SUFFIX}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

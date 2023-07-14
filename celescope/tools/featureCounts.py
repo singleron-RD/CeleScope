@@ -170,6 +170,7 @@ class FeatureCounts(Step):
         input_basename = os.path.basename(self.args.input)
         self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
         self.add_tag_bam = f'{self.out_prefix}_addTag.bam'
+        self.nameSorted_bam = f'{self.out_prefix}_nameSorted.bam'
         self.out_bam = f'{self.out_prefix}_{TAG_BAM_SUFFIX}'
 
 
@@ -232,9 +233,14 @@ class FeatureCounts(Step):
         os.remove(self.featureCounts_bam)
         os.remove(self.add_tag_bam)
 
+
     def run(self):
         self.run_get_log()
         self.add_metrics()
+        utils.sort_bam(
+            self.featureCounts_bam,
+            self.nameSorted_bam,
+            threads=self.thread, by='name')
         self.get_count_detail_add_tag()
         utils.sort_bam(
             input_bam=self.add_tag_bam,
@@ -295,7 +301,7 @@ class FeatureCounts(Step):
             - bam with tag(remain name sorted)
         """
         save = pysam.set_verbosity(0)
-        inputFile = pysam.AlignmentFile(self.featureCounts_bam, "rb")
+        inputFile = pysam.AlignmentFile(self.nameSorted_bam, "rb")
         outputFile = pysam.AlignmentFile(self.add_tag_bam, 'wb', header=inputFile.header)
         pysam.set_verbosity(save)
 

@@ -1,3 +1,8 @@
+## [1.16.2] - 2023-07-14
+ ### General improvements
+ - Remove convert_10X and flv_CR.
+ - Fixed an issue in v1.16.1: when using multithreading, the same (barcode, gene) combination in the matrix may have multiple entries.
+
 ## [1.16.1] - 2023-07-07
  ### `rna` and `dynaseq`
  - Reduce the memory consumption of `count`; improve speed of `featureCounts`.
@@ -105,7 +110,7 @@
 
  ### General improvments
  - `Reads without poly T` are not filtered by default. Remove the argument `--allowNoPolyT` and add a new argument `--filterNoPolyT`.
- - Add a sub-command `celescope utils mkgtf` which is similar to `cellranger mkgtf`. After using this command, only the lines with gene_biotype as protein_coding, lncRNA, antisense and VDJ related genes will be kept in gtf. This removes 2 mitochondrial ribosomal RNAs (mt-rRNA) and 22 mitochondrial transfer RNAs (mt-tRNA) from gtf. The detected mitochondrial gene UMI is decreased.
+ - Add a sub-command `celescope utils mkgtf`. After using this command, only the lines with gene_biotype as protein_coding, lncRNA, antisense and VDJ related genes will be kept in gtf. This removes 2 mitochondrial ribosomal RNAs (mt-rRNA) and 22 mitochondrial transfer RNAs (mt-tRNA) from gtf. The detected mitochondrial gene UMI is decreased.
 
 ## [1.11.1] - 2022-08-10
  ### General improvments
@@ -156,7 +161,6 @@
 
 ## [1.9.0] - 2022-04-01
  ### `rna` and `dynaseq`
- - Rename the cell-calling method from `cellranger3` to `EmptyDrops_CR`. Make `EmptyDrops_CR` the default method.
  - Fix an issue that mitochondrial percent is not added to metrics.
 
  ### `snp`,`capture_virus` and `fusion`
@@ -442,13 +446,6 @@ Now:
     `--species` can be one of:
     - `hs`: human
     - `mmu`: mouse
-
-- Add parameter `--cell_calling_method` to `celescope rna count` and `multi_rna`.
-
-    `--cell_calling_method` can be one of:  
-    - `auto`: Same result as v1.1.7.  
-    - `cellranger3`: Refer to the cell_calling algorithm of cellranger3, and the result is similar to cellranger3.  
-    - `reflection`: Use the inflection point of the barcode-rank curve as the UMI threshold. The minimum UMI value is changed from initial threshold / 10 to initial threshold / 2 to prevent the use of a lower inflection point when there are multiple inflection points.  
 
 - Add 4 tags to featureCounts bam.
 

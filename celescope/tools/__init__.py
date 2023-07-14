@@ -21,7 +21,7 @@ FILTERED_MATRIX_DIR_SUFFIX = ['filtered_feature_bc_matrix', 'matrix_10X']
 MATRIX_FILE_NAME = 'matrix.mtx'
 FEATURE_FILE_NAME = 'genes.tsv'
 BARCODE_FILE_NAME = 'barcodes.tsv'
-STAR_BAM_SUFFIX = 'aligned_nameSorted.bam'
+STAR_BAM_SUFFIX = 'Aligned.out.bam'
 TAG_BAM_SUFFIX = 'aligned_posSorted_addTag.bam'
 
 # mkref

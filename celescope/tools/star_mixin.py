@@ -1,5 +1,4 @@
 import subprocess
-import os
 
 import pandas as pd
 
@@ -8,6 +7,7 @@ from celescope.tools.mkref import Mkref
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step
+from celescope.tools.__init__ import STAR_BAM_SUFFIX
 
 
 @utils.add_log
@@ -58,8 +58,7 @@ class Star_mixin(Step):
         if add_prefix:
             self.out_prefix += f'_{add_prefix}'
         self.logPath = f'{self.out_prefix}_Log.final.out'
-        self.unsort_STAR_bam = f'{self.out_prefix}_Aligned.out.bam'
-        self.STAR_bam = f'{self.out_prefix}_aligned_{self.args.sortBy}Sorted.bam'
+        self.STAR_bam = f'{self.out_prefix}_{STAR_BAM_SUFFIX}'
 
     @utils.add_log
     def STAR(self):
@@ -80,18 +79,6 @@ class Star_mixin(Step):
     def run(self):
         self.STAR()
         self.add_star_metrics()
-        self.sort_bam()
-
-    @utils.add_log
-    def sort_bam(self):
-        utils.sort_bam(
-            self.unsort_STAR_bam,
-            self.STAR_bam,
-            threads=self.thread,
-            by=self.args.sortBy,
-        )
-        os.remove(self.unsort_STAR_bam)
-
 
     def add_star_metrics(self):
         """
@@ -152,12 +139,6 @@ is higher than or equal to this value.""",
         '--starMem',
         help='Default `30`. Maximum memory that STAR can use.',
         default=30
-    )
-    parser.add_argument(
-        '--sortBy',
-        help='can be one of ["unsort", "pos", "name"]. Methods to sort the output bam file',
-        default='unsort',
-        choices=["pos", "name", "unsort"],
     )
     if sub_program:
         parser.add_argument('--fq', help="Required. R2 fastq file.", required=True)
