@@ -30,7 +30,7 @@ class Features:
         gene_id = df['gene_id'].tolist()
         gene_name = df['gene_name'].tolist()
         # avoid adding extra \t to genes.tsv when all the gene_type are Nan
-        # if gene_type is None and add to dataframe, will cause Seurat::Read10X error: Error in FUN(X[[i]], ...) : # # subscript out of bounds
+        # if gene_type is None and add to dataframe, will cause Seurat::Read error: Error in FUN(X[[i]], ...) : # # subscript out of bounds
         if df['type'].isnull().sum() == len(df['type']):
             gene_type = None
         else:

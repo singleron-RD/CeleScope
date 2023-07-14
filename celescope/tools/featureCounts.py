@@ -329,7 +329,7 @@ class FeatureCounts(Step):
                         # also correct umi in gene_umi_pos_cigar
                         for low_seq, high_seq in correct_dict.items():
                             for ref_start in gene_umi_pos[gene_id][low_seq]:
-                                    gene_umi_pos[gene_id][high_seq][ref_start] += 1
+                                gene_umi_pos[gene_id][high_seq][ref_start] += 1
                             del gene_umi_pos[gene_id][low_seq]                    
 
                 # output
@@ -340,7 +340,7 @@ class FeatureCounts(Step):
                     for umi in gene_umi_dict[gene_id]:
                         n_read += gene_umi_dict[gene_id][umi]
                         for pos in gene_umi_pos[gene_id][umi]:
-                                dup_list.append(str(gene_umi_pos[gene_id][umi][pos]))
+                            dup_list.append(str(gene_umi_pos[gene_id][umi][pos]))
                     duplicate = ','.join(dup_list)
                     fh1.write(f'{barcode}\t{gene_id}\t{n_umi}\t{n_read}\t{duplicate}\n')
 

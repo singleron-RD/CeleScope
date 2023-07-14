@@ -202,9 +202,9 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
         )
 
 
-def cell_calling_3(all_matrix_10X_dir, expected_cell_num):
+def cell_calling_3(all_matrix_dir, expected_cell_num):
 
-    count_matrix = CountMatrix.from_matrix_dir(matrix_dir=all_matrix_10X_dir)
+    count_matrix = CountMatrix.from_matrix_dir(matrix_dir=all_matrix_dir)
 
     # Run cell calling
     filtered_bc_indices, round_1_filtered_metrics, _non_ambient_barcode_result = find_nonambient_barcodes(

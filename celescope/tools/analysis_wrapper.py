@@ -46,7 +46,7 @@ def get_opts_analysis(parser, sub_program):
     if sub_program:
         parser.add_argument(
             '--matrix_file',
-            help='Required. Matrix_10X directory from step count.',
+            help='Required. Matrix directory path.',
             required=True,
         )
         parser = s_common(parser)

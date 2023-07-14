@@ -13,8 +13,6 @@ ASSAY_LIST = [
     'capture_virus',
     'fusion',
     'citeseq',
-    'flv_CR',
-    'convert10X',
     'flv_trust4',
     'sweetseq',
     'utils'
@@ -22,7 +20,7 @@ ASSAY_LIST = [
 
 ROOT_PATH = os.path.dirname(__file__)
 
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion', 'citeseq', 'flv_CR', 'flv_trust4', 'sweetseq']
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion', 'citeseq', 'flv_trust4', 'sweetseq']
 
 # argument help
 HELP_DICT = {

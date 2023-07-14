@@ -81,7 +81,7 @@ class Target_metrics(Step):
                         gene_name = record.get_tag('GN')
                     except KeyError:
                         continue
-                    # compatible with 10X bam
+                    # compatible with tag bam
                     try:
                         barcode = record.get_tag('CB')
                         UMI = record.get_tag('UB')
