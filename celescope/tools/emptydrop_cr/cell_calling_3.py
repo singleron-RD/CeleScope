@@ -191,7 +191,6 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
         max_adj_pvalue = 0.01
         is_nonambient = pvalues_adj <= max_adj_pvalue
 
-        # of barcodes overlapped w/ the cellranger results
         filtered_bc_indices = np.concatenate((orig_cells, eval_bcs[is_nonambient]), axis=None)
 
         return filtered_bc_indices, gg_filtered_metrics, NonAmbientBarcodeResult(

@@ -1,146 +1,7 @@
-#!/usr/bin/env python
-#
-# Copyright (c) 2015 10X Genomics, Inc. All rights reserved.
-#
-
 import sys
 
 import numpy as np
 import scipy.stats as sp_stats
-
-# import cellranger.constants as cr_constants
-# import tenkit.constants as tk_constants
-# import tenkit.seq as tk_seq
-# import tenkit.stats as tk_stats
-
-# def to_col_vec(a):
-#     """ Convert a 1-d array to a column vector """
-#     return np.reshape(a, (len(a), 1))
-
-# def create_gmm(weights, means, sd):
-#     """ Create a 2-component GMM with tied variance and given initialization
-#         This uses the sklearn 0.17.1 interface - it changes in 0.18.x """
-#     gmm = sk_mix.GMM(n_components=2,
-#                      covariance_type='tied',
-#                      init_params='',
-#                      params='wmc')
-#     gmm.weights_ = np.array(weights)
-#     gmm.means_ = np.reshape(means, (len(means), 1))
-#     gmm._set_covars(np.reshape(sd, (1,1)))
-#     return gmm
-
-
-# def multistart_gmm(data, weights, means_list, sd):
-#     """ Sweep over the given initial mean vectors
-#         and return the result with the highest log-likelihood """
-#     best_gmm = None
-#     max_loglk = float('-inf')
-#     for means in means_list:
-#         gmm = create_gmm(weights=weights, means=means, sd=sd)
-#         gmm.fit(data)
-
-#         # sklearn 0.17 return type
-#         loglk = np.sum(gmm.score_samples(data)[0])
-
-#         if loglk > max_loglk:
-#             best_gmm = gmm
-#             max_loglk = loglk
-
-#     return best_gmm
-
-
-# # Inverse Simpson Index, or the effective diversity of power 2
-# def effective_diversity(counts):
-#     numerator = np.sum(counts)**2
-#     denominator = np.sum(v**2 for v in counts)
-#     effective_diversity = tk_stats.robust_divide(float(numerator), float(denominator))
-#     return effective_diversity
-
-
-# def compute_percentile_from_distribution(counter, percentile):
-#     """ Takes a Counter object (or value:frequency dict) and computes a single percentile.
-#     Uses Type 7 interpolation from:
-#       Hyndman, R.J.; Fan, Y. (1996). "Sample Quantiles in Statistical Packages".
-#     """
-#     assert 0 <= percentile <= 100
-
-#     n = np.sum(counter.values())
-#     h = (n - 1) * (percentile / 100.0)
-#     lower_value = None
-
-#     cum_sum = 0
-#     for value, freq in sorted(counter.items()):
-#         cum_sum += freq
-#         if cum_sum > np.floor(h) and lower_value is None:
-#             lower_value = value
-#         if cum_sum > np.ceil(h):
-#             return lower_value + (h - np.floor(h)) * (value - lower_value)
-
-# # Test for compute_percentile_from_distribution()
-# # def test_percentile(x, p):
-# #    c = Counter()
-# #    for xi in x:
-# #        c[xi] += 1
-# #    my_res = np.array([compute_percentile_from_distribution(c, p_i) for p_i in p], dtype=float)
-# #    numpy_res = np.percentile(x, p)
-# #    print np.sum(np.abs(numpy_res - my_res))
-
-# def compute_iqr_from_distribution(counter):
-#     p25 = compute_percentile_from_distribution(counter, 25)
-#     p75 = compute_percentile_from_distribution(counter, 75)
-#     return p75 - p25
-
-
-# def compute_median_from_distribution(counter):
-#     return compute_percentile_from_distribution(counter, 50)
-
-
-# def correct_bc_error(bc_confidence_threshold, seq, qual, wl_dist):
-#     '''Attempt to correct an incorrect BC sequence by computing
-#     the probability that a Hamming distance=1 BC generated
-#     the observed sequence, accounting for the prior distribution
-#     of the whitelist barcodes (wl_dist), and the QV of the base
-#     that must have been incorrect'''
-
-#     # QV values
-#     qvs = np.fromstring(qual, dtype=np.byte) - tk_constants.ILLUMINA_QUAL_OFFSET
-
-#     # Char array of read
-#     a = array.array('c', seq)
-
-#     # Likelihood of candidates
-#     wl_cand = []
-#     likelihoods = []
-
-#     # Enumerate Hamming distance 1 sequences - if a sequence
-#     # is on the whitelist, compute it's likelihood.
-#     for pos in range(len(a)):
-#         existing = a[pos]
-#         for c in tk_seq.NUCS:
-#             if c == existing:
-#                 continue
-#             a[pos] = c
-#             test_str = a.tostring()
-
-#             # prior probability of this BC
-#             p_bc = wl_dist.get(test_str)
-#             if p_bc is not None:
-#                 # probability of the base error
-#                 edit_qv = min(33.0, float(qvs[pos]))
-#                 p_edit = 10.0**(-edit_qv / 10.0)
-#                 wl_cand.append(test_str)
-#                 likelihoods.append(p_bc * p_edit)
-
-#         a[pos] = existing
-
-#     posterior = np.array(likelihoods)
-#     posterior /= posterior.sum()
-#     if len(posterior) > 0:
-#         pmax = posterior.max()
-#         if pmax > bc_confidence_threshold:
-#             return wl_cand[np.argmax(posterior)]
-
-#     return None
 
 
 def determine_max_filtered_bcs(recovered_cells):
@@ -201,7 +62,6 @@ def filter_cellular_barcodes_ordmag(bc_counts, recovered_cells):
         msg = "WARNING: All barcodes do not have enough reads for ordmag, allowing no bcs through"
         return [], metrics, msg
 
-#     baseline_bc_idx = int(round(float(recovered_cells) * (1 - cr_constants.ORDMAG_RECOVERED_CELLS_QUANTILE))) # Quantile=0.99
     baseline_bc_idx = int(round(float(recovered_cells) * (1 - 0.99)))  # Quantile=0.99
     baseline_bc_idx = min(baseline_bc_idx, len(nonzero_bc_counts) - 1)
     assert baseline_bc_idx < max_filtered_bcs
@@ -210,7 +70,6 @@ def filter_cellular_barcodes_ordmag(bc_counts, recovered_cells):
     top_n_boot = np.array([
         find_within_ordmag(np.random.choice(nonzero_bc_counts, len(nonzero_bc_counts)), baseline_bc_idx)
         for i in range(100)  # 100
-        #         for i in range(cr_constants.ORDMAG_NUM_BOOTSTRAP_SAMPLES) # 100
     ])
 
     metrics.update(summarize_bootstrapped_top_n(top_n_boot))
@@ -238,79 +97,6 @@ def filter_cellular_barcodes_fixed_cutoff(bc_counts, cutoff):
     }
     return top_bc_idx, metrics, None
 
-
-# def filter_cellular_barcodes_manual(matrix, cell_barcodes):
-#     """ Take take all barcodes that were given as cell barcodes """
-#     barcodes = list(set(matrix.bcs) & set(cell_barcodes))
-
-#     metrics = {
-#         'filtered_bcs': len(barcodes),
-#         'filtered_bcs_lb': len(barcodes),
-#         'filtered_bcs_ub': len(barcodes),
-#         'max_filtered_bcs': 0,
-#         'filtered_bcs_var': 0,
-#         'filtered_bcs_cv': 0,
-#     }
-
-#     return barcodes, metrics, None
-
-
-# def merge_filtered_metrics(filtered_metrics):
-#     result = {
-#         'filtered_bcs': 0,
-#         'filtered_bcs_lb': 0,
-#         'filtered_bcs_ub': 0,
-#         'max_filtered_bcs': 0,
-#         'filtered_bcs_var': 0,
-#         'filtered_bcs_cv': 0,
-#     }
-#     for i, fm in enumerate(filtered_metrics):
-#         # Add per-gem group metrics
-#         result.update({'gem_group_%d_%s' % (i + 1, key): value for key, value in fm.iteritems()})
-
-#         # Compute metrics over all gem groups
-#         result['filtered_bcs'] += fm['filtered_bcs']
-#         result['filtered_bcs_lb'] += fm['filtered_bcs_lb']
-#         result['filtered_bcs_ub'] += fm['filtered_bcs_ub']
-#         result['max_filtered_bcs'] += fm['max_filtered_bcs']
-#         result['filtered_bcs_var'] += fm['filtered_bcs_var']
-
-#     # Estimate CV based on sum of variances and means
-#     result['filtered_bcs_cv'] = tk_stats.robust_divide(
-#         np.sqrt(result['filtered_bcs_var']), fm['filtered_bcs'])
-
-#     return result
-
-# def correct_umis(dupe_keys):
-#     corrected_dupe_keys = collections.defaultdict(dict)
-#     for dupe_key, umis in dupe_keys.iteritems():
-#         for umi in umis:
-#             new_umi = correct_umi(umi, umis)
-#             if not (new_umi == umi):
-#                 corrected_dupe_keys[dupe_key][umi] = new_umi
-
-#     return corrected_dupe_keys
-
-# def correct_umi(seq, counts):
-#     corrected_seq = seq
-#     count = counts.get(seq, 0)
-
-#     a = array.array('c', seq)
-#     for pos in xrange(len(a)):
-#         existing = a[pos]
-#         for c in tk_seq.NUCS:
-#             if c == existing:
-#                 continue
-#             a[pos] = c
-#             test_str = a.tostring()
-
-#             value = counts.get(test_str, 0)
-#             if value > count or (value == count and corrected_seq < test_str):
-#                 corrected_seq = test_str
-#                 count = value
-
-#         a[pos] = existing
-#     return corrected_seq
 
 
 def est_background_profile_bottom(matrix, bottom_frac):

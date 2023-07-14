@@ -32,7 +32,6 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 |[dynaseq](./assay/multi_dynaseq.md)|single-cell dynamic RNA-Seq|DynaSCOPE<sup>TM</sup>|
 |[tag](./assay/multi_tag.md)|single-cell sample multiplexing|CLindex<sup>TM</sup>|
 |[vdj](./assay/multi_vdj.md)|single-cell VDJ|GEXSCOPE<sup>TM</sup> IR|
-|[flv_CR](./assay/multi_flv_CR.md)|single-cell full length VDJ|sCircle<sup>TM</sup>|
 |[flv_trust4](./assay/multi_flv_trust4.md)|single-cell full length VDJ|sCircle<sup>TM</sup>|
 |[capture_virus](./assay/multi_capture_virus.md)|single-cell virus|FocuSCOPE<sup>TM</sup> mRNA × EBV|
 |[snp](./assay/multi_snp.md)|single-cell variant|FocuSCOPE<sup>TM</sup>|

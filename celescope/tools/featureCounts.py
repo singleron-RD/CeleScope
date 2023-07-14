@@ -306,7 +306,7 @@ class FeatureCounts(Step):
                 return x.query_name.split('_', 1)[0]
             for _, g in groupby(inputFile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
-                gene_umi_pos_cigar = utils.genDict(dim=4, valType=int)
+                gene_umi_pos = utils.genDict(dim=3, valType=int)
                 segs = []
                 for seg in g:
                     segs.append(seg)
@@ -315,7 +315,7 @@ class FeatureCounts(Step):
                         continue
                     gene_id = seg.get_tag('XT')
                     gene_umi_dict[gene_id][umi] += 1
-                    gene_umi_pos_cigar[gene_id][umi][seg.reference_start][seg.cigarstring] += 1
+                    gene_umi_pos[gene_id][umi][seg.reference_start] += 1
 
                 gene_correct_umi = None
                 if self.args.correct_UMI:
@@ -328,10 +328,9 @@ class FeatureCounts(Step):
 
                         # also correct umi in gene_umi_pos_cigar
                         for low_seq, high_seq in correct_dict.items():
-                            for ref_start in gene_umi_pos_cigar[gene_id][low_seq]:
-                                for cigar in gene_umi_pos_cigar[gene_id][low_seq][ref_start]:
-                                    gene_umi_pos_cigar[gene_id][high_seq][ref_start][cigar] += 1
-                            del gene_umi_pos_cigar[gene_id][low_seq]                    
+                            for ref_start in gene_umi_pos[gene_id][low_seq]:
+                                    gene_umi_pos[gene_id][high_seq][ref_start] += 1
+                            del gene_umi_pos[gene_id][low_seq]                    
 
                 # output
                 for gene_id in gene_umi_dict:
@@ -340,9 +339,8 @@ class FeatureCounts(Step):
                     n_read = 0
                     for umi in gene_umi_dict[gene_id]:
                         n_read += gene_umi_dict[gene_id][umi]
-                        for pos in gene_umi_pos_cigar[gene_id][umi]:
-                            for cigar in gene_umi_pos_cigar[gene_id][umi][pos]:
-                                dup_list.append(str(gene_umi_pos_cigar[gene_id][umi][pos][cigar]))
+                        for pos in gene_umi_pos[gene_id][umi]:
+                                dup_list.append(str(gene_umi_pos[gene_id][umi][pos]))
                     duplicate = ','.join(dup_list)
                     fh1.write(f'{barcode}\t{gene_id}\t{n_umi}\t{n_read}\t{duplicate}\n')
 

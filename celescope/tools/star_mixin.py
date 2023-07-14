@@ -155,8 +155,9 @@ is higher than or equal to this value.""",
     )
     parser.add_argument(
         '--sortBy',
-        help='can be one of ["pos", "name"]. output position or name sorted bam. Please note `celescope rna featureCounts` only accept name sorted bam.',
-        default='name'
+        help='can be one of ["unsort", "pos", "name"]. Methods to sort the output bam file',
+        default='unsort',
+        choices=["pos", "name", "unsort"],
     )
     if sub_program:
         parser.add_argument('--fq', help="Required. R2 fastq file.", required=True)
