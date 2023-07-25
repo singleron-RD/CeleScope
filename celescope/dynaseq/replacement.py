@@ -1,13 +1,19 @@
-#!/bin/env python
-# coding=utf8
-
-import os
+import os,re
 import sys
-import subprocess
 import pandas as pd
+import anndata
 import pysam
+from multiprocessing import Pool
+import subprocess
+
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
+from celescope.__init__ import HELP_DICT
+from celescope.dynaseq.__init__ import DYNA_MATRIX_DIR_SUFFIX
+from celescope.rna.mkref import Mkref_rna
+from celescope.tools.matrix import CountMatrix, Features, ROW, COLUMN
+from celescope.tools import reference
+from celescope.tools.plotly_plot import Tsne_plot, Violin_plot
 
 toolsdir = os.path.dirname(__file__)
 
@@ -15,140 +21,192 @@ toolsdir = os.path.dirname(__file__)
 class Replacement(Step):
     """
     Features
-    - Computes the replacement rates in each cell and gene.
-    - Boxplots for rates distribution.
+    - Quantify unlabeled and labeled RNA.
+    - Boxplots for TOR rates distribution.
+    - TSNE plot for TOR rate 
 
     Output
-    - `{sample}.new_matrix.tsv.gz` New RNA matrix.
-    - `{sample}.old_matrix.tsv.gz` Old RNA matrix.
-    - `{sample}.fraction_of_newRNA_per_cell.txt` Fraction of new RNA of each cell.
-    - `{sample}.fraction_of_newRNA_per_gene.txt` Fraction of new RNA of each gene.
-    - `{sample}.fraction_of_newRNA_matrix.txt` Fraction of new RNA of each cell and gene.
+    - `{sample}.labeled.h5ad` h5ad file contains ['total', 'labeled', 'unlabeled'] layers and TOR rate of each cell/gene.
+    - `{sample}_labeled_feature_bc_matrix` The labeled expression matrix of cell barcodes & all features in Matrix Market Exchange Formats. (will be deprecated in future versions)
+    - `{sample}_unlabeled_feature_bc_matrix` The unlabeled expression matrix of cell barcodes & all features in Matrix Market Exchange Formats. (will be deprecated in future versions)
+    - `{sample}_labeled_detail.txt`  tab-delimited  file:
+        - Barcode: Cell barcode sequence
+        - UMI: UMI sequence
+        - geneID: gene ID
+        - TC: TC site number in a read (backgroup snp removed)
     """
 
-    def __init__(self, args):
-        Step.__init__(self, args)
+    def __init__(self, args, display_title=None):
+        Step.__init__(self, args, display_title=display_title)
 
         # input files
         self.outdir = args.outdir
         self.sample = args.sample
-        self.bam_file = args.bam
+        self.thread = int(args.thread)
+        self.inbam = args.bam
+        self.bcfile = args.cell
         self.snp_file = args.bg
-        self.bg_cov = args.bg_cov
-        self.snp_threshold = args.snp_threshold
+        self.tsne = args.tsne
+        self.cellsplit = args.cellsplit
+
+        # set
+        self.cell_dict, self.cell_num = utils.barcode_list_stamp(self.bcfile,cut=self.cellsplit)
+        gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
+        gp = reference.GtfParser(gtf_file)
+        gp.get_id_name()
+        self.features = gp.get_features()
+        self.used_gene_id, self.used_gene_name = [], []
+        self.used_features = None
+        self.totaldf = pd.DataFrame()
+        self.newdf, self.olddf = pd.DataFrame(), pd.DataFrame()
+        self.adata = anndata.AnnData()
 
         # output files
-        self.outmat = os.path.join(self.outdir, self.sample+'.TC_matrix.tsv')
-        self.outpre = os.path.join(self.outdir, self.sample)
+        ## tmp outputdir
+        self.tmp_dir = f'{args.outdir}/tmp'
+        utils.check_mkdir(self.tmp_dir)
+        ## final outputs
+        self.h5ad = f'{self.out_prefix}.labeled.h5ad'
+        self.detail_txt = f'{self.out_prefix}_labeled_detail.txt'
+        self.dir_labeled = f'{self.out_prefix}_{DYNA_MATRIX_DIR_SUFFIX[0]}'
+        self.dir_unlabeled = f'{self.out_prefix}_{DYNA_MATRIX_DIR_SUFFIX[1]}'
+
 
     @utils.add_log
     def run(self):
         # get backgroud snp        
-        bg = self.background_snp(self.snp_file, self.bg_cov, self.snp_threshold)
-        # get reads with TC
-        outframe = self.extract_dem(self.bam_file, bg)
-        # run_R
-        self.generate_TC_matrix(outframe, self.outmat)
+        self.bg = self.background_snp()
+        # replacement
+        self.run_quant()
+        # stat and plot
+        self.tor_plot()
+        self.add_help()
+        # output dedup and clean 
+        self.clean_tmp()
 
-        # split to New and Old Matrix
-        new_mat = self.outpre+'.new_matrix.tsv'
-        old_mat = self.outpre+'.old_matrix.tsv'
-        con_mat = self.outpre+'.NvsO_matrix.tsv'
-        self.split_matrix(self.outmat, self.outpre)
-
-        # replacement stat
-        self.replacment_stat(con_mat, self.outpre)
-        # plot
-        div_item = self.replacment_plot(self.outpre)
-
-        # report
-        self.report_prepare(div_item)
-        self._clean_up()
-
-        # clean
-        cmd = ['rm', self.outmat]
-        self.run_cmd(cmd)
-        cmd = ['rm', con_mat]
-        self.run_cmd(cmd)
-        cmd = ['gzip', new_mat]
-        self.run_cmd(cmd)
-        cmd = ['gzip', old_mat]
-        self.run_cmd(cmd)
-
-    def run_cmd(self, cmd):
-        subprocess.call(' '.join(cmd), shell=True)
 
     @utils.add_log
-    def extract_dem(self, bam, bg):
+    def run_quant(self):
+        ## set Parallelism para
+        self.cell_list = []
+        cell_arr = []
+        fetch_arr = [self.inbam] * len(self.cell_dict)
+        snp_list = [self.bg] * len(self.cell_dict)
+        for x in self.cell_dict:
+            cell_arr.append(self.cell_dict[x])
+            self.cell_list.extend(self.cell_dict[x])
+    
+        mincpu = min(self.cell_num, self.thread)
+        with Pool(mincpu) as pool:
+            results = pool.starmap(Replacement.modify_bam, 
+                      zip(fetch_arr,snp_list,cell_arr))
+        # merge matrix
+        for i in results:
+            self.totaldf = pd.concat([self.totaldf,i])
+        self.newdf = self.totaldf[self.totaldf['TC']>0]
+        self.olddf = self.totaldf[self.totaldf['TC']==0]
+        self.totaldf.to_csv(self.detail_txt, sep="\t", index=False)
+
+        used_gene = self.totaldf['geneID'].unique()        
+        for index,item in enumerate(self.features.gene_id):
+            if item in used_gene:
+                self.used_gene_id.append(item)
+                self.used_gene_name.append(self.features.gene_name[index])
+        self.used_features = Features(self.used_gene_id,self.used_gene_name)
+
+        # output
+        tmp_newdf = self.newdf.groupby([COLUMN, ROW]).agg({'UMI': 'count'})
+        tmp_olddf = self.olddf.groupby([COLUMN, ROW]).agg({'UMI': 'count'})
+        self.write_sparse_matrix(tmp_newdf, self.dir_labeled)
+        self.write_sparse_matrix(tmp_olddf, self.dir_unlabeled)
+        self.write_h5ad(self.totaldf, self.newdf, self.olddf)
+
+
+    @staticmethod
+    def modify_bam(bam, bg, cells):
+        save = pysam.set_verbosity(0)
         bamfile = pysam.AlignmentFile(bam, 'rb')
-        countdict = {}
-        for read in bamfile.fetch():
+        pysam.set_verbosity(save)
+        readdict= {}
+
+        for read in bamfile.fetch(until_eof=True):
             try:
-                chro = read.reference_name
                 cb = read.get_tag('CB')
-                ub = read.get_tag('UB')
-                if not read.has_tag('GN'):
+                if cb not in cells:
                     continue
-                gene = read.get_tag('GN')
+                chro = read.reference_name
+                ub = read.get_tag('UB')
+                gene = read.get_tag('GX')
+                tctag = 0
+                true_tc = []
 
                 if read.get_tag('ST') == '+':
                     stag = read.get_tag('TL')
                 else:
                     stag = read.get_tag('AL')
                 if len(stag) == 1 and stag[0] == 0:
-                    gene += '--T'
+                    tctag = 0
+                    true_tc = stag
                 else:
-                    fcount = 0
                     for si in range(0, len(stag)):
                         pos = chro + '_' + str(stag[si])
-                        if pos in bg:
-                            fcount += 1
-                    if fcount == len(stag):
-                        gene += '--T'
-                    else:
-                        gene += '--C'
-
-                readinfo = '\t'.join([gene, cb, ub])
-                if readinfo not in countdict:
-                    countdict[readinfo] = 1
+                        if pos not in bg:
+                            true_tc.append(int(stag[si]))
+                    tctag = len(true_tc)
+                ## dedup: select the most TC read per UMI_gene
+                readid = f'{cb}_{ub}_{gene}'
+                if readid not in readdict:
+                    readdict[readid] = [tctag,read,true_tc]
+                else:
+                    if tctag > readdict[readid][0]:
+                        readdict[readid] = [tctag,read,true_tc]
 
             except (ValueError, KeyError):
                 continue
         bamfile.close()
 
-        out1 = []
-        for rid in countdict:
-            checkt = rid.split('--T')
-            if len(checkt) == 2:
-                pairc = rid.replace('--T','--C')
-                if pairc not in countdict:
-                    out1.append(rid.split('\t'))
-            else:
-                out1.append(rid.split('\t'))
-
-        outframe = pd.DataFrame(out1)
-        outframe.columns=['geneID','Barcode','UMI']
-        out1=[]
-        countdict = {}
+        ## count df
+        tc_df = pd.DataFrame.from_dict(readdict,orient='index', columns=["TC","read","loc"])
+        tc_df.reset_index(inplace=True)
+        ub_df = tc_df['index'].str.split('_',expand=True)
+        ub_df.columns = ['Barcode','UMI','geneID']
+        #ub_df['Barcode'] = [cell] * ub_df.shape[0]
+        outframe = pd.concat([ub_df,tc_df['TC']], axis=1)
 
         return outframe
 
+    @staticmethod
+    def createTag(d):
+        return ''.join([''.join(key) + str(d[key]) + ';' for key in d.keys()])[:-1]
+
+    @staticmethod
+    def modifySCTag(sc,cnt,sstag):
+        pattern = re.compile(rf'{sstag}\d+')
+        result = pattern.sub(f'{sstag}{cnt}', sc)
+        return result
+
     @utils.add_log
-    def background_snp(self, bgfiles, cov=1, snp_threshold=0.5):
-        ## dict.update()
+    def background_snp(self):
         outdict = {}
-        bgs=bgfiles.strip().split(',')
+        bgs = []
+        for bgargv in self.snp_file:
+            if ',' in bgargv:
+                bgs += bgargv.strip().split(',')
+            else:
+                bgs.append(bgargv)
+        
         for bgfile in bgs:
             if bgfile.endswith('.csv'):
-                df = pd.read_csv(bgfile,index_col=0, dtype={"chrom":str})
-                df = df[df['convs']>=cov]
+                df = pd.read_csv(bgfile, dtype={"chrom":str})
                 if 'pos' in df.columns:
                     df['chrpos'] = df['chrom']+'_'+df['pos'].astype(str)
                 else: #compatible with previous version
                     df['chrpos'] = df['chrom']+'_'+df['pos2'].astype(str)
-                df1 = df[['chrpos','posratio']]
+                df1 = df[['chrpos','convs']]
                 df1.set_index('chrpos',inplace=True)
-                outdict.update(df1.to_dict(orient='index'))
+                for key1 in df1.index.to_list():
+                    outdict[key1] = 1
+                #outdict.update(df1.to_dict(orient='index'))
             elif bgfile.endswith('.vcf'):
                 bcf_in = pysam.VariantFile(bgfile)
                 for rec in bcf_in.fetch():
@@ -159,19 +217,6 @@ class Replacement(Step):
                     except (ValueError, KeyError):
                         continue
                 bcf_in.close()
-            elif bgfile.upper() == "SELF":
-                selfbg = os.path.splitext(self.bam_file)[0]+'.csv'
-                df = pd.read_csv(selfbg,index_col=0, dtype={"chrom":str})
-                df = df[df['convs']>=cov]
-                df = df[df['posratio']>=snp_threshold]
-                if 'pos' in df.columns:
-                    df['chrpos'] = df['chrom']+'_'+df['pos'].astype(str)
-                else: #compatible with previous version
-                    df['chrpos'] = df['chrom']+'_'+df['pos2'].astype(str)
-                df1 = df[['chrpos','posratio']]
-                df1.set_index('chrpos',inplace=True)
-                outdict.update(df1.to_dict(orient='index'))                
-                continue
             else:
                 try:
                     sys.exit(1)
@@ -181,177 +226,90 @@ class Replacement(Step):
                     print('Background snp file format cannot be recognized! Only csv or vcf format.')
         return outdict
 
-    @utils.add_log
-    def generate_TC_matrix(self, read, outmat):
-        table = read.pivot_table(
-                    index='geneID', columns='Barcode', values='UMI',
-                    aggfunc=len).fillna(0).astype(int)
-        table.index.name = ''
-        table.to_csv(outmat,sep="\t")
-
 
     @utils.add_log
-    def split_matrix(self, mat, outpre):
-        outnew = open(outpre+'.new_matrix.tsv', 'w')
-        outold = open(outpre+'.old_matrix.tsv', 'w')
-        con_mat = open(outpre+'.NvsO_matrix.tsv', 'w')
-        infile = open(mat, 'r')
-
-        tmph = infile.readline().strip().split()
-        fill_na = ['0'] * len(tmph)
-        tmph.insert(0, '')
-        outnew.write('\t'.join(tmph)+'\n')
-        outold.write('\t'.join(tmph)+'\n')
-        con_mat.write('\t'.join(tmph)+'\n')
-
-        genes = {}
-        for i in infile:
-            ii = i.strip().split()
-            gt = ii[0].split('--')
-            ii[0] = gt[0]
-            if gt[0] not in genes:
-                genes[gt[0]] = [0, [], []]
-            if gt[1] == 'C':
-                genes[gt[0]][0] += 1
-                genes[gt[0]][1] = ii[1:]
-                outnew.write('\t'.join(ii)+'\n')
-            elif gt[1] == 'T':
-                genes[gt[0]][0] += 2
-                genes[gt[0]][2] = ii[1:]
-                outold.write('\t'.join(ii)+'\n')
-
-        for gi in genes:
-            con_mat.write(gi)
-            if genes[gi][0] == 3:
-                for ci in range(len(genes[gi][1])):
-                    con_mat.write('\t'+genes[gi][1][ci]+':'+genes[gi][2][ci])
-                con_mat.write('\n')
-            elif genes[gi][0] == 1:
-                outold.write(gi+'\t'+'\t'.join(fill_na)+'\n')
-                for ci in range(len(genes[gi][1])):
-                    con_mat.write('\t'+genes[gi][1][ci]+':'+'0')
-                con_mat.write('\n')
-            elif genes[gi][0] == 2:
-                outnew.write(gi+'\t'+'\t'.join(fill_na)+'\n')
-                for ci in range(len(genes[gi][2])):
-                    con_mat.write('\t'+'0'+':'+genes[gi][2][ci])
-                con_mat.write('\n')
-
-        outnew.close()
-        outold.close()
-        con_mat.close()
-        infile.close()
+    def write_sparse_matrix(self, df, matrix_dir):
+        count_matrix = CountMatrix.from_dataframe(df, self.features, barcodes=self.cell_list)
+        count_matrix.to_matrix_dir(matrix_dir)
 
     @utils.add_log
-    def replacment_stat(self, inmat, outpre, mincell=10, mingene=10):
-
-        outcell = open(outpre+'.fraction_of_newRNA_per_cell.txt', 'w')
-        outgene = open(outpre+'.fraction_of_newRNA_per_gene.txt', 'w')
-        outmat1 = open(outpre+'.fraction_of_newRNA_matrix.txt', 'w')
-
-        cells = {}
-        genes = {}
-        mats = {}
-        with open(inmat) as f:
-            hh = f.readline().strip().split()
-            hh.insert(0, '')
-            outmat1.write('\t'.join(hh)+'\n')
-            for h in hh[1:]:
-                cells[h] = [[], []]
-            for i in f:
-                ii = i.strip().split()
-                mats[ii[0]] = []
-                genes[ii[0]] = [[], []]
-                for xi in range(1, len(ii)):
-                    xx = [int(x) for x in ii[xi].split(':')]
-                    if sum(xx) == 0:
-                        tmpf = 'NA'
-                    else:
-                        tmpf = float(xx[0])/(xx[0]+xx[1])
-                    mats[ii[0]].append(str(tmpf))
-                    if sum(xx) < 2:
-                        continue
-                    cells[hh[xi]][0].append(float(xx[0]))
-                    cells[hh[xi]][1].append(xx[1])
-                    genes[ii[0]][0].append(float(xx[0]))
-                    genes[ii[0]][1].append(xx[1])
-
-        for ci in cells:
-            if len(cells[ci][0]) < mincell:
-                continue
-            cfloat = sum(cells[ci][0])/(sum(cells[ci][0])+sum(cells[ci][1]))
-            outcell.write(ci+'\t'+str(cfloat)+'\n')
-
-        for gi in genes:
-            if len(genes[gi][0]) < mingene:
-                continue
-            gfloat = sum(genes[gi][0])/(sum(genes[gi][0])+sum(genes[gi][1]))
-            outgene.write(gi+'\t'+str(gfloat)+'\n')
-
-        for mi in mats:
-            outmat1.write(mi+'\t'+'\t'.join(mats[mi])+'\n')
-
-        outcell.close()
-        outgene.close()
-        outmat1.close()
-
-    @utils.add_log
-    def replacment_plot(self, sample):
-        import plotly
-        import plotly.graph_objects as go
-        from plotly.subplots import make_subplots
-
-        outpre = os.path.basename(sample)
-        df1 = pd.read_table(sample+'.fraction_of_newRNA_per_gene.txt', header=None)
-        df1.columns = ['gene', 'per']
-        df = pd.read_table(sample+'.fraction_of_newRNA_per_cell.txt', header=None)
-        df.columns = ['gene', 'per']
-
-        fig = make_subplots(rows=1, cols=2)
-        fig.add_trace(
-            go.Violin(y=df1['per'], box_visible=True, line_color='black',
-                      meanline_visible=True, fillcolor='#1f77b4', opacity=0.6, x0=outpre),
-            row=1, col=1
+    def write_h5ad(self, df, df_new, df_old):
+        layers = {}
+        matrix = CountMatrix.dataframe_to_matrix(df, self.cell_list, self.used_gene_id)
+        layers['total'] = matrix
+        layers['labeled'] = CountMatrix.dataframe_to_matrix(df_new, self.cell_list, self.used_gene_id)
+        layers['unlabeled'] = CountMatrix.dataframe_to_matrix(df_old, self.cell_list, self.used_gene_id)
+        
+        adata = anndata.AnnData(
+            X=matrix,
+            obs=pd.DataFrame(index=pd.Series(self.cell_list, name='cell')),
+            var=pd.DataFrame(index=pd.Series(self.used_gene_id, name='gene_id'), data={'gene_name': pd.Categorical(self.used_gene_name)}),
+            layers=layers
         )
-        fig.add_trace(
-            go.Violin(y=df['per'], box_visible=True, line_color='black',
-                      meanline_visible=True, fillcolor='#ff7f0e', opacity=0.6, x0=outpre),
-            row=1, col=2
+        adata = self.tor_stat(adata)
+        adata.write(self.h5ad)
+        self.adata = adata
+
+    @utils.add_log
+    def tor_stat(self, adata):
+        cell_ntr = adata.layers['labeled'].sum(axis=1) / adata.layers['total'].sum(axis=1)
+        gene_ntr = adata.layers['labeled'].sum(axis=0) / adata.layers['total'].sum(axis=0)
+        adata.obs['TOR'] = cell_ntr
+        adata.var['TOR'] = gene_ntr.T
+        return adata
+
+    @utils.add_log
+    def tor_plot(self):
+        tsne = pd.read_csv(self.tsne,sep="\t",index_col=0)
+        tsne = tsne.loc[self.adata.obs.index]
+        self.adata.obs['tSNE_1'] = tsne['tSNE_1']
+        self.adata.obs['tSNE_2'] = tsne['tSNE_2']
+
+        tsne_tor = Tsne_plot(self.adata.obs.sort_values(by="TOR"), 'TOR', discrete=False)
+        tsne_tor.set_color_scale("PuRd")        
+        self.add_data(tsne_tor=tsne_tor.get_plotly_div())
+
+        vln_gene = Violin_plot(self.adata.var['TOR'], 'gene', color='#1f77b4').get_plotly_div()
+        self.add_data(violin_gene=vln_gene)
+        vln_cell = Violin_plot(self.adata.obs['TOR'], 'cell', color='#ff7f0e').get_plotly_div()
+        self.add_data(violin_cell=vln_cell)
+
+    @utils.add_log
+    def add_help(self):
+        self.add_help_content(
+            name='TOR:',
+            content='(RNA turn-over rate) Fraction of labeled transcripts per gene or cell.'
         )
 
-        fig.update_layout(yaxis_zeroline=True,  showlegend=False)
-        fig.update_layout(plot_bgcolor='#FFFFFF')
-        fig.update_xaxes(showgrid=False, linecolor='black', showline=True, ticks=None)
-        fig.update_yaxes(showgrid=False, linecolor='black', showline=True, ticks='outside',
-                         title_text="Fraction new RNA (per gene)", row=1, col=1, rangemode="tozero")
-        fig.update_yaxes(showgrid=False, linecolor='black', showline=True, ticks='outside',
-                         title_text="Fraction new RNA (per cell)", row=1, col=2, rangemode="tozero")
 
-        div = plotly.offline.plot(fig, include_plotlyjs=False, output_type='div')
+    def run_cmd(self, cmd):
+        subprocess.call(' '.join(cmd), shell=True)
 
-        return div
-
-    def report_prepare(self, outdiv):
-        self.add_data(replacement=outdiv)
+    @utils.add_log
+    def clean_tmp(self):
+        cmd = (f'rm -rf {self.tmp_dir}')
+        self.debug_subprocess_call(cmd)
 
 
 @utils.add_log
 def replacement(args):
-
-    with Replacement(args) as runner:
+    if args.control:
+        return
+    with Replacement(args, display_title='Labeled') as runner:
         runner.run()
 
 
 def get_opts_replacement(parser, sub_program):
-    parser.add_argument('--bg_cov', type=int, default=1,
-                        help='background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format')
-    parser.add_argument('--snp_threshold', type=float, default=0.5,
-                        help='snp threshold filter, greater than snp_threshold will be recognized as snp. Only valid in csv format')
+    parser.add_argument('--genomeDir',help=HELP_DICT['genomeDir'])
+    parser.add_argument("--control", action='store_true',
+                        help="For control samples to generate backgroup snp files and skip replacement")
+    parser.add_argument("--cellsplit", default=300, type=int, help='split N cells into a list')
     if sub_program:
-        parser.add_argument('--bam', help='bam file from conversion step', required=True)
-        parser.add_argument('--bg', help='background snp file, csv or vcf format', required=True)
-        #parser.add_argument('--cell_keep', type=int, default=100000, help='filter cell')
-        parser.add_argument('--min_cell', type=int, default=10, help='a gene expressed in at least cells, default 10')
-        parser.add_argument('--min_gene', type=int, default=10, help='at least gene num in a cell, default 10')
+        parser.add_argument("--bam", 
+            help='convsrion tagged bam from conversion step', required=True)
+        parser.add_argument("--cell", help='barcode cell list', required=True)
+        parser.add_argument('--bg', nargs='+', required=False,
+                            help='background snp file, csv or vcf format')
+        parser.add_argument('--tsne', help='tsne file from analysis step', required=True)
         parser = s_common(parser)
     return parser

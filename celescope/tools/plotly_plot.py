@@ -1,6 +1,7 @@
 import math
 from collections import defaultdict
 import operator,functools
+import numpy as np
 
 import plotly
 import plotly.express as px
@@ -175,14 +176,14 @@ class Tsne_dropdown_plot(Plotly_plot):
 
     def __init__(self, df_tsne,name, feature_name_list, discrete=False):
         super().__init__(df_tsne)
-        
+
         self.name = name
         self.feature_name_list = feature_name_list
         self.discrete = discrete
         self.title = f"t-SNE plot Colored by {self.name}"
         self.x_pos = 0.1
         self._layout = {}
-        
+
         self._buttons=[]
         self._str_coord1 = "tSNE_1"
         self._str_coord2 = "tSNE_2"
@@ -195,28 +196,28 @@ class Tsne_dropdown_plot(Plotly_plot):
             'zerolinecolor': 'black',
             'zerolinewidth': 0.7,
         }
-        
+
         x_ = math.ceil(max(abs(self._df[self._str_coord1])))
         y_ = math.ceil(max(abs(self._df[self._str_coord2])))
         self.x_range = [-x_,x_]
         self.y_range = [-y_,y_]
 
-        
+
     def get_plotly_div(self):
 
         if self.discrete:
             self.discrete_tsne_plot()
         else:
             self.continuous_tsne_plot()
-            
+
         self.update_fig()
-        
+
         return self.plotly_plot()
-        
+
     def continuous_tsne_plot(self):
         self._fig = go.Figure()
         _num = len(self.feature_name_list)
-        i=0 
+        i=0
 
         max_num = math.ceil(max([self._df[_].max() for _ in self.feature_name_list]))
         split_num = math.ceil(max_num/5)
@@ -249,9 +250,9 @@ class Tsne_dropdown_plot(Plotly_plot):
               method="restyle",
              )
             self._buttons.append(button)
-    
-    
-    def discrete_tsne_plot(self):    
+
+
+    def discrete_tsne_plot(self):
         all_figures =[]
         num_all,last_num = 0,0
         for feature_name in self.feature_name_list:
@@ -305,10 +306,10 @@ class Tsne_dropdown_plot(Plotly_plot):
                           method="update",
             )
             self._buttons.append(button)
-        
+
         self._fig = go.Figure(data=functools.reduce(operator.add,[_.data for _ in all_figures]))
-        
-        
+
+
     def update_fig(self):
         self._fig.update_xaxes(
             range=self.x_range,
@@ -351,12 +352,12 @@ class Tsne_single_plot(Plotly_plot):
 
     def __init__(self, df_tsne, feature_name_list, analysis_dir):
         super().__init__(df_tsne)
-        
+
         self.feature_name_list = feature_name_list
         self.analysis_dir = analysis_dir
-        
+
         self._layout = {}
-        
+
         self._str_coord1 = "tSNE_1"
         self._str_coord2 = "tSNE_2"
         self.axes_config = {
@@ -368,13 +369,13 @@ class Tsne_single_plot(Plotly_plot):
             'zerolinecolor': 'black',
             'zerolinewidth': 0.7,
         }
-        
+
         x_ = math.ceil(max(abs(self._df[self._str_coord1])))
         y_ = math.ceil(max(abs(self._df[self._str_coord2])))
         self.x_range = [-x_,x_]
         self.y_range = [-y_,y_]
 
-        
+
     def get_plotly_div(self):
 
         max_num = math.ceil(max([self._df[_].max() for _ in self.feature_name_list]))
@@ -403,11 +404,11 @@ class Tsne_single_plot(Plotly_plot):
                                                                                                         titlefont={'size':11})),
                                             textposition='top center'
                                                 ))
-        
+
             self.update_fig()
             self._fig.update_layout(title={"text": title, "x": 0.5, "y": 0.95, "font": {"size": 15}})
             self._fig.write_image(f"{self.analysis_dir}/{name}_tsne.png")
-        
+
     def update_fig(self):
         self._fig.update_xaxes(
             range=self.x_range,
@@ -433,7 +434,7 @@ class Bar_plot(Plotly_plot):
     def __init__(self, df_bar):
         super().__init__(df_bar)
         self.set_fig()
-    
+
     def set_fig(self):
         self._fig = px.bar(
                     x=[str(i) for i in list(self._df.head(10).ClonotypeID)],
@@ -448,7 +449,7 @@ class Bar_plot(Plotly_plot):
                    title={"x": 0.5, "y": 0.9, "font": {"size": 20, "family": "San Serif"}},
                    plot_bgcolor='#FFFFFF')
 
-                   
+
 class Pie_plot(Plotly_plot):
 
     def __init__(self, df_region):
@@ -489,19 +490,19 @@ class Line_plot(Plotly_plot):
             'showgrid': True,
             'gridcolor': '#F5F5F5',
             'linecolor':'black',
-            'showline': True, 
+            'showline': True,
             'ticks': None,
             'tickmode':'linear',
             'tick0':0,
             'dtick':0.5,
         }
-        
+
         if self.section:
             self.yaxes_config = {
                 'showgrid': True,
                 'gridcolor': '#F5F5F5',
                 'linecolor':'black',
-                'showline': True, 
+                'showline': True,
                 'ticks': None,
                 'rangemode':'tozero',
             }
@@ -510,7 +511,7 @@ class Line_plot(Plotly_plot):
                 'showgrid': True,
                 'gridcolor': '#F5F5F5',
                 'linecolor':'black',
-                'showline': True, 
+                'showline': True,
                 'ticks': None,
                 'range':self.y_range,
             }
@@ -518,7 +519,7 @@ class Line_plot(Plotly_plot):
         self.line_config = {
             'data_frame': df_line,
             'title': self.title,
-            'x': self.x_title, 
+            'x': self.x_title,
             'y': self.y_title,
         }
 
@@ -529,7 +530,7 @@ class Line_plot(Plotly_plot):
     def line_plot(self):
         self._fig = px.line(
             **self.line_config,
-        )  
+        )
 
     def update_fig(self):
         self._fig.update_xaxes(
@@ -539,7 +540,7 @@ class Line_plot(Plotly_plot):
         self._fig.update_yaxes(
             **self.yaxes_config
         )
-        
+
         self._fig.update_layout(
             LAYOUT,
             title={"x":0.5, "y":0.95, "font":{"size":15}},
@@ -548,3 +549,118 @@ class Line_plot(Plotly_plot):
             plot_bgcolor = '#FFFFFF',
             hovermode = "closest"
         )
+
+
+class Conversion_plot(Plotly_plot):
+
+    def __init__(self, df_bar):
+        super().__init__(df_bar)
+        np.random.seed(1)
+        self.values, bins = np.histogram(df_bar['cell_pct'], bins=200)
+        self.bin_centers = (bins[:-1] + bins[1:]) / 2
+        self.set_fig()
+    
+    def set_fig(self):
+        self._fig = px.bar(x=self.bin_centers, y=self.values)
+        self._fig.update_layout(yaxis_type='log')
+        self._fig.update_xaxes(title='cell percent')
+        self._fig.update_yaxes(title='count')
+        self._fig.update_layout( plot_bgcolor='rgba(0,0,0,0)')
+
+
+class Substitution_plot(Plotly_plot):
+
+    def __init__(self, df_bar):
+        super().__init__(df_bar)
+        self.set_fig()
+
+    def set_fig(self):
+
+        num4sample = 0
+        colors4sample = {}
+        num4x = 0
+
+        self._fig = go.Figure()
+
+        for sample in self._df['sample'].unique():
+            legend_show = True
+            colors4sample[sample] = COLORS[num4sample]
+            num4sample += 1
+            flag_x = 'x' + str(num4x+1)
+            df_plot = self._df[self._df['sample'] == sample]
+            num4x += 1
+
+            self._fig.add_trace(go.Bar(name=sample+'+',
+                                 x=df_plot['sample'],
+                                 y=df_plot['+'],
+                                 legendgroup=sample,
+                                 marker_color=colors4sample[sample],
+                                 marker_line_color='#FFFFFF',
+                                 showlegend=legend_show,
+                                 xaxis=flag_x)
+                          )
+            self._fig.add_trace(go.Bar(name=sample+'-',
+                                 x=df_plot['sample'],
+                                 y=df_plot['-'],
+                                 legendgroup=sample,
+                                 showlegend=legend_show,
+                                 marker_color=colors4sample[sample],
+                                 marker_line_color='#FFFFFF',
+                                 opacity=0.3,
+                                 xaxis=flag_x)
+                          )
+
+        self._fig.update_layout(barmode='stack')
+
+        per = 1/(num4x+1)
+        gap4bar = per/len(self._df['sample'].unique())
+        num4x = 0
+        for typeB in self._df['sample'].unique():
+            if num4x == 0:
+                flag_x = 'xaxis'
+            else:
+                flag_x = 'xaxis' + str(num4x+1)
+            anchor_x = 'x'+str(num4x+1)
+            num4x += 1
+            self._fig['layout'][flag_x] = dict(domain=[per*num4x, per*(num4x+1)-gap4bar], anchor=anchor_x)
+
+        self._fig.update_layout(plot_bgcolor='#FFFFFF')
+        self._fig.update_xaxes(showgrid=False, linecolor='black', showline=True, ticks='outside', showticklabels=True)
+        self._fig.update_yaxes(showgrid=False, linecolor='black', showline=True, ticks='outside')
+        #width_num = 400 * (len(self._df['sample'].unique()) * len(self._df['sample'].unique())) / (5*12)  # set bar width
+        self._fig.update_layout(height=500)#, width=width_num)
+        self._fig.update_layout(legend=dict(orientation="h"))
+        self._fig.update_layout(legend=dict(
+            yanchor="top",y=1.3,
+            xanchor="left",x=0.07,
+            valign="top",
+        ))
+        self._fig.update_layout(
+            yaxis_title="Rates of nucleotide substitution (%)"
+        )
+
+
+class Violin_plot(Plotly_plot):
+    def __init__(self, df_vln, feature_name, color='#1f77b4', label=True):
+        super().__init__(df_vln)
+        self.feature_name = feature_name
+        self.color = color
+        self.label = label
+
+        if self.label:
+            self.y = "Fraction of labeled UMI"
+        else:
+            self.y = "Fraction of new RNA"
+        self.set_fig()
+
+    def set_fig(self):
+        self._fig = go.Figure()
+        self._fig.add_trace(
+            go.Violin(y=self._df, box_visible=True, meanline_visible=True,
+                    line_color='black', fillcolor=self.color, opacity=0.6,
+                    x0=self.feature_name))
+        self._fig.update_layout(yaxis_zeroline=True,  showlegend=False)
+        self._fig.update_layout(plot_bgcolor='#FFFFFF')
+        self._fig.update_xaxes(showgrid=False, linecolor='black', showline=True, ticks=None)
+        self._fig.update_yaxes(showgrid=False, linecolor='black', showline=True, ticks='outside',
+                            title_text=self.y, rangemode="tozero")
