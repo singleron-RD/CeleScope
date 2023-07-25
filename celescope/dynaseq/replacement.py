@@ -60,6 +60,8 @@ class Replacement(Step):
         self.totaldf = pd.DataFrame()
         self.newdf, self.olddf = pd.DataFrame(), pd.DataFrame()
         self.adata = anndata.AnnData()
+        self.cell_list = []
+        self.bg = None
 
         # output files
         ## tmp outputdir
@@ -88,7 +90,6 @@ class Replacement(Step):
     @utils.add_log
     def run_quant(self):
         ## set Parallelism para
-        self.cell_list = []
         cell_arr = []
         fetch_arr = [self.inbam] * len(self.cell_dict)
         snp_list = [self.bg] * len(self.cell_dict)

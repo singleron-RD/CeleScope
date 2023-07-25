@@ -615,7 +615,7 @@ class Substitution_plot(Plotly_plot):
         per = 1/(num4x+1)
         gap4bar = per/len(self._df['sample'].unique())
         num4x = 0
-        for typeB in self._df['sample'].unique():
+        for _ in self._df['sample'].unique():
             if num4x == 0:
                 flag_x = 'xaxis'
             else:

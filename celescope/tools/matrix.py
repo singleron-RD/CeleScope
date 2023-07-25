@@ -158,7 +158,7 @@ class CountMatrix:
     def get_matrix(self):
         return self.__matrix
 
-    def dataframe_to_matrix(df, barcodes, features, barcode_column='Barcode', feature_column='geneID'):
+    def dataframe_to_matrix(self, df, barcodes, features, barcode_column='Barcode', feature_column='geneID'):
         """Convert a counts dataframe to a sparse counts matrix.
         :param df_counts: counts dataframe
         :type df_counts: pandas.DataFrame
