@@ -158,26 +158,27 @@ class CountMatrix:
     def get_matrix(self):
         return self.__matrix
 
-    def dataframe_to_matrix(self, df, barcodes, features, barcode_column='Barcode', feature_column='geneID'):
+    @classmethod
+    def dataframe_to_matrix(cls, df, features: Features, barcodes=None, barcode_column='Barcode', feature_column='geneID'):
         """Convert a counts dataframe to a sparse counts matrix.
         :param df_counts: counts dataframe
         :type df_counts: pandas.DataFrame
         :param barcodes: list of barcodes that will map to the rows
         :type barcodes: list
-        :param features: list of features (i.e. genes) that will map to the columns
+        :param features: list of features that will map to the columns
         :type features: list
-        :param barcode_column: column in counts dataframe to use as barcodes, defaults to `barcode`
+        :param barcode_column: column in counts dataframe to use as barcodes, defaults to `Barcode`
         :type barcode_column: str
-        :param feature_column: column in counts dataframe to use as features, defaults to `GX`
+        :param feature_column: column in counts dataframe to use as features, defaults to `geneID`
         :type feature_column: str
 
         :return: sparse counts matrix
         :rtype: scipy.sparse.csrmatrix
         """
         barcode_indices = {barcode: i for i, barcode in enumerate(barcodes)}
-        feature_indices = {feature: i for i, feature in enumerate(features)}
+        feature_indices = {feature: i for i, feature in enumerate(features.gene_id)}
 
-        matrix = scipy.sparse.lil_matrix((len(barcodes), len(features)), dtype=np.float32)
+        matrix = scipy.sparse.lil_matrix((len(barcodes), len(features.gene_id)), dtype=np.float32)
         for (barcode, feature), count in df.groupby([barcode_column, feature_column], sort=False,
                                                         observed=True).size().items():
             matrix[barcode_indices[barcode], feature_indices[feature]] = count

@@ -236,10 +236,10 @@ class Replacement(Step):
     @utils.add_log
     def write_h5ad(self, df, df_new, df_old):
         layers = {}
-        matrix = CountMatrix.dataframe_to_matrix(df, self.cell_list, self.used_gene_id)
+        matrix = CountMatrix.dataframe_to_matrix(df, self.used_features, barcodes=self.cell_list)
         layers['total'] = matrix
-        layers['labeled'] = CountMatrix.dataframe_to_matrix(df_new, self.cell_list, self.used_gene_id)
-        layers['unlabeled'] = CountMatrix.dataframe_to_matrix(df_old, self.cell_list, self.used_gene_id)
+        layers['labeled'] = CountMatrix.dataframe_to_matrix(df_new, self.used_features, barcodes=self.cell_list)
+        layers['unlabeled'] = CountMatrix.dataframe_to_matrix(df_old, self.used_features, barcodes=self.cell_list)
         
         adata = anndata.AnnData(
             X=matrix,
