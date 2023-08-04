@@ -57,7 +57,8 @@ class Multi_dynaseq(Multi):
             f'--bam {bam} '
             f'--cell {cell} '
         )
-        self.process_cmd(cmd, step, sample, m=200, x=self.args.thread)
+
+        self.process_cmd(cmd, step, sample, m=self.args.conversionMem, x=self.args.thread)
 
     def substitution(self, sample):
         step = 'substitution'
