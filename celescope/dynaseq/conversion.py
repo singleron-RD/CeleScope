@@ -295,6 +295,8 @@ def get_opts_conversion(parser, sub_program):
     parser.add_argument('--snp_min_depth',default=20, type=int,
                         help='Minimum depth to call a variant')
     parser.add_argument("--cellsplit", default=300, type=int, help='split N cells into a list')
+    parser.add_argument('--conversionMem', default=30, type=int,
+                        help='Default `30`. Set conversion memory.')
     if sub_program:
         parser.add_argument("--bam", 
             help='featureCount bam(sortedByCoord), must have "MD" tag, set in star step', required=True)
