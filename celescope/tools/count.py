@@ -147,7 +147,7 @@ class Count(Step):
                 key='Valid Reads',
             )
         except KeyError:
-            self.add_count_metrics.logger.warning('Will not output `Mean Reads per Cell`')
+            sys.stderr.write('WARNING: Will not output `Mean Reads per Cell`')
         else:
             mean_reads_per_cell = int(valid_read_number / n_cells)
             self.add_metric(
