@@ -49,7 +49,7 @@ class Sample(Step):
             name='Chemistry',
             value=chemistry,
             display=add_kit_version(chemistry),
-            help_info='For more information, see <a href="https://github.com/singleron-RD/CeleScope/blob/master/docs/chemistry.md">here</a>',
+            help_info='For more information, see <a href="https://github.com/singleron-RD/CeleScope/blob/cbf5df39b74628fbcc1d9265728dcfe86b6989f2/doc/chemistry.md">here</a>',
         )
         self.add_metric(
             name='Software Version',
