@@ -17,6 +17,7 @@ class GtfParser:
         self.gene_id = []
         self.gene_name = []
         self.id_name = {}
+        self.id_strand = {}
 
     def get_properties_dict(self, properties_str):
         """
@@ -84,6 +85,8 @@ class GtfParser:
         for _row, _is_comment, annotation, properties in self.gtf_reader_iter():
             if annotation == 'gene':
                 gene_id = properties['gene_id']
+                gene_strand = _row[6]
+                self.id_strand[gene_id] = gene_strand
                 if 'gene_name' not in properties:
                     gene_name = gene_id
                 else:
@@ -117,6 +120,9 @@ class GtfParser:
             sys.exit("Empty self.gene_id. Run self.get_id_name first.")
         features = Features(self.gene_id, self.gene_name)
         return features
+    
+    def get_strand(self):
+        return self.id_strand
 
 
 class GtfBuilder:

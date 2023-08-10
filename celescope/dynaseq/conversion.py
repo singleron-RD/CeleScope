@@ -1,14 +1,16 @@
-#!/usr/bin/env python
-# v1.0
-
 import pysam
 import os
 import subprocess
-import numpy as np
 import pandas as pd
-from collections import Counter
+from collections import defaultdict
+from multiprocessing import Pool
+
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
+from celescope.rna.mkref import Mkref_rna
+from celescope.tools import reference
+from celescope.__init__ import HELP_DICT
+from celescope.tools.plotly_plot import Conversion_plot
 
 
 class Conversion(Step):
@@ -19,126 +21,127 @@ class Conversion(Step):
 
     ## Output
     - `{sample}.PosTag.bam` Bam file with conversion info.
-    - `{sample}.PosTag.csv` SNP info in csv format.
+    - `{sample}.PosTag.csv` TC conversion sites info in csv format.
+    - `{sample}.snp.csv` Candidated snp sites.
     """
 
     def __init__(self, args):
         Step.__init__(self, args)
         # input files
-        #self.ifile = os.path.join(args.outdir, args.sample+'.bam')
         self.sample = args.sample
-        self.strandednessfile = args.strand
         self.inbam = args.bam
         self.bcfile = args.cell
         self.outdir = args.outdir
-        self.thread = args.thread
+        self.thread = int(args.thread)
         self.qual = int(args.basequalilty)
+        self.snp_min_cells = args.snp_min_cells
+        self.snp_min_depth = args.snp_min_depth
+        self.cellsplit = args.cellsplit
 
-        # output files
+        # set
+        gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
+        gp = reference.GtfParser(gtf_file)
+        gp.get_id_name()
+        self.strand_dict = gp.get_strand()
+        self.cell_dict, self.cell_num = utils.barcode_list_stamp(self.bcfile,cut=self.cellsplit)
+        self.bam_list = []
+        self.conv_df = pd.DataFrame()
+        self.snp_df = pd.DataFrame()
+        
+
+        # output files 
+        ## tmp outputdir
+        self.tmp_dir = f'{args.outdir}/tmp'
+        utils.check_mkdir(self.tmp_dir)
+
+        ## final outputs
         self.outfile_bam = os.path.join(args.outdir, args.sample+'.PosTag.bam')
+        self.outtmp_bam = os.path.join(args.outdir, args.sample+'.PosTag.bam.tmp.bam')
         self.outfile_csv = os.path.join(args.outdir, args.sample+'.PosTag.csv')
+        self.outsnp_csv = os.path.join(args.outdir, args.sample+'.snp.csv')
 
     @utils.add_log
     def run(self):
 
-        # Adding tags
-        ContigLocs, AnnoteLocs = self.addTags(self.inbam, self.outfile_bam, self.bcfile, self.strandednessfile, self.qual, self.thread)
-        cmd = ['samtools index', self.outfile_bam]
-        self.run_cmd(cmd)
-
+        # Adding tags and parse snps
+        dfs = self.run_conversion()
         # Obtaining conversion positions
-        bam = pysam.AlignmentFile(self.outfile_bam, 'rb')
-        #ContigLocs, AnnoteLocs = self.CountConvperPos(bam)
+        self.snp_candidate(dfs)
+        # merge bam files
+        self.output_bam()
+        # stat and plot
+        self.add_conversion_metrics()
+        self.conversion_plot()
+        # delete tmp dir
+        self.clean_tmp()
 
-        # Obtaining coverage over conversion position
-        ConvsPerPos, CoverofPosWithConvs = self.CountReadConverPerConvPos(bam, ContigLocs)
-        A = self.ExportasVcf(ConvsPerPos, CoverofPosWithConvs, AnnoteLocs)
-        A['sample'] = self.sample
-        # Saving result
-        A.to_csv(self.outfile_csv)
-        bam.close()
 
-        #cmd = ['rm', self.ifile]
-        #self.run_cmd(cmd)
-        #cmd = ['rm', self.ifile+'.bai']
-        #self.run_cmd(cmd)
 
     def run_cmd(self, cmd):
         subprocess.call(' '.join(cmd), shell=True)
 
+    @utils.add_log
+    def run_conversion(self):
+        cell_arr,bam_arr = [],[]
+        fetch_arr = [self.inbam] * len(self.cell_dict)
+        strand_arr = [self.strand_dict] * len(self.cell_dict)
+        qual_arr = [self.qual] * len(self.cell_dict)
+        for x in self.cell_dict:
+            tmpbamfile = f'{self.tmp_dir}/tmp_{x}.bam'
+            bam_arr.append(tmpbamfile)
+            cell_arr.append(self.cell_dict[x])
+        self.bam_list = bam_arr
 
-    #@utils.add_log
-    def CountConvperPos_read(self, read, ContigLocs, AnnoteLocs):
-        #ContigLocs = {}
-        #AnnoteLocs = {}
-        try:
-            if read.get_tag('ST') == '+':
-                locs = read.get_tag('TL')
-            else:
-                locs = read.get_tag('AL')
-            if locs[0] != 0:
-                if read.reference_name in ContigLocs:
-                    ContigLocs[read.reference_name].extend(locs)
-                else:
-                    ContigLocs[read.reference_name] = list(locs)
-                if read.reference_name not in AnnoteLocs:
-                    for i, each in enumerate(locs):
-                        if i == 0:
-                            AnnoteLocs[read.reference_name] = {each: read.get_tag('GX')}
-                        else:
-                            AnnoteLocs[read.reference_name][each] = read.get_tag('GX')
-                else:
-                    for i, each in enumerate(locs):
-                        if each not in AnnoteLocs[read.reference_name]:
-                            AnnoteLocs[read.reference_name][each] = read.get_tag('GX')
-        except (ValueError, KeyError):
-            print("Reads Error {}".format(str(read.qurey_name)))
-        return ContigLocs, AnnoteLocs
+        mincpu = min(self.cell_num, self.thread)
+        with Pool(mincpu) as pool:
+            results = pool.starmap(Conversion.addTags,
+                        zip(fetch_arr,bam_arr,cell_arr,strand_arr,qual_arr))
+        return results
+        
 
     @utils.add_log
-    def CountReadConverPerConvPos(self, bam, ContigLocs):
-        ConvsPerPos = {}
-        CoverofPosWithConvs = {}
-        for key in ContigLocs.keys():
-            ConvsPerPos[key] = {}
-            ContigLocs[key] = sorted(ContigLocs[key])
-            ConvsPerPos[key] = Counter(ContigLocs[key])
-
-            CoverofPosWithConvs[key] = {}
-            for key2 in ConvsPerPos[key].keys():
-                try:
-                    CoverofPosWithConvs[key][key2] = bam.count(key, key2, key2+1)
-                except ValueError:
-                    continue
-        return ConvsPerPos, CoverofPosWithConvs
+    def snp_candidate(self, df_arr):
+        Outputdf = pd.DataFrame()
+        for i in df_arr:
+            Outputdf = pd.concat([Outputdf,i])  
+        Outputdf = Outputdf.reset_index()
+        Outputdf[['chrom', 'pos']] = Outputdf['index'].apply(pd.Series)
+        Outputdf.drop('index', axis=1, inplace=True)
+        # all conv sites
+        self.conv_df = Outputdf.groupby(['chrom', 'pos']).agg({'convs':'sum','cells':'sum'})
+        # snp sites
+        if self.snp_min_cells < 1:
+            self.snp_min_cells = int(self.snp_min_cells * self.cell_num)
+        self.snp_df = self.conv_df[ self.conv_df['cells'] >= self.snp_min_cells ]
+        self.snp_df = self.snp_df[ self.snp_df['convs'] >= self.snp_min_depth ]
+        # output
+        self.conv_df.to_csv(self.outfile_csv)
+        self.snp_df.to_csv(self.outsnp_csv)
 
     @utils.add_log
-    def ExportasVcf(self, ConvsPerPos, CoverofPosWithConvs, AnnoteLocs):
-        #Chrom, Pos , ConvsPerPs, CoverofPosWithConvs
-        order_columns=['chrom', 'pos', 'convs', 'covers', 'posratio','gene_id']
-        Outputdf = pd.DataFrame(columns=order_columns)
-        for key in ConvsPerPos.keys():
-            if len(ConvsPerPos[key])==0: continue
-            df = pd.DataFrame.from_dict(ConvsPerPos[key], orient='index')
-            df1 = pd.DataFrame.from_dict(CoverofPosWithConvs[key], orient='index')
-            df3 = pd.DataFrame.from_dict(AnnoteLocs[key], orient='index')
-            #df.index.name = 'pos'
-            #df1.index.name = 'pos'
-            df.columns = ['convs']
-            df1.columns = ['covers']
-            df3.columns = ['gene_id']
-            df2 = pd.concat([df,df1,df3],axis=1)
-            df2['pos'] = df2.index
-            #df2.index = np.arange(df2.shape[0])
-            df2['chrom'] = np.repeat(key, df2.shape[0])
-            df2['posratio'] = df2['convs']/df2['covers']
-            Outputdf = pd.concat([Outputdf,df2[order_columns]])
-        return Outputdf.reset_index(drop=True)
+    def output_bam(self):
+        if len(self.bam_list) > 1:
+            bam_list = " ".join(self.bam_list)
+            cmd = [f'samtools merge -@ {self.thread} -o {self.outtmp_bam}', f'{bam_list}']
+            self.run_cmd(cmd)
+        else:
+            self.outtmp_bam = self.bam_list[0]
+        cmd = [f'samtools sort -@ {self.thread} -o {self.outfile_bam}',f'{self.outtmp_bam}']
+        self.run_cmd(cmd)
+        cmd = ['rm', f'{self.outtmp_bam}']
+        self.run_cmd(cmd)       
 
-    def createTag(self, d):
+    @utils.add_log
+    def clean_tmp(self):
+        cmd = (f'rm -rf {self.tmp_dir}')
+        self.debug_subprocess_call(cmd)
+
+    @staticmethod
+    def createTag(d):
         return ''.join([''.join(key) + str(d[key]) + ';' for key in d.keys()])[:-1]
 
-    def convInRead(self, read, qual=20):
+    @staticmethod
+    def convInRead(read, qual=20):
         specific_conversions = {}
         total_content = {'a': 0, 'c': 0, 'g': 0, 't': 0}
         specific_conversions[('c', 'A')] = 0
@@ -164,7 +167,7 @@ class Conversion(Step):
         try:
             refseq = read.get_reference_sequence().lower()
         except (UnicodeDecodeError):
-            refseq = ''
+            return 0
         except (AssertionError):
             return 0
 
@@ -181,8 +184,8 @@ class Conversion(Step):
                             aG_loc.append(pair[1])
             except (UnicodeDecodeError, KeyError):
                 continue
-        SC_tag = self.createTag(specific_conversions)
-        TC_tag = self.createTag(total_content)
+        SC_tag = Conversion.createTag(specific_conversions)
+        TC_tag = Conversion.createTag(total_content)
 
         if len(tC_loc) == 0:
             tC_loc.append(0)
@@ -190,84 +193,90 @@ class Conversion(Step):
             aG_loc.append(0)
         return SC_tag, TC_tag, tC_loc, aG_loc
 
-
-    @utils.add_log
-    def addTags(self, bamfilename, outfile_bam, cellfile, strandednessfile, qual=20, thread=8):
-        ContigLocs={}
-        AnnoteLocs={}
+    @staticmethod
+    def addTags(bamfilename, tmpoutbam, cell_list, strandedness, qual=20):
+        tmp_cell = defaultdict(set)
+        site_cell = defaultdict(int)
+        site_depth = defaultdict(int)
+        save = pysam.set_verbosity(0)
         bamfile = pysam.AlignmentFile(bamfilename, 'rb')
-        mod_bamfile = pysam.AlignmentFile(outfile_bam, mode='wb', template=bamfile)
-        tmpread={}
-        cellist = pd.read_csv(cellfile, header=None, index_col=0)
-        cells = cellist.index
-        strandedness = pd.read_csv(strandednessfile, header=None, index_col=0)
-        genes=strandedness.index
-        chrp=''
+        header = bamfile.header
+        mod_bamfile = pysam.AlignmentFile(tmpoutbam, mode='wb', header=header,check_sq=False)
+        pysam.set_verbosity(save)
 
         class GeneError(Exception):
             pass
 
         for read in bamfile.fetch(until_eof=True):
             try:
+                ## check read info
                 if not read.has_tag('GX'):
                     continue
-                if read.get_tag("CB") not in cells:
+                if read.get_tag("CB") not in cell_list:
                     continue
-                if read.get_tag('GX') not in genes:
+                if read.get_tag('GX') not in strandedness:
                     raise GeneError
-                readid=read.get_tag("CB")+read.get_tag("UB")+read.get_tag("GX")
-                chr1=read.reference_name
 
-                if chr1!=chrp and chrp!='':
-                    for x in tmpread:
-                        mod_bamfile.write(tmpread[x][1])
-                        ContigLocs, AnnoteLocs=self.CountConvperPos_read(tmpread[x][1], ContigLocs, AnnoteLocs)
-                    tmpread={}
-
-                tags = self.convInRead(read, qual)
+                tags = Conversion.convInRead(read, qual)
                 if tags==0: 
                     continue
                 read.set_tag('SC', tags[0], 'Z')
                 read.set_tag('TC', tags[1], 'Z')
                 read.set_tag('TL', tags[2])
                 read.set_tag('AL', tags[3])
-                read.set_tag('ST', strandedness.loc[read.get_tag('XT')][1])
-                
-                if read.get_tag('ST') == '+':
-                    stag = read.get_tag('TL')
+                read.set_tag('ST', strandedness[read.get_tag('GX')])
+                mod_bamfile.write(read)
+
+                if strandedness[read.get_tag('GX')] == '+':
+                    locs = tags[2]
                 else:
-                    stag = read.get_tag('AL')
-                if len(stag) == 1 and stag[0] == 0:
-                    tc = 0
-                else:
-                    tc = len(stag)
-                if readid in tmpread:
-                    if tc>tmpread[readid][0]:
-                        tmpread[readid] = [tc,read]
-                else:
-                    tmpread[readid] = [tc,read]
-                
+                    locs = tags[3]
+                if locs[0] != 0:
+                    for loc in locs:
+                        site = (read.reference_name, loc)
+                        tmp_cell[site].add(read.get_tag("CB"))
+                        site_depth[site] += 1
+                  
             except (ValueError, KeyError):
                 continue
             except (GeneError):
-                print('{} is not in strand file, please check your files.'.format(read.get_tag("GX")))
+                print('{} is not in gtf file, please check your files.'.format(read.get_tag("GX")))
                 continue
             #except (Exception):
             #    print("convert error")
             #    sys.exit(1)
-        
-        for x in tmpread:
-            mod_bamfile.write(tmpread[x][1])
-            ContigLocs, AnnoteLocs=self.CountConvperPos_read(tmpread[x][1], ContigLocs, AnnoteLocs)
-
         bamfile.close()
         mod_bamfile.close()
 
-        cmd = ['samtools sort -@', str(thread), '-o', outfile_bam+'.bam', outfile_bam]
-        self.run_cmd(cmd)
-        cmd = ['mv', outfile_bam+'.bam', outfile_bam]
-        self.run_cmd(cmd)
-        return ContigLocs,AnnoteLocs
+        for x in tmp_cell:
+            site_cell[x] = len(tmp_cell[x])
+        df1 = pd.DataFrame.from_dict(site_depth, orient='index')
+        df2 = pd.DataFrame.from_dict(site_cell, orient='index')
+        df = pd.concat([df1,df2],axis=1)
+        df.columns=['convs','cells']
+        return df
+        
+
+
+    @utils.add_log
+    def add_conversion_metrics(self):
+        self.add_metric(
+            name='Conversion sites',
+            value=self.conv_df.shape[0],
+            help_info='the number of T_to_C conversion sites'
+        )
+        self.add_metric(
+            name='Possible SNP sites',
+            value=self.snp_df.shape[0],
+            help_info='the number of possible SNP sites according to the conditions'
+        )
+
+    @utils.add_log
+    def conversion_plot(self):
+        self.conv_df['cell_pct'] = self.conv_df['cells'] / self.cell_num
+        subplot = Conversion_plot(df_bar=self.conv_df).get_plotly_div()
+        self.add_data(conversion_box=subplot)
+
 
 
 @utils.add_log
@@ -278,11 +287,20 @@ def conversion(args):
 
 
 def get_opts_conversion(parser, sub_program):
-    parser.add_argument('--strand', help='gene strand file, the format is "geneID,+/-"', required=True)
-    parser.add_argument('--basequalilty', default=20, type=int ,help='min base quality of the read sequence', required=False)
+    parser.add_argument('--genomeDir', help=HELP_DICT['genomeDir'])
+    parser.add_argument('--basequalilty', default=20, type=int,
+                        help='min base quality of the read sequence', required=False)
+    parser.add_argument('--snp_min_cells', default=10, type=float,
+                        help='Minimum number of cells to call a variant(>=1 for cell number or <1 for cell fraction), default 10.')
+    parser.add_argument('--snp_min_depth',default=20, type=int,
+                        help='Minimum depth to call a variant')
+    parser.add_argument("--cellsplit", default=300, type=int, help='split N cells into a list')
+    parser.add_argument('--conversionMem', default=30, type=int,
+                        help='Default `30`. Set conversion memory.')
+
     if sub_program:
-        parser.add_argument(
-            "--bam", help='featureCount bam(sortedByCoord), must have "MD" tag, set in star step', required=True)
+        parser.add_argument("--bam", 
+            help='featureCount bam(sortedByCoord), must have "MD" tag, set in star step', required=True)
         parser.add_argument("--cell", help='barcode cell list', required=True)
         parser = s_common(parser)
     return parser

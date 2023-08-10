@@ -15,7 +15,8 @@ ASSAY_LIST = [
     'citeseq',
     'flv_trust4',
     'sweetseq',
-    'utils'
+    'utils',
+    'bulk_vdj'
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

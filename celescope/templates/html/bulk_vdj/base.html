@@ -1,0 +1,18 @@
+{% include "html/utils/start.html"%}
+
+    {% if consensus_summary is defined %}
+    {% set step_summary = consensus_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+    
+    {% if mapping_vdj_summary is defined %}
+    {% set step_summary = mapping_vdj_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+
+    {% if count_vdj_summary is defined %}
+    {% set step_summary = count_vdj_summary %}
+    {% include "html/bulk_vdj/count_vdj.html"%}
+    {% endif %}
+
+{% include "html/utils/end.html"%}
