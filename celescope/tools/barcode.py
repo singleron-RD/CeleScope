@@ -21,7 +21,7 @@ class Chemistry():
     Auto detect chemistry from R1-read
     """
 
-    def __init__(self, fq1):
+    def __init__(self, fq1, assay=None):
         '''
         'scopeV2.0.1': 'C8L16C8L16C8L1U8T18'
         'scopeV2.1.1': 'C8L16C8L16C8L1U12T18'
@@ -29,6 +29,7 @@ class Chemistry():
         'scopeV3.0.1': 'C9L16C9L16C9L1U12T18' with 4 types of linkers
         '''
         self.fq1 = fq1
+        self.assay = assay
         self.fq1_list = fq1.split(',')
         self.n_read = 10000
 
@@ -44,6 +45,8 @@ class Chemistry():
     @utils.add_log
     def check_chemistry(self):
         """check chemistry in the fq1_list"""
+        if self.assay == 'bulk_vdj':
+            return ['bulk_vdj'] * len(self.fq1_list)
         chemistry_list = []
         for fastq1 in self.fq1_list:
             self.check_chemistry.logger.info(fastq1)
@@ -171,7 +174,7 @@ class Barcode(Step):
         if self.fq_number != len(self.fq2_list):
             raise Exception('fastq1 and fastq2 do not have same file number!')
         if args.chemistry == 'auto':
-            ch = Chemistry(args.fq1)
+            ch = Chemistry(args.fq1, self.assay)
             self.chemistry_list = ch.check_chemistry()
         else:
             self.chemistry_list = [args.chemistry] * self.fq_number

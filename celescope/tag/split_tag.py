@@ -15,7 +15,6 @@ from celescope.tools.step import Step, s_common
 from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 from celescope.__init__ import HELP_DICT
 from celescope.tools.matrix import CountMatrix
-from celescope.flv_CR.match import gen_vj_annotation_metrics, gen_clonotypes_table
 
 
 def get_clonotypes_table(df):

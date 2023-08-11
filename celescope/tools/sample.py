@@ -31,7 +31,7 @@ class Sample(Step):
     def run(self):
         if self.chemistry == 'auto':
             fq1 = self.args.fq1
-            ch = Chemistry(fq1)
+            ch = Chemistry(fq1, self.assay)
             chemistry = ch.check_chemistry()
             chemistry = ",".join(set(chemistry))
         else:

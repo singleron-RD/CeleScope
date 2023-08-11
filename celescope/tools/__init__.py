@@ -11,6 +11,7 @@ PATTERN_DICT = {
     # flv_rna is actually U9L16, but the last 10 bases can not be sequenced accurately.
     'flv_rna': 'C8L16C8L16C8U9L6',
     'flv' : 'U9C8L16C8L16C8',
+    'bulk_vdj': 'L18C6U16',
     'customized': None,
 }
 
