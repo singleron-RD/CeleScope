@@ -1,7 +1,13 @@
-## [1.16.2] - 2023-07-14
- ### General improvements
- - Remove convert_10X and flv_CR.
- - Fixed an issue in v1.16.1: when using multithreading, the same (barcode, gene) combination in the matrix may have multiple entries.
+## [1.17.0] - 2023-08-11
+ ### `bulk_vdj`
+ - Add support for AccuraCode VDJ(bulk vdj).
+ 
+ ### `dynaseq`
+ - Various updates. #252
+ 
+ ### `tag`
+ - Fix a bug in the `split_tag` step.
+
 
 ## [1.16.1] - 2023-07-07
  ### `rna` and `dynaseq`

@@ -25,7 +25,7 @@ celescope vdj mkref mouse IG
 
 ## Usage
 
-Please note `multi_vdj` is only used for CDR3 vdj data(not full length). For full length vdj data, please use `multi_flv_CR` or  `multi_flv_trust4`.
+Please note `multi_vdj` is only used for CDR3 vdj data(not full length). For full length vdj data, please use  `multi_flv_trust4`.
 
 ```
 multi_vdj \
@@ -129,10 +129,9 @@ This file will only be produced when the `match_dir` parameter is provided.
 - `capture_virus` Required, matched_dir.
 - `fusion` Required, matched_dir.
 - `citeseq` Required, matched_dir.
-- `flv_CR` Required, matched_dir.
 - `flv_trust4` Required, matched_dir.
 - `sweetseq` Required, matched_dir.
- 
+
 5th column:
 - `dynaseq` Required, background snp file.
 

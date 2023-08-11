@@ -81,7 +81,6 @@ Mapfile is a tab-delimited text file with as least three columns. Each line of m
 - `capture_virus` Required, matched_dir.
 - `fusion` Required, matched_dir.
 - `citeseq` Required, matched_dir.
-- `flv_CR` Required, matched_dir.
 - `flv_trust4` Required, matched_dir.
 - `sweetseq` Required, matched_dir.
  
