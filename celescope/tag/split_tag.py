@@ -15,6 +15,7 @@ from celescope.tools.step import Step, s_common
 from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 from celescope.__init__ import HELP_DICT
 from celescope.tools.matrix import CountMatrix
+from celescope.flv_trust4.annotation import gen_vj_annotation_metrics, gen_clonotypes_table
 
 
 def get_clonotypes_table(df):
@@ -99,6 +100,14 @@ class Split_tag(Step):
             self.vdj_outdir = f'{args.outdir}/vdj/'
             if not os.path.exists(self.vdj_outdir):
                 os.system(f'mkdir -p {self.vdj_outdir}')
+
+        if args.split_fl_vdj:
+            self.fl_vdj_outdir = f'{args.outdir}/fl_vdj/'
+            if not os.path.exists(self.fl_vdj_outdir):
+                os.system(f'mkdir -p {self.fl_vdj_outdir}')
+            
+            self.anno_file = glob.glob(f'{args.vdj_dir}/04.summarize/*_filtered_contig.csv')[0]
+            self.fasta_file = glob.glob(f'{args.vdj_dir}/04.summarize/*_filtered_contig.fasta')[0]
         
  
     @utils.add_log
@@ -185,6 +194,40 @@ class Split_tag(Step):
                 continue
 
     @utils.add_log
+    def split_fl_vdj(self):
+        df_anno = pd.read_csv(self.anno_file, keep_default_na=False)
+        if df_anno.chain[0].startswith('IG'):
+            seqtype = 'BCR'
+        else:
+            seqtype = 'TCR'
+
+        for tag in self.tag_barcode_dict:
+            tag_barcodes = set(self.tag_barcode_dict[tag])
+            df_temp = df_anno[df_anno.barcode.isin(tag_barcodes)]
+            if not df_temp.empty:
+                df_temp.to_csv(f'{self.fl_vdj_outdir}/{tag}_{seqtype}_contig_annotations.csv', sep=',', index=False)
+                fasta_temp = open(f'{self.fl_vdj_outdir}/{tag}_{seqtype}_contig.fasta' ,'w')
+                with pysam.FastxFile(self.fasta_file) as raw_fasta:
+                    for entry in raw_fasta:
+                        name = entry.name
+                        attrs = name.split('_')
+                        cb = attrs[0]
+                        if cb in tag_barcodes:
+                            new_name = cb + '_' + attrs[1] + '_' + attrs[2]
+                            seq = entry.sequence
+                            fasta_temp.write(f'>{new_name}\n{seq}\n')
+                fasta_temp.close()
+
+                if 'clonotype_id' in df_temp.columns:
+                    df_temp = df_temp[df_temp.clonotype_id != ''] # del clonotype for trust4
+                split_clonotypes = f'{self.fl_vdj_outdir}/{tag}_{seqtype}_clonotypes.csv'
+
+                gen_clonotypes_table(df_temp, split_clonotypes, seqtype)
+                metrics_dict = gen_vj_annotation_metrics(df_temp, seqtype)
+                utils.dump_dict_to_json(metrics_dict, f"{self.fl_vdj_outdir}/{tag}_metrics.json")
+
+
+    @utils.add_log
     def run(self):
         if self.args.split_matrix:
             self.split_matrix()
@@ -195,6 +238,8 @@ class Split_tag(Step):
             self.write_r1_fastq_files()
         if self.args.split_vdj:
             self.split_vdj()
+        if self.args.split_fl_vdj:
+            self.split_fl_vdj()
 
 
 def split_tag(args):
@@ -222,6 +267,11 @@ def get_opts_split_tag(parser, sub_program):
     parser.add_argument(
         "--split_vdj",
         help="If used, will split scRNA-Seq vdj count file according to tag assignment.",
+        action='store_true',
+    )
+    parser.add_argument(
+        "--split_fl_vdj",
+        help='If used, will split scRNA-Seq full-length vdj annotation, fasta, clonotypes file according to tag assignment.',
         action='store_true',
     )
     parser.add_argument("--vdj_dir", help="Match celescope vdj directory. Required when --split_vdj or --split_fl_vdj is specified.")
