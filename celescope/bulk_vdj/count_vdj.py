@@ -234,18 +234,18 @@ class Count_vdj(Step):
         final_df_aa.to_csv(self.clonetypes_aa, sep=',', index=False)
         final_df_nt.to_csv(self.clonetypes_nt, sep=',', index=False)
         
-        df_table = final_df_aa.groupby('Index').head(100)
+        df_table = final_df_aa.groupby('Index').head(50)
         df_table = df_table[["Index", "ClonotypeID", "aaSeqCDR3", "Frequency", "Proportion", "Diversity"]]
         
-        mean_diversity = round(np.mean(df_table.Diversity), 2)
+        mean_diversity = round(np.median(df_table.Diversity), 2)
         self.add_metric(
-            name="Mean Diversity",
+            name="Median Diversity",
             value=mean_diversity,
-            help_info="Mean diversity of all indexes"
+            help_info="Median inverse Simpson index of all wells"
         )
         
         table_dict = self.get_table_dict(
-            title="Clonotypes by Index",
+            title="Clonotypes by well index",
             table_id='bulk_vdj',
             df_table=df_table
         )

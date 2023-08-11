@@ -9,7 +9,7 @@ import subprocess
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from celescope.tools import utils
-from celescope.__init__ import HELP_DICT
+from celescope.__init__ import HELP_DICT, __version__
 
 
 def cap_str_except_preposition(my_string):
@@ -41,6 +41,7 @@ class Step:
         display_title controls the section title in HTML report
         force thread <=20
         '''
+        sys.stderr.write(f'CeleScope version: {__version__} ')
         sys.stderr.write(f'Args: {args}\n')
         self.args = args
         self.outdir = args.outdir

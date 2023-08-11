@@ -180,7 +180,7 @@ class Count(Step):
             name='Saturation',
             value=saturation,
             display=f'{saturation}%',
-            help_info='the fraction of UMI originating from an already-observed UMI. '
+            help_info='the fraction of read originating from an already-observed UMI. '
         )
 
 

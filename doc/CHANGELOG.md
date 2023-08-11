@@ -3,7 +3,7 @@
  - Add support for AccuraCode VDJ(bulk vdj).
  
  ### `dynaseq`
- - Various updates. #252
+ - Various updates. https://github.com/singleron-RD/CeleScope/pull/252
  
  ### `tag`
  - Fix a bug in the `split_tag` step.
