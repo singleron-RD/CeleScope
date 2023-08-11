@@ -9,8 +9,7 @@ STEPS = [
     'analysis',
     'conversion',
     'substitution',
-    'replacement',
-    'replace_tsne']
+    'replacement']
 
 __ASSAY__ = 'dynaseq'
 
@@ -25,3 +24,7 @@ REMOVE_FROM_MULTI = {
     'cutadapt',
     'star',
 }
+
+
+#count
+DYNA_MATRIX_DIR_SUFFIX = ['labeled_matrix','unlabeled_matrix']

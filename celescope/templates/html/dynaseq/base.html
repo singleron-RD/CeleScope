@@ -20,19 +20,24 @@
     {% include "html/rna/analysis.html"%}
     {% endif %}
 
+    {% if conversion_summary is defined %}
+    {% set step_summary = conversion_summary %}
+    {% include "html/dynaseq/conversion.html"%}
+    {% endif %}
+
     {% if substitution_summary is defined %}
     {% set step_summary = substitution_summary %}
     {% include "html/dynaseq/substitution.html"%}
     {% endif %}
 
     {% if replacement_summary is defined %}
-    {% set step_summary = replacement_summary  %}
+    {% set step_summary = replacement_summary %}
     {% include "html/dynaseq/replacement.html"%}
     {% endif %}
 
-    {% if replace_tsne_summary is defined %}
-    {% set step_summary = replace_tsne_summary %}
-    {% include "html/dynaseq/replace_tsne.html"%}
+    {% if estimate_summary is defined %}
+    {% set step_summary = estimate_summary %}
+    {% include "html/dynaseq/replacement.html"%}
     {% endif %}
       
 {% include "html/utils/end.html"%}

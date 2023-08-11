@@ -595,6 +595,21 @@ def dump_dict_to_json(d, json_file):
     with open(json_file, 'w') as f:
         json.dump(d, f, indent=4)
 
+@add_log
+def barcode_list_stamp(barcode_list, cut=500):
+    bc_list, bc_num = read_one_col(barcode_list)
+    n, m = 0, 0
+    stamp = defaultdict(list)
+    for i in bc_list:
+        m += 1
+        if m <= cut:
+            stamp[n].append(i)
+        else:
+            n += 1
+            m = 1
+            stamp[n].append(i)
+    return stamp, bc_num
+
 
 class Test_utils(unittest.TestCase):
     def test_gtf_dict(self):
