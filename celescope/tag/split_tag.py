@@ -229,40 +229,6 @@ class Split_tag(Step):
 
 
     @utils.add_log
-    def split_fl_vdj(self):
-        df_anno = pd.read_csv(self.anno_file, keep_default_na=False)
-        if df_anno.chain[0].startswith('IG'):
-            seqtype = 'BCR'
-        else:
-            seqtype = 'TCR'
-
-        for tag in self.tag_barcode_dict:
-            tag_barcodes = set(self.tag_barcode_dict[tag])
-            df_temp = df_anno[df_anno.barcode.isin(tag_barcodes)]
-            if not df_temp.empty:
-                df_temp.to_csv(f'{self.fl_vdj_outdir}/{tag}_{seqtype}_contig_annotations.csv', sep=',', index=False)
-                fasta_temp = open(f'{self.fl_vdj_outdir}/{tag}_{seqtype}_contig.fasta' ,'w')
-                with pysam.FastxFile(self.fasta_file) as raw_fasta:
-                    for entry in raw_fasta:
-                        name = entry.name
-                        attrs = name.split('_')
-                        cb = attrs[0]
-                        if cb in tag_barcodes:
-                            new_name = cb + '_' + attrs[1] + '_' + attrs[2]
-                            seq = entry.sequence
-                            fasta_temp.write(f'>{new_name}\n{seq}\n')
-                fasta_temp.close()
-
-                if 'clonotype_id' in df_temp.columns:
-                    df_temp = df_temp[df_temp.clonotype_id != ''] # del clonotype for trust4
-                split_clonotypes = f'{self.fl_vdj_outdir}/{tag}_{seqtype}_clonotypes.csv'
-
-                gen_clonotypes_table(df_temp, split_clonotypes, seqtype)
-                metrics_dict = gen_vj_annotation_metrics(df_temp, seqtype)
-                utils.dump_dict_to_json(metrics_dict, f"{self.fl_vdj_outdir}/{tag}_metrics.json")
-
-
-    @utils.add_log
     def run(self):
         if self.args.split_matrix:
             self.split_matrix()
