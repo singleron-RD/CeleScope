@@ -33,7 +33,7 @@ def correct_cdr3_nt(umi_dict, percent=0.1):
     
     while True:
         # break when only highest in umi_arr
-        if len(umi_arr) == 1:
+        if len(umi_arr) <= 1:
             break
         umi_low = umi_arr.pop()
         low_seq = umi_low[0]
