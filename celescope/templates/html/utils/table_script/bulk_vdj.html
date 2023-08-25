@@ -1,0 +1,31 @@
+<script>
+
+    $(document).ready(function () {
+            var table = $('#bulk_vdj ').DataTable({
+                dom: 'Bfrtip',
+                buttons: ['excel']
+            });
+            var indexOfMyCol = 0 ;
+            var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+    $("#bulk_vdj  thead th").each( function ( i ) {
+        if (i==indexOfMyCol){
+
+          var select = $('<select><option value=""></option></select>')
+            .appendTo( $(this).empty() )
+            .on( 'change', function () {
+                var pattern = ""
+                if ($(this).val()!="") {
+                    pattern= pattern="^"+$(this).val() +"$"
+                }
+                table.column( i )
+                .search(input=pattern, regex=true, smart=false)
+                .draw();
+            } );
+ 
+        table.column( i).data().unique().sort(collator.compare).each( function ( d, j ) {
+            select.append( '<option value="'+d+'">'+d+'</option>' )
+        } );
+    }
+    } );
+    });
+</script>

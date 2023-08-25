@@ -24,15 +24,13 @@ celescope vdj mkref mouse IG
 ```
 
 ## Usage
-
-Please note `multi_vdj` is only used for CDR3 vdj data(not full length). For full length vdj data, please use  `multi_flv_trust4`.
-
 ```
-multi_vdj \
+multi_bulk_vdj \
     --mapfile ./vdj.mapfile \
     --ref_path /genome/vdj/human/human_TR \
     --species human \
     --type TCR \
+    --min_consensus_read 2 \
     --thread 8 \
     --mod shell
 ``` 
@@ -44,14 +42,9 @@ multi_vdj \
 - Make sure current directory contains all V,D,J of TRA/TRB or IGH/IGK/IGL reference downloaded from IMGT website.
 
 
-### barcode
-
-- Demultiplex barcodes.
-- Filter invalid R1 reads, which includes:
-    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
-    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
-    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
-    - Low quality reads: low sequencing quality in barcode and UMI regions.
+### sample
+- Generate sample info.
+- Add read_ID in fastq file. The format of the read name is `{readId}_{index}`.
 
 
 ### cutadapt
@@ -67,13 +60,11 @@ alignment. If the following conditions are met, the consensus sequence will be t
 2. most common residue reads >= min_consensus_read;
 otherwise an ambiguous character(N) will be added.
 
-
 ### mapping_vdj
 - Align R2 reads to IGMT(http://www.imgt.org/) database sequences with blast.
 
 
 ### count_vdj
-- Cell-calling based on barcode-UMI rank.    
 - Summarize clonetypes infomation.
 
 
@@ -82,36 +73,23 @@ otherwise an ambiguous character(N) will be added.
 
 - VDJ IMGT reference with index files.
 
-### barcode
-
-- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
-the read name is `{barcode}_{UMI}_{read ID}`.
+### sample
+- `01.barcode/{sample}_2.fq(.gz)`
 
 ### cutadapt
 - `cutadapt.log` Cutadapt output log file.
-- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
-
-### consensus
-- `{sample}_consensus.fq` Fastq file after consensus.
+- `{sample}_clean_2.fa` R2 reads file without adapters in fasta format.
 
 ### mapping_vdj
-- `{sample}_airr.tsv` The alignment result of each UMI.
+- `{sample}_airr.tsv` The alignment result of each read.
 A tab-delimited file compliant with the AIRR Rearrangement schema(https://docs.airr-community.org/en/stable/datarep/rearrangements.html)
 
-- `{sample}_UMI_count_unfiltered.tsv` UMI reading for each (barcode, chain, VJ_pair) combination.
-
-- `{sample}_UMI_count_filtered.tsv` For each (barcode, chain) combination, only the record with the 
-most VJ_pair UMI reads is kept.
+- `{sample}_produtive.tsv` Including all productive chains for each readID.
 
 ### count_vdj
-- `{sample}_cell_confident.tsv` The clone type of VDJ cell barcode, each chain occupies one line.
+- `{sample}_filtered_annotations.csv` Annotations for each CDR3.
 
-- `{sample}_cell_confident_count.tsv` The clone type of VDJ cell barcode, each cell occupies one line.
-
-- `{sample}_clonetypes.tsv` The count and percentage of each clonetypes of VDJ cell barcode.
-
-- `{sample}_match_clonetypes.tsv` When summarize clonetypes, only consider barcodes in the match scRNA-Seq library. 
-This file will only be produced when the `match_dir` parameter is provided.
+- `{sample}_clonetypes.csv` The count and percentage of each CDR3 of reads.
 
 ## Arguments
 `--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -131,7 +109,7 @@ This file will only be produced when the `match_dir` parameter is provided.
 - `citeseq` Required, matched_dir.
 - `flv_trust4` Required, matched_dir.
 - `sweetseq` Required, matched_dir.
-
+ 
 5th column:
 - `dynaseq` Required, background snp file.
 
@@ -165,34 +143,7 @@ use `--steps_run barcode,cutadapt`.
 
 `--thread` Thread to use.
 
-`--use_R3` ATAC libraries use R3 reads instead of R2.
-
 `--debug` If this argument is used, celescope may output addtional file for debugging.
-
-`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
-
-`--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
-        of bases.  
-- `C`: cell barcode  
-- `L`: linker(common sequences)  
-- `U`: UMI    
-- `T`: poly T.
-
-`--whitelist` Cell barcode whitelist file path, one cell barcode per line.
-
-`--linker` Linker whitelist file path, one linker per line.
-
-`--lowQual` Default 0. Bases in cell barcode and UMI whose phred value are lower than lowQual will be regarded as low-quality bases.
-
-`--lowNum` The maximum allowed lowQual bases in cell barcode and UMI.
-
-`--nopolyT` Outputs R1 reads without polyT.
-
-`--noLinker` Outputs R1 reads without correct linker.
-
-`--filterNoPolyT` Filter reads without PolyT.
-
-`--allowNoLinker` Allow valid reads without correct linker.
 
 `--output_R1` Output valid R1 reads.
 
@@ -200,50 +151,27 @@ use `--steps_run barcode,cutadapt`.
 
 `--adapter_fasta` Addtional adapter fasta file.
 
-`--minimum_length` Discard processed reads that are shorter than LENGTH.
+`--minimum_length` Default `20`. Discard processed reads that are shorter than LENGTH.
 
-`--nextseq_trim` Quality trimming of reads using two-color chemistry (NextSeq). 
+`--nextseq_trim` Default `20`. Quality trimming of reads using two-color chemistry (NextSeq). 
 Some Illumina instruments use a two-color chemistry to encode the four bases. 
 This includes the NextSeq and the NovaSeq. 
 In those instruments, a ‘dark cycle’ (with no detected color) encodes a G. 
 However, dark cycles also occur when sequencing “falls off” the end of the fragment.
 The read then contains a run of high-quality, but incorrect “G” calls at its 3’ end.
 
-`--overlap` Since Cutadapt allows partial matches between the read and the adapter sequence,
+`--overlap` Default `10`. Since Cutadapt allows partial matches between the read and the adapter sequence,
 short matches can occur by chance, leading to erroneously trimmed bases. 
 For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. 
 To reduce the number of falsely trimmed bases, the alignment algorithm requires that 
 at least {overlap} bases match between adapter and read.
 
-`--insert` Read2 insert length.
+`--insert` Default `150`. Read2 insert length.
 
 `--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
-
-`--threshold` Default 0.5. Valid base threshold.
-
-`--not_consensus` Skip the consensus step.
-
-`--min_consensus_read` Minimum number of reads to support a base.
 
 `--ref_path` reference path for igblast.
 
 `--species` Default human. human or mouse.
 
-`--split_fasta` split fasta file to map to avoid running out of memory.
-
 `--type` Required. `TCR` or `BCR`.
-
-`--UMI_min` minimum number of chain UMI to consider as as cell.
-
-`--BCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for BCR. 
-For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
-
-`--TCR_iUMI` Minimum number of UMI of identical receptor type and CDR3 for TCR. 
-For each (barcode, chain) combination, only UMI>=iUMI is considered valid.
-
-`--expected_target_cell_num` Expected T or B cell number. If `--target_cell_barcode` is provided, this argument is ignored.
-
-`--target_cell_barcode` Barcode of target cells. It is a plain text file with one barcode per line. If provided, `--expected_target_cell_num` is ignored.
-
-`--target_weight` UMIs of the target cells are multiplied by this factor. Only used when `--target_cell_barcode` is provided.
-
