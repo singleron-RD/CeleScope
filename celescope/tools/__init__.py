@@ -12,6 +12,7 @@ PATTERN_DICT = {
     'flv_rna': 'C8L16C8L16C8U9L6',
     'flv' : 'U9C8L16C8L16C8',
     'bulk_vdj': 'L18C6U16',
+    'bulk_rna': 'C9U12',
     'customized': None,
 }
 
