@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import numbers
+import pysam
+from collections import defaultdict
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.vdj.__init__ import CHAINS
@@ -106,6 +108,7 @@ class Count_vdj(Step):
         # IN
         self.airr_file = args.airr_file
         self.productive_file = args.productive_file
+        self.fq = args.fq
 
         # OUT
         self.mapping_result_file = f"{self.out_prefix}_mapping_metrics.tsv"
@@ -155,9 +158,16 @@ class Count_vdj(Step):
             ]
             metrics_list += UMIs_Mapped_To_chains
             metrics_list = [format_value(value, umi_count) for value in metrics_list]
-            
             df_metrics.loc[len(df_metrics.index)] = metrics_list
-            df_metrics.to_csv(self.mapping_result_file, sep="\t", index=False)
+
+        readcount_dict = defaultdict(int)
+        with pysam.FastxFile(self.fq) as f:
+            for read in f:
+                index = read.name.split('_')[0]
+                readcount_dict[index] += 1
+        
+        df_metrics.insert(1, 'read_count', df_metrics["Index"].apply(lambda x: format(readcount_dict[x], ',')))
+        df_metrics.to_csv(self.mapping_result_file, sep="\t", index=False)
         
     @utils.add_log
     def correct_cdr3_nt(self):
@@ -300,4 +310,5 @@ def get_opts_count_vdj(parser, sub_program):
     if sub_program:
         parser.add_argument("--productive_file", help="Required. Productive file from mapping_vdj step.", required=True)
         parser.add_argument("--airr_file", help="Required. Airr file from mapping_vdj step.", required=True)
+        parser.add_argument("--fq", help="Required. R2 reads from step Barcode.", required=True)
         parser = s_common(parser)
