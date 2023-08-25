@@ -26,6 +26,7 @@ class Sample(Step):
         Step.__init__(self, args)
         self.version = __VERSION__
         self.chemistry = args.chemistry
+        self.wells = args.wells
 
     @utils.add_log
     def run(self):
@@ -36,6 +37,9 @@ class Sample(Step):
             chemistry = ",".join(set(chemistry))
         else:
             chemistry = self.chemistry
+        
+        if chemistry == 'bulk_rna':
+            chemistry = f'accuracode{self.wells}'
 
         self.add_metric(
             name='Sample ID',
@@ -69,4 +73,6 @@ def get_opts_sample(parser, sub_program):
         parser = s_common(parser)
         parser.add_argument('--fq1', help='read1 fq file')
     parser.add_argument('--chemistry', choices=list(PATTERN_DICT.keys()), help='chemistry version', default='auto')
+    parser.add_argument('--wells', type=int,
+        help='The AccuraCode wells used (384 or 96), default 384.', default=384)
     return parser

@@ -53,9 +53,12 @@ class Prep_map(Step):
         bc_args_str = get_step_args_str(self.args, get_opts_barcode)
         ct_cmd = get_cutadapt_cmd(self.args, bc2, ct2)
         star_cmd = get_star_cmd(self.args, ct2, self.out_prefix)
+        run_assay = 'rna'
+        if self.assay == 'bulk_rna':
+            run_assay = self.assay
         cmd = (
             f'mkfifo {bc2} {ct2} \n'
-            f'celescope rna barcode {bc_args_str} --stdout >> {bc2} & \n'
+            f'celescope {run_assay} barcode {bc_args_str} --stdout >> {bc2} & \n'
             f'{ct_cmd} & \n'
             f'{star_cmd} \n'
             f'rm {bc2} {ct2} \n'
