@@ -78,6 +78,9 @@ class Mkref():
         """
         if some files are not in input arguments, set them in overwrite set_config_dict function
         """
+        config = configparser.ConfigParser()
+        config.read(GENOME_CONFIG)
+        self.config_dict = config['genome']
         self.config_dict['genome_type'] = self.genome_type
         self.config_dict['celescope_version'] = self.celescope_version
 
