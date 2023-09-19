@@ -1,14 +1,14 @@
 ## Usage
 
 ```
-    multi_dynaseq\\
+multi_dynaseq\\
     --mapfile ./rna.mapfile\\
     --genomeDir /SGRNJ/Public/Database/genome/homo_mus
 ```
 
 For control sample, set --control to skip replacement step.
 ```
-    multi_dynaseq\\
+multi_dynaseq\\
     --mapfile ./rna.mapfile\\
     --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
     --control
