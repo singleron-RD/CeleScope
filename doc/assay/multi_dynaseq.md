@@ -14,6 +14,8 @@ For control sample, set --control to skip replacement step.
     --control
 ```
 
+For genome reference generated, please refer to rna assay (./multi_rna.md) .
+
 ## Main Output
 - `substitution/{sample}.substitution.txt`: Substitution rate for each conversion type.
 - `replacement/{sample}.labeled.h5ad`: h5ad file contains ['total', 'labeled', 'unlabeled'] layers.
