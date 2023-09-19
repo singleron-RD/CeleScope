@@ -14,7 +14,7 @@ For control sample, set --control to skip replacement step.
     --control
 ```
 
-For genome reference generated, please refer to rna assay (./multi_rna.md) .
+For genome reference generated, please refer to [rna](multi_rna.md) assay.
 
 ## Main Output
 - `substitution/{sample}.substitution.txt`: Substitution rate for each conversion type.
