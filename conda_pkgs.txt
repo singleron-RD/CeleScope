@@ -1,5 +1,5 @@
 conda-forge::python=3.9
-bioconda::star=2.6.1b
+bioconda::star=2.7.11a
 bioconda::subread=2.0.1
 bioconda::samtools=1.16.1
 bioconda::igblast

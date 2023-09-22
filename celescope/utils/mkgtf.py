@@ -35,14 +35,14 @@ class Mkgtf:
     ```
     """
 
-    def __init__(self, args):
+    def __init__(self, in_gtf, out_gtf, attributes):
 
 
-        self.in_gtf_fn = args.gtf
-        self.out_gtf_fn = args.out_gtf
+        self.in_gtf_fn = in_gtf
+        self.out_gtf_fn = out_gtf
 
         self.attributes = {}
-        for attr_str in args.attributes.split(';'):
+        for attr_str in attributes.split(';'):
             if attr_str:
                 attr, val = attr_str.split('=')
                 val = set(val.split(','))
@@ -52,11 +52,10 @@ class Mkgtf:
     def run(self):
         runner = reference.GtfBuilder(self.in_gtf_fn, self.out_gtf_fn, self.attributes)
         runner.build_gtf()
-        
 
 
 def mkgtf(args):
-    runner = Mkgtf(args)
+    runner = Mkgtf(args.gtf, args.out_gtf, args.attributes)
     runner.run()
 
 

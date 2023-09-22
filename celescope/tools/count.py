@@ -67,7 +67,7 @@ class Count(Step):
         self.expected_cell_num = int(args.expected_cell_num)
 
         # set
-        gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
+        gtf_file = Mkref_rna.get_config(args.genomeDir)['files']['gtf']
         gp = reference.GtfParser(gtf_file)
         gp.get_id_name()
         self.features = gp.get_features()
@@ -310,8 +310,7 @@ class Count(Step):
         """
         saturation = 1 - n_deduped_reads / n_reads
 
-        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads. If a UMI has two reads mapped to one gene, but mapped to different locations of the gene, these two reads are
-        considered unique.
+        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads. If a UMI has two reads mapped to one gene, but mapped to different locations of the gene, these two reads are considered unique.
         n_reads = Total number of (confidently mapped, valid cell-barcode, valid UMI) reads.
         Args:
             fration: subsmaple fration
@@ -348,7 +347,7 @@ class Count(Step):
 
         for row in df_cell.itertuples():
             duplicates = row.duplicate.split(',')
-            ds = [int(d) for d in duplicates]
+            ds = [int(d) for d in duplicates if d != '0']
             for d in ds:
                 oindexList.append(row.Index)
                 dcountList.append(d)

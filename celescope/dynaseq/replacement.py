@@ -51,7 +51,7 @@ class Replacement(Step):
 
         # set
         self.cell_dict, self.cell_num = utils.barcode_list_stamp(self.bcfile,cut=self.cellsplit)
-        gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
+        gtf_file = Mkref_rna.get_config(args.genomeDir)['files']['gtf']
         gp = reference.GtfParser(gtf_file)
         gp.get_id_name()
         self.features = gp.get_features()

@@ -63,7 +63,7 @@ class Scanpy_wrapper(Step):
             args.matrix_file,  
             var_names='gene_symbols',
         )
-        self.mt_gene_list = Mkref_rna.parse_genomeDir(args.genomeDir)['mt_gene_list']
+        self.mt_gene_list = Mkref_rna.get_config(args.genomeDir)['files']['mt_gene_list']
 
         # out
         self.df_marker_file = f'{self.out_prefix}_markers.tsv'

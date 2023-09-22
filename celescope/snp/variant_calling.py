@@ -20,7 +20,7 @@ class Variant_calling(Step):
 
         # set
         self.barcodes, _num = utils.get_barcode_from_match_dir(args.match_dir)
-        self.fasta = Mkref_rna.parse_genomeDir(args.genomeDir)['fasta']
+        self.fasta = Mkref_rna.get_config(args.genomeDir)['files']['fasta']
         self.df_vcf = None
         self.panel = args.panel
         self.bed = utils.get_bed_file_path(self.panel)

@@ -39,7 +39,7 @@ class Conversion(Step):
         self.cellsplit = args.cellsplit
 
         # set
-        gtf_file = Mkref_rna.parse_genomeDir(args.genomeDir)['gtf']
+        gtf_file = Mkref_rna.get_config(args.genomeDir)['files']['gtf']
         gp = reference.GtfParser(gtf_file)
         gp.get_id_name()
         self.strand_dict = gp.get_strand()

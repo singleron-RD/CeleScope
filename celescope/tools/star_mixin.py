@@ -3,7 +3,7 @@ import subprocess
 import pandas as pd
 
 from celescope.tools import utils
-from celescope.tools.mkref import Mkref
+from celescope.tools.make_ref import MakeRef
 from celescope.tools.step import s_common
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step
@@ -49,7 +49,7 @@ class Star_mixin(Step):
         super().__init__(args, display_title)
 
         # parse
-        self.genome = Mkref.parse_genomeDir(args.genomeDir)
+        self.genome_name = MakeRef.get_config(args.genomeDir)['meta']['genome_name']
         self.stat_prefix = 'Reads'
         if getattr(args, "consensus_fq", False):
             self.stat_prefix = 'UMIs'
@@ -94,7 +94,7 @@ class Star_mixin(Step):
 
         self.add_metric(
             name='Genome',
-            value=self.genome['genome_name'],
+            value=self.genome_name,
         )
         self.add_metric(
             name=f'Uniquely Mapped {self.stat_prefix}',

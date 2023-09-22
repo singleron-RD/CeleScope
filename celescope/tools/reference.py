@@ -7,9 +7,25 @@ from celescope.tools import utils
 from celescope.tools.matrix import Features
 
 PATTERN = re.compile(r'(\S+?)\s*"(.*?)"')
+gtf_row = collections.namedtuple( 'gtf_row', 'seqname source feature start end ' \
+                                 'score strand frame attributes' )
 
-class GeneIdNotFound(Exception):
-    pass
+def row2list(row):
+    '''
+    row: gtf_row
+    '''
+    attr_str = '; '.join( [ '%s "%s"' % attr for attr in row.attributes.items() ] )
+    return [
+        row.seqname,
+        row.source,
+        row.feature,
+        row.start,
+        row.end,
+        row.score,
+        row.strand,
+        row.frame,
+        attr_str
+    ]
 
 class GtfParser:
     def __init__(self, gtf_fn):
@@ -33,10 +49,8 @@ class GtfParser:
             if attr:
                 m = re.search(PATTERN, attr)
                 if m:
-                    key = m.group(1)
-                    key = key.strip()
-                    value = m.group(2)
-                    value = value.strip()
+                    key = m.group(1).strip()
+                    value = m.group(2).strip()
                     properties[key] = value
 
         return properties
@@ -44,10 +58,8 @@ class GtfParser:
     def gtf_reader_iter(self):
         """
         Yield:
-            row: str
-            is_comment: bool
-            annotation: str; exon, gene, etc
-            properties: dict; gtf properties in the last column(9th col)
+            row: list
+            gtf_row
         """
         with utils.generic_open(self.gtf_fn, mode='rt') as f:
             reader = csv.reader(f, delimiter='\t')
@@ -55,7 +67,7 @@ class GtfParser:
                 if len(row) == 0:
                     continue
                 if row[0].startswith('#'):
-                    yield row, True, None, None
+                    yield row, None
                     continue
 
                 if len(row) != 9:
@@ -64,51 +76,41 @@ class GtfParser:
                 if row[6] not in ['+', '-']:
                     sys.exit(f"Invalid strand in GTF line {i}: {row}\n")
                 
-                properties = self.get_properties_dict(row[8])
-                annotation = row[2]
-                if annotation == 'exon':
-                    if 'gene_id' not in properties:
-                        raise GeneIdNotFound(f"Property 'gene_id' not found in GTF line {i}: {row}\n")
+                seqname = row[0]
+                source  = row[1]
+                feature = row[2]
+                # gff/gtf is 1-based, end-inclusive
+                start   = int(row[3])
+                end     = int(row[4])
+                score   = row[5]
+                strand  = row[6]
+                frame  = row[7]
+                attributes = self.get_properties_dict(row[8])
 
-                yield row, False, annotation, properties
+                yield row, gtf_row( seqname, source, feature, \
+                    start, end, score, strand, frame, \
+                    attributes )
 
     @utils.add_log
     def get_id_name(self):
         """
-        get gene_id:gene_name from gtf file
-            - one gene_name with multiple gene_id: allowed.
-            - one gene_id with multiple gene_name: error.
-            - duplicated (gene_name, gene_id): ignore duplicated records and print a warning.
-            - no gene_name: gene_id will be used as gene_name.
-
+        return: {gene_id:gene_name}
         """
-        for _row, _is_comment, annotation, properties in self.gtf_reader_iter():
-            if annotation == 'gene':
-                gene_id = properties['gene_id']
-                gene_strand = _row[6]
-                self.id_strand[gene_id] = gene_strand
-                if 'gene_name' not in properties:
-                    gene_name = gene_id
-                else:
-                    gene_name = properties['gene_name']
+        for _, grow in self.gtf_reader_iter():
+            if not grow:
+                continue
+            gene_id = grow.attributes['gene_id']
+            self.id_strand[gene_id] = grow.strand
+            if 'gene_name' not in grow.attributes:
+                gene_name = gene_id
+            else:
+                gene_name = grow.attributes['gene_name']
 
-                if gene_id in self.id_name:
-                    assert self.id_name[gene_id] == gene_name, (
-                        'one gene_id with multiple gene_name '
-                        f'gene_id: {gene_id}, '
-                        f'gene_name this line: {gene_name}'
-                        f'gene_name previous line: {self.id_name[gene_id]}'
-                    )
-                    self.get_id_name.logger.warning(
-                        'duplicated (gene_id, gene_name)'
-                        f'gene_id: {gene_id}, '
-                        f'gene_name {gene_name}'
-                    )
-                else:
-                    self.gene_id.append(gene_id)
-                    self.gene_name.append(gene_name)
-                    self.id_name[gene_id] = gene_name
-                    
+            if gene_id not in self.id_name:
+                self.gene_id.append(gene_id)
+                self.gene_name.append(gene_name)
+                self.id_name[gene_id] = gene_name
+
         return self.id_name
                     
     def get_features(self):
@@ -120,72 +122,89 @@ class GtfParser:
             sys.exit("Empty self.gene_id. Run self.get_id_name first.")
         features = Features(self.gene_id, self.gene_name)
         return features
-    
+
     def get_strand(self):
         return self.id_strand
-
 
 class GtfBuilder:
     def __init__(self, in_gtf_fn, out_gtf_fn, attributes):
         self.in_gtf_fn = in_gtf_fn
         self.out_gtf_fn = out_gtf_fn
         self.attributes = attributes
+    
+    @staticmethod
+    def get_introns(exons):
+        sys.stderr.write( 'done (%d exons).\n' % len(exons) )
+        # add intron
+        transcripts = collections.defaultdict(list)
+        for grow in exons:
+            if 'transcript_id' in grow.attributes:
+                transcripts[grow.attributes['transcript_id']].append(grow)
+        sys.stderr.write( 'done (%d transcripts).\n' % len(transcripts) )
+        
+        introns = []
+        for (transcript_id,rows) in transcripts.items():
+            if len(set( (row.seqname,row.strand) for row in rows )) != 1:
+                sys.stderr.write( 'Malformed transcript "%s". Skipping.' % transcript_id)
+
+            rows.sort( key = lambda row: row.start )
+            starts = [ row.start for row in rows ]
+            ends   = [ row.end   for row in rows ]
+
+            for (i,j) in zip(ends[:-1],starts[1:]):
+                assert i < j
+                if i+1 <= j-1:
+                    intron_row = gtf_row(
+                            seqname = rows[0].seqname,
+                            source  = rows[0].source,
+                            feature = 'intron',
+                            start   = i+1,
+                            end     = j-1,
+                            score   = '.',
+                            strand  = rows[0].strand,
+                            frame   = '.',
+                            attributes = rows[0].attributes )
+
+                    introns.append( intron_row )
+        sys.stderr.write( 'done (%d introns).\n' % len(introns) )
+        return introns
+
 
     @utils.add_log
     def build_gtf(self):
         """
-        Fix genes without gene annotation
+        add intron
         Filter gene biotypes
         """
-        self.build_gtf.logger.info("Writing filtered GTF file...")
+        self.build_gtf.logger.info("Writing GTF file...")
         gp = GtfParser(self.in_gtf_fn)
-
-        exons = collections.defaultdict(dict)
-        genes = set()
+        n_filter = 0
+        exons = []
 
         with open(self.out_gtf_fn, 'w') as f:
             writer = csv.writer(f, delimiter='\t', quoting=csv.QUOTE_NONE, quotechar='')
-            for row, is_comment, annotation, properties in gp.gtf_reader_iter():
-                if is_comment:
+            for row, grow in gp.gtf_reader_iter():
+                if not grow:
                     writer.writerow(row)
-                    continue
-                
-                if annotation == 'gene':
-                    genes.add(properties['gene_id'])
-                elif annotation == 'exon':
-                    gene_id = properties['gene_id']
-                    if gene_id not in genes:
-                        seqID = row[0]
-                        start, end = int(row[3]), int(row[4])
-                        strand = row[6]
-                        if gene_id not in exons:
-                            exons[gene_id]['strand'] = strand
-                            exons[gene_id]['start'] = start
-                            exons[gene_id]['end'] = end
-                            exons[gene_id]['properties'] = row[8]
-                            exons[gene_id]['seqID'] = seqID
-                        else:
-                            if strand != exons[gene_id]['strand']:
-                                self.build_gtf.logger.warning(f'Error: gene {gene_id} is on both strand!\nline: {row}')
-                                continue
-                            exons[gene_id]['start'] = min(start, exons[gene_id]['start'])
-                            exons[gene_id]['end'] = max(end, exons[gene_id]['end'])
-
+                    continue            
 
                 remove = False
-                for key, value in properties.items():
+                for key, value in grow.attributes.items():
                     if key in self.attributes and value not in self.attributes[key]:
                         remove = True
 
                 if not remove:
                     writer.writerow(row)
+                    if grow.feature == 'exon':
+                        exons.append(grow)
+                else:
+                    n_filter += 1
+            sys.stderr.write(f'filtered line number: {n_filter}\n')
 
-
-            for gene_id, vals in exons.items():
-                if gene_id not in genes:
-                    seqID, strand, start, end, properties = vals['seqID'], vals['strand'], str(vals['start']), str(vals['end']),vals['properties']
-                    row = [seqID, 'added', 'gene', start, end, '.', strand, '.', properties]
-                    writer.writerow(row)
+            introns = self.get_introns(exons)
+            for intron in introns:
+                writer.writerow(row2list(intron))
+    
 
 
 

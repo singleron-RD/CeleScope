@@ -1,7 +1,7 @@
 
-from celescope.tools.mkref import Mkref, super_opts
+from celescope.tools.make_ref import MakeRef_STAR
 
-class Mkref_fusion(Mkref):
+class Mkref_fusion(MakeRef_STAR):
     """
     ## Features
     - Create a fusion genome directory.
@@ -19,25 +19,19 @@ class Mkref_fusion(Mkref):
     --fusion_pos fusion_pos.txt \\
     ```
     """
-
-    def run(self):
-        super().run()
-        self.build_star_index()
-
-    @staticmethod
-    def parse_genomeDir(genomeDir):
-        return Mkref.parse_genomeDir(genomeDir, files=('fusion_pos',))
-
+    def __init__(self, genome_type, args):
+        super().__init__(genome_type, args)
+        self.files['fusion_pos'] = args.fusion_pos
 
 
 def mkref(args):
     genome_type = 'fusion'
-    with Mkref_fusion(genome_type, args, files=('fusion_pos',), ) as runner:
+    with Mkref_fusion(genome_type, args) as runner:
         runner.run()
 
 
 def get_opts_mkref(parser, sub_program):
-    super_opts(parser, sub_program)
+    MakeRef_STAR.opts(parser, sub_program)
     if sub_program:
         parser.add_argument(
             "--fusion_pos",

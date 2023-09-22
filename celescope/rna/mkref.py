@@ -1,85 +1,81 @@
+import subprocess
+import os
+import math
+import sys
+
 from celescope.tools import utils
-from celescope.tools.mkref import Mkref, super_opts
+from celescope.tools.make_ref import MakeRef_STAR
+from celescope.tools import reference
 
 
-class Mkref_rna(Mkref):
-    """
-    ## Features
-    - Create a genome reference directory.
+def parse_attributes(attrs):
+    dic = {}
+    for attr_str in attrs.split(';'):
+        if attr_str:
+            attr, val = attr_str.split('=')
+            val = set(val.split(','))
+            dic[attr] = val
+    return dic
 
-    ## Usage
-    ```
-    celescope utils mkgtf Homo_sapiens.GRCh38.99.gtf Homo_sapiens.GRCh38.99.filtered.gtf
-    celescope rna mkref \\
-    --genome_name Homo_sapiens_ensembl_99_filtered \\
-    --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \\
-    --gtf Homo_sapiens.GRCh38.99.filtered.gtf
-    ```
-
-    ## Output
-
-    - STAR genome index files
-
-    - Genome config file
-    ```
-    $ cat celescope_genome.config
-    [genome]
-    genome_name = Homo_sapiens_ensembl_99
-    genome_type = rna
-    fasta = Homo_sapiens.GRCh38.dna.primary_assembly.fa
-    gtf = Homo_sapiens.GRCh38.99.gtf
-    ```
-    """
-
+class Mkref_rna(MakeRef_STAR):
+    def __init__(self, genome_type, args):
+        super().__init__(genome_type, args)
+        self.out_gtf = 'addIntron_filtered.gtf'
+        self.files['gtf'] = self.out_gtf
+        self.files['mt_gene_list'] = self.args.mt_gene_list
 
     @utils.add_log
     def build_rna_star_index(self):
+        SA = self._get_SA()
         cmd = (
             f'STAR \\\n'
             f'--runMode genomeGenerate \\\n'
-            f'--runThreadN {self.thread} \\\n'
+            f'--runThreadN {self.args.thread} \\\n'
             f'--genomeDir ./ \\\n'
-            f'--genomeFastaFiles {self.fasta} \\\n'
-            f'--sjdbGTFfile {self.gtf} \\\n'
+            f'--genomeFastaFiles {self.args.fasta} \\\n'
+            f'--sjdbGTFfile {self.out_gtf} \\\n'
             f'--sjdbOverhang 100 \\\n'
+            f'--genomeSAindexNbases {SA} \\\n'
         )
-        if self.STAR_param:
-            cmd += (" " + self.STAR_param)
-        self.build_star_index.logger.info(cmd)
-        self.debug_subprocess_call(cmd)
+
+        sys.stderr.write(cmd+'\n')
+        if not self.dry_run:
+            subprocess.check_call(cmd, shell=True)
 
 
-    @staticmethod
-    def parse_genomeDir(genomeDir):
-        return Mkref.parse_genomeDir(genomeDir, files=('gtf', 'mt_gene_list'))
-
+    def build_gtf(self):
+        out_gtf = 'addIntron_filtered.gtf'
+        attrs_dict= parse_attributes(self.args.attributes)
+        if not self.dry_run:
+            reference.GtfBuilder(self.args.gtf, out_gtf, attrs_dict).build_gtf()
 
     @utils.add_log
     def run(self):
-        super().run()
-        self.build_star_index()
-
+        self.build_gtf()
+        self.build_rna_star_index()
 
 
 def mkref(args):
     genome_type = 'rna'
-    # files do not contain refflat because refflat is not input argument
-    with Mkref_rna(genome_type, args, files=('gtf', 'mt_gene_list')) as runner:
+    with Mkref_rna(genome_type, args) as runner:
         runner.run()
 
-
 def get_opts_mkref(parser, sub_program):
-    super_opts(parser, sub_program)
+    MakeRef_STAR.opts(parser, sub_program)
     if sub_program:
         parser.add_argument(
             "--gtf",
-            help="Required. Genome gtf file. Use absolute path or relative path to `genomeDir`.",
+            help="Required. Gtf file name.",
             required=True
         )
         parser.add_argument(
             "--mt_gene_list",
-            help="""Mitochondria gene list file. Use absolute path or relative path to `genomeDir`.
-It is a plain text file with one gene per line. 
+            help="""Mitochondria gene list file name. This file is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
             default="None"
+        )
+        parser.add_argument(
+            '--attributes', 
+            help='Attributes to keep. Example: `gene_biotype=protein_coding,lncRNA,antisense;`',
+            default="gene_biotype=protein_coding,lncRNA,antisense,IG_LV_gene,IG_V_gene,IG_V_pseudogene,IG_D_gene,IG_J_gene,IG_J_pseudogene,IG_C_gene,IG_C_pseudogene,TR_V_gene,TR_V_pseudogene,TR_D_gene,TR_J_gene,TR_J_pseudogene,TR_C_gene;",
         )

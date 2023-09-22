@@ -5,6 +5,7 @@ from collections import defaultdict
 from itertools import groupby
 import subprocess
 import unittest
+import shutil
 
 import pandas as pd
 import pysam
@@ -18,51 +19,6 @@ from celescope.tools.__init__ import TAG_BAM_SUFFIX
 
 
 GTF_TYPES = ['exon','gene']
-
-def add_tag(seg, id_name, gene_correct_umi=None):
-    """
-    Args:
-        seg: pysam bam segment
-        id_name: {gene_id: gene_name}
-        correct_dict: {low_seq: high_seq}
-
-    Returns:
-        seg with tag added
-
-    Tags:
-        CB: cell barcode
-        UB: error-corrected UMI
-        UR: original UMI
-        GN: gene name
-        GX: gene_id
-
-    """
-    attr = seg.query_name.split('_')
-    barcode = attr[0]
-    ur = ub = attr[1]
-
-    # assign to some gene
-    if seg.has_tag('XT'):
-        gene_id = seg.get_tag('XT')
-        # if multi-mapping reads are included in original bam,
-        # there are multiple gene_ids
-        if ',' in gene_id:
-            gene_name = [id_name[i] for i in gene_id.split(',')]
-            gene_name = ','.join(gene_name)
-        else:
-            gene_name = id_name[gene_id]
-        seg.set_tag(tag='GN', value=gene_name, value_type='Z')
-        seg.set_tag(tag='GX', value=gene_id, value_type='Z')
-
-        if gene_correct_umi:
-            if gene_id in gene_correct_umi and ur in gene_correct_umi[gene_id]:
-                ub = gene_correct_umi[gene_id][ur]
-    
-    seg.set_tag(tag='CB', value=barcode, value_type='Z')
-    seg.set_tag(tag='UB', value=ub, value_type='Z')
-    seg.set_tag(tag='UR', value=ur, value_type='Z')
-
-    return seg
 
 
 def correct_umi(umi_dict, percent=0.1):
@@ -149,43 +105,94 @@ class FeatureCounts(Step):
     successfully assigned reads and number of reads that failed to be assigned due to 
     various reasons (these reasons are included in the stat info).
     - `{sample}_aligned_sortedByCoord_addTag.bam` featureCounts output BAM, 
-    sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
+    sorted by coordinates
     """
 
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
         # set
-        self.gtf = Mkref_rna.parse_genomeDir(self.args.genomeDir)['gtf']
+        self.gtf = Mkref_rna.get_config(self.args.genomeDir)['files']['gtf']
         gp = reference.GtfParser(self.gtf)
         self.id_name = gp.get_id_name()
+        self.intron_dict = {}
 
         # stats
-        self.feature_log_dict = defaultdict(dict)
-        self.n_corrected_read = 0
-        self.n_corrected_umi = 0
+        self.exon = self.intron = self.intergenic = self.ambiguity = 0
+
+
+        # temp file
+        self.tmp_dir = f'{self.outdir}/tmp/'
+        self.add_tag_bam = f'{self.out_prefix}_addTag.bam'
+        input_basename = os.path.basename(self.args.input)
+        self.exon_bam = f'{self.tmp_dir}/exon/{input_basename}.featureCounts.bam'
+        self.intron_bam = f'{self.tmp_dir}/intron/{input_basename}.featureCounts.bam'
 
         # out
         self.count_detail_file = f'{self.out_prefix}_count_detail.txt'
-        input_basename = os.path.basename(self.args.input)
-        self.featureCounts_bam = f'{self.outdir}/{input_basename}.featureCounts.bam'
-        self.add_tag_bam = f'{self.out_prefix}_addTag.bam'
         self.nameSorted_bam = f'{self.out_prefix}_nameSorted.bam'
         self.out_bam = f'{self.out_prefix}_{TAG_BAM_SUFFIX}'
 
+    def add_tag(self, seg, id_name):
+        """
+        Add intron reads and tag
 
-    @staticmethod
-    def read_log(log_file):
-        """
         Args:
-            log_file: featureCounts log summary file
+            seg: pysam bam segment
+            id_name: {gene_id: gene_name}
+
         Returns:
-            log_dict: {'Assigned': 123, ...}
+            seg with tag added
+
+        Tags:
+            CB: cell barcode
+            UB: error-corrected UMI
+            UR: original UMI
+            GN: gene name
+            GX: gene_id
+
         """
-        # skip first line
-        df = pd.read_csv(log_file, sep='\t', header=None, names=['name', 'value'], skiprows=1)
-        log_dict = df.set_index('name')['value'].to_dict()
-        return log_dict
+        attr = seg.query_name.split('_')
+        barcode = attr[0]
+        ur = ub = attr[1]
+
+        # assign to some gene
+        xs = seg.get_tag('XS')
+        if xs == 'Assigned':
+            gene_id = seg.get_tag('XT')
+            gene_name = id_name[gene_id]
+            seg.set_tag(tag='GN', value=gene_name, value_type='Z')
+            seg.set_tag(tag='GX', value=gene_id, value_type='Z')
+            seg.set_tag(tag='RE', value='E', value_type='Z')
+            self.exon += 1
+        else:
+            if self.intron_dict and seg.query_name in self.intron_dict:
+                gene_id = self.intron_dict[seg.query_name]
+                gene_name = id_name[gene_id]
+                seg.set_tag(tag='GN', value=gene_name, value_type='Z')
+                seg.set_tag(tag='GX', value=gene_id, value_type='Z')
+                seg.set_tag(tag='RE', value='N', value_type='Z')
+                seg.set_tag(tag='XT', value=gene_id, value_type='Z')
+                self.intron += 1
+            elif xs == 'Unassigned_NoFeatures':
+                seg.set_tag(tag='RE', value='I', value_type='Z')
+                self.intergenic += 1
+            elif xs == 'Unassigned_Ambiguity':
+                seg.set_tag(tag='RE', value='A', value_type='Z')
+                self.ambiguity += 1
+        
+        seg.set_tag(tag='CB', value=barcode, value_type='Z')
+        seg.set_tag(tag='UB', value=ub, value_type='Z')
+        seg.set_tag(tag='UR', value=ur, value_type='Z')
+
+        return seg
+
+    @utils.add_log
+    def get_intron_dict(self):
+        with pysam.AlignmentFile(self.intron_bam, "rb") as in_bam:
+            for seg in in_bam:
+                if seg.has_tag('XT'):
+                    self.intron_dict[seg.query_name] = seg.get_tag('XT')
 
 
     @utils.add_log
@@ -211,37 +218,26 @@ class FeatureCounts(Step):
         self.run_featureCounts.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    def run_get_log(self):
+    def run_exon_intron(self):
         tmp_dir = f'{self.outdir}/tmp/'
-        for gtf_type in GTF_TYPES:
+        for gtf_type in ['exon', 'intron']:
             outdir = f'{tmp_dir}/{gtf_type}'
-            pathlib.Path(outdir).mkdir(parents=True, exist_ok=True)
-            log_file = f'{outdir}/{self.sample}.summary'
-            
+            pathlib.Path(outdir).mkdir(parents=True, exist_ok=True)            
             self.run_featureCounts(outdir, gtf_type)
-            self.feature_log_dict[gtf_type] = FeatureCounts.read_log(log_file)
-
-            if gtf_type == self.args.gtf_type:
-                cmd = f'mv {outdir}/* {self.outdir}/ '
-                subprocess.check_call(cmd, shell=True)
-
-        cmd = f'rm -r {tmp_dir} '
-        subprocess.check_call(cmd, shell=True)
-
 
     def remove_temp_file(self):
-        os.remove(self.featureCounts_bam)
+        shutil.rmtree(self.tmp_dir)
         os.remove(self.add_tag_bam)
 
-
     def run(self):
-        self.run_get_log()
-        self.add_metrics()
+        self.run_exon_intron()
+        self.get_intron_dict()
         utils.sort_bam(
-            self.featureCounts_bam,
+            self.exon_bam,
             self.nameSorted_bam,
             threads=self.thread, by='name')
         self.get_count_detail_add_tag()
+        self.add_metrics()
         utils.sort_bam(
             input_bam=self.add_tag_bam,
             output_bam=self.out_bam)
@@ -249,18 +245,8 @@ class FeatureCounts(Step):
 
     @utils.add_log
     def add_metrics(self):
-        total = sum(self.feature_log_dict['exon'].values())
+        total = self.exon + self.intron + self.intergenic + self.ambiguity
 
-        Assigned_exon = self.feature_log_dict['exon']['Assigned']
-        Assigned_intergenic = self.feature_log_dict['gene']['Unassigned_NoFeatures']
-        """
-        https://academic.oup.com/nargab/article/2/3/lqaa073/5910008
-        Approximately 15% of genes had exon counts that were greater than genebody counts (by a median value of eight counts). This was due to our conservative approach of excluding reads that overlapped features in multiple genes during the read summarization step by featureCounts using the argument allowMultiOverlap=FALSE. Under this strategy, some reads were counted towards the exon count set but not the genebody count set. This happens when a read overlaps the exon in one gene and the intron of another gene—it is counted towards exon counts but not genebody counts due to its overlap of multiple genebodies but not multiple exons.
-        """
-        Unassigned_ambiguity = self.feature_log_dict['exon']['Unassigned_Ambiguity']
-        Assigned_intron = total - Assigned_exon - Assigned_intergenic - Unassigned_ambiguity           
-       
-        
         self.add_metric(
             name='Feature Type',
             value=self.args.gtf_type.capitalize(),
@@ -268,25 +254,25 @@ class FeatureCounts(Step):
         )
         self.add_metric(
             name='Reads Assigned To Exonic Regions',
-            value=Assigned_exon,
+            value=self.exon,
             total=total,
             help_info='Reads that can be successfully assigned to exonic regions'
         )
         self.add_metric(
             name='Reads Assigned To Intronic Regions',
-            value=Assigned_intron,
+            value=self.intron,
             total=total,
             help_info='Reads that can be successfully assigned to intronic regions'
         )
         self.add_metric(
             name='Reads Assigned To Intergenic Regions',
-            value=Assigned_intergenic,
+            value=self.intergenic,
             total=total,
             help_info='Reads that can be successfully assigned to intergenic regions'
         )
         self.add_metric(
             name='Reads Unassigned Ambiguity',
-            value=Unassigned_ambiguity,
+            value=self.ambiguity,
             total=total,
             help_info='Alignments that overlap two or more features'
         )
@@ -313,30 +299,15 @@ class FeatureCounts(Step):
             for _, g in groupby(inputFile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
                 gene_umi_pos = utils.genDict(dim=3, valType=int)
-                segs = []
                 for seg in g:
-                    segs.append(seg)
-                    (barcode, umi) = seg.query_name.split('_')[:2]
-                    if not seg.has_tag('XT'):
+                    seg = self.add_tag(seg, self.id_name)
+                    outputFile.write(seg)
+                    barcode, umi = seg.get_tag('CB'), seg.get_tag('UB')
+                    if not seg.has_tag('GX'):
                         continue
-                    gene_id = seg.get_tag('XT')
+                    gene_id = seg.get_tag('GX')
                     gene_umi_dict[gene_id][umi] += 1
-                    gene_umi_pos[gene_id][umi][seg.reference_start] += 1
-
-                gene_correct_umi = None
-                if self.args.correct_UMI:
-                    gene_correct_umi = dict()
-                    for gene_id in gene_umi_dict:
-                        n_corrected_umi, n_corrected_read, correct_dict = correct_umi(gene_umi_dict[gene_id])
-                        gene_correct_umi[gene_id] = correct_dict
-                        self.n_corrected_read += n_corrected_read
-                        self.n_corrected_umi += n_corrected_umi
-
-                        # also correct umi in gene_umi_pos_cigar
-                        for low_seq, high_seq in correct_dict.items():
-                            for ref_start in gene_umi_pos[gene_id][low_seq]:
-                                gene_umi_pos[gene_id][high_seq][ref_start] += 1
-                            del gene_umi_pos[gene_id][low_seq]                    
+                    gene_umi_pos[gene_id][umi][seg.reference_start] += 1                
 
                 # output
                 for gene_id in gene_umi_dict:
@@ -344,17 +315,20 @@ class FeatureCounts(Step):
                     dup_list = []
                     n_read = 0
                     for umi in gene_umi_dict[gene_id]:
-                        n_read += gene_umi_dict[gene_id][umi]
-                        for pos in gene_umi_pos[gene_id][umi]:
-                            dup_list.append(str(gene_umi_pos[gene_id][umi][pos]))
+                        read_count = gene_umi_dict[gene_id][umi] 
+                        n_read += read_count
+                        if read_count == 1:
+                            # non_dup
+                            dup_list.append("1")
+                        else:
+                            # only add postion duplicate read number
+                            for pos in gene_umi_pos[gene_id][umi]:
+                                if gene_umi_pos[gene_id][umi][pos] > 1:
+                                    dup_list.append(str(gene_umi_pos[gene_id][umi][pos]))
+                                else:
+                                    dup_list.append("0")
                     duplicate = ','.join(dup_list)
                     fh1.write(f'{barcode}\t{gene_id}\t{n_umi}\t{n_read}\t{duplicate}\n')
-
-                for seg in segs:
-                    outputFile.write(add_tag(seg, self.id_name, gene_correct_umi))
-
-        self.add_metric('n_corrected_read', self.n_corrected_read, show=False)
-        self.add_metric('n_corrected_umi', self.n_corrected_umi, show=False)
 
         inputFile.close()
         outputFile.close()
@@ -375,7 +349,7 @@ def get_opts_featureCounts(parser, sub_program):
     )
     parser.add_argument('--genomeDir', help=HELP_DICT['genomeDir'])
     parser.add_argument('--featureCounts_param', help=HELP_DICT['additional_param'], default="")
-    parser.add_argument('--correct_UMI', help='perform UMI correction.')
+    #parser.add_argument('--correct_UMI', help='perform UMI correction.')
 
     if sub_program:
         parser.add_argument('--input', help='Required. BAM file path.', required=True)
