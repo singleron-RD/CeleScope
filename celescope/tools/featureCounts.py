@@ -292,7 +292,7 @@ class FeatureCounts(Step):
         pysam.set_verbosity(save)
 
         with open(self.count_detail_file, 'wt') as fh1:
-            fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'read', 'duplicate']) + '\n')
+            fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'read', 'unique', 'PCR_duplicate']) + '\n')
 
             def keyfunc(x):
                 return x.query_name.split('_', 1)[0]
@@ -312,23 +312,20 @@ class FeatureCounts(Step):
                 # output
                 for gene_id in gene_umi_dict:
                     n_umi = len(gene_umi_dict[gene_id])
-                    dup_list = []
                     n_read = 0
+                    unique = dup = 0
                     for umi in gene_umi_dict[gene_id]:
                         read_count = gene_umi_dict[gene_id][umi] 
                         n_read += read_count
                         if read_count == 1:
-                            # non_dup
-                            dup_list.append("1")
+                            # unique
+                            unique += 1
                         else:
                             # only add postion duplicate read number
                             for pos in gene_umi_pos[gene_id][umi]:
                                 if gene_umi_pos[gene_id][umi][pos] > 1:
-                                    dup_list.append(str(gene_umi_pos[gene_id][umi][pos]))
-                                else:
-                                    dup_list.append("0")
-                    duplicate = ','.join(dup_list)
-                    fh1.write(f'{barcode}\t{gene_id}\t{n_umi}\t{n_read}\t{duplicate}\n')
+                                    dup += gene_umi_pos[gene_id][umi][pos]
+                    fh1.write(f'{barcode}\t{gene_id}\t{n_umi}\t{n_read}\t{unique}\t{dup}\n')
 
         inputFile.close()
         outputFile.close()

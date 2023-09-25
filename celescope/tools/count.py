@@ -111,19 +111,20 @@ class Count(Step):
         self.write_marked_df_bc(df_bc, cell_bc)
         # export cell matrix
         df_cell = self.get_df_cell(df, cell_bc)
+        print(df_cell)
+        median_gene = self.get_median_gene(df_cell)
+        saturation = self.get_saturation(df_cell)
         del df
         self.write_sparse_matrix(df_cell, self.cell_matrix_dir)
         total_cell_gene = len(df_cell.index.levels[1])
         df_bc_cell = self.get_df_bc(df_cell)
         del df_bc
-        # downsample
-        downsample_dict = self.downsample(df_cell)
         # metrics
-        self.add_count_metrics(total_reads, total_cell_gene, cell_bc, df_bc_cell, downsample_dict)
+        self.add_count_metrics(total_reads, total_cell_gene, cell_bc, df_bc_cell, median_gene, saturation)
         # plot
         self.add_plot_data()
 
-    def add_count_metrics(self, total_reads, total_cell_gene, cell_bc, df_sum_cell, downsample_dict):
+    def add_count_metrics(self, total_reads, total_cell_gene, cell_bc, df_sum_cell, median_gene, saturation):
         n_cells = len(cell_bc)
         self.add_metric(
             name='Estimated Number of Cells',
@@ -171,11 +172,10 @@ class Count(Step):
 
         self.add_metric(
             name='Median Genes per Cell',
-            value=int(downsample_dict[MEDIAN_GENE_NUMBER][-1]),
+            value=int(median_gene),
             help_info='the median number of genes detected per cell-associated barcode'
         )
 
-        saturation = downsample_dict[SATURATION][-1]
         self.add_metric(
             name='Saturation',
             value=saturation,
@@ -183,18 +183,7 @@ class Count(Step):
             help_info='the fraction of read originating from an already-observed UMI. '
         )
 
-
     def add_plot_data(self):
-
-        df_line = self.get_df_line()
-
-        line_saturation = Line_plot(df_line=df_line,title="Sequencing Saturation",x_title=X_TITLE,
-                                    y_title=SATURATION_Y_TITLE, y_range=[0,100], section=False).get_plotly_div()
-        self.add_data(line_saturation=line_saturation)
-        line_median = Line_plot(df_line=df_line,title="Median Genes per Cell", x_title=X_TITLE,
-                                y_title=MEDIAN_GENE_Y_TITLE).get_plotly_div()
-        self.add_data(line_median=line_median)
-
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.marked_count_file))
 
 
@@ -306,73 +295,15 @@ class Count(Step):
         return(CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome)
 
     @staticmethod
-    def sub_sample(fraction, df_cell, new_df, cell_read_index):
-        """
-        saturation = 1 - n_deduped_reads / n_reads
+    def get_saturation(df_cell):
+        unique = sum(df_cell['unique'])
+        dup = sum(df_cell['PCR_duplicate'])
+        saturation = (1 - unique / (unique + dup)) * 100
+        return round(saturation, 2)
 
-        n_deduped_reads = Number of unique (valid cell-barcode, valid UMI, gene) combinations among confidently mapped reads. If a UMI has two reads mapped to one gene, but mapped to different locations of the gene, these two reads are considered unique.
-        n_reads = Total number of (confidently mapped, valid cell-barcode, valid UMI) reads.
-        Args:
-            fration: subsmaple fration
-            df_cell: in cell df with (Barcode geneID UMI count) 
-            new_df: two columns: [original df_cell index, duplicate count]
-            cell_read_index: df_cell repeat index
-        """
-
-        cell_read = new_df['dcount'].sum()
-        frac_n_read = int(cell_read * fraction)
-        subsample_read_index = cell_read_index[:frac_n_read]
-        index_dedup, counts = np.unique(subsample_read_index, return_counts=True)
-        n_count_once = np.sum(counts == 1)
-        read_total = frac_n_read
-        saturation = round((1 - n_count_once / read_total) * 100, 2)
-        df_cell_subsample = df_cell.loc[new_df.loc[index_dedup,]['oindex']]
-        geneNum_median = float(df_cell_subsample.groupby(
-        'Barcode').agg({'geneID': 'nunique'}).median())
-
-        return saturation, geneNum_median
-
-    @utils.add_log
-    def downsample(self, df_cell):
-        """saturation and median gene
-        Returns:
-            downsample dict             
-                READ_FRACTION: float
-                SATURATION: float
-                MEDIAN_GENE_NUMBER: float
-        """
-        oindexList = []
-        dcountList = []
-        df_cell = df_cell.reset_index()
-
-        for row in df_cell.itertuples():
-            duplicates = row.duplicate.split(',')
-            ds = [int(d) for d in duplicates if d != '0']
-            for d in ds:
-                oindexList.append(row.Index)
-                dcountList.append(d)
-
-        new_df = pd.DataFrame({'oindex':oindexList, 'dcount':dcountList})
-
-        cell_read_index = np.array(new_df.index.repeat(new_df['dcount']), dtype='int32')
-        np.random.shuffle(cell_read_index)
-
-        downsample_dict = {
-            READ_FRACTION: [0],
-            SATURATION: [0],
-            MEDIAN_GENE_NUMBER: [0],
-        }
-
-        for fraction in np.arange(0.1, 1.1, 0.1):
-            saturation, geneNum_median = Count.sub_sample(fraction, df_cell, new_df, cell_read_index)
-            fraction = round(fraction,1)
-            downsample_dict[READ_FRACTION].append(fraction)
-            downsample_dict[SATURATION].append(saturation)
-            downsample_dict[MEDIAN_GENE_NUMBER].append(geneNum_median)
-
-        df_downsample = pd.DataFrame(downsample_dict, columns=[READ_FRACTION, MEDIAN_GENE_NUMBER, SATURATION,])
-        df_downsample.to_csv(self.downsample_file, index=False, sep='\t')
-        return downsample_dict
+    @staticmethod
+    def get_median_gene(df_cell):
+        return df_cell.groupby('Barcode')['UMI'].count().median()
 
 
 @utils.add_log
