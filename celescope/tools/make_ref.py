@@ -37,9 +37,20 @@ class MakeRef:
         add genomeDir prefix to files
         '''
         config_file = f'{genomeDir}/{GENOME_CONFIG}'
+        if not os.path.exists(config_file):
+            sys.exit(
+                f'Error: {config_file} not found.\n'
+                'Solution: Use the mkref command of CeleScope to generate the genome.\n'
+            )
         config = configparser.ConfigParser()
         config.optionxform = str
         config.read(config_file)
+        if 'meta' not in config:
+            sys.exit(
+                'Error: CeleScope version >= 2.0.0 have upgraded the STAR version, so the old genome can no longer be used.\n'
+                'Solution: Use the mkref command of CeleScope to regenerate the genome.\n'
+                f'Genome path: {genomeDir}\n'
+            )
         for k,v in dict(config['files']).items():
             if v and v != 'None':
                 config['files'][k] = f'{genomeDir}/{v}'

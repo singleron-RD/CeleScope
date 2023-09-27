@@ -10,6 +10,7 @@ from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, STAR_BAM_SUFFIX
 from celescope.tools import utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
+from celescope.tools.make_ref import MakeRef
 
 TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
@@ -181,7 +182,7 @@ use `--steps_run barcode,cutadapt`
         make sjm dir, sjm file
         """
         self.args = self.parser.parse_args()
-
+        self.check_genome()
 
         if self.args.steps_run != 'all':
             self.steps_run = self.args.steps_run.strip().split(',')
@@ -407,6 +408,12 @@ job_end
             for sample in self.shell_dict:
                 with open(f'./shell/{sample}.sh', 'w') as f:
                     f.write(self.shell_dict[sample])
+
+    def check_genome(self):
+        for arg, val in vars(self.args).items():
+            if val and 'genomeDir' in arg:
+                MakeRef.get_config(val)
+
 
     def run(self):
         self.prepare()

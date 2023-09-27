@@ -19,7 +19,7 @@ class Count_fusion(Count_bam):
         super().__init__(args, display_title)
 
         self.flanking_base = int(args.flanking_base)
-        fusion_pos_file = Mkref_fusion.parse_genomeDir(args.fusion_genomeDir)['fusion_pos']
+        fusion_pos_file = Mkref_fusion.get_config(args.fusion_genomeDir)['files']['fusion_pos']
         self.pos_dict = self.read_pos_file(fusion_pos_file)
         self.posSorted_bam = f'{self.out_prefix}_posSorted.bam'
         self.fusion_bam = f'{self.out_prefix}_raw_fusion.bam'

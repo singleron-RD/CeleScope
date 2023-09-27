@@ -75,8 +75,21 @@ class FeatureCounts(Step):
             by='name'
         )
 
+    @staticmethod
+    def read_log(log_file):
+        """
+        Args:
+            log_file: featureCounts log summary file
+        Returns:
+            log_dict: {'Assigned': 123, ...}
+        """
+        # skip first line
+        df = pd.read_csv(log_file, sep='\t', header=None, names=['name', 'value'], skiprows=1)
+        log_dict = df.set_index('name')['value'].to_dict()
+        return log_dict
+
     def add_metrics(self):
-        log_dict = Fc.read_log(self.log_file)
+        log_dict = self.read_log(self.log_file)
         total = sum(log_dict .values())
         self.add_metric(
             name='Reads Assigned',

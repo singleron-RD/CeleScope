@@ -111,7 +111,6 @@ class Count(Step):
         self.write_marked_df_bc(df_bc, cell_bc)
         # export cell matrix
         df_cell = self.get_df_cell(df, cell_bc)
-        print(df_cell)
         median_gene = self.get_median_gene(df_cell)
         saturation = self.get_saturation(df_cell)
         del df

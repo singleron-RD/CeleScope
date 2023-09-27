@@ -20,7 +20,7 @@ class Analysis_fusion(Analysis):
     def __init__(self, args, display_title='Analysis'):
         super().__init__(args, display_title)
 
-        fusion_pos_file =  Mkref_fusion.parse_genomeDir(args.fusion_genomeDir)['fusion_pos']
+        fusion_pos_file =  Mkref_fusion.get_config(args.fusion_genomeDir)['files']['fusion_pos']
         self.pos_dict = Count_fusion.read_pos_file(fusion_pos_file)
 
         self.count_fusion_df = None
