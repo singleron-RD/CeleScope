@@ -87,9 +87,10 @@ class CountMatrix:
         Use all gene_id from features even if it is not in df
         Args:
             df: count details dataframe with columns UMI and multi-index (column, row).
-            value: value name in df, UMI
             features: Features
-            type: type of features, e.g. [gene, protein]
+            barcodes: only keep barcode in barcodes
+            value: value name in df, UMI
+            
         """
         if not barcodes:
             barcodes = df.index.levels[0].tolist()

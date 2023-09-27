@@ -1,110 +1,45 @@
+import sys
+
 import numpy as np
 import pandas as pd
-import scipy.io
-import scipy.sparse
-import glob
-import anndata as ad
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
 from celescope.tools.matrix import CountMatrix, Features
+from celescope.tools.analysis_wrapper import read_tsne
 
 
 TAG_COL = 'tag_name'
-
-
-def filter_fun(df):
-    """
-    Filter data according to mean and standard deviation
-    """
-    df['filter_num'] = np.mean(df,axis=1)+np.std(df,axis=1)
-    for index,_ in df.iterrows():
-        df.loc[index] = df.loc[index].mask(df.loc[index]<df.loc[index]['filter_num'],0)
-    df.drop(columns='filter_num',inplace=True)
-    return df
-
-def geometric_trans(df,target_sum=1e4):
-    '''
-    Geometric mean conversion of original composition data
-
-    : param df: Raw composition data, with each row representing a component and each column representing a sample
-
-    : return: Converted composition df
-    '''
-    T_geometric = df/np.exp(np.log1p(df).sum(axis=0)/df.shape[1]*target_sum)
-    
-    return T_geometric
-
-
-def scanpy_trans(df,target_sum=1e4):
-    '''
-    scanpy.pp.normalize_total()
-
-    : param df: Raw composition data, with each row representing a component and each column representing a sample
-
-    : return: Converted composition df
-    '''
-    T_sc = np.log1p(df/df.sum(axis=0)*target_sum)
-    
-    return T_sc
-
-
-def clr_trans(df):
-    '''
-    implements the CLR transform used in CITEseq
-    https://doi.org/10.1038/nmeth.4380
-    '''
-    T_clr = np.log1p(df/np.exp(np.mean(np.log1p(df),axis = 0)))
-    
-    return T_clr
-
-
-def asinh_trans(df, cofactor=5):
-    '''
-    implements the hyperbolic arcsin transform used in CyTOF/mass cytometry
-    https://doi.org/10.1038/nmeth.4380
-    '''
-    T_cytof = np.arcsinh(df/cofactor)
-    
-    return T_cytof
-
-
-class CountMatrix2(CountMatrix):
-    @classmethod
-    def from_dataframe2(cls, df,features: Features, barcodes=None):
-        matrix = df
-        mtx = scipy.sparse.coo_matrix(matrix, matrix.shape, int)
-        return cls(features,barcodes,mtx)
-
 
 class Count_cite(Step):
 
     def __init__(self, args, display_title):
         super().__init__(args, display_title)
 
-        self.df_read_count = pd.read_csv(args.read_count_file, sep='\t', index_col=0)
+        self.df_read_count = pd.read_csv(args.read_count_file, sep='\t', index_col=[0,1])
 
         self.match_dict = utils.parse_match_dir(args.match_dir)
         self.match_barcode = self.match_dict['match_barcode']
         self.match_matrix_dir = self.match_dict['matrix_dir']
+        self.df_rna_tsne = pd.DataFrame()
+        if 'tsne_coord' in self.match_dict:
+            self.df_rna_tsne = read_tsne(self.match_dict['tsne_coord'])
+        else:
+            sys.stderr.write('rna tsne file not found!')
 
-        # input
-        self.tsne_coord = glob.glob(f'{args.match_dir}/*analysis*/*tsne_coord.tsv')[0]
 
         # out
         self.mtx = f'{self.out_prefix}_citeseq.mtx.gz'
-        self.raw_matrix_dir = f'{self.out_prefix}_raw_citeseq_matrix'
-        self.filtered_matrix_dir  = f'{self.out_prefix}_filtered_citeseq_matrix'
-        self.filtered_tsne_coord = f'{self.out_prefix}_filtered_tsne_coord.tsv'
-        
+        self.matrix_dir = f'{self.out_prefix}_rna_citeseq_matrix'
+        self.tsne_file = f'{self.out_prefix}_tsne_coord.tsv'
 
     @utils.add_log
     def run(self):
         mapped_read = int(self.df_read_count['read_count'].sum())
 
         # in cell
-        df_read_count_in_cell = self.df_read_count[self.df_read_count.index.isin(self.match_barcode)]
+        df_read_count_in_cell = self.df_read_count[self.df_read_count.index.isin(self.match_barcode, level=0)]
         mapped_read_in_cell = int(df_read_count_in_cell['read_count'].sum())
         self.add_metric(
             name='Mapped Reads in Cells',
@@ -112,68 +47,36 @@ class Count_cite(Step):
             total=mapped_read,
         )
 
-        tag_names = df_read_count_in_cell[TAG_COL].unique()
-        features_raw = Features(tag_names)
-        
-        # raw_matrix
-        df = df_read_count_in_cell.groupby(['barcode', TAG_COL]).agg({'UMI':'count'})
-        raw_citeseq_matrix = CountMatrix.from_dataframe(df, features_raw, barcodes=self.match_barcode, value='UMI')
-        rna_matrix = CountMatrix.from_matrix_dir(matrix_dir=self.match_matrix_dir)
-        raw_merged_matrix = rna_matrix.concat_by_barcodes(raw_citeseq_matrix)
-        raw_merged_matrix.to_matrix_dir(self.raw_matrix_dir)
-
         # UMI
-        df_UMI_in_cell = df_read_count_in_cell.reset_index().groupby([
+        df_UMI_in_cell = df_read_count_in_cell.groupby([
             'barcode', TAG_COL]).agg({'UMI': 'count'})
 
-        df_UMI_in_cell = df_UMI_in_cell.reset_index()
-        df_UMI_in_cell = df_UMI_in_cell.pivot(
+        df_temp= df_UMI_in_cell.reset_index().pivot(
             index='barcode', columns=TAG_COL, values='UMI')
         df_cell = pd.DataFrame(index=self.match_barcode)
-        df_UMI_cell = pd.merge(
+        df_pivot = pd.merge(
             df_cell,
-            df_UMI_in_cell,
+            df_temp,
             how="left",
             left_index=True,
             right_index=True)
 
         # fillna
-        df_UMI_cell.fillna(0, inplace=True)
-        df_UMI_cell = df_UMI_cell.astype(int)
-        df_UMI_cell_out = df_UMI_cell.T
+        df_pivot.fillna(0, inplace=True)
+        df_pivot = df_pivot.astype(int)
+        df_UMI_cell_out = df_pivot.T
         df_UMI_cell_out.to_csv(self.mtx, sep='\t', compression='gzip')
 
-        
-        # fix
-        ## 1.normalize;2.filter
-        ### normalize
-        # fix fun
-        df_UMI_cell_out = geometric_trans(df_UMI_cell_out)
-        obs = pd.DataFrame(index=df_UMI_cell_out.columns)
-        var = pd.DataFrame(df_UMI_cell_out.index,index=df_UMI_cell_out.index,columns=['ADT'])
-        mdata_citeseq = ad.AnnData(np.array(df_UMI_cell_out.T),obs=obs,var=var)
-        ### filter
-        df_filtered = filter_fun(mdata_citeseq.to_df().T)
-        features_filtered = Features(df_filtered.index.to_list())
-        filtered_citeseq_matrix = CountMatrix2.from_dataframe2(df_filtered, features_filtered, barcodes=self.match_barcode)
-        filtered_merged_matrix = rna_matrix.concat_by_barcodes(filtered_citeseq_matrix)
-        filtered_merged_matrix.to_matrix_dir(self.filtered_matrix_dir)
-        
-        
-        # filtered_tsne.csv
-        df_tsne = pd.read_csv(self.tsne_coord,sep="\t")
-        if 'Unnamed: 0' in df_tsne.columns:
-            df_tsne.rename(columns={'Unnamed: 0': 'barcode'}, inplace=True)
-            df_tsne = df_tsne.set_index('barcode')
-
-        df_citeseq = mdata_citeseq.to_df()
-        df_tsne = pd.concat([df_tsne,df_citeseq],axis=1)
-        df_tsne.fillna(0,inplace=True)
-        df_tsne.to_csv(self.filtered_tsne_coord,sep='\t')
-
+        # merge rna matrix
+        tag_names = df_read_count_in_cell.index.get_level_values(1).unique()
+        features = Features(tag_names)
+        citeseq_matrix = CountMatrix.from_dataframe(df_UMI_in_cell, features, barcodes=self.match_barcode, value='UMI')
+        rna_matrix = CountMatrix.from_matrix_dir(matrix_dir=self.match_matrix_dir)
+        merged_matrix = rna_matrix.concat_by_barcodes(citeseq_matrix)
+        merged_matrix.to_matrix_dir(self.matrix_dir)
 
         # UMI
-        UMIs = df_UMI_cell.apply(sum, axis=1)
+        UMIs = df_pivot.apply(sum, axis=1)
         median_umi = round(np.median(UMIs), 2)
         mean_umi = round(np.mean(UMIs), 2)
         self.add_metric(
@@ -184,6 +87,12 @@ class Count_cite(Step):
             name='Mean UMI per Cell',
             value=float(mean_umi),
         )
+
+        # out tsne
+        if not self.df_rna_tsne.empty:
+            df_log1p = np.log2(df_pivot + 1)
+            df_tsne = self.df_rna_tsne.merge(df_log1p, left_index=True, right_index=True)
+            df_tsne.to_csv(self.tsne_file,sep='\t')
 
 
 def get_opts_count_cite(parser, sub_program):
