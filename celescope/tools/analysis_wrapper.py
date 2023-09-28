@@ -63,6 +63,7 @@ class Scanpy_wrapper(Step):
             args.matrix_file,  
             var_names='gene_symbols',
         )
+        self.adata.layers['raw'] = self.adata.X.copy()
         self.mt_gene_list = Mkref_rna.get_config(args.genomeDir)['files']['mt_gene_list']
 
         # out

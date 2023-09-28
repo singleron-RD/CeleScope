@@ -313,7 +313,7 @@ def count(args):
 
 def get_opts_count(parser, sub_program):
     parser.add_argument('--genomeDir', help='Required. Genome directory.')
-    parser.add_argument('--expected_cell_num', help='Default `3000`. Expected cell number.', default=3000)
+    parser.add_argument('--expected_cell_num', help='Expected cell number.', default=8000)
     parser.add_argument(
         '--cell_calling_method',
         help=HELP_DICT['cell_calling_method'],
