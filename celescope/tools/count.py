@@ -16,7 +16,6 @@ from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.emptydrop_cr.cell_calling_3 import cell_calling_3
 from celescope.tools.step import Step, s_common
 from celescope.rna.mkref import Mkref_rna
-from celescope.tools.plotly_plot import Line_plot
 from celescope.tools.matrix import CountMatrix, ROW, COLUMN
 from celescope.tools import reference
 

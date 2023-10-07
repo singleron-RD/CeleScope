@@ -7,7 +7,6 @@ import subprocess
 import unittest
 import shutil
 
-import pandas as pd
 import pysam
 
 from celescope.rna.mkref import Mkref_rna

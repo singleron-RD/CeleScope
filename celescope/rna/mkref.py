@@ -1,6 +1,4 @@
 import subprocess
-import os
-import math
 import sys
 
 from celescope.tools import utils

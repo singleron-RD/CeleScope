@@ -61,8 +61,10 @@ class Mkref_snp:
     
 
 def mkref(args):
+    # pylint: disable=unused-argument
     Mkref_snp().run()
 
 
 def get_opts_mkref(parser, sub_program):
+    # pylint: disable=unused-argument
     pass

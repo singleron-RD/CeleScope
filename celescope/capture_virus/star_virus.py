@@ -1,6 +1,5 @@
 from celescope.tools import utils
 from celescope.tools.star_mixin import Star_mixin, get_opts_star_mixin
-from celescope.tools.make_ref import MakeRef_STAR
 
 
 class Star_virus(Star_mixin):
