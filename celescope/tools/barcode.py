@@ -1,3 +1,4 @@
+import os
 import glob
 import re
 import sys
@@ -148,6 +149,20 @@ class Chemistry():
         Chemistry.get_chemistry.logger.info(f'chemistry: {chemistry}')
 
         return chemistry
+
+    @staticmethod
+    def get_whitelist(chemistry):
+        # returns: [bclists]
+        repeat = 3
+        root_dir = f'{ROOT_PATH}/data/chemistry/{chemistry}'
+        bclist = f'{root_dir}/bclist'
+        bclist1 = f'{root_dir}/bclist1'
+        if os.path.exists(bclist1):
+            return [f'{root_dir}/bclist{i}' for i in range(1,repeat+1)]
+        elif os.path.exists(bclist):
+            return [bclist] * repeat
+        else:
+            sys.exit(f'No bclist found for chemistry {chemistry} under {root_dir}')
 
 
 class Barcode(Step):
