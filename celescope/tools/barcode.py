@@ -47,6 +47,8 @@ class Chemistry():
         """check chemistry in the fq1_list"""
         if self.assay == 'bulk_vdj':
             return ['bulk_vdj'] * len(self.fq1_list)
+        if self.assay == 'bulk_rna':
+            return ['bulk_rna'] * len(self.fq1_list)
         chemistry_list = []
         for fastq1 in self.fq1_list:
             self.check_chemistry.logger.info(fastq1)
@@ -199,6 +201,7 @@ class Barcode(Step):
         self.noLinker = args.noLinker
         self.output_R1 = args.output_R1
         self.bool_flv = False
+        self.wells = args.wells
 
 
         # flv_trust4, flv_CR
@@ -313,11 +316,15 @@ class Barcode(Step):
         
 
     @staticmethod
-    def get_scope_bc(chemistry):
+    def get_scope_bc(chemistry, wells=""):
         """Return (linker file path, whitelist file path)"""
         try:
-            linker_f = glob.glob(f'{ROOT_PATH}/data/chemistry/{chemistry}/linker*')[0]
-            whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/bclist'
+            if chemistry == 'bulk_rna':
+                linker_f = None
+                whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/bclist{wells}'
+            else:
+                linker_f = glob.glob(f'{ROOT_PATH}/data/chemistry/{chemistry}/linker*')[0]
+                whitelist_f = f'{ROOT_PATH}/data/chemistry/{chemistry}/bclist'
         except IndexError:
             return None, None
         return linker_f, whitelist_f
@@ -619,7 +626,7 @@ class Barcode(Step):
             # get linker and whitelist
             bc_pattern = PATTERN_DICT[chemistry]
             if (bc_pattern):
-                linker_file, whitelist_file = self.get_scope_bc(chemistry)
+                linker_file, whitelist_file = self.get_scope_bc(chemistry, self.wells)
                 whitelist_files = [whitelist_file]
             else:
                 bc_pattern = self.pattern
@@ -807,6 +814,12 @@ lowQual will be regarded as low-quality bases.',
         '--output_R1',
         help="Output valid R1 reads.",
         action='store_true'
+    )
+    parser.add_argument(
+        '--wells',
+        help='The AccuraCode wells used (384 or 96).',
+        type=int,
+        default=384
     )
     if sub_program:
         parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)

@@ -105,10 +105,12 @@ class Conversion(Step):
         for i in df_arr:
             Outputdf = pd.concat([Outputdf,i])  
         Outputdf = Outputdf.reset_index()
-        Outputdf[['chrom', 'pos']] = Outputdf['index'].apply(pd.Series)
-        Outputdf.drop('index', axis=1, inplace=True)
         # all conv sites
-        self.conv_df = Outputdf.groupby(['chrom', 'pos']).agg({'convs':'sum','cells':'sum'})
+        self.conv_df = Outputdf.groupby('index').agg({'convs':'sum','cells':'sum'})
+        self.conv_df = self.conv_df.reset_index()
+        self.conv_df[['chrom', 'pos']] = self.conv_df['index'].str.split('+', expand=True)
+        self.conv_df = self.conv_df.set_index(['chrom', 'pos'])
+        self.conv_df.drop('index', axis=1, inplace=True)
         # snp sites
         if self.snp_min_cells < 1:
             self.snp_min_cells = int(self.snp_min_cells * self.cell_num)
@@ -233,7 +235,7 @@ class Conversion(Step):
                     locs = tags[3]
                 if locs[0] != 0:
                     for loc in locs:
-                        site = (read.reference_name, loc)
+                        site = f'{read.reference_name}+{loc}'
                         tmp_cell[site].add(read.get_tag("CB"))
                         site_depth[site] += 1
                   

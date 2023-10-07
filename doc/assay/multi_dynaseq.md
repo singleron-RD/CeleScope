@@ -1,39 +1,26 @@
 ## Usage
 
 ```
-    multi_dynaseq\
-    --mapfile ./rna.mapfile\
-    --genomeDir /SGRNJ/Public/Database/genome/homo_mus\
-    --strand /SGRNJ03/Public/Database/genome/gene.strandedness.csv
+multi_dynaseq \
+    --mapfile ./rna.mapfile \
+    --genomeDir /SGRNJ/Public/Database/genome/homo_mus
 ```
 
-You need to generate strandness-file from gtf file. 
-The format is "geneID,strand", eg:
+For control sample, set --control to skip replacement step.
 ```
-ENSG00000223972,+
-ENSG00000227232,-
-ENSG00000278267,-
+multi_dynaseq \
+    --mapfile ./rna.mapfile \
+    --genomeDir /SGRNJ/Public/Database/genome/homo_mus \
+    --control
 ```
+
+For genome reference generated, please refer to [rna](multi_rna.md) assay.
+
+## Main Output
+- `substitution/{sample}.substitution.txt`: Substitution rate for each conversion type.
+- `replacement/{sample}.labeled.h5ad`: h5ad file contains ['total', 'labeled', 'unlabeled'] layers.
+
 ## Features
-### barcode
-
-- Demultiplex barcodes.
-- Filter invalid R1 reads, which includes:
-    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
-    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
-    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
-    - Low quality reads: low sequencing quality in barcode and UMI regions.
-
-
-### cutadapt
-- Trim adapters in R2 reads with cutadapt. Default adapters includes:
-    - polyT=A{18}, 18 A bases. 
-    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
-
-### star
-- Align R2 reads to the reference genome with STAR.
-
-
 ### featureCounts
 - Assigning uniquely mapped reads to genomic features with FeatureCounts.
 
@@ -43,244 +30,65 @@ ENSG00000278267,-
 
 ### analysis
 - Cell clustering with Seurat.
-
 - Calculate the marker gene of each cluster.
-
 - Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
-
 
 ### conversion
 - Get conversion pos in each read.
     - Get snp info. 
 
-
 ### substitution
 - Computes the overall conversion rates in reads and plots a barplot.
 
-
-### replace_tsne
-- Replace rate in each cluster
-- Top replace genes in each cluster
+### replacement
+- Quantify unlabeled and labeled RNA.
+- Boxplots for TOR rates distribution.
+- TSNE plot for TOR rate 
 
 
 ## Output files
-### barcode
-
-- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
-the read name is `{barcode}_{UMI}_{read ID}`.
-
-### cutadapt
-- `cutadapt.log` Cutadapt output log file.
-- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
-
-### star
-- `{sample}_Aligned.sortedByCoord.out.bam` BAM file contains Uniquely Mapped Reads.
-
-- `{sample}_SJ.out.tab` SJ.out.tab contains high confidence collapsed splice junctions in tab-delimited format.
-
-- `{sample}_Log.out` Main log with a lot of detailed information about the run. 
-This is most useful for troubleshooting and debugging.
-
-- `{sample}_Log.progress.out` Report job progress statistics, such as the number of processed reads, 
-% of mapped reads etc. It is updated in 1 minute intervals.
-
-- `{sample}_Log.Log.final.out` Summary mapping statistics after mapping job is complete, 
-very useful for quality control. The statistics are calculated for each read (single- or paired-end) and 
-then summed or averaged over all reads. Note that STAR counts a paired-end read as one read, 
-(unlike the samtools agstat/idxstats, which count each mate separately). 
-Most of the information is collected about the UNIQUE mappers 
-(unlike samtools agstat/idxstats which does not separate unique or multi-mappers). 
-Each splicing is counted in the numbers of splices, which would correspond to 
-summing the counts in SJ.out.tab. The mismatch/indel error rates are calculated on a per base basis, 
-i.e. as total number of mismatches/indels in all unique mappers divided by the total number of mapped bases.
-
 ### featureCounts
-- `{sample}` Numbers of reads assigned to features (or meta-features).
-- `{sample}_summary` Stat info for the overall summrization results, including number of 
-successfully assigned reads and number of reads that failed to be assigned due to 
-various reasons (these reasons are included in the stat info).
-- `{sample}_aligned_sortedByCoord_addTag.bam` featureCounts output BAM, 
-sorted by coordinates;BAM file contains tags as following(Software Version>=1.1.8):
-    - CB cell barcode
-    - UB UMI
-    - GN gene name
-    - GX gene id
-- `{sample}_name_sorted.bam` featureCounts output BAM, sorted by read name.
+- `featureCounts/{sample}_aligned_posSorted_addTag.bam` This bam file contains coordinate-sorted reads aligned to the genome.
 
 ### count
 - `{sample}_raw_feature_bc_matrix` The expression matrix of all detected barcodes in [Matrix Market Exchange Formats](
     https://math.nist.gov/MatrixMarket/formats.html). 
 - `{sample}_filtered_feature_bc_matrix` The expression matrix of cell barcodes in Matrix Market Exchange Formats. 
-- `{sample}_count_detail.txt.gz` 4 columns: 
-    - barcode  
-    - gene ID  
-    - UMI count  
-    - read_count  
-- `{sample}_counts.txt` 6 columns:
-    - Barcode: barcode sequence
-    - read: read count of each barcode
-    - UMI: UMI count for each barcode
-    - geneID: gene count for each barcode
-    - mark: cell barcode or backgound barcode.
-        `CB` cell  
-        `UB` background  
-- `{sample}_downsample.tsv` Subset a fraction of reads and calculate median gene number and sequencing saturation.
 
 ### analysis
 - `markers.tsv` Marker genes of each cluster.
 
-- `tsne_coord.tsv` t-SNE coordinates and clustering information.
-
-- `{sample}/06.analsis/{sample}_auto_assign/` This result will only be obtained when `--type_marker_tsv` 
-parameter is provided. The result contains 3 files:
-    - `{sample}_auto_cluster_type.tsv` The cell type of each cluster; if cell_type is "NA", 
-it means that the given marker is not enough to identify the cluster.
-    - `{sample}_png/{cluster}_pctdiff.png` Percentage of marker gene expression in this cluster - percentage in all other clusters.
-    - `{sample}_png/{cluster}_logfc.png` log2 (average expression of marker gene in this cluster / average expression in all other clusters + 1)
-
 ### conversion
 - `{sample}.PosTag.bam` Bam file with conversion info.
-- `{sample}.PosTag.csv` SNP info in csv format.
+- `{sample}.PosTag.csv` TC conversion sites info in csv format.
+- `{sample}.snp.csv` Candidated snp sites.
 
 ### substitution
 - `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
 
-### replace_tsne
-- `{sample}.rep_in_tsne.txt` Replace rate in each cluster.
-- `{sample}.rep_in_tsne_top10` Top 10 replace genes in each cluster.
+### replacement
+- `{sample}.labeled.h5ad` h5ad file contains ['total', 'labeled', 'unlabeled'] layers and TOR rate of each cell/gene.
+- `{sample}_labeled_feature_bc_matrix` The labeled expression matrix of cell barcodes & all features in Matrix Market Exchange Formats. (will be deprecated in future versions)
+- `{sample}_unlabeled_feature_bc_matrix` The unlabeled expression matrix of cell barcodes & all features in Matrix Market Exchange Formats. (will be deprecated in future versions)
+- `{sample}_labeled_detail.txt`  tab-delimited  file:
+    - Barcode: Cell barcode sequence
+    - UMI: UMI sequence
+    - geneID: gene ID
+    - TC: TC site number in a read (backgroup snp removed)
 
 ## Arguments
-`--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
-
-1st column: Fastq file prefix.  
-2nd column: Fastq file directory path.  
-3rd column: Sample name, which is the prefix of all output files.  
-4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
-
-- `rna` Optional, forced cell number.
-- `vdj` Required, matched_dir.
-- `tag` Required, matched_dir.
-- `dynaseq` Optional, forced cell number.
-- `snp` Required, matched_dir.
-- `capture_virus` Required, matched_dir.
-- `fusion` Required, matched_dir.
-- `citeseq` Required, matched_dir.
-- `flv_trust4` Required, matched_dir.
-- `sweetseq` Required, matched_dir.
- 
-5th column:
-- `dynaseq` Required, background snp file.
-
-Example
-
-Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
-```
-$cat ./my.mapfile
-fastq_prefix1	fastq_dir1	sample1
-fastq_prefix2	fastq_dir2	sample1
-fastq_prefix3	fastq_dir1	sample2
-
-$ls fastq_dir1
-fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
-fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
-
-$ls fastq_dir2
-fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
-```
-
-`--mod` Which type of script to generate, `sjm` or `shell`.
-
-`--queue` Only works if the `--mod` selects `sjm`.
-
-`--rm_files` Remove redundant fastq and bam files after running.
-
-`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
-use `--steps_run barcode,cutadapt`.
-
-`--outdir` Output directory.
-
-`--thread` Thread to use.
-
-`--use_R3` ATAC libraries use R3 reads instead of R2.
-
-`--debug` If this argument is used, celescope may output addtional file for debugging.
-
-`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
-
-`--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
-        of bases.  
-- `C`: cell barcode  
-- `L`: linker(common sequences)  
-- `U`: UMI    
-- `T`: poly T.
-
-`--whitelist` Cell barcode whitelist file path, one cell barcode per line.
-
-`--linker` Linker whitelist file path, one linker per line.
-
-`--lowQual` Default 0. Bases in cell barcode and UMI whose phred value are lower than lowQual will be regarded as low-quality bases.
-
-`--lowNum` The maximum allowed lowQual bases in cell barcode and UMI.
-
-`--nopolyT` Outputs R1 reads without polyT.
-
-`--noLinker` Outputs R1 reads without correct linker.
-
-`--filterNoPolyT` Filter reads without PolyT.
-
-`--allowNoLinker` Allow valid reads without correct linker.
-
-`--output_R1` Output valid R1 reads.
-
-`--gzip` Output gzipped fastq files.
-
-`--adapter_fasta` Addtional adapter fasta file.
-
-`--minimum_length` Discard processed reads that are shorter than LENGTH.
-
-`--nextseq_trim` Quality trimming of reads using two-color chemistry (NextSeq). 
-Some Illumina instruments use a two-color chemistry to encode the four bases. 
-This includes the NextSeq and the NovaSeq. 
-In those instruments, a ‘dark cycle’ (with no detected color) encodes a G. 
-However, dark cycles also occur when sequencing “falls off” the end of the fragment.
-The read then contains a run of high-quality, but incorrect “G” calls at its 3’ end.
-
-`--overlap` Since Cutadapt allows partial matches between the read and the adapter sequence,
-short matches can occur by chance, leading to erroneously trimmed bases. 
-For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. 
-To reduce the number of falsely trimmed bases, the alignment algorithm requires that 
-at least {overlap} bases match between adapter and read.
-
-`--insert` Read2 insert length.
-
-`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
-
-`--outFilterMatchNmin` Alignment will be output only if the number of matched bases 
-is higher than or equal to this value.
-
-`--out_unmapped` Output unmapped reads.
-
-`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
-
-`--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
-
-`--starMem` Default `30`. Maximum memory that STAR can use.
-
-`--gtf_type` Specify feature type in GTF annotation.
-
-`--featureCounts_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
-
-`--expected_cell_num` Default `3000`. Expected cell number.
-
-`--cell_calling_method` Default `EmptyDrops_CR`. Choose from [`auto`, `EmptyDrops_CR`].
 
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
-`--strand` gene strand file, the format is "geneID,+/-".
+`--basequalilty` Min base quality of the read sequence.
 
-`--basequalilty` min base quality of the read sequence.
+`--snp_min_cells` Minimum number of cells to call a variant(>=1 for cell number or <1 for cell fraction).
 
-`--bg_cov` background snp depth filter, lower than bg_cov will be discarded. Only valid in csv format.
+`--snp_min_depth` Minimum depth to call a variant.
 
-`--snp_threshold` snp threshold filter, greater than snp_threshold will be recognized as snp. Only valid in csv format.
+`--cellsplit` Split N cells into a list.
+
+`--conversionMem` Set conversion memory.
+
+`--control` For control samples to generate backgroup snp files and skip replacement.
 

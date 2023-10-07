@@ -16,12 +16,13 @@ ASSAY_LIST = [
     'flv_trust4',
     'sweetseq',
     'utils',
-    'bulk_vdj'
+    'bulk_vdj',
+    'bulk_rna'
 ]
 
 ROOT_PATH = os.path.dirname(__file__)
 
-RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion', 'citeseq', 'flv_trust4', 'sweetseq','bulk_vdj']
+RELEASED_ASSAYS = ['rna', 'vdj', 'tag', 'dynaseq', 'snp', 'capture_virus', 'fusion', 'citeseq', 'flv_trust4', 'sweetseq','bulk_vdj','bulk_rna']
 
 # argument help
 HELP_DICT = {

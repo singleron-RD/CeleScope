@@ -21,6 +21,8 @@
         {% include "./html/utils/table_script/snp.html" %}
     {% elif step_summary.table_dict.id == "bulk_vdj" %}
         {% include "./html/utils/table_script/bulk_vdj.html" %}
+    {% elif step_summary.table_dict.id == "bulk_rna" %}
+        {% include "./html/utils/table_script/bulk_rna.html" %}
     {% endif %}
 
     <h3>{{step_summary.table_dict['title']}}</h3>

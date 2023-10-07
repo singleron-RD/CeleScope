@@ -71,10 +71,12 @@ class Multi_bulk_vdj(Multi):
         cmd_line = self.get_cmd_line(step, sample)
         productive_file = f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_productive.tsv'
         airr_file = f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_airr.tsv'
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{self.fq_suffix}'
         cmd = (
             f'{cmd_line} '
             f'--productive_file {productive_file} '
-            f'--airr_file {airr_file}'
+            f'--airr_file {airr_file} '
+            f'--fq {fq} '
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
