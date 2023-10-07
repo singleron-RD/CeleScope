@@ -207,6 +207,8 @@ use `--steps_run barcode,cutadapt`
                 step_outdir = f"{self.args.outdir}/{sample}/{index:02d}.{step}"
                 self.outdir_dic[sample].update({step: step_outdir})
                 index += 1
+            # add outs dir
+            self.outdir_dic[sample]['outs'] = f"{self.args.outdir}/{sample}/outs"
 
     def generate_cmd(self, cmd, step, sample, m=1, x=1):
         if sample:

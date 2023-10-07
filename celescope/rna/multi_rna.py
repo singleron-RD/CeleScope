@@ -28,7 +28,7 @@ class Multi_rna(Multi):
 
     def analysis(self, sample):
         step = 'analysis'
-        matrix_file = f'{self.outdir_dic[sample]["starsolo"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
+        matrix_file = f'{self.outdir_dic[sample]["outs"]}/filtered'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

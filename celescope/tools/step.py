@@ -45,6 +45,7 @@ class Step:
         sys.stderr.write(f'Args: {args}\n')
         self.args = args
         self.outdir = args.outdir
+        self.outs_dir = f'{args.outdir}/../outs'
         self.sample = args.sample
         self.assay = args.subparser_assay
         self.thread = int(args.thread)
@@ -55,6 +56,7 @@ class Step:
 
         # important! make outdir before path_dict because path_dict use relative path.
         utils.check_mkdir(self.outdir)
+        utils.check_mkdir(self.outs_dir)
 
         # set
         class_name = self.__class__.__name__
@@ -94,6 +96,9 @@ class Step:
 
         # out file
         self.__stat_file = f'{self.outdir}/stat.txt'
+
+        # move file to outs
+        self.outs = []
 
     def add_metric(self, name, value, total=None, help_info=None, display=None, show=True, print_log=True):
         '''
@@ -228,6 +233,17 @@ class Step:
             justify="center")
         table_dict['id'] = table_id
         return table_dict
+    
+    def _move_files(self):
+        for f in self.outs:
+            if not os.path.exists(f):
+                sys.exit(f'Error: output file {f} not found')
+            elif os.path.isfile(f):
+                cmd = f'mv -f {f} {self.outs_dir}'
+            elif os.path.isdir(f):
+                cmd = f'cp -r {f} {self.outs_dir}; rm -r {f}'
+            subprocess.check_call(cmd, shell=True)
+
 
     @utils.add_log
     def _clean_up(self):
@@ -236,6 +252,7 @@ class Step:
         self._write_stat()
         self._dump_content()
         self._render_html()
+        self._move_files()
 
     @utils.add_log
     def debug_subprocess_call(self, cmd):

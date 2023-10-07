@@ -5,6 +5,7 @@ from celescope.tools.__init__ import PATTERN_DICT
 from celescope.__init__ import ROOT_PATH, HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.tools.barcode import Chemistry, Barcode
+from celescope.tools import utils
 
 
 class Starsolo(Step):
@@ -40,6 +41,15 @@ class Starsolo(Step):
             self.cell_filter = 'EmptyDrops_CR'
         elif args.cell_calling_method == 'auto':
             self.cell_filter = 'CellRanger2.2'
+        
+        # output files
+        solo_dir = f'{self.outdir}/{self.sample}_Solo.out/'
+        self.raw_matrix = f'{solo_dir}/GeneFull_Ex50pAS/raw'
+        self.filtered_matrix = f'{solo_dir}/GeneFull_Ex50pAS/filtered'
+        bam = f'{self.outdir}/{self.sample}_Aligned.sortedByCoord.out.bam'
+
+        # outs
+        self.outs = [self.raw_matrix, self.filtered_matrix, bam]
         
     
     @staticmethod
@@ -78,8 +88,14 @@ class Starsolo(Step):
         sys.stderr.write(cmd)
         subprocess.check_call(cmd, shell=True)
 
+    @utils.add_log
+    def gzip_matrix(self):
+        cmd = f'gzip {self.raw_matrix}/*; gzip {self.filtered_matrix}/*'
+        subprocess.check_call(cmd, shell=True)
+
     def run(self):
         self.run_starsolo()
+        self.gzip_matrix()
 
 def starsolo(args):
     with Starsolo(args) as runner:
