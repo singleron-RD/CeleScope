@@ -105,7 +105,7 @@ Note that the `./shell/{sample}.sh` must be run under the working directory(You 
 	- UMI: UMI count for each barcode
 	- read: read count of each barcode
 	- gene: gene count for each barcode
-- `{sample}_counts_report.txt` 4 columns as `{sample}_counts.txt`. Filtered by UMI/gene/read cutoff (defaul UMI>=500).
+- `{sample}_counts_report.txt` 4 columns as `{sample}_counts.txt`. Filtered by UMI/gene/read cutoff (default UMI>=500).
 
 ## Arguments
 `--umi_cutoff` If the UMI number exceeds the threshold, it is considered a valid well and reported. (default 500)
