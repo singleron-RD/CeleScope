@@ -85,7 +85,7 @@ class Assemble(Step):
         read_count_dict, umi_dict = defaultdict(int), defaultdict(set)
         with pysam.FastxFile(self.candidate_fq) as f:
             for read in f:
-                attrs = read.name.split('_')
+                attrs = read.name.split(':')
                 cb, umi = attrs[0], attrs[1]
                 read_count_dict[cb] += 1
                 umi_dict[cb].add(umi)
@@ -111,7 +111,7 @@ class Assemble(Step):
         with pysam.FastxFile(self.candidate_fq) as f:
             for read in f:
                 name = read.name
-                bc, umi = name.split('_')[0], name.split('_')[1]
+                bc, umi = name.split(':')[0], name.split(':')[1]
                 for i in range(self._n_chunk):
                     if bc in split_barcodes[i]:
                         fq_list[i].write(str(read) + '\n')

@@ -304,7 +304,7 @@ class Summarize(Step):
         with pysam.FastxFile(all_contig_fasta) as fa:
             for read in fa:
                 name = read.name
-                cb = name.split('_')[0]
+                cb = name.split(':')[0]
                 sequence = read.sequence
                 if cb in cell_barcodes:
                     filter_contig_fasta.write('>' + name + '\n' + sequence + '\n')
@@ -377,8 +377,8 @@ class Summarize(Step):
         with pysam.FastxFile(self.fq2) as fq:
             for read in fq:
                 read_count_all+=1
-                cb = read.name.split('_')[0]
-                umi = read.name.split('_')[1]
+                cb = read.name.split(':')[0]
+                umi = read.name.split(':')[1]
                 umi_dict[cb].add(umi)
                 if cb in cell_barcodes:
                     read_count+=1
@@ -408,7 +408,7 @@ class Summarize(Step):
         used_read = 0
         with pysam.FastxFile(self.assembled_fa) as fa:
             for read in fa:
-                bc = read.name.split('_')[0]
+                bc = read.name.split(':')[0]
                 if bc in cell_barcodes:
                     used_read += 1
         self.add_metric(

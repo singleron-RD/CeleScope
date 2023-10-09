@@ -151,7 +151,7 @@ class FeatureCounts(Step):
             GX: gene_id
 
         """
-        attr = seg.query_name.split('_')
+        attr = seg.query_name.split(':')
         barcode = attr[0]
         ur = ub = attr[1]
 
@@ -294,7 +294,7 @@ class FeatureCounts(Step):
             fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'read', 'unique', 'PCR_duplicate']) + '\n')
 
             def keyfunc(x):
-                return x.query_name.split('_', 1)[0]
+                return x.query_name.split(':', 1)[0]
             for _, g in groupby(inputFile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
                 gene_umi_pos = utils.genDict(dim=3, valType=int)

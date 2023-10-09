@@ -50,7 +50,7 @@ class Count_bam(Step):
         for read in samfile:
             ref = read.reference_name
             query_length = read.infer_query_length()
-            attr = read.query_name.split('_')
+            attr = read.query_name.split(':')
             barcode = attr[0]
             umi = attr[1]
             if (barcode in self.match_barcode) and (query_length >= self.min_query_length):

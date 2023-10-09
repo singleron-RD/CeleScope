@@ -175,7 +175,7 @@ class Mapping_tag(Step):
         with pysam.FastxFile(self.fq) as infile:
             for record in infile:
                 self.total_reads += 1
-                attr = str(record.name).strip("@").split("_")
+                attr = str(record.name).strip("@").split(':')
                 barcode = str(attr[0])
                 umi = str(attr[1])
                 seq = record.sequence

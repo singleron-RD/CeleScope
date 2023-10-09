@@ -60,7 +60,7 @@ def split_bam(out_bam, barcodes, outdir, sample):
     samfile = pysam.AlignmentFile(out_bam, "rb")
     header = samfile.header
     for read in samfile:
-        attr = read.query_name.split('_')
+        attr = read.query_name.split(':')
         barcode = attr[0]
         umi = attr[1]
         if barcode in barcodes:

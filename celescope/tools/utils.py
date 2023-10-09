@@ -17,7 +17,7 @@ from Bio.Seq import Seq
 import pandas as pd
 import pysam
 
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME, OUTS_DIR
 from celescope.__init__ import ROOT_PATH
 
 
@@ -287,7 +287,7 @@ def get_matrix_dir_from_match_dir(match_dir):
     """
     matrix_dir_pattern_list = []
     for matrix_dir_suffix in FILTERED_MATRIX_DIR_SUFFIX:
-        matrix_dir_pattern_list.append(f"{match_dir}/*count/*{matrix_dir_suffix}")
+        matrix_dir_pattern_list.append(f"{match_dir}/{OUTS_DIR}/*{matrix_dir_suffix}")
   
     matrix_dir = glob_file(matrix_dir_pattern_list)
     get_matrix_dir_from_match_dir.logger.info(f"Matrix_dir :{matrix_dir}")
@@ -417,7 +417,7 @@ def add_tag(seg, id_name, correct_dict):
         seg with tag added
 
     """
-    attr = seg.query_name.split('_')
+    attr = seg.query_name.split(':')
     barcode = attr[0]
     umi = attr[1]
     seg.set_tag(tag='CB', value=barcode, value_type='Z')
@@ -490,7 +490,7 @@ class Samtools():
             header = original_bam.header
             with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
                 for read in original_bam:
-                    attr = read.query_name.split('_')
+                    attr = read.query_name.split(':')
                     barcode = attr[0]
                     umi = attr[1]
                     read.set_tag(tag='CB', value=barcode, value_type='Z')

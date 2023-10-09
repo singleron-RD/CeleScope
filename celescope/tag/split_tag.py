@@ -115,7 +115,7 @@ class Split_tag(Step):
         with pysam.FastxFile(self.rna_fq_file, 'r') as rna_fq:
             for read in rna_fq:
                 read_num += 1
-                attr = read.name.strip("@").split("_")
+                attr = read.name.strip("@").split(':')
                 barcode = attr[0]
                 read_index = int(attr[2])
                 for tag in self.tag_barcode_dict:
@@ -211,12 +211,11 @@ class Split_tag(Step):
                 with pysam.FastxFile(self.fasta_file) as raw_fasta:
                     for entry in raw_fasta:
                         name = entry.name
-                        attrs = name.split('_')
+                        attrs = name.split(':')
                         cb = attrs[0]
                         if cb in tag_barcodes:
-                            new_name = cb + '_' + attrs[1] + '_' + attrs[2]
                             seq = entry.sequence
-                            fasta_temp.write(f'>{new_name}\n{seq}\n')
+                            fasta_temp.write(f'>{name}\n{seq}\n')
                 fasta_temp.close()
 
                 if 'clonotype_id' in df_temp.columns:

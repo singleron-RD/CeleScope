@@ -415,26 +415,27 @@ class Barcode(Step):
         >>> mismatch_dict_list = [Barcode.get_mismatch_dict(['AAA'])] * 3
 
         >>> Barcode.check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
-        (True, True, 'AAAAAAAAA')
+        (True, True, 'AAA_AAA_AAA')
 
         >>> seq_list = ['AAA', 'AAA', 'AAA']
         >>> Barcode.check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
-        (True, False, 'AAAAAAAAA')
+        (True, False, 'AAA_AAA_AAA')
         '''
         bool_valid = True
         bool_corrected = False
-        corrected_seq = ''
+        corrected_seq_list = []
         for index, seq in enumerate(seq_list):
             if seq not in correct_set_list[index]:
                 if seq not in mismatch_dict_list[index]:
                     bool_valid = False
-                    return bool_valid, bool_corrected, corrected_seq
+                    return bool_valid, bool_corrected, ""
                 else:
                     bool_corrected = True
-                    corrected_seq += mismatch_dict_list[index][seq]
+                    corrected_seq_list.append(mismatch_dict_list[index][seq])
             else:
-                corrected_seq += seq
-        return bool_valid, bool_corrected, corrected_seq
+                corrected_seq_list.append(seq)
+
+        return bool_valid, bool_corrected, '_'.join(corrected_seq_list)
 
     @staticmethod
     def parse_whitelist_file(files: list, n_pattern: int, n_mismatch: int):
@@ -720,7 +721,7 @@ class Barcode(Step):
                             self.barcode_corrected_num += 1
                         cb = corrected_seq
                     else:
-                        cb = "".join(seq_list)
+                        cb = "_".join(seq_list)
 
                     self.clean_num += 1
                     self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
@@ -737,19 +738,15 @@ class Barcode(Step):
                             self.match_num += 1
                             self.match_cbs.add(cb)
                             if self.barcode_read_Counter[cb] <= 80000:
-                                self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-                                self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual1}\n')
-                        elif self.assay == 'flv_CR':
-                            self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
-                            self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{cb}{umi}\n+\n{qual1}\n')
-
+                                self.fh_fq2.write(f'@{cb}:{umi}:{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                                self.fh_fq1.write(f'@{cb}:{umi}:{self.total_num}\n{cb}{umi}\n+\n{qual1}\n')
                     else:
                         if self.args.stdout:
-                            print(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}')
+                            print(f'@{cb}:{umi}:{self.total_num}\n{seq2}\n+\n{qual2}')
                         else:
-                            self.fh_fq2.write(f'@{cb}_{umi}_{self.total_num}\n{seq2}\n+\n{qual2}\n')
+                            self.fh_fq2.write(f'@{cb}:{umi}:{self.total_num}\n{seq2}\n+\n{qual2}\n')
                         if self.output_R1:
-                            self.fh_fq1.write(f'@{cb}_{umi}_{self.total_num}\n{seq1}\n+\n{qual1}\n')                   
+                            self.fh_fq1.write(f'@{cb}:{umi}:{self.total_num}\n{seq1}\n+\n{qual1}\n')                   
             
                 self.run.logger.info(self.fq1_list[i] + ' finished.')
 

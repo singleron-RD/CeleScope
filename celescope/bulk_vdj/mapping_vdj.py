@@ -100,7 +100,7 @@ class Mapping_vdj(super_vdj.Mapping_vdj):
             )
         
         # output file
-        df_confident["barcode"] = df_confident["sequence_id"].apply(lambda x: x.split('_')[0])
+        df_confident["barcode"] = df_confident["sequence_id"].apply(lambda x: x.split(':')[0])
         df_VJ = df_confident[["barcode", "sequence_id","locus", "v_call", "d_call", "j_call", "junction", "junction_aa"]]
         df_VJ.rename(columns={
             "locus": "chain",

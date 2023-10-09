@@ -223,7 +223,7 @@ class Count_vdj(Step):
         """
         df = pd.read_csv(self.airr_file, sep='\t')
         df.fillna("", inplace=True)
-        df["index"] = df["sequence_id"].apply(lambda x: x.split('_')[0])
+        df["index"] = df["sequence_id"].apply(lambda x: x.split(':')[0])
         
         df_metrics = pd.DataFrame(columns=[
             "Index", "UMI_Counts", "UMIs_Mapped_To_Any_VDJ_Gene", "UMIs_with_CDR3",
@@ -263,7 +263,7 @@ class Count_vdj(Step):
         readcount_dict = defaultdict(int)
         with pysam.FastxFile(self.fq) as f:
             for read in f:
-                index = read.name.split('_')[0]
+                index = read.name.split(':')[0]
                 readcount_dict[index] += 1
         
         df_metrics.insert(1, "read_count", df_metrics["Index"].apply(lambda x: readcount_dict[x]))
@@ -280,7 +280,7 @@ class Count_vdj(Step):
         self.productive_file = pd.read_csv(self.productive_file, sep='\t')
         self.productive_file = self.productive_file[self.productive_file["chain"].isin(self.chains)]
         self.productive_file["barcode"] = self.productive_file["barcode"].apply(lambda x: INDEX_DICT[x])
-        self.productive_file["umi"] = self.productive_file["sequence_id"].apply(lambda x: x.split('_')[1])
+        self.productive_file["umi"] = self.productive_file["sequence_id"].apply(lambda x: x.split(':')[1])
 
         for chain in self.chains:
             df_tmp = self.productive_file[self.productive_file["chain"] == chain]

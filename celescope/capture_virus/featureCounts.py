@@ -45,7 +45,7 @@ class FeatureCounts(Step):
             header = raw_bam.header
             with pysam.AlignmentFile(self.filter_bam, "w", header=header) as filter_bam:
                 for read in raw_bam:
-                    attr = read.query_name.split('_')
+                    attr = read.query_name.split(':')
                     barcode = attr[0]
                     umi = attr[1]
                     if barcode in valid_barcodes and umi in barcode_umis[barcode]:

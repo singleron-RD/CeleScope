@@ -47,11 +47,11 @@ class Count(Step):
             fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
 
             def keyfunc(x):
-                return x.query_name.split('_', maxsplit=1)[0]
+                return x.query_name.split(':', maxsplit=1)[0]
             for _, g in itertools.groupby(samfile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
                 for seg in g:
-                    (barcode, umi) = seg.query_name.split('_')[:2]
+                    (barcode, umi) = seg.query_name.split(':')[:2]
                     if not seg.has_tag('XT'):
                         continue
                     gene_id = seg.get_tag('XT')

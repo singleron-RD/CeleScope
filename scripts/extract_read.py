@@ -39,7 +39,7 @@ class Extract_read():
             with gzip.open(self.out_fq2, 'wt') as fq2:
                 for read in rna_fq:
                     read_num += 1
-                    attr = read.name.strip("@").split("_")
+                    attr = read.name.strip("@").split(':')
                     barcode = attr[0]
                     read_index = int(attr[2])
                     if barcode in self.barcodes:

@@ -60,7 +60,7 @@ class Count_fusion(Count_bam):
                         right_bases = read.get_overlap(pos, right)
                         if left_bases < self.flanking_base or right_bases < self.flanking_base:
                             continue
-                        attr = read.query_name.split("_")
+                        attr = read.query_name.split(':')
                         barcode = attr[0]
                         umi = attr[1]
                         if barcode in self.match_barcode:

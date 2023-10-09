@@ -181,8 +181,8 @@ class Mapping_vdj(Step):
             "junction": "nSeqCDR3",
             "junction_aa": "aaSeqCDR3"
         }, inplace=True)
-        df_VJ["barcode"] = df_VJ["readID"].apply(lambda x: x.split("_")[0])
-        df_VJ["UMI"] = df_VJ["readID"].apply(lambda x: x.split("_")[1])
+        df_VJ["barcode"] = df_VJ["readID"].apply(lambda x: x.split(':')[0])
+        df_VJ["UMI"] = df_VJ["readID"].apply(lambda x: x.split(':')[1])
 
         for i in ["bestVGene", "bestDGene", "bestJGene"]:
             df_VJ[i] = df_VJ[i].apply(lambda x: x.split("*")[0])

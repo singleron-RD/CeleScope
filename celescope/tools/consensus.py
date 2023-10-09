@@ -94,7 +94,7 @@ def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read, out_fmt):
     out_h = xopen(outfile, 'w')
 
     def keyfunc(read):
-        attr = read.name.split('_')
+        attr = read.name.split(':')
         return (attr[0], attr[1])
 
     with pysam.FastxFile(fq) as fh:
@@ -109,8 +109,7 @@ def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read, out_fmt):
                 ambiguous="N"
             )
             n_umi += 1
-            prefix = "_".join([barcode, umi])
-            read_name = f'{prefix}_{n_umi}'
+            read_name = ':'.join([barcode, umi, str(n_umi)])
             if out_fmt == "fasta":
                 out_h.write(utils.fasta_line(read_name, consensus_seq))
             else:

@@ -18,7 +18,7 @@ def add_tag(bam, outdir):
     header = handle_in.header
     handle_out = pysam.AlignmentFile(bam_out, "wb", header=header)
     for read in handle_in:
-        attr = read.query_name.split('_')
+        attr = read.query_name.split(':')
         barcode = attr[0]
         umi = attr[1]
         read.set_tag(tag='CB', value=barcode, value_type='Z')

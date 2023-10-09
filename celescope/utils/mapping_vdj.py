@@ -85,7 +85,7 @@ class Mapping_vdj:
         out_fq1 = open(self.out_fq1, 'w')
         with pysam.FastxFile(f"{self.out_dir}/bcrtcr_2.fq") as f:
             for read in f:
-                bc, umi, _ = read.name.split('_')
+                bc, umi, _ = read.name.split(':')
                 new_seq = bc + umi
                 new_qual = 'F' * len(new_seq)
                 out_fq1.write(utils.fastq_line(read.name, new_seq, new_qual))
