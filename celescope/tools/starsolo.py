@@ -1,11 +1,12 @@
 import sys
 import subprocess
+from collections import Counter
 
-import numpy as np
 import pandas as pd
+import pysam
 
 from celescope.tools.__init__ import PATTERN_DICT
-from celescope.__init__ import ROOT_PATH, HELP_DICT
+from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.tools.barcode import Chemistry, Barcode
 from celescope.tools import utils
@@ -13,6 +14,7 @@ from celescope.tools.make_ref import MakeRef
 from celescope.tools.matrix import CountMatrix
 from celescope.tools.emptydrop_cr import get_plot_elements
 
+SAM_attributes = 'NH HI nM AS CR UR CB UB GX GN '
 
 class Starsolo(Step):
     def __init__(self, args, display_title=None):
@@ -30,7 +32,7 @@ class Starsolo(Step):
             ch = Chemistry(args.fq1)
             chemistry_list = ch.check_chemistry()
             if len(set(chemistry_list)) != 1:
-                 sys.exit('multiple chemistry found!' + str(chemistry_list))
+                sys.exit('multiple chemistry found!' + str(chemistry_list))
             chemistry = chemistry_list[0]
         else:
             chemistry = args.chemistry
@@ -42,6 +44,7 @@ class Starsolo(Step):
             self.whitelist_str = args.whitelist
             pattern = self.args.pattern
         self.cb_pos, self.umi_pos, self.umi_len = self.get_solo_pos(pattern)
+        self.pattern = pattern
 
         if args.cell_calling_method == 'EmptyDrops_CR':
             self.cell_filter = 'EmptyDrops_CR'
@@ -72,6 +75,7 @@ class Starsolo(Step):
         return cb_pos, umi_pos, umi_len
 
     def run_starsolo(self):
+        sa = SAM_attributes + self.args.SAM_attributes
         cmd = (
             'STAR \\\n'
             f'--genomeDir {self.args.genomeDir} \\\n'
@@ -87,12 +91,14 @@ class Starsolo(Step):
             f'--runThreadN {self.thread} \\\n'
             f'--clip3pAdapterSeq {self.args.adapter_3p} \\\n'
             f'--outFilterMatchNmin {self.args.outFilterMatchNmin} \\\n'
+            f'--outSAMattributes {sa} \\\n'
             '--soloCBmatchWLtype 1MM \\\n'
             '--soloFeatures Gene GeneFull_Ex50pAS \\\n'
-            '--outSAMattributes NH HI nM AS CR UR CB UB GX GN \\\n'
             '--outSAMtype BAM SortedByCoordinate \\\n'
             '--soloCellReadStats Standard \\\n'
         )
+        if self.args.STAR_param:
+            cmd += self.args.STAR_param
         sys.stderr.write(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -101,24 +107,59 @@ class Starsolo(Step):
         cmd = f'gzip {self.raw_matrix}/*; gzip {self.filtered_matrix}/*'
         subprocess.check_call(cmd, shell=True)
 
+    @utils.add_log
+    def get_Q30_cb_UMI(self):
+        fq1_list = self.args.fq1.split(",")
+        pattern_dict = Barcode.parse_pattern(self.pattern)
+        cb_10k, umi_10k, cb_10k_100k, umi_10k_100k = Counter(), Counter(), Counter(), Counter()
+        n = 0
+        with pysam.FastxFile(fq1_list[0], persist=False) as fq1:
+            for entry in fq1:
+                n += 1
+                if n > 10 ** 5:
+                    break
+                qual = entry.quality
+                cb_qual = Barcode.get_seq_str(qual, pattern_dict['C'])
+                umi_qual = Barcode.get_seq_str(qual, pattern_dict['U'])
+                if n <= 10 ** 4:
+                    cb_10k.update(cb_qual)
+                    umi_10k.update(umi_qual)
+                else:
+                    cb_10k_100k.update(cb_qual)
+                    umi_10k_100k.update(umi_qual)
+        
+        cb_qual_counter = cb_10k
+        umi_qual_counter = umi_10k
+        if cb_10k_100k:
+            cb_qual_counter = cb_10k_100k
+            umi_qual_counter = umi_10k_100k
+        q30_cb = sum([cb_qual_counter[k] for k in cb_qual_counter if k >= Barcode.ord2chr(
+            30)]) / float(sum(cb_qual_counter.values()))
+        q30_umi = sum([umi_qual_counter[k] for k in umi_qual_counter if k >= Barcode.ord2chr(
+            30)]) / float(sum(umi_qual_counter.values()))
+        return q30_cb, q30_umi
+
+
     def run(self):
         self.run_starsolo()
         self.gzip_matrix()
-
+        q30_cb, q30_umi = self.get_Q30_cb_UMI()
+        return q30_cb, q30_umi
 
 
 def starsolo(args):
 
-    '''
     with Starsolo(args) as runner:
-        runner.run()
-    '''
+        q30_cb, q30_umi = runner.run()
+
     with Mapping(args) as runner:
         valid_reads = runner.run()
-
+    
     with Cells(args) as runner:
-        runner.run(valid_reads)
-
+        n_reads, q30_RNA = runner.run(valid_reads)
+    
+    with Demultiplexing(args) as runner:
+        runner.run(valid_reads, n_reads, q30_cb, q30_umi, q30_RNA)
 
 
 class Mapping(Step):
@@ -147,6 +188,7 @@ class Mapping(Step):
         exonic = int(s['exonic'])
         intronic = int(s['intronic'])
         antisense = int(s['exonicAS'] + s['intronicAS'])
+        intergenic = genomeM + genomeU - exonic - intronic - antisense
         countedU = int(s['countedU'])
         del df
 
@@ -157,39 +199,45 @@ class Mapping(Step):
 
         self.add_metric(
             name='Reads mapped to unique loci',
-            value=genomeU,
-            total=valid,
+            value=genomeU / valid,
+            value_type='fraction',
             help_info='Reads that mapped uniquely to the genome.'
         )
 
         self.add_metric(
             name='Reads mapped to multiple loci',
-            value=genomeM,
-            total=valid,
+            value=genomeM / valid,
+            value_type='fraction',
             help_info='Reads that mapped to multiple loci in the genome'
         )
         self.add_metric(
             name='Reads mapped uniquely to Transcriptome',
-            value=countedU,
-            total=valid,
+            value=countedU / valid,
+            value_type='fraction',
             help_info='Reads that mapped to a unique gene in the transcriptome. These reads are used for UMI counting.'
         )
         self.add_metric(
             name='Reads assigned to exonic regions',
-            value=exonic,
-            total=valid,
+            value=exonic / valid,
+            value_type='fraction',
             help_info='Reads that assigned to exonic regions of genes',
         )
         self.add_metric(
             name='Reads assigned to intronic regions',
-            value=intronic,
-            total=valid,
+            value=intronic / valid,
+            value_type='fraction',
             help_info='Reads that assigned to intronic regions of genes',
         )
         self.add_metric(
+            name='Reads assigned to intergenic regions',
+            value=intergenic / valid,
+            value_type='fraction',
+            help_info='Reads that can not be assigned to a gene will be considered as intergenic reads.',
+        )
+        self.add_metric(
             name='Reads assigned Antisense to gene',
-            value=antisense,
-            total=valid,
+            value=antisense / valid,
+            value_type='fraction',
             help_info='Reads that assigned to the opposite strand of genes',
         )
 
@@ -222,6 +270,8 @@ class Cells(Step):
         median_genes_per_cell = int(s["Median GeneFull_Ex50pAS per Cell"])
         total_genes = int(s["Total GeneFull_Ex50pAS Detected"])
         saturation = float(s["Sequencing Saturation"])
+        n_reads = int(s["Number of Reads"])
+        q30_RNA = float(s["Q30 Bases in RNA read"])
 
         self.add_metric(
             name='Estimated Number of Cells',
@@ -268,19 +318,51 @@ class Cells(Step):
             display=f'{saturation}%',
             help_info='the fraction of read originating from an already-observed UMI. '
         )
+        return n_reads, q30_RNA
 
     def run(self, valid_reads):
-        self.parse_summary_add_metrics(valid_reads)
+        n_reads, q30_RNA = self.parse_summary_add_metrics(valid_reads)
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.UMI_counts_file))
+        return n_reads, q30_RNA
 
 
-class Sequencing(Step):
+class Demultiplexing(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-    def run(self):
-        pass
+    def run(self, valid_reads, n_reads, q30_cb, q30_umi, q30_RNA):
+        self.add_metric(
+            name='Raw Reads',
+            value=n_reads,
+            help_info='total reads from FASTQ files'
+        )
+        self.add_metric(
+            name='Valid Reads',
+            value=valid_reads / n_reads,
+            value_type='fraction',
+            help_info='reads with valid barcode and UMI'
+        )
 
+        self.add_metric(
+            name='Q30 of Barcodes',
+            value=q30_cb,
+            value_type='fraction',
+            help_info='Fraction of barcode bases with quality score >= 30',
+        )
+
+        self.add_metric(
+            name='Q30 of UMI',
+            value=q30_umi,
+            value_type='fraction',
+            help_info='Fraction of UMI bases with quality score >= 30',
+        )
+
+        self.add_metric(
+            name='Q30 of RNA Reads',
+            value=q30_RNA,
+            value_type='fraction',
+            help_info='Fraction of RNA read bases with quality score >= 30',
+        )
 
 
 def get_opts_starsolo(parser, sub_program=True):
@@ -329,6 +411,11 @@ is higher than or equal to this value.""",
         help='Maximum memory that STAR can use.',
         default=32
     )
+    parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], default="")
+    parser.add_argument(
+        '--SAM_attributes', 
+        help=f'Additional attributes(other than {SAM_attributes}) to be added to SAM file',
+        default="")
     if sub_program:
         parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
         parser.add_argument('--fq2', help='R2 fastq file. Multiple files are separated by comma.', required=True)

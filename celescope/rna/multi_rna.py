@@ -1,6 +1,5 @@
 from celescope.rna.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX
 
 
 class Multi_rna(Multi):

@@ -100,7 +100,7 @@ class Step:
         # move file to outs
         self.outs = []
 
-    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True, print_log=True):
+    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True, print_log=True, value_type=None):
         '''
         add metric to metric_list
         
@@ -110,6 +110,7 @@ class Step:
             display: str, controls how to display the metric in HTML report.
             show: bool, whether to add to `.data.json` and `stat.txt`. `.data.json` is used for HTML report. `stat.txt` is used in house.
             print_log: bool, whether to print metric to stdout
+            value_type: if value_type is "fraction", value = round(value * 100, 2), display = f'{value}%'
         '''
 
         name = cap_str_except_preposition(name)
@@ -126,6 +127,9 @@ class Step:
         if total:
             fraction = round(value / total * 100, 2)
             display += f'({fraction}%)'
+        if value_type == 'fraction':
+            value = round(value * 100, 2)
+            display = f'{value}%'
         self.__metric_list.append(
             {
                 "name": name,
