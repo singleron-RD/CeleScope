@@ -180,16 +180,16 @@ def convert_numpy_array_to_line_chart(array, ntype):
 
 
 @add_log
-def counter_barcode_rank_plot_data(count_data_path, log_uniform=False):
+def counter_barcode_rank_plot_data(df_UMI_path, log_uniform=False):
     """
     get cell density for each plot_segments
     :param count_data_path:
     :return: sorted_counts, plot_segments, cell_nums
     """
-    count_data = pd.read_csv(count_data_path, index_col=0, sep='\t')
-    cell_bc = np.array(count_data[count_data['mark'] == 'CB'].index)
-    sorted_bc = np.array(count_data.index)
-    sorted_counts = np.array(count_data['UMI'])
+    df_UMI = pd.read_csv(df_UMI_path, index_col=0, sep='\t')
+    cell_bc = set(df_UMI[df_UMI['mark'] == 'CB'].index)
+    sorted_bc = np.array(df_UMI.index)
+    sorted_counts = np.array(df_UMI['UMI'])
     cell_nums = len(cell_bc)
     total_bc = len(sorted_bc)
     # find the first barcode which is not a cell

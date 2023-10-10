@@ -1,18 +1,18 @@
 {% include "html/utils/start.html"%}
 
-    {% if star_summary is defined %}
-    {% set step_summary = star_summary %}
+    {% if demultiplex_summary is defined %}
+    {% set step_summary = demultiplex_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+
+    {% if mapping_summary is defined %}
+    {% set step_summary = mapping_summary %}
     {% include "html/utils/step.html" %}
     {% endif %}
 
-    {% if featureCounts_summary is defined%}
-    {% set step_summary = featureCounts_summary %}
-    {% include "html/utils/step.html" %}
-    {% endif %}
-
-    {% if count_summary is defined %}
-    {% set step_summary = count_summary %}
-    {% include "html/rna/count.html"%}
+    {% if cells_summary is defined%}
+    {% set step_summary = cells_summary %}
+    {% include "html/rna/count.html" %}
     {% endif %}
 
     {% if analysis_summary is defined %}

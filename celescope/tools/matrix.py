@@ -61,6 +61,16 @@ class CountMatrix:
         self.__barcodes = barcodes
         self.__matrix = matrix
         self.shape = matrix.shape
+    
+    @staticmethod
+    @utils.add_log
+    def read_barcodes(matrix_dir):
+        """
+            returns: barcodes set
+        """
+        barcode_file = utils.get_matrix_file_path(matrix_dir, BARCODE_FILE_NAME)
+        barcodes, _ = utils.read_one_col(barcode_file)
+        return set(barcodes)
 
     @classmethod
     @utils.add_log

@@ -387,6 +387,7 @@ job_end
         step = "merge_report"
         steps_str = ",".join(self.STEPS)
         steps_str = steps_str.replace('prep_map', 'barcode,cutadapt,star')
+        steps_str = steps_str.replace('starsolo', 'demultiplexing,mapping,cells')
         samples = ','.join(self.fq_dict.keys())
         app = TOOLS_DIR + '/merge_table.py'
         cmd = (
