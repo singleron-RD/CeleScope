@@ -14,4 +14,4 @@ IMPORT_DICT = {
 
 
 #count
-DYNA_MATRIX_DIR_SUFFIX = ['labeled_matrix','unlabeled_matrix']
+DYNA_MATRIX_DIR_SUFFIX = ['labeled','unlabeled']

@@ -70,8 +70,9 @@ class Replacement(Step):
         ## final outputs
         self.h5ad = f'{self.out_prefix}.labeled.h5ad'
         self.detail_txt = f'{self.out_prefix}_labeled_detail.txt'
-        self.dir_labeled = f'{self.out_prefix}_{DYNA_MATRIX_DIR_SUFFIX[0]}'
-        self.dir_unlabeled = f'{self.out_prefix}_{DYNA_MATRIX_DIR_SUFFIX[1]}'
+        self.dir_labeled = f'{self.outdir}/{DYNA_MATRIX_DIR_SUFFIX[0]}'
+        self.dir_unlabeled = f'{self.outdir}/{DYNA_MATRIX_DIR_SUFFIX[1]}'
+        self.outs = [self.dir_labeled, self.dir_unlabeled, self.h5ad]
 
 
     @utils.add_log

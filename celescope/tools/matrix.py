@@ -1,3 +1,5 @@
+import gzip
+
 import scipy.io
 import scipy.sparse
 import pandas as pd
@@ -89,7 +91,8 @@ class CountMatrix:
         self.__features.to_tsv(f'{matrix_dir}/{FEATURE_FILE_NAME}')
         pd.Series(self.__barcodes).to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t', header=False)
         matrix_path = f'{matrix_dir}/{MATRIX_FILE_NAME}'
-        scipy.io.mmwrite(matrix_path, self.__matrix)
+        with gzip.open(matrix_path, 'wb') as f:
+            scipy.io.mmwrite(f, self.__matrix)
 
     @classmethod
     def from_dataframe(cls, df, features: Features, barcodes=None, value="UMI"):
