@@ -155,7 +155,7 @@ class Replacement(Step):
                             true_tc.append(int(stag[si]))
                     tctag = len(true_tc)
                 ## dedup: select the most TC read per UMI_gene
-                readid = f'{cb}_{ub}_{gene}'
+                readid = ':'.join([cb,ub,gene])
                 if readid not in readdict:
                     readdict[readid] = [tctag,read,true_tc]
                 else:
@@ -169,7 +169,7 @@ class Replacement(Step):
         ## count df
         tc_df = pd.DataFrame.from_dict(readdict,orient='index', columns=["TC","read","loc"])
         tc_df.reset_index(inplace=True)
-        ub_df = tc_df['index'].str.split('_',expand=True)
+        ub_df = tc_df['index'].str.split(':',expand=True)
         ub_df.columns = ['Barcode','UMI','geneID']
         #ub_df['Barcode'] = [cell] * ub_df.shape[0]
         outframe = pd.concat([ub_df,tc_df['TC']], axis=1)

@@ -1,9 +1,9 @@
 from celescope.dynaseq.__init__ import __ASSAY__
-from celescope.tools.multi import Multi
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME, TAG_BAM_SUFFIX
+from celescope.rna.multi_rna import Multi_rna
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME, STARSOLO_BAM_SUFFIX 
 
 
-class Multi_dynaseq(Multi):
+class Multi_dynaseq(Multi_rna):
 
     """
     ## Usage
@@ -22,42 +22,28 @@ class Multi_dynaseq(Multi):
         --control
     ```
     """
-
-    def star(self, sample):
-        """
-        """
-        step = 'star'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
-        cmd_line = self.get_cmd_line(step, sample)
-        cmd = (
-            f'{cmd_line} '
-            f'--fq {fq} '
-            f'--STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 --outSAMattributes MD NH HI AS nM" '
-        )
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
-
-    def prep_map(self, sample):
-        step = 'prep_map'
+    def starsolo(self, sample):
+        step = 'starsolo'
         arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--fq1 {arr[0]} --fq2 {arr[1]} '
-            f'--STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3 --outSAMattributes MD NH HI AS nM"'
+            f'--STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3" '
+            f'--SAM_attributes MD '
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def conversion(self, sample):
         step = 'conversion'
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_{TAG_BAM_SUFFIX}'
-        cell = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
+        bam = f'{self.outdir_dic[sample]["outs"]}/{sample}_{STARSOLO_BAM_SUFFIX}'
+        cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
             f'--bam {bam} '
             f'--cell {cell} '
         )
-
         self.process_cmd(cmd, step, sample, m=self.args.conversionMem, x=self.args.thread)
 
     def substitution(self, sample):
@@ -75,7 +61,7 @@ class Multi_dynaseq(Multi):
         bam = f'{self.outdir_dic[sample]["conversion"]}/{sample}.PosTag.bam'
         snp = f'{self.outdir_dic[sample]["conversion"]}/{sample}.snp.csv'
         tsne_file = f'{self.outdir_dic[sample]["analysis"]}/{sample}_tsne_coord.tsv'
-        cell = f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
+        cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         bg_para = ''
         if sample in self.col5_dict:

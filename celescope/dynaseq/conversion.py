@@ -212,7 +212,7 @@ class Conversion(Step):
         for read in bamfile.fetch(until_eof=True):
             try:
                 ## check read info
-                if not read.has_tag('GX'):
+                if (not read.has_tag('GX')) or read.get_tag('GX') == '-':
                     continue
                 if read.get_tag("CB") not in cell_list:
                     continue
