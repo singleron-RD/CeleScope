@@ -316,9 +316,9 @@ def parse_match_dir(match_dir):
     match_dict = {}
 
     pattern_dict = {
-        'tsne_coord': [f'{match_dir}/*analysis*/*tsne_coord.tsv'],
-        'markers': [f'{match_dir}/*analysis*/*markers.tsv'],
-        'h5ad': [f'{match_dir}/*analysis*/*.h5ad'],
+        'tsne_coord': [f'{match_dir}/{OUTS_DIR}/tsne_coord.tsv'],
+        'markers': [f'{match_dir}/{OUTS_DIR}/markers.tsv'],
+        'h5ad': [f'{match_dir}/{OUTS_DIR}/rna.h5ad'],
     }
 
     for file_key in pattern_dict:

@@ -20,11 +20,8 @@ MARKER_TOP_N = 100
 
 
 def read_tsne(tsne_file):
-    df = pd.read_csv(tsne_file, sep='\t')
-    # compatible with old version
-    if 'Unnamed: 0' in df.columns:
-        df.rename(columns={'Unnamed: 0': 'barcode'}, inplace=True)
-        df = df.set_index('barcode')
+    df = pd.read_csv(tsne_file, sep='\t', index_col=0)
+    df.index.names = ['barcode']
     return df
 
 def format_df_marker(df_marker):
@@ -67,10 +64,11 @@ class Scanpy_wrapper(Step):
         self.mt_gene_list = Mkref_rna.get_config(args.genomeDir)['files']['mt_gene_list']
 
         # out
-        self.df_marker_file = f'{self.out_prefix}_markers.tsv'
-        self.df_marker_raw_file = f'{self.out_prefix}_markers_raw.tsv'
-        self.df_tsne_file = f'{self.out_prefix}_tsne_coord.tsv'
-        self.h5ad_file = f'{self.out_prefix}.h5ad'
+        self.df_marker_file = 'markers.tsv'
+        self.df_marker_raw_file = 'markers_raw.tsv'
+        self.df_tsne_file = 'tsne_coord.tsv'
+        self.h5ad_file = 'rna.h5ad'
+        self.outs = [self.df_marker_file, self.df_tsne_file, self.h5ad_file]
 
    
     @utils.add_log

@@ -1,6 +1,6 @@
 from celescope.dynaseq.__init__ import __ASSAY__
 from celescope.rna.multi_rna import Multi_rna
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME, STARSOLO_BAM_SUFFIX 
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME, STARSOLO_BAM_SUFFIX, OUTS_DIR
 
 
 class Multi_dynaseq(Multi_rna):
@@ -60,7 +60,7 @@ class Multi_dynaseq(Multi_rna):
         step = 'replacement'
         bam = f'{self.outdir_dic[sample]["conversion"]}/{sample}.PosTag.bam'
         snp = f'{self.outdir_dic[sample]["conversion"]}/{sample}.snp.csv'
-        tsne_file = f'{self.outdir_dic[sample]["analysis"]}/{sample}_tsne_coord.tsv'
+        tsne_file = f'{self.outdir_dic[sample][OUTS_DIR]}/tsne_coord.tsv'
         cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         bg_para = ''

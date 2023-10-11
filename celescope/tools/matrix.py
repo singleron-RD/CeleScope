@@ -1,4 +1,5 @@
 import gzip
+import os
 
 import scipy.io
 import scipy.sparse
@@ -7,6 +8,7 @@ import numpy as np
 
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME, MATRIX_FILE_NAME)
 from celescope.tools import utils
+import sys
 
 ROW = 'geneID'
 COLUMN = 'Barcode'
@@ -29,6 +31,8 @@ class Features:
 
     @classmethod
     def from_tsv(cls, tsv_file):
+        if not os.path.exists(tsv_file):
+            sys.exit(f'ERROR: {tsv_file} does not exist. \nSOLUTION: Rename and gzip the features file to {FEATURE_FILE_NAME}')
         df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'], dtype=str)
         gene_id = df['gene_id'].tolist()
         gene_name = df['gene_name'].tolist()
