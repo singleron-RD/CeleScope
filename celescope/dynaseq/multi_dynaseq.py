@@ -37,7 +37,7 @@ class Multi_dynaseq(Multi_rna):
     def conversion(self, sample):
         step = 'conversion'
         bam = f'{self.outdir_dic[sample]["outs"]}/{sample}_{STARSOLO_BAM_SUFFIX}'
-        cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
+        cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
@@ -61,7 +61,7 @@ class Multi_dynaseq(Multi_rna):
         bam = f'{self.outdir_dic[sample]["conversion"]}/{sample}.PosTag.bam'
         snp = f'{self.outdir_dic[sample]["conversion"]}/{sample}.snp.csv'
         tsne_file = f'{self.outdir_dic[sample][OUTS_DIR]}/tsne_coord.tsv'
-        cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX[0]}/{BARCODE_FILE_NAME}'
+        cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         bg_para = ''
         if sample in self.col5_dict:

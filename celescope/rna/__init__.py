@@ -2,11 +2,13 @@ STEPS = [
     'mkref',
     'sample',
     'starsolo',
-    'analysis'
+    'analysis',
+    'cells',
 ]
 __ASSAY__ = 'rna'
 REMOVE_FROM_MULTI = {
     'mkref',
+    'cells',
 }
 
 

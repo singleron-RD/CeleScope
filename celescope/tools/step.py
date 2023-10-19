@@ -75,6 +75,7 @@ class Step:
             self._path_dict[slot] = f'{self.outdir}/../.{slot}.json'
 
         self.__content_dict = {}
+        self.old_step_dict = {}
         for slot, path in self._path_dict.items():
             if not os.path.exists(path):
                 self.__content_dict[slot] = {}
@@ -86,6 +87,8 @@ class Step:
                         print(f'WARNING: Decoding "{path}" as json has failed. Will create empty json file.')
                         self.__content_dict[slot] = {}
             # clear step_summary
+            if self._step_summary_name in self.__content_dict[slot]:
+                self.old_step_dict[slot] = self.__content_dict[slot][self._step_summary_name]
             self.__content_dict[slot][self._step_summary_name] = {}
 
         # jinja env
@@ -217,6 +220,7 @@ class Step:
     def get_slot_key(self, slot, step_name, key):
         '''read slot from json file
         '''
+        key = key.capitalize()
         try:
             return self.__content_dict[slot][step_name + '_summary'][key]
         except KeyError:
@@ -240,12 +244,13 @@ class Step:
     
     def _move_files(self):
         for f in self.outs:
+            cmd = ''
             if not os.path.exists(f):
-                sys.exit(f'Error: output file {f} not found')
+                sys.stderr.write(f'WARNING: output file {f} not found! The pipeline may have failed.\n')
             elif os.path.isfile(f):
                 cmd = f'mv -f {f} {self.outs_dir}'
             elif os.path.isdir(f):
-                cmd = f'cp -r {f} {self.outs_dir}; rm -r {f}'
+                cmd = f'set -e; cp -r {f} {self.outs_dir}; rm -r {f}'
             subprocess.check_call(cmd, shell=True)
 
 

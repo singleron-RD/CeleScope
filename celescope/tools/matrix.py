@@ -32,7 +32,7 @@ class Features:
     @classmethod
     def from_tsv(cls, tsv_file):
         if not os.path.exists(tsv_file):
-            sys.exit(f'ERROR: {tsv_file} does not exist. \nSOLUTION: Rename and gzip the features file to {FEATURE_FILE_NAME}')
+            sys.stderr.write(f'ERROR: {tsv_file} does not exist. \nSOLUTION: Rename and gzip the features file to {FEATURE_FILE_NAME}\n')
         df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'], dtype=str)
         gene_id = df['gene_id'].tolist()
         gene_name = df['gene_name'].tolist()
@@ -155,6 +155,7 @@ class CountMatrix:
 
         return CountMatrix(features, self.__barcodes, matrix)
 
+    @utils.add_log
     def slice_matrix(self, slice_barcodes_indices):
         """
         Args:
@@ -166,6 +167,19 @@ class CountMatrix:
         sliced_mtx = mtx_csc[:, slice_barcodes_indices]
         barcodes = [self.__barcodes[i] for i in slice_barcodes_indices]
         return CountMatrix(self.__features, barcodes, sliced_mtx)
+    
+    @utils.add_log
+    def slice_matrix_bc(self, bcs):
+        """
+        Args:
+            bcs: cell barcodes
+        Returns:
+            CountMatrix object
+        """
+        barcodes_indices = [self.__barcodes.index(barcode) for barcode in bcs]
+        barcodes_indices.sort()
+        return self.slice_matrix(barcodes_indices)
+        
 
     def get_barcodes(self):
         return self.__barcodes

@@ -4,8 +4,11 @@ from collections import Counter
 
 import pandas as pd
 import pysam
+from scipy import interpolate
+import numpy as np
+import math
 
-from celescope.tools.__init__ import PATTERN_DICT
+from celescope.tools.__init__ import PATTERN_DICT, FILTERED_MATRIX_DIR_SUFFIX, COUNTS_FILE_NAME 
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.tools.barcode import Chemistry, Barcode
@@ -13,8 +16,11 @@ from celescope.tools import utils
 from celescope.tools.make_ref import MakeRef
 from celescope.tools.matrix import CountMatrix
 from celescope.tools.emptydrop_cr import get_plot_elements
+from celescope.tools.cells import Cells_metrics
 
 SAM_attributes = 'NH HI nM AS CR UR CB UB GX GN '
+MIN_CELL = 500
+MAX_CELL = 60000
 
 class Starsolo(Step):
     def __init__(self, args, display_title=None):
@@ -36,6 +42,7 @@ class Starsolo(Step):
             chemistry = chemistry_list[0]
         else:
             chemistry = args.chemistry
+        self.chemistry = chemistry
         
         if chemistry != 'customized':
             self.whitelist_str = " ".join(Chemistry.get_whitelist(chemistry))
@@ -45,11 +52,6 @@ class Starsolo(Step):
             pattern = self.args.pattern
         self.cb_pos, self.umi_pos, self.umi_len = self.get_solo_pos(pattern)
         self.pattern = pattern
-
-        if args.cell_calling_method == 'EmptyDrops_CR':
-            self.cell_filter = 'EmptyDrops_CR'
-        elif args.cell_calling_method == 'auto':
-            self.cell_filter = 'CellRanger2.2'
        
         # output files
         solo_dir = f'{self.outdir}/{self.sample}_Solo.out/GeneFull_Ex50pAS'
@@ -86,14 +88,14 @@ class Starsolo(Step):
             f'--soloCBposition {self.cb_pos} \\\n'
             f'--soloUMIposition {self.umi_pos} \\\n'
             f'--soloUMIlen {self.umi_len} \\\n'
-            f'--soloCellFilter {self.cell_filter} \\\n'
+            f'--soloCellFilter {self.args.soloCellFilter} \\\n'
             f'--outFileNamePrefix {self.out_prefix}_ \\\n'
             f'--runThreadN {self.thread} \\\n'
             f'--clip3pAdapterSeq {self.args.adapter_3p} \\\n'
             f'--outFilterMatchNmin {self.args.outFilterMatchNmin} \\\n'
+            f'--soloFeatures {self.args.soloFeatures} \\\n'
             f'--outSAMattributes {sa} \\\n'
             '--soloCBmatchWLtype 1MM \\\n'
-            '--soloFeatures Gene GeneFull_Ex50pAS \\\n'
             '--outSAMtype BAM SortedByCoordinate \\\n'
             '--soloCellReadStats Standard \\\n'
         )
@@ -141,22 +143,22 @@ class Starsolo(Step):
 
 
     def run(self):
-        self.run_starsolo()
-        self.gzip_matrix()
+        #self.run_starsolo()
+        #self.gzip_matrix()
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
-        return q30_cb, q30_umi
+        return q30_cb, q30_umi, self.chemistry
 
 
 def starsolo(args):
 
     with Starsolo(args) as runner:
-        q30_cb, q30_umi = runner.run()
+        q30_cb, q30_umi, chemistry = runner.run()
 
     with Mapping(args) as runner:
         valid_reads = runner.run()
     
     with Cells(args) as runner:
-        n_reads, q30_RNA = runner.run(valid_reads)
+        n_reads, q30_RNA = runner.run(chemistry)
     
     with Demultiplexing(args) as runner:
         runner.run(valid_reads, n_reads, q30_cb, q30_umi, q30_RNA)
@@ -168,17 +170,19 @@ class Mapping(Step):
         super().__init__(args, display_title=display_title)
         solo_dir = f'{self.outdir}/{self.sample}_Solo.out/GeneFull_Ex50pAS'
         self.cellReadsStats = f'{solo_dir}/CellReads.stats'
-        self.filtered_matrix = f'{self.outs_dir}/filtered'
-        self.UMI_counts_file = f'{solo_dir}/UMI_Counts.txt'
+        self.filtered_matrix = f'{self.outs_dir}/{FILTERED_MATRIX_DIR_SUFFIX}'
+        self.counts_file = f'{solo_dir}/{COUNTS_FILE_NAME }'
         self.genome = MakeRef.get_config(args.genomeDir)['meta']['genome_name']
+
+        self.outs = [self.counts_file]
 
 
     @utils.add_log
     def run(self):
         df = pd.read_csv(self.cellReadsStats, sep='\t', header=0, index_col=0)
         df = df.iloc[1:,] # skip first line cb not pass whitelist
-        df_UMI = df.loc[:,'nUMIunique'].to_frame() # keep dataframe format
-        df_UMI.rename(columns={'nUMIunique': 'UMI'}, inplace=True)
+        df_count = df.loc[:,['nUMIunique','countedU']] # keep dataframe format
+        df_count.rename(columns={'nUMIunique': 'UMI'}, inplace=True)
         df = df.loc[:,['cbMatch','genomeU', 'genomeM', 'exonic', 'intronic','exonicAS','intronicAS','countedU']]
         s= df.sum()
         # json does not recognize NumPy data types. TypeError: Object of type int64 is not JSON serializable
@@ -241,31 +245,31 @@ class Mapping(Step):
             help_info='Reads that assigned to the opposite strand of genes',
         )
 
-        df_UMI.sort_values(by='UMI', ascending=False, inplace=True)
+        df_count.sort_values(by='UMI', ascending=False, inplace=True)
         cbs = CountMatrix.read_barcodes(self.filtered_matrix)
-        df_UMI['mark'] = 'UB'
+        df_count['mark'] = 'UB'
         for cb in cbs:
-            df_UMI.loc[cb, 'mark'] = 'CB'
-        df_UMI.to_csv(self.UMI_counts_file, sep='\t', index=True)
+            df_count.loc[cb, 'mark'] = 'CB'
+        df_count.to_csv(self.counts_file, sep='\t', index=True)
 
         return valid
 
 
-class Cells(Step):
+class Cells(Cells_metrics):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
         solo_dir = f'{self.outdir}/{self.sample}_Solo.out/GeneFull_Ex50pAS'
         self.summary_file = f'{solo_dir}/Summary.csv'
-        self.UMI_counts_file = f'{solo_dir}/UMI_Counts.txt'
+        self.counts_file = f'{self.outs_dir}/{COUNTS_FILE_NAME}'
 
 
     @utils.add_log
-    def parse_summary_add_metrics(self, valid_reads):
+    def parse_summary_add_metrics(self):
         df = pd.read_csv(self.summary_file, index_col=0, header=None)
         s = df.iloc[:,0]
         n_cells = int(s["Estimated Number of Cells"])
         fraction_reads_in_cells = float(s["Fraction of Unique Reads in Cells"])
-        mean_reads_per_cell = valid_reads // n_cells
+        mean_used_reads_per_cell = int(s["Mean Reads per Cell"])
         median_umi_per_cell  = int(s["Median UMI per Cell"])
         median_genes_per_cell = int(s["Median GeneFull_Ex50pAS per Cell"])
         total_genes = int(s["Total GeneFull_Ex50pAS Detected"])
@@ -273,56 +277,87 @@ class Cells(Step):
         n_reads = int(s["Number of Reads"])
         q30_RNA = float(s["Q30 Bases in RNA read"])
 
-        self.add_metric(
-            name='Estimated Number of Cells',
-            value=n_cells,
-            help_info='the number of barcodes considered as cell-associated.'
-        )
-
-        fraction_reads_in_cells = round(fraction_reads_in_cells * 100, 2)
-        self.add_metric(
-            name='Fraction Reads in Cells',
-            value=fraction_reads_in_cells,
-            display=f'{fraction_reads_in_cells}%',
-            help_info='the fraction of uniquely-mapped-to-transcriptome reads with cell-associated barcodes'
-        )
-
-        self.add_metric(
-            name='Mean Reads per Cell',
-            value=mean_reads_per_cell,
-            help_info='the number of valid reads divided by the estimated number of cells'
-        )
-
-        self.add_metric(
-            name='Median UMI per Cell',
-            value=median_umi_per_cell,
-            help_info='the median number of UMI counts per cell-associated barcode'
-        )
-
-        self.add_metric(
-            name='Total Genes',
-            value=total_genes,
-            help_info='the number of genes with at least one UMI count in any cell'
-        )
-
-        self.add_metric(
-            name='Median Genes per Cell',
-            value=median_genes_per_cell,
-            help_info='the median number of genes detected per cell-associated barcode'
-        )
-
-        saturation = round(saturation * 100, 2)
-        self.add_metric(
-            name='Saturation',
-            value=saturation,
-            display=f'{saturation}%',
-            help_info='the fraction of read originating from an already-observed UMI. '
-        )
+        self.add_cells_metrics(n_cells, fraction_reads_in_cells, mean_used_reads_per_cell, median_umi_per_cell, total_genes, median_genes_per_cell, saturation)
         return n_reads, q30_RNA
 
-    def run(self, valid_reads):
-        n_reads, q30_RNA = self.parse_summary_add_metrics(valid_reads)
-        self.add_data(chart=get_plot_elements.plot_barcode_rank(self.UMI_counts_file))
+    def add_curve_metrics(self, chemistry):
+        df = pd.read_csv(self.counts_file, header=0,sep='\t',index_col=0)
+        total = df.shape[0]
+        _x = list(range(1, total+1))
+        _x = np.log10(_x)
+        _y = df['UMI']
+        _y = np.log10(_y+1)
+        b = interpolate.splrep(_x, _y, s=10)
+        d1 = interpolate.splev(_x,b,der=1)
+        d2 = interpolate.splev(_x,b,der=2)
+        def get_d1_min(x1,x2):
+            """
+                x1,x2: start and end bc index of the curve
+                returns: bc_index, minimum d1
+            """
+            i = np.argmin(d1[x1:x2+1]) + x1
+            return i, d1[i]
+
+        def get_cliff(x1, x2):
+            """
+                cliff point(first knee)
+                returns: bc_index
+            """
+            curvature = d2/(1 + d1 ** 2) ** 1.5
+            i = np.argmin(curvature[x1:x2+1]) + x1
+            return i
+
+        min_cell, max_cell = MIN_CELL, MAX_CELL
+        if total < MAX_CELL:
+            min_cell = 0
+            max_cell = total - 1
+        d1_min_cell, d1_min = get_d1_min(min_cell, max_cell)
+        cliff_cell = get_cliff(min_cell, max_cell)
+        self.add_metric(
+            name='Minimum first derivative',
+            value=round(d1_min,4),
+            show=False,
+        )
+        self.add_metric(
+            name='Minimum first derivative cell',
+            value=int(d1_min_cell),
+            show=False,
+        )
+        self.add_metric(
+            name='Cliff cell',
+            value=int(cliff_cell),
+            show=False,
+            help_info='Using the method from emptyDrops to determine the first knee. It is not accurate when the sample shows loss of single cell behavior'
+        )
+        loss_of_single_cell_behavior = d1_min > -2
+        self.add_metric(
+            name='Loss of single cell behavior',
+            value=str(loss_of_single_cell_behavior),
+            show=False,
+            help_info='If the minimum first derivative of the curve is greater than -2, it is considered as loss of single cell behavior.'
+        )
+        self.add_metric(
+            name='Total barcodes',
+            value=total,
+            help_info='Total deteced barcodes in whitelist.',
+        )
+
+        bc_total = math.inf
+        if chemistry.startswith('scopeV2'):
+            bc_total = 96 ** 3
+        elif chemistry.startswith('scopeV3'):
+            bc_total = 96 ** 3 * 2
+        min_total = bc_total / 3 * 2
+        self.add_metric(
+            name='Sample Clog',
+            value=str(total < min_total),
+            help_info='Total number of cell barcodes is lower than expected. This can can be caused by a sample clog.'
+        )
+
+    def run(self, chemistry):
+        n_reads, q30_RNA = self.parse_summary_add_metrics()
+        self.add_data(chart=get_plot_elements.plot_barcode_rank(self.counts_file))
+        self.add_curve_metrics(chemistry)
         return n_reads, q30_RNA
 
 
@@ -401,9 +436,8 @@ is higher than or equal to this value.""",
         default=50,
     )
     parser.add_argument(
-        '--cell_calling_method',
-        help=HELP_DICT['cell_calling_method'],
-        choices=['auto', 'EmptyDrops_CR'],
+        '--soloCellFilter',
+        help='The same as the argument in STARsolo',
         default='EmptyDrops_CR',
     )
     parser.add_argument(
@@ -416,6 +450,11 @@ is higher than or equal to this value.""",
         '--SAM_attributes', 
         help=f'Additional attributes(other than {SAM_attributes}) to be added to SAM file',
         default="")
+    parser.add_argument(
+        '--soloFeatures', 
+        help='The same as the argument in STARsolo',
+        default='Gene GeneFull_Ex50pAS',
+    )
     if sub_program:
         parser.add_argument('--fq1', help='R1 fastq file. Multiple files are separated by comma.', required=True)
         parser.add_argument('--fq2', help='R2 fastq file. Multiple files are separated by comma.', required=True)

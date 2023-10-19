@@ -152,7 +152,7 @@ class Split_tag(Step):
             tag_barcodes_indices.sort()
             slice_matrix = self.count_matrix.slice_matrix(tag_barcodes_indices)
 
-            tag_matrix_dir = f'{self.matrix_outdir}/{tag}_{FILTERED_MATRIX_DIR_SUFFIX[0]}/'
+            tag_matrix_dir = f'{self.matrix_outdir}/{tag}_{FILTERED_MATRIX_DIR_SUFFIX}/'
             slice_matrix.to_matrix_dir(tag_matrix_dir)
 
     @utils.add_log

@@ -74,8 +74,8 @@ class Count(Step):
 
         # output files
         self.marked_count_file = f'{self.outdir}/{self.sample}_counts.txt'
-        self.raw_matrix_dir = f'{self.outdir}/{self.sample}_{RAW_MATRIX_DIR_SUFFIX[0]}'
-        self.cell_matrix_dir = f'{self.outdir}/{self.sample}_{FILTERED_MATRIX_DIR_SUFFIX[0]}'
+        self.raw_matrix_dir = f'{self.outdir}/{self.sample}_{RAW_MATRIX_DIR_SUFFIX}'
+        self.cell_matrix_dir = f'{self.outdir}/{self.sample}_{FILTERED_MATRIX_DIR_SUFFIX}'
         self.downsample_file = f'{self.outdir}/{self.sample}_downsample.tsv'
 
     def get_df_line(self):
