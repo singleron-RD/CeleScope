@@ -21,6 +21,8 @@ from celescope.tools.cells import Cells_metrics
 SAM_attributes = 'NH HI nM AS CR UR CB UB GX GN '
 MIN_CELL = 500
 MAX_CELL = 60000
+MIN_BEAD = 100000
+MAX_BEAD = 300000
 
 class Starsolo(Step):
     def __init__(self, args, display_title=None):
@@ -143,8 +145,8 @@ class Starsolo(Step):
 
 
     def run(self):
-        #self.run_starsolo()
-        #self.gzip_matrix()
+        self.run_starsolo()
+        self.gzip_matrix()
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
         return q30_cb, q30_umi, self.chemistry
 
@@ -307,39 +309,58 @@ class Cells(Cells_metrics):
             i = np.argmin(curvature[x1:x2+1]) + x1
             return i
 
-        min_cell, max_cell = MIN_CELL, MAX_CELL
-        if total < MAX_CELL:
-            min_cell = 0
-            max_cell = total - 1
-        d1_min_cell, d1_min = get_d1_min(min_cell, max_cell)
-        cliff_cell = get_cliff(min_cell, max_cell)
+        if total < MAX_BEAD:
+            sys.stderr.write(f'Warning: Total number of detected barcodes is less than {MAX_BEAD}.\n')
+            return
+        d1_cliff_cell, d1_cliff = get_d1_min(MIN_CELL, MAX_CELL)
+        d1_knee_cell, d1_knee = get_d1_min(MIN_BEAD, MAX_BEAD)
+        cliff_cell = get_cliff(MIN_CELL, MAX_CELL)
         self.add_metric(
-            name='Minimum first derivative',
-            value=round(d1_min,4),
+            name='Minimum derivative of cliff',
+            value=round(d1_cliff, 4),
             show=False,
         )
         self.add_metric(
-            name='Minimum first derivative cell',
-            value=int(d1_min_cell),
+            name='Barcode number at minimum derivative of cliff',
+            value=int(d1_cliff_cell),
             show=False,
         )
         self.add_metric(
-            name='Cliff cell',
+            name='Barcode number at cliff',
             value=int(cliff_cell),
             show=False,
-            help_info='Using the method from emptyDrops to determine the first knee. It is not accurate when the sample shows loss of single cell behavior'
+            help_info='Using the method from emptyDrops to determine the first knee. It is not accurate when the sample shows loss of cliff.'
         )
-        loss_of_single_cell_behavior = d1_min > -2
+        loss_of_cliff = d1_cliff > -2
         self.add_metric(
-            name='Loss of single cell behavior',
-            value=str(loss_of_single_cell_behavior),
+            name='Loss of cliff',
+            value=str(loss_of_cliff),
             show=False,
-            help_info='If the minimum first derivative of the curve is greater than -2, it is considered as loss of single cell behavior.'
+            help_info='If the minimum first derivative around cliff is greater than -2, it is considered as loss of cliff (loss of single cell behavior).'
         )
+        self.add_metric(
+            name='Minimum derivative of knee',
+            value=round(d1_knee, 4),
+            show=False,
+        )
+        self.add_metric(
+            name='Barcode number at minimum derivative of knee',
+            value=int(d1_knee_cell),
+            show=False,
+        )
+        loss_of_knee = d1_knee > -2
+        self.add_metric(
+            name='Loss of knee',
+            value=str(loss_of_knee),
+            show=False,
+            help_info='If the minimum first derivative around knee is greater than -2, it is considered as loss of knee.'
+        )
+
         self.add_metric(
             name='Total barcodes',
             value=total,
             help_info='Total deteced barcodes in whitelist.',
+            show=False,
         )
 
         bc_total = math.inf
@@ -349,9 +370,10 @@ class Cells(Cells_metrics):
             bc_total = 96 ** 3 * 2
         min_total = bc_total / 3 * 2
         self.add_metric(
-            name='Sample Clog',
+            name='Low total barcodes',
             value=str(total < min_total),
-            help_info='Total number of cell barcodes is lower than expected. This can can be caused by a sample clog.'
+            show=False,
+            help_info='Total number of detected barcodes is lower than expected. This can can be caused by a sample clog.'
         )
 
     def run(self, chemistry):

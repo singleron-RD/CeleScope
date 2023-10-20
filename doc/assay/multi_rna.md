@@ -14,10 +14,12 @@ gunzip Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
 gunzip Homo_sapiens.GRCh38.99.gtf.gz
 
 conda activate celescope
+celescope utils mkgtf Homo_sapiens.GRCh38.99.gtf Homo_sapiens.GRCh38.99.filtered.gtf
 celescope rna mkref \
- --genome_name Homo_sapiens_ensembl_99 \
+ --genome_name Homo_sapiens_ensembl_99_filtered \
  --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \
- --gtf Homo_sapiens.GRCh38.99.gtf
+ --gtf Homo_sapiens.GRCh38.99.filtered.gtf \
+ --mt_gene_list mt_gene_list.txt
 ```
 
 ### Mus musculus
@@ -33,11 +35,13 @@ gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
 gunzip Mus_musculus.GRCm38.99.gtf.gz
 
 conda activate celescope
+celescope utils mkgtf Mus_musculus.GRCm38.99.gtf Mus_musculus.GRCm38.99.filtered.gtf
 
 celescope rna mkref \
- --genome_name Mus_musculus_ensembl_99 \
+ --genome_name Mus_musculus_ensembl_99_filtered \
  --fasta Mus_musculus.GRCm38.dna.primary_assembly.fa \
- --gtf Mus_musculus.GRCm38.99.gtf
+ --gtf Mus_musculus.GRCm38.99.filtered.gtf \
+ --mt_gene_list mt_gene_list.txt
 ```
 
 2. Generate scripts for each sample
@@ -90,15 +94,6 @@ sh ./shell/{sample}.sh
 Note that the `./shell/{sample}.sh` must be run under the working directory(You shouldn't run them under the `shell` directory)
 
 ## Main output
-- `featureCounts/{sample}_aligned_posSorted_addTag.bam` This bam file contains coordinate-sorted reads aligned to the genome. This bam can be used as input file for downstream analysis like [velocyto](http://velocyto.org/). It contains the following `tag` fields:
-
-|Tag|Description|
-|--|--|
-|CB|cell barcode|
-|UB|error-corrected UMI|
-|UR|original UMI|
-|GN|gene name|
-|GX|gene_id |
-
-- `count/{sample}_raw_feature_bc_matrix` Gene expression matrix file contains all barcodes(background + cell) from the barcode whitelist.
-- `count/{sample}_filtered_feature_bc_matrix` Gene expression matrix file contains only cell barcodes.
+- `outs/{sample}_Aligned.sortedByCoord.out.bam` This bam file contains coordinate-sorted reads aligned to the genome. 
+- `outs/raw` Gene expression matrix file contains all barcodes(background + cell) from the barcode whitelist.
+- `outs/filtered` Gene expression matrix file contains only cell barcodes.

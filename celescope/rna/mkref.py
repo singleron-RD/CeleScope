@@ -18,8 +18,7 @@ def parse_attributes(attrs):
 class Mkref_rna(MakeRef_STAR):
     def __init__(self, genome_type, args):
         super().__init__(genome_type, args)
-        self.out_gtf = 'addIntron_filtered.gtf'
-        self.files['gtf'] = self.out_gtf
+        self.files['gtf'] = self.args.gtf
         self.files['mt_gene_list'] = self.args.mt_gene_list
 
     @utils.add_log
@@ -31,7 +30,7 @@ class Mkref_rna(MakeRef_STAR):
             f'--runThreadN {self.args.thread} \\\n'
             f'--genomeDir ./ \\\n'
             f'--genomeFastaFiles {self.args.fasta} \\\n'
-            f'--sjdbGTFfile {self.out_gtf} \\\n'
+            f'--sjdbGTFfile {self.args.gtf} \\\n'
             f'--sjdbOverhang 100 \\\n'
             f'--genomeSAindexNbases {SA} \\\n'
         )
@@ -40,16 +39,8 @@ class Mkref_rna(MakeRef_STAR):
         if not self.dry_run:
             subprocess.check_call(cmd, shell=True)
 
-
-    def build_gtf(self):
-        out_gtf = 'addIntron_filtered.gtf'
-        attrs_dict= parse_attributes(self.args.attributes)
-        if not self.dry_run:
-            reference.GtfBuilder(self.args.gtf, out_gtf, attrs_dict).build_gtf()
-
     @utils.add_log
     def run(self):
-        self.build_gtf()
         self.build_rna_star_index()
 
 

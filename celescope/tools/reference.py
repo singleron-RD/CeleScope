@@ -3,6 +3,8 @@ import collections
 import csv
 import sys
 
+import pandas as pd
+
 from celescope.tools import utils
 from celescope.tools.matrix import Features
 
@@ -127,10 +129,12 @@ class GtfParser:
         return self.id_strand
 
 class GtfBuilder:
-    def __init__(self, in_gtf_fn, out_gtf_fn, attributes):
+    def __init__(self, in_gtf_fn, out_gtf_fn, attributes, add_intron=False):
         self.in_gtf_fn = in_gtf_fn
         self.out_gtf_fn = out_gtf_fn
         self.attributes = attributes
+        self.add_intron = add_intron
+        self.mt_gene_list = 'mt_gene_list.txt'
     
     @staticmethod
     def get_introns(exons):
@@ -176,10 +180,11 @@ class GtfBuilder:
         add intron
         Filter gene biotypes
         """
-        self.build_gtf.logger.info("Writing GTF file...")
+        sys.stderr.write("Writing GTF file...\n")
         gp = GtfParser(self.in_gtf_fn)
         n_filter = 0
         exons = []
+        mt = set()
 
         with open(self.out_gtf_fn, 'w') as f:
             writer = csv.writer(f, delimiter='\t', quoting=csv.QUOTE_NONE, quotechar='')
@@ -194,6 +199,8 @@ class GtfBuilder:
                         remove = True
 
                 if not remove:
+                    if grow.seqname.upper() == 'MT':
+                        mt.add(grow.attributes['gene_name'])
                     writer.writerow(row)
                     if grow.feature == 'exon':
                         exons.append(grow)
@@ -201,9 +208,15 @@ class GtfBuilder:
                     n_filter += 1
             sys.stderr.write(f'filtered line number: {n_filter}\n')
 
-            introns = self.get_introns(exons)
-            for intron in introns:
-                writer.writerow(row2list(intron))
+            if self.add_intron:                
+                introns = self.get_introns(exons)
+                for intron in introns:
+                    writer.writerow(row2list(intron))
+
+            if mt:
+                sys.stderr.write('Writing mito genes\n')
+                pd.Series(list(mt)).to_csv(self.mt_gene_list, index=False, header=False)
+
     
 
 

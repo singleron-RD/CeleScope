@@ -63,6 +63,7 @@ def get_opts_mkgtf(parser, sub_program=True):
     if sub_program:
         parser.add_argument('gtf', help='raw gtf file')
         parser.add_argument('out_gtf', help='output gtf file')
+        parser.add_argument('--add_intron', help='add intron lines to gtf file', action='store_true')
         parser.add_argument(
             '--attributes', 
             help='Attributes to keep. Example: `gene_biotype=protein_coding,lncRNA,antisense;`',

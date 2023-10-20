@@ -220,7 +220,6 @@ class Step:
     def get_slot_key(self, slot, step_name, key):
         '''read slot from json file
         '''
-        key = key.capitalize()
         try:
             return self.__content_dict[slot][step_name + '_summary'][key]
         except KeyError:
