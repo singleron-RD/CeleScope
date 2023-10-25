@@ -64,10 +64,10 @@ class Scanpy_wrapper(Step):
         self.mt_gene_list = Mkref_rna.get_config(args.genomeDir)['files']['mt_gene_list']
 
         # out
-        self.df_marker_file = 'markers.tsv'
-        self.df_marker_raw_file = 'markers_raw.tsv'
-        self.df_tsne_file = 'tsne_coord.tsv'
-        self.h5ad_file = 'rna.h5ad'
+        self.df_marker_file = f'{self.outdir}/markers.tsv'
+        self.df_marker_raw_file = f'{self.outdir}/markers_raw.tsv'
+        self.df_tsne_file = f'{self.outdir}/tsne_coord.tsv'
+        self.h5ad_file = f'{self.outdir}/rna.h5ad'
         self.outs = [self.df_marker_file, self.df_tsne_file, self.h5ad_file]
 
    

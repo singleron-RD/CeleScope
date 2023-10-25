@@ -5,7 +5,7 @@
     {% endfor %}
 
     {% for item in step_summary.metric_list %} 
-        {% if item.help_info %}
+        {% if item.help_info and item.show %}
             <p><b>{{ item.name|e }} : </b> {{ item.help_info|safe }}</p>
         {% endif %}  
     {% endfor %}

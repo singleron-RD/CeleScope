@@ -56,6 +56,7 @@ class Starsolo(Step):
         self.pattern = pattern
        
         # output files
+        self.solo_out_dir = f'{self.outdir}/{self.sample}_Solo.out/'
         solo_dir = f'{self.outdir}/{self.sample}_Solo.out/GeneFull_Ex50pAS'
         self.raw_matrix = f'{solo_dir}/raw'
         self.filtered_matrix = f'{solo_dir}/filtered'
@@ -105,6 +106,9 @@ class Starsolo(Step):
             cmd += self.args.STAR_param
         sys.stderr.write(cmd)
         subprocess.check_call(cmd, shell=True)
+        cmd = f'chmod -R 755 {self.solo_out_dir}'
+        sys.stderr.write(cmd)
+        subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
     def gzip_matrix(self):
@@ -150,6 +154,7 @@ class Starsolo(Step):
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
         return q30_cb, q30_umi, self.chemistry
 
+    
 
 def starsolo(args):
 
@@ -160,7 +165,7 @@ def starsolo(args):
         valid_reads = runner.run()
     
     with Cells(args) as runner:
-        n_reads, q30_RNA = runner.run(chemistry)
+        n_reads, q30_RNA = runner.run(chemistry, valid_reads)
     
     with Demultiplexing(args) as runner:
         runner.run(valid_reads, n_reads, q30_cb, q30_umi, q30_RNA)
@@ -216,9 +221,10 @@ class Mapping(Step):
             value_type='fraction',
             help_info='Reads that mapped to multiple loci in the genome'
         )
+        unique_transcriptome = countedU / valid
         self.add_metric(
             name='Reads mapped uniquely to Transcriptome',
-            value=countedU / valid,
+            value=unique_transcriptome,
             value_type='fraction',
             help_info='Reads that mapped to a unique gene in the transcriptome. These reads are used for UMI counting.'
         )
@@ -266,7 +272,7 @@ class Cells(Cells_metrics):
 
 
     @utils.add_log
-    def parse_summary_add_metrics(self):
+    def parse_summary_add_metrics(self, valid_reads):
         df = pd.read_csv(self.summary_file, index_col=0, header=None)
         s = df.iloc[:,0]
         n_cells = int(s["Estimated Number of Cells"])
@@ -279,10 +285,16 @@ class Cells(Cells_metrics):
         n_reads = int(s["Number of Reads"])
         q30_RNA = float(s["Q30 Bases in RNA read"])
 
-        self.add_cells_metrics(n_cells, fraction_reads_in_cells, mean_used_reads_per_cell, median_umi_per_cell, total_genes, median_genes_per_cell, saturation)
-        return n_reads, q30_RNA
+        self.add_cells_metrics(n_cells, fraction_reads_in_cells, mean_used_reads_per_cell, median_umi_per_cell, total_genes, median_genes_per_cell, saturation, valid_reads)
+        return n_reads, q30_RNA, fraction_reads_in_cells
 
     def add_curve_metrics(self, chemistry):
+        """
+        Returns:
+            low barcodes
+            loss of cliff
+            loss of knee
+        """
         df = pd.read_csv(self.counts_file, header=0,sep='\t',index_col=0)
         total = df.shape[0]
         _x = list(range(1, total+1))
@@ -300,7 +312,7 @@ class Cells(Cells_metrics):
             i = np.argmin(d1[x1:x2+1]) + x1
             return i, d1[i]
 
-        def get_cliff(x1, x2):
+        def get_knee_point(x1, x2):
             """
                 cliff point(first knee)
                 returns: bc_index
@@ -309,12 +321,32 @@ class Cells(Cells_metrics):
             i = np.argmin(curvature[x1:x2+1]) + x1
             return i
 
+        self.add_metric(
+            name='Total barcodes',
+            value=total,
+            help_info='Total deteced barcodes in whitelist.',
+            show=False,
+        )
+        bc_total = math.inf
+        if chemistry.startswith('scopeV2'):
+            bc_total = 96 ** 3
+        elif chemistry.startswith('scopeV3'):
+            bc_total = 96 ** 3 * 2
+        min_total = bc_total / 2
+        low_barcodes = total < min_total
+        self.add_metric(
+            name='Low total barcodes',
+            value=str(low_barcodes),
+            show=False,
+            help_info='Total number of detected barcodes is lower than expected. This can can be caused by a sample clog.'
+        )
+
         if total < MAX_BEAD:
             sys.stderr.write(f'Warning: Total number of detected barcodes is less than {MAX_BEAD}.\n')
-            return
+            return True, True, True
         d1_cliff_cell, d1_cliff = get_d1_min(MIN_CELL, MAX_CELL)
         d1_knee_cell, d1_knee = get_d1_min(MIN_BEAD, MAX_BEAD)
-        cliff_cell = get_cliff(MIN_CELL, MAX_CELL)
+        cliff_cell = get_knee_point(MIN_CELL, MAX_CELL)
         self.add_metric(
             name='Minimum derivative of cliff',
             value=round(d1_cliff, 4),
@@ -356,30 +388,32 @@ class Cells(Cells_metrics):
             help_info='If the minimum first derivative around knee is greater than -2, it is considered as loss of knee.'
         )
 
-        self.add_metric(
-            name='Total barcodes',
-            value=total,
-            help_info='Total deteced barcodes in whitelist.',
-            show=False,
-        )
+        return low_barcodes, loss_of_cliff, loss_of_knee
 
-        bc_total = math.inf
-        if chemistry.startswith('scopeV2'):
-            bc_total = 96 ** 3
-        elif chemistry.startswith('scopeV3'):
-            bc_total = 96 ** 3 * 2
-        min_total = bc_total / 3 * 2
-        self.add_metric(
-            name='Low total barcodes',
-            value=str(total < min_total),
-            show=False,
-            help_info='Total number of detected barcodes is lower than expected. This can can be caused by a sample clog.'
-        )
+    @staticmethod
+    def get_curve_quality(fraction_reads_in_cells, low_barcodes, loss_of_cliff, loss_of_knee):
+        """
 
-    def run(self, chemistry):
-        n_reads, q30_RNA = self.parse_summary_add_metrics()
+        """
+        if any([loss_of_cliff, low_barcodes, loss_of_knee]):
+            return "fail"
+        if fraction_reads_in_cells >= 0.88:
+            return 'super'
+        elif fraction_reads_in_cells >= 0.75:
+            return 'good'
+        return 'pass'
+
+
+    def run(self, chemistry, valid_reads):
+        n_reads, q30_RNA, fraction_reads_in_cells = self.parse_summary_add_metrics(valid_reads)
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.counts_file))
-        self.add_curve_metrics(chemistry)
+        low_barcodes, loss_of_cliff, loss_of_knee = self.add_curve_metrics(chemistry)
+        quality = self.get_curve_quality(fraction_reads_in_cells, low_barcodes, loss_of_cliff, loss_of_knee)
+        self.add_metric(
+            name='Barcode rank curve quality', 
+            value=quality,
+            show=False,
+        )
         return n_reads, q30_RNA
 
 
@@ -460,7 +494,7 @@ is higher than or equal to this value.""",
     parser.add_argument(
         '--soloCellFilter',
         help='The same as the argument in STARsolo',
-        default='EmptyDrops_CR',
+        default='EmptyDrops_CR 3000 0.99 10 45000 90000 500 0.01 20000 0.001 10000',
     )
     parser.add_argument(
         '--starMem',

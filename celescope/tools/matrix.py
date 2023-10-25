@@ -8,7 +8,6 @@ import numpy as np
 
 from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME, MATRIX_FILE_NAME)
 from celescope.tools import utils
-import sys
 
 ROW = 'geneID'
 COLUMN = 'Barcode'
@@ -31,8 +30,8 @@ class Features:
 
     @classmethod
     def from_tsv(cls, tsv_file):
-        if not os.path.exists(tsv_file):
-            sys.stderr.write(f'ERROR: {tsv_file} does not exist. \nSOLUTION: Rename and gzip the features file to {FEATURE_FILE_NAME}\n')
+        if (not tsv_file) or (not os.path.exists(tsv_file)):
+            raise FileNotFoundError(f'ERROR: {tsv_file} does not exist. \nSOLUTION: Rename and gzip the features file to {FEATURE_FILE_NAME}\n')
         df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'], dtype=str)
         gene_id = df['gene_id'].tolist()
         gene_name = df['gene_name'].tolist()
@@ -81,6 +80,8 @@ class CountMatrix:
     @classmethod
     @utils.add_log
     def from_matrix_dir(cls, matrix_dir):
+        if not os.path.exists(matrix_dir):
+            raise FileNotFoundError(f'{matrix_dir} does not exist')
         features_tsv = utils.get_matrix_file_path(matrix_dir, FEATURE_FILE_NAME)
         features = Features.from_tsv(tsv_file=features_tsv)
         barcode_file = utils.get_matrix_file_path(matrix_dir, BARCODE_FILE_NAME)
@@ -90,6 +91,7 @@ class CountMatrix:
 
         return cls(features, barcodes, matrix)
 
+    @utils.add_log
     def to_matrix_dir(self, matrix_dir):
         utils.check_mkdir(dir_name=matrix_dir)
         self.__features.to_tsv(f'{matrix_dir}/{FEATURE_FILE_NAME}')
@@ -164,6 +166,7 @@ class CountMatrix:
             CountMatrix object
         """
         mtx_csc = self.__matrix.tocsc()
+        slice_barcodes_indices.sort()
         sliced_mtx = mtx_csc[:, slice_barcodes_indices]
         barcodes = [self.__barcodes[i] for i in slice_barcodes_indices]
         return CountMatrix(self.__features, barcodes, sliced_mtx)
@@ -179,7 +182,20 @@ class CountMatrix:
         barcodes_indices = [self.__barcodes.index(barcode) for barcode in bcs]
         barcodes_indices.sort()
         return self.slice_matrix(barcodes_indices)
-        
+
+    @utils.add_log
+    def get_genes_fraction(self, gene_list):
+        """
+        Returns:
+            numpy 2d fraction of gene_names in gene_list
+        """
+        gene_indices = [self.__features.gene_name.index(gene) for gene in gene_list]
+        mtx = self.__matrix.tocsc()
+        total = mtx.sum(axis=0)
+        gene = mtx[gene_indices,:].sum(axis=0)
+        f = gene / total
+
+        return f
 
     def get_barcodes(self):
         return self.__barcodes
@@ -193,19 +209,6 @@ class CountMatrix:
     @classmethod
     def dataframe_to_matrix(cls, df, features: Features, barcodes=None, barcode_column='Barcode', feature_column='geneID'):
         """Convert a counts dataframe to a sparse counts matrix.
-        :param df_counts: counts dataframe
-        :type df_counts: pandas.DataFrame
-        :param barcodes: list of barcodes that will map to the rows
-        :type barcodes: list
-        :param features: list of features that will map to the columns
-        :type features: list
-        :param barcode_column: column in counts dataframe to use as barcodes, defaults to `Barcode`
-        :type barcode_column: str
-        :param feature_column: column in counts dataframe to use as features, defaults to `geneID`
-        :type feature_column: str
-
-        :return: sparse counts matrix
-        :rtype: scipy.sparse.csrmatrix
         """
         barcode_indices = {barcode: i for i, barcode in enumerate(barcodes)}
         feature_indices = {feature: i for i, feature in enumerate(features.gene_id)}

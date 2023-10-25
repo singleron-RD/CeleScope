@@ -99,6 +99,7 @@ class Step:
 
         # out file
         self.__stat_file = f'{self.outdir}/stat.txt'
+        self.report_html = f"{self.outdir}/../{self.sample}_report.html"
 
         # move file to outs
         self.outs = []
@@ -169,8 +170,7 @@ class Step:
     @utils.add_log
     def _render_html(self):
         template = self.env.get_template(f'html/{self.assay}/base.html')
-        report_html = f"{self.outdir}/../{self.sample}_report.html"
-        with io.open(report_html, 'w', encoding='utf8') as f:
+        with io.open(self.report_html, 'w', encoding='utf8') as f:
             html = template.render(self.__content_dict['data'])
             f.write(html)
 
@@ -179,8 +179,7 @@ class Step:
         step_summary['display_title'] = self._display_title
         metric_list = []
         for metric in self.__metric_list:
-            if metric['show']:
-                metric_list.append(metric)
+            metric_list.append(metric)
         step_summary['metric_list'] = metric_list
         step_summary['help_content'] = self.__help_content
         self.__content_dict['data'][self._step_summary_name].update(step_summary)
@@ -225,6 +224,19 @@ class Step:
         except KeyError:
             self.get_slot_key.logger.warning(f'{key} not found in {step_name}_summary.{slot}')
             raise
+
+    @utils.add_log
+    def add_slot_step(self, slot, step_name, val):
+        '''add slot to json
+        '''
+        self.__content_dict[slot][step_name + '_summary'] = val
+
+    @utils.add_log
+    def get_slot_step(self, slot, step_name):
+        '''add slot to json
+        '''
+        return self.__content_dict[slot][step_name + '_summary']
+
 
 
     def get_table_dict(self, title, table_id, df_table):
@@ -285,5 +297,6 @@ class Step:
     def __enter__(self):
         return self
 
-    def __exit__(self, *args, **kwargs):
-        self._clean_up()
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            self._clean_up()

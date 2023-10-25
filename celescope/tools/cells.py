@@ -1,24 +1,27 @@
 from collections import defaultdict
 import shutil
 import os
+import sys
 
 import numpy as np
 import pandas as pd
 
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX, COUNTS_FILE_NAME 
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, RAW_MATRIX_DIR_SUFFIX, COUNTS_FILE_NAME
+from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from celescope.tools.matrix import CountMatrix
 from celescope.tools.emptydrop_cr import get_plot_elements
+from celescope.rna.mkref import Mkref_rna
 
 class Cells_metrics(Step):
     @utils.add_log
     def add_cells_metrics(self, n_cells, fraction_reads_in_cells, mean_used_reads_per_cell, median_umi_per_cell,
-        total_genes, median_genes_per_cell, saturation):
+        total_genes, median_genes_per_cell, saturation, valid_reads):
         self.add_metric(
             name='Estimated Number of Cells',
             value=n_cells,
-            help_info='the number of barcodes considered as cell-associated.'
+            help_info='The number of barcodes considered as cell-associated.'
         )
 
         self.add_metric(
@@ -26,6 +29,13 @@ class Cells_metrics(Step):
             value=fraction_reads_in_cells,
             value_type='fraction',
             help_info='the fraction of uniquely-mapped-to-transcriptome reads with cell-associated barcodes'
+        )
+
+        mean_reads_per_cell = valid_reads // n_cells
+        self.add_metric(
+            name='Mean Reads per Cell',
+            value=mean_reads_per_cell,
+            help_info='the number of Valid Reads divided by Estimated Number of Cells'
         )
 
         self.add_metric(
@@ -64,6 +74,8 @@ class Cells_metrics(Step):
 
 class Cells(Cells_metrics):
     def __init__(self, args, display_title=None):
+        os.chdir(args.root_dir)
+        args.outdir = f'{args.sample}/cells'
         super().__init__(args, display_title=display_title)
         self.raw_matrix = f'{self.outs_dir}/{RAW_MATRIX_DIR_SUFFIX}'
         self.old_filtered_matrix = f'{self.outs_dir}/{FILTERED_MATRIX_DIR_SUFFIX}'
@@ -72,25 +84,48 @@ class Cells(Cells_metrics):
         # out
         self.filter_matrix = f'{self.outdir}/{FILTERED_MATRIX_DIR_SUFFIX}'
         self.default_filter_matrix = f'{self.outs_dir}/default_{FILTERED_MATRIX_DIR_SUFFIX}'
+        self.default_report_html = f'{self.outdir}/../default_{self.sample}_report.html'
+
+        if os.path.exists(self.default_filter_matrix):
+            self.old_filtered_matrix = self.default_filter_matrix
 
         self.outs = [self.filter_matrix]
 
     @utils.add_log
     def force_cells(self):
-        if self.args.force_cells <= 0:
-            return None, []
         raw = CountMatrix.from_matrix_dir(self.raw_matrix)
         df_counts = pd.read_csv(self.counts_file, index_col=0, header=0, sep='\t')
         bcs = list(df_counts.head(self.args.force_cells).index)
         filtered = raw.slice_matrix_bc(bcs)
-        if not os.path.exists(self.default_filter_matrix):
-            shutil.move(self.old_filtered_matrix, self.default_filter_matrix)
-        filtered.to_matrix_dir(self.filter_matrix)
-        return filtered, bcs
+        self.add_metric(
+            name='Force cells', 
+            value=self.args.force_cells,
+            show=False,
+        )
+        return filtered
 
     @utils.add_log
-    def metrics_report(self, filtered, bcs):
+    def metrics_report(self, filtered:CountMatrix):
+        p_default_dict = {
+            self.old_filtered_matrix: self.default_filter_matrix,
+            self.report_html: self.default_report_html,
+        }
+        for p, default_p in p_default_dict.items():
+            if not os.path.exists(default_p):
+                shutil.move(p, default_p)
 
+        self.add_slot_step(
+            slot='metrics',
+            step_name='default_cells',
+            val=self.old_step_dict['metrics'],
+        )
+        
+        self.add_slot_step(
+            slot='data',
+            step_name='default_cells',
+            val=self.old_step_dict['data'],
+        )
+        bcs = filtered.get_barcodes()
         n_cells = len(bcs)
 
         df_counts = pd.read_csv(self.counts_file, index_col=0, header=0, sep='\t')
@@ -113,18 +148,49 @@ class Cells(Cells_metrics):
         df_counts.loc[:, 'mark'] = 'UB'
         df_counts.loc[bcs, 'mark'] = 'CB'
         df_counts.to_csv(self.counts_file, sep='\t', index=True)
-        self.add_cells_metrics(n_cells, fraction_reads_in_cells, mean_used_reads_per_cell, median_umi_per_cell, total_genes, median_genes_per_cell, saturation)
+        valid_reads = self.old_step_dict['metrics']['Mean Reads per Cell'] * self.old_step_dict['metrics']['Estimated Number of Cells']
+        self.add_cells_metrics(n_cells, fraction_reads_in_cells, mean_used_reads_per_cell, median_umi_per_cell, total_genes, median_genes_per_cell, saturation, valid_reads)
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.counts_file))
 
+    @utils.add_log
+    def filter_mito(self, filtered:CountMatrix) -> CountMatrix:
+        if not self.args.genomeDir:
+            raise ValueError("--genomeDir must be provided when --max_mito is set.")
+        mt_gene_list = Mkref_rna.get_config(self.args.genomeDir)['files']['mt_gene_list']
+        if not mt_gene_list:
+            raise FileNotFoundError(f'mt_gene_list not exist in genomeDir: {self.args.genomeDir}')
+        mito_genes, _ = utils.read_one_col(mt_gene_list)
+        bc_fraction = filtered.get_genes_fraction(mito_genes)
+        bc_indices = (bc_fraction <= self.args.max_mito).nonzero()[1]
+        n_filtered_cells = len(filtered.get_barcodes()) - len(bc_indices)
+        filtered = filtered.slice_matrix(bc_indices)
+        self.add_metric(
+            name='Maximum fraction of mitocondrial UMI in cells', 
+            value=self.args.max_mito,
+            show=False,
+        )
+        self.add_metric(
+            name='Number of cells filtered by max_mito', 
+            value=n_filtered_cells,
+            show=False,
+        )
+        return filtered
+
+    @utils.add_log
     def run(self):
-        bcs = []
+        if self.args.max_mito > 1.0:
+            sys.exit('max_mito should be less than 1.0')
+        filtered = CountMatrix.from_matrix_dir(self.old_filtered_matrix)
         if self.args.force_cells > 0:
-            filtered, bcs = self.force_cells()
-        if bcs:
-            self.metrics_report(filtered, bcs)
+            filtered= self.force_cells()
+        if self.args.max_mito < 1.0:
+            filtered = self.filter_mito(filtered)
+
+        filtered.to_matrix_dir(self.filter_matrix)
+        self.metrics_report(filtered)
 
 def cells(args):
-    with Cells(args) as runner:
+    with Cells(args) as runner: 
         runner.run()
 
 
@@ -138,7 +204,17 @@ def get_opts_cells(parser, sub_program=True):
         )
         parser.add_argument(
             '--root_dir',
-            help='Root directory of CeleScope',
+            help='The root directory of CeleScope runs.',
             default='./',
+        )
+        parser.add_argument(
+            '--max_mito',
+            help='Maximum mitocondrial fraction in a cell',
+            default='1.0',
+            type=float,
+        )
+        parser.add_argument(
+            '--genomeDir',
+            help=HELP_DICT['genomeDir'],           
         )
         parser = s_common(parser)

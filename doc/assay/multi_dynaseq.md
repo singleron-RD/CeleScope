@@ -17,22 +17,12 @@ multi_dynaseq \
 For genome reference generated, please refer to [rna](multi_rna.md) assay.
 
 ## Main Output
+- `outs/labeled` labeled matrix
+- `outs/unlabeled` unlabeled matrix
+- `outs/{sample}.labeled.h5ad`: h5ad file contains ['total', 'labeled', 'unlabeled'] layers.
 - `substitution/{sample}.substitution.txt`: Substitution rate for each conversion type.
-- `replacement/{sample}.labeled.h5ad`: h5ad file contains ['total', 'labeled', 'unlabeled'] layers.
 
-## Features
-### featureCounts
-- Assigning uniquely mapped reads to genomic features with FeatureCounts.
-
-### count
-- Cell-calling: Distinguish cell barcodes from background barcodes. 
-- Generate expression matrix.
-
-### analysis
-- Cell clustering with Seurat.
-- Calculate the marker gene of each cluster.
-- Cell type annotation(optional). You can provide markers of known cell types and annotate cell types for each cluster.
-
+## Steps
 ### conversion
 - Get conversion pos in each read.
     - Get snp info. 
@@ -46,18 +36,6 @@ For genome reference generated, please refer to [rna](multi_rna.md) assay.
 - TSNE plot for TOR rate 
 
 
-## Output files
-### featureCounts
-- `featureCounts/{sample}_aligned_posSorted_addTag.bam` This bam file contains coordinate-sorted reads aligned to the genome.
-
-### count
-- `{sample}_raw_feature_bc_matrix` The expression matrix of all detected barcodes in [Matrix Market Exchange Formats](
-    https://math.nist.gov/MatrixMarket/formats.html). 
-- `{sample}_filtered_feature_bc_matrix` The expression matrix of cell barcodes in Matrix Market Exchange Formats. 
-
-### analysis
-- `markers.tsv` Marker genes of each cluster.
-
 ### conversion
 - `{sample}.PosTag.bam` Bam file with conversion info.
 - `{sample}.PosTag.csv` TC conversion sites info in csv format.
@@ -67,9 +45,6 @@ For genome reference generated, please refer to [rna](multi_rna.md) assay.
 - `{sample}.substitution.txt` Tab-separated table of the overall conversion rates.
 
 ### replacement
-- `{sample}.labeled.h5ad` h5ad file contains ['total', 'labeled', 'unlabeled'] layers and TOR rate of each cell/gene.
-- `{sample}_labeled_feature_bc_matrix` The labeled expression matrix of cell barcodes & all features in Matrix Market Exchange Formats. (will be deprecated in future versions)
-- `{sample}_unlabeled_feature_bc_matrix` The unlabeled expression matrix of cell barcodes & all features in Matrix Market Exchange Formats. (will be deprecated in future versions)
 - `{sample}_labeled_detail.txt`  tab-delimited  file:
     - Barcode: Cell barcode sequence
     - UMI: UMI sequence

@@ -3,7 +3,6 @@ import sys
 
 from celescope.tools import utils
 from celescope.tools.make_ref import MakeRef_STAR
-from celescope.tools import reference
 
 
 def parse_attributes(attrs):
