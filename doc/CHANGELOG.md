@@ -1,3 +1,27 @@
+## [2.0.0] - 2023-10-25
+ ### `rna` and `dynaseq`
+ - Use Starsolo to quantify the gene expression.
+
+ - The c`elescope rna cells step` has been added, which can perform mitochondrial quality control and forced cell number on the existing results, and generate the corresponding expression matrix and HTML report. The original expression matrix and HTML report will be prefixed with 'default_'; the cells_summary in .metrics.json and .data.json will also be prefixed with 'default_'.
+
+ - Update the STAR version from 2.6.1 to 2.7.11a; since the STAR index file is incompatible between the two versions, the genome needs to re-run mkref. scanpy upgraded to 1.9.3.
+
+ - When using celescope utils mkgtf to filter gtf, if the program finds that there is an MT chromosome in gtf, an additional mt_gene_list.txt file will be generated, including the gene_name of the gene on the MT chromosome. This file can be provided to the mkref command during mkref, so that the analysis step can count the percentages of these genes. This file will also be used in subsequent mitochondrial quality control (celescope rna cells).
+
+ - The main output files (bam, expression matrix, h5ad, etc.) are now placed in the `{sample}/outs/` directory. Expression matrix files use gzip compression.
+ 
+ - Added HTML reporting metrics
+
+  `Q30 of RNA Reads` Fraction of RNA read bases with quality score >= 30.
+
+  `Reads Mapped Uniquely To Transcriptome` Reads that mapped to a unique gene in the transcriptome. These reads are used for UMI counting.
+
+  `Reads Assigned Antisense To Gene` Reads that assigned to the opposite strand of genes.
+
+  `Mean Used Reads per Cell` The number of uniquely-mapped-to-transcriptome reads per cell-associated barcode.
+
+ - In bam and matrix, the three barcode segments are now separated by underscore '_'.
+
 ## [1.17.0] - 2023-08-11
  ### `bulk_vdj`
  - Add support for AccuraCode VDJ(bulk vdj).
