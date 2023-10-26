@@ -54,6 +54,9 @@ class Step:
         self.out_prefix = f'{self.outdir}/{self.sample}'
         self.display_title = display_title
 
+        # metrics index
+        self.metric_index = 0
+
         # important! make outdir before path_dict because path_dict use relative path.
         utils.check_mkdir(self.outdir)
         utils.check_mkdir(self.outs_dir)
@@ -134,6 +137,10 @@ class Step:
         if value_type == 'fraction':
             value = round(value * 100, 2)
             display = f'{value}%'
+        metric_index = 0
+        if show:
+            self.metric_index += 1
+            metric_index = self.metric_index
         self.__metric_list.append(
             {
                 "name": name,
@@ -143,6 +150,7 @@ class Step:
                 "display": display,
                 "help_info": help_info,
                 "show": show,
+                "index": metric_index,
             }
         )
 
