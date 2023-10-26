@@ -2,7 +2,7 @@
  ### `rna` and `dynaseq`
  - Use Starsolo to quantify the gene expression.
 
- - The c`elescope rna cells step` has been added, which can perform mitochondrial quality control and forced cell number on the existing results, and generate the corresponding expression matrix and HTML report. The original expression matrix and HTML report will be prefixed with 'default_'; the cells_summary in .metrics.json and .data.json will also be prefixed with 'default_'.
+ - The `celescope rna cells` step has been added, which can perform mitochondrial quality control and forced cell number on the existing results, and generate the corresponding expression matrix and HTML report. The original expression matrix and HTML report will be prefixed with 'default_'; the cells_summary in .metrics.json and .data.json will also be prefixed with 'default_'.
 
  - Update the STAR version from 2.6.1 to 2.7.11a; since the STAR index file is incompatible between the two versions, the genome needs to re-run mkref. scanpy upgraded to 1.9.3.
 
