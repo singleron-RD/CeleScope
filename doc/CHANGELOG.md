@@ -1,4 +1,4 @@
-## [2.0.1] - 2023-10-25
+## [2.0.1] - 2023-10-27
  ### `rna` and `dynaseq`
  - Add a metric in HTML report - Corrected Barcodes.
  - `celescope rna cells` add a new argument `--min_gene` to filter cells with low number of genes.
