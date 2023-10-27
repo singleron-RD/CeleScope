@@ -1,5 +1,6 @@
 import gzip
 import os
+from collections import defaultdict
 
 import scipy.io
 import scipy.sparse
@@ -196,6 +197,17 @@ class CountMatrix:
         f = gene / total
 
         return f
+
+    def get_bc_geneNum(self):
+        """
+        Returns {bc: geneNum}, total_genes
+        """
+        gene_index, bc_index = self.__matrix.nonzero()
+        total_genes = len(set(gene_index))
+        bc_gene = defaultdict(set)
+        for gene, bc in zip(gene_index, bc_index):
+            bc_gene[bc].add(gene)
+        return {bc: len(bc_gene[bc]) for bc in bc_gene}, total_genes
 
     def get_barcodes(self):
         return self.__barcodes

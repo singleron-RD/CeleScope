@@ -154,7 +154,6 @@ class Starsolo(Step):
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
         return q30_cb, q30_umi, self.chemistry
 
-    
 
 def starsolo(args):
 
@@ -162,13 +161,13 @@ def starsolo(args):
         q30_cb, q30_umi, chemistry = runner.run()
 
     with Mapping(args) as runner:
-        valid_reads = runner.run()
+        valid_reads, corrected = runner.run()
     
     with Cells(args) as runner:
         n_reads, q30_RNA = runner.run(chemistry, valid_reads)
     
     with Demultiplexing(args) as runner:
-        runner.run(valid_reads, n_reads, q30_cb, q30_umi, q30_RNA)
+        runner.run(valid_reads, n_reads, corrected, q30_cb, q30_umi, q30_RNA)
 
 
 class Mapping(Step):
@@ -190,10 +189,12 @@ class Mapping(Step):
         df = df.iloc[1:,] # skip first line cb not pass whitelist
         df_count = df.loc[:,['nUMIunique','countedU']] # keep dataframe format
         df_count.rename(columns={'nUMIunique': 'UMI'}, inplace=True)
-        df = df.loc[:,['cbMatch','genomeU', 'genomeM', 'exonic', 'intronic','exonicAS','intronicAS','countedU']]
+        df = df.loc[:,['cbMatch', 'cbPerfect','genomeU', 'genomeM', 'exonic', 'intronic','exonicAS','intronicAS','countedU']]
         s= df.sum()
         # json does not recognize NumPy data types. TypeError: Object of type int64 is not JSON serializable
         valid = int(s['cbMatch'])
+        perfect = int(s['cbPerfect'])
+        corrected = valid - perfect
         genomeU= int(s['genomeU'])
         genomeM = int(s['genomeM'])
         exonic = int(s['exonic'])
@@ -260,7 +261,7 @@ class Mapping(Step):
             df_count.loc[cb, 'mark'] = 'CB'
         df_count.to_csv(self.counts_file, sep='\t', index=True)
 
-        return valid
+        return valid, corrected
 
 
 class Cells(Cells_metrics):
@@ -421,7 +422,7 @@ class Demultiplexing(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-    def run(self, valid_reads, n_reads, q30_cb, q30_umi, q30_RNA):
+    def run(self, valid_reads, n_reads, corrected, q30_cb, q30_umi, q30_RNA):
         self.add_metric(
             name='Raw Reads',
             value=n_reads,
@@ -431,7 +432,14 @@ class Demultiplexing(Step):
             name='Valid Reads',
             value=valid_reads / n_reads,
             value_type='fraction',
-            help_info='reads with valid barcode and UMI'
+            help_info='fraction of reads with valid barcode and UMI'
+        )
+
+        self.add_metric(
+            name='Corrected Barcodes',
+            value=corrected / valid_reads,
+            value_type='fraction',
+            help_info='fraction of valid reads with corrected barcodes. Barcodes are corrected to the whitelist sequence that is 1 Hamming-distance away.'
         )
 
         self.add_metric(

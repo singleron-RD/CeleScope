@@ -13,7 +13,7 @@ from celescope.__init__ import HELP_DICT, __version__
 
 
 def cap_str_except_preposition(my_string):
-    prepositions = {"and", "or", "the", "a", "of", "in", "per", "after", 'with'}
+    prepositions = {"and", "or", "the", "a", "of", "in", "per", "after", 'with', 'by', 'at'}
     lowercase_words = my_string.split(" ")
 
     final_words = [word if word in prepositions else word[0].upper() + word[1:] for word in lowercase_words]
@@ -137,10 +137,6 @@ class Step:
         if value_type == 'fraction':
             value = round(value * 100, 2)
             display = f'{value}%'
-        metric_index = 0
-        if show:
-            self.metric_index += 1
-            metric_index = self.metric_index
         self.__metric_list.append(
             {
                 "name": name,
@@ -150,7 +146,6 @@ class Step:
                 "display": display,
                 "help_info": help_info,
                 "show": show,
-                "index": metric_index,
             }
         )
 
@@ -187,7 +182,8 @@ class Step:
         step_summary['display_title'] = self._display_title
         metric_list = []
         for metric in self.__metric_list:
-            metric_list.append(metric)
+            if metric['show']:
+                metric_list.append(metric)
         step_summary['metric_list'] = metric_list
         step_summary['help_content'] = self.__help_content
         self.__content_dict['data'][self._step_summary_name].update(step_summary)

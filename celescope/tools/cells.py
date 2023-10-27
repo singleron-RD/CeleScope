@@ -1,4 +1,3 @@
-from collections import defaultdict
 import shutil
 import os
 import sys
@@ -102,7 +101,26 @@ class Cells(Cells_metrics):
             value=self.args.force_cells,
             show=False,
         )
+        self.add_help_content('force_cells', self.args.force_cells)
         return filtered
+
+    @utils.add_log
+    def filter_min_gene(self, filtered:CountMatrix) -> CountMatrix:
+        bc_geneNum, _ = filtered.get_bc_geneNum()
+        bc_indices = [bc for bc in bc_geneNum if bc_geneNum[bc] >= self.args.min_gene]
+        n_filtered_cells = len(bc_geneNum) - len(bc_indices)
+        self.add_metric(
+            name='Minimum gene number in cells', 
+            value=self.args.min_gene,
+            show=False,
+        )
+        self.add_metric(
+            name='Number of cells filtered by min_gene', 
+            value=n_filtered_cells,
+            show=False,
+        )
+        self.add_help_content('min_gene', self.args.min_gene)
+        return filtered.slice_matrix(bc_indices)
 
     @utils.add_log
     def metrics_report(self, filtered:CountMatrix):
@@ -135,14 +153,8 @@ class Cells(Cells_metrics):
         mean_used_reads_per_cell = int(reads_cell // len(bcs))
         median_umi_per_cell = int(df_counts.loc[bcs, 'UMI'].median())
 
-        matrix = filtered.get_matrix()
-        gene_index, bc_index = matrix.nonzero()
-        total_genes = len(set(gene_index))
-        bc_gene = defaultdict(set)
-        for gene, bc in zip(gene_index, bc_index):
-            bc_gene[bc].add(gene)
-        gene_per_cell = [len(v) for v in bc_gene.values()]            
-        median_genes_per_cell = int(np.median(gene_per_cell))
+        bc_geneNum, total_genes = filtered.get_bc_geneNum()        
+        median_genes_per_cell = int(np.median(list(bc_geneNum.values())))
 
         saturation = self.old_step_dict['metrics']['Saturation'] / 100
         df_counts.loc[:, 'mark'] = 'UB'
@@ -174,6 +186,7 @@ class Cells(Cells_metrics):
             value=n_filtered_cells,
             show=False,
         )
+        self.add_help_content('max_mito', self.args.max_mito)
         return filtered
 
     @utils.add_log
@@ -185,6 +198,8 @@ class Cells(Cells_metrics):
             filtered= self.force_cells()
         if self.args.max_mito < 1.0:
             filtered = self.filter_mito(filtered)
+        if self.args.min_gene > 0:
+            filtered = self.filter_min_gene(filtered)
 
         filtered.to_matrix_dir(self.filter_matrix)
         self.metrics_report(filtered)
@@ -209,9 +224,15 @@ def get_opts_cells(parser, sub_program=True):
         )
         parser.add_argument(
             '--max_mito',
-            help='Maximum mitocondrial fraction in a cell',
+            help='Maximum mitocondrial fraction in a cell.',
             default='1.0',
             type=float,
+        )
+        parser.add_argument(
+            '--min_gene',
+            help='Minimum gene number in a cell.',
+            default=0,
+            type=int,
         )
         parser.add_argument(
             '--genomeDir',
