@@ -1,10 +1,12 @@
 <table style="float: left; margin-left: 0%; margin-top: 0%; margin-right:3%; width: 47%">
     {% for item in step_summary.metric_list %}
-        {% if item.show %}
-            <tr>
-                <td>{{ item.name|e }}</td>
-                <td>{{ item.display|e }}</td>
-            </tr>
-        {% endif %}
+        <tr>
+            <td>{{ item.name|e }}</td>
+            <td>{{ item.display|e }}</td>
+        </tr>
+    {% endfor %}
+
+    {% for item in step_summary.comment_metric_list %}
+            <!-- {{ item.name|e }}: {{ item.display|e }} -->
     {% endfor %}
 </table>

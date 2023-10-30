@@ -102,7 +102,6 @@ class Cells(Cells_metrics):
             value=self.args.force_cells,
             show=False,
         )
-        self.add_help_content('force_cells', self.args.force_cells)
         return filtered
 
     @utils.add_log
@@ -120,7 +119,6 @@ class Cells(Cells_metrics):
             value=n_filtered_cells,
             show=False,
         )
-        self.add_help_content('min_gene', self.args.min_gene)
         return filtered.slice_matrix(bc_indices)
 
     @utils.add_log
@@ -187,7 +185,6 @@ class Cells(Cells_metrics):
             value=n_filtered_cells,
             show=False,
         )
-        self.add_help_content('max_mito', self.args.max_mito)
         return filtered
 
     @utils.add_log

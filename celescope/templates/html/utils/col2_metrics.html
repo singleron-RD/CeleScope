@@ -18,4 +18,8 @@
         </tr>
     {% endif %}
   {% endfor %}
+
+  {% for item in step_summary.comment_metric_list %}
+    <!-- {{ item.name|e }}: {{ item.display|e }} -->
+  {% endfor %}
 </table>

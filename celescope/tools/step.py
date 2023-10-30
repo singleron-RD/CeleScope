@@ -73,6 +73,7 @@ class Step:
 
         self.__metric_list = []
         self.__help_content = []
+        self.__comments = []
         self._path_dict = {}
         for slot in self.__slots:
             self._path_dict[slot] = f'{self.outdir}/../.{slot}.json'
@@ -181,11 +182,16 @@ class Step:
         step_summary = {}
         step_summary['display_title'] = self._display_title
         metric_list = []
+        comment_metric_list = []
         for metric in self.__metric_list:
             if metric['show']:
                 metric_list.append(metric)
+            else:
+                comment_metric_list.append(metric)
         step_summary['metric_list'] = metric_list
+        step_summary['comment_metric_list'] = comment_metric_list
         step_summary['help_content'] = self.__help_content
+        step_summary['comments'] = self.__comments
         self.__content_dict['data'][self._step_summary_name].update(step_summary)
 
     def _add_content_metric(self):
@@ -218,6 +224,12 @@ class Step:
                 'content': content
             }
         )
+
+    def add_comments(self, content):
+        """
+        add comment to self.__comments
+        """
+        self.__comments.append(content)
 
     @utils.add_log
     def get_slot_key(self, slot, step_name, key):
