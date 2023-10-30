@@ -1,3 +1,7 @@
+## [2.0.2] - 2023-10-30
+ ### `rna` and `dynaseq`
+ - - `celescope rna cells` add a new argument `--soloCellFilter` for cell filtering of the raw count matrix.
+
 ## [2.0.1] - 2023-10-27
  ### `rna` and `dynaseq`
  - Add a metric in HTML report - Corrected Barcodes.
