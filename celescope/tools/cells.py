@@ -1,6 +1,7 @@
 import shutil
 import os
 import sys
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -190,12 +191,33 @@ class Cells(Cells_metrics):
         return filtered
 
     @utils.add_log
+    def soloCellFilter(self, filtered:CountMatrix) -> CountMatrix:
+        temp_raw = f'{self.outdir}/raw' 
+        cmd = f'cp -r {self.raw_matrix} {self.outdir}; gunzip {temp_raw}/*.gz' #STAR do not recognize gzip matrix
+        if not os.path.exists(temp_raw):
+            subprocess.check_call(cmd, shell=True)
+        temp_filtered = f'./{self.outdir}/filtered/'
+        cmd = f'STAR --runMode soloCellFiltering {temp_raw} {temp_filtered} --soloCellFilter {self.args.soloCellFilter}'
+        subprocess.check_call(cmd, shell=True)
+        cmd = f'gzip {temp_filtered}/*'
+        subprocess.check_call(cmd, shell=True)
+        filtered = CountMatrix.from_matrix_dir(temp_filtered)
+        self.add_metric(
+            name='soloCellFilter', 
+            value=self.args.soloCellFilter,
+            show=False,
+        )
+        return filtered
+
+    @utils.add_log
     def run(self):
         if self.args.max_mito > 1.0:
             sys.exit('max_mito should be less than 1.0')
         filtered = CountMatrix.from_matrix_dir(self.old_filtered_matrix)
         if self.args.force_cells > 0:
             filtered= self.force_cells()
+        elif self.args.soloCellFilter:
+            filtered = self.soloCellFilter(filtered)
         if self.args.max_mito < 1.0:
             filtered = self.filter_mito(filtered)
         if self.args.min_gene > 0:
@@ -216,6 +238,11 @@ def get_opts_cells(parser, sub_program=True):
             help='Force to use this number of cells.',
             default=0,
             type=int,
+        )
+        parser.add_argument(
+            '--soloCellFilter',
+            help='The same as the argument in STARsolo. Ignored when --force_cells is set.',
+            default='',
         )
         parser.add_argument(
             '--root_dir',
