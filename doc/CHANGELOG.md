@@ -1,6 +1,13 @@
+## [2.0.3] - 2023-10-31
+ ### `tag`, `citeseq` and `sweetseq`
+ - Remove cutadapt from steps.
+
+ ### `citeseq`
+ - Remove low expression antibody from HTML Umap plot.
+
 ## [2.0.2] - 2023-10-30
  ### `rna` and `dynaseq`
- - - `celescope rna cells` add a new argument `--soloCellFilter` for cell filtering of the raw count matrix.
+ - `celescope rna cells` add a new argument `--soloCellFilter` for cell filtering of the raw count matrix.
 
 ## [2.0.1] - 2023-10-27
  ### `rna` and `dynaseq`
