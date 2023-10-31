@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict
 
-__VERSION__ = "2.0.2"
+__VERSION__ = "2.0.3"
 __version__ = __VERSION__
 
 ASSAY_LIST = [

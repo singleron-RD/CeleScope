@@ -182,17 +182,9 @@ class Mapping_tag(Step):
 
                 if self.linker_length != 0:
                     seq_linker = Barcode.get_seq_str_no_exception(seq, self.pattern_dict['L'])
-                    if len(seq_linker) < self.linker_length:
-                        self.reads_unmapped_too_short += 1
-                        continue
+
                 if self.barcode_dict:
                     seq_barcode = Barcode.get_seq_str_no_exception(seq, self.pattern_dict['C'])
-                    if self.barcode_length != len(seq_barcode):
-                        miss_length = self.barcode_length - len(seq_barcode)
-                        if miss_length > 2:
-                            self.reads_unmapped_too_short += 1
-                            continue
-                        seq_barcode = seq_barcode + "A" * miss_length
 
                 # check linker
                 if self.linker_length != 0:
@@ -243,12 +235,6 @@ class Mapping_tag(Step):
             value=self.reads_mapped,
             total=self.total_reads,
             help_info="R2 reads that successfully mapped to linker and tag-barcode"
-        )
-        self.add_metric(
-            name='Reads Unmapped too Short',
-            value=self.reads_unmapped_too_short,
-            total=self.total_reads,
-            help_info="Unmapped R2 reads because read length < linker length + tag-barcode length"
         )
         self.add_metric(
             name='Reads Unmapped Invalid Linker',
