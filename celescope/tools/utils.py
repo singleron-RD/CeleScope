@@ -257,9 +257,10 @@ def glob_file(pattern_list: list):
 
 def get_matrix_file_path(matrix_dir, file_name):
     """
-    compatible with gzip file
+    compatible with non-gzip file
     """
-    file_path_list = [f'{matrix_dir}/{file_name}', f'{matrix_dir}/{file_name}.gz']
+    non_gzip = file_name.strip('.gz')
+    file_path_list = [f'{matrix_dir}/{file_name}', f'{matrix_dir}/{non_gzip}']
     for file_path in file_path_list:
         if os.path.exists(file_path):
             return file_path
@@ -285,14 +286,12 @@ def get_matrix_dir_from_match_dir(match_dir):
     Returns:
         matrix_dir: PosixPath object
     """
-    matrix_dir_pattern_list = []
-    for matrix_dir_suffix in FILTERED_MATRIX_DIR_SUFFIX:
-        matrix_dir_pattern_list.append(f"{match_dir}/{OUTS_DIR}/*{matrix_dir_suffix}")
-  
-    matrix_dir = glob_file(matrix_dir_pattern_list)
-    get_matrix_dir_from_match_dir.logger.info(f"Matrix_dir :{matrix_dir}")
-
+    matrix_dir = f"{match_dir}/{OUTS_DIR}/{FILTERED_MATRIX_DIR_SUFFIX}"
+    if not os.path.exists(matrix_dir):
+        raise FileNotFoundError(f'{matrix_dir} not found')
+    
     return matrix_dir
+
 
 
 @add_log

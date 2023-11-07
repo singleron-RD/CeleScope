@@ -1,3 +1,7 @@
+## [2.0.4] - 2023-11-07
+ ### General improvments
+ - Fix a bug in parsing matrix files from `matched_dir`.
+
 ## [2.0.3] - 2023-10-31
  ### `tag`, `citeseq` and `sweetseq`
  - Remove cutadapt from steps.
