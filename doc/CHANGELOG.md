@@ -1,3 +1,7 @@
+## [2.0.5] - 2023-11-15
+ - Add a new panel `CHIP`.
+ - Merge all overlapping regions in bed files. Fix KRAS gene in lung_1.bed.
+
 ## [2.0.4] - 2023-11-07
  ### General improvments
  - Fix a bug in parsing matrix files from `matched_dir`.

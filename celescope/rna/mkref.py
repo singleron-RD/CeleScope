@@ -33,7 +33,8 @@ class Mkref_rna(MakeRef_STAR):
             f'--sjdbOverhang 100 \\\n'
             f'--genomeSAindexNbases {SA} \\\n'
         )
-
+        if self.STAR_param:
+            cmd += (" " + self.args.STAR_param)
         sys.stderr.write(cmd+'\n')
         if not self.dry_run:
             subprocess.check_call(cmd, shell=True)

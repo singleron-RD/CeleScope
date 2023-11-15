@@ -8,4 +8,4 @@ IMPORT_DICT = {
     'star': 'celescope.rna'
 }
 
-PANEL = {'lung_1', 'blood_1'}
+PANEL = {'lung_1', 'blood_1', 'CHIP'}
