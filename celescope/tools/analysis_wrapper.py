@@ -204,7 +204,6 @@ class Scanpy_wrapper(Step):
         sc.tl.tsne(
             self.adata,
             n_pcs=N_PCS,
-            n_jobs=self.thread,
             copy=False,
         )
 
