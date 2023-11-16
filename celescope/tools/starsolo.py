@@ -47,12 +47,15 @@ class Starsolo(Step):
         self.chemistry = chemistry
         
         if chemistry != 'customized':
-            self.whitelist_str = " ".join(Chemistry.get_whitelist(chemistry))
+            if chemistry == 'scopeV1':
+                self.whitelist_str = None
+            else:
+                self.whitelist_str = " ".join(Chemistry.get_whitelist(chemistry))
             pattern = PATTERN_DICT[chemistry]
         else:
             self.whitelist_str = args.whitelist
             pattern = self.args.pattern
-        self.cb_pos, self.umi_pos, self.umi_len = self.get_solo_pos(pattern)
+        self.solo_type, self.cb_str, self.umi_str = self.get_solo_pattern(pattern)
         self.pattern = pattern
        
         # output files
@@ -68,18 +71,40 @@ class Starsolo(Step):
         
     
     @staticmethod
-    def get_solo_pos(pattern):
-        # returns: cb_pos, umi_pos, umi_len
+    def get_solo_pattern(pattern) -> (str, str, str):
+        """
+        Returns:
+            solo_type
+            cb_str
+            umi_str
+        """
         pattern_dict = Barcode.parse_pattern(pattern)
-        cb_pos = ' '.join([f'0_{l}_0_{r-1}' for l, r in pattern_dict["C"]])
         if len(pattern_dict['U']) != 1:
             sys.exit(f'Error: Wrong pattern:{pattern}. \n Solution: fix pattern so that UMI only have 1 position.\n')
         ul, ur = pattern_dict["U"][0]
-        umi_pos = f'0_{ul}_0_{ur-1}'
         umi_len = ur - ul
-        return cb_pos, umi_pos, umi_len
+
+        if len(pattern_dict["C"]) == 1:
+            solo_type = 'CB_UMI_Simple'
+            l, r = pattern_dict["C"][0]
+            cb_start = l + 1
+            cb_len = r - l
+            umi_start = ul + 1
+            cb_str = f'--soloCBstart {cb_start} --soloCBlen {cb_len} '
+            umi_str = f'--soloUMIstart {umi_start} --soloUMIlen {umi_len} '
+        else:
+            solo_type = 'CB_UMI_Complex'
+            cb_pos = ' '.join([f'0_{l}_0_{r-1}' for l, r in pattern_dict["C"]])
+            umi_pos = f'0_{ul}_0_{ur-1}'
+            cb_str = f'--soloCBposition {cb_pos} '
+            umi_str = f'--soloUMIposition {umi_pos} --soloUMIlen {umi_len} '
+        return solo_type, cb_str, umi_str
 
     def run_starsolo(self):
+        """
+        If UMI+CB length is not equal to the barcode read length, specify barcode read length with --soloBarcodeReadLength.
+        To avoid checking of barcode read length, specify soloBarcodeReadLength 0
+        """
         sa = SAM_attributes + self.args.SAM_attributes
         cmd = (
             'STAR \\\n'
@@ -87,10 +112,6 @@ class Starsolo(Step):
             f'--readFilesIn {self.args.fq2} {self.args.fq1} \\\n'
             f'--readFilesCommand {self.read_command} \\\n'
             f'--soloCBwhitelist {self.whitelist_str} \\\n'
-            f'--soloType CB_UMI_Complex \\\n'
-            f'--soloCBposition {self.cb_pos} \\\n'
-            f'--soloUMIposition {self.umi_pos} \\\n'
-            f'--soloUMIlen {self.umi_len} \\\n'
             f'--soloCellFilter {self.args.soloCellFilter} \\\n'
             f'--outFileNamePrefix {self.out_prefix}_ \\\n'
             f'--runThreadN {self.thread} \\\n'
@@ -98,9 +119,13 @@ class Starsolo(Step):
             f'--outFilterMatchNmin {self.args.outFilterMatchNmin} \\\n'
             f'--soloFeatures {self.args.soloFeatures} \\\n'
             f'--outSAMattributes {sa} \\\n'
+            f'--soloType {self.solo_type} \\\n'
+            f'{self.cb_str} \\\n'
+            f'{self.umi_str} \\\n'
             '--soloCBmatchWLtype 1MM \\\n'
             '--outSAMtype BAM SortedByCoordinate \\\n'
             '--soloCellReadStats Standard \\\n'
+            '--soloBarcodeReadLength 0 \\\n' 
         )
         if self.args.STAR_param:
             cmd += self.args.STAR_param

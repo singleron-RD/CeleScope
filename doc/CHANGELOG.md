@@ -1,3 +1,7 @@
+## [2.0.6] - 2023-11-16
+ ### General improvments
+ - Add support for legacy chemistry `scopeV1`.
+
 ## [2.0.5] - 2023-11-15
  - Add a new panel `CHIP`.
  - Merge all overlapping regions in bed files. Fix KRAS gene in lung_1.bed.
