@@ -50,7 +50,7 @@ class Mkgtf:
 
     @utils.add_log
     def run(self):
-        runner = reference.GtfBuilder(self.in_gtf_fn, self.out_gtf_fn, self.attributes)
+        runner = reference.GtfBuilder(self.in_gtf_fn, self.out_gtf_fn, self.attributes, add_intron=True)
         runner.build_gtf()
 
 
@@ -63,7 +63,6 @@ def get_opts_mkgtf(parser, sub_program=True):
     if sub_program:
         parser.add_argument('gtf', help='raw gtf file')
         parser.add_argument('out_gtf', help='output gtf file')
-        parser.add_argument('--add_intron', help='add intron lines to gtf file', action='store_true')
         parser.add_argument(
             '--attributes', 
             help='Attributes to keep. Example: `gene_biotype=protein_coding,lncRNA,antisense;`',

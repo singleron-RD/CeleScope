@@ -28,7 +28,7 @@ class Multi_capture_virus(Multi):
         step = 'star_virus'
         cmd_line = self.get_cmd_line(step, sample)
         if self.args.not_consensus:
-            fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+            fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
         else:
             fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'
             cmd_line += ' --consensus_fq '

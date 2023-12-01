@@ -3,7 +3,10 @@
 ### Make a snp reference genomeDir
 
 1. Run `celescope rna mkref`. If you already have a rna genomeDir, you can use it and skip this step.
-2. Run `celescope snp mkref` under the rna genomeDir. Check [mkref.md](./mkref.md) for help.
+2. Run `celescope snp mkref` under the rna genomeDir. 
+```
+celescope snp mkref
+```
 
 ### Run multi_snp
 There are two ways to run `multi_snp`

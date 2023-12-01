@@ -155,9 +155,15 @@ class GtfBuilder:
             starts = [ row.start for row in rows ]
             ends   = [ row.end   for row in rows ]
 
+            k = 0
             for (i,j) in zip(ends[:-1],starts[1:]):
                 assert i < j
                 if i+1 <= j-1:
+                    k += 1
+                    attributes = rows[0].attributes.copy()
+                    if 'exon_number' in attributes:
+                        del attributes['exon_number']
+                    attributes['intron_number'] = k
                     intron_row = gtf_row(
                             seqname = rows[0].seqname,
                             source  = rows[0].source,
@@ -167,7 +173,7 @@ class GtfBuilder:
                             score   = '.',
                             strand  = rows[0].strand,
                             frame   = '.',
-                            attributes = rows[0].attributes )
+                            attributes = attributes )
 
                     introns.append( intron_row )
         sys.stderr.write( 'done (%d introns).\n' % len(introns) )

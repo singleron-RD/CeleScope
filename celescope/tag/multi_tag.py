@@ -22,7 +22,7 @@ class Multi_tag(Multi):
 
     def mapping_tag(self, sample):
         step = 'mapping_tag'
-        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{self.fq_suffix}'
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

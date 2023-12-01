@@ -231,12 +231,8 @@ class Barcode(Step):
                 self.match_cbs = set() # record barcode number match with flv_rna.
 
         # out file
-        if args.gzip:
-            self.suffix = ".gz"
-        else:
-            self.suffix = ""
-        self.out_fq2 = f'{self.out_prefix}_2.fq{self.suffix}'
-        self.out_fq1 = f'{self.out_prefix}_1.fq{self.suffix}'
+        self.out_fq2 = f'{self.out_prefix}_2.fq'
+        self.out_fq1 = f'{self.out_prefix}_1.fq'
         if self.nopolyT:
             self.nopolyT_1 = f'{self.out_prefix}_noPolyT_1.fq'
             self.nopolyT_2 = f'{self.out_prefix}_noPolyT_2.fq'
@@ -815,11 +811,6 @@ lowQual will be regarded as low-quality bases.',
     parser.add_argument(
         '--allowNoLinker',
         help="Allow valid reads without correct linker.",
-        action='store_true'
-    )
-    parser.add_argument(
-        '--gzip',
-        help="Output gzipped fastq files.",
         action='store_true'
     )
     parser.add_argument(

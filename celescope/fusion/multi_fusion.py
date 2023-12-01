@@ -29,7 +29,7 @@ class Multi_fusion(Multi):
     def star_fusion(self, sample):
         step = 'star_fusion'
         cmd_line = self.get_cmd_line(step, sample)
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
         cmd = (
             f'{cmd_line} '
             f'--fq {fq} '

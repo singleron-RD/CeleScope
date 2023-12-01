@@ -44,7 +44,6 @@ class Multi():
         self.args = None
         self.col4_default = None
         self.last_step = ''
-        self.fq_suffix = ""
         self.steps_run = self.STEPS
         self.fq_dict = {}
         self.col4_dict = {}
@@ -291,7 +290,7 @@ job_end
 
     def cutadapt(self, sample):
         step = "cutadapt"
-        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq{self.fq_suffix}'
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
@@ -301,7 +300,7 @@ job_end
 
     def star(self, sample):
         step = 'star'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
@@ -360,7 +359,7 @@ job_end
 
     def consensus(self, sample):
         step = 'consensus'
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
+        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '

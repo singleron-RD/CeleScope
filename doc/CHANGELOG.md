@@ -1,3 +1,11 @@
+## [2.0.7] - 2023-12-01
+ ### `rna` and `dynaseq`
+  - Adjust the denominator of `Reads Assigned To {Exonic, Intronic, Intergenic, Antisense} regions` from valid reads to mapped reads. This way Exonic + Intronic + Intergenic + Antisense = 100%
+
+ ### General improvments
+ - Bug fix: Introns was added to gtf when running `celescope utils mkgtf`. Otherwise the featureCounts step will report an error for not finding intron regions.
+ - Removed the --gzip argument.
+
 ## [2.0.6] - 2023-11-16
  ### General improvments
  - Add support for legacy chemistry `scopeV1`.

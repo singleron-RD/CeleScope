@@ -222,10 +222,11 @@ class Mapping(Step):
         corrected = valid - perfect
         genomeU= int(s['genomeU'])
         genomeM = int(s['genomeM'])
+        mapped = genomeU + genomeM
         exonic = int(s['exonic'])
         intronic = int(s['intronic'])
         antisense = int(s['exonicAS'] + s['intronicAS'])
-        intergenic = genomeM + genomeU - exonic - intronic - antisense
+        intergenic = mapped - exonic - intronic - antisense
         countedU = int(s['countedU'])
         del df
 
@@ -255,26 +256,26 @@ class Mapping(Step):
             help_info='Reads that mapped to a unique gene in the transcriptome. These reads are used for UMI counting.'
         )
         self.add_metric(
-            name='Reads assigned to exonic regions',
-            value=exonic / valid,
+            name='Mapped Reads assigned to exonic regions',
+            value=exonic / mapped,
             value_type='fraction',
             help_info='Reads that assigned to exonic regions of genes',
         )
         self.add_metric(
-            name='Reads assigned to intronic regions',
-            value=intronic / valid,
+            name='Mapped Reads assigned to intronic regions',
+            value=intronic / mapped,
             value_type='fraction',
             help_info='Reads that assigned to intronic regions of genes',
         )
         self.add_metric(
-            name='Reads assigned to intergenic regions',
-            value=intergenic / valid,
+            name='Mapped Reads assigned to intergenic regions',
+            value=intergenic / mapped,
             value_type='fraction',
             help_info='Reads that can not be assigned to a gene will be considered as intergenic reads.',
         )
         self.add_metric(
-            name='Reads assigned Antisense to gene',
-            value=antisense / valid,
+            name='Mapped Reads assigned Antisense to gene',
+            value=antisense / mapped,
             value_type='fraction',
             help_info='Reads that assigned to the opposite strand of genes',
         )
