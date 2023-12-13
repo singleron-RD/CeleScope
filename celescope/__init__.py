@@ -1,7 +1,7 @@
 import os
 from collections import OrderedDict
 
-__VERSION__ = "2.0.7"
+__VERSION__ = "2.1.0"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
@@ -18,6 +18,7 @@ ASSAY_LIST = [
     'utils',
     'bulk_vdj',
     'bulk_rna',
+    'rna_5p3p',
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

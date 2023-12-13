@@ -132,7 +132,7 @@ use `--steps_run barcode,cutadapt`
     @staticmethod
     @utils.add_log
     def parse_mapfile(mapfile, default_val, use_R3=False):
-        fq_dict = defaultdict(list)
+        fq_dict = defaultdict(lambda: defaultdict(list))
         col4_dict = {}
         col5_dict = {}
         with open(mapfile) as fh:
@@ -148,18 +148,16 @@ use `--steps_run barcode,cutadapt`
                     col4 = default_val
                 fq1, fq2 = get_fq(library_id, library_path, use_R3)
 
-                if sample_name in fq_dict:
-                    fq_dict[sample_name][0].append(fq1)
-                    fq_dict[sample_name][1].append(fq2)
-                else:
-                    fq_dict[sample_name] = [[fq1], [fq2]]
-                    col4_dict[sample_name] = col4
+                fq_dict[sample_name]['fq1'].append(fq1)
+                fq_dict[sample_name]['fq2'].append(fq2)
+                fq_dict[sample_name]['col4'].append(col4)
+                col4_dict[sample_name] = col4
                 if len(line_split) == 5:
                     col5_dict[sample_name] = line_split[4]
 
         for sample_name in fq_dict:
-            fq_dict[sample_name][0] = ",".join(fq_dict[sample_name][0])
-            fq_dict[sample_name][1] = ",".join(fq_dict[sample_name][1])
+            fq_dict[sample_name]['fq1_str'] = ",".join(fq_dict[sample_name]['fq1'])
+            fq_dict[sample_name]['fq2_str'] = ",".join(fq_dict[sample_name]['fq2'])
 
         if not fq_dict:
             raise Exception('empty mapfile!')
@@ -171,8 +169,8 @@ use `--steps_run barcode,cutadapt`
         with open(raw_dir + '/ln.sh', 'w') as fh:
             fh.write('cd %s\n' % (raw_dir))
             for s, arr in self.fq_dict.items():
-                fh.write('ln -sf %s %s\n' % (arr[0], s + '_1.fq.gz'))
-                fh.write('ln -sf %s %s\n' % (arr[1], s + '_2.fq.gz'))
+                fh.write('ln -sf %s %s\n' % (arr["fq1_str"], s + '_1.fq.gz'))
+                fh.write('ln -sf %s %s\n' % (arr["fq2_str"], s + '_2.fq.gz'))
 
     def prepare(self):
         """
@@ -274,7 +272,7 @@ job_end
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--fq1 {arr[0]} '
+            f'--fq1 {arr["fq1_str"]} '
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
@@ -284,7 +282,7 @@ job_end
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--fq1 {arr[0]} --fq2 {arr[1]} '
+            f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
@@ -315,7 +313,7 @@ job_end
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--fq1 {arr[0]} --fq2 {arr[1]} '
+            f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
