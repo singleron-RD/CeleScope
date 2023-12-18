@@ -155,7 +155,9 @@ class Chemistry():
         """
         returns: [bclists]
         """
-        repeat = 3
+        pattern = PATTERN_DICT[chemistry]
+        pattern_dict = Barcode.parse_pattern(pattern)
+        repeat = len(pattern_dict["C"])
         root_dir = f'{ROOT_PATH}/data/chemistry/{chemistry}'
         bclist = f'{root_dir}/bclist'
         bclist1 = f'{root_dir}/bclist1'

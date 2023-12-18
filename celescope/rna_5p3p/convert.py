@@ -62,16 +62,24 @@ class Convert(Step):
         for i, (fn1,fn2) in enumerate(zip(self.fq1_5p,self.fq2_5p), start=1):
             out_fn1 = f'{self.out_prefix}_5p{i}_R1.fq.gz'
             out_fn2 = f'{self.out_prefix}_5p{i}_R2.fq.gz'
-            fh_5p = xopen(out_fn1, 'w')
+            fh_5p_1 = xopen(out_fn1, 'w')
+            fh_5p_2 = xopen(out_fn2, 'w')
             with pysam.FastxFile(fn1, persist=False) as fq:
                 for entry1 in fq:
                     header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
                     bc, umi = self.convert_5p_R1(seq1)
                     bc_qual = Bc.get_seq_str(qual1, self.pattern_dict_5p['C'])
                     umi_qual = Bc.get_seq_str(qual1, self.pattern_dict_5p['U'])
-                    fh_5p.write('@{}\n{}\n+\n{}\n'.format(header1, bc+umi, bc_qual+umi_qual))
-            cmd = f'ln -s -f {fn2} {out_fn2}'
-            subprocess.check_call(cmd, shell=True)
+                    fh_5p_1.write('@{}\n{}\n+\n{}\n'.format(header1, bc+umi, bc_qual+umi_qual))
+            fh_5p_1.close()
+            with pysam.FastxFile(fn2, persist=False) as fq:
+                for entry2 in fq:
+                    header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
+                    seq2 = utils.reverse_complement(seq2)
+                    qual2 = qual2[::-1]
+                    fh_5p_2.write('@{}\n{}\n+\n{}\n'.format(header2, seq2, qual2))
+            fh_5p_2.close()
+
 
 
     def run(self):
