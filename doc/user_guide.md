@@ -7,9 +7,8 @@ git clone https://github.com/singleron-RD/CeleScope.git
 ```
 
 2. Create conda environment and install conda packages. 
-It is recommended to use [mamba](https://github.com/mamba-org/mamba) (which is a faster replacement for Conda):
+It is recommended to use [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (which is a faster replacement for Conda):
 ```
-conda install mamba
 cd CeleScope
 mamba create -n celescope -y --file conda_pkgs.txt
 ```
