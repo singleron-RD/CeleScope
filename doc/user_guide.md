@@ -1,25 +1,30 @@
 # User guide
 
 ## Installation
-1. Clone repo
-```
-git clone https://github.com/singleron-RD/CeleScope.git
-```
 
-2. Create conda environment and install conda packages. 
+### Create conda environment and install conda packages. 
 It is recommended to use [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (which is a faster replacement for Conda):
 ```
-cd CeleScope
+wget https://github.com/singleron-RD/CeleScope/blob/master/conda_pkgs.txt
 mamba create -n celescope -y --file conda_pkgs.txt
 ```
 
+If you want to install a previous version instead of the latest version, for example v1.15.0
+```
+wget https://github.com/singleron-RD/CeleScope/blob/v1.15.0/conda_pkgs.txt
+```
 
-3. Install celescope
+### Install celescope
 
-Make sure you have activated the `celescope` conda environment before running `pip install celescope`. 
+Make sure you have activated the conda environment before running `pip install celescope`. 
 ```
 conda activate celescope
 pip install celescope
+```
+
+If you want to install a previous version instead of the latest version, for example v1.15.0
+```
+pip install celescope==1.15.0
 ```
 
 ## Usage
