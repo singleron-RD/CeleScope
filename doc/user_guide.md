@@ -3,20 +3,29 @@
 ## Installation
 
 ### Create conda environment and install conda packages. 
-It is recommended to use [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (which is a faster replacement for Conda):
+First, you need to get the txt file from the github repository containing the name of the conda package you need to install. You can download it directly from the github repository interface, or use a download link.
+The following command will download the conda_pkgs.txt required for the latest version.
 ```
-wget https://github.com/singleron-RD/CeleScope/blob/master/conda_pkgs.txt
-mamba create -n celescope -y --file conda_pkgs.txt
+wget https://raw.githubusercontent.com/singleron-RD/CeleScope/master/conda_pkgs.txt
+```
+Use the mirror if you have trouble connecting to github:
+```
+wget https://gitee.com/singleron-rd/celescope/raw/master/conda_pkgs.txt
+```
+If you need to download an earlier version of `conda_pkgs.txt`, just change `master` in the link to that version
+```
+wget https://raw.githubusercontent.com/singleron-RD/CeleScope/v1.15.0/conda_pkgs.txt
 ```
 
-If you want to install a previous version instead of the latest version, for example v1.15.0
+Then, start creating the conda environment and install the conda package.It is recommended to use [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (which is a faster replacement for Conda) to install conda packages.
+The following command will create a conda environment named `celescope` and install the dependency packages contained in conda_pkgs.txt.
 ```
-wget https://github.com/singleron-RD/CeleScope/blob/v1.15.0/conda_pkgs.txt
+mamba create -n celescope -y --file conda_pkgs.txt
 ```
 
 ### Install celescope
 
-Make sure you have activated the conda environment before running `pip install celescope`. 
+Make sure you have activated the conda environment before running `pip install celescope`. The following command will install the latest version of celescope.
 ```
 conda activate celescope
 pip install celescope
