@@ -304,7 +304,7 @@ class Summarize(Step):
         with pysam.FastxFile(all_contig_fasta) as fa:
             for read in fa:
                 name = read.name
-                cb = name.split(':')[0]
+                cb = '_'.join(name.split('_')[:-1]) # remove the suffix num in "bc1_bc2_bc3_num"
                 sequence = read.sequence
                 if cb in cell_barcodes:
                     filter_contig_fasta.write('>' + name + '\n' + sequence + '\n')
