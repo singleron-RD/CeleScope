@@ -49,7 +49,7 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 |[capture_virus](./assay/multi_capture_virus.md)|single-cell virus|FocuSCOPE<sup>TM</sup> mRNA × EBV|
 |[snp](./assay/multi_snp.md)|single-cell variant|FocuSCOPE<sup>TM</sup>|
 |[fusion](./assay/multi_fusion.md)|single-cell fusion|FocuSCOPE<sup>TM</sup>|
-|[sweetseq](assay/multi_citeseq.md)|single-cell glycosylation|ProMoSCOPE<sup>TM</sup>|
+|[sweetseq](assay/multi_sweetseq.md)|single-cell glycosylation|ProMoSCOPE<sup>TM</sup>|
 |[citeseq](assay/multi_citeseq.md)|single-cell CITE-Seq|NA|
 |[bulk_vdj](assay/multi_bulk_vdj.md)|bulk_vdj|NA|
 
