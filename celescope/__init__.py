@@ -18,6 +18,7 @@ ASSAY_LIST = [
     'utils',
     'bulk_vdj',
     'bulk_rna',
+    'rna_5p3p',
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

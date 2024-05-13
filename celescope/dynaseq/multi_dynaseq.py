@@ -28,7 +28,7 @@ class Multi_dynaseq(Multi_rna):
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--fq1 {arr[0]} --fq2 {arr[1]} '
+            f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
             f'--STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3" '
             f'--SAM_attributes MD '
         )

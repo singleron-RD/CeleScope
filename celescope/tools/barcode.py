@@ -152,8 +152,12 @@ class Chemistry():
 
     @staticmethod
     def get_whitelist(chemistry):
-        # returns: [bclists]
-        repeat = 3
+        """
+        returns: [bclists]
+        """
+        pattern = PATTERN_DICT[chemistry]
+        pattern_dict = Barcode.parse_pattern(pattern)
+        repeat = len(pattern_dict["C"])
         root_dir = f'{ROOT_PATH}/data/chemistry/{chemistry}'
         bclist = f'{root_dir}/bclist'
         bclist1 = f'{root_dir}/bclist1'
@@ -404,18 +408,18 @@ class Barcode(Step):
     @staticmethod
     def check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list):
         '''
-        Return bool_valid, bool_corrected, corrected_seq
+        Return bool_valid, bool_corrected, corrected_seq_list
 
-        >>> seq_list = ['ATA', 'AAT', 'ATA']
         >>> correct_set_list = [{'AAA'},{'AAA'},{'AAA'}]
         >>> mismatch_dict_list = [Barcode.get_mismatch_dict(['AAA'])] * 3
 
+        >>> seq_list = ['ATA', 'AAT', 'ATA']
         >>> Barcode.check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
-        (True, True, 'AAA_AAA_AAA')
+        (True, True, ['AAA','AAA', 'AAA'])
 
         >>> seq_list = ['AAA', 'AAA', 'AAA']
         >>> Barcode.check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
-        (True, False, 'AAA_AAA_AAA')
+        (True, False, ['AAA','AAA', 'AAA'])
         '''
         bool_valid = True
         bool_corrected = False
@@ -431,10 +435,10 @@ class Barcode(Step):
             else:
                 corrected_seq_list.append(seq)
 
-        return bool_valid, bool_corrected, '_'.join(corrected_seq_list)
+        return bool_valid, bool_corrected, corrected_seq_list
 
     @staticmethod
-    def parse_whitelist_file(files: list, n_pattern: int, n_mismatch: int):
+    def parse_whitelist_file(files: list, n_pattern: int, n_mismatch: int, reverse_complement=False):
         """
         files: file paths
         n_pattern: number of sections in pattern
@@ -452,6 +456,8 @@ class Barcode(Step):
         white_set_list, mismatch_list = [], []
         for f in files:
             barcodes, _ = utils.read_one_col(f)
+            if reverse_complement:
+                barcodes = [utils.reverse_complement(seq) for seq in barcodes]
             white_set_list.append(set(barcodes))
             barcode_mismatch_dict = Barcode.get_mismatch_dict(barcodes, n_mismatch)
             mismatch_list.append(barcode_mismatch_dict)
@@ -707,7 +713,7 @@ class Barcode(Step):
                     if self.bool_flv:
                         seq_list = [utils.reverse_complement(seq) for seq in seq_list[::-1]]
                     if bool_whitelist:
-                        bool_valid, bool_corrected, corrected_seq = Barcode.check_seq_mismatch(
+                        bool_valid, bool_corrected, corrected_seq_list = Barcode.check_seq_mismatch(
                             seq_list, barcode_set_list, barcode_mismatch_list)
 
                         if not bool_valid:
@@ -715,7 +721,7 @@ class Barcode(Step):
                             continue
                         elif bool_corrected:
                             self.barcode_corrected_num += 1
-                        cb = corrected_seq
+                        cb = '_'.join(corrected_seq_list)
                     else:
                         cb = "_".join(seq_list)
 
