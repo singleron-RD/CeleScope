@@ -3,6 +3,7 @@ import numpy as np
 import pysam
 import sys
 import subprocess
+from collections import defaultdict
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
@@ -48,6 +49,8 @@ class Target_metrics(Step):
             sys.exit("You must provide either --panel or --gene_list!")
 
         self.count_dict = utils.genDict(dim=3, valType=int)
+        self.dup_dict = utils.genDict(dim=4, valType=int)
+        self.used_dict = defaultdict(int)
 
         self.add_metric(
             name="Number of Target Genes",
@@ -64,7 +67,11 @@ class Target_metrics(Step):
 
     @utils.add_log
     def read_bam_write_filtered(self):
+        """
+        for each (barcode,UMI,reference_name,reference_start), keep at most max_duplicate_reads
+        """
         sam_temp = f'{self.out_bam_file}.temp'
+        max_duplicate = self.args.max_duplicate
         with pysam.AlignmentFile(self.args.bam, "rb") as reader:
             header = reader.header.to_dict()
             # add RG to header
@@ -87,11 +94,16 @@ class Target_metrics(Step):
                         UMI = record.get_tag('UB')
                     except KeyError:
                         continue
+                    self.count_dict[barcode][gene_name][UMI] += 1
                     if barcode in self.match_barcode and gene_name in self.gene_list:
+                        rn, rs = record.reference_name, record.reference_start
+                        self.dup_dict[barcode][UMI][rn][rs] += 1
+                        if self.dup_dict[barcode][UMI][rn][rs] > max_duplicate:
+                            continue
+                        self.used_dict[barcode] += 1
                         if self.args.add_RG:
                             record.set_tag(tag='RG', value=record.get_tag('CB'), value_type='Z')
                         writer.write(record)
-                    self.count_dict[barcode][gene_name][UMI] += 1
 
             cmd = f'samtools view -b {sam_temp} -o {self.out_bam_file}; rm {sam_temp}'
             subprocess.check_call(cmd, shell=True)
@@ -145,6 +157,11 @@ class Target_metrics(Step):
             value=np.median(valid_enriched_reads_per_cell_list),
         )
 
+        self.add_metric(
+            name="Median Used Reads per Valid Cell",
+            value=np.median(list(self.used_dict.values())),
+        )
+
     def run(self):
         self.read_bam_write_filtered()
         self.parse_count_dict_add_metrics()
@@ -167,6 +184,7 @@ def target_metrics(args):
 def get_opts_target_metrics(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT['gene_list'])
     parser.add_argument("--panel", help=HELP_DICT['panel'], choices=list(PANEL))
+    parser.add_argument("--max_duplicate", type=int, default=5)
     if sub_program:
         parser.add_argument("--bam", help='Input bam file', required=True)
         parser.add_argument('--match_dir', help=HELP_DICT['match_dir'], required=True)

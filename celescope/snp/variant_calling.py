@@ -67,7 +67,7 @@ class Variant_calling(Step):
             f'-f {self.fasta} '
             f'--threads {self.thread} '
             f'--annotate DP,AD '
-            f'--max-depth 2000000 --max-idepth 1000000 --no-BAQ '
+            f'--max-depth 2000000 --max-idepth 2000000 --no-BAQ '
             f'-o {self.raw_bcf_file} '
             f'{self.splitN_bam} '
         )
