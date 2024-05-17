@@ -84,14 +84,14 @@ class Chemistry():
         """
 
         # check flv_rna first. otherwise it may be considered as scopeV2.1.1 and scopeV2.2.1
-        linker_flv_rna = Barcode.get_seq_str(seq, self.pattern_dict_flv_rna["L"])
+        linker_flv_rna = Barcode.get_seq_str_no_exception(seq, self.pattern_dict_flv_rna["L"])
         bool_valid, _, _ = Barcode.check_seq_mismatch(
             [linker_flv_rna], self.linker_flv_rna_set_list, self.linker_flv_rna_mismatch_list)
         if bool_valid:
             return "flv_rna"
 
 
-        linker_v2 = Barcode.get_seq_str(seq, self.pattern_dict_v2["L"])
+        linker_v2 = Barcode.get_seq_str_no_exception(seq, self.pattern_dict_v2["L"])
         bool_valid, _, _ = Barcode.check_seq_mismatch(
             [linker_v2], self.linker_1_v2_set_list, self.linker_1_v2_mismatch_list)
         if bool_valid:
@@ -100,19 +100,19 @@ class Chemistry():
             else:
                 return "scopeV2.1.1"
 
-        linker_v3 = Barcode.get_seq_str(seq, self.pattern_dict_v3["L"])
+        linker_v3 = Barcode.get_seq_str_no_exception(seq, self.pattern_dict_v3["L"])
         bool_valid, _, _ = Barcode.check_seq_mismatch(
             [linker_v3], self.linker_v3_set_list, self.linker_v3_mismatch_list)
         if bool_valid:
             return "scopeV3.0.1"
 
-        linker_v2 = Barcode.get_seq_str(seq, self.pattern_dict_v2["L"])
+        linker_v2 = Barcode.get_seq_str_no_exception(seq, self.pattern_dict_v2["L"])
         bool_valid, _, _ = Barcode.check_seq_mismatch(
             [linker_v2], self.linker_4_v2_set_list, self.linker_4_v2_mismatch_list)
         if bool_valid:
             return "scopeV2.2.1"
 
-        linker_flv = Barcode.get_seq_str(seq, self.pattern_dict_flv["L"])
+        linker_flv = Barcode.get_seq_str_no_exception(seq, self.pattern_dict_flv["L"])
         bool_valid, _, _ = Barcode.check_seq_mismatch(
             [linker_flv], self.linker_flv_set_list, self.linker_flv_mismatch_list)
         if bool_valid:
@@ -478,7 +478,7 @@ class Barcode(Step):
         Return:
             True if polyT is found
         """
-        seq_polyT = Barcode.get_seq_str(seq, pattern_dict['T'])
+        seq_polyT = Barcode.get_seq_str_no_exception(seq, pattern_dict['T'])
         n_polyT_found = seq_polyT.count('T')
         if n_polyT_found >= min_polyT_count:
             return True
@@ -680,7 +680,7 @@ class Barcode(Step):
                             continue
 
                     # lowQual filter
-                    C_U_quals_ascii = Barcode.get_seq_str(
+                    C_U_quals_ascii = Barcode.get_seq_str_no_exception(
                         qual1, pattern_dict['C'] + pattern_dict['U'])
                     if lowQual > 0 and Barcode.low_qual(C_U_quals_ascii, lowQual, lowNum):
                         self.lowQual_num += 1
@@ -688,7 +688,7 @@ class Barcode(Step):
 
                     # linker filter
                     if bool_L and (not self.allowNoLinker):
-                        seq_str = Barcode.get_seq_str(seq1, pattern_dict['L'])
+                        seq_str = Barcode.get_seq_str_no_exception(seq1, pattern_dict['L'])
                         bool_valid, bool_corrected, _ = Barcode.check_seq_mismatch(
                             [seq_str], linker_set_list, linker_mismatch_list)
                         if not bool_valid:
@@ -723,7 +723,7 @@ class Barcode(Step):
                     self.barcode_qual_Counter.update(C_U_quals_ascii[:C_len])
                     self.umi_qual_Counter.update(C_U_quals_ascii[C_len:])
 
-                    umi = Barcode.get_seq_str(seq1, pattern_dict['U'])
+                    umi = Barcode.get_seq_str_no_exception(seq1, pattern_dict['U'])
                     if not umi:
                         continue
 
