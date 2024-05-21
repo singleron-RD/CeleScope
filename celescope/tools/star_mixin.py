@@ -126,7 +126,7 @@ is higher than or equal to this value.""",
         help='Output unmapped reads.',
         action='store_true'
     )
-    parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], default="")
+    parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], nargs='+', default="")
     parser.add_argument(
         '--outFilterMultimapNmax',
         help=(
