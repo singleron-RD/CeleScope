@@ -1,3 +1,7 @@
+## [2.0.8] - 2024-03-06
+ ### `flv_trust4`
+  - Bugfix: Wrong delimiter results in empty filter_contig.fasta
+
 ## [2.0.7] - 2023-12-01
  ### `rna` and `dynaseq`
   - Adjust the denominator of `Reads Assigned To {Exonic, Intronic, Intergenic, Antisense} regions` from valid reads to mapped reads. This way Exonic + Intronic + Intergenic + Antisense = 100%

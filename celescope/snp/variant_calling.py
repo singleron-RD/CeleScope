@@ -60,13 +60,14 @@ class Variant_calling(Step):
     @utils.add_log
     def call_variants(self):
         """
-        max depth 100M
+        https://github.com/samtools/bcftools/issues/1459
         """
         cmd = (
             f'bcftools mpileup '
             f'-f {self.fasta} '
             f'--threads {self.thread} '
-            f'--annotate DP,AD -d 100000000 '
+            f'--annotate DP,AD '
+            f'--max-depth 2000000 --max-idepth 1000000 --no-BAQ '
             f'-o {self.raw_bcf_file} '
             f'{self.splitN_bam} '
         )

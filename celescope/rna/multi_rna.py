@@ -21,7 +21,7 @@ class Multi_rna(Multi):
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--fq1 {arr[0]} --fq2 {arr[1]} '
+            f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 

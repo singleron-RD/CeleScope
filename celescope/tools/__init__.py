@@ -14,6 +14,9 @@ PATTERN_DICT = {
     'bulk_vdj': 'L18C6U16',
     'bulk_rna': 'C9U12',
     'customized': None,
+    'rna_5p': 'U8C9L4C9L4C9',
+    'rna_3p': 'C9L4C9L4C9U8',
+    'scope_5p3p': 'C9C9C9U8', # converted
 }
 
 

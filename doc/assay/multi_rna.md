@@ -97,3 +97,9 @@ Note that the `./shell/{sample}.sh` must be run under the working directory(You 
 - `outs/{sample}_Aligned.sortedByCoord.out.bam` This bam file contains coordinate-sorted reads aligned to the genome. 
 - `outs/raw` Gene expression matrix file contains all barcodes(background + cell) from the barcode whitelist.
 - `outs/filtered` Gene expression matrix file contains only cell barcodes.
+
+## Seurat CreateSeuratObject
+When using [seurat CreateSeuratObject](https://www.rdocumentation.org/packages/Seurat/versions/3.0.1/topics/CreateSeuratObject), the default `names.delim` is underscore . Since cell barcode is separated by underscore(for example, ATCGATCGA_ATCGATCGA_ATCGATCGA), using `names.delim = "_"` will incorrectly set `orig.ident` to the third segment of barcode. This problem can be avoided by setting names.delim to other characters, such as `names.delim="-"`
+```
+seurat.object = CreateSeuratObject(matrix, names.delim="-", project="sample_name") 
+```

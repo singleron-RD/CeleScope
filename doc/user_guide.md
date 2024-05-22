@@ -1,26 +1,39 @@
 # User guide
 
 ## Installation
-1. Clone repo
+
+### Create conda environment and install conda packages. 
+First, you need to get the txt file from the github repository containing the name of the conda package you need to install. You can download it directly from the github repository interface, or use a download link.
+The following command will download the conda_pkgs.txt required for the latest version.
 ```
-git clone https://github.com/singleron-RD/CeleScope.git
+wget https://raw.githubusercontent.com/singleron-RD/CeleScope/master/conda_pkgs.txt
+```
+Use the mirror if you have trouble connecting to github:
+```
+wget https://gitee.com/singleron-rd/celescope/raw/master/conda_pkgs.txt
+```
+If you need to download an earlier version of `conda_pkgs.txt`, just change `master` in the link to that version
+```
+wget https://raw.githubusercontent.com/singleron-RD/CeleScope/v1.15.0/conda_pkgs.txt
 ```
 
-2. Create conda environment and install conda packages. 
-It is recommended to use [mamba](https://github.com/mamba-org/mamba) (which is a faster replacement for Conda):
+Then, start creating the conda environment and install the conda package.It is recommended to use [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (which is a faster replacement for Conda) to install conda packages.
+The following command will create a conda environment named `celescope` and install the dependency packages contained in conda_pkgs.txt.
 ```
-conda install mamba
-cd CeleScope
 mamba create -n celescope -y --file conda_pkgs.txt
 ```
 
+### Install celescope
 
-3. Install celescope
-
-Make sure you have activated the `celescope` conda environment before running `pip install celescope`. 
+Make sure you have activated the conda environment before running `pip install celescope`. The following command will install the latest version of celescope.
 ```
 conda activate celescope
 pip install celescope
+```
+
+If you want to install a previous version instead of the latest version, for example v1.15.0
+```
+pip install celescope==1.15.0
 ```
 
 ## Usage
@@ -36,7 +49,7 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 |[capture_virus](./assay/multi_capture_virus.md)|single-cell virus|FocuSCOPE<sup>TM</sup> mRNA × EBV|
 |[snp](./assay/multi_snp.md)|single-cell variant|FocuSCOPE<sup>TM</sup>|
 |[fusion](./assay/multi_fusion.md)|single-cell fusion|FocuSCOPE<sup>TM</sup>|
-|[sweetseq](assay/multi_citeseq.md)|single-cell glycosylation|ProMoSCOPE<sup>TM</sup>|
+|[sweetseq](assay/multi_sweetseq.md)|single-cell glycosylation|ProMoSCOPE<sup>TM</sup>|
 |[citeseq](assay/multi_citeseq.md)|single-cell CITE-Seq|NA|
 |[bulk_vdj](assay/multi_bulk_vdj.md)|bulk_vdj|NA|
 

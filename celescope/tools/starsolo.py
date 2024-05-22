@@ -535,7 +535,7 @@ is higher than or equal to this value.""",
         help='Maximum memory that STAR can use.',
         default=32
     )
-    parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], default="")
+    parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], nargs='+', default="")
     parser.add_argument(
         '--SAM_attributes', 
         help=f'Additional attributes(other than {SAM_attributes}) to be added to SAM file',
