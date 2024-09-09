@@ -4,11 +4,12 @@ import datetime
 from celescope.__init__ import __version__
 from celescope.tools.utils import add_log
 
-ENV_NAME = f'celescope{__version__}'
-CONDA_ROOT = '/SGRNJ/Public/Software/conda_env/'
-CHANGELOG = 'docs_template/CHANGELOG.md'
-TIMEFORMAT = '%Y-%m-%d'
+ENV_NAME = f"celescope{__version__}"
+CONDA_ROOT = "/SGRNJ/Public/Software/conda_env/"
+CHANGELOG = "docs_template/CHANGELOG.md"
+TIMEFORMAT = "%Y-%m-%d"
 TIME = datetime.datetime.now().strftime(TIMEFORMAT)
+
 
 @add_log
 def create_conda():
@@ -71,31 +72,30 @@ def multi_test():
     print(cmd)
     subprocess.check_call(cmd, shell=True)
 
+
 @add_log
 def generate_docs():
-    cmd = (
-        "python scripts/generate_docs.py"
-    )
+    cmd = "python scripts/generate_docs.py"
     print(cmd)
     subprocess.check_call(cmd, shell=True)
+
 
 @add_log
 def modify_changelog():
     header = f"## [unreleased] - {TIME}\n "
     lines = [header]
-    with open(CHANGELOG, 'r') as f:
+    with open(CHANGELOG, "r") as f:
         for line in f:
             if line.find("unreleased") != -1:
-                line = f'## [{__version__}] - {TIME}\n'
+                line = f"## [{__version__}] - {TIME}\n"
             lines.append(line)
-    
-    with open(CHANGELOG, 'w') as f:
+
+    with open(CHANGELOG, "w") as f:
         for line in lines:
             f.write(line)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     modify_changelog()
     generate_docs()
     lint_code()

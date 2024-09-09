@@ -16,29 +16,24 @@ class Multi_rna(Multi):
     """
 
     def starsolo(self, sample):
-        step = 'starsolo'
+        step = "starsolo"
         arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = (
-            f'{cmd_line} '
-            f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
-        )
+        cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def analysis(self, sample):
-        step = 'analysis'
+        step = "analysis"
         matrix_file = f'{self.outdir_dic[sample]["outs"]}/filtered'
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = (
-            f'{cmd_line} '
-            f'--matrix_file {matrix_file} '
-        )
+        cmd = f"{cmd_line} " f"--matrix_file {matrix_file} "
         self.process_cmd(cmd, step, sample, m=10, x=1)
+
 
 def main():
     multi = Multi_rna(__ASSAY__)
     multi.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

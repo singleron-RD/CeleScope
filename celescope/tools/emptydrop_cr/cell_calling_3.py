@@ -34,7 +34,7 @@ MAX_ADJ_PVALUE = 0.01
 
 
 def adjust_pvalue_bh(p):
-    """ Multiple testing correction of p-values using the Benjamini-Hochberg procedure """
+    """Multiple testing correction of p-values using the Benjamini-Hochberg procedure"""
     descending = np.argsort(p)[::-1]
     # q = p * N / k where p = p-value, N = # tests, k = p-value rank
     scale = float(len(p)) / np.arange(len(p), 0, -1)
@@ -45,7 +45,7 @@ def adjust_pvalue_bh(p):
 
 
 def estimate_profile_sgt(matrix, barcode_indices, nz_feat):
-    """ Estimate a gene expression profile by Simple Good Turing.
+    """Estimate a gene expression profile by Simple Good Turing.
     Args:
       raw_mat (sparse matrix): Sparse matrix of all counts
       barcode_indices (np.array(int)): Barcode indices to use
@@ -63,7 +63,7 @@ def estimate_profile_sgt(matrix, barcode_indices, nz_feat):
     p_smoothed, p0 = cr_sgt.sgt_proportions(profile[np.flatnonzero(profile)])
 
     # Distribute p0 equally among the zero elements.
-    p0_i = p0/len(zero_feat)
+    p0_i = p0 / len(zero_feat)
 
     profile_p = np.repeat(p0_i, len(nz_feat))
     profile_p[np.flatnonzero(profile)] = p_smoothed
@@ -74,7 +74,7 @@ def estimate_profile_sgt(matrix, barcode_indices, nz_feat):
 
 # Construct a background expression profile from barcodes with <= T UMIs
 def est_background_profile_sgt(matrix, use_bcs):
-    """ Estimate a gene expression profile on a given subset of barcodes.
+    """Estimate a gene expression profile on a given subset of barcodes.
          Use Good-Turing to smooth the estimated profile.
     Args:
       matrix (scipy.sparse.csc_matrix): Sparse matrix of all counts
@@ -90,25 +90,32 @@ def est_background_profile_sgt(matrix, use_bcs):
 
     return (use_feats, bg_profile_p)
 
+
 @utils.add_log
-def find_nonambient_barcodes(raw_mat, recovered_cells,
-                             min_umi_frac_of_median=MIN_UMI_FRAC_OF_MEDIAN,
-                             min_umis_nonambient=MIN_UMIS,
-                             max_adj_pvalue=MAX_ADJ_PVALUE,):
-    """ Call barcodes as being sufficiently distinct from the ambient profile
+def find_nonambient_barcodes(
+    raw_mat,
+    recovered_cells,
+    min_umi_frac_of_median=MIN_UMI_FRAC_OF_MEDIAN,
+    min_umis_nonambient=MIN_UMIS,
+    max_adj_pvalue=MAX_ADJ_PVALUE,
+):
+    """Call barcodes as being sufficiently distinct from the ambient profile
     Args:
       raw_mat: raw matrix of UMI counts
       recovered_cells: expected number of recovered cells
     Returns:
     TBD
     """
-    NonAmbientBarcodeResult = namedtuple('NonAmbientBarcodeResult',
-                                         ['eval_bcs',      # Candidate barcode indices (n)
-                                          'log_likelihood',  # Ambient log likelihoods (n)
-                                          'pvalues',       # pvalues (n)
-                                          'pvalues_adj',   # B-H adjusted pvalues (n)
-                                          'is_nonambient',  # Boolean nonambient calls (n)
-                                          ])
+    NonAmbientBarcodeResult = namedtuple(
+        "NonAmbientBarcodeResult",
+        [
+            "eval_bcs",  # Candidate barcode indices (n)
+            "log_likelihood",  # Ambient log likelihoods (n)
+            "pvalues",  # pvalues (n)
+            "pvalues_adj",  # B-H adjusted pvalues (n)
+            "is_nonambient",  # Boolean nonambient calls (n)
+        ],
+    )
 
     # Estimate an ambient RNA profile
     umis_per_bc = np.squeeze(np.asarray(raw_mat.sum(axis=0)))
@@ -120,7 +127,9 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
 
     # Take what we expect to be the barcodes associated w/ empty partitions.
     # Drop the top MAX_OCCUPIED_PARTITIONS_FRAC fraction of barcodes
-    empty_bcs = bc_order[::-1][int(N_PARTITIONS*MAX_OCCUPIED_PARTITIONS_FRAC):N_PARTITIONS]
+    empty_bcs = bc_order[::-1][
+        int(N_PARTITIONS * MAX_OCCUPIED_PARTITIONS_FRAC) : N_PARTITIONS
+    ]
     empty_bcs.sort()
 
     # Get the non-zero barcodes overlapped with barcodes assumed to be associated w/ empty partitions
@@ -130,7 +139,9 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
         try:
             # Get used "Gene" features (eval_features)
             # and the smoothed prob profile per "Gene" (ambient_profile_p)
-            eval_features, ambient_profile_p = est_background_profile_sgt(raw_mat.tocsc(), use_bcs)
+            eval_features, ambient_profile_p = est_background_profile_sgt(
+                raw_mat.tocsc(), use_bcs
+            )
         except cr_sgt.SimpleGoodTuringError as e:
             print(str(e))
     else:
@@ -139,16 +150,22 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
 
     # Choose candidate cell barcodes
     # Regular ordmag filter
-    gg_filtered_indices, gg_filtered_metrics, _msg = cr_stats.filter_cellular_barcodes_ordmag(
-        umis_per_bc, recovered_cells=recovered_cells)
-
+    gg_filtered_indices, gg_filtered_metrics, _msg = (
+        cr_stats.filter_cellular_barcodes_ordmag(
+            umis_per_bc, recovered_cells=recovered_cells
+        )
+    )
 
     orig_cell_bc_set = set(gg_filtered_indices)
-    orig_cells = np.flatnonzero(np.fromiter((bc in orig_cell_bc_set for bc in range(raw_mat.shape[1])), dtype=bool))
+    orig_cells = np.flatnonzero(
+        np.fromiter(
+            (bc in orig_cell_bc_set for bc in range(raw_mat.shape[1])), dtype=bool
+        )
+    )
 
     # No good incoming cell calls
     if orig_cells.sum() == 0:
-        print('Error: No original cells are selected!')
+        print("Error: No original cells are selected!")
         return None, None, None
 
     # Look at non-cell barcodes above a minimum UMI count
@@ -157,17 +174,26 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
 
     median_initial_umis = np.median(umis_per_bc[orig_cells])
 
-    min_umis = int(max(min_umis_nonambient, round(np.ceil(median_initial_umis * min_umi_frac_of_median))))
+    min_umis = int(
+        max(
+            min_umis_nonambient,
+            round(np.ceil(median_initial_umis * min_umi_frac_of_median)),
+        )
+    )
 
     eval_bcs[umis_per_bc < min_umis] = ma.masked
     n_unmasked_bcs = len(eval_bcs) - eval_bcs.mask.sum()
 
     # Take the top N_CANDIDATE_BARCODES by UMI count, of barcodes that pass the above criteria
     # For evaluation of non-ambient bcs using background info estimated from SGT
-    eval_bcs = np.argsort(ma.masked_array(umis_per_bc, mask=eval_bcs.mask))[:n_unmasked_bcs][-N_CANDIDATE_BARCODES:]
+    eval_bcs = np.argsort(ma.masked_array(umis_per_bc, mask=eval_bcs.mask))[
+        :n_unmasked_bcs
+    ][-N_CANDIDATE_BARCODES:]
 
     if len(eval_bcs) == 0:
-        find_nonambient_barcodes.logger.warning('no eval bcs are selected to evaluate non-empty bcs from SGT results!')
+        find_nonambient_barcodes.logger.warning(
+            "no eval bcs are selected to evaluate non-empty bcs from SGT results!"
+        )
         return orig_cells, gg_filtered_metrics, None
     else:
         assert not np.any(np.isin(eval_bcs, orig_cells))
@@ -178,39 +204,52 @@ def find_nonambient_barcodes(raw_mat, recovered_cells,
             return orig_cells, gg_filtered_metrics, None
 
         # Compute observed log-likelihood of barcodes being generated from ambient RNA
-        obs_loglk = cr_stats.eval_multinomial_loglikelihoods(eval_mat, ambient_profile_p)
+        obs_loglk = cr_stats.eval_multinomial_loglikelihoods(
+            eval_mat, ambient_profile_p
+        )
 
         # Simulate log likelihoods
-        distinct_ns, sim_loglk = cr_stats.simulate_multinomial_loglikelihoods(ambient_profile_p, umis_per_bc[eval_bcs],
-                                                                              num_sims=10000, verbose=True)
+        distinct_ns, sim_loglk = cr_stats.simulate_multinomial_loglikelihoods(
+            ambient_profile_p, umis_per_bc[eval_bcs], num_sims=10000, verbose=True
+        )
 
         # Compute p-values
-        pvalues = cr_stats.compute_ambient_pvalues(umis_per_bc[eval_bcs], obs_loglk, distinct_ns, sim_loglk)
+        pvalues = cr_stats.compute_ambient_pvalues(
+            umis_per_bc[eval_bcs], obs_loglk, distinct_ns, sim_loglk
+        )
 
         pvalues_adj = adjust_pvalue_bh(pvalues)
         max_adj_pvalue = 0.01
         is_nonambient = pvalues_adj <= max_adj_pvalue
 
-        filtered_bc_indices = np.concatenate((orig_cells, eval_bcs[is_nonambient]), axis=None)
+        filtered_bc_indices = np.concatenate(
+            (orig_cells, eval_bcs[is_nonambient]), axis=None
+        )
 
-        return filtered_bc_indices, gg_filtered_metrics, NonAmbientBarcodeResult(
-            eval_bcs=eval_bcs,
-            log_likelihood=obs_loglk,
-            pvalues=pvalues,
-            pvalues_adj=pvalues_adj,
-            is_nonambient=is_nonambient,
+        return (
+            filtered_bc_indices,
+            gg_filtered_metrics,
+            NonAmbientBarcodeResult(
+                eval_bcs=eval_bcs,
+                log_likelihood=obs_loglk,
+                pvalues=pvalues,
+                pvalues_adj=pvalues_adj,
+                is_nonambient=is_nonambient,
+            ),
         )
 
 
 def cell_calling_3(all_matrix_dir, expected_cell_num):
-
     count_matrix = CountMatrix.from_matrix_dir(matrix_dir=all_matrix_dir)
 
     # Run cell calling
-    filtered_bc_indices, round_1_filtered_metrics, _non_ambient_barcode_result = find_nonambient_barcodes(
-        raw_mat=count_matrix.get_matrix(), recovered_cells=expected_cell_num)
+    filtered_bc_indices, round_1_filtered_metrics, _non_ambient_barcode_result = (
+        find_nonambient_barcodes(
+            raw_mat=count_matrix.get_matrix(), recovered_cells=expected_cell_num
+        )
+    )
 
     raw_barcodes = np.array(count_matrix.get_barcodes())
     cell_bc = raw_barcodes[filtered_bc_indices]
-    initial_cell_num = round_1_filtered_metrics['filtered_bcs']
+    initial_cell_num = round_1_filtered_metrics["filtered_bcs"]
     return cell_bc, initial_cell_num

@@ -13,21 +13,35 @@ from celescope.__init__ import HELP_DICT, __version__
 
 
 def cap_str_except_preposition(my_string):
-    prepositions = {"and", "or", "the", "a", "of", "in", "per", "after", 'with', 'by', 'at'}
+    prepositions = {
+        "and",
+        "or",
+        "the",
+        "a",
+        "of",
+        "in",
+        "per",
+        "after",
+        "with",
+        "by",
+        "at",
+    }
     lowercase_words = my_string.split(" ")
 
-    final_words = [word if word in prepositions else word[0].upper() + word[1:] for word in lowercase_words]
+    final_words = [
+        word if word in prepositions else word[0].upper() + word[1:]
+        for word in lowercase_words
+    ]
     final_words = " ".join(final_words)
     return final_words
 
 
 def s_common(parser):
-    """subparser common arguments
-    """
-    parser.add_argument('--outdir', help='Output diretory.', required=True)
-    parser.add_argument('--sample', help='Sample name.', required=True)
-    parser.add_argument('--thread', help=HELP_DICT['thread'], default=4)
-    parser.add_argument('--debug', help=HELP_DICT['debug'], action='store_true')
+    """subparser common arguments"""
+    parser.add_argument("--outdir", help="Output diretory.", required=True)
+    parser.add_argument("--sample", help="Sample name.", required=True)
+    parser.add_argument("--thread", help=HELP_DICT["thread"], default=4)
+    parser.add_argument("--debug", help=HELP_DICT["debug"], action="store_true")
     return parser
 
 
@@ -37,21 +51,21 @@ class Step:
     """
 
     def __init__(self, args, display_title=None):
-        '''
+        """
         display_title controls the section title in HTML report
         force thread <=20
-        '''
-        sys.stderr.write(f'CeleScope version: {__version__} ')
-        sys.stderr.write(f'Args: {args}\n')
+        """
+        sys.stderr.write(f"CeleScope version: {__version__} ")
+        sys.stderr.write(f"Args: {args}\n")
         self.args = args
         self.outdir = args.outdir
-        self.outs_dir = f'{args.outdir}/../outs'
+        self.outs_dir = f"{args.outdir}/../outs"
         self.sample = args.sample
         self.assay = args.subparser_assay
         self.thread = int(args.thread)
         self.thread = min(self.thread, 20)
         self.debug = args.debug
-        self.out_prefix = f'{self.outdir}/{self.sample}'
+        self.out_prefix = f"{self.outdir}/{self.sample}"
         self.display_title = display_title
 
         # metrics index
@@ -68,15 +82,15 @@ class Step:
         else:
             self._display_title = display_title
         self._step_name = class_name[0].lower() + class_name[1:]
-        self.__slots = ['data', 'metrics']
-        self._step_summary_name = f'{self._step_name}_summary'
+        self.__slots = ["data", "metrics"]
+        self._step_summary_name = f"{self._step_name}_summary"
 
         self.__metric_list = []
         self.__help_content = []
         self.__comments = []
         self._path_dict = {}
         for slot in self.__slots:
-            self._path_dict[slot] = f'{self.outdir}/../.{slot}.json'
+            self._path_dict[slot] = f"{self.outdir}/../.{slot}.json"
 
         self.__content_dict = {}
         self.old_step_dict = {}
@@ -88,30 +102,44 @@ class Step:
                     try:
                         self.__content_dict[slot] = json.load(f)
                     except ValueError:
-                        print(f'WARNING: Decoding "{path}" as json has failed. Will create empty json file.')
+                        print(
+                            f'WARNING: Decoding "{path}" as json has failed. Will create empty json file.'
+                        )
                         self.__content_dict[slot] = {}
             # clear step_summary
             if self._step_summary_name in self.__content_dict[slot]:
-                self.old_step_dict[slot] = self.__content_dict[slot][self._step_summary_name]
+                self.old_step_dict[slot] = self.__content_dict[slot][
+                    self._step_summary_name
+                ]
             self.__content_dict[slot][self._step_summary_name] = {}
 
         # jinja env
         self.env = Environment(
-            loader=FileSystemLoader(os.path.dirname(__file__) + '/../templates/'),
-            autoescape=select_autoescape(['html', 'xml'])
+            loader=FileSystemLoader(os.path.dirname(__file__) + "/../templates/"),
+            autoescape=select_autoescape(["html", "xml"]),
         )
 
         # out file
-        self.__stat_file = f'{self.outdir}/stat.txt'
+        self.__stat_file = f"{self.outdir}/stat.txt"
         self.report_html = f"{self.outdir}/../{self.sample}_report.html"
 
         # move file to outs
         self.outs = []
 
-    def add_metric(self, name, value, total=None, help_info=None, display=None, show=True, print_log=True, value_type=None):
-        '''
+    def add_metric(
+        self,
+        name,
+        value,
+        total=None,
+        help_info=None,
+        display=None,
+        show=True,
+        print_log=True,
+        value_type=None,
+    ):
+        """
         add metric to metric_list
-        
+
         Args
             total: int or float, used to calculate fraction
             help_info: str, help info for metric in html report
@@ -119,25 +147,25 @@ class Step:
             show: bool, whether to add to `.data.json` and `stat.txt`. `.data.json` is used for HTML report. `stat.txt` is used in house.
             print_log: bool, whether to print metric to stdout
             value_type: if value_type is "fraction", value = round(value * 100, 2), display = f'{value}%'
-        '''
+        """
 
         name = cap_str_except_preposition(name)
         if help_info:
             help_info = help_info[0].upper() + help_info[1:]
-            if help_info[-1] != '.':
-                help_info += '.'
+            if help_info[-1] != ".":
+                help_info += "."
         if not display:
             if isinstance(value, numbers.Number):
-                display = str(format(value, ','))
+                display = str(format(value, ","))
             else:
                 display = value
         fraction = None
         if total:
             fraction = round(value / total * 100, 2)
-            display += f'({fraction}%)'
-        if value_type == 'fraction':
+            display += f"({fraction}%)"
+        if value_type == "fraction":
             value = round(value * 100, 2)
-            display = f'{value}%'
+            display = f"{value}%"
         self.__metric_list.append(
             {
                 "name": name,
@@ -151,60 +179,59 @@ class Step:
         )
 
         if print_log:
-            sys.stderr.write(f'{name}: {display}\n')
+            sys.stderr.write(f"{name}: {display}\n")
 
     def _write_stat(self):
-        with open(self.__stat_file, 'w') as writer:
+        with open(self.__stat_file, "w") as writer:
             for metric in self.__metric_list:
-                if metric['show']:
-                    name = metric['name']
-                    display = metric['display']
+                if metric["show"]:
+                    name = metric["name"]
+                    display = metric["display"]
 
-                    line = f'{name}: {display}'
-                    writer.write(line + '\n')
+                    line = f"{name}: {display}"
+                    writer.write(line + "\n")
 
     def _dump_content(self):
-        '''dump content to json file
-        '''
+        """dump content to json file"""
         for slot, path in self._path_dict.items():
             if self.__content_dict[slot]:
-                with open(path, 'w') as f:
+                with open(path, "w") as f:
                     json.dump(self.__content_dict[slot], f, indent=4)
 
     @utils.add_log
     def _render_html(self):
-        template = self.env.get_template(f'html/{self.assay}/base.html')
-        with io.open(self.report_html, 'w', encoding='utf8') as f:
-            html = template.render(self.__content_dict['data'])
+        template = self.env.get_template(f"html/{self.assay}/base.html")
+        with io.open(self.report_html, "w", encoding="utf8") as f:
+            html = template.render(self.__content_dict["data"])
             f.write(html)
 
     def _add_content_data(self):
         step_summary = {}
-        step_summary['display_title'] = self._display_title
+        step_summary["display_title"] = self._display_title
         metric_list = []
         comment_metric_list = []
         for metric in self.__metric_list:
-            if metric['show']:
+            if metric["show"]:
                 metric_list.append(metric)
             else:
                 comment_metric_list.append(metric)
-        step_summary['metric_list'] = metric_list
-        step_summary['comment_metric_list'] = comment_metric_list
-        step_summary['help_content'] = self.__help_content
-        step_summary['comments'] = self.__comments
-        self.__content_dict['data'][self._step_summary_name].update(step_summary)
+        step_summary["metric_list"] = metric_list
+        step_summary["comment_metric_list"] = comment_metric_list
+        step_summary["help_content"] = self.__help_content
+        step_summary["comments"] = self.__comments
+        self.__content_dict["data"][self._step_summary_name].update(step_summary)
 
     def _add_content_metric(self):
         metric_dict = dict()
         for metric in self.__metric_list:
-            name = metric['name']
-            value = metric['value']
-            fraction = metric['fraction']
+            name = metric["name"]
+            value = metric["value"]
+            fraction = metric["fraction"]
             metric_dict[name] = value
             if fraction:
-                metric_dict[f'{name} Fraction'] = fraction
+                metric_dict[f"{name} Fraction"] = fraction
 
-        self.__content_dict['metrics'][self._step_summary_name].update(metric_dict)
+        self.__content_dict["metrics"][self._step_summary_name].update(metric_dict)
 
     def add_data(self, **kwargs):
         """
@@ -212,18 +239,13 @@ class Step:
         for example: add plots and tables
         """
         for key, value in kwargs.items():
-            self.__content_dict['data'][self._step_summary_name][key] = value
+            self.__content_dict["data"][self._step_summary_name][key] = value
 
     def add_help_content(self, name, content):
         """
         add help info before metrics' help_info
         """
-        self.__help_content.append(
-            {
-                'name': name,
-                'content': content
-            }
-        )
+        self.__help_content.append({"name": name, "content": content})
 
     def add_comments(self, content):
         """
@@ -233,53 +255,49 @@ class Step:
 
     @utils.add_log
     def get_slot_key(self, slot, step_name, key):
-        '''read slot from json file
-        '''
+        """read slot from json file"""
         try:
-            return self.__content_dict[slot][step_name + '_summary'][key]
+            return self.__content_dict[slot][step_name + "_summary"][key]
         except KeyError:
-            self.get_slot_key.logger.warning(f'{key} not found in {step_name}_summary.{slot}')
+            self.get_slot_key.logger.warning(
+                f"{key} not found in {step_name}_summary.{slot}"
+            )
             raise
 
     @utils.add_log
     def add_slot_step(self, slot, step_name, val):
-        '''add slot to json
-        '''
-        self.__content_dict[slot][step_name + '_summary'] = val
+        """add slot to json"""
+        self.__content_dict[slot][step_name + "_summary"] = val
 
     @utils.add_log
     def get_slot_step(self, slot, step_name):
-        '''add slot to json
-        '''
-        return self.__content_dict[slot][step_name + '_summary']
-
-
+        """add slot to json"""
+        return self.__content_dict[slot][step_name + "_summary"]
 
     def get_table_dict(self, title, table_id, df_table):
         """
         table_dict {title: '', table_id: '', df_table: pd.DataFrame}
         """
         table_dict = {}
-        table_dict['title'] = title
-        table_dict['table'] = df_table.to_html(
-            escape=False,
-            index=False,
-            table_id=table_id,
-            justify="center")
-        table_dict['id'] = table_id
+        table_dict["title"] = title
+        table_dict["table"] = df_table.to_html(
+            escape=False, index=False, table_id=table_id, justify="center"
+        )
+        table_dict["id"] = table_id
         return table_dict
-    
+
     def _move_files(self):
         for f in self.outs:
-            cmd = ''
+            cmd = ""
             if not os.path.exists(f):
-                sys.stderr.write(f'WARNING: output file {f} not found! The pipeline may have failed.\n')
+                sys.stderr.write(
+                    f"WARNING: output file {f} not found! The pipeline may have failed.\n"
+                )
             elif os.path.isfile(f):
-                cmd = f'mv -f {f} {self.outs_dir}'
+                cmd = f"mv -f {f} {self.outs_dir}"
             elif os.path.isdir(f):
-                cmd = f'set -e; cp -r {f} {self.outs_dir}; rm -r {f}'
+                cmd = f"set -e; cp -r {f} {self.outs_dir}; rm -r {f}"
             subprocess.check_call(cmd, shell=True)
-
 
     @utils.add_log
     def _clean_up(self):
@@ -292,12 +310,12 @@ class Step:
 
     @utils.add_log
     def debug_subprocess_call(self, cmd):
-        '''
+        """
         debug subprocess call
-        '''
+        """
         self.debug_subprocess_call.logger.info(cmd)
-        if cmd.find('2>&1') == -1:
-            cmd += ' 2>&1 '
+        if cmd.find("2>&1") == -1:
+            cmd += " 2>&1 "
         subprocess.check_call(cmd, shell=True)
 
     def get_metric_list(self):
@@ -308,7 +326,7 @@ class Step:
 
     @abc.abstractmethod
     def run(self):
-        sys.exit('Please implement run() method.')
+        sys.exit("Please implement run() method.")
 
     def __enter__(self):
         return self

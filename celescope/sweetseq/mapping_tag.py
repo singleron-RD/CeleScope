@@ -1,6 +1,7 @@
 from celescope.tools.tag.mapping_tag import Mapping_tag as Mt, mapping_tag as mt
 from celescope.tools.step import s_common
 
+
 # L23C15, not L25C15 like Clindex
 def get_opts_mapping_tag(parser, sub_program):
     parser.add_argument(
@@ -9,7 +10,7 @@ def get_opts_mapping_tag(parser, sub_program):
 `L` linker(common sequences)  
 `C` tag barcode  
 """,
-        default='L23C15'
+        default="L23C15",
     )
     parser.add_argument(
         "--barcode_fasta",
@@ -32,8 +33,10 @@ with all linker sequence in linker_fasta. If no mismatch < len(linker) / 10 + 1,
         s_common(parser)
         parser.add_argument("--fq", help="R2 read fastq.", required=True)
 
+
 class Mapping_tag(Mt):
     pass
+
 
 def mapping_tag(args):
     mt(args)

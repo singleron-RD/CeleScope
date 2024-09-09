@@ -11,46 +11,48 @@ import matplotlib.pyplot as plt
 
 import matplotlib
 
-matplotlib.use('Agg')
+matplotlib.use("Agg")
 
 
 def get_opts_count_tag(parser, sub_program):
     parser.add_argument(
         "--UMI_min",
         help="Default='auto'. Minimum UMI threshold. Cell barcodes with valid UMI < UMI_min are classified as *undeterminded*.",
-        default="auto"
+        default="auto",
     )
     parser.add_argument(
         "--dim",
         help="Default=1. Tag dimentions. Usually we use 1-dimentional tag.",
-        default=1
+        default=1,
     )
     parser.add_argument(
         "--SNR_min",
         help="""Default='auto'. Minimum signal-to-noise ratio. 
 Cell barcodes with UMI >=UMI_min and SNR < SNR_min are classified as *multiplet*. """,
-        default="auto"
+        default="auto",
     )
-    parser.add_argument("--combine_cluster",
-                        help="Conbine cluster tsv file.", default=None)
+    parser.add_argument(
+        "--combine_cluster", help="Conbine cluster tsv file.", default=None
+    )
     parser.add_argument(
         "--coefficient",
         help="""Default=0.1. If `SNR_min` is 'auto', minimum signal-to-noise ratio is calulated as 
 `SNR_min = max(median(SNRs) * coefficient, 2)`. 
 Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
-        default=0.1
+        default=0.1,
     )
     if sub_program:
-        parser.add_argument("--read_count_file", help="Tag read count file.", required=True)
-        parser.add_argument("--match_dir", help=HELP_DICT['match_dir'])
-        parser.add_argument("--matrix_dir", help=HELP_DICT['matrix_dir'])
-        parser.add_argument("--tsne_file", help=HELP_DICT['tsne_file'])
+        parser.add_argument(
+            "--read_count_file", help="Tag read count file.", required=True
+        )
+        parser.add_argument("--match_dir", help=HELP_DICT["match_dir"])
+        parser.add_argument("--matrix_dir", help=HELP_DICT["matrix_dir"])
+        parser.add_argument("--tsne_file", help=HELP_DICT["tsne_file"])
 
         s_common(parser)
 
 
 def count_tag(args):
-
     with Count_tag(args, display_title="Cells") as runner:
         runner.run()
 
@@ -62,11 +64,11 @@ class Count_tag(Step):
 
     ## Output
 
-    - `{sample}_umi_tag.tsv` 
+    - `{sample}_umi_tag.tsv`
 
-        `first column` cell barcode  
-        `last column`  assigned tag  
-        `columns between first and last` UMI count for each tag 
+        `first column` cell barcode
+        `last column`  assigned tag
+        `columns between first and last` UMI count for each tag
 
     - `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
 
@@ -86,14 +88,16 @@ class Count_tag(Step):
         # read
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)
 
-        if utils.check_arg_not_none(args, 'match_dir'):
+        if utils.check_arg_not_none(args, "match_dir"):
             match_dict = utils.parse_match_dir(args.match_dir)
-            self.match_barcode = match_dict['match_barcode']
-            self.n_match_barcode = match_dict['n_match_barcode']
-            self.tsne_file = match_dict['tsne_coord']
-            self.matrix_dir = match_dict['matrix_dir']
-        elif utils.check_arg_not_none(args, 'matrix_dir'):
-            self.match_barcode, self.n_match_barcode = utils.get_barcode_from_matrix_dir(args.matrix_dir)
+            self.match_barcode = match_dict["match_barcode"]
+            self.n_match_barcode = match_dict["n_match_barcode"]
+            self.tsne_file = match_dict["tsne_coord"]
+            self.matrix_dir = match_dict["matrix_dir"]
+        elif utils.check_arg_not_none(args, "matrix_dir"):
+            self.match_barcode, self.n_match_barcode = (
+                utils.get_barcode_from_matrix_dir(args.matrix_dir)
+            )
             self.tsne_file = args.tsne_file
             self.matrix_dir = args.matrix_dir
         else:
@@ -103,13 +107,17 @@ class Count_tag(Step):
         self.no_noise = False
 
         # out files
-        self.UMI_tag_file = f'{self.outdir}/{self.sample}_umi_tag.tsv'
-        self.tsne_tag_file = f'{self.outdir}/{self.sample}_tsne_tag.tsv'
-        self.cluster_count_file = f'{self.outdir}/{self.sample}_cluster_count.tsv'
-        self.cluster_plot = f'{self.outdir}/{self.sample}_cluster_plot.pdf'
+        self.UMI_tag_file = f"{self.outdir}/{self.sample}_umi_tag.tsv"
+        self.tsne_tag_file = f"{self.outdir}/{self.sample}_tsne_tag.tsv"
+        self.cluster_count_file = f"{self.outdir}/{self.sample}_cluster_count.tsv"
+        self.cluster_plot = f"{self.outdir}/{self.sample}_cluster_plot.pdf"
         if self.combine_cluster:
-            self.combine_cluster_count_file = f'{self.outdir}/{self.sample}_combine_cluster_count.tsv'
-            self.combine_cluster_plot = f'{self.outdir}/{self.sample}_combine_cluster_plot.pdf'
+            self.combine_cluster_count_file = (
+                f"{self.outdir}/{self.sample}_combine_cluster_count.tsv"
+            )
+            self.combine_cluster_plot = (
+                f"{self.outdir}/{self.sample}_combine_cluster_plot.pdf"
+            )
 
     @staticmethod
     def get_UMI(row):
@@ -144,7 +152,7 @@ class Count_tag(Step):
         if SNR_min == "auto":
             # no noise
             if df_valid_cell_UMI.shape[1] <= self.dim:
-                Count_tag.get_SNR_min.logger.warning('*** No NOISE FOUND! ***')
+                Count_tag.get_SNR_min.logger.warning("*** No NOISE FOUND! ***")
                 self.no_noise = True
                 return 0
             SNRs = df_valid_cell_UMI.apply(Count_tag.get_SNR, dim=self.dim, axis=1)
@@ -192,44 +200,51 @@ class Count_tag(Step):
                 print("not enough colors")
                 return
             values = list(df_plot.loc[df_plot["tag"] == tag_type, "percent"])
-            df_plot[df_plot['tag'] == tag_type].plot.bar(
-                x=column_name, y='percent', ax=ax, stacked=True,
-                bottom=margin_bottom, label=tag_type, color=color)
+            df_plot[df_plot["tag"] == tag_type].plot.bar(
+                x=column_name,
+                y="percent",
+                ax=ax,
+                stacked=True,
+                bottom=margin_bottom,
+                label=tag_type,
+                color=color,
+            )
 
             margin_bottom += values
-        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
         plt.title("tag fraction")
         fig.savefig(plot_file)
 
     @utils.add_log
     def run(self):
-
-        mapped_read = int(self.df_read_count['read_count'].sum())
+        mapped_read = int(self.df_read_count["read_count"].sum())
 
         # in cell
-        df_read_count_in_cell = self.df_read_count[self.df_read_count.index.isin(self.match_barcode)]
-        mapped_read_in_cell = int(df_read_count_in_cell['read_count'].sum())
+        df_read_count_in_cell = self.df_read_count[
+            self.df_read_count.index.isin(self.match_barcode)
+        ]
+        mapped_read_in_cell = int(df_read_count_in_cell["read_count"].sum())
         self.add_metric(
-            name='Mapped Reads in Cells',
+            name="Mapped Reads in Cells",
             value=mapped_read_in_cell,
             total=mapped_read,
-            help_info="Mapped reads with scRNA-Seq cell barcode"
+            help_info="Mapped reads with scRNA-Seq cell barcode",
         )
 
         # UMI
         tag_name = df_read_count_in_cell.columns[0]
-        df_UMI_in_cell = df_read_count_in_cell.reset_index().groupby([
-            'barcode', tag_name]).agg({'UMI': 'count'})
+        df_UMI_in_cell = (
+            df_read_count_in_cell.reset_index()
+            .groupby(["barcode", tag_name])
+            .agg({"UMI": "count"})
+        )
         df_UMI_in_cell = df_UMI_in_cell.reset_index()
         df_UMI_in_cell = df_UMI_in_cell.pivot(
-            index='barcode', columns=tag_name, values='UMI')
+            index="barcode", columns=tag_name, values="UMI"
+        )
         df_cell = pd.DataFrame(index=self.match_barcode)
         df_UMI_cell = pd.merge(
-            df_cell,
-            df_UMI_in_cell,
-            how="left",
-            left_index=True,
-            right_index=True
+            df_cell, df_UMI_in_cell, how="left", left_index=True, right_index=True
         )
 
         # fillna
@@ -241,40 +256,48 @@ class Count_tag(Step):
         umi_median = round(np.median(UMIs), 2)
         umi_mean = round(np.mean(UMIs), 2)
         self.add_metric(
-            name='Median UMI per Cell',
+            name="Median UMI per Cell",
             value=umi_median,
-            help_info="Median UMI per scRNA-Seq cell barcode"
+            help_info="Median UMI per scRNA-Seq cell barcode",
         )
 
         self.add_metric(
-            name='Mean UMI per Cell',
+            name="Mean UMI per Cell",
             value=umi_mean,
-            help_info="Mean UMI per scRNA-Seq cell barcode"
+            help_info="Mean UMI per scRNA-Seq cell barcode",
         )
 
         UMI_min = Count_tag.get_UMI_min(df_UMI_cell, self.UMI_min)
-        Count_tag.run.logger.info(f'UMI_min: {UMI_min}')
+        Count_tag.run.logger.info(f"UMI_min: {UMI_min}")
         SNR_min = self.get_SNR_min(df_UMI_cell, self.SNR_min, UMI_min)
-        Count_tag.run.logger.info(f'SNR_min: {SNR_min}')
+        Count_tag.run.logger.info(f"SNR_min: {SNR_min}")
         df_UMI_cell["tag"] = df_UMI_cell.apply(
-            Count_tag.tag_type, UMI_min=UMI_min, SNR_min=SNR_min, dim=self.dim, no_noise=self.no_noise, axis=1)
+            Count_tag.tag_type,
+            UMI_min=UMI_min,
+            SNR_min=SNR_min,
+            dim=self.dim,
+            no_noise=self.no_noise,
+            axis=1,
+        )
         df_UMI_cell.to_csv(self.UMI_tag_file, sep="\t")
 
         df_tsne = pd.read_csv(self.tsne_file, sep="\t", index_col=0)
         df_tsne_tag = pd.merge(
-            df_tsne,
-            df_UMI_cell,
-            how="left",
-            left_index=True,
-            right_index=True)
+            df_tsne, df_UMI_cell, how="left", left_index=True, right_index=True
+        )
 
         if self.combine_cluster:
             df_combine_cluster = pd.read_csv(
-                self.combine_cluster, sep="\t", header=None)
+                self.combine_cluster, sep="\t", header=None
+            )
             df_combine_cluster.columns = ["cluster", "combine_cluster"]
             df_tsne_combine_cluster_tag = pd.merge(
-                df_tsne_tag, df_combine_cluster,
-                on=["cluster"], how="left", left_index=True).set_index(df_tsne_tag.index)
+                df_tsne_tag,
+                df_combine_cluster,
+                on=["cluster"],
+                how="left",
+                left_index=True,
+            ).set_index(df_tsne_tag.index)
             df_tsne_combine_cluster_tag.to_csv(self.tsne_tag_file, sep="\t")
         else:
             df_tsne_tag.to_csv(self.tsne_tag_file, sep="\t")
@@ -291,22 +314,23 @@ class Count_tag(Step):
                 df=df_tsne_combine_cluster_tag,
                 column_name="combine_cluster",
                 count_file=self.combine_cluster_count_file,
-                plot_file=self.combine_cluster_plot
+                plot_file=self.combine_cluster_plot,
             )
 
-        sr_tag_count = df_UMI_cell["tag"].value_counts()  # series(index:tag name, value:tag count)
+        sr_tag_count = df_UMI_cell[
+            "tag"
+        ].value_counts()  # series(index:tag name, value:tag count)
         for tag_name in ("Undetermined", "Multiplet"):
             if tag_name in sr_tag_count:
                 self.add_metric(
-                    name=tag_name + ' Cells',
+                    name=tag_name + " Cells",
                     value=int(sr_tag_count[tag_name]),
                     total=self.n_match_barcode,
                 )
                 sr_tag_count.drop(tag_name, inplace=True)
         for tag_name in sorted(sr_tag_count.index):
             self.add_metric(
-                name=tag_name + ' Cells',
+                name=tag_name + " Cells",
                 value=int(sr_tag_count[tag_name]),
                 total=self.n_match_barcode,
             )
-

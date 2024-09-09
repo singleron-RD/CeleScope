@@ -41,42 +41,39 @@ class Multi_bulk_vdj(Multi):
         --mod shell
     ``` 
     """
-         
+
     def consensus(self, sample):
-        step = 'consensus'
+        step = "consensus"
         fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = (
-            f'{cmd_line} '
-            f'--fq {fq} '
-            f'--out_fasta '
-        )
+        cmd = f"{cmd_line} " f"--fq {fq} " f"--out_fasta "
         self.process_cmd(cmd, step, sample, m=5, x=1)
-        outfile = f'{self.outdir_dic[sample][step]}/{sample}_consensus.fasta'
+        outfile = f"{self.outdir_dic[sample][step]}/{sample}_consensus.fasta"
         return outfile
-    
+
     def mapping_vdj(self, sample):
-        step = 'mapping_vdj'
+        step = "mapping_vdj"
         cmd_line = self.get_cmd_line(step, sample)
-        #fasta = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fasta'
-        fasta = f'{self.outdir_dic[sample]["consensus"]}/{sample}_filtered_consensus.fasta'
-        cmd = (
-            f'{cmd_line} '
-            f'--fasta {fasta} '
+        # fasta = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fasta'
+        fasta = (
+            f'{self.outdir_dic[sample]["consensus"]}/{sample}_filtered_consensus.fasta'
         )
+        cmd = f"{cmd_line} " f"--fasta {fasta} "
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
 
     def count_vdj(self, sample):
-        step = 'count_vdj'
+        step = "count_vdj"
         cmd_line = self.get_cmd_line(step, sample)
-        productive_file = f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_productive.tsv'
+        productive_file = (
+            f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_productive.tsv'
+        )
         airr_file = f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_airr.tsv'
         fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd = (
-            f'{cmd_line} '
-            f'--productive_file {productive_file} '
-            f'--airr_file {airr_file} '
-            f'--fq {fq} '
+            f"{cmd_line} "
+            f"--productive_file {productive_file} "
+            f"--airr_file {airr_file} "
+            f"--fq {fq} "
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
@@ -86,5 +83,5 @@ def main():
     multi.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

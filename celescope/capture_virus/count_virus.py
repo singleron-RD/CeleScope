@@ -16,8 +16,6 @@ class Count_virus(Count_bam):
     """
 
 
-
 def count_virus(args):
-
     with Count_virus(args) as runner:
         runner.run()

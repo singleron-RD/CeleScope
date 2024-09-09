@@ -7,7 +7,7 @@ import pysam
 class Consensus(supert_cs.Consensus):
     """
     ## Features
-    - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and 
+    - Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and
     count up the number of each type of residue (ie. A or G or T or C for DNA) in all sequences in the
     alignment. If the following conditions are met, the consensus sequence will be the most common residue in the alignment:
     1. the percentage of the most common residue type > threshold(default: 0.5);
@@ -17,27 +17,28 @@ class Consensus(supert_cs.Consensus):
     ## Output
     - `{sample}_consensus.fq` Fastq file after consensus.
     """
+
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
-        
-        self.filtered_consensus_out = f'{self.out_prefix}_filtered_consensus.fasta'
-        
+
+        self.filtered_consensus_out = f"{self.out_prefix}_filtered_consensus.fasta"
+
     def __exit__(self, *args, **kwargs):
         self.filter_consensus_out()
         self._clean_up()
-        
+
     @utils.add_log
     def filter_consensus_out(self):
-        out_h = xopen(self.filtered_consensus_out, 'w')
+        out_h = xopen(self.filtered_consensus_out, "w")
         n_umi_count = 0
         n_filter_umi_count = 0
-        
+
         with pysam.FastxFile(self.consensus_out) as f:
             for read in f:
                 n_umi_count += 1
-                #if set(read.sequence) == {'N'}:
-                #if read.sequence.count('N') > 10:
-                if read.sequence.count('N') > 5:
+                # if set(read.sequence) == {'N'}:
+                # if read.sequence.count('N') > 10:
+                if read.sequence.count("N") > 5:
                     n_filter_umi_count += 1
                 else:
                     out_h.write(utils.fasta_line(read.name, read.sequence))
@@ -47,7 +48,7 @@ class Consensus(supert_cs.Consensus):
             name="Filtered UMI Counts",
             value=n_umi_count - n_filter_umi_count,
             total=n_umi_count,
-            help_info="Filtered UMI from Consensus UMI fasta"
+            help_info="Filtered UMI from Consensus UMI fasta",
         )
 
 

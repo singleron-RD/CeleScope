@@ -1,3 +1,6 @@
+## [2.0.9] - 2024-09-09
+ - Fix: numpy version
+
 ## [2.0.8] - 2024-03-06
  ### `flv_trust4`
   - Bugfix: Wrong delimiter results in empty filter_contig.fasta

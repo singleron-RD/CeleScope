@@ -1,17 +1,11 @@
-STEPS = [
-    'sample',
-    'starsolo',
-    'analysis',
-    'conversion',
-    'substitution',
-    'replacement']
+STEPS = ["sample", "starsolo", "analysis", "conversion", "substitution", "replacement"]
 
-__ASSAY__ = 'dynaseq'
+__ASSAY__ = "dynaseq"
 
 IMPORT_DICT = {
-    'analysis': 'celescope.rna',
+    "analysis": "celescope.rna",
 }
 
 
-#count
-DYNA_MATRIX_DIR_SUFFIX = ['labeled','unlabeled']
+# count
+DYNA_MATRIX_DIR_SUFFIX = ["labeled", "unlabeled"]

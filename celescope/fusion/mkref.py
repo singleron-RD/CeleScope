@@ -1,5 +1,5 @@
-
 from celescope.tools.make_ref import MakeRef_STAR
+
 
 class Mkref_fusion(MakeRef_STAR):
     """
@@ -19,13 +19,14 @@ class Mkref_fusion(MakeRef_STAR):
     --fusion_pos fusion_pos.txt \\
     ```
     """
+
     def __init__(self, genome_type, args):
         super().__init__(genome_type, args)
-        self.files['fusion_pos'] = args.fusion_pos
+        self.files["fusion_pos"] = args.fusion_pos
 
 
 def mkref(args):
-    genome_type = 'fusion'
+    genome_type = "fusion"
     with Mkref_fusion(genome_type, args) as runner:
         runner.run()
 
@@ -45,5 +46,5 @@ PML_4\t254
 PML_5\t326  
 PML_6\t204   
 """,
-            required=True,)
-
+            required=True,
+        )

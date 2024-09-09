@@ -8,6 +8,7 @@ from celescope.tools.__init__ import GENOME_CONFIG
 from celescope.__init__ import HELP_DICT, __VERSION__
 from celescope.tools import utils
 
+
 class MakeRef:
     def __init__(self, genome_type, args):
         self.config_file = GENOME_CONFIG
@@ -18,44 +19,44 @@ class MakeRef:
 
         self.files = {}
         self.meta = {}
-        self.meta['genome_name'] = args.genome_name
-        self.meta['genome_type'] = genome_type
-        self.meta['celescope_version'] = __VERSION__
+        self.meta["genome_name"] = args.genome_name
+        self.meta["genome_type"] = genome_type
+        self.meta["celescope_version"] = __VERSION__
 
     def write_config(self):
         config = configparser.ConfigParser()
         config.optionxform = str
-        config['files'] = self.files
-        config['meta'] = self.meta
+        config["files"] = self.files
+        config["meta"] = self.meta
 
-        with open(GENOME_CONFIG, 'w') as config_handle:
+        with open(GENOME_CONFIG, "w") as config_handle:
             config.write(config_handle)
 
     @staticmethod
     def get_config(genomeDir):
-        '''
+        """
         add genomeDir prefix to files
-        '''
-        config_file = f'{genomeDir}/{GENOME_CONFIG}'
+        """
+        config_file = f"{genomeDir}/{GENOME_CONFIG}"
         if not os.path.exists(config_file):
             sys.exit(
-                f'Error: {config_file} not found.\n'
-                'Solution: Use the mkref command of CeleScope to generate the genome.\n'
+                f"Error: {config_file} not found.\n"
+                "Solution: Use the mkref command of CeleScope to generate the genome.\n"
             )
         config = configparser.ConfigParser()
         config.optionxform = str
         config.read(config_file)
-        if 'meta' not in config:
+        if "meta" not in config:
             sys.exit(
-                'Error: CeleScope version >= 2.0.0 have upgraded the STAR version, so the old genome can no longer be used.\n'
-                'Solution: Use the mkref command of CeleScope to regenerate the genome.\n'
-                f'Genome path: {genomeDir}\n'
+                "Error: CeleScope version >= 2.0.0 have upgraded the STAR version, so the old genome can no longer be used.\n"
+                "Solution: Use the mkref command of CeleScope to regenerate the genome.\n"
+                f"Genome path: {genomeDir}\n"
             )
-        for k,v in dict(config['files']).items():
-            if v and v != 'None':
-                config['files'][k] = f'{genomeDir}/{v}'
+        for k, v in dict(config["files"]).items():
+            if v and v != "None":
+                config["files"][k] = f"{genomeDir}/{v}"
             else:
-                config['files'][k] = ""
+                config["files"][k] = ""
         return config
 
     def __enter__(self):
@@ -67,9 +68,17 @@ class MakeRef:
     @staticmethod
     def opts(parser, sub_program):
         if sub_program:
-            parser.add_argument("--thread", help="Default=6. Threads to use.", default=6)
-            parser.add_argument("--genome_name", help="Required, genome name. ", required=True)
-            parser.add_argument("--dry_run", help="Only write config file and exit.", action='store_true')
+            parser.add_argument(
+                "--thread", help="Default=6. Threads to use.", default=6
+            )
+            parser.add_argument(
+                "--genome_name", help="Required, genome name. ", required=True
+            )
+            parser.add_argument(
+                "--dry_run",
+                help="Only write config file and exit.",
+                action="store_true",
+            )
 
 
 class MakeRef_STAR(MakeRef):
@@ -77,15 +86,19 @@ class MakeRef_STAR(MakeRef):
         super().__init__(genome_type, args)
         self.fasta = args.fasta
         self.STAR_param = args.STAR_param
-        self.files['fasta'] = args.fasta
-        self.meta['STAR_param'] = args.STAR_param
+        self.files["fasta"] = args.fasta
+        self.meta["STAR_param"] = args.STAR_param
 
     @staticmethod
     def opts(parser, sub_program):
         MakeRef.opts(parser, sub_program)
         if sub_program:
-            parser.add_argument("--fasta", help="Required. fasta file name.",required=True)
-            parser.add_argument('--STAR_param', help=HELP_DICT['additional_param'], default="")
+            parser.add_argument(
+                "--fasta", help="Required. fasta file name.", required=True
+            )
+            parser.add_argument(
+                "--STAR_param", help=HELP_DICT["additional_param"], default=""
+            )
 
     @staticmethod
     def get_SA(fasta_size):
@@ -110,29 +123,25 @@ class MakeRef_STAR(MakeRef):
     def _get_SA(self):
         fasta_size = os.path.getsize(self.fasta)
         SA = self.get_SA(fasta_size)
-        self.meta['genomeSAindexNbases'] = SA
+        self.meta["genomeSAindexNbases"] = SA
         return SA
 
     @utils.add_log
     def build_star_index(self):
         SA = self._get_SA()
         cmd = (
-            f'STAR \\\n'
-            f'--runMode genomeGenerate \\\n'
-            f'--runThreadN {self.thread} \\\n'
-            f'--genomeDir ./ \\\n'
-            f'--genomeFastaFiles {self.fasta} \\\n'
-            f'--genomeSAindexNbases {SA} \\\n'
+            f"STAR \\\n"
+            f"--runMode genomeGenerate \\\n"
+            f"--runThreadN {self.thread} \\\n"
+            f"--genomeDir ./ \\\n"
+            f"--genomeFastaFiles {self.fasta} \\\n"
+            f"--genomeSAindexNbases {SA} \\\n"
         )
         if self.STAR_param:
-            cmd += (" " + self.args.STAR_param)
-        sys.stderr.write(cmd + '\n')
+            cmd += " " + self.args.STAR_param
+        sys.stderr.write(cmd + "\n")
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
     def run(self):
         self.build_star_index()
-
-
-    
-    
