@@ -18,7 +18,7 @@ def gen_vj_annotation_metrics(df, seqtype):
         Get Productive V-J Spanning_Pair metric from annotation file
         Return productive chain pair number. eg: TRA/TRB or IGH/IGL, IGH/IGK.
         """
-        df_productive = df[df["productive"] is True]
+        df_productive = df[df["productive"]]
 
         if seqtype == "BCR":
             df_chain_heavy = df_productive[(df_productive["chain"] == "IGH")]
@@ -46,8 +46,8 @@ def gen_vj_annotation_metrics(df, seqtype):
 
     for pair in chain_pairs:
         chain1, chain2 = pair.split("_")[0], pair.split("_")[1]
-        cbs1 = set(df[(df["productive"] is True) & (df["chain"] == chain1)].barcode)
-        cbs2 = set(df[(df["productive"] is True) & (df["chain"] == chain2)].barcode)
+        cbs1 = set(df[(df["productive"]) & (df["chain"] == chain1)].barcode)
+        cbs2 = set(df[(df["productive"]) & (df["chain"] == chain2)].barcode)
         metric_dict[f"Cells With Productive V-J Spanning ({chain1}, {chain2}) Pair"] = (
             len(cbs1.intersection(cbs2))
         )
@@ -60,10 +60,10 @@ def gen_vj_annotation_metrics(df, seqtype):
             set(df[(df["chain"] == chain) & (df["cdr3"] != "None")].barcode)
         )
         metric_dict[f"Cells With V-J Spanning {chain} Contig"] = len(
-            set(df[(df["full_length"] is True) & (df["chain"] == chain)].barcode)
+            set(df[(df["full_length"]) & (df["chain"] == chain)].barcode)
         )
         metric_dict[f"Cells With Productive {chain} Contig"] = len(
-            set(df[(df["productive"] is True) & (df["chain"] == chain)].barcode)
+            set(df[(df["productive"]) & (df["chain"] == chain)].barcode)
         )
 
     return metric_dict
@@ -73,7 +73,7 @@ def gen_clonotypes_table(df, out_clonotypes, seqtype):
     """
     Generate clonotypes.csv file
     """
-    df = df[df["productive"] is True]
+    df = df[df["productive"]]
     df["chain_cdr3aa"] = df[["chain", "cdr3"]].apply(":".join, axis=1)
     df = df.rename(
         columns={"chain_cdr3aa": "cdr3s_aa", "raw_clonotype_id": "clonotype_id"}
@@ -145,9 +145,7 @@ class Annotation(Step):
         Add vdj metrics in html.
         """
         metric_result = []
-        fl_pro_pair_df = pd.DataFrame(
-            df[df["productive"] is True].barcode.value_counts()
-        )
+        fl_pro_pair_df = pd.DataFrame(df[df["productive"]].barcode.value_counts())
         fl_pro_pair_df = fl_pro_pair_df[fl_pro_pair_df["barcode"] >= 2]
         cell_nums = len(set(df["barcode"]))
 
@@ -163,16 +161,12 @@ class Annotation(Step):
             chain1, chain2 = pair.split("_")[0], pair.split("_")[1]
             cbs1 = set(
                 df[
-                    (df["full_length"] is True)
-                    & (df["productive"] is True)
-                    & (df["chain"] == chain1)
+                    (df["full_length"]) & (df["productive"]) & (df["chain"] == chain1)
                 ].barcode
             )
             cbs2 = set(
                 df[
-                    (df["full_length"] is True)
-                    & (df["productive"] is True)
-                    & (df["chain"] == chain2)
+                    (df["full_length"]) & (df["productive"]) & (df["chain"] == chain2)
                 ].barcode
             )
             paired_cbs = len(cbs1.intersection(cbs2))
@@ -212,11 +206,7 @@ class Annotation(Step):
                 {
                     "name": f"Cells With V-J Spanning {chain} Contig",
                     "value": len(
-                        set(
-                            df[
-                                (df["full_length"] is True) & (df["chain"] == chain)
-                            ].barcode
-                        )
+                        set(df[(df["full_length"]) & (df["chain"] == chain)].barcode)
                     ),
                     "total": cell_nums,
                     "help_info": f"Fraction of cell-associated barcodes with at least one contig spanning the 5' end of the V region to the 3' end of the J region for {chain}",
@@ -228,8 +218,8 @@ class Annotation(Step):
                     "value": len(
                         set(
                             df[
-                                (df["full_length"] is True)
-                                & (df["productive"] is True)
+                                (df["full_length"])
+                                & (df["productive"])
                                 & (df["chain"] == chain)
                             ].barcode
                         )

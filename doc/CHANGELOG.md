@@ -1,9 +1,8 @@
-## [2.0.9] - 2024-09-09
- - Fix: numpy version
-
-## [2.0.8] - 2024-03-06
- ### `flv_trust4`
-  - Bugfix: Wrong delimiter results in empty filter_contig.fasta
+## [2.1.0] - 2024-09-10
+ - Fix numpy version==1.26.0.
+ - Bugfix: Wrong delimiter results in empty filter_contig.fasta.
+ - When some read lengths in R1 read are shorter than required, no error is reported.
+ - Add support for `rna_5p3p`.
 
 ## [2.0.7] - 2023-12-01
  ### `rna` and `dynaseq`
