@@ -1,5 +1,13 @@
 # User guide
 
+## Hardware/Software requirements
+
+- 64 bit Linux
+- Minimum 32GB RAM to run [STAR](https://github.com/alexdobin/STAR) with human/mouse genome
+- [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) or [conda](https://anaconda.org/anaconda/conda)
+- [pip](https://pypi.org/project/pip/)
+
+
 ## Installation
 
 ### Create conda environment and install conda packages. 
@@ -7,14 +15,6 @@ First, you need to get the txt file from the github repository containing the na
 The following command will download the conda_pkgs.txt required for the latest version.
 ```
 wget https://raw.githubusercontent.com/singleron-RD/CeleScope/master/conda_pkgs.txt
-```
-Use the mirror if you have trouble connecting to github:
-```
-wget https://gitee.com/singleron-rd/celescope/raw/master/conda_pkgs.txt
-```
-If you need to download an earlier version of `conda_pkgs.txt`, just change `master` in the link to that version
-```
-wget https://raw.githubusercontent.com/singleron-RD/CeleScope/v1.15.0/conda_pkgs.txt
 ```
 
 Then, start creating the conda environment and install the conda package.It is recommended to use [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (which is a faster replacement for Conda) to install conda packages.
@@ -27,13 +27,8 @@ mamba create -n celescope -y --file conda_pkgs.txt
 
 Make sure you have activated the conda environment before running `pip install celescope`. The following command will install the latest version of celescope.
 ```
-conda activate celescope
+mamba activate celescope
 pip install celescope
-```
-
-If you want to install a previous version instead of the latest version, for example v1.15.0
-```
-pip install celescope==1.15.0
 ```
 
 ## Usage
@@ -62,9 +57,34 @@ usage: rna multi-samples [-h] --mapfile MAPFILE [--mod {sjm,shell}] [--queue QUE
 ...
 ```
 
+
 ## [Test scripts and data](https://github.com/singleron-RD/celescope_test_script)
 
 ## [Change log](./CHANGELOG.md)
+
+## Frequently asked questions
+
+### What if CeleScope reports an error?
+
+When CeleScope reports an error, using GitHub Issues can be an effective way to solve or report the error.
+
+Before creating a new issue, search the existing issues with keywords(e.g., error message) to see if someone else has already reported the same problem. 
+
+### How to install a previous version instead of the latest version?
+
+1. Download an earlier version of `conda_pkgs.txt`: just change `master` to the version number(e.g. v.15.0) in the link to that version 
+```
+wget https://raw.githubusercontent.com/singleron-RD/CeleScope/v1.15.0/conda_pkgs.txt
+# create the env
+mamba create -n celescope1.15.0 -y --file conda_pkgs.txt
+```
+
+2. Install celescope
+```
+mamba activate celescope1.15.0
+pip install celescope==1.15.0
+```
+
 
 
  
