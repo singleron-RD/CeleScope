@@ -45,6 +45,7 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 |[sweetseq](assay/multi_sweetseq.md)|single-cell glycosylation|ProMoSCOPE<sup>TM</sup>|
 |[citeseq](assay/multi_citeseq.md)|single-cell CITE-Seq|NA|
 |[bulk_vdj](assay/multi_bulk_vdj.md)|bulk_vdj|NA|
+|[bulk_rna](assay/multi_bulk_rna.md)|bulk_rna|NA|
 
 
 Click on the hyperlinks above to view the uasge for each assay. Run `multi_{assay} -h` in the command line to display available arguments. For example：
