@@ -21,9 +21,17 @@ class Convert(Step):
         self.fq1_3p = args.fq1_3p.split(",")
         self.fq2_5p = args.fq2_5p.split(",")
         self.fq2_3p = args.fq2_3p.split(",")
-        self.pattern_dict_5p = Bc.parse_pattern(PATTERN_DICT["rna_5p"])
-        self.pattern_dict_3p = Bc.parse_pattern(PATTERN_DICT["rna_3p"])
-        whitelist_files = Chemistry.get_whitelist("scope_5p3p")
+        if args.chemistry == "5p3p-1":
+            self.pattern_dict_5p = Bc.parse_pattern(PATTERN_DICT["rna_5p"])
+            self.pattern_dict_3p = Bc.parse_pattern(PATTERN_DICT["rna_3p"])
+        elif args.chemistry == "5p3p-2":
+            self.pattern_dict_5p = Bc.parse_pattern(PATTERN_DICT["rna_5p.1"])
+            self.pattern_dict_3p = Bc.parse_pattern(PATTERN_DICT["rna_3p.1"])
+        else:
+            raise ValueError(
+                f"Invalid chemistry {args.chemistry}. chemistry must be one of 5p3p-1 or 5p3p-2"
+            )
+        whitelist_files = Chemistry.get_whitelist(args.chemistry)
         self.barcode_set_list, self.barcode_mismatch_list = Bc.parse_whitelist_file(
             whitelist_files, n_pattern=len(self.pattern_dict_5p["C"]), n_mismatch=1
         )
@@ -97,6 +105,12 @@ def convert(args):
 
 
 def get_opts_convert(parser, sub_program=True):
+    parser.add_argument(
+        "--chemistry",
+        required=True,
+        choices=["5p3p-1", "5p3p-2"],
+        help="chemistry version",
+    )
     if sub_program:
         parser.add_argument(
             "--fq1_3p",
@@ -117,9 +131,6 @@ def get_opts_convert(parser, sub_program=True):
             "--fq2_5p",
             help="5 prime R2 fastq file. Multiple files are separated by comma.",
             required=True,
-        )
-        parser.add_argument(
-            "--stdout", help="Write output to standard output", action="store_true"
         )
         parser = s_common(parser)
 

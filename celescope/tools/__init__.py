@@ -16,7 +16,11 @@ PATTERN_DICT = {
     "customized": None,
     "rna_5p": "U8C9L4C9L4C9",
     "rna_3p": "C9L4C9L4C9U8",
-    "scope_5p3p": "C9C9C9U8",  # converted
+    "5p3p-1": "C9C9C9U8",  # converted
+    # temp
+    "rna_5p.1": "C8L4U9C8L4C8",
+    "rna_3p.1": "C8L4C8U9L4C8",
+    "5p3p-2": "C8C8C8U9",  # converted
 }
 
 

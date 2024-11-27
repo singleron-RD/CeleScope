@@ -1,5 +1,4 @@
 import math
-from collections import defaultdict
 import operator
 import functools
 import numpy as np
@@ -124,8 +123,9 @@ class Tsne_plot(Plotly_plot):
     def discrete_tsne_plot(self):
         sum_df = self._df.groupby([self.feature_name]).agg("count").iloc[:, 0]
         percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-        res_dict = defaultdict(int)
+        res_dict = dict()
         res_list = []
+        print(set(self._df[self.feature_name]))
         for cluster in sorted(self._df[self.feature_name].unique()):
             name = f"{cluster}({percent_df[cluster]}%)"
             res_dict[cluster] = name
@@ -255,7 +255,7 @@ class Tsne_dropdown_plot(Plotly_plot):
 
             sum_df = df_sub.groupby(feature_name).agg("count").iloc[:, 0]
             percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-            res_dict = defaultdict(int)
+            res_dict = dict()
             res_list = []
             for cluster in sorted(df_sub[feature_name].unique()):
                 name = f"{cluster}({percent_df[cluster]}%)"

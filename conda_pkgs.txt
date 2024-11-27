@@ -8,3 +8,4 @@ bioconda::gatk4
 conda-forge::gcc
 bioconda::trust4=1.0.7
 bioconda::snpeff
+bioconda::pysam

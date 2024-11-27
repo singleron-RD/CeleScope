@@ -77,6 +77,7 @@ class Count_bam(Step):
             value=n_positive_cell,
             total=self.n_match_barcode,
             help_info="this number is calculated on raw read counts(i.e. before filtering)",
+            show=False,
         )
 
     @utils.add_log

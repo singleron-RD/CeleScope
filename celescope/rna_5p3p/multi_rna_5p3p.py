@@ -18,7 +18,7 @@ class Multi_rna_5p3p(Multi):
     def sample(self, sample):
         step = "sample"
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = f"{cmd_line} " f"--chemistry scope_5p3p "
+        cmd = f"{cmd_line} " f"--chemistry 5p3p-1 "
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def get_5p3p_fq(self, sample):
@@ -54,7 +54,6 @@ class Multi_rna_5p3p(Multi):
     def starsolo(self, sample):
         step = "starsolo"
         arr = self.get_5p3p_fq(sample)
-        self.args.chemistry = "rna_5p3p"
         cmd_line = self.get_cmd_line(step, sample)
         fq1_list, fq2_list = [], []
         cnt = {"3p": 0, "5p": 0}
@@ -69,7 +68,6 @@ class Multi_rna_5p3p(Multi):
         cmd = (
             f"{cmd_line} "
             f"--fq1 {fq1_str} --fq2 {fq2_str} "
-            f"--chemistry scope_5p3p "
             f'--soloFeatures "Gene GeneFull_Ex50pAS SJ" '
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
