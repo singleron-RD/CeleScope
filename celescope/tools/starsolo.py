@@ -1,6 +1,7 @@
 import sys
 import subprocess
 from collections import Counter
+from typing import Tuple
 
 import pandas as pd
 import pysam
@@ -75,7 +76,7 @@ class Starsolo(Step):
         self.outs = [self.raw_matrix, self.filtered_matrix, bam]
 
     @staticmethod
-    def get_solo_pattern(pattern) -> (str, str, str):
+    def get_solo_pattern(pattern) -> Tuple[str, str, str]:
         """
         Returns:
             solo_type
@@ -221,11 +222,18 @@ class Mapping(Step):
         self.outs = [self.counts_file]
 
     @utils.add_log
-    def run(self):
+    def parse_cellReadsStats(self) -> dict[str, int]:
         df = pd.read_csv(self.cellReadsStats, sep="\t", header=0, index_col=0)
         df = df.iloc[1:,]  # skip first line cb not pass whitelist
         df_count = df.loc[:, ["nUMIunique", "countedU"]]  # keep dataframe format
         df_count.rename(columns={"nUMIunique": "UMI"}, inplace=True)
+        df_count.sort_values(by="UMI", ascending=False, inplace=True)
+        cbs = CountMatrix.read_barcodes(self.filtered_matrix)
+        df_count["mark"] = "UB"
+        for cb in cbs:
+            df_count.loc[cb, "mark"] = "CB"
+        df_count.to_csv(self.counts_file, sep="\t", index=True)
+
         df = df.loc[
             :,
             [
@@ -240,20 +248,22 @@ class Mapping(Step):
                 "countedU",
             ],
         ]
-        s = df.sum()
-        # json does not recognize NumPy data types. TypeError: Object of type int64 is not JSON serializable
-        valid = int(s["cbMatch"])
-        perfect = int(s["cbPerfect"])
+        metrics = df.sum().to_dict()
+        return metrics
+
+    @utils.add_log
+    def add_metrics_to_report(self, metrics: dict[str, int]):
+        valid = metrics["cbMatch"]
+        perfect = metrics["cbPerfect"]
         corrected = valid - perfect
-        genomeU = int(s["genomeU"])
-        genomeM = int(s["genomeM"])
+        genomeU = metrics["genomeU"]
+        genomeM = metrics["genomeM"]
         mapped = genomeU + genomeM
-        exonic = int(s["exonic"])
-        intronic = int(s["intronic"])
-        antisense = int(s["exonicAS"] + s["intronicAS"])
+        exonic = metrics["exonic"]
+        intronic = metrics["intronic"]
+        antisense = metrics["exonicAS"] + metrics["intronicAS"]
         intergenic = mapped - exonic - intronic - antisense
-        countedU = int(s["countedU"])
-        del df
+        countedU = metrics["countedU"]
 
         self.add_metric(
             name="genome",
@@ -304,15 +314,12 @@ class Mapping(Step):
             value_type="fraction",
             help_info="Reads that assigned to the opposite strand of genes",
         )
-
-        df_count.sort_values(by="UMI", ascending=False, inplace=True)
-        cbs = CountMatrix.read_barcodes(self.filtered_matrix)
-        df_count["mark"] = "UB"
-        for cb in cbs:
-            df_count.loc[cb, "mark"] = "CB"
-        df_count.to_csv(self.counts_file, sep="\t", index=True)
-
         return valid, corrected
+
+    @utils.add_log
+    def run(self):
+        metrics = self.parse_cellReadsStats()
+        return self.add_metrics_to_report(metrics)
 
 
 class Cells(Cells_metrics):
