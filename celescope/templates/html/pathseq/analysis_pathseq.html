@@ -18,9 +18,12 @@
 
         {% include "html/utils/help_info.html" %}
 
+        <div style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+          {{step_summary.tsne_cluster|safe}}        
+        </div>
 
-        <div style="float: left; margin-left: 1%; margin-top: 1%;margin-right:1%; width: 100%">
-        {{step_summary.tsne_pathseq|safe}}        
+        <div style="float: left; margin-left: 3%; margin-top: 1%;margin-right:0%; width: 47%">
+          {{step_summary.tsne_feature|safe}}        
         </div>
 
     <div class="clear" ></div>

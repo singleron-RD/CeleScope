@@ -412,7 +412,6 @@ class Tsne_single_plot(Plotly_plot):
             self._fig.update_layout(
                 title={"text": title, "x": 0.5, "y": 0.95, "font": {"size": 15}}
             )
-            self._fig.write_image(f"{self.analysis_dir}/{name}_tsne.png")
 
     def update_fig(self):
         self._fig.update_xaxes(

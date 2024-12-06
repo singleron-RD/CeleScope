@@ -2,6 +2,7 @@ STEPS = [
     "sample",
     "starsolo",
     "pathseq",
-    # "analysis_pathseq"
+    "count_pathseq",
+    "analysis_pathseq",
 ]
 __ASSAY__ = "pathseq"

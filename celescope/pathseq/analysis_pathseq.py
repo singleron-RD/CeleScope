@@ -6,7 +6,9 @@ from celescope.tools.plotly_plot import Tsne_dropdown_plot, Tsne_single_plot, Ts
 
 def get_opts_analysis_pathseq(parser, sub_program):
     if sub_program:
-        parser.add_argument("--tsne_coord", help="tsne coord file", required=True)
+        parser.add_argument(
+            "--UMI_tsne", help="tsne coordinate plus UMI count file", required=True
+        )
         s_common(parser)
 
 
@@ -20,25 +22,31 @@ class Analysis_pathseq(Step):
         super().__init__(args, display_title)
 
     def run(self):
-        df_tsne = pd.read_csv(self.args.tsne_coord, sep="\t", index_col=0)
-        # filter low expression
-        keep_antibody = df_tsne.columns[4:][
-            (df_tsne.iloc[:, 4:].mean() > 0.1).to_list()
-        ].to_list()
-        keep_cols = df_tsne.columns[:4].to_list() + keep_antibody
-        df_tsne = df_tsne.loc[:, keep_cols]
+        df = pd.read_csv(self.args.UMI_tsne, sep="\t", index_col=0)
+        feature_names = df.columns[4:]
+        df_feature = df[feature_names]
+        column_sums = df_feature.sum()
+        non_zero_counts = (df_feature != 0).sum()
+        # Create a new DataFrame with the information
+        summary_df = pd.DataFrame(
+            {"Number of UMIs": column_sums, "Number of Positive Cells": non_zero_counts}
+        )
+        summary_df = summary_df.sort_values(by="Number of UMIs", ascending=False)
+        print(summary_df)
+        sorted_columns = df_feature.sum().sort_values(ascending=False).index
+        df_feature = df_feature[sorted_columns]
 
         # accelerate
-        df_tsne["tSNE_1"] = df_tsne["tSNE_1"].astype("float16")
-        df_tsne["tSNE_2"] = df_tsne["tSNE_2"].astype("float16")
-        for col in keep_antibody:
-            df_tsne[col] = df_tsne[col].astype("float16")
+        df["tSNE_1"] = df["tSNE_1"].astype("float16")
+        df["tSNE_2"] = df["tSNE_2"].astype("float16")
+        for col in feature_names:
+            df[col] = df[col].astype("float16")
 
         # plot
-        tsne_cluster = Tsne_plot(df_tsne, "cluster").get_plotly_div()
+        tsne_cluster = Tsne_plot(df, "cluster").get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
-        tsne_pathseq = Tsne_dropdown_plot(
-            df_tsne, "pathseq", keep_antibody
+        tsne_feature = Tsne_dropdown_plot(
+            df, "UMI count", sorted_columns
         ).get_plotly_div()
-        self.add_data(tsne_pathseq=tsne_pathseq)
-        Tsne_single_plot(df_tsne, keep_antibody, self.args.outdir).get_plotly_div()
+        self.add_data(tsne_feature=tsne_feature)
+        Tsne_single_plot(df, sorted_columns, self.args.outdir).get_plotly_div()
