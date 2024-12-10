@@ -3,17 +3,6 @@ from celescope.tools.multi import Multi
 
 
 class Multi_pathseq(Multi):
-    """
-    ## Usage
-    ```
-        multi_rna\\
-        --mapfile ./rna.mapfile\\
-        --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
-        --thread 8\\
-        --mod shell
-    ```
-    """
-
     def starsolo(self, sample):
         step = "starsolo"
         arr = self.fq_dict[sample]
@@ -52,7 +41,8 @@ class Multi_pathseq(Multi):
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f"{cmd_line} "
-            f"--UMI_tsne {self.outdir_dic[sample]['count_pathseq']}/{sample}_UMI_tsne.tsv.gz "
+            f"--umi_matrix_file {self.outdir_dic[sample]['count_pathseq']}/{sample}_raw_UMI_matrix.tsv.gz "
+            f"--match_dir {self.col4_dict[sample]} "
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)
 

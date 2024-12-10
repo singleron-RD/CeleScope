@@ -1,0 +1,11 @@
+<script>
+    $(document).ready(function () {
+            var table = $('#pathseq').DataTable({
+                "scrollX": true,
+                "autoWidth": false,
+                dom: 'Bfrtip',
+                buttons: ['excel']
+            });
+            table.columns(1).order('desc').draw();
+    });
+</script>

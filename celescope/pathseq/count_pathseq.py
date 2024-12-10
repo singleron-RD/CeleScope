@@ -1,11 +1,9 @@
-import sys
 import pandas as pd
 import pysam
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 from collections import defaultdict
 from celescope.__init__ import HELP_DICT
-from celescope.tools.analysis_wrapper import read_tsne
 
 
 def count_pathseq(args):
@@ -19,12 +17,6 @@ class Count_pathseq(Step):
         # match
         self.match_dict = utils.parse_match_dir(args.match_dir)
         self.match_barcode = self.match_dict["match_barcode"]
-        self.match_matrix_dir = self.match_dict["matrix_dir"]
-        self.df_rna_tsne = pd.DataFrame()
-        if "tsne_coord" in self.match_dict:
-            self.df_rna_tsne = read_tsne(self.match_dict["tsne_coord"])
-        else:
-            sys.stderr.write("rna tsne file not found!")
 
         # out
         self.raw_matrix_file = f"{self.outdir}/{self.sample}_raw_UMI_matrix.tsv.gz"
@@ -146,30 +138,17 @@ class Count_pathseq(Step):
                 df_raw[cb] = 0
         df_raw.fillna(0, inplace=True)
         df_raw = df_raw.astype(int)
+        non_zero_rows = df_raw.index[df_raw.sum(axis=1) > 0]
+        df_raw = df_raw.loc[non_zero_rows, :]
         df_raw.to_csv(self.raw_matrix_file, sep="\t")
-        return df_raw
-
-    def filter_matrix_by_min_exp_cell(self, df_raw):
-        df_filtered = df_raw[(df_raw != 0).sum(axis=1) >= self.args.min_exp_cell]
-        df_filtered.to_csv(self.filtered_matrix_file, sep="\t")
-        return df_filtered
-
-    def write_umi_tsne(self, df_filtered):
-        df = self.df_rna_tsne.merge(df_filtered.T, left_index=True, right_index=True)
-        df.to_csv(self.umi_tsne_file, sep="\t")
 
     def run(self):
-        """
         dict_for_genus = self.pathseq_score_to_dict()
         read_dict = self.parse_pathseq_bam()
         unmap_read_dict = self.parse_unmap_bam()
         read_highest_AS = self.select_highest_AS(read_dict, unmap_read_dict)
         cb_genus_umi = self.select_unique_YP(read_highest_AS, read_dict, dict_for_genus)
-        df_raw = self.write_raw_matrix(cb_genus_umi)
-        """
-        df_raw = pd.read_csv(self.raw_matrix_file, sep="\t", index_col=0)
-        df_filtered = self.filter_matrix_by_min_exp_cell(df_raw)
-        self.write_umi_tsne(df_filtered)
+        self.write_raw_matrix(cb_genus_umi)
 
 
 def get_opts_count_pathseq(parser, sub_program):
