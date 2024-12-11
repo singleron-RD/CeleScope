@@ -27,6 +27,9 @@ class Convert(Step):
         elif args.chemistry == "5p3p-2":
             self.pattern_dict_5p = Bc.parse_pattern(PATTERN_DICT["rna_5p.1"])
             self.pattern_dict_3p = Bc.parse_pattern(PATTERN_DICT["rna_3p.1"])
+        elif args.chemistry == "5p3p-3":
+            self.pattern_dict_5p = Bc.parse_pattern(PATTERN_DICT["rna_5p.2"])
+            self.pattern_dict_3p = Bc.parse_pattern(PATTERN_DICT["rna_3p.2"])
         else:
             raise ValueError(
                 f"Invalid chemistry {args.chemistry}. chemistry must be one of 5p3p-1 or 5p3p-2"
@@ -108,7 +111,7 @@ def get_opts_convert(parser, sub_program=True):
     parser.add_argument(
         "--chemistry",
         required=True,
-        choices=["5p3p-1", "5p3p-2"],
+        choices=["5p3p-1", "5p3p-2", "5p3p-3"],
         help="chemistry version",
     )
     if sub_program:

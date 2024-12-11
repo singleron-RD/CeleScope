@@ -18,7 +18,7 @@ class Multi_rna_5p3p(Multi):
     def sample(self, sample):
         step = "sample"
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = f"{cmd_line} " f"--chemistry 5p3p-1 "
+        cmd = f"{cmd_line} "
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def get_5p3p_fq(self, sample):
