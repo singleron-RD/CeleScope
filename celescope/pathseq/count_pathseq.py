@@ -152,12 +152,14 @@ class Count_pathseq(Step):
 
 
 def get_opts_count_pathseq(parser, sub_program):
+    """
     parser.add_argument(
-        "--min_exp_cell",
-        help="minimum number of cell express a certain microbe",
-        default=5,
+        "--downsample_reads",
+        help="It is strongly recommended that there are <10M total microbial reads.",
+        default=10**7,
         type=int,
     )
+    """
     if sub_program:
         parser.add_argument(
             "--pathseq_bam_file", help="pathseq bam file", required=True
