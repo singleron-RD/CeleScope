@@ -58,11 +58,7 @@ class Multi_dynaseq(Multi_rna):
         bg_para = ""
         if sample in self.col5_dict:
             bg_para = f"--bg {self.col5_dict[sample]} "
-        cmd = (
-            f"{cmd_line} "
-            f"--bam {bam} "
-            f"--bg {snp} {bg_para} "
-        )
+        cmd = f"{cmd_line} " f"--bam {bam} " f"--bg {snp} {bg_para} "
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def replacement(self, sample):

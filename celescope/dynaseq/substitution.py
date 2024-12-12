@@ -37,8 +37,18 @@ class Substitution(Step):
     def run(self):
         bg_snp = self.background_snp()
         # overall rate
-        for_base, rev_base, is_forward, is_reverse, is_snp = self.get_sub_tag(self.bam_file,bg_snp)
-        self.outtc = self.sub_stat(for_base, rev_base, is_forward, is_reverse, is_snp, self.outstat, self.tcstat)
+        for_base, rev_base, is_forward, is_reverse, is_snp = self.get_sub_tag(
+            self.bam_file, bg_snp
+        )
+        self.outtc = self.sub_stat(
+            for_base,
+            rev_base,
+            is_forward,
+            is_reverse,
+            is_snp,
+            self.outstat,
+            self.tcstat,
+        )
         self.add_substitution_metrics()
         self.substitution_plot()
         self.add_help()
@@ -76,7 +86,7 @@ class Substitution(Step):
             "cT": 0,
             "gT": 0,
         }
-        is_snp = {"reverse":0, "forward":0}
+        is_snp = {"reverse": 0, "forward": 0}
         for_base = {"a": 0, "c": 0, "g": 0, "t": 0}
         rev_base = {"a": 0, "c": 0, "g": 0, "t": 0}
         snp_tags = [
@@ -137,7 +147,9 @@ class Substitution(Step):
         return for_base, rev_base, is_forward, is_reverse, is_snp
 
     @utils.add_log
-    def sub_stat(self, for_base, rev_base, is_forward, is_reverse, is_snp, outfile, outtc):
+    def sub_stat(
+        self, for_base, rev_base, is_forward, is_reverse, is_snp, outfile, outtc
+    ):
         convertdict = {
             "a": ["aC", "aG", "aT"],
             "c": ["cA", "cG", "cT"],
@@ -193,19 +205,20 @@ class Substitution(Step):
         outw2 = open(outtc, "w")
         fbase = for_base["t"]
         rbase = rev_base["a"]
-        for_label = (is_forward["tC"] - is_snp["forward"]) * 100 / float(fbase) 
-        rev_label = (is_reverse["aG"] - is_snp["reverse"]) * 100 / float(rbase) 
-        for_snp = is_snp["forward"] * 100 / float(fbase) 
-        rev_snp = is_snp["reverse"] * 100 / float(rbase) 
+        for_label = (is_forward["tC"] - is_snp["forward"]) * 100 / float(fbase)
+        rev_label = (is_reverse["aG"] - is_snp["reverse"]) * 100 / float(rbase)
+        for_snp = is_snp["forward"] * 100 / float(fbase)
+        rev_snp = is_snp["reverse"] * 100 / float(rbase)
         outw2.write(f"Labeled\t{'%.3f' % for_label}\t{'%.3f' % rev_label}\n")
         outw2.write(f"Background\t{'%.3f' % for_snp}\t{'%.3f' % rev_snp}\n")
         outw2.close()
 
-        tc_stat = {"labeled": "%.3f" % (for_label+rev_label),
-                  "snp": "%.3f" % (for_snp+rev_snp)}
+        tc_stat = {
+            "labeled": "%.3f" % (for_label + rev_label),
+            "snp": "%.3f" % (for_snp + rev_snp),
+        }
 
         return tc_stat
-
 
     @utils.add_log
     def background_snp(self):
@@ -240,9 +253,10 @@ class Substitution(Step):
                         continue
                 bcf_in.close()
             else:
-                raise ValueError("Background snp file format cannot be recognized! Only csv or vcf format.")
+                raise ValueError(
+                    "Background snp file format cannot be recognized! Only csv or vcf format."
+                )
         return outdict
-
 
     @utils.add_log
     def substitution_plot(self):
@@ -268,7 +282,7 @@ class Substitution(Step):
             self.add_help_content(
                 name="Substitution:",
                 content="Nucleotide substitution rate at labeled/background level",
-            )            
+            )
 
     @utils.add_log
     def add_substitution_metrics(self):

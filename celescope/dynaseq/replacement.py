@@ -234,7 +234,7 @@ class Replacement(Step):
         count_matrix.to_matrix_dir(matrix_dir)
 
     @utils.add_log
-    def write_h5ad(self):        
+    def write_h5ad(self):
         self.adata.layers["total"] = self.adata.X.copy()
         a1 = sc.read_10x_mtx(
             self.dir_labeled,
@@ -256,10 +256,14 @@ class Replacement(Step):
     def tor_stat(self):
         gene_count = self.adata.layers["total"].sum(axis=0)
         self.adata.var["total_counts"] = pd.DataFrame(gene_count).loc[0].to_numpy()
-        self.adata = self.adata[: , self.adata.var["total_counts"]>0]
+        self.adata = self.adata[:, self.adata.var["total_counts"] > 0]
 
-        cell_ntr = self.adata.layers["labeled"].sum(axis=1) / self.adata.layers["total"].sum(axis=1)
-        gene_ntr = self.adata.layers["labeled"].sum(axis=0) / self.adata.layers["total"].sum(axis=0)
+        cell_ntr = self.adata.layers["labeled"].sum(axis=1) / self.adata.layers[
+            "total"
+        ].sum(axis=1)
+        gene_ntr = self.adata.layers["labeled"].sum(axis=0) / self.adata.layers[
+            "total"
+        ].sum(axis=0)
         self.adata.obs["TOR"] = cell_ntr
         self.adata.var["TOR"] = gene_ntr.T
 
@@ -277,7 +281,9 @@ class Replacement(Step):
         self.add_data(tsne_tor=tsne_tor.get_plotly_div())
 
         vln_gene = Violin_plot(
-            self.adata.var[self.adata.var["total_counts"]>=10]["TOR"], "gene", color="#1f77b4"
+            self.adata.var[self.adata.var["total_counts"] >= 10]["TOR"],
+            "gene",
+            color="#1f77b4",
         ).get_plotly_div()
         self.add_data(violin_gene=vln_gene)
         vln_cell = Violin_plot(
@@ -324,7 +330,9 @@ def get_opts_replacement(parser, sub_program):
             "--bam", help="convsrion tagged bam from conversion step", required=True
         )
         parser.add_argument("--cell", help="barcode cell list", required=True)
-        parser.add_argument("--gene", help="gene list(from filtered matrix dir)", required=True)
+        parser.add_argument(
+            "--gene", help="gene list(from filtered matrix dir)", required=True
+        )
         parser.add_argument(
             "--bg",
             nargs="+",
