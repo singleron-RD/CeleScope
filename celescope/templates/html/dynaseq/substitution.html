@@ -6,10 +6,15 @@
         {% include "html/utils/help_info.html" %}
 
         <div style="float: left; margin-left: 5%; margin-top: 1%;margin-right:5%; width: 90%">
-          {{step_summary.substitution_box|safe}}
+          {{step_summary.substitution_tc_box|safe}}
         </div>
 
-
+        {% if step_summary.substitution_box %}
+        <hr />
+        <div style="float: left; margin-left: 5%; margin-top: 1%; margin-right: 5%; width: 90%">
+          {{step_summary.substitution_box|safe}}
+        </div>
+        {% endif %}
 
     <div class="clear" ></div>
     </div>
