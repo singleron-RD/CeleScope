@@ -165,8 +165,8 @@ class Starsolo(Step):
                 if n > 10**5:
                     break
                 qual = entry.quality
-                cb_qual = Barcode.get_seq_str(qual, pattern_dict["C"])
-                umi_qual = Barcode.get_seq_str(qual, pattern_dict["U"])
+                cb_qual = Barcode.get_seq_str_no_exception(qual, pattern_dict["C"])
+                umi_qual = Barcode.get_seq_str_no_exception(qual, pattern_dict["U"])
                 if n <= 10**4:
                     cb_10k.update(cb_qual)
                     umi_10k.update(umi_qual)

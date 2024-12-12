@@ -3,6 +3,7 @@ from celescope.rna.multi_rna import Multi_rna
 from celescope.tools.__init__ import (
     FILTERED_MATRIX_DIR_SUFFIX,
     BARCODE_FILE_NAME,
+    FEATURE_FILE_NAME,
     STARSOLO_BAM_SUFFIX,
     OUTS_DIR,
 )
@@ -52,8 +53,12 @@ class Multi_dynaseq(Multi_rna):
     def substitution(self, sample):
         step = "substitution"
         bam = f'{self.outdir_dic[sample]["conversion"]}/{sample}.PosTag.bam'
+        snp = f'{self.outdir_dic[sample]["conversion"]}/{sample}.snp.csv'
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = f"{cmd_line} " f"--bam {bam} "
+        bg_para = ""
+        if sample in self.col5_dict:
+            bg_para = f"--bg {self.col5_dict[sample]} "
+        cmd = f"{cmd_line} " f"--bam {bam} " f"--bg {snp} {bg_para} "
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def replacement(self, sample):
@@ -62,6 +67,7 @@ class Multi_dynaseq(Multi_rna):
         snp = f'{self.outdir_dic[sample]["conversion"]}/{sample}.snp.csv'
         tsne_file = f"{self.outdir_dic[sample][OUTS_DIR]}/tsne_coord.tsv"
         cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX}/{BARCODE_FILE_NAME}'
+        gene = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX}/{FEATURE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
         bg_para = ""
         if sample in self.col5_dict:
@@ -72,6 +78,7 @@ class Multi_dynaseq(Multi_rna):
             f"--bg {snp} {bg_para} "
             f"--tsne {tsne_file} "
             f"--cell {cell} "
+            f"--gene {gene} "
         )
         self.process_cmd(
             cmd, step, sample, m=5 * int(self.args.thread), x=self.args.thread

@@ -156,7 +156,7 @@ class Summarize(Step):
         add cell number after each filtering step to .metrics.json
         do not show in HTML report
         """
-        cell_num = len(set(df[df["productive"] is True].barcode))
+        cell_num = len(set(df[df["productive"]].barcode))
         self.add_metric(name, cell_num, show=False)
         return cell_num
 
@@ -322,7 +322,7 @@ class Summarize(Step):
         df_for_clono = df_for_clono[df_for_clono.contig_id.isin(filtered_congtigs_id)]
         self.add_cell_num_metric(df_for_clono, "Cell Number after UMI filtering")
 
-        df_for_clono_pro = df_for_clono[df_for_clono["productive"] is True]
+        df_for_clono_pro = df_for_clono[df_for_clono["productive"]]
         cell_barcodes, filtered_contig = (
             set(df_for_clono_pro["barcode"]),
             set(df_for_clono_pro["contig_id"]),
@@ -361,7 +361,7 @@ class Summarize(Step):
         :param cell_barcodes: all barcodes identified to be cell.
         :return df_filter_contig: filtered contigs by cell barcodes.
         """
-        df_for_clono_pro = df_for_clono[df_for_clono["productive"] is True].copy()
+        df_for_clono_pro = df_for_clono[df_for_clono["productive"]].copy()
         df_for_clono_pro["chain_cdr3aa"] = df_for_clono_pro.loc[
             :, ["chain", "cdr3"]
         ].apply(":".join, axis=1)
@@ -452,7 +452,7 @@ class Summarize(Step):
     @utils.add_log
     def gen_summary(self, df_for_clono):
         """Generate metrics in html"""
-        df_for_clono_pro = df_for_clono[df_for_clono["productive"] is True]
+        df_for_clono_pro = df_for_clono[df_for_clono["productive"]]
         cell_barcodes = set(df_for_clono_pro["barcode"])
         total_cells = len(cell_barcodes)
 

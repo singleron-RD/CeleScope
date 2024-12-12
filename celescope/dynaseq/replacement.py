@@ -2,7 +2,7 @@ import os
 import re
 import sys
 import pandas as pd
-import anndata
+import scanpy as sc
 import pysam
 from multiprocessing import Pool
 import subprocess
@@ -11,9 +11,7 @@ from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.dynaseq.__init__ import DYNA_MATRIX_DIR_SUFFIX
-from celescope.rna.mkref import Mkref_rna
 from celescope.tools.matrix import CountMatrix, Features, ROW, COLUMN
-from celescope.tools import reference
 from celescope.tools.plotly_plot import Tsne_plot, Violin_plot
 
 toolsdir = os.path.dirname(__file__)
@@ -46,6 +44,7 @@ class Replacement(Step):
         self.thread = int(args.thread)
         self.inbam = args.bam
         self.bcfile = args.cell
+        self.featurefile = args.gene
         self.snp_file = args.bg
         self.tsne = args.tsne
         self.cellsplit = args.cellsplit
@@ -54,15 +53,14 @@ class Replacement(Step):
         self.cell_dict, self.cell_num = utils.barcode_list_stamp(
             self.bcfile, cut=self.cellsplit
         )
-        gtf_file = Mkref_rna.get_config(args.genomeDir)["files"]["gtf"]
-        gp = reference.GtfParser(gtf_file)
-        gp.get_id_name()
-        self.features = gp.get_features()
-        self.used_gene_id, self.used_gene_name = [], []
-        self.used_features = None
+        self.features = Features.from_tsv(tsv_file=self.featurefile)
         self.totaldf = pd.DataFrame()
         self.newdf, self.olddf = pd.DataFrame(), pd.DataFrame()
-        self.adata = anndata.AnnData()
+        matrix_file = os.path.dirname(self.bcfile)
+        self.adata = sc.read_10x_mtx(
+            matrix_file,
+            var_names="gene_ids",
+        )
         self.cell_list = []
         self.bg = None
 
@@ -111,19 +109,12 @@ class Replacement(Step):
         self.olddf = self.totaldf[self.totaldf["TC"] == 0]
         self.totaldf.to_csv(self.detail_txt, sep="\t", index=False)
 
-        used_gene = self.totaldf["geneID"].unique()
-        for index, item in enumerate(self.features.gene_id):
-            if item in used_gene:
-                self.used_gene_id.append(item)
-                self.used_gene_name.append(self.features.gene_name[index])
-        self.used_features = Features(self.used_gene_id, self.used_gene_name)
-
         # output
         tmp_newdf = self.newdf.groupby([COLUMN, ROW]).agg({"UMI": "count"})
         tmp_olddf = self.olddf.groupby([COLUMN, ROW]).agg({"UMI": "count"})
         self.write_sparse_matrix(tmp_newdf, self.dir_labeled)
         self.write_sparse_matrix(tmp_olddf, self.dir_unlabeled)
-        self.write_h5ad(self.totaldf, self.newdf, self.olddf)
+        self.write_h5ad()
 
     @staticmethod
     def modify_bam(bam, bg, cells):
@@ -243,43 +234,38 @@ class Replacement(Step):
         count_matrix.to_matrix_dir(matrix_dir)
 
     @utils.add_log
-    def write_h5ad(self, df, df_new, df_old):
-        layers = {}
-        matrix = CountMatrix.dataframe_to_matrix(
-            df, self.used_features, barcodes=self.cell_list
+    def write_h5ad(self):
+        self.adata.layers["total"] = self.adata.X.copy()
+        a1 = sc.read_10x_mtx(
+            self.dir_labeled,
+            var_names="gene_ids",
         )
-        layers["total"] = matrix
-        layers["labeled"] = CountMatrix.dataframe_to_matrix(
-            df_new, self.used_features, barcodes=self.cell_list
+        a1 = a1[self.adata.obs.index, self.adata.var.index]
+        self.adata.layers["labeled"] = a1.X.copy()
+        a2 = sc.read_10x_mtx(
+            self.dir_unlabeled,
+            var_names="gene_ids",
         )
-        layers["unlabeled"] = CountMatrix.dataframe_to_matrix(
-            df_old, self.used_features, barcodes=self.cell_list
-        )
+        a2 = a2[self.adata.obs.index, self.adata.var.index]
+        self.adata.layers["unlabeled"] = a2.X.copy()
 
-        adata = anndata.AnnData(
-            X=matrix,
-            obs=pd.DataFrame(index=pd.Series(self.cell_list, name="cell")),
-            var=pd.DataFrame(
-                index=pd.Series(self.used_gene_id, name="gene_id"),
-                data={"gene_name": pd.Categorical(self.used_gene_name)},
-            ),
-            layers=layers,
-        )
-        adata = self.tor_stat(adata)
-        adata.write(self.h5ad)
-        self.adata = adata
+        self.tor_stat()
+        self.adata.write(self.h5ad)
 
     @utils.add_log
-    def tor_stat(self, adata):
-        cell_ntr = adata.layers["labeled"].sum(axis=1) / adata.layers["total"].sum(
-            axis=1
-        )
-        gene_ntr = adata.layers["labeled"].sum(axis=0) / adata.layers["total"].sum(
-            axis=0
-        )
-        adata.obs["TOR"] = cell_ntr
-        adata.var["TOR"] = gene_ntr.T
-        return adata
+    def tor_stat(self):
+        gene_count = self.adata.layers["total"].sum(axis=0)
+        self.adata.var["total_counts"] = pd.DataFrame(gene_count).loc[0].to_numpy()
+        self.adata = self.adata[:, self.adata.var["total_counts"] > 0]
+
+        cell_ntr = self.adata.layers["labeled"].sum(axis=1) / self.adata.layers[
+            "total"
+        ].sum(axis=1)
+        gene_ntr = self.adata.layers["labeled"].sum(axis=0) / self.adata.layers[
+            "total"
+        ].sum(axis=0)
+        self.adata.obs["TOR"] = cell_ntr
+        self.adata.var["TOR"] = gene_ntr.T
 
     @utils.add_log
     def tor_plot(self):
@@ -295,7 +281,9 @@ class Replacement(Step):
         self.add_data(tsne_tor=tsne_tor.get_plotly_div())
 
         vln_gene = Violin_plot(
-            self.adata.var["TOR"], "gene", color="#1f77b4"
+            self.adata.var[self.adata.var["total_counts"] >= 10]["TOR"],
+            "gene",
+            color="#1f77b4",
         ).get_plotly_div()
         self.add_data(violin_gene=vln_gene)
         vln_cell = Violin_plot(
@@ -342,6 +330,9 @@ def get_opts_replacement(parser, sub_program):
             "--bam", help="convsrion tagged bam from conversion step", required=True
         )
         parser.add_argument("--cell", help="barcode cell list", required=True)
+        parser.add_argument(
+            "--gene", help="gene list(from filtered matrix dir)", required=True
+        )
         parser.add_argument(
             "--bg",
             nargs="+",
