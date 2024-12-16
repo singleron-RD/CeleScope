@@ -23,6 +23,8 @@
         {% include "./html/utils/table_script/bulk_vdj.html" %}
     {% elif step_summary.table_dict.id == "bulk_rna" %}
         {% include "./html/utils/table_script/bulk_rna.html" %}
+        {% elif step_summary.table_dict.id == "pathseq" %}
+        {% include "./html/utils/table_script/pathseq.html" %}
     {% endif %}
 
     <h3>{{step_summary.table_dict['title']}}</h3>

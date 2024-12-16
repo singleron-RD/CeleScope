@@ -1,6 +1,4 @@
 import math
-import operator
-import functools
 import numpy as np
 
 import plotly
@@ -30,21 +28,6 @@ LAYOUT = {
         "t": 30,
     },
 }
-
-
-def _round_float(x: float) -> float:
-    """Round a float to the nearest value which can be represented with 4 decimal digits.
-
-    In order to avoid representing floats with full precision, we convert them
-    to a lower precision string and then convert that back to a float for use by `json.dumps`
-    which will typically then output many fewer digits if possible.
-    """
-    return float(f"{x:.4g}")
-
-
-def round_floats_in_list(x):
-    """Lower the precision for a whole bunch of floats."""
-    return [_round_float(x) for x in x]
 
 
 class Plotly_plot:
@@ -157,19 +140,20 @@ class Tsne_plot(Plotly_plot):
 
 
 class Tsne_dropdown_plot(Plotly_plot):
-    def __init__(self, df_tsne, name, feature_name_list, discrete=False):
+    def __init__(self, df_tsne, name, feature_name_list):
         super().__init__(df_tsne)
 
         self.name = name
         self.feature_name_list = feature_name_list
-        self.discrete = discrete
         self.title = f"t-SNE plot Colored by {self.name}"
         self.x_pos = 0.1
         self._layout = {}
 
         self._buttons = []
-        self._str_coord1 = "tSNE_1"
-        self._str_coord2 = "tSNE_2"
+        self.x_label, self.y_label = "tSNE_1", "tSNE_2"
+
+        self.x = df_tsne[self.x_label]
+        self.y = df_tsne[self.y_label]
         self.axes_config = {
             "showgrid": True,
             "gridcolor": "#F5F5F5",
@@ -180,143 +164,77 @@ class Tsne_dropdown_plot(Plotly_plot):
             "zerolinewidth": 0.7,
         }
 
-        x_ = math.ceil(max(abs(self._df[self._str_coord1])))
-        y_ = math.ceil(max(abs(self._df[self._str_coord2])))
+        x_ = math.ceil(max(abs(self.x)))
+        y_ = math.ceil(max(abs(self.y)))
         self.x_range = [-x_, x_]
         self.y_range = [-y_, y_]
 
     def get_plotly_div(self):
-        if self.discrete:
-            self.discrete_tsne_plot()
-        else:
-            self.continuous_tsne_plot()
-
+        self.continuous_tsne_plot()
         self.update_fig()
-
         return self.plotly_plot()
 
     def continuous_tsne_plot(self):
         self._fig = go.Figure()
-        _num = len(self.feature_name_list)
-        i = 0
 
-        max_num = math.ceil(max([self._df[_].max() for _ in self.feature_name_list]))
-        split_num = math.ceil(max_num / 5)
-        tick_list = list(range(0, max_num, split_num))
+        # remove the cluster fraction "cluster 1(10%)"
+        self._df["hover_text"] = "cluster " + self._df["cluster"].apply(
+            lambda x: x.split("(")[0]
+        )
 
-        for feature_name in self.feature_name_list:
-            df_tmp = self._df.loc[:, [self._str_coord1, self._str_coord2, feature_name]]
+        # Coordinates
+        for i, feature in enumerate(self.feature_name_list):
             self._fig.add_trace(
                 go.Scattergl(
-                    x=round_floats_in_list(df_tmp[self._str_coord1]),
-                    y=round_floats_in_list(df_tmp[self._str_coord2]),
+                    x=self.x,
+                    y=self.y,
                     mode="markers",
-                    name=feature_name[0].upper() + feature_name[1:],
-                    showlegend=False,
-                    marker=go.scattergl.Marker(
-                        opacity=0.9,
-                        size=3,
-                        color=self._df[feature_name],
-                        cmax=max_num,
-                        cmin=0,
-                        colorscale=[[0, "LightGrey"], [1, "Red"]],
-                        colorbar=go.scattergl.marker.ColorBar(
-                            tickmode="array",
-                            tickvals=tick_list,
-                            ticktext=tick_list,
-                            title="",
-                            titlefont={"size": 11},
-                        ),
+                    marker=dict(
+                        size=4,
+                        color=self._df[feature],
+                        colorscale=[
+                            [0, "lightgray"],  # Start with light gray
+                            [1, "red"],  # End with red
+                        ],
+                        colorbar=dict(title="UMI"),
+                        opacity=0.8,
                     ),
-                    textposition="top center",
+                    name=feature,
+                    hovertext=self._df["hover_text"],  # Text to display when hovering
+                    hoverinfo="text",  # Display only the hover text on hover
+                    visible=True if i == 0 else False,
                 )
             )
-            visible_list = [False] * _num
-            visible_list[i] = True
-            i += 1
-            button = dict(
-                args=[
-                    {"visible": visible_list},
-                ],
-                label=feature_name,
-                method="restyle",
-            )
-            self._buttons.append(button)
-
-    def discrete_tsne_plot(self):
-        all_figures = []
-        num_all, last_num = 0, 0
-        for feature_name in self.feature_name_list:
-            num_all += len(self._df[feature_name].unique())
-
-        for feature_name in self.feature_name_list:
-            df_sub = self._df.loc[:, ["tSNE_1", "tSNE_2", feature_name]]
-            num_feature = len(df_sub[feature_name].unique())
-
-            sum_df = df_sub.groupby(feature_name).agg("count").iloc[:, 0]
-            percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
-            res_dict = dict()
-            res_list = []
-            for cluster in sorted(df_sub[feature_name].unique()):
-                name = f"{cluster}({percent_df[cluster]}%)"
-                res_dict[cluster] = name
-                res_list.append(name)
-
-            df_sub[feature_name] = df_sub[feature_name].map(res_dict)
-            df_sub["size"] = 4
-
-            scatter_config = {
-                "data_frame": df_sub,
-                "x": "tSNE_1",
-                "y": "tSNE_2",
-                "size_max": 4,
-                "hover_data": {
-                    "tSNE_1": False,
-                    "tSNE_2": False,
-                    feature_name: True,
-                    "size": False,
-                },
-                "size": "size",
-                "opacity": 0.9,
-                "color": feature_name,
-                "color_discrete_sequence": COLORS,
-                "color_continuous_scale": px.colors.sequential.Jet,
-            }
-            fig = px.scatter(**scatter_config, category_orders={feature_name: res_list})
-            all_figures.append(fig)
-
-            true_list = [True] * num_feature
-            visible_list = [False] * num_all
-
-            visible_list[last_num : num_feature + last_num] = true_list
-            last_num += num_feature
-            button = dict(
-                args=[
-                    {"visible": visible_list},
-                ],
-                label=feature_name,
-                method="update",
-            )
-            self._buttons.append(button)
-
-        self._fig = go.Figure(
-            data=functools.reduce(operator.add, [_.data for _ in all_figures])
-        )
 
     def update_fig(self):
         self._fig.update_xaxes(
-            range=self.x_range, title_text=self._str_coord1, **self.axes_config
+            range=self.x_range, title_text=self.x_label, **self.axes_config
         )
 
         self._fig.update_yaxes(
-            range=self.y_range, title_text=self._str_coord2, **self.axes_config
+            range=self.y_range, title_text=self.y_label, **self.axes_config
         )
+
+        # Create dropdown buttons to toggle traces
+        buttons = []
+        for i, feature in enumerate(self.feature_name_list):
+            visibility = [False] * len(self.feature_name_list)
+            visibility[i] = True
+            buttons.append(
+                dict(
+                    label=feature,
+                    method="update",
+                    args=[
+                        {"visible": visibility},
+                    ],
+                )
+            )
 
         self._fig.update_layout(
             self._layout,
             updatemenus=[
                 {
-                    "buttons": self._buttons,
+                    "buttons": buttons,
                     "direction": "down",
                     "pad": {"r": 8, "t": 8},
                     "showactive": True,
@@ -342,115 +260,6 @@ class Tsne_dropdown_plot(Plotly_plot):
             title={"text": self.title, "x": 0.5, "y": 0.95, "font": {"size": 15}},
             plot_bgcolor="#FFFFFF",
             hovermode="closest",
-        )
-
-
-# Add single tag plot
-class Tsne_single_plot(Plotly_plot):
-    def __init__(self, df_tsne, feature_name_list, analysis_dir):
-        super().__init__(df_tsne)
-
-        self.feature_name_list = feature_name_list
-        self.analysis_dir = analysis_dir
-
-        self._layout = {}
-
-        self._str_coord1 = "tSNE_1"
-        self._str_coord2 = "tSNE_2"
-        self.axes_config = {
-            "showgrid": True,
-            "gridcolor": "#F5F5F5",
-            "showline": False,
-            "ticks": None,
-            "zeroline": True,
-            "zerolinecolor": "black",
-            "zerolinewidth": 0.7,
-        }
-
-        x_ = math.ceil(max(abs(self._df[self._str_coord1])))
-        y_ = math.ceil(max(abs(self._df[self._str_coord2])))
-        self.x_range = [-x_, x_]
-        self.y_range = [-y_, y_]
-
-    def get_plotly_div(self):
-        max_num = math.ceil(max([self._df[_].max() for _ in self.feature_name_list]))
-        split_num = math.ceil(max_num / 5)
-        tick_list = list(range(0, max_num, split_num))
-
-        for feature_name in self.feature_name_list:
-            self._fig = go.Figure()
-            name = feature_name[0].upper() + feature_name[1:]
-            title = f"t-SNE plot Colored by {name}"
-            df_tmp = self._df.loc[:, [self._str_coord1, self._str_coord2, feature_name]]
-            df_tmp = df_tmp.loc[df_tmp[feature_name] != 0]
-            self._fig.add_trace(
-                go.Scatter(
-                    x=round_floats_in_list(df_tmp[self._str_coord1]),
-                    y=round_floats_in_list(df_tmp[self._str_coord2]),
-                    mode="markers",
-                    showlegend=False,
-                    marker=go.scatter.Marker(
-                        opacity=0.9,
-                        size=3,
-                        color=self._df[feature_name],
-                        cmax=max_num,
-                        cmin=0,
-                        colorscale=[[0, "LightGrey"], [1, "Red"]],
-                        colorbar=go.scatter.marker.ColorBar(
-                            tickmode="array",
-                            tickvals=tick_list,
-                            ticktext=tick_list,
-                            title="",
-                            titlefont={"size": 11},
-                        ),
-                    ),
-                    textposition="top center",
-                )
-            )
-
-            self.update_fig()
-            self._fig.update_layout(
-                title={"text": title, "x": 0.5, "y": 0.95, "font": {"size": 15}}
-            )
-            self._fig.write_image(f"{self.analysis_dir}/{name}_tsne.png")
-
-    def update_fig(self):
-        self._fig.update_xaxes(
-            range=self.x_range, title_text=self._str_coord1, **self.axes_config
-        )
-
-        self._fig.update_yaxes(
-            range=self.y_range, title_text=self._str_coord2, **self.axes_config
-        )
-
-        self._fig.update_layout(
-            self._layout, plot_bgcolor="#FFFFFF", hovermode="closest"
-        )
-
-
-class Bar_plot(Plotly_plot):
-    def __init__(self, df_bar):
-        super().__init__(df_bar)
-        self.set_fig()
-
-    def set_fig(self):
-        self._fig = px.bar(
-            x=[str(i) for i in list(self._df.head(10).ClonotypeID)],
-            y=self._df.head(10).proportion.tolist(),
-            labels={"x": "Clonotype ID", "y": "Fraction of Cells"},
-            width=700,
-            height=500,
-        )
-        self._fig.update_traces(
-            marker_color="rgb(158,202,225)",
-            marker_line_color="rgb(8,48,107)",
-            marker_line_width=1.5,
-            opacity=0.6,
-        )
-        self._fig.update_layout(
-            title_text="Top 10 Clonotype Frequencies",
-            title={"x": 0.5, "y": 0.9, "font": {"size": 20, "family": "San Serif"}},
-            plot_bgcolor="#FFFFFF",
         )
 
 
@@ -555,6 +364,32 @@ class Line_plot(Plotly_plot):
             showlegend=False,
             plot_bgcolor="#FFFFFF",
             hovermode="closest",
+        )
+
+
+class Bar_plot(Plotly_plot):
+    def __init__(self, df_bar):
+        super().__init__(df_bar)
+        self.set_fig()
+
+    def set_fig(self):
+        self._fig = px.bar(
+            x=[str(i) for i in list(self._df.head(10).ClonotypeID)],
+            y=self._df.head(10).proportion.tolist(),
+            labels={"x": "Clonotype ID", "y": "Fraction of Cells"},
+            width=700,
+            height=500,
+        )
+        self._fig.update_traces(
+            marker_color="rgb(158,202,225)",
+            marker_line_color="rgb(8,48,107)",
+            marker_line_width=1.5,
+            opacity=0.6,
+        )
+        self._fig.update_layout(
+            title_text="Top 10 Clonotype Frequencies",
+            title={"x": 0.5, "y": 0.9, "font": {"size": 20, "family": "San Serif"}},
+            plot_bgcolor="#FFFFFF",
         )
 
 

@@ -285,6 +285,7 @@ class Count_tag(Step):
         df_tsne_tag = pd.merge(
             df_tsne, df_UMI_cell, how="left", left_index=True, right_index=True
         )
+        df_tsne.fillna(0, inplace=True)
 
         if self.combine_cluster:
             df_combine_cluster = pd.read_csv(

@@ -3,7 +3,7 @@ import pandas as pd
 from celescope.tools.capture.analysis import Analysis, get_opts_analysis
 from celescope.fusion.count_fusion import Count_fusion
 from celescope.fusion.mkref import Mkref_fusion
-from celescope.tools.plotly_plot import Tsne_dropdown_plot, Tsne_single_plot, Tsne_plot
+from celescope.tools.plotly_plot import Tsne_dropdown_plot, Tsne_plot
 
 
 def analysis_fusion(args):
@@ -44,7 +44,6 @@ class Analysis_fusion(Analysis):
             df_tsne, "Fusion", feature_name_list
         ).get_plotly_div()
         self.add_data(tsne_citeseq=tsne_citeseq)
-        Tsne_single_plot(df_tsne, feature_name_list, self.args.outdir).get_plotly_div()
 
     def get_fusion_count_df(self):
         fusion_df = self.df_tsne.reset_index().filter(
