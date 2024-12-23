@@ -9,6 +9,7 @@ from celescope.tools.plotly_plot import Line_plot
 random.seed(0)
 np.random.seed(0)
 
+
 class Count(super_count.Count):
     """
     ## Features
@@ -42,7 +43,6 @@ class Count(super_count.Count):
         self.gene_cutoff = args.gene_cutoff
         self._table_id = self.assay
 
-
     @utils.add_log
     def run(self):
         ## output exprssion matrix
@@ -65,7 +65,9 @@ class Count(super_count.Count):
         df_bc_valid.to_csv(self.marked_count_file, sep="\t")
 
         ## saturation
-        df_valid = df.reset_index().set_index("Barcode").loc[df_bc_valid.index.to_list()]
+        df_valid = (
+            df.reset_index().set_index("Barcode").loc[df_bc_valid.index.to_list()]
+        )
         self.saturation = Count.get_read_saturation(df_valid)
         self.downsample_dict = self.downsample(df_valid.reset_index())
 
@@ -79,17 +81,18 @@ class Count(super_count.Count):
         reads = sum(df_cell["read"])
         saturation = 1 - unique / reads
         return saturation
-    
+
     @staticmethod
     def sub_sample(fraction, df_cell, cell_read_index):
-        cell_read = df_cell['read'].sum()
+        cell_read = df_cell["read"].sum()
         frac_n_read = int(cell_read * fraction)
         subsample_read_index = cell_read_index[:frac_n_read]
         index_dedup = np.unique(subsample_read_index, return_counts=False)
         # gene median
-        df_cell_subsample = df_cell.loc[index_dedup, ]
-        geneNum_median = float(df_cell_subsample.groupby(
-            'Barcode').agg({ROW: 'nunique'}).median().iloc[0])
+        df_cell_subsample = df_cell.loc[index_dedup,]
+        geneNum_median = float(
+            df_cell_subsample.groupby("Barcode").agg({ROW: "nunique"}).median().iloc[0]
+        )
         return geneNum_median
 
     @utils.add_log
@@ -97,22 +100,18 @@ class Count(super_count.Count):
         """saturation and median gene
         return fraction=1 saturation
         """
-        cell_read_index = np.array(df_cell.index.repeat(df_cell['read']), dtype='int32')
+        cell_read_index = np.array(df_cell.index.repeat(df_cell["read"]), dtype="int32")
         np.random.shuffle(cell_read_index)
 
         format_str = "%.2f\t%.2f\n"
-        res_dict = {
-            "fraction": [0.0],
-            "median_gene": [0]
-        }
-        with open(self.downsample_file, 'w') as fh:
-            fh.write('percent\tmedian_geneNum\n')
+        res_dict = {"fraction": [0.0], "median_gene": [0]}
+        with open(self.downsample_file, "w") as fh:
+            fh.write("percent\tmedian_geneNum\n")
             fh.write(format_str % (0, 0))
             for fraction in np.arange(0.1, 1.1, 0.1):
-                geneNum_median = Count.sub_sample(
-                    fraction, df_cell, cell_read_index)
+                geneNum_median = Count.sub_sample(fraction, df_cell, cell_read_index)
                 fh.write(format_str % (fraction, geneNum_median))
-                #def format_float(x): return round(x / 100, 4)
+                # def format_float(x): return round(x / 100, 4)
                 res_dict["fraction"].append(round(fraction, 1))
                 res_dict["median_gene"].append(geneNum_median)
 
@@ -143,7 +142,7 @@ class Count(super_count.Count):
                 help_info="",
             )
         self.add_metric(
-            name=f"Sequencing saturation",
+            name="Sequencing saturation",
             value=self.saturation,
             value_type="fraction",
             help_info="the fraction of read originating from an already-observed UMI.",
@@ -157,8 +156,15 @@ class Count(super_count.Count):
 
     def add_plot_data(self):
         df_plot = pd.DataFrame(self.downsample_dict)
-        df_plot = df_plot.rename(columns={"median_gene":"Median Genes","fraction":"Reads Fraction"})
-        self.add_data(df_line=Line_plot(df_plot, x_title="Reads Fraction", y_title="Median Genes").get_plotly_div())
+        df_plot = df_plot.rename(
+            columns={"median_gene": "Median Genes", "fraction": "Reads Fraction"}
+        )
+        self.add_data(
+            df_line=Line_plot(
+                df_plot, x_title="Reads Fraction", y_title="Median Genes"
+            ).get_plotly_div()
+        )
+
 
 def count(args):
     with Count(args, display_title="Wells") as runner:
