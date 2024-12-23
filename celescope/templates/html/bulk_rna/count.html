@@ -15,7 +15,11 @@
   <h2>{{ step_summary.display_title}}    <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
   <div class="box">
     {% include "html/utils/help_info.html" %}
-    {% include "html/utils/col2_metrics.html" %}
+    {% include "html/utils/col1_metrics.html" %}
+
+    <div style="float: left; margin-left: 3%; margin-top: 0%;margin-right:0%; width: 47%">
+      {{ step_summary.df_line|safe }}
+    </div>
 
     <hr />
 
