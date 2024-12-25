@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "2.1.0"
+__VERSION__ = "2.2.0dev"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
@@ -18,6 +18,7 @@ ASSAY_LIST = [
     "bulk_vdj",
     "bulk_rna",
     "rna_5p3p",
+    "pathseq",
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

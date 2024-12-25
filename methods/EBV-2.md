@@ -1,13 +1,8 @@
-Both single-cell RNA-Seq and virus-enriched libraries were analyzed using CeleScope.
-
 ## Preprocessing
 Barcodes and UMIs were extracted from R1 reads and corrected. Adapter sequences and poly A tails were trimmed from R2 reads using Cutadapt v3.7.
 
-## Single-cell RNA-Seq library analysis
-After preprocessing, R2 reads were aligned against the hg38 transcriptome using STAR v2.6.1a. Uniquely mapped reads were then assigned to exons with FeatureCounts(v2.0.1). Successfully Assigned Reads with the same cell barcode, UMI and gene were grouped together to generate the gene expression matrix for further analysis.
-
 ## Virus-enriched library analysis
-After preprocessing, R2 reads were aligned against the EBV genome using STAR v2.6.1a with --outFilterMatchNmin set to 80. Uniquely mapped reads were then assigned to EBV genes with FeatureCounts(v2.0.1). After obtaining the BAM file, in order to remove ambient contamination, we adopted a two-step filtration process. First, a UMI needs to be supported by a certain number of reads. Second, an EBV-positive cell needs to be supported by a certain number of UMIs. Thresholds for supporting reads and UMIs were determined by the Otsu's method.
+After preprocessing, R2 reads were aligned against the EBV genome(https://www.ncbi.nlm.nih.gov/nuccore/NC_007605) using STAR v2.6.1a with --outFilterMatchNmin set to 80. Uniquely mapped reads were then assigned to EBV genes with FeatureCounts(v2.0.1). After obtaining the BAM file, to remove ambient contamination, we adopted a filtering step borrowed from Viral-Track(https://github.com/PierreBSC/Viral-Track). A valid UMI needs to be supported by a certain number of reads. The threshold for supporting reads was determined by the Otsu's method.
 
 ## Reference
 - MARTIN, Marcel. Cutadapt removes adapter sequences from high-throughput sequencing reads. EMBnet.journal, [S.l.], v. 17, n. 1, p. pp. 10-12, may 2011. ISSN 2226-6089.

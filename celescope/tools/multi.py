@@ -126,7 +126,7 @@ use `--steps_run barcode,cutadapt`
         )
         # sub_program parser do not have
         parser.add_argument("--outdir", help="Output directory.", default="./")
-        parser.add_argument("--thread", help=HELP_DICT["thread"], default=4)
+        parser.add_argument("--thread", help=HELP_DICT["thread"], default=16)
         parser.add_argument(
             "--use_R3",
             help="ATAC libraries use R3 reads instead of R2.",

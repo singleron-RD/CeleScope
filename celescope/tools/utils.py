@@ -342,8 +342,13 @@ def parse_match_dir(match_dir):
     match_barcode, n_match_barcode = get_barcode_from_match_dir(match_dir)
     match_dict["match_barcode"] = match_barcode
     match_dict["n_match_barcode"] = n_match_barcode
-
     return match_dict
+
+
+def read_tsne(tsne_file):
+    df = pd.read_csv(tsne_file, sep="\t", index_col=0)
+    df.index.names = ["barcode"]
+    return df
 
 
 def fastq_line(name, seq, qual):

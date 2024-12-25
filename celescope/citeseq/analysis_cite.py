@@ -1,7 +1,7 @@
 import pandas as pd
 
 from celescope.tools.step import Step, s_common
-from celescope.tools.plotly_plot import Tsne_dropdown_plot, Tsne_single_plot, Tsne_plot
+from celescope.tools.plotly_plot import Tsne_dropdown_plot, Tsne_plot
 
 
 def get_opts_analysis_cite(parser, sub_program):
@@ -41,4 +41,3 @@ class Analysis_cite(Step):
             df_tsne, "Citeseq", keep_antibody
         ).get_plotly_div()
         self.add_data(tsne_citeseq=tsne_citeseq)
-        Tsne_single_plot(df_tsne, keep_antibody, self.args.outdir).get_plotly_div()
