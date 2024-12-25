@@ -281,7 +281,7 @@ def get_barcode_from_matrix_dir(matrix_dir):
     """
     Returns:
         match_barcode: list
-        no_match_barcode: int
+        n_match_barcode: int
     """
 
     match_barcode_file = get_matrix_file_path(matrix_dir, BARCODE_FILE_NAME)

@@ -12,7 +12,8 @@ def get_opts_analysis_pathseq(parser, sub_program):
         parser.add_argument(
             "--umi_matrix_file", help="UMI matrix tsv file", required=True
         )
-        parser.add_argument("--match_dir", help=HELP_DICT["match_dir"], required=True)
+        parser.add_argument("--match_dir", help=HELP_DICT["match_dir"])
+        parser.add_argument("--tsne_coord_file")
         s_common(parser)
 
 
@@ -25,8 +26,12 @@ class Analysis_pathseq(Step):
     def __init__(self, args, display_title):
         super().__init__(args, display_title)
 
-        match_dict = parse_match_dir(self.args.match_dir)
-        self.df_tsne = read_tsne(match_dict["tsne_coord"])
+        if args.match_dir:
+            match_dict = parse_match_dir(self.args.match_dir)
+            tsne_file = match_dict["tsne_coord"]
+        else:
+            tsne_file = args.tsne_coord_file
+        self.df_tsne = read_tsne(tsne_file)
         self.df_umi = pd.read_csv(self.args.umi_matrix_file, sep="\t", index_col=0).T
 
     def add_dropdown_plot(self):

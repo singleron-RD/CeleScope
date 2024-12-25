@@ -15,8 +15,11 @@ class Count_pathseq(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
         # match
-        self.match_dict = utils.parse_match_dir(args.match_dir)
-        self.match_barcode = self.match_dict["match_barcode"]
+        if args.match_dir:
+            self.match_dict = utils.parse_match_dir(args.match_dir)
+            self.match_barcode = self.match_dict["match_barcode"]
+        else:
+            self.match_barcode, _ = utils.get_barcode_from_matrix_dir(args.matrix_dir)
 
         # out
         self.raw_matrix_file = f"{self.outdir}/{self.sample}_raw_UMI_matrix.tsv.gz"
@@ -157,6 +160,7 @@ def get_opts_count_pathseq(parser, sub_program):
             "--pathseq_score_file", help="pathseq score file", required=True
         )
         parser.add_argument("--unmap_bam_file", help="unmap bam file", required=True)
-        parser.add_argument("--match_dir", help=HELP_DICT["match_dir"], required=True)
+        parser.add_argument("--match_dir", help=HELP_DICT["match_dir"])
+        parser.add_argument("--matrix_dir")
         s_common(parser)
     return parser
