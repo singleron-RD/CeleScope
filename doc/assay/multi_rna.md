@@ -1,5 +1,5 @@
 ## Usage
-1. Make a rna genomeDir
+1. Create a genomeDir.
 
 ### Homo sapiens
 
@@ -44,15 +44,15 @@ celescope rna mkref \
  --mt_gene_list mt_gene_list.txt
 ```
 
-2. Generate scripts for each sample
+2. Generate scripts for each sample.
 
 Under your working directory, write a shell script `run.sh` as
 
 ```
-multi_rna\
-	--mapfile ./rna.mapfile\
-	--genomeDir {path to hs_ensembl_99 or mmu_ensembl_99}\
-	--thread 8\
+multi_rna \
+	--mapfile ./rna.mapfile \
+	--genomeDir {path to hs_ensembl_99 or mmu_ensembl_99} \
+	--thread 16 \
 	--mod shell
 ```
 `--mapfile` Required.  Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -60,7 +60,6 @@ multi_rna\
 1st column: Fastq file prefix.  
 2nd column: Fastq file directory path.  
 3rd column: Sample name, which is the prefix of all output files.  
-4th column: The 4th column has different meaning for each assay. For `rna`, it means `forced cell number` and it's an optional column. For other assays, see [here](./mapfile.md).
 
 Example
 
@@ -81,13 +80,13 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--genomeDir` Required. The path of the genome directory after running `celescope rna mkref`.
 
-`--thread` Threads to use. The recommended setting is 8, and the maximum should not exceed 20.
+`--thread` It is recommended to use 16 threads. Using more than 20 threads is not advised because  [the mapping speed of STAR saturates at >~20 threads](https://github.com/singleron-RD/CeleScope/issues/197).
 
 `--mod` Create `sjm`(simple job manager https://github.com/StanfordBioinformatics/SJM) or `shell` scripts. 
 
 After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will be generated.
 
-3. Start the analysis by running:
+1. Start the analysis by running:
 ```
 sh ./shell/{sample}.sh
 ```
@@ -103,3 +102,40 @@ When using [seurat CreateSeuratObject](https://www.rdocumentation.org/packages/S
 ```
 seurat.object = CreateSeuratObject(matrix, names.delim="-", project="sample_name") 
 ```
+
+## Additional matrix filter
+After completing the `multi_rna` process, you can run `celescope rna cells` to perform cell calling again on the existing results, forced cell number, filtering by minimum gene number, and filtering by maximum mitochondrial gene fraction. It will generate a new expression matrix and HTML report. The original expression matrix and HTML report will be prefixed with `default_`.
+
+### Example
+
+- Adjust Parameters for Cell Calling
+https://github.com/alexdobin/STAR/blob/master/docs/STARsolo.md#emptydrop-like-filtering
+
+```
+# In celescope V1.*, the default FDR for cell calling is 0.01. In celescope V2.*, the default FDR is 0.001. The following parameters set the FDR to 0.01:
+
+celescope rna cells \
+  --soloCellFilter "EmptyDrops_CR 3000 0.99 10 45000 90000 500 0.01 20000 0.01 10000" \
+  --outdir test1/cells \
+  --sample test1
+```
+
+- Force cell number to be 10000, then keep cells with gene>=200 and mitochondrial gene fraction<=0.05.
+
+```
+celescope rna cells \
+  --force_cells 10000 \
+  --min_gene 200 \
+  --max_mito 0.05 \
+  --genomeDir /genome/rna/celescope2/mmu \
+  --outdir test1/cells \
+  --sample test1
+```
+
+
+
+## Multiple samples
+
+The Nextflow-based [singleron-RD/scrna](https://github.com/singleron-RD/scrna) pipeline allows you to easily process multiple samples, obtain results consistent with CeleScope, and generate a single [MultiQC](https://github.com/MultiQC/MultiQC) report that includes QC information for all samples.
+
+![multiqc report](../images/multiqc_report.png)
