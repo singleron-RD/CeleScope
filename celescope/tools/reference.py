@@ -172,7 +172,12 @@ class GtfBuilder:
 
             k = 0
             for i, j in zip(ends[:-1], starts[1:]):
-                assert i < j
+                if i >= j:
+                    sys.stderr.write(
+                        f"Skipping {transcript_id} last exon end {i} next exon start {j}"
+                    )
+                    continue
+
                 if i + 1 <= j - 1:
                     k += 1
                     attributes = rows[0].attributes.copy()

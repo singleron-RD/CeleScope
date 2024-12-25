@@ -1,4 +1,6 @@
 import subprocess
+
+import pysam
 from celescope.tools.step import Step, s_common
 
 
@@ -6,6 +8,7 @@ class PathSeq(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title)
         self.unmap_bam = f"{self.out_prefix}_unmapped.bam"
+        self.downsample_bam = f"{self.out_prefix}_downsample.bam"
         self.addRG_bam = f"{self.out_prefix}_addRG.bam"
         self.pathseq_bam = f"{self.out_prefix}_pathseq.bam"
         self.pathseq_score_txt = f"{self.out_prefix}_pathseq_score.txt"
@@ -19,10 +22,29 @@ class PathSeq(Step):
         )
         subprocess.check_call(cmd, shell=True)
 
+    @staticmethod
+    def count_reads(bam_file):
+        count = 0
+        with pysam.AlignmentFile(bam_file, "rb") as bam:
+            for read in bam:
+                count += 1
+        return count
+
+    def downsample(self):
+        read_count = self.count_reads(self.unmap_bam)
+        downsample_rate = self.args.downsample_reads / read_count
+        downsample_rate = min(downsample_rate, 1.0)
+        cmd = (
+            f"samtools view -b -s {downsample_rate} "
+            f"{self.unmap_bam} "
+            f"> {self.downsample_bam} "
+        )
+        subprocess.check_call(cmd, shell=True)
+
     def picard_addRG(self):
         cmd = (
             f"picard AddOrReplaceReadGroups "
-            f"INPUT={self.unmap_bam} "
+            f"INPUT={self.downsample_bam} "
             f"OUTPUT={self.addRG_bam} "
             f"RGID={self.sample}_rgid "
             f"RGLB={self.sample}_rglb "
@@ -54,6 +76,7 @@ class PathSeq(Step):
 
     def run(self):
         self.get_unmap_bam()
+        self.downsample()
         self.picard_addRG()
         self.run_pathseq()
 
@@ -74,6 +97,12 @@ def get_opts_pathseq(parser, sub_program):
     parser.add_argument("--min_score_identity", help="min_score_identity", default=0.7)
     parser.add_argument(
         "--min_clipped_read_length", help="min_clipped_read_length", default=60
+    )
+    parser.add_argument(
+        "--downsample_reads",
+        help="It is strongly recommended that there are <10M total microbial reads.",
+        default=10**7,
+        type=int,
     )
     if sub_program:
         parser.add_argument("--input_bam", help="input bam file", required=True)

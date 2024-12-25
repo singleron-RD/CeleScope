@@ -20,10 +20,7 @@ class Count_pathseq(Step):
 
         # out
         self.raw_matrix_file = f"{self.outdir}/{self.sample}_raw_UMI_matrix.tsv.gz"
-        self.filtered_matrix_file = (
-            f"{self.outdir}/{self.sample}_filtered_UMI_matrix.tsv.gz"
-        )
-        self.umi_tsne_file = f"{self.outdir}/{self.sample}_UMI_tsne.tsv.gz"
+        self.outs = [self.raw_matrix_file]
 
         # metrics
         self.total_pathseq_reads = 0
@@ -152,14 +149,6 @@ class Count_pathseq(Step):
 
 
 def get_opts_count_pathseq(parser, sub_program):
-    """
-    parser.add_argument(
-        "--downsample_reads",
-        help="It is strongly recommended that there are <10M total microbial reads.",
-        default=10**7,
-        type=int,
-    )
-    """
     if sub_program:
         parser.add_argument(
             "--pathseq_bam_file", help="pathseq bam file", required=True

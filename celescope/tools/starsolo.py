@@ -131,7 +131,7 @@ class Starsolo(Step):
             f"--soloType {self.solo_type} \\\n"
             f"{self.cb_str} \\\n"
             f"{self.umi_str} \\\n"
-            "--soloCBmatchWLtype 1MM \\\n"
+            f"--soloCBmatchWLtype {self.args.soloCBmatchWLtype} \\\n"
             "--outSAMtype BAM SortedByCoordinate \\\n"
             "--soloCellReadStats Standard \\\n"
             "--soloBarcodeReadLength 0 \\\n"
@@ -589,6 +589,12 @@ is higher than or equal to this value.""",
         help="The same as the argument in STARsolo",
         default="Gene GeneFull_Ex50pAS",
     )
+    parser.add_argument(
+        "--soloCBmatchWLtype",
+        help="The same as the argument in STARsolo",
+        default="EditDist_2",
+    )
+
     if sub_program:
         parser.add_argument(
             "--fq1",
