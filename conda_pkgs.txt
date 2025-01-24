@@ -1,6 +1,5 @@
 conda-forge::python=3.9
 conda-forge::gcc
-conda-forge::openjdk=8
 bioconda::star=2.7.11a
 bioconda::subread=2.0.1
 bioconda::samtools=1.16.1
@@ -10,3 +9,4 @@ bioconda::igblast
 bioconda::pysam
 bioconda::gatk4
 bioconda::picard
+bioconda::snpeff

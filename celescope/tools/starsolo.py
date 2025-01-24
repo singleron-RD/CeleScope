@@ -1,3 +1,4 @@
+import os
 import sys
 import subprocess
 from collections import Counter
@@ -146,6 +147,10 @@ class Starsolo(Step):
 
     @utils.add_log
     def gzip_matrix(self):
+        if not os.path.exists(self.filtered_matrix):
+            sys.exit(
+                f"{self.filtered_matrix} not found. This error indicates that StarSolo did not generate the gene expression matrix correctly. The specific cause of this error can usually be found in the log above. A common cause of the error is that the fastq file was truncated due to incomplete download."
+            )
         cmd = f"gzip {self.raw_matrix}/*; gzip {self.filtered_matrix}/*"
         subprocess.check_call(cmd, shell=True)
 

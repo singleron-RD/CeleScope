@@ -198,7 +198,7 @@ def get_read_length(read_list, threshold=0.5):
         length = len(read[0])
         length_dict[length] += 1
     for length in length_dict:
-        length_dict[length] = length_dict[length] / n_read
+        length_dict[length] = length_dict[length] // n_read
 
     fraction = 0
     for length in sorted(length_dict.keys(), reverse=True):

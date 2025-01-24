@@ -17,7 +17,7 @@ class Multi_pathseq(Multi):
             f'{self.outdir_dic[sample]["outs"]}/{sample}_Aligned.sortedByCoord.out.bam'
         )
         cmd = f"{cmd_line} " f"--input_bam {input_bam} "
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+        self.process_cmd(cmd, step, sample, m=100, x=self.args.thread)
 
     def count_pathseq(self, sample):
         step = "count_pathseq"
