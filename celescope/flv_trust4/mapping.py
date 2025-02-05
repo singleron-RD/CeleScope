@@ -26,16 +26,16 @@ class Mapping(Step):
 
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
-
-        if args.species:
-            self.ref = f"{REF_DIR}/{args.species}/IMGT+C.fa"
-        elif args.ref:
-            self.ref = args.ref
-        else:
+        self._chains = CHAIN[args.seqtype]
+        if (not args.species) and (not args.ref):
             raise ValueError("Please provide --ref or --species")
+        if args.species:
+            display_ref = f"{args.species}/bcrtcr.fa"
+        else:
+            display_ref = "/".join(args.ref.split("/")[-2:])
         self.add_metric(
             name="Reference",
-            value="/".join(self.ref.split("/")[-2:]),
+            value=display_ref,
             help_info="Reference used for mapping. If --species is provided, it will be the build-in human or mouse reference.",
         )
 
@@ -43,7 +43,6 @@ class Mapping(Step):
         self._umiRange = args.umiRange
         self._match_fq1 = args.match_fq1
         self._match_fq2 = args.match_fq2
-        self._chains = CHAIN[args.seqtype]
 
         n_extract = len(self._chains) + 1
         self._single_thread = math.ceil(self.thread / n_extract)
@@ -61,10 +60,16 @@ class Mapping(Step):
         cb_range = self._barcodeRange.split(" ")
         umi_range = self._umiRange.split(" ")
 
-        map_index_prefix = ["bcrtcr"] + self._chains
+        if self.args.species:
+            map_index_prefix = ["bcrtcr"] + self._chains
+            map_ref = [
+                f"{REF_DIR}/{self.args.species}/{name}.fa" for name in map_index_prefix
+            ]
+        else:
+            map_index_prefix = ["bcrtcr"]
+            map_ref = [self.args.ref]
         n_map = len(map_index_prefix)
         samples = [self.sample] * n_map
-        map_ref = [self.ref] * n_map
         map_outdirs = [self.outdir] * n_map
         map_fq1 = [self._match_fq1] * n_map
         map_fq2 = [self._match_fq2] * n_map
@@ -122,24 +127,25 @@ class Mapping(Step):
         subprocess.check_call(cmd, shell=True)
 
     def add_metrics(self):
-        n_bcrtcr = utils.get_fastx_read_number(
+        n_total = utils.get_fastx_read_number(
             f"{self.out_prefix}_{CANDIDATE_FQ_SUFFIX}"
         )
         self.add_metric(
             name="Reads Mapped to Any V(D)J genes",
-            value=n_bcrtcr,
+            value=n_total,
             total=self._matched_reads,
             help_info="Fraction of reads that partially or wholly map to any germline V(D)J gene segment",
         )
 
-        for _chain in self._chains:
-            n_chain = utils.get_fastx_read_number(f"{self.out_prefix}_{_chain}.fq")
-            self.add_metric(
-                name=f"Reads Mapped to {_chain}",
-                value=n_chain,
-                total=self._matched_reads,
-                help_info=f"Fraction of reads that map partially or wholly to a germline {_chain} gene segment.",
-            )
+        if self.args.species:
+            for _chain in self._chains:
+                n_chain = utils.get_fastx_read_number(f"{self.out_prefix}_{_chain}.fq")
+                self.add_metric(
+                    name=f"Reads Mapped to {_chain}",
+                    value=n_chain,
+                    total=self._matched_reads,
+                    help_info=f"Fraction of reads that map partially or wholly to a germline {_chain} gene segment.",
+                )
 
     def run(self):
         self.extract_chain_reads()
