@@ -3,13 +3,13 @@
 ```
 multi_flv_trust4 \
     --mapfile ./test.mapfile \
-    --ref human or mouse \
+    --species human or mouse \
     --thread 8 \
     --seqtype BCR \
     --mod shell
 ```
 
-If the species is not human or mouse, there is no need to provide the --species parameter. Instead, provide the --ref parameter. The --ref can be constructed using the [BuildImgtAnnot.pl](https://github.com/liulab-dfci/TRUST4?tab=readme-ov-file#practical-notes) script provided by TRUST4.  
+If the species is not human or mouse, there is no need to provide the `--species` parameter. Instead, provide the `--ref` parameter. The `--ref` can be constructed using the [BuildImgtAnnot.pl](https://github.com/liulab-dfci/TRUST4?tab=readme-ov-file#practical-notes) script provided by TRUST4.  
 For example:  
 `BuildImgtAnnot.pl Oryctolagus cuniculus > rabbit_IMGT+C.fa`
 
