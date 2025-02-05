@@ -91,7 +91,7 @@ class Summarize(Step):
         Step.__init__(self, args, display_title=display_title)
 
         self.seqtype = args.seqtype
-        self.ref = args.ref
+        self.species = args.species
         self.fq2 = args.fq2
         self.diffuseFrac = args.diffuseFrac
         self.assembled_fa = f"{args.assemble_out}/{self.sample}_{ASSEMBLE_SUFFIX}"
@@ -168,7 +168,6 @@ class Summarize(Step):
         target_cell_barcode requires >=2 identified marker genes of T/B cells in top10 marker genes for each cluster.
         Return target_barcodes, expected_target_cell_num.
         """
-        species, cell_type = Summarize.get_cell_species(self.ref, self.seqtype)
 
         with open(f"{TOOLS_DIR}/Immune_marker.json", "r") as f:
             marker_dict = json.load(f)
@@ -186,8 +185,9 @@ class Summarize(Step):
         df_marker_top5["celltype"] = None
 
         target_genes = set(df_marker_top5.gene)
+        cell_type = "T_cells" if self.seqtype == "TCR" else "B_cells"
         for gene in target_genes:
-            if gene in marker_dict[species][cell_type]:
+            if gene in marker_dict[self.species][cell_type]:
                 df_marker_top5.loc[df_marker_top5["gene"] == gene, "celltype"] = (
                     cell_type
                 )
@@ -208,20 +208,6 @@ class Summarize(Step):
             target_barcodes += bc_cluster_dict[cluster]
 
         return target_barcodes, len(target_barcodes)
-
-    @staticmethod
-    def get_cell_species(ref, seqtype):
-        if ref == "GRCm38":
-            species = "mouse"
-        else:
-            species = "human"
-
-        if seqtype == "BCR":
-            target_cell_type = "B_cells"
-        else:
-            target_cell_type = "T_cells"
-
-        return species, target_cell_type
 
     @utils.add_log
     def parse_contig_file(self):
@@ -543,10 +529,9 @@ def get_opts_summarize(parser, sub_program):
         "--seqtype", help="TCR or BCR", choices=["TCR", "BCR"], required=True
     )
     parser.add_argument(
-        "--ref",
-        help="reference name",
-        choices=["hg19", "hg38", "GRCm38", "other"],
-        required=True,
+        "--species",
+        help="human or mouse. If not provided, must specify --ref.",
+        choices=["human", "mouse"],
     )
     parser.add_argument("--coef", help="coef for auto filter", default=5)
     parser.add_argument(

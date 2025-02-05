@@ -1,3 +1,7 @@
+## [2.2.0] - 2025-02-05
+ - Add pathSeq workflow: single-cell 16S.
+ - Enhance flv_trust4 workflow to support species other than human or mouse.
+
 ## [2.1.0] - 2024-09-10
  - Fix numpy version==1.26.0.
  - Bugfix: Wrong delimiter results in empty filter_contig.fasta.

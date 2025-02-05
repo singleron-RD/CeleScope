@@ -27,7 +27,18 @@ class Mapping(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-        self._ref = args.ref
+        if args.species:
+            self.ref = f"{REF_DIR}/{args.species}/IMGT+C.fa"
+        elif args.ref:
+            self.ref = args.ref
+        else:
+            raise ValueError("Please provide --ref or --species")
+        self.add_metric(
+            name="Reference",
+            value="/".join(self.ref.split("/")[-2:]),
+            help_info="Reference used for mapping. If --species is provided, it will be the build-in human or mouse reference.",
+        )
+
         self._barcodeRange = args.barcodeRange
         self._umiRange = args.umiRange
         self._match_fq1 = args.match_fq1
@@ -53,7 +64,7 @@ class Mapping(Step):
         map_index_prefix = ["bcrtcr"] + self._chains
         n_map = len(map_index_prefix)
         samples = [self.sample] * n_map
-        map_ref = [self._ref] * n_map
+        map_ref = [self.ref] * n_map
         map_outdirs = [self.outdir] * n_map
         map_fq1 = [self._match_fq1] * n_map
         map_fq2 = [self._match_fq2] * n_map
@@ -96,7 +107,7 @@ class Mapping(Step):
         """
         cmd = (
             f"fastq-extractor -t {single_thread} "
-            f"-f {REF_DIR}/{ref}/{index_prefix}.fa "
+            f"-f {ref} "
             f"-o {outdir}/{sample}_{index_prefix} "
             f"--barcodeStart {barcodeRange[0]} "
             f"--barcodeEnd {barcodeRange[1]} "
@@ -152,10 +163,13 @@ def get_opts_mapping(parser, sub_program):
         )
 
     parser.add_argument(
+        "--species",
+        help="human or mouse. If not provided, must specify --ref.",
+        choices=["human", "mouse"],
+    )
+    parser.add_argument(
         "--ref",
-        help="reference name",
-        choices=["hg19", "hg38", "GRCm38", "other"],
-        required=True,
+        help="Same as TRUST4 --ref. This file can be created by using perl BuildImgtAnnot.pl Homo_sapien > IMGT+C.fa. https://github.com/liulab-dfci/TRUST4?tab=readme-ov-file#practical-notes",
     )
     parser.add_argument(
         "--seqtype", help="TCR/BCR seq data.", choices=["TCR", "BCR"], required=True

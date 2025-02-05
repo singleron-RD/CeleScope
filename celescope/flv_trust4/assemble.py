@@ -46,7 +46,13 @@ class Assemble(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
-        self.ref = args.ref
+        if args.species:
+            self.ref = f"{REF_DIR}/{args.species}/IMGT+C.fa"
+        elif args.ref:
+            self.ref = args.ref
+        else:
+            raise ValueError("Please provide --ref or --species")
+
         self.seqtype = args.seqtype
         self.barcodeRange = args.barcodeRange
         self.umiRange = args.umiRange
@@ -158,7 +164,7 @@ class Assemble(Step):
     def assemble(ref, outdir, sample, single_thread, trimLevel=1):
         cmd = (
             f"trust4 -t {single_thread} "
-            f"-f {REF_DIR}/{ref}/bcrtcr.fa "
+            f"-f {ref} "
             f"-o {outdir}/{sample} "
             f"-u {outdir}/{sample}.fq "
             f"--barcode {outdir}/{sample}_bc.fa "
@@ -189,7 +195,7 @@ class Assemble(Step):
     @utils.add_log
     def annotate(name, outdir, ref, single_thread):
         cmd = (
-            f"annotator -f {REF_DIR}/{ref}/IMGT+C.fa "
+            f"annotator -f {ref} "
             f"-a {outdir}/{name}_final.out "
             f"-t {single_thread} "
             f"-o {outdir}/{name} "
@@ -306,10 +312,13 @@ def get_opts_assemble(parser, sub_program):
         "--not_split", help="do not split reads into chunks", action="store_true"
     )
     parser.add_argument(
+        "--species",
+        help="human or mouse. If not provided, must specify --ref.",
+        choices=["human", "mouse"],
+    )
+    parser.add_argument(
         "--ref",
-        help="reference name",
-        choices=["hg19", "hg38", "GRCm38", "other"],
-        required=True,
+        help="Same as TRUST4 --ref. This file can be created by using perl BuildImgtAnnot.pl Homo_sapien > IMGT+C.fa. https://github.com/liulab-dfci/TRUST4?tab=readme-ov-file#practical-notes",
     )
     parser.add_argument(
         "--seqtype", help="TCR/BCR seq data.", choices=["TCR", "BCR"], required=True

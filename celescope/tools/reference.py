@@ -174,7 +174,7 @@ class GtfBuilder:
             for i, j in zip(ends[:-1], starts[1:]):
                 if i >= j:
                     sys.stderr.write(
-                        f"Skipping {transcript_id} last exon end {i} next exon start {j}"
+                        f"Skipping {transcript_id} last exon end {i} next exon start {j}\n"
                     )
                     continue
 
