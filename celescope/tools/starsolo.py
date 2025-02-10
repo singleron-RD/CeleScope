@@ -9,6 +9,8 @@ import pysam
 from scipy import interpolate
 import numpy as np
 import math
+from sccore.starsolo import create_v3_pattern_args, create_whitelist_args, create_pattern_args, create_solo_args
+from sccore.parse_protocol import AutoRNA, get_protocol_dict
 
 from celescope.tools.__init__ import (
     PATTERN_DICT,
@@ -34,36 +36,33 @@ MAX_BEAD = 300000
 class Starsolo(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
-        fq1_list = args.fq1.split(",")
-        fq2_list = args.fq2.split(",")
-        fq1_number = len(fq1_list)
-        fq2_number = len(fq2_list)
-        if fq1_number != fq2_number:
-            sys.exit("fastq1 and fastq2 do not have same file number!")
-        self.read_command = "cat"
-        if str(fq1_list[0]).endswith(".gz"):
-            self.read_command = "zcat"
+        self.fq1_list = args.fq1.split(",")
+        self.fq2_list = args.fq2.split(",")
+        if len(self.fq1_list) != len(self.fq2_list):
+            sys.exit("fq1 and fq2 must have same number of files")
+
         if args.chemistry == "auto":
-            ch = Chemistry(args.fq1)
-            chemistry_list = ch.check_chemistry()
-            if len(set(chemistry_list)) != 1:
-                sys.exit("multiple chemistry found!" + str(chemistry_list))
-            chemistry = chemistry_list[0]
+            chemistry, _ = AutoRNA(self.fq1_list).run()
         else:
             chemistry = args.chemistry
         self.chemistry = chemistry
+        protocol_dict = get_protocol_dict()
 
         if chemistry != "customized":
-            if chemistry == "scopeV1":
-                self.whitelist_str = None
+            if 'bc' not in protocol_dict[chemistry]:
+                whitelist_str = ''
             else:
-                self.whitelist_str = " ".join(Chemistry.get_whitelist(chemistry))
-            pattern = PATTERN_DICT[chemistry]
+                whitelist_str = ' '.join(protocol_dict[chemistry]['bc'])
+                pattern = protocol_dict[chemistry]['pattern']
         else:
-            self.whitelist_str = args.whitelist
-            pattern = self.args.pattern
-        self.solo_type, self.cb_str, self.umi_str = self.get_solo_pattern(pattern)
-        self.pattern = pattern
+            whitelist_str = args.whitelist
+            pattern = args.pattern
+
+        self.pattern_dict = protocol_dict[chemistry]['pattern_dict']
+        self.pattern_args = create_pattern_args(pattern) if chemistry != "GEXSCOPE-V3" else create_v3_pattern_args()
+        self.whitelist_args = create_whitelist_args(whitelist_str)
+        self.outSAMattributes = SAM_attributes + self.args.SAM_attributes
+        self.extra_starsolo_args = args.STAR_param
 
         # output files
         self.solo_out_dir = f"{self.outdir}/{self.sample}_Solo.out/"
@@ -76,69 +75,23 @@ class Starsolo(Step):
         # outs
         self.outs = [self.raw_matrix, self.filtered_matrix, bam]
 
-    @staticmethod
-    def get_solo_pattern(pattern) -> Tuple[str, str, str]:
-        """
-        Returns:
-            solo_type
-            cb_str
-            umi_str
-        """
-        pattern_dict = Barcode.parse_pattern(pattern)
-        if len(pattern_dict["U"]) != 1:
-            sys.exit(
-                f"Error: Wrong pattern:{pattern}. \n Solution: fix pattern so that UMI only have 1 position.\n"
-            )
-        ul, ur = pattern_dict["U"][0]
-        umi_len = ur - ul
-
-        if len(pattern_dict["C"]) == 1:
-            solo_type = "CB_UMI_Simple"
-            left, right = pattern_dict["C"][0]
-            cb_start = left + 1
-            cb_len = right - left
-            umi_start = ul + 1
-            cb_str = f"--soloCBstart {cb_start} --soloCBlen {cb_len} "
-            umi_str = f"--soloUMIstart {umi_start} --soloUMIlen {umi_len} "
-        else:
-            solo_type = "CB_UMI_Complex"
-            cb_pos = " ".join(
-                [f"0_{left}_0_{right-1}" for left, right in pattern_dict["C"]]
-            )
-            umi_pos = f"0_{ul}_0_{ur-1}"
-            cb_str = f"--soloCBposition {cb_pos} "
-            umi_str = f"--soloUMIposition {umi_pos} --soloUMIlen {umi_len} "
-        return solo_type, cb_str, umi_str
 
     def run_starsolo(self):
-        """
-        If UMI+CB length is not equal to the barcode read length, specify barcode read length with --soloBarcodeReadLength.
-        To avoid checking of barcode read length, specify soloBarcodeReadLength 0
-        """
-        sa = SAM_attributes + self.args.SAM_attributes
-        cmd = (
-            "STAR \\\n"
-            f"--genomeDir {self.args.genomeDir} \\\n"
-            f"--readFilesIn {self.args.fq2} {self.args.fq1} \\\n"
-            f"--readFilesCommand {self.read_command} \\\n"
-            f"--soloCBwhitelist {self.whitelist_str} \\\n"
-            f"--soloCellFilter {self.args.soloCellFilter} \\\n"
-            f"--outFileNamePrefix {self.out_prefix}_ \\\n"
-            f"--runThreadN {self.thread} \\\n"
-            f"--clip3pAdapterSeq {self.args.adapter_3p} \\\n"
-            f"--outFilterMatchNmin {self.args.outFilterMatchNmin} \\\n"
-            f"--soloFeatures {self.args.soloFeatures} \\\n"
-            f"--outSAMattributes {sa} \\\n"
-            f"--soloType {self.solo_type} \\\n"
-            f"{self.cb_str} \\\n"
-            f"{self.umi_str} \\\n"
-            f"--soloCBmatchWLtype {self.args.soloCBmatchWLtype} \\\n"
-            "--outSAMtype BAM SortedByCoordinate \\\n"
-            "--soloCellReadStats Standard \\\n"
-            "--soloBarcodeReadLength 0 \\\n"
+        cmd = create_solo_args(
+            pattern_args=self.pattern_args,
+            whitelist_args=self.whitelist_args,
+            outFileNamePrefix=self.out_prefix + '_',
+            fq1=self.args.fq1,
+            fq2=self.args.fq2,
+            genomeDir=self.args.genomeDir,
+            soloCellFilter=self.args.soloCellFilter,
+            runThreadN=self.args.thread,
+            clip3pAdapterSeq=self.args.adapter_3p,
+            outFilterMatchNmin=self.args.outFilterMatchNmin,
+            soloFeatures=self.args.soloFeatures,
+            outSAMattributes=self.outSAMattributes,
+            extra_starsolo_args=self.extra_starsolo_args,
         )
-        if self.args.STAR_param:
-            cmd += self.args.STAR_param
         sys.stderr.write(cmd)
         subprocess.check_call(cmd, shell=True)
         cmd = f"chmod -R 755 {self.solo_out_dir}"
@@ -157,7 +110,7 @@ class Starsolo(Step):
     @utils.add_log
     def get_Q30_cb_UMI(self):
         fq1_list = self.args.fq1.split(",")
-        pattern_dict = Barcode.parse_pattern(self.pattern)
+        pattern_dict = self.pattern_dict
         cb_10k, umi_10k, cb_10k_100k, umi_10k_100k = (
             Counter(),
             Counter(),
@@ -170,9 +123,9 @@ class Starsolo(Step):
                 n += 1
                 if n > 10**5:
                     break
-                qual = entry.quality
-                cb_qual = Barcode.get_seq_str_no_exception(qual, pattern_dict["C"])
-                umi_qual = Barcode.get_seq_str_no_exception(qual, pattern_dict["U"])
+                qual:str = entry.quality 
+                cb_qual = "".join([qual[slice] for slice in pattern_dict['C']])
+                umi_qual = "".join([qual[slice] for slice in pattern_dict['U']])
                 if n <= 10**4:
                     cb_10k.update(cb_qual)
                     umi_10k.update(umi_qual)
@@ -193,6 +146,7 @@ class Starsolo(Step):
         ) / float(sum(umi_qual_counter.values()))
         return q30_cb, q30_umi
 
+    
     def run(self):
         self.run_starsolo()
         self.gzip_matrix()
@@ -592,7 +546,7 @@ is higher than or equal to this value.""",
     parser.add_argument(
         "--soloFeatures",
         help="The same as the argument in STARsolo",
-        default="Gene GeneFull_Ex50pAS",
+        default="GeneFull_Ex50pAS Gene",
     )
     parser.add_argument(
         "--soloCBmatchWLtype",

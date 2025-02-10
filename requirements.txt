@@ -18,3 +18,4 @@ pandas==1.4.2
 biopython
 anndata==0.7.6
 kaleido
+sccore
