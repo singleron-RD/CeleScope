@@ -2,14 +2,18 @@ import os
 import sys
 import subprocess
 from collections import Counter
-from typing import Tuple
 
 import pandas as pd
 import pysam
 from scipy import interpolate
 import numpy as np
 import math
-from sccore.starsolo import create_v3_pattern_args, create_whitelist_args, create_pattern_args, create_solo_args
+from sccore.starsolo import (
+    create_v3_pattern_args,
+    create_whitelist_args,
+    create_pattern_args,
+    create_solo_args,
+)
 from sccore.parse_protocol import AutoRNA, get_protocol_dict
 
 from celescope.tools.__init__ import (
@@ -19,7 +23,7 @@ from celescope.tools.__init__ import (
 )
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
-from celescope.tools.barcode import Chemistry, Barcode
+from celescope.tools.barcode import Barcode
 from celescope.tools import utils
 from celescope.tools.make_ref import MakeRef
 from celescope.tools.matrix import CountMatrix
@@ -49,17 +53,21 @@ class Starsolo(Step):
         protocol_dict = get_protocol_dict()
 
         if chemistry != "customized":
-            if 'bc' not in protocol_dict[chemistry]:
-                whitelist_str = ''
+            if "bc" not in protocol_dict[chemistry]:
+                whitelist_str = ""
             else:
-                whitelist_str = ' '.join(protocol_dict[chemistry]['bc'])
-                pattern = protocol_dict[chemistry]['pattern']
+                whitelist_str = " ".join(protocol_dict[chemistry]["bc"])
+                pattern = protocol_dict[chemistry]["pattern"]
         else:
             whitelist_str = args.whitelist
             pattern = args.pattern
 
-        self.pattern_dict = protocol_dict[chemistry]['pattern_dict']
-        self.pattern_args = create_pattern_args(pattern) if chemistry != "GEXSCOPE-V3" else create_v3_pattern_args()
+        self.pattern_dict = protocol_dict[chemistry]["pattern_dict"]
+        self.pattern_args = (
+            create_pattern_args(pattern)
+            if chemistry != "GEXSCOPE-V3"
+            else create_v3_pattern_args()
+        )
         self.whitelist_args = create_whitelist_args(whitelist_str)
         self.outSAMattributes = SAM_attributes + self.args.SAM_attributes
         self.extra_starsolo_args = args.STAR_param
@@ -75,12 +83,11 @@ class Starsolo(Step):
         # outs
         self.outs = [self.raw_matrix, self.filtered_matrix, bam]
 
-
     def run_starsolo(self):
         cmd = create_solo_args(
             pattern_args=self.pattern_args,
             whitelist_args=self.whitelist_args,
-            outFileNamePrefix=self.out_prefix + '_',
+            outFileNamePrefix=self.out_prefix + "_",
             fq1=self.args.fq1,
             fq2=self.args.fq2,
             genomeDir=self.args.genomeDir,
@@ -123,9 +130,9 @@ class Starsolo(Step):
                 n += 1
                 if n > 10**5:
                     break
-                qual:str = entry.quality 
-                cb_qual = "".join([qual[slice] for slice in pattern_dict['C']])
-                umi_qual = "".join([qual[slice] for slice in pattern_dict['U']])
+                qual: str = entry.quality
+                cb_qual = "".join([qual[slice] for slice in pattern_dict["C"]])
+                umi_qual = "".join([qual[slice] for slice in pattern_dict["U"]])
                 if n <= 10**4:
                     cb_10k.update(cb_qual)
                     umi_10k.update(umi_qual)
@@ -146,7 +153,6 @@ class Starsolo(Step):
         ) / float(sum(umi_qual_counter.values()))
         return q30_cb, q30_umi
 
-    
     def run(self):
         self.run_starsolo()
         self.gzip_matrix()
