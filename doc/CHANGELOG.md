@@ -1,3 +1,6 @@
+## [2.2.2] - 2025-02-12
+ - Pin plotly version == 5.24.1 to avoid compatibility issues.
+ 
 ## [2.2.0] - 2025-02-05
  - Add pathSeq workflow: single-cell 16S.
  - Enhance flv_trust4 workflow to support species other than human or mouse.
