@@ -11,7 +11,7 @@ import pysam
 from celescope.tools import utils
 from celescope.tools.__init__ import PATTERN_DICT
 from celescope.tools.step import Step, s_common
-from celescope.tools.barcode import Chemistry, Barcode as Bc
+from celescope.tools.barcode import get_whitelist, Barcode as Bc
 
 
 class Convert(Step):
@@ -34,7 +34,7 @@ class Convert(Step):
             raise ValueError(
                 f"Invalid chemistry {args.chemistry}. chemistry must be one of 5p3p-1 or 5p3p-2"
             )
-        whitelist_files = Chemistry.get_whitelist(args.chemistry)
+        whitelist_files = get_whitelist(args.chemistry)
         self.barcode_set_list, self.barcode_mismatch_list = Bc.parse_whitelist_file(
             whitelist_files, n_pattern=len(self.pattern_dict_5p["C"]), n_mismatch=1
         )

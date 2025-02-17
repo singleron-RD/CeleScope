@@ -1,44 +1,29 @@
 from celescope.tools import utils
 from celescope.__init__ import __VERSION__
 from celescope.tools.__init__ import PATTERN_DICT
-from celescope.tools.barcode import Chemistry
+
 from celescope.tools.step import Step, s_common
 
+from sccore.parse_protocol import AutoRNA
 
-def add_kit_version(chemistry):
-    kit_dict = {
-        "1": "no longer in use",
-        "2": "kit V1",
-        "3": "kit V2",
-    }
-    if chemistry.startswith("scopeV"):
-        s = chemistry.replace("scopeV", "")
-        chem_version = s[0]
-        kit = kit_dict[chem_version]
-        chemistry = f"{chemistry} ({kit})"
 
+def parse_chemistry(chemistry, fq1_list):
+    if chemistry == "auto":
+        return AutoRNA(fq1_list).get_protocol()
     return chemistry
 
 
 class Sample(Step):
     def __init__(self, args):
         Step.__init__(self, args)
-        self.version = __VERSION__
-        self.chemistry = args.chemistry
-        self.wells = args.wells
+        self.fq1_list = args.fq1.split(",")
 
     @utils.add_log
     def run(self):
-        if self.chemistry == "auto":
-            fq1 = self.args.fq1
-            ch = Chemistry(fq1, self.assay)
-            chemistry = ch.check_chemistry()
-            chemistry = ",".join(set(chemistry))
-        else:
-            chemistry = self.chemistry
+        chemistry = parse_chemistry(self.args.chemistry, self.fq1_list)
 
         if chemistry == "bulk_rna":
-            chemistry = f"accuracode{self.wells}"
+            chemistry = f"accuracode{self.args.wells}"
 
         self.add_metric(
             name="Sample ID",
@@ -51,12 +36,11 @@ class Sample(Step):
         self.add_metric(
             name="Chemistry",
             value=chemistry,
-            display=add_kit_version(chemistry),
             help_info='For more information, see <a href="https://github.com/singleron-RD/CeleScope/blob/cbf5df39b74628fbcc1d9265728dcfe86b6989f2/doc/chemistry.md">here</a>',
         )
         self.add_metric(
             name="Software Version",
-            value=self.version,
+            value=__VERSION__,
         )
 
 
