@@ -1,0 +1,1 @@
+python -m doctest celescope/tools/*.py

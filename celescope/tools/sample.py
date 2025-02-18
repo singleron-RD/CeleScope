@@ -4,12 +4,12 @@ from celescope.tools.__init__ import PATTERN_DICT
 
 from celescope.tools.step import Step, s_common
 
-from sccore.parse_protocol import AutoRNA
+from celescope.tools.parse_chemistry import AutoRNA
 
 
 def parse_chemistry(chemistry, fq1_list):
     if chemistry == "auto":
-        return AutoRNA(fq1_list).get_protocol()
+        return AutoRNA(fq1_list).get_chemistry()
     return chemistry
 
 

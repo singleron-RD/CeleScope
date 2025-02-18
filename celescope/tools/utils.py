@@ -13,7 +13,6 @@ from collections import Counter, defaultdict
 from datetime import timedelta
 from functools import wraps
 
-from Bio.Seq import Seq
 import pandas as pd
 import pysam
 
@@ -149,6 +148,16 @@ def read_one_col(file):
     col1 = [item.strip() for item in col1]
     num = len(col1)
     return col1, num
+
+
+def one_col_to_list(file) -> list:
+    """
+    Read file with one column. Strip each line.
+    Returns col_list
+    """
+    df = pd.read_csv(file, header=None)
+    col1 = list(df.iloc[:, 0])
+    return [item.strip() for item in col1]
 
 
 def get_bed_file_path(panel):
@@ -591,13 +600,13 @@ def check_arg_not_none(args, arg_name):
         return False
 
 
-def reverse_complement(seq):
-    """Reverse complementary sequence
-
-    :param original seq
-    :return Reverse complementary sequence
+def reverse_complement(dna: str) -> str:
+    """Returns the reverse complement of a DNA sequence, allowing 'N' bases.
+    >>> reverse_complement("ATCGNTA")
+    'TANCGAT'
     """
-    return str(Seq(seq).reverse_complement())
+    complement = {"A": "T", "T": "A", "C": "G", "G": "C", "N": "N"}
+    return "".join(complement.get(base, "N") for base in reversed(dna))
 
 
 def get_fastx_read_number(fastx_file):

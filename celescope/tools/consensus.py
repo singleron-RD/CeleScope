@@ -205,6 +205,7 @@ def get_read_length(read_list, threshold=0.5):
         fraction += length_dict[length]
         if fraction >= threshold:
             return length
+    return 0
 
 
 @utils.add_log

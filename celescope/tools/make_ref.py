@@ -111,11 +111,11 @@ class MakeRef_STAR(MakeRef):
         Args:
             fasta_size: fasta size in bytes
 
-        >>> Mkref.get_SA(10 ** 6)
+        >>> MakeRef_STAR.get_SA(10 ** 6)
         8
-        >>> Mkref.get_SA(10 ** 5)
+        >>> MakeRef_STAR.get_SA(10 ** 5)
         7
-        >>> Mkref.get_SA(10 ** 50)
+        >>> MakeRef_STAR.get_SA(10 ** 50)
         14
         """
         return min(int(math.log2(fasta_size) / 2 - 1), 14)

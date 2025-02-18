@@ -3,56 +3,51 @@
 2. 读入3p R1,生成3p barcode + UMI
 """
 
-import subprocess
-
-from xopen import xopen
-import pysam
-
 from celescope.tools import utils
-from celescope.tools.__init__ import PATTERN_DICT
 from celescope.tools.step import Step, s_common
-from celescope.tools.barcode import get_whitelist, Barcode as Bc
 
 
 class Convert(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
-        self.fq1_5p = args.fq1_5p.split(",")
+
+
+"""        self.fq1_5p = args.fq1_5p.split(",")
         self.fq1_3p = args.fq1_3p.split(",")
         self.fq2_5p = args.fq2_5p.split(",")
         self.fq2_3p = args.fq2_3p.split(",")
         if args.chemistry == "5p3p-1":
-            self.pattern_dict_5p = Bc.parse_pattern(PATTERN_DICT["rna_5p"])
-            self.pattern_dict_3p = Bc.parse_pattern(PATTERN_DICT["rna_3p"])
+            self.pattern_dict_5p = parse_chemistry.parse_pattern(PATTERN_DICT["rna_5p"])
+            self.pattern_dict_3p = parse_chemistry.parse_pattern(PATTERN_DICT["rna_3p"])
         elif args.chemistry == "5p3p-2":
-            self.pattern_dict_5p = Bc.parse_pattern(PATTERN_DICT["rna_5p.1"])
-            self.pattern_dict_3p = Bc.parse_pattern(PATTERN_DICT["rna_3p.1"])
+            self.pattern_dict_5p = parse_chemistry.parse_pattern(PATTERN_DICT["rna_5p.1"])
+            self.pattern_dict_3p = parse_chemistry.parse_pattern(PATTERN_DICT["rna_3p.1"])
         elif args.chemistry == "5p3p-3":
-            self.pattern_dict_5p = Bc.parse_pattern(PATTERN_DICT["rna_5p.2"])
-            self.pattern_dict_3p = Bc.parse_pattern(PATTERN_DICT["rna_3p.2"])
+            self.pattern_dict_5p = parse_chemistry.parse_pattern(PATTERN_DICT["rna_5p.2"])
+            self.pattern_dict_3p = parse_chemistry.parse_pattern(PATTERN_DICT["rna_3p.2"])
         else:
             raise ValueError(
                 f"Invalid chemistry {args.chemistry}. chemistry must be one of 5p3p-1 or 5p3p-2"
             )
         whitelist_files = get_whitelist(args.chemistry)
-        self.barcode_set_list, self.barcode_mismatch_list = Bc.parse_whitelist_file(
+        self.barcode_set_list, self.barcode_mismatch_list = parse_chemistry.parse_whitelist_file(
             whitelist_files, n_pattern=len(self.pattern_dict_5p["C"]), n_mismatch=1
         )
 
     def convert_5p_R1(self, seq1):
-        # convert 5p R1 to 3p bc
-        seq_list = Bc.get_seq_list(seq1, self.pattern_dict_5p, "C")
+        # convert 5p R1 to 3p parse_chemistry
+        seq_list = parse_chemistry.get_seq_list(seq1, self.pattern_dict_5p, "C")
         seq_list = [utils.reverse_complement(seq) for seq in seq_list[::-1]]
-        bool_valid, bool_corrected, corrected_seq_list = Bc.check_seq_mismatch(
+        bool_valid, bool_corrected, corrected_seq_list = parse_chemistry.check_seq_mismatch(
             seq_list, self.barcode_set_list, self.barcode_mismatch_list
         )
-        umi = Bc.get_seq_str(seq1, self.pattern_dict_5p["U"])
+        umi = parse_chemistry.get_seq_str(seq1, self.pattern_dict_5p["U"])
         umi = utils.reverse_complement(umi)
         if bool_valid:
-            bc = "".join(corrected_seq_list)
+            parse_chemistry = "".join(corrected_seq_list)
         else:
-            bc = "".join(seq_list)
-        return bc, umi
+            parse_chemistry = "".join(seq_list)
+        return parse_chemistry, umi
 
     def write_3p(self):
         for i, (fn1, fn2) in enumerate(zip(self.fq1_3p, self.fq2_3p), start=1):
@@ -62,12 +57,12 @@ class Convert(Step):
             with pysam.FastxFile(fn1, persist=False) as fq:
                 for entry1 in fq:
                     header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
-                    bc = Bc.get_seq_str(seq1, self.pattern_dict_3p["C"])
-                    umi = Bc.get_seq_str(seq1, self.pattern_dict_3p["U"])
-                    bc_qual = Bc.get_seq_str(qual1, self.pattern_dict_3p["C"])
-                    umi_qual = Bc.get_seq_str(qual1, self.pattern_dict_3p["U"])
+                    parse_chemistry = parse_chemistry.get_seq_str(seq1, self.pattern_dict_3p["C"])
+                    umi = parse_chemistry.get_seq_str(seq1, self.pattern_dict_3p["U"])
+                    parse_chemistry_qual = parse_chemistry.get_seq_str(qual1, self.pattern_dict_3p["C"])
+                    umi_qual = parse_chemistry.get_seq_str(qual1, self.pattern_dict_3p["U"])
                     fh_3p.write(
-                        "@{}\n{}\n+\n{}\n".format(header1, bc + umi, bc_qual + umi_qual)
+                        "@{}\n{}\n+\n{}\n".format(header1, parse_chemistry + umi, parse_chemistry_qual + umi_qual)
                     )
             cmd = f"ln -s -f {fn2} {out_fn2}"
             subprocess.check_call(cmd, shell=True)
@@ -81,11 +76,11 @@ class Convert(Step):
             with pysam.FastxFile(fn1, persist=False) as fq:
                 for entry1 in fq:
                     header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
-                    bc, umi = self.convert_5p_R1(seq1)
-                    bc_qual = Bc.get_seq_str(qual1, self.pattern_dict_5p["C"])
-                    umi_qual = Bc.get_seq_str(qual1, self.pattern_dict_5p["U"])
+                    parse_chemistry, umi = self.convert_5p_R1(seq1)
+                    parse_chemistry_qual = parse_chemistry.get_seq_str(qual1, self.pattern_dict_5p["C"])
+                    umi_qual = parse_chemistry.get_seq_str(qual1, self.pattern_dict_5p["U"])
                     fh_5p_1.write(
-                        "@{}\n{}\n+\n{}\n".format(header1, bc + umi, bc_qual + umi_qual)
+                        "@{}\n{}\n+\n{}\n".format(header1, parse_chemistry + umi, parse_chemistry_qual + umi_qual)
                     )
             fh_5p_1.close()
             with pysam.FastxFile(fn2, persist=False) as fq:
@@ -99,6 +94,7 @@ class Convert(Step):
     def run(self):
         self.write_3p()
         self.write_5p()
+"""
 
 
 @utils.add_log

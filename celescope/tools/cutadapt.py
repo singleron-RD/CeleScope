@@ -34,15 +34,6 @@ def get_cutadapt_cmd(args, input_file, output_file):
 
 
 class Cutadapt(Step):
-    """
-    ## Features
-    - Trim poly A tails and user-provided adapters in R2 reads with cutadapt.
-
-    ## Output
-    - `cutadapt.log` Cutadapt output log file.
-    - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
-    """
-
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 

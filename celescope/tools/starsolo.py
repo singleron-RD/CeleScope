@@ -8,16 +8,10 @@ import pysam
 from scipy import interpolate
 import numpy as np
 import math
-from sccore.starsolo import (
-    create_v3_pattern_args,
-    create_whitelist_args,
-    create_pattern_args,
-    create_solo_args,
-)
-from sccore.parse_protocol import AutoRNA, get_protocol_dict
-
+import celescope.tools.parse_chemistry as parse_chemistry
+from celescope.chemistry_dict import chemistry_dict
+from typing import Union
 from celescope.tools.__init__ import (
-    PATTERN_DICT,
     FILTERED_MATRIX_DIR_SUFFIX,
     COUNTS_FILE_NAME,
 )
@@ -37,6 +31,108 @@ MIN_BEAD = 100000
 MAX_BEAD = 300000
 
 
+def create_pattern_args(pattern: str) -> str:
+    """Create starsolo args relate to pattern"""
+    pattern_dict = parse_chemistry.parse_pattern(pattern)
+    if len(pattern_dict["U"]) != 1:
+        raise ValueError(
+            f"Error: Wrong pattern:{pattern}. \n Solution: fix pattern so that UMI only have 1 position.\n"
+        )
+    ul = pattern_dict["U"][0].start
+    ur = pattern_dict["U"][0].stop
+    umi_len = ur - ul
+
+    if len(pattern_dict["C"]) == 1:
+        solo_type = "CB_UMI_Simple"
+        start, stop = pattern_dict["C"][0].start, pattern_dict["C"][0].stop
+        cb_start = start + 1
+        cb_len = stop - start
+        umi_start = ul + 1
+        cb_str = (
+            f"--soloCBstart {cb_start} --soloCBlen {cb_len} --soloCBmatchWLtype 1MM "
+        )
+        umi_str = f"--soloUMIstart {umi_start} --soloUMIlen {umi_len} "
+    else:
+        solo_type = "CB_UMI_Complex"
+        cb_pos = " ".join([f"0_{x.start}_0_{x.stop-1}" for x in pattern_dict["C"]])
+        umi_pos = f"0_{ul}_0_{ur-1}"
+        cb_str = f"--soloCBposition {cb_pos} --soloCBmatchWLtype EditDist_2 "
+        umi_str = f"--soloUMIposition {umi_pos} --soloUMIlen {umi_len} "
+
+    return " ".join([f"--soloType {solo_type} ", cb_str, umi_str])
+
+
+def create_v3_pattern_args() -> str:
+    """GEXSCOPE-V3 has a 0-3 bases offset at the begining."""
+    linker1 = "ACGATG"
+    linker2 = "CATAGT"
+    bc = "N" * 9
+    linker_len = 6
+    bc2_start = 9 + linker_len
+    pattern_args = (
+        "--soloType CB_UMI_Complex "
+        f"--soloCBposition 2_0_2_8 2_{bc2_start}_2_{bc2_start+8} 3_1_3_9 "
+        "--soloUMIposition 3_10_3_21 "
+        f"--soloAdapterSequence {bc}{linker1}{bc}{linker2} "
+        "--soloAdapterMismatchesNmax 1 "
+        "--soloCBmatchWLtype EditDist_2 "
+    )
+    return pattern_args
+
+
+def create_whitelist_args(whitelist_str) -> str:
+    if not whitelist_str:
+        res = "None"
+    else:
+        res = whitelist_str.strip()
+        # nextflow copy remote file to current folder, so only keep file name.
+        if res.startswith("http"):
+            res = res.split("/")[-1]
+        if res.endswith(".gz"):
+            res = f"<(gzip -cdf {res})"
+    res = f" --soloCBwhitelist {res} "
+    return res
+
+
+def create_solo_args(
+    pattern_args: str,
+    whitelist_args: str,
+    outFileNamePrefix: str,
+    fq1: str,
+    fq2: str,
+    genomeDir: str,
+    soloCellFilter: str,
+    runThreadN: Union[str, int],
+    clip3pAdapterSeq: str,
+    outFilterMatchNmin: Union[str, int],
+    soloFeatures: str,
+    outSAMattributes: str,
+    extra_starsolo_args: str,
+) -> str:
+    """Create all starsolo args"""
+    read_command = "zcat" if fq1.strip().endswith(".gz") else "cat"
+    cmd = (
+        "STAR \\\n"
+        f"{pattern_args} \\\n"
+        f"{whitelist_args} \\\n"
+        f"--outFileNamePrefix {outFileNamePrefix} \\\n"
+        f"--readFilesIn {fq2} {fq1} \\\n"
+        f"--readFilesCommand {read_command} \\\n"
+        f"--genomeDir {genomeDir} \\\n"
+        f"--soloCellFilter {soloCellFilter} \\\n"
+        f"--runThreadN {runThreadN} \\\n"
+        f"--clip3pAdapterSeq {clip3pAdapterSeq} \\\n"
+        f"--outFilterMatchNmin {outFilterMatchNmin} \\\n"
+        f"--soloFeatures {soloFeatures} \\\n"
+        f"--outSAMattributes {outSAMattributes} \\\n"
+        f"{extra_starsolo_args} \\\n"
+        "--outSAMtype BAM SortedByCoordinate \\\n"
+        "--soloCellReadStats Standard \\\n"
+        "--soloBarcodeReadLength 0 \\\n"
+    )
+    return cmd
+
+
 class Starsolo(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
@@ -46,11 +142,11 @@ class Starsolo(Step):
             sys.exit("fq1 and fq2 must have same number of files")
 
         if args.chemistry == "auto":
-            chemistry, _ = AutoRNA(self.fq1_list).run()
+            chemistry, _ = parse_chemistry.AutoRNA(self.fq1_list).run()
         else:
             chemistry = args.chemistry
         self.chemistry = chemistry
-        protocol_dict = get_protocol_dict()
+        protocol_dict = parse_chemistry.get_chemistry_dict()
 
         if chemistry != "customized":
             if "bc" not in protocol_dict[chemistry]:
@@ -146,10 +242,14 @@ class Starsolo(Step):
             cb_qual_counter = cb_10k_100k
             umi_qual_counter = umi_10k_100k
         q30_cb = sum(
-            [cb_qual_counter[k] for k in cb_qual_counter if k >= Barcode.ord2chr(30)]
+            [cb_qual_counter[k] for k in cb_qual_counter if Barcode.chr_to_int(k) >= 30]
         ) / float(sum(cb_qual_counter.values()))
         q30_umi = sum(
-            [umi_qual_counter[k] for k in umi_qual_counter if k >= Barcode.ord2chr(30)]
+            [
+                umi_qual_counter[k]
+                for k in umi_qual_counter
+                if Barcode.chr_to_int(k) >= 30
+            ]
         ) / float(sum(umi_qual_counter.values()))
         return q30_cb, q30_umi
 
@@ -502,9 +602,8 @@ class Demultiplexing(Step):
 def get_opts_starsolo(parser, sub_program=True):
     parser.add_argument(
         "--chemistry",
-        help="Predefined (pattern, barcode whitelist, linker whitelist) combinations. "
-        + HELP_DICT["chemistry"],
-        choices=list(PATTERN_DICT.keys()),
+        help=HELP_DICT["chemistry"],
+        choices=list(chemistry_dict.keys()),
         default="auto",
     )
     parser.add_argument(

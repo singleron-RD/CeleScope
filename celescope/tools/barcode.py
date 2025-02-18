@@ -1,53 +1,13 @@
-import os
-import glob
-import sys
 import unittest
+from collections import Counter
 
+import pysam
 
+import celescope.tools.parse_chemistry as parse_chemistry
+from celescope.__init__ import HELP_DICT
+from celescope.chemistry_dict import chemistry_dict
 from celescope.tools import utils
-from celescope.tools.__init__ import PATTERN_DICT
-from celescope.__init__ import ROOT_PATH, HELP_DICT
 from celescope.tools.step import Step, s_common
-
-from sccore.parse_protocol import AutoRNA, parse_pattern
-from sccore.extract import Extract
-
-
-def get_whitelist(chemistry):
-    """
-    returns: [bclists]
-    """
-    pattern = PATTERN_DICT[chemistry]
-    pattern_dict = Barcode.parse_pattern(pattern)
-    repeat = len(pattern_dict["C"])
-    root_dir = f"{ROOT_PATH}/data/chemistry/{chemistry}"
-    bclist = f"{root_dir}/bclist"
-    bclist1 = f"{root_dir}/bclist1"
-    if os.path.exists(bclist1):
-        return [f"{root_dir}/bclist{i}" for i in range(1, repeat + 1)]
-    elif os.path.exists(bclist):
-        return [bclist] * repeat
-    else:
-        sys.exit(f"No bclist found for chemistry {chemistry} under {root_dir}")
-
-
-def get_linker_whitelist_file(chemistry, wells=""):
-    """Return (linker file path, whitelist file path)"""
-    try:
-        if chemistry == "bulk_rna":
-            linker_f = None
-            whitelist_f = f"{ROOT_PATH}/data/chemistry/{chemistry}/bclist{wells}"
-        else:
-            linker_f = glob.glob(f"{ROOT_PATH}/data/chemistry/{chemistry}/linker*")[0]
-            whitelist_f = f"{ROOT_PATH}/data/chemistry/{chemistry}/bclist"
-    except IndexError:
-        return None, None
-    return linker_f, whitelist_f
-
-
-def get_protocol_and_dict(assay, fq1_list, chemistry):
-    if assay in ["bulk_rna", "bulk_vdj"]:
-        return assay
 
 
 class Barcode(Step):
@@ -56,24 +16,119 @@ class Barcode(Step):
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
         if args.chemistry == "auto":
-            self.chemistry, self.protocol_dict = AutoRNA(self.fq1_list).run()
+            self.chemistry, self.chemistry_dict = parse_chemistry.AutoRNA(
+                self.fq1_list
+            ).run()
         elif args.chemistry == "customized":
             self.chemistry = "customized"
-            self.protocol_dict = {
-                "pattern_dict": parse_pattern(args.pattern),
+            self.chemistry_dict = {
+                "pattern_dict": parse_chemistry.parse_pattern(args.pattern),
                 "bc": args.whitelist.split(","),
             }
+        else:
+            self.chemistry = args.chemistry
+            self.chemistry_dict = parse_chemistry.get_chemistry_dict()[self.chemistry]
 
-    def run(self):
-        runner = Extract(
-            self.fq1_list,
-            self.fq2_list,
-            self.sample,
-            self.protocol_dict,
-            self.chemistry,
-            self.outdir,
+        self.pattern_dict = self.chemistry_dict["pattern_dict"]
+        self.raw_list, self.mismatch_list = (
+            parse_chemistry.create_mismatch_origin_dicts_from_whitelists(
+                self.chemistry_dict["bc"], 1
+            )
         )
-        runner.run()
+        # v3
+        self.offset_runner = parse_chemistry.AutoRNA(self.fq1_list)
+        # output
+        self.out_fq = f"{self.outdir}/{self.sample}_2.fq"
+
+    def get_bc_umi(self, seq):
+        if self.chemistry == "GEXSCOPE-V3":
+            offset = self.offset_runner.v3_offset(seq)
+            seq = seq[offset:]
+        bc_list = [seq[x] for x in self.pattern_dict["C"]]
+        if self.chemistry == "flv":
+            bc_list = [utils.reverse_complement(bc) for bc in bc_list]
+        valid, corrected, corrected_seq = parse_chemistry.check_seq_mismatch(
+            bc_list, self.raw_list, self.mismatch_list
+        )
+        if not valid:
+            umi = None
+        else:
+            umi = seq[self.pattern_dict["U"][0]]
+        return valid, corrected, corrected_seq, umi
+
+    @utils.add_log
+    def run(self):
+        raw_reads = valid_reads = corrected_reads = 0
+        # quality
+        cb_quality_counter = Counter()
+        umi_quality_counter = Counter()
+
+        with utils.generic_open(self.out_fq, "wt") as out_fh:
+            for fq1, fq2 in zip(self.fq1_list, self.fq2_list):
+                fq1 = pysam.FastxFile(fq1)
+                fq2 = pysam.FastxFile(fq2)
+                for e1, e2 in zip(fq1, fq2):
+                    raw_reads += 1
+                    valid, corrected, corrected_seq, umi = self.get_bc_umi(e1.sequence)
+                    if valid:
+                        valid_reads += 1
+                        if corrected:
+                            corrected_reads += 1
+                        read_name = f"{corrected_seq}:{umi}:{raw_reads}"
+                        out_fh.write(f"@{read_name}\n{e2.sequence}\n+\n{e2.quality}\n")  # type: ignore
+                    cb_quality_counter.update(
+                        "".join([e1.quality[slice] for slice in self.pattern_dict["C"]])
+                    )  # type: ignore
+                    umi_quality_counter.update(
+                        "".join([e1.quality[self.pattern_dict["U"][0]]])
+                    )  # type: ignore
+
+        self.add_metric(
+            name="Raw Reads",
+            value=raw_reads,
+            help_info="total reads from FASTQ files",
+        )
+        self.add_metric(
+            name="Valid Reads",
+            value=valid_reads,
+            total=raw_reads,
+            help_info="reads with correct barcode",
+        )
+        self.add_metric(
+            name="Corrected Reads",
+            value=corrected_reads,
+            total=raw_reads,
+            help_info="Reads with barcodes that are not in the whitelist but are within one Hamming distance of it",
+        )
+        q30_cb = sum(
+            [
+                cb_quality_counter[k]
+                for k in cb_quality_counter
+                if Barcode.chr_to_int(k) >= 30
+            ]
+        ) / float(sum(cb_quality_counter.values()))
+        q30_umi = sum(
+            [
+                umi_quality_counter[k]
+                for k in umi_quality_counter
+                if Barcode.chr_to_int(k) >= 30
+            ]
+        ) / float(sum(umi_quality_counter.values()))
+        self.add_metric(
+            name="Q30 of Barcode",
+            value=f"{round(q30_cb * 100,2)}%",
+            help_info="percent of barcode base pairs with quality scores over Q30",
+        )
+        self.add_metric(
+            name="Q30 of UMI",
+            value=f"{round(q30_umi * 100, 2)}%",
+            help_info="percent of UMI base pairs with quality scores over Q30",
+        )
+
+    @staticmethod
+    def chr_to_int(chr, offset=33):
+        """Convert Phred quality to int"""
+        return ord(chr) - offset
 
 
 @utils.add_log
@@ -85,9 +140,8 @@ def barcode(args):
 def get_opts_barcode(parser, sub_program=True):
     parser.add_argument(
         "--chemistry",
-        help="Predefined (pattern, barcode whitelist, linker whitelist) combinations. "
-        + HELP_DICT["chemistry"],
-        choices=list(PATTERN_DICT.keys()),
+        help=HELP_DICT["chemistry"],
+        choices=list(chemistry_dict.keys()),
         default="auto",
     )
     parser.add_argument(
@@ -103,9 +157,6 @@ def get_opts_barcode(parser, sub_program=True):
         "--whitelist",
         help="Cell barcode whitelist file path, one cell barcode per line.",
     )
-    parser.add_argument(
-        "--wells", help="The AccuraCode wells used (384 or 96).", type=int, default=384
-    )
     if sub_program:
         parser.add_argument(
             "--fq1",
@@ -119,9 +170,6 @@ def get_opts_barcode(parser, sub_program=True):
         )
         parser.add_argument(
             "--match_dir", help="Matched scRNA-seq directory, required for flv_trust4"
-        )
-        parser.add_argument(
-            "--stdout", help="Write output to standard output", action="store_true"
         )
         parser = s_common(parser)
 
