@@ -152,6 +152,23 @@ def get_chemistry_dict():
     return chemistry_dict
 
 
+def get_raw_umi_bc_and_quality(
+    seq: str, quality: str, pattern_dict: dict, reverse_complement=False
+) -> tuple[list, list, str, str]:
+    """
+    Returns:
+        bc_list, umi, bc_quality_list, umi_qual
+    """
+    bc_list = [seq[x] for x in pattern_dict["C"]]
+    bc_quality_list = [quality[x] for x in pattern_dict["C"]]
+    if reverse_complement:
+        bc_list = [utils.reverse_complement(x) for x in bc_list[::-1]]
+        bc_quality_list = bc_quality_list[::-1]
+    umi = seq[pattern_dict["U"][0]]
+    umi_qual = quality[pattern_dict["U"][0]]
+    return bc_list, bc_quality_list, umi, umi_qual
+
+
 class Auto:
     """
     Auto detect singleron chemistrys from R1-read

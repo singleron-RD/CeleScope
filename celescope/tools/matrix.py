@@ -24,7 +24,7 @@ class Features:
         Args:
             gene_id: list of gene id
             gene_name: list of gene name
-            type: ype of features, e.g. [gene, protein]
+            type: type of features, e.g. [gene, protein]
         """
         self.gene_id = list(gene_id)
         if not gene_name:

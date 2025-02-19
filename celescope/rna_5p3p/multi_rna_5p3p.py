@@ -15,12 +15,6 @@ class Multi_rna_5p3p(Multi):
     Work for both single cell RNA-Seq and single nuclei RNA-Seq.
     """
 
-    def sample(self, sample):
-        step = "sample"
-        cmd_line = self.get_cmd_line(step, sample)
-        cmd = f"{cmd_line} "
-        self.process_cmd(cmd, step, sample, m=1, x=1)
-
     def get_5p3p_fq(self, sample):
         arr = self.fq_dict[sample]
         arr["fq1_3p"] = []
@@ -68,7 +62,7 @@ class Multi_rna_5p3p(Multi):
         cmd = (
             f"{cmd_line} "
             f"--fq1 {fq1_str} --fq2 {fq2_str} "
-            f'--soloFeatures "Gene GeneFull_Ex50pAS SJ" '
+            f'--soloFeatures "GeneFull_Ex50pAS Gene SJ" '
         )
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
