@@ -2,7 +2,7 @@ import pandas as pd
 import pysam
 
 from celescope.tools import utils
-from celescope.tools.barcode import Barcode
+from celescope.tools import parse_chemistry
 from celescope.tools.step import Step, s_common
 
 # n_mismatch = 1 if n_tag_barcode > N_TAG_BARCODE_THRESHOLD else 2
@@ -25,41 +25,7 @@ sequence in R2 reads with all tag barcode sequence in barcode_fasta.
 It will assign read to the tag with mismatch < threshold. 
 If no such tag exists, the read is classified as invalid.
 
-You can find the barcode fasta file under `celescope/data/Clindex`
-```
->CLindex_TAG_1
-CGTGTTAGGGCCGAT
->CLindex_TAG_2
-GAGTGGTTGCGCCAT
->CLindex_TAG_3
-AAGTTGCCAAGGGCC
->CLindex_TAG_4
-TAAGAGCCCGGCAAG
->CLindex_TAG_5
-TGACCTGCTTCACGC
->CLindex_TAG_6
-GAGACCCGTGGAATC
->CLindex_TAG_7
-GTTATGCGACCGCGA
->CLindex_TAG_8
-ATACGCAGGGTCCGA
->CLindex_TAG_9
-AGCGGCATTTGGGAC
->CLindex_TAG_10
-TCGCCAGCCAAGTCT
->CLindex_TAG_11
-ACCAATGGCGCATGG
->CLindex_TAG_12
-TCCTCCTAGCAACCC
->CLindex_TAG_13
-GGCCGATACTTCAGC
->CLindex_TAG_14
-CCGTTCGACTTGGTG
->CLindex_TAG_15
-CGCAAGACACTCCAC
->CLindex_TAG_16
-CTGCAACAAGGTCGC
-```
+You can find the example barcode fasta file under `celescope/data/Clindex` or `celescope/data/sweetseq`
 """,
         required=True,
     )
@@ -109,12 +75,12 @@ class Mapping_tag(Step):
         self.barcode_fasta = args.barcode_fasta
 
         # process
-        self.pattern_dict = Barcode.parse_pattern(self.fq_pattern)
+        self.pattern_dict = parse_chemistry.parse_pattern(self.fq_pattern)
 
         self.barcode_dict, self.barcode_length = utils.read_fasta(
             self.barcode_fasta, equal=True
         )
-        len_C = Barcode.get_abbr_len(self.pattern_dict, "C")
+        len_C = sum(x.stop - x.start for x in self.pattern_dict["C"])
         if len_C != self.barcode_length:
             raise ValueError(f"""The length of tag barcode in fq_pattern({len_C}) != 
                 length of tag barcode in barcode_fasta({self.barcode_length})""")
@@ -123,7 +89,7 @@ class Mapping_tag(Step):
             self.linker_dict, self.linker_length = utils.read_fasta(
                 self.linker_fasta, equal=True
             )
-            len_L = Barcode.get_abbr_len(self.pattern_dict, "L")
+            len_L = sum(x.stop - x.start for x in self.pattern_dict["L"])
             if len_L != self.linker_length:
                 raise ValueError(f"""The length of linker in fq_pattern({len_L}) != 
                     length of linker in linker_fasta({self.linker_length})""")
@@ -153,7 +119,9 @@ class Mapping_tag(Step):
         mismatch_dict = {}
         n_mismatch = 1 if len(self.barcode_dict) > N_TAG_BARCODE_THRESHOLD else 2
         for seq_id, seq in self.barcode_dict.items():
-            for mismatch_seq in Barcode.findall_mismatch(seq, n_mismatch=n_mismatch):
+            for mismatch_seq in parse_chemistry.create_mismatch_seqs(
+                seq, max_mismatch=n_mismatch
+            ):
                 mismatch_dict[mismatch_seq] = seq_id
 
         return mismatch_dict
@@ -183,14 +151,10 @@ class Mapping_tag(Step):
                 seq = record.sequence
 
                 if self.linker_length != 0:
-                    seq_linker = Barcode.get_seq_str_no_exception(
-                        seq, self.pattern_dict["L"]
-                    )
+                    seq_linker = "".join(seq[x] for x in self.pattern_dict["L"])
 
                 if self.barcode_dict:
-                    seq_barcode = Barcode.get_seq_str_no_exception(
-                        seq, self.pattern_dict["C"]
-                    )
+                    seq_barcode = "".join(seq[x] for x in self.pattern_dict["C"])
 
                 # check linker
                 if self.linker_length != 0:

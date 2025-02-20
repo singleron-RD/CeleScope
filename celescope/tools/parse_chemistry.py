@@ -337,3 +337,15 @@ class AutoRNA(Auto):
         # check if it is MicroBead
         if seq[16:20] != "TTTT" and seq[22:26] == "TTTT":
             return "GEXSCOPE-MicroBead"
+
+
+@utils.add_log
+def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
+    if assay in ["bulk_vdj"]:
+        return assay
+    elif assay == "flv_trust4":
+        return "flv"
+    elif args_chemistry == "auto":
+        return AutoRNA(fq1_list).get_chemistry()
+    else:
+        return args_chemistry

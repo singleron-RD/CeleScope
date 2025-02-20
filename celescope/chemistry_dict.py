@@ -60,6 +60,22 @@ chemistry_dict = {
         "pattern": "C9C9C9U9",  # converted
         "bc": ["bc1.txt", "bc2.txt", "bc3.txt"],
     },
+    "bulk_vdj": {
+        "pattern": "L18C6U16",
+        "bc": ["bc.txt"],
+    },
+    "bulk_rna-v1-96well": {
+        "pattern": "C9U12",
+        "bc": ["bc.txt"],
+    },
+    "bulk_rna-v1-384well": {
+        "pattern": "C9U12",
+        "bc": ["bc.txt"],
+    },
+    "bulk_rna-v2": {
+        "pattern": "L9C9U12",
+        "bc": ["bc.txt"],
+    },
 }
 
 chemistry_dir = str(resources.files("celescope.data.chemistry"))

@@ -3,25 +3,6 @@ from celescope.tools.multi import Multi
 
 
 class Multi_bulk_rna(Multi):
-    """
-    ## Usage
-    - For default 384 wells:
-    ```
-        multi_bulk_rna\\
-        --mapfile ./bulk_rna.mapfile\\
-        --genomeDir /SGRNJ/Public/Database/genome/homo_mus
-    ```
-    - For 96 wells, set `--wells`:
-    ```
-        multi_bulk_rna\\
-        --mapfile ./bulk_rna.mapfile\\
-        --genomeDir /SGRNJ/Public/Database/genome/homo_mus\\
-        --wells 96
-    ```
-
-    Work for AccuraCode bulk RNA-Seq.
-    """
-
     def count(self, sample):
         step = "count"
         count_detail = (

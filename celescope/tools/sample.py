@@ -4,13 +4,7 @@ from celescope.chemistry_dict import chemistry_dict
 
 from celescope.tools.step import Step, s_common
 
-from celescope.tools.parse_chemistry import AutoRNA
-
-
-def parse_chemistry(chemistry, fq1_list):
-    if chemistry == "auto":
-        return AutoRNA(fq1_list).get_chemistry()
-    return chemistry
+from celescope.tools.parse_chemistry import get_chemistry
 
 
 class Sample(Step):
@@ -20,10 +14,7 @@ class Sample(Step):
 
     @utils.add_log
     def run(self):
-        chemistry = parse_chemistry(self.args.chemistry, self.fq1_list)
-
-        if chemistry == "bulk_rna":
-            chemistry = f"accuracode{self.args.wells}"
+        chemistry = get_chemistry(self.assay, self.args.chemistry, self.fq1_list)
 
         self.add_metric(
             name="Sample ID",

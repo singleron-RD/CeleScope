@@ -11,7 +11,7 @@ Under your working directory, write a shell script `run.sh` as
 multi_bulk_rna\
 	--mapfile ./rna.mapfile\
 	--genomeDir {path to hs_ensembl_99 or mmu_ensembl_99}\
-	--wells {384 or 96, default 384}\
+	--chemistry {bulk_rna-v1-96well | bulk_rna-v1-384well | bulk_rna-v2}
 	--thread 8\
 	--mod shell
 ```

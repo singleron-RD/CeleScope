@@ -9,24 +9,23 @@ from celescope.chemistry_dict import chemistry_dict
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 
+MAX_TRUST4_READ_PER_BARCODE = 80000
+
 
 class Barcode(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title)
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
-        if args.chemistry == "auto":
-            self.chemistry, self.chemistry_dict = parse_chemistry.AutoRNA(
-                self.fq1_list
-            ).run()
-        elif args.chemistry == "customized":
-            self.chemistry = "customized"
+        self.chemistry = parse_chemistry.get_chemistry(
+            self.assay, args.chemistry, self.fq1_list
+        )
+        if self.chemistry == "customized":
             self.chemistry_dict = {
                 "pattern_dict": parse_chemistry.parse_pattern(args.pattern),
                 "bc": args.whitelist.split(","),
             }
         else:
-            self.chemistry = args.chemistry
             self.chemistry_dict = parse_chemistry.get_chemistry_dict()[self.chemistry]
 
         self.pattern_dict = self.chemistry_dict["pattern_dict"]
@@ -38,7 +37,12 @@ class Barcode(Step):
         # v3
         self.offset_runner = parse_chemistry.AutoRNA(self.fq1_list)
         # output
-        self.out_fq = f"{self.outdir}/{self.sample}_2.fq"
+        self.out_fq2 = f"{self.outdir}/{self.sample}_2.fq"
+        if self.chemistry == "flv":
+            self.out_fq1 = f"{self.outdir}/{self.sample}_1.fq"
+            self.match_barcodes = set(
+                utils.get_barcode_from_match_dir(args.match_dir)[0]
+            )
 
     def get_bc_umi(self, seq):
         if self.chemistry == "GEXSCOPE-V3":
@@ -46,7 +50,7 @@ class Barcode(Step):
             seq = seq[offset:]
         bc_list = [seq[x] for x in self.pattern_dict["C"]]
         if self.chemistry == "flv":
-            bc_list = [utils.reverse_complement(bc) for bc in bc_list]
+            bc_list = [utils.reverse_complement(bc) for bc in bc_list[::-1]]
         valid, corrected, corrected_seq = parse_chemistry.check_seq_mismatch(
             bc_list, self.raw_list, self.mismatch_list
         )
@@ -62,8 +66,12 @@ class Barcode(Step):
         # quality
         cb_quality_counter = Counter()
         umi_quality_counter = Counter()
+        if self.chemistry == "flv":
+            out_fh1 = utils.generic_open(self.out_fq1, "wt")
+            bc_read_counter = Counter()
+            match_reads = 0
 
-        with utils.generic_open(self.out_fq, "wt") as out_fh:
+        with utils.generic_open(self.out_fq2, "wt") as out_fh2:
             for fq1, fq2 in zip(self.fq1_list, self.fq2_list):
                 fq1 = pysam.FastxFile(fq1)
                 fq2 = pysam.FastxFile(fq2)
@@ -75,13 +83,27 @@ class Barcode(Step):
                         if corrected:
                             corrected_reads += 1
                         read_name = f"{corrected_seq}:{umi}:{raw_reads}"
-                        out_fh.write(f"@{read_name}\n{e2.sequence}\n+\n{e2.quality}\n")  # type: ignore
+                        out_fh2.write(f"@{read_name}\n{e2.sequence}\n+\n{e2.quality}\n")  # type: ignore
+
+                        if self.chemistry == "flv":
+                            if corrected_seq not in self.match_barcodes:
+                                continue
+                            match_reads += 1
+                            bc_read_counter[corrected_seq] += 1
+                            seq1 = corrected_seq + umi
+                            qual1 = "F" * len(seq1)
+                            if (
+                                bc_read_counter[corrected_seq]
+                                <= MAX_TRUST4_READ_PER_BARCODE
+                            ):
+                                out_fh1.write(utils.fastq_line(read_name, seq1, qual1))
+
                     cb_quality_counter.update(
-                        "".join([e1.quality[slice] for slice in self.pattern_dict["C"]])
-                    )  # type: ignore
+                        "".join([e1.quality[slice] for slice in self.pattern_dict["C"]])  # type: ignore
+                    )
                     umi_quality_counter.update(
-                        "".join([e1.quality[self.pattern_dict["U"][0]]])
-                    )  # type: ignore
+                        "".join([e1.quality[self.pattern_dict["U"][0]]])  # type: ignore
+                    )
 
         self.add_metric(
             name="Raw Reads",
@@ -124,6 +146,20 @@ class Barcode(Step):
             value=f"{round(q30_umi * 100, 2)}%",
             help_info="percent of UMI base pairs with quality scores over Q30",
         )
+
+        if self.assay == "flv_trust4":
+            self.add_metric(
+                name="Valid Matched Reads",
+                value=match_reads,
+                total=valid_reads,
+                help_info="reads match with flv_rna cell barcodes",
+            )
+
+            self.add_metric(
+                name="Matched Barcodes",
+                value=len(bc_read_counter),
+                help_info="barcodes match with flv_rna",
+            )
 
     @staticmethod
     def chr_to_int(chr, offset=33):
