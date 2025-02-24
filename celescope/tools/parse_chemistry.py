@@ -339,6 +339,19 @@ class AutoRNA(Auto):
             return "GEXSCOPE-MicroBead"
 
 
+class AutoBulkRNA(Auto):
+    def __init__(self, fq1_list, max_read=10000):
+        super().__init__(fq1_list, get_chemistry_dict(), max_read)
+
+    def seq_chemistry(self, seq):
+        """
+        Returns: chemistry or None
+        """
+        for chemistry in ["bulk_rna-V1", "bulk_rna-V2", "bulk_rna-bulk_vdj_match"]:
+            if self.is_chemistry(seq, chemistry):
+                return chemistry
+
+
 @utils.add_log
 def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
     if assay in ["bulk_vdj"]:
@@ -346,6 +359,8 @@ def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
     elif assay == "flv_trust4":
         return "flv"
     elif args_chemistry == "auto":
+        if assay == "bulk_rna":
+            return AutoBulkRNA(fq1_list).get_chemistry()
         return AutoRNA(fq1_list).get_chemistry()
     else:
         return args_chemistry

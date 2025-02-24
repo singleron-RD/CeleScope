@@ -51,10 +51,4 @@ def get_opts_sample(parser, sub_program):
         help="chemistry version",
         default="auto",
     )
-    parser.add_argument(
-        "--wells",
-        type=int,
-        help="The AccuraCode wells used (384 or 96), default 384.",
-        default=384,
-    )
     return parser

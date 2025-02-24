@@ -3,14 +3,12 @@ from celescope.tools.multi import Multi
 
 
 class Multi_bulk_rna(Multi):
-    def count(self, sample):
-        step = "count"
-        count_detail = (
-            f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_count_detail.txt'
-        )
+    def starsolo(self, sample):
+        step = "starsolo"
+        arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = f"{cmd_line} " f"--count_detail {count_detail} "
-        self.process_cmd(cmd, step, sample, m=20, x=1)
+        cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
+        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
 
 def main():

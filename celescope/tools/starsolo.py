@@ -48,15 +48,13 @@ def create_pattern_args(pattern: str) -> str:
         cb_start = start + 1
         cb_len = stop - start
         umi_start = ul + 1
-        cb_str = (
-            f"--soloCBstart {cb_start} --soloCBlen {cb_len} --soloCBmatchWLtype 1MM "
-        )
+        cb_str = f"--soloCBstart {cb_start} --soloCBlen {cb_len} "
         umi_str = f"--soloUMIstart {umi_start} --soloUMIlen {umi_len} "
     else:
         solo_type = "CB_UMI_Complex"
         cb_pos = " ".join([f"0_{x.start}_0_{x.stop-1}" for x in pattern_dict["C"]])
         umi_pos = f"0_{ul}_0_{ur-1}"
-        cb_str = f"--soloCBposition {cb_pos} --soloCBmatchWLtype EditDist_2 "
+        cb_str = f"--soloCBposition {cb_pos} "
         umi_str = f"--soloUMIposition {umi_pos} --soloUMIlen {umi_len} "
 
     return " ".join([f"--soloType {solo_type} ", cb_str, umi_str])
@@ -75,7 +73,6 @@ def create_v3_pattern_args() -> str:
         "--soloUMIposition 3_10_3_21 "
         f"--soloAdapterSequence {bc}{linker1}{bc}{linker2} "
         "--soloAdapterMismatchesNmax 1 "
-        "--soloCBmatchWLtype EditDist_2 "
     )
     return pattern_args
 
@@ -107,6 +104,7 @@ def create_solo_args(
     outFilterMatchNmin: Union[str, int],
     soloFeatures: str,
     outSAMattributes: str,
+    soloCBmatchWLtype: str,
     extra_starsolo_args: str,
 ) -> str:
     """Create all starsolo args"""
@@ -125,6 +123,7 @@ def create_solo_args(
         f"--outFilterMatchNmin {outFilterMatchNmin} \\\n"
         f"--soloFeatures {soloFeatures} \\\n"
         f"--outSAMattributes {outSAMattributes} \\\n"
+        f"--soloCBmatchWLtype {soloCBmatchWLtype} \\\n"
         f"{extra_starsolo_args} \\\n"
         "--outSAMtype BAM SortedByCoordinate \\\n"
         "--soloCellReadStats Standard \\\n"
@@ -142,7 +141,7 @@ class Starsolo(Step):
             sys.exit("fq1 and fq2 must have same number of files")
 
         if args.chemistry == "auto":
-            chemistry, _ = parse_chemistry.AutoRNA(self.fq1_list).run()
+            chemistry = parse_chemistry.get_chemistry(self.assay, "auto", self.fq1_list)
         else:
             chemistry = args.chemistry
         self.chemistry = chemistry
@@ -193,6 +192,7 @@ class Starsolo(Step):
             outFilterMatchNmin=self.args.outFilterMatchNmin,
             soloFeatures=self.args.soloFeatures,
             outSAMattributes=self.outSAMattributes,
+            soloCBmatchWLtype=self.args.soloCBmatchWLtype,
             extra_starsolo_args=self.extra_starsolo_args,
         )
         sys.stderr.write(cmd)
@@ -655,8 +655,8 @@ is higher than or equal to this value.""",
     )
     parser.add_argument(
         "--soloCBmatchWLtype",
-        help="The same as the argument in STARsolo",
-        default="EditDist_2",
+        help="The same as the argument in STARsolo. Please note `EditDist 2` only works with `--soloType CB UMI Complex`. ",
+        default="1MM",
     )
 
     if sub_program:

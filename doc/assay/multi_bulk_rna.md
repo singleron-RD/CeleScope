@@ -11,7 +11,6 @@ Under your working directory, write a shell script `run.sh` as
 multi_bulk_rna\
 	--mapfile ./rna.mapfile\
 	--genomeDir {path to hs_ensembl_99 or mmu_ensembl_99}\
-	--chemistry {bulk_rna-v1-96well | bulk_rna-v1-384well | bulk_rna-v2}
 	--thread 8\
 	--mod shell
 ```
@@ -44,11 +43,10 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--mod` Create `sjm`(simple job manager https://github.com/StanfordBioinformatics/SJM) or `shell` scripts. 
 
-`--wells` The AccuraCode wells used (384 or 96), default 384.
 
 After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will be generated.
 
-3. Start the analysis by running:
+1. Start the analysis by running:
 ```
 sh ./shell/{sample}.sh
 ```
