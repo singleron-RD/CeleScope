@@ -31,12 +31,11 @@ MIN_BEAD = 100000
 MAX_BEAD = 300000
 
 
-def create_pattern_args(pattern: str) -> str:
+def create_pattern_args(pattern_dict: dict) -> str:
     """Create starsolo args relate to pattern"""
-    pattern_dict = parse_chemistry.parse_pattern(pattern)
     if len(pattern_dict["U"]) != 1:
         raise ValueError(
-            f"Error: Wrong pattern:{pattern}. \n Solution: fix pattern so that UMI only have 1 position.\n"
+            f"Error: Wrong pattern:{pattern_dict}. \n Solution: fix pattern so that UMI only have 1 position.\n"
         )
     ul = pattern_dict["U"][0].start
     ur = pattern_dict["U"][0].stop
@@ -140,29 +139,19 @@ class Starsolo(Step):
         if len(self.fq1_list) != len(self.fq2_list):
             sys.exit("fq1 and fq2 must have same number of files")
 
-        if args.chemistry == "auto":
-            chemistry = parse_chemistry.get_chemistry(self.assay, "auto", self.fq1_list)
-        else:
-            chemistry = args.chemistry
-        self.chemistry = chemistry
-        protocol_dict = parse_chemistry.get_chemistry_dict()
+        self.chemistry = parse_chemistry.get_chemistry(
+            self.assay, "auto", self.fq1_list
+        )
+        self.pattern_dict, self.bc = parse_chemistry.get_pattern_dict_and_bc(
+            self.chemistry, args.pattern, args.whitelist
+        )
 
-        if chemistry != "customized":
-            if "bc" not in protocol_dict[chemistry]:
-                whitelist_str = ""
-            else:
-                whitelist_str = " ".join(protocol_dict[chemistry]["bc"])
-                pattern = protocol_dict[chemistry]["pattern"]
-        else:
-            whitelist_str = args.whitelist
-            pattern = args.pattern
-
-        self.pattern_dict = protocol_dict[chemistry]["pattern_dict"]
         self.pattern_args = (
-            create_pattern_args(pattern)
-            if chemistry != "GEXSCOPE-V3"
+            create_pattern_args(self.pattern_dict)
+            if self.chemistry != "GEXSCOPE-V3"
             else create_v3_pattern_args()
         )
+        whitelist_str = " ".join(self.bc)
         self.whitelist_args = create_whitelist_args(whitelist_str)
         self.outSAMattributes = SAM_attributes + self.args.SAM_attributes
         self.extra_starsolo_args = args.STAR_param

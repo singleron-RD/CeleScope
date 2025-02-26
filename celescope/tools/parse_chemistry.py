@@ -98,7 +98,7 @@ def create_mismatch_origin_dicts_from_whitelists(
 def check_seq_mismatch(seq_list, raw_list, mismatch_list):
     """
     Returns
-        valid: True if seq in mismatch_list
+        valid: True if seq in mismatch_list or mismatch_list is empty
         corrected: True if seq in mismatch_list but not in raw_list
         res: joined seq
 
@@ -112,7 +112,14 @@ def check_seq_mismatch(seq_list, raw_list, mismatch_list):
     >>> seq_list = ['AAA', 'AAA', 'AAA']
     >>> check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
     (True, False, 'AAA_AAA_AAA')
+
+    >>> seq_list = ['AAA', 'AAA', 'AAA']
+    >>> raw_list, mismatch_list = [], []
+    >>> check_seq_mismatch(seq_list, raw_list, mismatch_list)
+    (True, False, 'AAA_AAA_AAA')
     """
+    if not mismatch_list:
+        return True, False, "_".join(seq_list)
     valid = True
     corrected = False
     res = []
@@ -354,6 +361,7 @@ class AutoBulkRNA(Auto):
 
 @utils.add_log
 def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
+    """Auto detect chemistry. If customized, return 'customized'"""
     if assay in ["bulk_vdj"]:
         return assay
     elif assay == "flv_trust4":
@@ -364,3 +372,17 @@ def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
         return AutoRNA(fq1_list).get_chemistry()
     else:
         return args_chemistry
+
+
+@utils.add_log
+def get_pattern_dict_and_bc(
+    chemistry, pattern: str = "", whitelist: str = ""
+) -> tuple[dict, list]:
+    if chemistry != "customized":
+        chemistry_dict = get_chemistry_dict()
+        pattern_dict = chemistry_dict[chemistry]["pattern_dict"]
+        bc = chemistry_dict[chemistry]["bc"]
+    else:
+        pattern_dict = parse_pattern(pattern)
+        bc = whitelist.split(",")
+    return pattern_dict, bc

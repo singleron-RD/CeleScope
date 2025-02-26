@@ -20,19 +20,12 @@ class Barcode(Step):
         self.chemistry = parse_chemistry.get_chemistry(
             self.assay, args.chemistry, self.fq1_list
         )
-        if self.chemistry == "customized":
-            self.chemistry_dict = {
-                "pattern_dict": parse_chemistry.parse_pattern(args.pattern),
-                "bc": args.whitelist.split(","),
-            }
-        else:
-            self.chemistry_dict = parse_chemistry.get_chemistry_dict()[self.chemistry]
+        self.pattern_dict, self.bc = parse_chemistry.get_pattern_dict_and_bc(
+            self.chemistry, args.pattern, args.whitelist
+        )
 
-        self.pattern_dict = self.chemistry_dict["pattern_dict"]
         self.raw_list, self.mismatch_list = (
-            parse_chemistry.create_mismatch_origin_dicts_from_whitelists(
-                self.chemistry_dict["bc"], 1
-            )
+            parse_chemistry.create_mismatch_origin_dicts_from_whitelists(self.bc, 1)
         )
         # v3
         self.offset_runner = parse_chemistry.AutoRNA(self.fq1_list)
