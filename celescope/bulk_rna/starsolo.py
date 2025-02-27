@@ -76,7 +76,7 @@ def get_opts_starsolo(parser, sub_program=True):
     )
     parser.add_argument(
         "--whitelist",
-        help="Cell barcode whitelist file path, one cell barcode per line.",
+        help="Cell barcode whitelist file path, one cell barcode per line. Multiple whitelist files are seperated by space.",
     )
     parser.add_argument(
         "--adapter_3p",
