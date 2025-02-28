@@ -7,7 +7,10 @@ chemistry_dict = {
     "customized": {
         "pattern": ""  # user defined
     },
-    "GEXSCOPE-MicroBead": {"pattern": "C12U8"},
+    "GEXSCOPE-MicroBead": {
+        "pattern": "C12U8",
+        "bc": [],
+    },
     "GEXSCOPE-V1": {
         "pattern": "C8L16C8L16C8L1U12",
         "bc": ["bc.txt", "bc.txt", "bc.txt"],

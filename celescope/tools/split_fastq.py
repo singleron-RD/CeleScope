@@ -17,7 +17,7 @@ class Split_fastq(Step):
 
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
-        self.barcodes = set(utils.one_col_to_list(args.barcodes))
+        self.barcode_sample = utils.two_col_to_dict(args.barcode_sample)
 
         chemistry = parse_chemistry.get_chemistry(
             self.assay, args.chemistry, self.fq1_list
@@ -32,9 +32,9 @@ class Split_fastq(Step):
     @utils.add_log
     def split(self):
         self.fh_dict = {}
-        for barcode in self.barcodes:
+        for barcode, sample in self.barcode_sample.items():
             self.fh_dict[barcode] = utils.generic_open(
-                f"{self.out_prefix}_{barcode}.fq.gz", "wt"
+                f"{self.outdir}/{sample}.fq.gz", "wt"
             )
 
         for fq1, fq2 in zip(self.fq1_list, self.fq2_list):
@@ -45,7 +45,7 @@ class Split_fastq(Step):
                 valid, corrected, corrected_bc = parse_chemistry.check_seq_mismatch(
                     bc_list, self.raw_list, self.mismatch_list
                 )
-                if valid and corrected_bc in self.barcodes:
+                if valid and corrected_bc in self.barcode_sample:
                     umi = e1.sequence[self.pattern_dict["U"][0]]
                     name = e1.name + UMI_SEPARATOR + umi
                     self.fh_dict[corrected_bc].write(
@@ -80,6 +80,11 @@ def get_opts_split_fastq(parser, sub_program):
     parser.add_argument(
         "--whitelist",
         help="Cell barcode whitelist file path, one cell barcode per line.",
+    )
+    parser.add_argument(
+        "--barcode_sample",
+        help="tsv file of well barcodes and sample names. The first column is well barcodes and the second column is sample names.",
+        required=True,
     )
     if sub_program:
         parser.add_argument(
