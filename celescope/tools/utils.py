@@ -1,27 +1,27 @@
 import glob
 import gzip
 import importlib
+import json
 import logging
 import os
 import re
 import subprocess
+import sys
 import time
 import unittest
-import json
-import sys
-from collections import Counter, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 from datetime import timedelta
 from functools import wraps
 
 import pandas as pd
 import pysam
 
+from celescope.__init__ import ROOT_PATH
 from celescope.tools.__init__ import (
-    FILTERED_MATRIX_DIR_SUFFIX,
     BARCODE_FILE_NAME,
+    FILTERED_MATRIX_DIR_SUFFIX,
     OUTS_DIR,
 )
-from celescope.__init__ import ROOT_PATH
 
 
 def add_log(func):
@@ -158,6 +158,16 @@ def one_col_to_list(file) -> list:
     df = pd.read_csv(file, header=None)
     col1 = list(df.iloc[:, 0])
     return [item.strip() for item in col1]
+
+
+def two_col_to_dict(file):
+    """
+    Read file with two columns.
+    Returns dict
+    """
+    df = pd.read_csv(file, header=None, sep="\t")
+    df = df.dropna()
+    return OrderedDict(zip(df[0], df[1]))
 
 
 def get_bed_file_path(panel):

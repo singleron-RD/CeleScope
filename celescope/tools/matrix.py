@@ -271,3 +271,13 @@ class CountMatrix:
             matrix[barcode_indices[barcode], feature_indices[feature]] = count
 
         return matrix.tocsr()
+
+    def to_df(self, gene_id=True):
+        """
+        Returns:
+            df: pd.DataFrame
+        """
+        index = self.__features.gene_id if gene_id else self.__features.gene_name
+        return pd.DataFrame.sparse.from_spmatrix(
+            self.__matrix, index=index, columns=self.__barcodes
+        )

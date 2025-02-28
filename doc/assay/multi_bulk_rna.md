@@ -11,7 +11,8 @@ Under your working directory, write a shell script `run.sh` as
 multi_bulk_rna\
 	--mapfile ./rna.mapfile\
 	--genomeDir {path to hs_ensembl_99 or mmu_ensembl_99}\
-	--thread 8\
+    --barcode_sample barcode_sample.tsv \
+	--thread 16\
 	--mod shell
 ```
 `--mapfile` Required.  Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -39,6 +40,8 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--genomeDir` Required. The path of the genome directory after running `celescope rna mkref`.
 
+`--barcode_sample` Required. Tsv file of well barcodes and sample names. The first column are well barcodes and the second column are sample names.
+
 `--thread` Threads to use. The recommended setting is 8, and the maximum should not exceed 20.
 
 `--mod` Create `sjm`(simple job manager https://github.com/StanfordBioinformatics/SJM) or `shell` scripts. 
@@ -51,5 +54,11 @@ After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will b
 sh ./shell/{sample}.sh
 ```
 Note that the `./shell/{sample}.sh` must be run under the working directory(You shouldn't run them under the `shell` directory)
+
+## Main Ouput
+
+- outs/*_matrix.tsv.gz: Gene expression UMI matrix, where rows represent gene IDs and columns correspond to samples.
+
+- 02.split_fastq/{sample}_fq.gz: R2 FASTQ files split based on well barcodes. The UMI sequence is appended to the read name, separated by a semicolon.
 
 
