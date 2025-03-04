@@ -23,12 +23,18 @@ from celescope.tools.step import Step, s_common
 SAM_attributes = "NH HI nM AS CR UR CB UB GX GN "
 
 
+def get_well_barcode(
+    bc_file: str,
+) -> dict[int, str]:
+    barcodes = utils.one_col_to_list(bc_file)
+    return {i: x for i, x in enumerate(barcodes, start=1)}
+
+
 def get_barcode_sample(
     bc_file: str,
     well_sample_file: str,
 ) -> dict[str, str]:
-    barcodes = utils.one_col_to_list(bc_file)
-    well_barcode = {i: x for i, x in enumerate(barcodes, start=1)}
+    well_barcode = get_well_barcode(bc_file)
     well_sample = utils.two_col_to_dict(well_sample_file)
     barcode_sample = {
         well_barcode[well]: sample for well, sample in well_sample.items()
@@ -39,6 +45,7 @@ def get_barcode_sample(
 class Starsolo(tools_Starsolo):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
+        self.well_barcode = get_well_barcode(self.bc[0])
         self.barcode_sample = get_barcode_sample(self.bc[0], args.well_sample)
 
         self.tsv_matrix_file = f"{self.out_prefix}_matrix.tsv.gz"
@@ -93,7 +100,7 @@ class Starsolo(tools_Starsolo):
         filtered = self.keep_barcodes()
         self.gzip_matrix()
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
-        return q30_cb, q30_umi, filtered, self.barcode_sample
+        return q30_cb, q30_umi, filtered, self.barcode_sample, self.well_barcode
 
 
 class Cells(Step):
@@ -113,7 +120,7 @@ class Cells(Step):
 
         return n_reads, q30_RNA, saturation
 
-    def run(self, filtered: CountMatrix, barcode_sample: dict):
+    def run(self, filtered: CountMatrix, barcode_sample: dict, well_barcode: dict):
         df_counts = pd.read_csv(self.counts_file, index_col=0, header=0, sep="\t")
         reads_total = df_counts["countedU"].sum()
         bcs = filtered.get_barcodes()
@@ -170,10 +177,13 @@ class Cells(Step):
         df_cells = df_counts[df_counts["mark"] == "CB"]
         df_cells["Sample"] = df_cells.index.map(lambda x: barcode_sample[x])
         df_cells["Genes"] = df_cells.index.map(lambda x: bc_geneNum[x])
-        df_cells = df_cells.loc[:, ["Sample", "UMI", "Genes"]]
+        df_cells["Barcode"] = df_cells.index
+        barcode_well = {v: k for k, v in well_barcode.items()}
+        df_cells["Well"] = df_cells["Barcode"].map(lambda x: barcode_well[x])
+        df_cells = df_cells.loc[:, ["Well", "Sample", "Barcode", "UMI", "Genes"]]
 
         table_dict = self.get_table_dict(
-            title="Metrics per Well",
+            title="Metrics for a Single Well",
             table_id=self.assay,
             df_table=df_cells,
         )
@@ -184,13 +194,13 @@ class Cells(Step):
 
 def starsolo(args):
     with Starsolo(args) as runner:
-        q30_cb, q30_umi, filtered, barcode_sample = runner.run()
+        q30_cb, q30_umi, filtered, barcode_sample, well_barcode = runner.run()
 
     with Mapping(args) as runner:
         valid_reads, corrected = runner.run()
 
     with Cells(args, display_title="Wells") as runner:
-        n_reads, q30_RNA = runner.run(filtered, barcode_sample)
+        n_reads, q30_RNA = runner.run(filtered, barcode_sample, well_barcode)
 
     with Demultiplexing(args) as runner:
         runner.run(valid_reads, n_reads, corrected, q30_cb, q30_umi, q30_RNA)
