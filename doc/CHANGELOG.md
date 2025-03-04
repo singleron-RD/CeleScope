@@ -1,3 +1,6 @@
+## [2.3.0] - 2025-03-04
+ - `bulk_rna` added automatic chemistry detection and FASTQ splitting functionality, replaced featureCounts with STARsolo for quantification, introduced the required `--well_sample` parameter.
+
 ## [2.2.2] - 2025-02-12
  - Pin plotly version == 5.24.1 to avoid compatibility issues.
  
