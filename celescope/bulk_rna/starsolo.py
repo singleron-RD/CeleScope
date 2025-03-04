@@ -61,10 +61,10 @@ class Starsolo(tools_Starsolo):
         barcode_sample = utils.two_col_to_dict(self.args.barcode_sample)
         for barcode in barcode_sample:
             if barcode not in matrix.get_barcodes():
-                barcode_sample.pop(barcode)
                 sys.stderr.write(
                     f"WARNING: {barcode} {barcode_sample[barcode]} not found in raw matrix!\n"
                 )
+                barcode_sample.pop(barcode)
         filtered = matrix.slice_matrix_bc(barcode_sample.keys())
         filtered.to_matrix_dir(self.filtered_matrix)
         samples = [barcode_sample[bc] for bc in filtered.get_barcodes()]
