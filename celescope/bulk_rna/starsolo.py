@@ -81,12 +81,6 @@ class Starsolo(tools_Starsolo):
         """take in raw matrix, only keep barcodes in the input file, and convert barcodes to sample names"""
         matrix = CountMatrix.from_matrix_dir(self.raw_matrix)
 
-        for barcode in self.barcode_sample:
-            if barcode not in matrix.get_barcodes():
-                sys.stderr.write(
-                    f"WARNING: barcode:{barcode} {self.barcode_sample[barcode]} not found in raw matrix!\n"
-                )
-                self.barcode_sample.pop(barcode)
         filtered = matrix.slice_matrix_bc(self.barcode_sample.keys())
         filtered.to_matrix_dir(self.filtered_matrix)
         samples = [self.barcode_sample[bc] for bc in filtered.get_barcodes()]
@@ -135,6 +129,8 @@ class Cells(Step):
 
         df_counts.loc[:, "mark"] = "UB"
         df_counts.loc[bcs, "mark"] = "CB"
+        df_counts.fillna(0, inplace=True)
+        df_counts = df_counts.astype({"UMI": int, "countedU": int})
         df_counts.to_csv(self.counts_file, sep="\t", index=True)
 
         self.add_metric(
@@ -176,7 +172,7 @@ class Cells(Step):
         # table
         df_cells = df_counts[df_counts["mark"] == "CB"]
         df_cells["Sample"] = df_cells.index.map(lambda x: barcode_sample[x])
-        df_cells["Genes"] = df_cells.index.map(lambda x: bc_geneNum[x])
+        df_cells["Genes"] = df_cells.index.map(lambda x: bc_geneNum.get(x, 0))
         df_cells["Barcode"] = df_cells.index
         barcode_well = {v: k for k, v in well_barcode.items()}
         df_cells["Well"] = df_cells["Barcode"].map(lambda x: barcode_well[x])
