@@ -45,9 +45,12 @@ multi_bulk_rna \
 - `--well_sample` (**Required**): A TSV file containing well numbers and sample names of wells.  
   - Column structure:  
     - **1st column**: Well numbers  
-    - **2nd column**: Corresponding sample names 
+    - **2nd column**: Corresponding sample names
+
   - 96 well number(8 * 12)
+  
   ![](../images/96_well_number.png)
+
   - 384 well number(16 * 24), only used in `bulk_rna-V1`.
   - Example
   ```tsv
