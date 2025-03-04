@@ -10,7 +10,7 @@ In your working directory, create a shell script named `run.sh` with the followi
 multi_bulk_rna \
     --mapfile ./rna.mapfile \
     --genomeDir {path to hs_ensembl_99 or mmu_ensembl_99} \
-    --barcode_sample barcode_sample.tsv \
+    --well_sample well_sample.tsv \
     --thread 16 \
     --mod shell
 ```  
@@ -42,10 +42,22 @@ multi_bulk_rna \
 
 - `--genomeDir` (**Required**): Path to the genome directory created using `celescope rna mkref`.  
 
-- `--barcode_sample` (**Required**): A TSV file containing well barcodes and sample names of wells.  
-  - **Column structure:**  
-    - **1st column**: Well barcodes  
-    - **2nd column**: Corresponding sample names  
+- `--well_sample` (**Required**): A TSV file containing well numbers and sample names of wells.  
+  - Column structure:  
+    - **1st column**: Well numbers  
+    - **2nd column**: Corresponding sample names 
+  - 96 well number(8 * 12)
+  ![](../images/96_well_number.png)
+  - 384 well number(16 * 24), only used in `bulk_rna-V1`.
+  - Example
+  ```tsv
+  1 control1
+  2 control2
+  3 treatment1
+  4 treatment2
+  ...
+  ```
+
 - `--thread`: Number of threads to use (maximum: 20).  
 - `--mod`: Specifies the script format:  
   - `shell` bash script

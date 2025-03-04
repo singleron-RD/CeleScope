@@ -6,6 +6,7 @@ import celescope.tools.parse_chemistry as parse_chemistry
 import pysam
 from celescope.chemistry_dict import chemistry_dict
 from celescope.__init__ import HELP_DICT
+from celescope.bulk_rna.starsolo import get_barcode_sample
 
 
 UMI_SEPARATOR = ":"
@@ -17,7 +18,6 @@ class Split_fastq(Step):
 
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
-        self.barcode_sample = utils.two_col_to_dict(args.barcode_sample)
 
         chemistry = parse_chemistry.get_chemistry(
             self.assay, args.chemistry, self.fq1_list
@@ -28,6 +28,8 @@ class Split_fastq(Step):
         self.raw_list, self.mismatch_list = (
             parse_chemistry.create_mismatch_origin_dicts_from_whitelists(bc, 1)
         )
+
+        self.barcode_sample = get_barcode_sample(bc[0], args.well_sample)
 
     @utils.add_log
     def split(self):
@@ -82,8 +84,8 @@ def get_opts_split_fastq(parser, sub_program):
         help="Cell barcode whitelist file path, one cell barcode per line.",
     )
     parser.add_argument(
-        "--barcode_sample",
-        help="tsv file of well barcodes and sample names. The first column is well barcodes and the second column is sample names.",
+        "--well_sample",
+        help="tsv file of well numbers and sample names. The first column is well numbers and the second column is sample names.",
         required=True,
     )
     if sub_program:
