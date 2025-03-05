@@ -1,5 +1,6 @@
 """Split fastq file according to barcode. Append UMI to read name with umi_separator semicolon ':'"""
 
+import io
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 import celescope.tools.parse_chemistry as parse_chemistry
@@ -35,8 +36,11 @@ class Split_fastq(Step):
     def split(self):
         self.fh_dict = {}
         for barcode, sample in self.barcode_sample.items():
-            self.fh_dict[barcode] = utils.generic_open(
-                f"{self.outdir}/{sample}.fq.gz", "wt"
+            file_obj = utils.generic_open(
+                f"{self.outdir}/{sample}.fq.gz", "wb", compresslevel=1
+            )
+            self.fh_dict[barcode] = io.BufferedWriter(
+                file_obj, buffer_size=16 * 1024 * 1024
             )
 
         for fq1, fq2 in zip(self.fq1_list, self.fq2_list):
@@ -51,7 +55,7 @@ class Split_fastq(Step):
                     umi = e1.sequence[self.pattern_dict["U"][0]]
                     name = e1.name + UMI_SEPARATOR + umi
                     self.fh_dict[corrected_bc].write(
-                        utils.fastq_line(name, e2.sequence, e2.quality)
+                        utils.fastq_line(name, e2.sequence, e2.quality).encode()
                     )
 
     def run(self):
