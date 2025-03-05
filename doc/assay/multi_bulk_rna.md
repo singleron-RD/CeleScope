@@ -50,7 +50,7 @@ multi_bulk_rna \
 
   **96 well number(8 * 12)**
   
-  ![](../images/96_well_number.png)
+  ![](../images/96-well.png)
 
   **384 well number(16 * 24), only used in `bulk_rna-V1`**
   
