@@ -1,4 +1,4 @@
-## [] - unreleased
+## [2.3.1] - 2025-03-06
  - Improve the split_fastq speed of `bulk_rna`.
 
 ## [2.3.0] - 2025-03-04
