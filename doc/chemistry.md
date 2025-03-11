@@ -28,5 +28,5 @@ For example, in the pattern:
 - The next **16 bp** is a **linker**.  
 - Then, another **8 bp** of **cell barcode**, and so on.  
 
-> Note
+> [!NOTE] 
 > To maintain sequencing base balance, `GEXSCOPE-V3` includes an additional **0–3 bp** sequence before the first barcode segment.  
