@@ -6,9 +6,6 @@ from collections import defaultdict
 
 
 def load_barcodes(barcode_file):
-    """
-    读取 barcode.gz 文件，返回一个包含所有 barcodes 的集合
-    """
     barcodes = set()
     with gzip.open(barcode_file, "rt") as f:
         for line in f:
@@ -17,9 +14,6 @@ def load_barcodes(barcode_file):
 
 
 def split_fastq_by_bc(input_fastq, barcode_file, output_dir):
-    """
-    读取 FASTQ 文件，并根据指定的 barcode 文件拆分 reads，只输出符合条件的条形码
-    """
     os.makedirs(output_dir, exist_ok=True)  # 确保输出目录存在
     valid_barcodes = load_barcodes(barcode_file)  # 读取 barcodes
     print(f"Loaded {len(valid_barcodes)} barcodes from {barcode_file}")
@@ -49,7 +43,7 @@ def split_fastq_by_bc(input_fastq, barcode_file, output_dir):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Split FASTQ file based on barcode (BC) in read names using pysam"
+        description="Split FASTQ file based on barcode (BC) in read names"
     )
     parser.add_argument(
         "-i", "--input", required=True, help="Input FASTQ file (can be gzipped)"
