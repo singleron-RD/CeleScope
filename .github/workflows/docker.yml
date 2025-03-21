@@ -15,7 +15,7 @@ jobs:
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
-          image: sccore
+          image: celescope
           tags: ${{ github.event.release.tag_name }}
           containerfiles: Dockerfile
 
