@@ -1,0 +1,35 @@
+name: Build and Push Image
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build and push image
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Image
+        id: build-image
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: sccore
+          tags: ${{ github.event.release.tag_name }}
+          containerfiles: Dockerfile
+
+      # Podman Login action (https://github.com/redhat-actions/podman-login) also be used to log in,
+      # in which case 'username' and 'password' can be omitted.
+      - name: Push To quay.io
+        id: push-to-quay
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: quay.io/singleron-rd
+          username: singleron-rd
+          password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Print image url
+        run: echo "Image pushed to ${{ steps.push-to-quay.outputs.registry-paths }}"
