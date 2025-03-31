@@ -140,7 +140,7 @@ class Starsolo(Step):
             sys.exit("fq1 and fq2 must have same number of files")
 
         self.chemistry = parse_chemistry.get_chemistry(
-            self.assay, "auto", self.fq1_list
+            self.assay, args.chemistry, self.fq1_list
         )
         self.pattern_dict, self.bc = parse_chemistry.get_pattern_dict_and_bc(
             self.chemistry, args.pattern, args.whitelist
