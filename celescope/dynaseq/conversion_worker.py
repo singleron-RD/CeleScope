@@ -1,5 +1,4 @@
 import subprocess
-import os
 import pysam
 import pandas as pd
 from collections import defaultdict
@@ -7,6 +6,7 @@ from collections import defaultdict
 
 def createTag(d):
     return "".join(["".join(key) + str(d[key]) + ";" for key in d.keys()])[:-1]
+
 
 def convInRead(read, qual=20):
     specific_conversions = {}
@@ -42,7 +42,10 @@ def convInRead(read, qual=20):
         for pair in read.get_aligned_pairs(with_seq=True):
             try:
                 if pair[0] is not None and pair[1] is not None and pair[2] is not None:
-                    if str(pair[2]).islower() and not read.query_qualities[pair[0]] < qual:
+                    if (
+                        str(pair[2]).islower()
+                        and not read.query_qualities[pair[0]] < qual
+                    ):
                         specific_conversions[(pair[2], read.seq[pair[0]])] += 1
                         if (pair[2], read.seq[pair[0]]) == ("t", "C"):
                             tC_loc.append(pair[1])
@@ -60,13 +63,16 @@ def convInRead(read, qual=20):
         aG_loc.append(0)
     return SC_tag, TC_tag, tC_loc, aG_loc
 
+
 def process_bam(bamfilename, tmpoutbam, cells, strandedness, qual):
     site_depth = defaultdict(int)
-    
+
     save = pysam.set_verbosity(0)
     bamfile = pysam.AlignmentFile(bamfilename, "rb")
     header = bamfile.header
-    mod_bamfile = pysam.AlignmentFile(tmpoutbam, mode="wb", header=header, check_sq=False)
+    mod_bamfile = pysam.AlignmentFile(
+        tmpoutbam, mode="wb", header=header, check_sq=False
+    )
     pysam.set_verbosity(save)
 
     class GeneError(Exception):
@@ -116,6 +122,7 @@ def process_bam(bamfilename, tmpoutbam, cells, strandedness, qual):
     df.columns = ["convs"]
     return df
 
+
 def count_read_cover_per_conv_pos(outbam, df_conv):
     bamfile = outbam
     df = df_conv
@@ -146,6 +153,7 @@ def count_read_cover_per_conv_pos(outbam, df_conv):
     bam.close()
     return cover_of_pos_with_convs
 
+
 def conv_candidate(df_conv, df_cover):
     df = df_conv
     if df.shape[0] == 0:
@@ -165,6 +173,7 @@ def conv_candidate(df_conv, df_cover):
         df = pd.concat([df, dep], axis=1)
 
     return df
+
 
 def conversion_process(args):
     bamfilename, tmpoutbam, cells, strandedness, qual = args
