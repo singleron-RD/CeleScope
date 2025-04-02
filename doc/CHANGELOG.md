@@ -1,24 +1,28 @@
+## [2.4.0] - 2025-04-02
+ - Added: support for `flv_rna-V2` chemistry.
+ - Fixed: "customized" option in chemistry was not working.
+
 ## [2.3.2] - 2025-03-11
- - Fix a bug that `bulk_rna-V2` will be auto-detect as `bulk_rna-V1`.
+ - Fix: `bulk_rna-V2` was auto-detected as `bulk_rna-V1`.
 
 ## [2.3.1] - 2025-03-06
- - Improve the split_fastq speed of `bulk_rna`.
+ - Changed: Improve the split_fastq speed of `bulk_rna`.
 
 ## [2.3.0] - 2025-03-04
- - `bulk_rna` added automatic chemistry detection and FASTQ splitting functionality, replaced featureCounts with STARsolo for quantification, introduced the required `--well_sample` parameter.
+ - Changed: `bulk_rna` added automatic chemistry detection and FASTQ splitting functionality, replaced featureCounts with STARsolo for quantification, introduced the required `--well_sample` parameter.
 
 ## [2.2.2] - 2025-02-12
- - Pin plotly version == 5.24.1 to avoid compatibility issues.
+ - Fixed: Pin plotly version == 5.24.1 to avoid compatibility issues.
  
 ## [2.2.0] - 2025-02-05
- - Add pathSeq workflow: single-cell 16S.
- - Enhance flv_trust4 workflow to support species other than human or mouse.
+ - Added: pathSeq workflow for single-cell 16S.
+ - Added: support for species other than human or mouse in `flv_trust4`.
 
 ## [2.1.0] - 2024-09-10
- - Fix numpy version==1.26.0.
- - Bugfix: Wrong delimiter results in empty filter_contig.fasta.
- - When some read lengths in R1 read are shorter than required, no error is reported.
- - Add support for `rna_5p3p`.
+ - Added: support for `rna_5p3p`.
+ - Fixed: Pin numpy version==1.26.0.
+ - Fixed: Wrong delimiter results in empty filter_contig.fasta.
+ - Changed: When some read lengths in R1 read are shorter than required, no error is reported.
 
 ## [2.0.7] - 2023-12-01
  ### `rna` and `dynaseq`
