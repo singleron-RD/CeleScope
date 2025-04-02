@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "2.3.3"
+__VERSION__ = "2.4.0dev"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
