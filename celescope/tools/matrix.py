@@ -234,9 +234,11 @@ class CountMatrix:
         gene_index, bc_index = self.__matrix.nonzero()
         total_genes = len(set(gene_index))
         bc_gene = defaultdict(set)
-        for gene, bc in zip(gene_index, bc_index):
-            bc_gene[bc].add(gene)
-        return {bc: len(bc_gene[bc]) for bc in bc_gene}, total_genes
+        for gene, bc_i in zip(gene_index, bc_index):
+            bc_gene[bc_i].add(gene)
+        return {
+            self.__barcodes[bc_i]: len(bc_gene[bc_i]) for bc_i in bc_gene
+        }, total_genes
 
     def get_barcodes(self):
         return self.__barcodes
@@ -271,3 +273,13 @@ class CountMatrix:
             matrix[barcode_indices[barcode], feature_indices[feature]] = count
 
         return matrix.tocsr()
+
+    def to_df(self, gene_id=True):
+        """
+        Returns:
+            df: pd.DataFrame
+        """
+        index = self.__features.gene_id if gene_id else self.__features.gene_name
+        return pd.DataFrame.sparse.from_spmatrix(
+            self.__matrix, index=index, columns=self.__barcodes
+        )

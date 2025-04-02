@@ -76,9 +76,11 @@ class Barcode(Step):
                         if corrected:
                             corrected_reads += 1
                         read_name = f"{corrected_seq}:{umi}:{raw_reads}"
-                        out_fh2.write(f"@{read_name}\n{e2.sequence}\n+\n{e2.quality}\n")  # type: ignore
-
-                        if self.chemistry == "flv":
+                        if self.chemistry != "flv":
+                            out_fh2.write(
+                                utils.fastq_line(read_name, e2.sequence, e2.quality)
+                            )  # type: ignore
+                        else:
                             if corrected_seq not in self.match_barcodes:
                                 continue
                             match_reads += 1
@@ -90,6 +92,9 @@ class Barcode(Step):
                                 <= MAX_TRUST4_READ_PER_BARCODE
                             ):
                                 out_fh1.write(utils.fastq_line(read_name, seq1, qual1))
+                                out_fh2.write(
+                                    utils.fastq_line(read_name, e2.sequence, e2.quality)
+                                )  # type: ignore
 
                     cb_quality_counter.update(
                         "".join([e1.quality[slice] for slice in self.pattern_dict["C"]])  # type: ignore

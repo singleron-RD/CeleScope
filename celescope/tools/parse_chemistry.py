@@ -384,5 +384,5 @@ def get_pattern_dict_and_bc(
         bc = chemistry_dict[chemistry]["bc"]
     else:
         pattern_dict = parse_pattern(pattern)
-        bc = whitelist.split(",")
+        bc = whitelist.split(" ")
     return pattern_dict, bc
