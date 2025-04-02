@@ -43,9 +43,10 @@ class Multi_dynaseq(Multi_rna):
     def conversion(self, sample):
         step = "conversion"
         bam = f'{self.outdir_dic[sample]["outs"]}/{sample}_{STARSOLO_BAM_SUFFIX}'
+        star_log = f'{self.outdir_dic[sample]["starsolo"]}/{sample}_Log.final.out'
         cell = f'{self.outdir_dic[sample]["outs"]}/{FILTERED_MATRIX_DIR_SUFFIX}/{BARCODE_FILE_NAME}'
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = f"{cmd_line} " f"--bam {bam} " f"--cell {cell} "
+        cmd = f"{cmd_line} " f"--bam {bam} " f"--cell {cell} " f"--star_log {star_log} "
         self.process_cmd(
             cmd, step, sample, m=self.args.conversionMem, x=self.args.thread
         )
@@ -81,7 +82,7 @@ class Multi_dynaseq(Multi_rna):
             f"--gene {gene} "
         )
         self.process_cmd(
-            cmd, step, sample, m=5 * int(self.args.thread), x=self.args.thread
+            cmd, step, sample, m=self.args.replacementMem, x=self.args.thread
         )
 
 

@@ -1,6 +1,6 @@
 import os
 import re
-import sys
+import glob
 import pandas as pd
 import scanpy as sc
 import pysam
@@ -42,17 +42,17 @@ class Replacement(Step):
         self.outdir = args.outdir
         self.sample = args.sample
         self.thread = int(args.thread)
-        self.inbam = args.bam
         self.bcfile = args.cell
         self.featurefile = args.gene
         self.snp_file = args.bg
         self.tsne = args.tsne
-        self.cellsplit = args.cellsplit
 
         # set
-        self.cell_dict, self.cell_num = utils.barcode_list_stamp(
-            self.bcfile, cut=self.cellsplit
-        )
+        if args.bam:
+            self.inbam = args.bam
+        else:
+            self.inbam = None
+        self.cell_list, self.cell_num = utils.read_one_col(self.bcfile)
         self.features = Features.from_tsv(tsv_file=self.featurefile)
         self.totaldf = pd.DataFrame()
         self.newdf, self.olddf = pd.DataFrame(), pd.DataFrame()
@@ -61,16 +61,15 @@ class Replacement(Step):
             matrix_file,
             var_names="gene_ids",
         )
-        self.cell_list = []
         self.bg = None
 
         # output files
         ## tmp outputdir
-        self.tmp_dir = f"{args.outdir}/tmp"
+        self.tmp_dir = f"{args.outdir}/../tmp/"
         utils.check_mkdir(self.tmp_dir)
         ## final outputs
         self.h5ad = f"{self.out_prefix}.labeled.h5ad"
-        self.detail_txt = f"{self.out_prefix}_labeled_detail.txt"
+        self.detail_txt = f"{self.out_prefix}_labeled_detail.csv"
         self.dir_labeled = f"{self.outdir}/{DYNA_MATRIX_DIR_SUFFIX[0]}"
         self.dir_unlabeled = f"{self.outdir}/{DYNA_MATRIX_DIR_SUFFIX[1]}"
         self.outs = [self.dir_labeled, self.dir_unlabeled, self.h5ad]
@@ -80,7 +79,8 @@ class Replacement(Step):
         # get backgroud snp
         self.bg = self.background_snp()
         # replacement
-        self.run_quant()
+        dfs = self.run_quant()
+        self.labeled(dfs)
         # stat and plot
         self.tor_plot()
         self.add_help()
@@ -89,25 +89,35 @@ class Replacement(Step):
 
     @utils.add_log
     def run_quant(self):
+        # tmp_dir = f"{self.tmp_dir}/2"
+        # utils.check_mkdir(tmp_dir)
         ## set Parallelism para
-        cell_arr = []
-        fetch_arr = [self.inbam] * len(self.cell_dict)
-        snp_list = [self.bg] * len(self.cell_dict)
-        for x in self.cell_dict:
-            cell_arr.append(self.cell_dict[x])
-            self.cell_list.extend(self.cell_dict[x])
+        fetch_arr = glob.glob(f"{self.tmp_dir}/1/*.bam", recursive=False)
+        if len(fetch_arr) == 0:
+            if self.inbam:
+                fetch_arr = [self.inbam]
+            else:
+                raise ValueError(
+                    "No bam detected, please check `../tmp/1` or specific by `--bam`."
+                )
+        snp_list = [self.bg] * len(fetch_arr)
+        cell_arr = [self.cell_list] * len(fetch_arr)
 
         mincpu = min(self.cell_num, self.thread)
         with Pool(mincpu) as pool:
             results = pool.starmap(
                 Replacement.modify_bam, zip(fetch_arr, snp_list, cell_arr)
             )
-        # merge matrix
-        for i in results:
-            self.totaldf = pd.concat([self.totaldf, i])
+        return results
+
+    @utils.add_log
+    def labeled(self, dfs):
+        # merge df
+        df = pd.concat(dfs, ignore_index=True)
+        self.totaldf = df.loc[df.groupby(["Barcode", "geneID", "UMI"])["TC"].idxmax()]
         self.newdf = self.totaldf[self.totaldf["TC"] > 0]
         self.olddf = self.totaldf[self.totaldf["TC"] == 0]
-        self.totaldf.to_csv(self.detail_txt, sep="\t", index=False)
+        self.totaldf.to_csv(self.detail_txt, index=False)
 
         # output
         tmp_newdf = self.newdf.groupby([COLUMN, ROW]).agg({"UMI": "count"})
@@ -150,26 +160,25 @@ class Replacement(Step):
                 ## dedup: select the most TC read per UMI_gene
                 readid = ":".join([cb, ub, gene])
                 if readid not in readdict:
-                    readdict[readid] = [tctag, read, true_tc]
+                    readdict[readid] = tctag
                 else:
-                    if tctag > readdict[readid][0]:
-                        readdict[readid] = [tctag, read, true_tc]
+                    if tctag > readdict[readid]:
+                        readdict[readid] = tctag
 
             except (ValueError, KeyError):
                 continue
         bamfile.close()
 
         ## count df
-        tc_df = pd.DataFrame.from_dict(
-            readdict, orient="index", columns=["TC", "read", "loc"]
-        )
+        if len(readdict) == 0:
+            return pd.DataFrame()
+        tc_df = pd.DataFrame.from_dict(readdict, orient="index", columns=["TC"])
+        tc_df["TC"] = tc_df["TC"].astype("uint8")
         tc_df.reset_index(inplace=True)
         ub_df = tc_df["index"].str.split(":", expand=True)
         ub_df.columns = ["Barcode", "UMI", "geneID"]
-        # ub_df['Barcode'] = [cell] * ub_df.shape[0]
-        outframe = pd.concat([ub_df, tc_df["TC"]], axis=1)
-
-        return outframe
+        tc_df = pd.concat([ub_df, tc_df["TC"]], axis=1)
+        return tc_df
 
     @staticmethod
     def createTag(d):
@@ -202,7 +211,6 @@ class Replacement(Step):
                 df1.set_index("chrpos", inplace=True)
                 for key1 in df1.index.to_list():
                     outdict[key1] = 1
-                # outdict.update(df1.to_dict(orient='index'))
             elif bgfile.endswith(".vcf"):
                 bcf_in = pysam.VariantFile(bgfile)
                 for rec in bcf_in.fetch():
@@ -214,16 +222,9 @@ class Replacement(Step):
                         continue
                 bcf_in.close()
             else:
-                try:
-                    sys.exit(1)
-                except SystemExit:
-                    print(
-                        "Background snp file format cannot be recognized! Only csv or vcf format."
-                    )
-                finally:
-                    print(
-                        "Background snp file format cannot be recognized! Only csv or vcf format."
-                    )
+                raise ValueError(
+                    "Background snp file format cannot be recognized! Only csv or vcf format."
+                )
         return outdict
 
     @utils.add_log
@@ -323,13 +324,20 @@ def get_opts_replacement(parser, sub_program):
         help="For control samples to generate backgroup snp files and skip replacement",
     )
     parser.add_argument(
-        "--cellsplit", default=300, type=int, help="split N cells into a list"
+        "--replacementMem",
+        default=50,
+        type=int,
+        help="Set replacement memory.",
     )
     if sub_program:
         parser.add_argument(
-            "--bam", help="convsrion tagged bam from conversion step", required=True
+            "--bam",
+            help="BAM file from the conversion step (if the temp dir was removed)",
+            required=False,
         )
-        parser.add_argument("--cell", help="barcode cell list", required=True)
+        parser.add_argument(
+            "--cell", help="barcode cell list(from filtered matrix dir)", required=True
+        )
         parser.add_argument(
             "--gene", help="gene list(from filtered matrix dir)", required=True
         )

@@ -45,7 +45,7 @@ Calculate the overall substitution rates in reads.
 
 Quantify unlabeled and labeled RNA.
 
-- `{sample}_labeled_detail.txt`  tab-delimited  file:
+- `{sample}_labeled_detail.csv`  comma-delimited file:
     - Barcode: Cell barcode sequence
     - UMI: UMI sequence
     - geneID: gene ID
@@ -56,17 +56,18 @@ Quantify unlabeled and labeled RNA.
 
 `--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
 
-`--basequalilty` Min base quality of the read sequence.
+`--basequalilty` Min base quality of the read sequence. (20)
 
-`--snp_min_cells` Minimum number of cells to call a variant(>=1 for cell number or <1 for cell fraction).
+`--snp_threshold` SNP threshold filter, greater than snp_threshold will be recognized as snp. (0.5)
 
-`--snp_min_depth` Minimum depth to call a variant.
+`--snp_min_depth` Minimum depth to call a variant. (20)
 
-`--conversionMem` Set conversion memory.
+`--readsplit` Split to have approximately N reads per output file. (1,000,000)
 
 `--all_type_plot` Plot subsititution rate for all conversion type.
 
-`--cellsplit` Split N cells into a list for program parallelism.
-
 `--control` For control samples to generate backgroup snp files and skip replacement.
 
+`--conversionMem` Set conversion memory (G). (5)
+
+`--replacementMem` Set replacement memory (G). (50)
