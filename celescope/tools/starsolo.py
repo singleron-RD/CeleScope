@@ -60,7 +60,11 @@ def create_pattern_args(pattern_dict: dict) -> str:
 
 
 def create_v3_pattern_args() -> str:
-    """GEXSCOPE-V3 has a 0-3 bases offset at the begining."""
+    """Can also be used to create flv_rna-V2
+    https://github.com/alexdobin/STAR/issues/1607#issuecomment-1210096785
+    2: adapter start
+    3: adapter end
+    """
     linker1 = "ACGATG"
     linker2 = "CATAGT"
     bc = "N" * 9
@@ -140,7 +144,7 @@ class Starsolo(Step):
             sys.exit("fq1 and fq2 must have same number of files")
 
         self.chemistry = parse_chemistry.get_chemistry(
-            self.assay, "auto", self.fq1_list
+            self.assay, args.chemistry, self.fq1_list
         )
         self.pattern_dict, self.bc = parse_chemistry.get_pattern_dict_and_bc(
             self.chemistry, args.pattern, args.whitelist
@@ -148,7 +152,7 @@ class Starsolo(Step):
 
         self.pattern_args = (
             create_pattern_args(self.pattern_dict)
-            if self.chemistry != "GEXSCOPE-V3"
+            if self.chemistry not in ("GEXSCOPE-V3", "flv_rna-V2")
             else create_v3_pattern_args()
         )
         whitelist_str = " ".join(self.bc)

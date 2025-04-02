@@ -192,12 +192,9 @@ class Tsne_dropdown_plot(Plotly_plot):
                     marker=dict(
                         size=4,
                         color=self._df[feature],
-                        colorscale=[
-                            [0, "lightgray"],  # Start with light gray
-                            [1, "red"],  # End with red
-                        ],
                         colorbar=dict(title="UMI"),
-                        opacity=0.8,
+                        colorscale=px.colors.sequential.Jet,
+                        opacity=0.9,
                     ),
                     name=feature,
                     hovertext=self._df["hover_text"],  # Text to display when hovering

@@ -12,7 +12,8 @@ multi_bulk_rna \
     --genomeDir {path to hs_ensembl_99 or mmu_ensembl_99} \
     --well_sample well_sample.tsv \
     --thread 16 \
-    --mod shell
+    --mod shell \
+    --steps_run sample,starsolo
 ```  
 
 #### **Parameter Descriptions:**  
@@ -67,6 +68,7 @@ multi_bulk_rna \
 - `--mod`: Specifies the script format:  
   - `shell` bash script
   - `sjm` (for [Simple Job Manager](https://github.com/StanfordBioinformatics/SJM))  
+- `--steps_run` If you need to add the step of splitting FASTQ files for each sample, use `--steps_run sample,starsolo,split_fastq`.
 
 ### **3. Run the analysis**  
 After executing `sh run.sh`, a `shell/` directory will be created, containing `{sample}.sh` scripts.  

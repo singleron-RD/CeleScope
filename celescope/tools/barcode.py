@@ -41,6 +41,9 @@ class Barcode(Step):
         if self.chemistry == "GEXSCOPE-V3":
             offset = self.offset_runner.v3_offset(seq)
             seq = seq[offset:]
+        elif self.chemistry == "flv_rna-V2":
+            offset = self.offset_runner.flv_rna_v2_offset(seq)
+            seq = seq[offset:]
         bc_list = [seq[x] for x in self.pattern_dict["C"]]
         if self.chemistry == "flv":
             bc_list = [utils.reverse_complement(bc) for bc in bc_list[::-1]]

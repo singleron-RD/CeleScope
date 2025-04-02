@@ -78,7 +78,7 @@ def create_mismatch_origin_dict(origin_seqs: list, n_mismatch=1) -> dict[str, st
 def create_mismatch_origin_dicts_from_whitelists(
     whitelists: list, n_mismatch: int = 1
 ) -> tuple[list, list]:
-    """Returns origin whitelist list and mismatch dict list.
+    """Returns raw dict list and mismatch dict list.
 
     >>> whitelists = [os.path.join(chemistry_dir, "GEXSCOPE-V1/bc.txt")]
     >>> raw_list, mismatch_list = create_mismatch_origin_dicts_from_whitelists(whitelists)
@@ -157,6 +157,9 @@ def get_chemistry_dict():
             cur["linker"] = [os.path.join(chemistry_dir, chemistry, x) for x in linker]
         cur["pattern_dict"] = parse_pattern(cur["pattern"])
     return chemistry_dict
+
+
+CHEMISTRY_DICT = get_chemistry_dict()
 
 
 def get_raw_umi_bc_and_quality(
@@ -264,11 +267,17 @@ class Auto:
         return chemistry
 
 
+FLV_RNA_V2_LINKER1 = "ATCCAGCTGCTTGAGATC"
+
+
 class AutoRNA(Auto):
     def __init__(self, fq1_list, max_read=10000):
-        super().__init__(fq1_list, get_chemistry_dict(), max_read)
+        super().__init__(fq1_list, CHEMISTRY_DICT, max_read)
         self.v3_linker_mismatch = create_mismatch_origin_dicts_from_whitelists(
             self.chemistry_dict["GEXSCOPE-V3"]["linker"], 1
+        )
+        self.flv_rna_v2_linker1_mismatch_dict = create_mismatch_origin_dict(
+            [FLV_RNA_V2_LINKER1], 1
         )
 
     def v3_offset(self, seq):
@@ -303,6 +312,28 @@ class AutoRNA(Auto):
                 return offset
         return -1
 
+    def flv_rna_v2_offset(self, seq) -> int:
+        """
+        return -1 if not
+
+        >>> seq = FLV_RNA_V2_LINKER1
+        >>> runner = AutoRNA([], "fake_sample")
+        >>> runner.flv_rna_v2_offset(seq)
+        0
+        >>> seq = "A" + FLV_RNA_V2_LINKER1
+        >>> runner.flv_rna_v2_offset(seq)
+        1
+        >>> seq = "GGGGG" + FLV_RNA_V2_LINKER1
+        >>> runner.flv_rna_v2_offset(seq)
+        -1
+        """
+        max_offset_len = 3 + 1  # allow for extra 1 bases
+        for offset in range(max_offset_len + 1):
+            linker = seq[offset : offset + 18]
+            if linker in self.flv_rna_v2_linker1_mismatch_dict:
+                return offset
+        return -1
+
     def seq_chemistry(self, seq):
         """
         Returns: chemistry or None
@@ -331,6 +362,9 @@ class AutoRNA(Auto):
         if self.v3_offset(seq) != -1:
             return "GEXSCOPE-V3"
 
+        if self.flv_rna_v2_offset(seq) != -1:
+            return "flv_rna-V2"
+
         for chemistry in ["GEXSCOPE-V2", "GEXSCOPE-V1"]:
             if self.is_chemistry(seq, chemistry):
                 if chemistry == "GEXSCOPE-V1":
@@ -348,13 +382,14 @@ class AutoRNA(Auto):
 
 class AutoBulkRNA(Auto):
     def __init__(self, fq1_list, max_read=10000):
-        super().__init__(fq1_list, get_chemistry_dict(), max_read)
+        super().__init__(fq1_list, CHEMISTRY_DICT, max_read)
 
     def seq_chemistry(self, seq):
         """
         Returns: chemistry or None
         """
-        for chemistry in ["bulk_rna-V1", "bulk_rna-V2", "bulk_rna-bulk_vdj_match"]:
+        # V2 9bp linker is ATACGCGGA, which is a valid barcode of V1; so must detect V2 first, otherwise it is a valid V1
+        for chemistry in ["bulk_rna-V2", "bulk_rna-V1", "bulk_rna-bulk_vdj_match"]:
             if self.is_chemistry(seq, chemistry):
                 return chemistry
 

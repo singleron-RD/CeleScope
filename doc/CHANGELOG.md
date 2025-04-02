@@ -1,4 +1,7 @@
-## [] - unreleased
+## [2.3.2] - 2025-03-11
+ - Fix a bug that `bulk_rna-V2` will be auto-detect as `bulk_rna-V1`.
+
+## [2.3.1] - 2025-03-06
  - Improve the split_fastq speed of `bulk_rna`.
 
 ## [2.3.0] - 2025-03-04
