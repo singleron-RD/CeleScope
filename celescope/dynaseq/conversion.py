@@ -134,7 +134,7 @@ class Conversion(Step):
 
         mincpu = min(self.cell_num, self.thread)
         with Pool(mincpu) as pool:
-            results = pool.map(
+            results = pool.starmap(
                 conversion_process,
                 zip(fetch_arr, bam_arr, cell_arr, strand_arr, qual_arr)
             )
