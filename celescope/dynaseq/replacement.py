@@ -48,7 +48,7 @@ class Replacement(Step):
         self.tsne = args.tsne
 
         # set
-        if  args.bam:
+        if args.bam:
             self.inbam = args.bam
         else:
             self.inbam = None
@@ -89,8 +89,8 @@ class Replacement(Step):
 
     @utils.add_log
     def run_quant(self):
-        #tmp_dir = f"{self.tmp_dir}/2"
-        #utils.check_mkdir(tmp_dir)
+        # tmp_dir = f"{self.tmp_dir}/2"
+        # utils.check_mkdir(tmp_dir)
         ## set Parallelism para
         fetch_arr = glob.glob(f"{self.tmp_dir}/1/*.bam", recursive=False)
         if len(fetch_arr) == 0:
@@ -107,9 +107,9 @@ class Replacement(Step):
         with Pool(mincpu) as pool:
             results = pool.starmap(
                 Replacement.modify_bam, zip(fetch_arr, snp_list, cell_arr)
-            )        
+            )
         return results
-    
+
     @utils.add_log
     def labeled(self, dfs):
         # merge df
@@ -172,9 +172,7 @@ class Replacement(Step):
         ## count df
         if len(readdict) == 0:
             return pd.DataFrame()
-        tc_df = pd.DataFrame.from_dict(
-            readdict, orient="index", columns=["TC"]
-        )
+        tc_df = pd.DataFrame.from_dict(readdict, orient="index", columns=["TC"])
         tc_df["TC"] = tc_df["TC"].astype("uint8")
         tc_df.reset_index(inplace=True)
         ub_df = tc_df["index"].str.split(":", expand=True)
@@ -333,7 +331,9 @@ def get_opts_replacement(parser, sub_program):
     )
     if sub_program:
         parser.add_argument(
-            "--bam", help="BAM file from the conversion step (if the temp dir was removed)", required=False
+            "--bam",
+            help="BAM file from the conversion step (if the temp dir was removed)",
+            required=False,
         )
         parser.add_argument(
             "--cell", help="barcode cell list(from filtered matrix dir)", required=True
