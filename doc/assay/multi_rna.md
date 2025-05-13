@@ -86,7 +86,7 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will be generated.
 
-1. Start the analysis by running:
+Start the analysis by running:
 ```
 sh ./shell/{sample}.sh
 ```

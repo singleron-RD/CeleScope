@@ -71,9 +71,7 @@ class Step:
         # metrics index
         self.metric_index = 0
 
-        # important! make outdir before path_dict because path_dict use relative path.
         utils.check_mkdir(self.outdir)
-        utils.check_mkdir(self.outs_dir)
 
         # set
         class_name = self.__class__.__name__
@@ -287,6 +285,8 @@ class Step:
         return table_dict
 
     def _move_files(self):
+        if self.outs:
+            utils.check_mkdir(self.outs_dir)
         for f in self.outs:
             cmd = ""
             if not os.path.exists(f):

@@ -20,7 +20,13 @@ class Multi_rna(Multi):
         arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
         cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+        self.process_cmd(
+            cmd,
+            step,
+            sample,
+            m=int(self.args.limitBAMsortRAM / 1e9),
+            x=self.args.thread,
+        )
 
     def analysis(self, sample):
         step = "analysis"

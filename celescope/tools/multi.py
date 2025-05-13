@@ -303,21 +303,12 @@ job_end
         cmd = f"{cmd_line} " f"--fq {fq} "
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
-    def prep_map(self, sample):
-        step = "prep_map"
-        arr = self.fq_dict[sample]
-        cmd_line = self.get_cmd_line(step, sample)
-        cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
-
     def featureCounts(self, sample):
         step = "featureCounts"
         if "star" in self.STEPS:
             prev = "star"
-        elif "prep_map" in self.STEPS:
-            prev = "prep_map"
         else:
-            sys.exit("To use featureCounts, star or prep must in the steps!")
+            sys.exit("To use featureCounts, star must in the steps!")
         input_bam = f"{self.outdir_dic[sample][prev]}/{sample}_{STAR_BAM_SUFFIX}"
         cmd_line = self.get_cmd_line(step, sample)
         cmd = f"{cmd_line} " f"--input {input_bam} "

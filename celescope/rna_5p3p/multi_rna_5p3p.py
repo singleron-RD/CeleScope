@@ -43,7 +43,7 @@ class Multi_rna_5p3p(Multi):
             f"--fq1_5p {fq1_5p} --fq1_3p {fq1_3p} "
             f"--fq2_5p {fq2_5p} --fq2_3p {fq2_3p} "
         )
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=1)
+        self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def starsolo(self, sample):
         step = "starsolo"
@@ -64,7 +64,13 @@ class Multi_rna_5p3p(Multi):
             f"--fq1 {fq1_str} --fq2 {fq2_str} "
             f'--soloFeatures "GeneFull_Ex50pAS Gene SJ" '
         )
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+        self.process_cmd(
+            cmd,
+            step,
+            sample,
+            m=int(self.args.limitBAMsortRAM / 1e9),
+            x=self.args.thread,
+        )
 
     def analysis(self, sample):
         step = "analysis"

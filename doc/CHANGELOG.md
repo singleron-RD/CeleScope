@@ -1,3 +1,7 @@
+## [2.5.0] - 2025-05-13
+ - Added: BAM splitting functionality and read-level metrics in `bulk_rna`.
+ - Added: `--limitBAMsortRAM` parameter in `starsolo`.
+
 ## [2.4.0] - 2025-04-02
  - Added: support for `flv_rna-V2` chemistry.
  - Fixed: "customized" option in chemistry was not working.

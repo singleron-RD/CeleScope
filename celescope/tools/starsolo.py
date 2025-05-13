@@ -5,9 +5,6 @@ from collections import Counter
 
 import pandas as pd
 import pysam
-from scipy import interpolate
-import numpy as np
-import math
 import celescope.tools.parse_chemistry as parse_chemistry
 from celescope.chemistry_dict import chemistry_dict
 from typing import Union
@@ -108,6 +105,7 @@ def create_solo_args(
     soloFeatures: str,
     outSAMattributes: str,
     soloCBmatchWLtype: str,
+    limitBAMsortRAM: Union[str, int],
     extra_starsolo_args: str,
 ) -> str:
     """Create all starsolo args"""
@@ -127,10 +125,11 @@ def create_solo_args(
         f"--soloFeatures {soloFeatures} \\\n"
         f"--outSAMattributes {outSAMattributes} \\\n"
         f"--soloCBmatchWLtype {soloCBmatchWLtype} \\\n"
-        f"{extra_starsolo_args} \\\n"
+        f"--limitBAMsortRAM {limitBAMsortRAM} \\\n"
         "--outSAMtype BAM SortedByCoordinate \\\n"
         "--soloCellReadStats Standard \\\n"
         "--soloBarcodeReadLength 0 \\\n"
+        f"{extra_starsolo_args} \\\n"
     )
     return cmd
 
@@ -186,6 +185,7 @@ class Starsolo(Step):
             soloFeatures=self.args.soloFeatures,
             outSAMattributes=self.outSAMattributes,
             soloCBmatchWLtype=self.args.soloCBmatchWLtype,
+            limitBAMsortRAM=self.args.limitBAMsortRAM,
             extra_starsolo_args=self.extra_starsolo_args,
         )
         sys.stderr.write(cmd)
@@ -413,138 +413,11 @@ class Cells(Cells_metrics):
         )
         return n_reads, q30_RNA, fraction_reads_in_cells
 
-    def add_curve_metrics(self, chemistry):
-        """
-        Returns:
-            low barcodes
-            loss of cliff
-            loss of knee
-        """
-        df = pd.read_csv(self.counts_file, header=0, sep="\t", index_col=0)
-        total = df.shape[0]
-        _x = list(range(1, total + 1))
-        _x = np.log10(_x)
-        _y = df["UMI"]
-        _y = np.log10(_y + 1)
-        b = interpolate.splrep(_x, _y, s=10)
-        d1 = interpolate.splev(_x, b, der=1)
-        d2 = interpolate.splev(_x, b, der=2)
-
-        def get_d1_min(x1, x2):
-            """
-            x1,x2: start and end bc index of the curve
-            returns: bc_index, minimum d1
-            """
-            i = np.argmin(d1[x1 : x2 + 1]) + x1
-            return i, d1[i]
-
-        def get_knee_point(x1, x2):
-            """
-            cliff point(first knee)
-            returns: bc_index
-            """
-            curvature = d2 / (1 + d1**2) ** 1.5
-            i = np.argmin(curvature[x1 : x2 + 1]) + x1
-            return i
-
-        self.add_metric(
-            name="Total barcodes",
-            value=total,
-            help_info="Total deteced barcodes in whitelist.",
-            show=False,
-        )
-        bc_total = math.inf
-        if chemistry.startswith("scopeV2"):
-            bc_total = 96**3
-        elif chemistry.startswith("scopeV3"):
-            bc_total = 96**3 * 2
-        min_total = bc_total / 2
-        low_barcodes = total < min_total
-        self.add_metric(
-            name="Low total barcodes",
-            value=str(low_barcodes),
-            show=False,
-            help_info="Total number of detected barcodes is lower than expected. This can can be caused by a sample clog.",
-        )
-
-        if total < MAX_BEAD:
-            sys.stderr.write(
-                f"Warning: Total number of detected barcodes is less than {MAX_BEAD}.\n"
-            )
-            return True, True, True
-        d1_cliff_cell, d1_cliff = get_d1_min(MIN_CELL, MAX_CELL)
-        d1_knee_cell, d1_knee = get_d1_min(MIN_BEAD, MAX_BEAD)
-        cliff_cell = get_knee_point(MIN_CELL, MAX_CELL)
-        self.add_metric(
-            name="Minimum derivative of cliff",
-            value=round(d1_cliff, 4),
-            show=False,
-        )
-        self.add_metric(
-            name="Barcode number at minimum derivative of cliff",
-            value=int(d1_cliff_cell),
-            show=False,
-        )
-        self.add_metric(
-            name="Barcode number at cliff",
-            value=int(cliff_cell),
-            show=False,
-            help_info="Using the method from emptyDrops to determine the first knee. It is not accurate when the sample shows loss of cliff.",
-        )
-        loss_of_cliff = d1_cliff > -2
-        self.add_metric(
-            name="Loss of cliff",
-            value=str(loss_of_cliff),
-            show=False,
-            help_info="If the minimum first derivative around cliff is greater than -2, it is considered as loss of cliff (loss of single cell behavior).",
-        )
-        self.add_metric(
-            name="Minimum derivative of knee",
-            value=round(d1_knee, 4),
-            show=False,
-        )
-        self.add_metric(
-            name="Barcode number at minimum derivative of knee",
-            value=int(d1_knee_cell),
-            show=False,
-        )
-        loss_of_knee = d1_knee > -2
-        self.add_metric(
-            name="Loss of knee",
-            value=str(loss_of_knee),
-            show=False,
-            help_info="If the minimum first derivative around knee is greater than -2, it is considered as loss of knee.",
-        )
-
-        return low_barcodes, loss_of_cliff, loss_of_knee
-
-    @staticmethod
-    def get_curve_quality(
-        fraction_reads_in_cells, low_barcodes, loss_of_cliff, loss_of_knee
-    ):
-        """ """
-        if any([loss_of_cliff, low_barcodes, loss_of_knee]):
-            return "fail"
-        if fraction_reads_in_cells >= 0.88:
-            return "super"
-        elif fraction_reads_in_cells >= 0.75:
-            return "good"
-        return "pass"
-
     def run(self, chemistry, valid_reads):
         n_reads, q30_RNA, fraction_reads_in_cells = self.parse_summary_add_metrics(
             valid_reads
         )
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.counts_file))
-        low_barcodes, loss_of_cliff, loss_of_knee = self.add_curve_metrics(chemistry)
-        quality = self.get_curve_quality(
-            fraction_reads_in_cells, low_barcodes, loss_of_cliff, loss_of_knee
-        )
-        self.add_metric(
-            name="Barcode rank curve quality",
-            value=quality,
-            show=False,
-        )
         return n_reads, q30_RNA
 
 
@@ -633,7 +506,15 @@ is higher than or equal to this value.""",
         default="EmptyDrops_CR 3000 0.99 10 45000 90000 500 0.01 20000 0.001 10000",
     )
     parser.add_argument(
-        "--starMem", help="Maximum memory that STAR can use.", default=32
+        "--no_bam",
+        help="Do not remove the underscore in CR/UR tags and do not output sorted BAM file",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--limitBAMsortRAM",
+        help="The same as the argument in STARsolo",
+        default=32000000000,
+        type=int,
     )
     parser.add_argument("--STAR_param", help=HELP_DICT["additional_param"], default="")
     parser.add_argument(

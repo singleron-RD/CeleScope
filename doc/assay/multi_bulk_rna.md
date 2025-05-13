@@ -12,9 +12,10 @@ multi_bulk_rna \
     --genomeDir {path to hs_ensembl_99 or mmu_ensembl_99} \
     --well_sample well_sample.tsv \
     --thread 16 \
-    --mod shell \
-    --steps_run sample,starsolo
+    --mod shell
 ```  
+
+Optional: Add `--split_fastq` and/or `--split_bam` if you want to split the FASTQ/BAM for each well.
 
 #### **Parameter Descriptions:**  
 - `--mapfile` (**Required**): A tab-delimited text file with at least three columns, where each row represents a paired-end FASTQ file entry.  
@@ -68,7 +69,6 @@ multi_bulk_rna \
 - `--mod`: Specifies the script format:  
   - `shell` bash script
   - `sjm` (for [Simple Job Manager](https://github.com/StanfordBioinformatics/SJM))  
-- `--steps_run` If you need to add the step of splitting FASTQ files for each sample, use `--steps_run sample,starsolo,split_fastq`.
 
 ### **3. Run the analysis**  
 After executing `sh run.sh`, a `shell/` directory will be created, containing `{sample}.sh` scripts.  
@@ -85,8 +85,4 @@ sh ./shell/{sample}.sh
 
 - `outs/*_matrix.tsv.gz`  
   - Gene expression UMI matrix, where rows represent gene IDs and columns correspond to samples.
-
-- `02.split_fastq/{sample}_fq.gz`  
-  - R2 FASTQ files split based on well barcodes. The UMI sequence is appended to the read name, separated by a colon.
-
 

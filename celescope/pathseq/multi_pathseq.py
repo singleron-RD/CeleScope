@@ -8,7 +8,13 @@ class Multi_pathseq(Multi):
         arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
         cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+        self.process_cmd(
+            cmd,
+            step,
+            sample,
+            m=int(self.args.limitBAMsortRAM / 1e9),
+            x=self.args.thread,
+        )
 
     def pathseq(self, sample):
         step = "pathseq"
@@ -34,7 +40,7 @@ class Multi_pathseq(Multi):
             f"--unmap_bam_file {unmap_bam_file} "
             f"--match_dir {self.col4_dict[sample]} "
         )
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+        self.process_cmd(cmd, step, sample, m=5, x=self.args.thread)
 
     def analysis_pathseq(self, sample):
         step = "analysis_pathseq"

@@ -38,7 +38,13 @@ class Multi_dynaseq(Multi_rna):
             f'--STAR_param "--outFilterScoreMinOverLread 0.3 --outFilterMatchNminOverLread 0.3" '
             f'--SAM_attributes MD '
         )
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+        self.process_cmd(
+            cmd,
+            step,
+            sample,
+            m=int(self.args.limitBAMsortRAM / 1e9),
+            x=self.args.thread,
+        )
 
     def conversion(self, sample):
         step = "conversion"

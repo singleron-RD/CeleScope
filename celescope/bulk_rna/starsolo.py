@@ -10,7 +10,7 @@ from celescope.chemistry_dict import chemistry_dict
 from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.starsolo import (
     Demultiplexing,
-    Mapping,
+    Mapping as ToolsMapping,
     create_solo_args,
 )
 from celescope.tools.starsolo import (
@@ -52,6 +52,8 @@ class Starsolo(tools_Starsolo):
         self.outs.append(self.tsv_matrix_file)
 
     def run_starsolo(self):
+        if "--outSAMunmapped Within" not in self.extra_starsolo_args:
+            self.extra_starsolo_args += " --outSAMunmapped Within "
         cmd = create_solo_args(
             pattern_args=self.pattern_args,
             whitelist_args=self.whitelist_args,
@@ -66,6 +68,7 @@ class Starsolo(tools_Starsolo):
             soloFeatures=self.args.soloFeatures,
             outSAMattributes=self.outSAMattributes,
             soloCBmatchWLtype=self.args.soloCBmatchWLtype,
+            limitBAMsortRAM=self.args.limitBAMsortRAM,
             extra_starsolo_args=self.extra_starsolo_args,
         )
         if self.chemistry == "bulk_rna-bulk_vdj_match":
@@ -97,6 +100,74 @@ class Starsolo(tools_Starsolo):
         return q30_cb, q30_umi, filtered, self.barcode_sample, self.well_barcode
 
 
+class Mapping(ToolsMapping):
+    # only add metrics
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title=display_title)
+
+    @utils.add_log
+    def parse_cellReadsStats(self) -> tuple[dict[str, int], pd.DataFrame]:
+        df = pd.read_csv(self.cellReadsStats, sep="\t", header=0, index_col=0)
+        df = df.iloc[1:,]  # skip first line cb not pass whitelist
+        df_count = df.loc[:, ["nUMIunique", "countedU"]]  # keep dataframe format
+        df_count.rename(columns={"nUMIunique": "UMI"}, inplace=True)
+        df_count.sort_values(by="UMI", ascending=False, inplace=True)
+        cbs = CountMatrix.read_barcodes(self.filtered_matrix)
+        df_count["mark"] = "UB"
+        for cb in cbs:
+            df_count.loc[cb, "mark"] = "CB"
+        df_count.to_csv(self.counts_file, sep="\t", index=True)
+
+        df = df.loc[
+            :,
+            [
+                "cbMatch",
+                "cbPerfect",
+                "genomeU",
+                "genomeM",
+                "exonic",
+                "intronic",
+                "exonicAS",
+                "intronicAS",
+                "countedU",
+            ],
+        ]
+        metrics = df.sum().to_dict()
+        df = df.loc[
+            :,
+            [
+                "cbMatch",
+                "genomeU",
+                "genomeM",
+            ],
+        ]
+        df.rename(
+            columns={
+                "cbMatch": "Reads",
+                "genomeU": "Unique-mapping Reads",
+                "genomeM": "Multiple-mapping Reads",
+            },
+            inplace=True,
+        )
+        df["Unique-mapping Reads"] = np.where(
+            df["Reads"] != 0,
+            (df["Unique-mapping Reads"] / df["Reads"] * 100).round(2).astype(str) + "%",
+            np.nan,
+        )
+        df["Multiple-mapping Reads"] = np.where(
+            df["Reads"] != 0,
+            (df["Multiple-mapping Reads"] / df["Reads"] * 100).round(2).astype(str)
+            + "%",
+            np.nan,
+        )
+        return metrics, df
+
+    @utils.add_log
+    def run(self):
+        metrics, df = self.parse_cellReadsStats()
+        return self.add_metrics_to_report(metrics), df
+
+
 class Cells(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
@@ -114,7 +185,13 @@ class Cells(Step):
 
         return n_reads, q30_RNA, saturation
 
-    def run(self, filtered: CountMatrix, barcode_sample: dict, well_barcode: dict):
+    def run(
+        self,
+        filtered: CountMatrix,
+        barcode_sample: dict,
+        well_barcode: dict,
+        df_metrics: pd.DataFrame,
+    ):
         df_counts = pd.read_csv(self.counts_file, index_col=0, header=0, sep="\t")
         reads_total = df_counts["countedU"].sum()
         bcs = filtered.get_barcodes()
@@ -145,9 +222,9 @@ class Cells(Step):
             help_info="Fraction of reads which were mapped to a barcode",
         )
         self.add_metric(
-            "Mean Reads per Well",
+            "Mean Used Reads per Well",
             mean_used_reads_per_cell,
-            help_info="Mean number of reads per barcode",
+            help_info="The number of uniquely-mapped-to-transcriptome reads per well",
         )
         self.add_metric(
             "Median UMI per Well",
@@ -176,7 +253,22 @@ class Cells(Step):
         df_cells["Barcode"] = df_cells.index
         barcode_well = {v: k for k, v in well_barcode.items()}
         df_cells["Well"] = df_cells["Barcode"].map(lambda x: barcode_well[x])
-        df_cells = df_cells.loc[:, ["Well", "Sample", "Barcode", "UMI", "Genes"]]
+        df_cells = df_cells.merge(
+            df_metrics, left_on="Barcode", right_index=True, how="left"
+        )
+        df_cells = df_cells.loc[
+            :,
+            [
+                "Well",
+                "Sample",
+                "Barcode",
+                "Reads",
+                "Unique-mapping Reads",
+                "Multiple-mapping Reads",
+                "UMI",
+                "Genes",
+            ],
+        ]
 
         table_dict = self.get_table_dict(
             title="Metrics for a Single Well",
@@ -193,10 +285,12 @@ def starsolo(args):
         q30_cb, q30_umi, filtered, barcode_sample, well_barcode = runner.run()
 
     with Mapping(args) as runner:
-        valid_reads, corrected = runner.run()
+        (valid_reads, corrected), df_metrics = runner.run()
 
     with Cells(args, display_title="Wells") as runner:
-        n_reads, q30_RNA = runner.run(filtered, barcode_sample, well_barcode)
+        n_reads, q30_RNA = runner.run(
+            filtered, barcode_sample, well_barcode, df_metrics
+        )
 
     with Demultiplexing(args) as runner:
         runner.run(valid_reads, n_reads, corrected, q30_cb, q30_umi, q30_RNA)
@@ -242,9 +336,6 @@ is higher than or equal to this value.""",
         help="The same as the argument in STARsolo",
         default="None",
     )
-    parser.add_argument(
-        "--starMem", help="Maximum memory that STAR can use.", default=32
-    )
     parser.add_argument("--STAR_param", help=HELP_DICT["additional_param"], default="")
     parser.add_argument(
         "--SAM_attributes",
@@ -260,6 +351,12 @@ is higher than or equal to this value.""",
         "--soloCBmatchWLtype",
         help="The same as the argument in STARsolo. Please note `EditDist 2` only works with `--soloType CB UMI Complex`. ",
         default="1MM",
+    )
+    parser.add_argument(
+        "--limitBAMsortRAM",
+        help="The same as the argument in STARsolo",
+        default=32000000000,
+        type=int,
     )
     parser.add_argument(
         "--well_sample",

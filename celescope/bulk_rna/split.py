@@ -14,16 +14,15 @@ from celescope.bulk_rna.starsolo import get_barcode_sample
 UMI_SEPARATOR = ":"
 
 
-class Split_fastq(Step):
+class Split(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
 
-        self.fq1_list = args.fq1.split(",")
-        self.fq2_list = args.fq2.split(",")
+        self.split_fastq = args.split_fastq
+        self.split_bam = args.split_bam
 
-        chemistry = parse_chemistry.get_chemistry(
-            self.assay, args.chemistry, self.fq1_list
-        )
+        fq1_list = args.fq1.split(",")
+        chemistry = parse_chemistry.get_chemistry(self.assay, args.chemistry, fq1_list)
         self.pattern_dict, bc = parse_chemistry.get_pattern_dict_and_bc(
             chemistry, args.pattern, args.whitelist
         )
@@ -34,45 +33,57 @@ class Split_fastq(Step):
         self.barcode_sample = get_barcode_sample(bc[0], args.well_sample)
 
     @utils.add_log
-    def split(self):
-        self.fh_dict = {}
-        for barcode, sample in self.barcode_sample.items():
-            file_obj = utils.generic_open(
-                f"{self.outdir}/{sample}.fq.gz", "wb", compresslevel=1
-            )
-            self.fh_dict[barcode] = io.BufferedWriter(
-                file_obj, buffer_size=16 * 1024 * 1024
-            )
-
-        for fq1, fq2 in zip(self.fq1_list, self.fq2_list):
-            fq1 = pysam.FastxFile(fq1)
-            fq2 = pysam.FastxFile(fq2)
-            for e1, e2 in zip(fq1, fq2):
-                bc_list = [e1.sequence[x] for x in self.pattern_dict["C"]]
-                valid, corrected, corrected_bc = parse_chemistry.check_seq_mismatch(
-                    bc_list, self.raw_list, self.mismatch_list
-                )
-                if valid and corrected_bc in self.barcode_sample:
-                    umi = e1.sequence[self.pattern_dict["U"][0]]
-                    name = e1.name + UMI_SEPARATOR + umi
-                    self.fh_dict[corrected_bc].write(
-                        utils.fastq_line(name, e2.sequence, e2.quality).encode()
-                    )
-
     def run(self):
-        self.split()
+        fq_dict = {}
+        bam_dict = {}
+        all_bam = pysam.AlignmentFile(self.args.bam, "rb")
+        for barcode, sample in self.barcode_sample.items():
+            if self.split_fastq:
+                file_obj = utils.generic_open(
+                    f"{self.outdir}/{sample}.fq.gz", "wb", compresslevel=1
+                )
+                fq_dict[barcode] = io.BufferedWriter(
+                    file_obj, buffer_size=16 * 1024 * 1024
+                )
+            if self.split_bam:
+                bam_dict[barcode] = pysam.AlignmentFile(
+                    f"{self.outdir}/{sample}.bam", "wb", header=all_bam.header
+                )
+
+        dup_align_read_names = set()
+        for segment in all_bam:
+            cb = segment.get_tag("CB")
+            if cb == "-":
+                continue
+            if cb not in self.barcode_sample:
+                continue
+            if self.split_bam:
+                bam_dict[cb].write(segment)
+            if segment.get_tag("NH") > 1:
+                if segment.query_name in dup_align_read_names:
+                    continue
+                else:
+                    dup_align_read_names.add(segment.query_name)
+            if self.split_fastq:
+                umi = segment.get_tag("UB")
+                name = segment.query_name + UMI_SEPARATOR + umi
+                seq = segment.query_sequence
+                qual = "".join(chr(q + 33) for q in segment.query_qualities)
+                fq_dict[cb].write(utils.fastq_line(name, seq, qual).encode())
 
 
 @utils.add_log
-def split_fastq(args):
+def split(args):
     if not args.split_fastq:
         sys.stderr.write("--split_fastq not set. Skip split_fastq\n")
+    if not args.split_bam:
+        sys.stderr.write("--split_bam not set. Skip split_bam\n")
+    if not (args.split_fastq or args.split_bam):
         return
-    split_fastq_obj = Split_fastq(args)
-    split_fastq_obj.run()
+    Split(args).run()
 
 
-def get_opts_split_fastq(parser, sub_program):
+def get_opts_split(parser, sub_program):
     parser.add_argument(
         "--chemistry",
         help=HELP_DICT["chemistry"],
@@ -102,6 +113,11 @@ def get_opts_split_fastq(parser, sub_program):
         help="Split fastq file according to well barcodes. Append UMI to read name with umi_separator semicolon ':'",
         action="store_true",
     )
+    parser.add_argument(
+        "--split_bam",
+        help="Split BAM file according to well barcodes.",
+        action="store_true",
+    )
     if sub_program:
         parser.add_argument(
             "--fq1",
@@ -109,8 +125,8 @@ def get_opts_split_fastq(parser, sub_program):
             required=True,
         )
         parser.add_argument(
-            "--fq2",
-            help="R2 fastq file. Multiple files are separated by comma.",
+            "--bam",
+            help="BAM file",
             required=True,
         )
         parser.add_argument(

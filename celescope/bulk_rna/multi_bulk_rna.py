@@ -11,15 +11,23 @@ class Multi_bulk_rna(Multi):
         arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
         cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
+        self.process_cmd(
+            cmd,
+            step,
+            sample,
+            m=int(self.args.limitBAMsortRAM / 1e9),
+            x=self.args.thread,
+        )
 
-    def split_fastq(self, sample):
-        step = "split_fastq"
+    def split(self, sample):
+        step = "split"
         arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f'{cmd_line} '
-            f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} --barcodes {self.outdir_dic[sample][OUTS_DIR]}/filtered/barcodes.tsv.gz'
+            f'--fq1 {arr["fq1_str"]} '
+            f'--bam {self.outdir_dic[sample][OUTS_DIR]}/{sample}_Aligned.sortedByCoord.out.bam '
+            f'--barcodes {self.outdir_dic[sample][OUTS_DIR]}/filtered/barcodes.tsv.gz '
         )
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
