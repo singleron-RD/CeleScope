@@ -1,3 +1,39 @@
-        </div>
+<script>
+    $(document).ready(function () {
+        var table_id = '#param';
+        var table = $(table_id).DataTable({
+            dom: 'Bfrtip',
+            buttons: ['excel']
+        });
+        table.draw();
+    });
+</script>
+
+
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+<h2>Parameters</h2>
+<div class="box">
+<div style="margin-left: 3%; margin-right:3%;">
+    <table id="param" border="1" class="dataframe">
+        <thead>
+            <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, value in parameters.items() %}
+                <tr>
+                    <td>{{ key }}</td>
+                    <td>{{ value }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+<div class="clear" ></div>
+</div>
+</div>
+
+</div>
     </body>    
 </html>

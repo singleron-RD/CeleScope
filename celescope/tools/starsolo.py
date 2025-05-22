@@ -506,11 +506,6 @@ is higher than or equal to this value.""",
         default="EmptyDrops_CR 3000 0.99 10 45000 90000 500 0.01 20000 0.001 10000",
     )
     parser.add_argument(
-        "--no_bam",
-        help="Do not remove the underscore in CR/UR tags and do not output sorted BAM file",
-        action="store_true",
-    )
-    parser.add_argument(
         "--limitBAMsortRAM",
         help="The same as the argument in STARsolo",
         default=32000000000,

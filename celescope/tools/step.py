@@ -95,6 +95,8 @@ class Step:
         for slot, path in self._path_dict.items():
             if not os.path.exists(path):
                 self.__content_dict[slot] = {}
+                if slot == "data":
+                    self.__content_dict[slot]["parameters"] = {}
             else:
                 with open(path) as f:
                     try:
@@ -300,9 +302,23 @@ class Step:
             subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
+    def _add_parameters(self):
+        for key, value in vars(self.args).items():
+            if key not in {
+                "func",
+                "thread",
+                "outdir",
+                "sample",
+                "subparser_assay",
+                "debug",
+            }:
+                self.__content_dict["data"]["parameters"][key] = value
+
+    @utils.add_log
     def _clean_up(self):
         self._add_content_data()
         self._add_content_metric()
+        self._add_parameters()
         self._write_stat()
         self._dump_content()
         self._render_html()
