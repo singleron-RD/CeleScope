@@ -1,19 +1,17 @@
 # Build stage
 FROM mambaorg/micromamba:0.22.0 AS build
-
-# Set working directory and add source code
 ADD . /usr/src/celescope
 WORKDIR /usr/src/celescope
-
-# Install dependencies using micromamba
 USER root
+
+# conda pkgs
 RUN micromamba create --name runtime --always-copy --file conda_pkgs.txt
 
 # Runtime stage
 FROM mambaorg/micromamba:0.22.0 AS runtime
-
-# Set working directory and environment variables
+ADD . /usr/src/celescope
 WORKDIR /usr/src/celescope
+USER root
 ENV ENV_NAME=runtime PATH="/opt/conda/envs/runtime/bin:${PATH}"
 
 # Copy the environment from the build stage
