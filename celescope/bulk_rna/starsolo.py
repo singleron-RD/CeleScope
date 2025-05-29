@@ -12,6 +12,7 @@ from celescope.tools.starsolo import (
     Demultiplexing,
     Mapping as ToolsMapping,
     create_solo_args,
+    create_soloFeatures,
 )
 from celescope.tools.starsolo import (
     Starsolo as tools_Starsolo,
@@ -54,6 +55,9 @@ class Starsolo(tools_Starsolo):
     def run_starsolo(self):
         if "--outSAMunmapped Within" not in self.extra_starsolo_args:
             self.extra_starsolo_args += " --outSAMunmapped Within "
+        soloFeatures = create_soloFeatures(
+            self.args.soloFeatures, self.args.report_soloFeature
+        )
         cmd = create_solo_args(
             pattern_args=self.pattern_args,
             whitelist_args=self.whitelist_args,
@@ -65,7 +69,7 @@ class Starsolo(tools_Starsolo):
             runThreadN=self.args.thread,
             clip3pAdapterSeq=self.args.adapter_3p,
             outFilterMatchNmin=self.args.outFilterMatchNmin,
-            soloFeatures=self.args.soloFeatures,
+            soloFeatures=soloFeatures,
             outSAMattributes=self.outSAMattributes,
             soloCBmatchWLtype=self.args.soloCBmatchWLtype,
             limitBAMsortRAM=self.args.limitBAMsortRAM,
@@ -171,7 +175,9 @@ class Mapping(ToolsMapping):
 class Cells(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
-        solo_dir = f"{self.outdir}/{self.sample}_Solo.out/GeneFull_Ex50pAS"
+        solo_dir = (
+            f"{self.outdir}/{self.sample}_Solo.out/{self.args.report_soloFeature}"
+        )
         self.summary_file = f"{solo_dir}/Summary.csv"
         self.counts_file = f"{self.outs_dir}/{COUNTS_FILE_NAME}"
 
@@ -346,6 +352,11 @@ is higher than or equal to this value.""",
         "--soloFeatures",
         help="The same as the argument in STARsolo",
         default="GeneFull_Ex50pAS Gene",
+    )
+    parser.add_argument(
+        "--report_soloFeature",
+        help="Specify which soloFeatures to use in the HTML report and the outs directory.",
+        default="GeneFull_Ex50pAS",
     )
     parser.add_argument(
         "--soloCBmatchWLtype",

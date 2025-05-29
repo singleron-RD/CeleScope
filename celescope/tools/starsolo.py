@@ -134,6 +134,20 @@ def create_solo_args(
     return cmd
 
 
+def create_soloFeatures(args_soloFeatures, report_soloFeature):
+    """
+    BAM uses first feature in soloFeatures, so move report_soloFeature to the first position.
+    GeneFull_Ex50pAS is also need for intron region metrics.
+    """
+    features = args_soloFeatures.split(" ")
+    if report_soloFeature in features:
+        features.remove(report_soloFeature)
+    features = [report_soloFeature] + features
+    if "GeneFull_Ex50pAS" not in features:
+        features.append("GeneFull_Ex50pAS")
+    return " ".join(features)
+
+
 class Starsolo(Step):
     def __init__(self, args, display_title=None):
         Step.__init__(self, args, display_title=display_title)
@@ -161,7 +175,7 @@ class Starsolo(Step):
 
         # output files
         self.solo_out_dir = f"{self.outdir}/{self.sample}_Solo.out/"
-        solo_dir = f"{self.outdir}/{self.sample}_Solo.out/GeneFull_Ex50pAS"
+        solo_dir = f"{self.outdir}/{self.sample}_Solo.out/{args.report_soloFeature}"
         self.raw_matrix = f"{solo_dir}/raw"
         self.filtered_matrix = f"{solo_dir}/filtered"
         self.summary_file = f"{solo_dir}/Summary.csv"
@@ -171,6 +185,9 @@ class Starsolo(Step):
         self.outs = [self.raw_matrix, self.filtered_matrix, bam]
 
     def run_starsolo(self):
+        soloFeatures = create_soloFeatures(
+            self.args.soloFeatures, self.args.report_soloFeature
+        )
         cmd = create_solo_args(
             pattern_args=self.pattern_args,
             whitelist_args=self.whitelist_args,
@@ -182,7 +199,7 @@ class Starsolo(Step):
             runThreadN=self.args.thread,
             clip3pAdapterSeq=self.args.adapter_3p,
             outFilterMatchNmin=self.args.outFilterMatchNmin,
-            soloFeatures=self.args.soloFeatures,
+            soloFeatures=soloFeatures,
             outSAMattributes=self.outSAMattributes,
             soloCBmatchWLtype=self.args.soloCBmatchWLtype,
             limitBAMsortRAM=self.args.limitBAMsortRAM,
@@ -383,7 +400,7 @@ class Mapping(Step):
 class Cells(Cells_metrics):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
-        solo_dir = f"{self.outdir}/{self.sample}_Solo.out/GeneFull_Ex50pAS"
+        solo_dir = f"{self.outdir}/{self.sample}_Solo.out/{args.report_soloFeature}"
         self.summary_file = f"{solo_dir}/Summary.csv"
         self.counts_file = f"{self.outs_dir}/{COUNTS_FILE_NAME}"
 
@@ -395,8 +412,10 @@ class Cells(Cells_metrics):
         fraction_reads_in_cells = float(s["Fraction of Unique Reads in Cells"])
         mean_used_reads_per_cell = int(s["Mean Reads per Cell"])
         median_umi_per_cell = int(s["Median UMI per Cell"])
-        median_genes_per_cell = int(s["Median GeneFull_Ex50pAS per Cell"])
-        total_genes = int(s["Total GeneFull_Ex50pAS Detected"])
+        median_genes_per_cell = int(
+            s[f"Median {self.args.report_soloFeature} per Cell"]
+        )
+        total_genes = int(s[f"Total {self.args.report_soloFeature} Detected"])
         saturation = float(s["Sequencing Saturation"])
         n_reads = int(s["Number of Reads"])
         q30_RNA = float(s["Q30 Bases in RNA read"])
@@ -526,6 +545,11 @@ is higher than or equal to this value.""",
         "--soloCBmatchWLtype",
         help="The same as the argument in STARsolo. Please note `EditDist 2` only works with `--soloType CB UMI Complex`. ",
         default="1MM",
+    )
+    parser.add_argument(
+        "--report_soloFeature",
+        help="Specify which soloFeatures to use in the HTML report and the outs directory.",
+        default="GeneFull_Ex50pAS",
     )
 
     if sub_program:

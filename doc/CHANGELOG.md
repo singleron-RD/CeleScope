@@ -1,3 +1,7 @@
+## [2.6.0] - 2025-05-29
+ - Added: `--report_soloFeature` in `starsolo`. If you do not want to include intron reads in the analysis, use `--report_soloFeature Gene`.
+ - Added: parameters in the HTML report.
+
 ## [2.5.0] - 2025-05-13
  - Added: BAM splitting functionality and read-level metrics in `bulk_rna`.
  - Added: `--limitBAMsortRAM` parameter in `starsolo`.
