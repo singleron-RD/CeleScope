@@ -231,7 +231,7 @@ job_end
 
     def process_cmd(self, cmd, step, sample, m=1, x=1):
         self.generate_cmd(cmd, step, sample, m=m, x=x)
-        self.shell_dict[sample] += cmd + "\n"
+        self.shell_dict[sample] += cmd + f" 2>&1 | tee -a {sample}_celescope_log.txt \n"
         if self.last_step:
             self.sjm_order += f"order {step}_{sample} after {self.last_step}_{sample}\n"
         self.last_step = step
@@ -387,7 +387,11 @@ job_end
             os.system("mkdir -p ./shell/")
             for sample in self.shell_dict:
                 with open(f"./shell/{sample}.sh", "w") as f:
+                    f.write("set -euo pipefail\n")
                     f.write(self.shell_dict[sample])
+                    f.write(
+                        f'echo "Celescope finished successfully.\n" 2>&1 | tee -a {sample}_celescope_log.txt'
+                    )
 
     def check_genome(self):
         for arg, val in vars(self.args).items():

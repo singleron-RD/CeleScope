@@ -1,3 +1,6 @@
+## [2.6.1] - 2025-06-10
+ - Added: log output support for shell mode.
+
 ## [2.6.0] - 2025-05-29
  - Added: `--report_soloFeature` in `starsolo`. If you do not want to include intron reads in the analysis, use `--report_soloFeature Gene`.
  - Added: parameters in the HTML report.
