@@ -13,7 +13,7 @@ multi_capture_virus \
 
 3. Run shell scripts
 ```
-sh ./shell/{sample}.sh
+bash ./shell/{sample}.sh
 ```
 ## Features
 ### mkref

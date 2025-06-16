@@ -67,7 +67,7 @@ After executing `sh run.sh`, a `shell/` directory will be created, containing `{
 
 Start the analysis by running:  
 ```bash
-sh ./shell/{sample}.sh
+bash ./shell/{sample}.sh
 ```  
 > **Note:** The `{sample}.sh` script must be executed from the working directory, not from inside the `shell/` directory.  
 

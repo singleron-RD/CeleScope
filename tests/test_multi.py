@@ -29,7 +29,7 @@ def run_single(assay, test_dir):
     subprocess.check_call("sh run_shell.sh", shell=True)
     subprocess.check_call("sh sjm.sh", shell=True)
     try:
-        subprocess.check_call("sh ./shell/test1.sh", shell=True)
+        subprocess.check_call("bash ./shell/test1.sh", shell=True)
     except subprocess.CalledProcessError:
         return f"{assay} failed"
     print("*" * 20 + "success " + assay + "*" * 20)

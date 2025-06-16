@@ -20,7 +20,7 @@ class Multi_capture_virus(Multi):
 
     3. Run shell scripts
     ```
-    sh ./shell/{sample}.sh
+    bash ./shell/{sample}.sh
     ```
     """
 

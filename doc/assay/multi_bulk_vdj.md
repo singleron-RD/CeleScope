@@ -78,7 +78,7 @@ After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will b
 
 3. Start the analysis by running:
 ```
-sh ./shell/{sample}.sh
+bash ./shell/{sample}.sh
 ```
 Note that the `./shell/{sample}.sh` must be run under the working directory(You shouldn't run them under the `shell` directory)
 
