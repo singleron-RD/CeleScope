@@ -1,12 +1,19 @@
 # User guide
 
-## Hardware/Software requirements
+## Requirements
 
 - 64 bit Linux
 - Minimum 32GB RAM to run [STAR](https://github.com/alexdobin/STAR) with human/mouse genome
-- [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) or [conda](https://anaconda.org/anaconda/conda)
+
 
 ## Installation
+
+### Docker image
+
+```
+https://quay.io/repository/singleron-rd/celescope?tab=tags
+```
+If you are unable to use Docker, you can install it using mamba/conda and pip as follows.
 
 ### Create conda environment and install conda packages. 
 First, you need to get the txt file from the github repository containing the name of the conda package you need to install. You can download it directly from the github repository interface, or use a download link.
