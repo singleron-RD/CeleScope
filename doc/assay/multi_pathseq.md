@@ -78,8 +78,7 @@ bash ./shell/{sample}.sh
 
 ## Main Output Files
 
-- `outs/{sample}_raw_UMI_matrix.tsv.gz`  
-  - UMI matrix, where rows represent microbes and columns correspond to cell barcodes.
+- `outs/{sample}_raw_UMI_matrix.tsv.gz`  UMI matrix, where rows represent microbes and columns correspond to cell barcodes.
 
 An examples of downstream analysis using `Seurat` can be found at [github](https://github.com/singleron-RD/analysis_guide/blob/main/PathSeq_analysis.ipynb) or [gitee](https://gitee.com/singleron-rd/analysis_guide/blob/main/PathSeq_analysis.ipynb) for chinese users.
 
