@@ -108,7 +108,6 @@ class Tsne_plot(Plotly_plot):
         percent_df = sum_df.transform(lambda x: round(x / sum(x) * 100, 2))
         res_dict = dict()
         res_list = []
-        print(set(self._df[self.feature_name]))
         for cluster in sorted(self._df[self.feature_name].unique()):
             name = f"{cluster}({percent_df[cluster]}%)"
             res_dict[cluster] = name
