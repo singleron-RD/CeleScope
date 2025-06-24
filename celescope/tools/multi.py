@@ -390,7 +390,7 @@ job_end
                     f.write("set -euo pipefail\n")
                     f.write(self.shell_dict[sample])
                     f.write(
-                        f'echo "Celescope finished successfully.\n" 2>&1 | tee -a {sample}_celescope_log.txt'
+                        f'echo -e "Celescope finished successfully.\\n" 2>&1 | tee -a {sample}_celescope_log.txt\n'
                     )
 
     def check_genome(self):
@@ -398,10 +398,20 @@ job_end
             if val and "genomeDir" in arg:
                 MakeRef.get_config(val)
 
+    def guide(self):
+        if self.args.mod == "sjm":
+            msg = "sjm sjm/sjm.job"
+        else:
+            msg = "nohup bash ./shell/{sample}.sh &"
+        sys.stderr.write(
+            f"The run shell for each sample has been successfully generated. Execute the following command to start running each sample in the background:\n{msg}\n"
+        )
+
     def run(self):
         self.prepare()
         self.run_steps()
         self.end()
+        self.guide()
 
 
 def get_read(library_id, library_path, read="1"):
