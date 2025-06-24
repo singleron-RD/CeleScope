@@ -17,9 +17,6 @@ CeleScope is currently developed by Singleron Biotechnologies.
 [www.singleron.bio](https://www.singleron.bio)
 
 
-> [!NOTE]
-> We are rewriting CeleScope pipelines using nextflow to achieve better scalability and reproducibility. For a list of available pipelines, see [nf-celescope](https://github.com/singleron-RD/nf-celescope).
-
 
 
 

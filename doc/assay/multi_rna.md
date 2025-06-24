@@ -132,11 +132,3 @@ celescope rna cells \
   --outdir test1/cells \
   --sample test1
 ```
-
-
-
-## Multiple samples
-
-The Nextflow-based [singleron-RD/scrna](https://github.com/singleron-RD/scrna) pipeline allows you to easily process multiple samples, obtain results consistent with CeleScope, and generate a single [MultiQC](https://github.com/MultiQC/MultiQC) report that includes QC information for all samples.
-
-![multiqc report](../images/multiqc_report.png)
