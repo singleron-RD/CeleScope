@@ -15,26 +15,6 @@ class Multi_rna(Multi):
     Work for both single cell RNA-Seq and single nuclei RNA-Seq.
     """
 
-    def starsolo(self, sample):
-        step = "starsolo"
-        arr = self.fq_dict[sample]
-        cmd_line = self.get_cmd_line(step, sample)
-        cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
-        self.process_cmd(
-            cmd,
-            step,
-            sample,
-            m=int(self.args.limitBAMsortRAM / 1e9),
-            x=self.args.thread,
-        )
-
-    def analysis(self, sample):
-        step = "analysis"
-        matrix_file = f'{self.outdir_dic[sample]["outs"]}/filtered'
-        cmd_line = self.get_cmd_line(step, sample)
-        cmd = f"{cmd_line} " f"--matrix_file {matrix_file} "
-        self.process_cmd(cmd, step, sample, m=10, x=1)
-
 
 def main():
     multi = Multi_rna(__ASSAY__)

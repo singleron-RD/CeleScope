@@ -201,7 +201,7 @@ def read_fasta(fasta_file, equal=False):
     Args:
         equal: if True, seq in fasta must have equal length
     Returns:
-        {seq_id: seq} dict
+        {seq_id: seq} dict, length
     """
     fa_dict = {}
     length = None

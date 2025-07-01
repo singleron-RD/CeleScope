@@ -19,6 +19,7 @@ ASSAY_LIST = [
     "bulk_rna",
     "rna_5p3p",
     "pathseq",
+    "probe",
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

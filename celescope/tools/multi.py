@@ -6,7 +6,7 @@ import sys
 from collections import defaultdict
 
 import celescope
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, STAR_BAM_SUFFIX
+from celescope.tools.__init__ import STAR_BAM_SUFFIX
 from celescope.tools import utils
 from celescope.celescope import ArgFormatter
 from celescope.__init__ import HELP_DICT
@@ -330,9 +330,7 @@ job_end
 
     def analysis(self, sample):
         step = "analysis"
-        matrix_file = (
-            f'{self.outdir_dic[sample]["count"]}/{sample}_{FILTERED_MATRIX_DIR_SUFFIX}'
-        )
+        matrix_file = f'{self.outdir_dic[sample]["outs"]}/filtered'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = f"{cmd_line} " f"--matrix_file {matrix_file} "
         self.process_cmd(cmd, step, sample, m=10, x=1)
@@ -345,6 +343,19 @@ job_end
         self.process_cmd(cmd, step, sample, m=5, x=1)
         outfile = f"{self.outdir_dic[sample][step]}/{sample}_consensus.fq"
         return outfile
+
+    def starsolo(self, sample):
+        step = "starsolo"
+        arr = self.fq_dict[sample]
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
+        self.process_cmd(
+            cmd,
+            step,
+            sample,
+            m=int(self.args.limitBAMsortRAM / 1e9),
+            x=self.args.thread,
+        )
 
     def run_steps(self):
         for sample in self.fq_dict:
@@ -399,13 +410,11 @@ job_end
                 MakeRef.get_config(val)
 
     def guide(self):
-        if self.args.mod == "sjm":
-            msg = "sjm sjm/sjm.job"
-        else:
-            msg = "nohup bash ./shell/{sample}.sh &"
-        sys.stderr.write(
-            f"The run shell for each sample has been successfully generated. Execute the following command to start running each sample in the background:\n{msg}\n"
-        )
+        if self.args.mod == "shell":
+            msg = "nohup bash ./shell/sample.sh &"
+            sys.stderr.write(
+                f"The run shell for each sample has been successfully generated. Execute the following command to start running in the background(replace 'sample' with the actual sample name):\n{msg}\n"
+            )
 
     def run(self):
         self.prepare()
