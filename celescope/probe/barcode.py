@@ -3,12 +3,17 @@ from collections import Counter, defaultdict
 import sys
 
 import pysam
+import pandas as pd
 
 import celescope.tools.parse_chemistry as parse_chemistry
 from celescope.__init__ import HELP_DICT
 from celescope.chemistry_dict import chemistry_dict
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
+
+
+SEQUENCE_LENGTH = 150
+PRIMER_OFFSET = 5
 
 
 @utils.add_log
@@ -23,6 +28,21 @@ def fasta_to_dict(fasta, max_mismatch):
         length_dict[seq_id] = len(seq)
 
     return mismatch_dict, length_dict
+
+
+@utils.add_log
+def get_metrics_df(read_counter, umi_counter, total_reads, total_umis):
+    all_probes = read_counter.keys()
+    df = pd.DataFrame(index=sorted(all_probes))
+    df["read"] = df.index.map(lambda x: read_counter.get(x, 0))
+    df["umi"] = df.index.map(lambda x: umi_counter.get(x, 0))
+    df["read_percent"] = df["read"] / total_reads * 100
+    df["umi_percent"] = df["umi"] / total_umis * 100
+
+    df["read_percent"] = df["read_percent"].round(2)
+    df["umi_percent"] = df["umi_percent"].round(2)
+    df = df.sort_values(by="read", ascending=False)
+    return df
 
 
 class Barcode(Step):
@@ -49,13 +69,20 @@ class Barcode(Step):
         #
         self.probe_mismatch_dict = {}
         if args.probe_fasta:
-            self.probe_mismatch_dict, self.length_dict = fasta_to_dict(
+            self.probe_mismatch_dict, self.probe_length_dict = fasta_to_dict(
                 args.probe_fasta, args.max_mismatch
+            )
+
+        self.primer_mismatch_dict = {}
+        if args.primer_fasta:
+            self.primer_mismatch_dict, self.primer_length_dict = fasta_to_dict(
+                args.primer_fasta, args.max_mismatch
             )
 
         # output
         self.probe_count_file = f"{self.out_prefix}_probe_count.tsv"
         self.primer_count_file = f"{self.out_prefix}_primer_count.tsv"
+        self.outs = [self.probe_count_file, self.primer_count_file]
 
     def get_bc_umi(self, seq):
         if self.chemistry == "GEXSCOPE-V3":
@@ -82,8 +109,12 @@ class Barcode(Step):
         # quality
         cb_quality_counter = Counter()
         umi_quality_counter = Counter()
-        read_counter = Counter()
-        umi_set = defaultdict(set)
+        all_umi_set = set()
+
+        probe_read_counter = Counter()
+        primer_read_counter = Counter()
+        probe_umi_set = defaultdict(set)
+        primer_umi_set = defaultdict(set)
 
         for fq1, fq2 in zip(self.fq1_list, self.fq2_list):
             fq1 = pysam.FastxFile(fq1)
@@ -95,13 +126,24 @@ class Barcode(Step):
                     valid_reads += 1
                     if corrected:
                         corrected_reads += 1
+                    all_umi_set.add((corrected_seq, umi))
 
                     for probe_id, seqs in self.probe_mismatch_dict.items():
-                        seq_length = self.length_dict[probe_id]
-                        for start in range(self.bc_umi_length + 10, 120):
+                        seq_length = self.probe_length_dict[probe_id]
+                        for start in range(
+                            self.bc_umi_length, SEQUENCE_LENGTH - seq_length
+                        ):
                             if e1.sequence[start : start + seq_length] in seqs:
-                                read_counter[probe_id] += 1
-                                umi_set[probe_id].add((corrected_seq, umi))
+                                probe_read_counter[probe_id] += 1
+                                probe_umi_set[probe_id].add((corrected_seq, umi))
+                                break
+
+                    for primer_id, seqs in self.primer_mismatch_dict.items():
+                        seq_length = self.primer_length_dict[primer_id]
+                        for start in range(0, PRIMER_OFFSET):
+                            if e2.sequence[start : start + seq_length] in seqs:
+                                primer_read_counter[primer_id] += 1
+                                primer_umi_set[primer_id].add((corrected_seq, umi))
                                 break
 
                 cb_quality_counter.update(
@@ -111,8 +153,19 @@ class Barcode(Step):
                     "".join([e1.quality[self.pattern_dict["U"][0]]])  # type: ignore
                 )
 
-        umi_counter = {k: len(v) for k, v in umi_set.items()}
-        print(read_counter, umi_counter)
+        total_umi = len(all_umi_set)
+
+        probe_umi_counter = {k: len(v) for k, v in probe_umi_set.items()}
+        probe_df = get_metrics_df(
+            probe_read_counter, probe_umi_counter, valid_reads, total_umi
+        )
+        probe_df.to_csv(self.probe_count_file, sep="\t")
+
+        primer_umi_counter = {k: len(v) for k, v in primer_umi_set.items()}
+        primer_df = get_metrics_df(
+            primer_read_counter, primer_umi_counter, valid_reads, total_umi
+        )
+        primer_df.to_csv(self.primer_count_file, sep="\t")
 
         self.add_metric(
             name="Raw Reads",
@@ -130,6 +183,11 @@ class Barcode(Step):
             value=corrected_reads,
             total=raw_reads,
             help_info="Reads with barcodes that are not in the whitelist but are within one Hamming distance of it",
+        )
+        self.add_metric(
+            name="Total UMI",
+            value=total_umi,
+            help_info="total UMI count",
         )
         q30_cb = sum(
             [
