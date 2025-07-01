@@ -274,6 +274,30 @@ class Step:
         """add slot to json"""
         return self.__content_dict[slot][step_name + "_summary"]
 
+    @utils.add_log
+    def add_table(self, title, table_id, df, script=None):
+        if not script:
+            script = """
+            <script>
+            $(document).ready(function () {{
+                var table = $('#{table_id}').DataTable({{
+                    "order": [],
+                    dom: 'Bfrtip',
+                    buttons: ['excel']
+                }});
+                table.draw();
+            }});
+            </script>
+            """.format(table_id=table_id)
+
+        self.__content_dict["data"][table_id] = {
+            "title": title,
+            "df": df.to_html(
+                escape=False, index=False, table_id=table_id, justify="center"
+            ),
+            "script": script,
+        }
+
     def get_table_dict(self, title, table_id, df_table):
         """
         table_dict {title: '', table_id: '', df_table: pd.DataFrame}

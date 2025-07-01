@@ -41,6 +41,7 @@ def get_metrics_df(read_counter, umi_counter, total_reads, total_umis):
 
     df["read_percent"] = df["read_percent"].round(2)
     df["umi_percent"] = df["umi_percent"].round(2)
+    df = df.reset_index().rename(columns={"index": "id"})
     df = df.sort_values(by="read", ascending=False)
     return df
 
@@ -159,13 +160,23 @@ class Barcode(Step):
         probe_df = get_metrics_df(
             probe_read_counter, probe_umi_counter, valid_reads, total_umi
         )
-        probe_df.to_csv(self.probe_count_file, sep="\t")
+        probe_df.to_csv(self.probe_count_file, sep="\t", index=False)
+        self.add_table(
+            title="Probe",
+            table_id="table_probe",
+            df=probe_df,
+        )
 
         primer_umi_counter = {k: len(v) for k, v in primer_umi_set.items()}
         primer_df = get_metrics_df(
             primer_read_counter, primer_umi_counter, valid_reads, total_umi
         )
-        primer_df.to_csv(self.primer_count_file, sep="\t")
+        primer_df.to_csv(self.primer_count_file, sep="\t", index=False)
+        self.add_table(
+            title="Primer",
+            table_id="table_primer",
+            df=primer_df,
+        )
 
         self.add_metric(
             name="Raw Reads",
