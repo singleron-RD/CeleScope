@@ -84,8 +84,8 @@ class Filter(Step):
         self.read_threshold_dict = {}
         self.umi_threshold_dict = {}  # if not set explicitly, use 1 as default
 
-        self.barcode_ref_umi_dict = utils.genDict(dim=2)
-        self.ref_barcode_umi_dict = utils.genDict(dim=2)
+        self.barcode_ref_umi_dict = utils.nested_defaultdict(dim=2)
+        self.ref_barcode_umi_dict = utils.nested_defaultdict(dim=2)
 
         match_dir_dict = utils.parse_match_dir(args.match_dir)
         self.match_barcode = match_dir_dict["match_barcode"]
@@ -146,7 +146,7 @@ class Filter(Step):
                 help_info="threshold = top 1% positive cell count / auto_coef",
             )
 
-        read_dict = utils.genDict(dim=1, valType=list)
+        read_dict = utils.nested_defaultdict(dim=1, valType=list)
 
         for barcode in self.count_dict:
             for ref in self.count_dict[barcode]:

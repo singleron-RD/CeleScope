@@ -2,14 +2,21 @@
 bulk-seq vdj mapping
 """
 
-import pandas as pd
 import subprocess
+import csv
+import os
 
-from celescope.tools import utils
+from celescope.tools import utils, step
 from celescope.vdj import mapping_vdj as super_vdj
+from celescope.vdj.__init__ import CHAINS
+from celescope.bulk_rna.starsolo import get_barcode_sample
+import celescope.tools.parse_chemistry as parse_chemistry
+from celescope.__init__ import HELP_DICT
+from celescope.chemistry_dict import chemistry_dict
+import pandas as pd
 
 
-class Mapping_vdj(super_vdj.Mapping_vdj):
+class Mapping_vdj(step.Step):
     """
     ## Features
     - Align R2 reads to IMGT(http://www.imgt.org/) database sequences with blast.
@@ -21,128 +28,157 @@ class Mapping_vdj(super_vdj.Mapping_vdj):
 
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
+        self.chains = CHAINS[args.type]
+
+        chemistry = self.get_slot_key(
+            slot="metrics", step_name="sample", key="Chemistry"
+        )
+
+        self.pattern_dict, bc = parse_chemistry.get_pattern_dict_and_bc(
+            chemistry, args.pattern, args.whitelist
+        )
+        self.barcode_sample = get_barcode_sample(bc[0], args.well_sample)
 
         # out
+        self.sample_productive_dir = f"{self.outdir}/sample_productive"
+        if not os.path.exists(self.sample_productive_dir):
+            os.makedirs(self.sample_productive_dir)
         self.airr_out = f"{self.out_prefix}_airr.tsv"
         self.productive_file = f"{self.out_prefix}_productive.tsv"
 
     @utils.add_log
-    def igblast(self, chain, ig_seqtype):
+    def igblast(self):
+        if self.args.type == "TCR":
+            chain = "TR"
+            ig_seqtype = "TCR"
+        elif self.args.type == "BCR":
+            chain = "IG"
+            ig_seqtype = "Ig"
         cmd = (
             f"igblastn -query {self.args.fasta} "
-            f"-organism {self.species} "
+            f"-organism {self.args.species} "
             f"-ig_seqtype {ig_seqtype} "
-            f"-auxiliary_data optional_file/{self.species}_gl.aux "
+            f"-auxiliary_data optional_file/{self.args.species}_gl.aux "
             f"-num_threads {self.args.thread} "
-            f"-germline_db_V {self.ref_path}/{chain}V.fa "
-            f"-germline_db_D {self.ref_path}/{chain}D.fa "
-            f"-germline_db_J {self.ref_path}/{chain}J.fa "
+            f"-germline_db_V {self.args.ref_path}/{chain}V.fa "
+            f"-germline_db_D {self.args.ref_path}/{chain}D.fa "
+            f"-germline_db_J {self.args.ref_path}/{chain}J.fa "
             "-domain_system imgt -show_translation -outfmt 19 "  # outfmt19 is an AIRR tab-delimited file, IgBLAST v1.9.0 or higher required.
             f"-out {self.airr_out} "
         )
-
         self.igblast.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
-    def mapping_summary(self):
-        df = pd.read_csv(self.airr_out, sep="\t")
-        df.fillna("", inplace=True)
-        total_reads = df.shape[0]
+    def process_airr(self):
+        """
+        read airr line by line, collect metrics, write productive to seperate wells
+        """
 
-        self.add_metric(name="Species", value=self.species, help_info="Human or Mouse")
+        tsv_handles = {
+            barcode: open(f"{self.sample_productive_dir}/{sample}_productive.tsv", "wt")
+            for barcode, sample in self.barcode_sample.items()
+        }
+        headers = [
+            "sample",
+            "barcode",
+            "umi",
+            "chain",
+            "bestVGene",
+            "bestDGene",
+            "bestJGene",
+            "nSeqCDR3",
+            "aaSeqCDR3",
+        ]
+        for f in tsv_handles.values():
+            f.write("\t".join(headers) + "\n")
 
-        df = df[(df["v_call"] != "") | (df["d_call"] != "") | (df["j_call"] != "")]
+        consensus_metrics_df = pd.read_csv(
+            self.args.consensus_metrics_file, sep="\t", index_col=0
+        )
+        consensus_metrics_dict = consensus_metrics_df.to_dict(orient="index")
+        metrics = utils.nested_defaultdict(dim=2)
+        for barcode in consensus_metrics_dict:
+            if barcode in self.barcode_sample:
+                metrics[barcode]["sample"] = self.barcode_sample[barcode]
+            else:
+                metrics[barcode]["sample"] = ""
+            metrics[barcode]["read"] = consensus_metrics_dict[barcode]["n_read"]
+
+        total_umi = 0
+        with open(self.airr_out, "rt") as infile:
+            reader = csv.DictReader(infile, delimiter="\t")
+            for row in reader:
+                total_umi += 1
+                barcode, umi = row["sequence_id"].split(":")[0:2]
+                metrics[barcode]["UMI"] += 1
+                if row["v_call"] != "" or row["d_call"] != "" or row["j_call"] != "":
+                    metrics[barcode]["UMI_mapped_to_any_vdj"] += 1
+                else:
+                    continue
+                if row["productive"] == "T" and "N" not in row["junction"]:
+                    metrics[barcode]["UMI_confident"] += 1
+                    metrics[barcode][f"UMI_confident_{row['locus']}"] += 1
+                else:
+                    continue
+                if barcode in self.barcode_sample:
+                    line = [
+                        self.barcode_sample[barcode],
+                        barcode,
+                        umi,
+                        row["locus"],
+                        row["v_call"],
+                        row["d_call"],
+                        row["j_call"],
+                        row["junction"],
+                        row["junction_aa"],
+                    ]
+                    tsv_handles[barcode].write("\t".join(line) + "\n")
+
+        umi_mapped_to_any_vdj = sum(
+            v for barcode, k in metrics.items() for v in [k["UMI_mapped_to_any_vdj"]]
+        )
         self.add_metric(
             name="UMIs Mapped to Any VDJ Gene",
-            value=df.shape[0],
-            total=total_reads,
+            value=umi_mapped_to_any_vdj,
+            total=total_umi,
             help_info="UMIs Mapped to any germline VDJ gene segments",
         )
 
-        # Reads with CDR3
-        df_cdr3 = df[(df["cdr3_aa"] != "") & (df["junction_aa"] != "")]
-        self.add_metric(
-            name="UMIs with CDR3",
-            value=df_cdr3.shape[0],
-            total=total_reads,
-            help_info="UMIs with CDR3 sequence",
+        umi_confident = sum(
+            v for barcode, k in metrics.items() for v in [k["UMI_confident"]]
         )
-
-        # Reads with Correct CDR3
-        df_correct_cdr3 = df_cdr3[
-            ~(df_cdr3["cdr3_aa"].str.contains(r"\*"))
-            & ~(df_cdr3["cdr3_aa"].str.contains("X"))
-        ]
-        self.add_metric(
-            name="UMIs with Correct CDR3",
-            value=df_correct_cdr3.shape[0],
-            total=total_reads,
-            help_info="UMIs with CDR3 might have stop codon and these Reads are classified as incorrect",
-        )
-
-        # Reads Mapped Confidently To VJ Gene
-        df_confident = df_correct_cdr3[df_correct_cdr3["productive"] == "T"]
         self.add_metric(
             name="UMIs Mapped Confidently to VJ Gene",
-            value=df_confident.shape[0],
-            total=total_reads,
-            help_info="UMIs with productive rearrangement mapped to VJ gene pairs and with correct CDR3",
+            value=umi_confident,
+            total=total_umi,
+            help_info="UMIs with productive rearrangement mapped to VJ gene pairs and without N in the junction sequence",
         )
 
-        # Reads Mapped Confidently to each chain
         for chain in self.chains:
-            df_chain = df_confident[df_confident.locus == chain]
+            UMI_confident_chain = sum(
+                v
+                for barcode, k in metrics.items()
+                for v in [k[f"UMI_confident_{chain}"]]
+            )
             self.add_metric(
-                name=f"UMIs Mapped to {chain}",
-                value=df_chain.shape[0],
-                total=total_reads,
-                help_info=f"UMIs mapped confidently to {chain}",
+                name=f"UMIs Mapped Confidently to {chain}",
+                value=UMI_confident_chain,
+                total=total_umi,
+                help_info=f"UMIs with productive rearrangement mapped to {chain}",
             )
 
-        # output file
-        df_confident["barcode"] = df_confident["sequence_id"].apply(
-            lambda x: x.split(":")[0]
-        )
-        df_VJ = df_confident[
-            [
-                "barcode",
-                "sequence_id",
-                "locus",
-                "v_call",
-                "d_call",
-                "j_call",
-                "junction",
-                "junction_aa",
-            ]
-        ]
-        df_VJ.rename(
-            columns={
-                "locus": "chain",
-                "v_call": "bestVGene",
-                "d_call": "bestDGene",
-                "j_call": "bestJGene",
-                "junction": "nSeqCDR3",
-                "junction_aa": "aaSeqCDR3",
-            },
-            inplace=True,
-        )
+        metrics_df = pd.DataFrame.from_dict(metrics, orient="index")
+        metrics_df.index.name = "barcode"
+        metrics_df.reset_index(inplace=True)
+        metrics_df = metrics_df.sort_values(by="read", ascending=False)
 
-        for i in ["bestVGene", "bestDGene", "bestJGene"]:
-            df_VJ[i] = df_VJ[i].apply(lambda x: x.split("*")[0])
-
-        # CDR3 sequence have at least 5 amino acids and start with C
-        df_VJ = df_VJ[df_VJ["aaSeqCDR3"].str.len() > 5]
-        df_VJ = df_VJ[df_VJ["aaSeqCDR3"].str.startswith("C")]
-        df_VJ.to_csv(self.productive_file, sep="\t", index=False)
+        metrics_df.to_csv(f"{self.out_prefix}_well_metrics.tsv", sep="\t", index=False)
 
     def run(self):
         # run igblstn
-        if self.seqtype == "TCR":
-            self.igblast(chain="TR", ig_seqtype="TCR")
-        else:
-            self.igblast(chain="IG", ig_seqtype="Ig")
-        self.mapping_summary()
+        # self.igblast()
+        self.process_airr()
 
 
 def mapping_vdj(args):
@@ -151,4 +187,30 @@ def mapping_vdj(args):
 
 
 def get_opts_mapping_vdj(parser, sub_program):
+    parser.add_argument(
+        "--well_sample",
+        help="tsv file of well numbers and sample names. The first column is well numbers and the second column is sample names.",
+        required=True,
+    )
+    parser.add_argument(
+        "--chemistry",
+        help=HELP_DICT["chemistry"],
+        choices=list(chemistry_dict.keys()),
+        default="auto",
+    )
+    parser.add_argument(
+        "--pattern",
+        help="""The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
+        of bases.  
+        - `C`: cell barcode  
+        - `L`: linker(common sequences)  
+        - `U`: UMI    
+        - `T`: poly T""",
+    )
+    parser.add_argument(
+        "--whitelist",
+        help="Cell barcode whitelist file path, one cell barcode per line.",
+    )
     super_vdj.get_opts_mapping_vdj(parser, sub_program)
+    if sub_program:
+        parser.add_argument("--consensus_metrics_file", required=True)

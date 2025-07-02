@@ -37,7 +37,7 @@ class Count_bam(Step):
 
         # data
         self.total_corrected_umi = 0
-        self.count_dict = utils.genDict(dim=3)
+        self.count_dict = utils.nested_defaultdict(dim=3)
 
         # out
         self.raw_read_count_file = f"{self.out_prefix}_raw_read_count.json"

@@ -48,7 +48,7 @@ class Multi_vdj(Multi):
 
     def consensus(self, sample):
         step = "consensus"
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = f"{cmd_line} " f"--fq {fq} " f"--out_fasta "
         self.process_cmd(cmd, step, sample, m=5, x=1)

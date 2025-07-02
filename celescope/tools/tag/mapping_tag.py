@@ -105,10 +105,10 @@ class Mapping_tag(Step):
         self.reads_unmapped_invalid_linker = 0
         self.reads_unmapped_invalid_barcode = 0
         self.reads_mapped = 0
-        self.res_dic = utils.genDict()
-        self.res_sum_dic = utils.genDict(dim=2)
+        self.res_dic = utils.nested_defaultdict()
+        self.res_sum_dic = utils.nested_defaultdict(dim=2)
         self.match_barcode = []
-        self.invalid_barcode_dict = utils.genDict(dim=1)
+        self.invalid_barcode_dict = utils.nested_defaultdict(dim=1)
 
         # out files
         self.read_count_file = f"{self.outdir}/{self.sample}_read_count.tsv"

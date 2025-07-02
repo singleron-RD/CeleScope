@@ -242,11 +242,11 @@ def format_number(number: int) -> str:
     return format(number, ",")
 
 
-def genDict(dim=3, valType=int):
+def nested_defaultdict(dim=3, valType=int):
     if dim == 1:
         return defaultdict(valType)
     else:
-        return defaultdict(lambda: genDict(dim - 1, valType=valType))
+        return defaultdict(lambda: nested_defaultdict(dim - 1, valType=valType))
 
 
 class MultipleFileFoundError(Exception):

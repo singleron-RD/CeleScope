@@ -3,9 +3,9 @@ import unittest
 from collections import defaultdict
 from itertools import groupby
 
-import numpy as np
 import pysam
 from xopen import xopen
+import pandas as pd
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
@@ -44,23 +44,22 @@ class Consensus(Step):
     @utils.add_log
     def run(self):
         sort_fastq(self.args.fq, self.fq_tmp_file, self.outdir)
-        n, total_ambiguous_base_n, length_list = sorted_dumb_consensus(
+        n, total_ambiguous_base_n, length_list, metrics = sorted_dumb_consensus(
             fq=self.fq_tmp_file,
             outfile=self.consensus_out,
             threshold=self.args.threshold,
             min_consensus_read=self.min_consensus_read,
             out_fmt=self.out_fmt,
         )
+        metrics_df = pd.DataFrame.from_dict(metrics, orient="index")
+        metrics_df.index.name = "barcode"
+        metrics_df.reset_index(inplace=True)
+        metrics_df.to_csv(f"{self.out_prefix}_metrics.tsv", sep="\t", index=False)
 
         self.add_metric(
             name="UMI Counts",
             value=n,
             help_info="total UMI from FASTQ files",
-        )
-        self.add_metric(
-            name="Mean UMI Length",
-            value=round(np.mean(length_list), 2),
-            help_info="mean of all UMI length",
         )
         self.add_metric(
             name="Ambiguous Base Counts",
@@ -84,8 +83,8 @@ def sort_fastq(fq, fq_tmp_file, outdir):
 def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read, out_fmt):
     """
     consensus read in name-sorted fastq
-    output (barcode,umi) consensus fastq
     """
+    metrics = utils.nested_defaultdict(dim=2)
     read_list = []
     n_umi = 0
     total_ambiguous_base_n = 0
@@ -100,7 +99,9 @@ def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read, out_fmt):
         for (barcode, umi), g in groupby(fh, key=keyfunc):
             read_list = []
             for read in g:
-                read_list.append([read.sequence, read.quality])
+                read_list.append(read.sequence)
+            metrics[barcode]["n_read"] += len(read_list)
+            metrics[barcode]["n_umi"] += 1
             consensus_seq, consensus_qual, ambiguous_base_n, con_len = dumb_consensus(
                 read_list,
                 threshold=threshold,
@@ -119,7 +120,7 @@ def sorted_dumb_consensus(fq, outfile, threshold, min_consensus_read, out_fmt):
             length_list.append(con_len)
 
     out_h.close()
-    return n_umi, total_ambiguous_base_n, length_list
+    return n_umi, total_ambiguous_base_n, length_list, metrics
 
 
 def dumb_consensus(
@@ -135,33 +136,29 @@ def dumb_consensus(
     then we will add that residue type,
     otherwise an ambiguous character will be added.
     elements of read_list: [entry.sequence,entry.quality]
+
+    >>> read_list = ["AAAAAA", "AATTTT", "AAACCC", "AAAGG"]
+    >>> consensus_seq, _, _, _ = dumb_consensus(read_list)
+    >>> consensus_seq
+    'AAANNN'
     """
 
-    con_len = get_read_length(read_list, threshold=threshold)
+    max_length = max([len(read) for read in read_list])
     consensus_seq_list = []
-    consensus_qual_list = []
     ambiguous_base_n = 0
-    for n in range(con_len):
+    for n in range(max_length):
         atom_dict = defaultdict(int)
-        quality_dict = defaultdict(int)
-        num_atoms = 0
-        for read in read_list:
+        for sequence in read_list:
             # make sure we haven't run past the end of any sequences
             # if they are of different lengths
-            sequence = read[0]
-            quality = read[1]
             if n < len(sequence):
                 atom = sequence[n]
                 atom_dict[atom] += 1
-                num_atoms = num_atoms + 1
-
-                base_qual = quality[n]
-                quality_dict[base_qual] += 1
 
         consensus_atom = ambiguous
         for atom in atom_dict:
             if (
-                atom_dict[atom] > num_atoms * threshold
+                atom_dict[atom] > len(read_list) * threshold
                 and atom_dict[atom] >= min_consensus_read
             ):
                 consensus_atom = atom
@@ -170,42 +167,10 @@ def dumb_consensus(
             ambiguous_base_n += 1
         consensus_seq_list.append(consensus_atom)
 
-        max_freq_qual = 0
-        consensus_base_qual = default_qual
-        for base_qual in quality_dict:
-            if quality_dict[base_qual] > max_freq_qual:
-                max_freq_qual = quality_dict[base_qual]
-                consensus_base_qual = base_qual
-
-        consensus_qual_list.append(consensus_base_qual)
-
     consensus_seq = "".join(consensus_seq_list)
-    consensus_qual = "".join(consensus_qual_list)
+    consensus_qual = default_qual * len(consensus_seq)
 
-    return consensus_seq, consensus_qual, ambiguous_base_n, con_len
-
-
-def get_read_length(read_list, threshold=0.5):
-    """
-    compute read_length from read_list.
-    length = max length with read fraction >= threshold
-    elements of read_list: [entry.sequence,entry.quality]
-    """
-
-    n_read = len(read_list)
-    length_dict = defaultdict(int)
-    for read in read_list:
-        length = len(read[0])
-        length_dict[length] += 1
-    for length in length_dict:
-        length_dict[length] = length_dict[length] // n_read
-
-    fraction = 0
-    for length in sorted(length_dict.keys(), reverse=True):
-        fraction += length_dict[length]
-        if fraction >= threshold:
-            return length
-    return 0
+    return consensus_seq, consensus_qual, ambiguous_base_n, max_length
 
 
 @utils.add_log
@@ -240,40 +205,6 @@ def get_opts_consensus(parser, sub_program):
             action="store_true",
         )
         s_common(parser)
-
-
-class Consensus_unittest(unittest.TestCase):
-    def test_get_read_length(self):
-        read_list = [
-            ["AAAA", "FFFF"],
-            ["TTT", "FFF"],
-            ["CCC", "FFF"],
-            ["GGGGGGG", "FFFFFFF"],
-        ]
-        assert get_read_length(read_list, 0.5) == 4
-
-    def test_dumb_consensus(self):
-        read_list = [
-            ("AAAA", "FFFF"),
-            ("TTT", "FF;"),
-            ("CCCC", "FFFF"),
-            ("GGGAGGG", "FFFFFFF"),
-        ]
-        consensus_seq, _consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(
-            read_list, 0.5
-        )
-        self.assertEqual(consensus_seq, "NNNA")
-
-        read_list = [
-            ("AAAA", "FFFF"),
-            ("TTT", "FF;"),
-            ("CCC", "FFF"),
-            ("GGGGGGG", "FFFFFFF"),
-        ]
-        consensus_seq, _consensus_qual, _ambiguous_base_n, _con_len = dumb_consensus(
-            read_list, 0.5
-        )
-        self.assertEqual(consensus_seq, "NNNN")
 
 
 if __name__ == "__main__":

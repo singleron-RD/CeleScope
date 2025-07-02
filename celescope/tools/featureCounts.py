@@ -301,7 +301,7 @@ class FeatureCounts(Step):
 
             for _, g in groupby(inputFile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
-                gene_umi_pos = utils.genDict(dim=3, valType=int)
+                gene_umi_pos = utils.nested_defaultdict(dim=3, valType=int)
                 for seg in g:
                     seg = self.add_tag(seg, self.id_name)
                     outputFile.write(seg)

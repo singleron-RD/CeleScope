@@ -2,7 +2,6 @@ STEPS = [
     "mkref",
     "sample",
     "barcode",
-    "cutadapt",
     "consensus",
     "mapping_vdj",
     "count_vdj",

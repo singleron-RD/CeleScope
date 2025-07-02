@@ -47,8 +47,8 @@ class Target_metrics(Step):
         if not self.gene_list:
             sys.exit("You must provide either --panel or --gene_list!")
 
-        self.count_dict = utils.genDict(dim=3, valType=int)
-        self.dup_dict = utils.genDict(dim=4, valType=int)
+        self.count_dict = utils.nested_defaultdict(dim=3, valType=int)
+        self.dup_dict = utils.nested_defaultdict(dim=4, valType=int)
         self.used_dict = defaultdict(int)
 
         self.add_metric(

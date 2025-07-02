@@ -44,7 +44,7 @@ class Multi_bulk_vdj(Multi):
 
     def consensus(self, sample):
         step = "consensus"
-        fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
+        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = f"{cmd_line} " f"--fq {fq} " f"--out_fasta "
         self.process_cmd(cmd, step, sample, m=5, x=1)
@@ -58,7 +58,8 @@ class Multi_bulk_vdj(Multi):
         fasta = (
             f'{self.outdir_dic[sample]["consensus"]}/{sample}_filtered_consensus.fasta'
         )
-        cmd = f"{cmd_line} " f"--fasta {fasta} "
+        metrics = f'{self.outdir_dic[sample]["consensus"]}/{sample}_metrics.tsv'
+        cmd = f"{cmd_line} " f"--fasta {fasta} " f"--consensus_metrics_file {metrics}"
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
 
     def count_vdj(self, sample):
