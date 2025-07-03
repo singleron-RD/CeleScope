@@ -12,6 +12,7 @@ import unittest
 from collections import Counter, OrderedDict, defaultdict
 from datetime import timedelta
 from functools import wraps
+from typing import List
 
 import pandas as pd
 import pysam
@@ -650,6 +651,23 @@ def barcode_list_stamp(barcode_list, cut=500):
             m = 1
             stamp[n].append(i)
     return stamp, bc_num
+
+
+def merge_table_files(
+    table_files: List[str],
+    output_file: str,
+    sep: str = "\t",
+) -> None:
+    if not table_files:
+        raise ValueError("Error: empty table_files")
+
+    df = pd.read_csv(table_files[0], sep=sep)
+
+    for file in table_files[1:]:
+        temp_df = pd.read_csv(file, sep=sep)
+        df = pd.concat([df, temp_df], axis=0)
+
+    df.to_csv(output_file, sep=sep, index=False)
 
 
 class Test_utils(unittest.TestCase):

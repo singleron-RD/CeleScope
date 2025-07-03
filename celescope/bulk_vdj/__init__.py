@@ -4,7 +4,6 @@ STEPS = [
     "barcode",
     "consensus",
     "mapping_vdj",
-    "count_vdj",
 ]
 __ASSAY__ = "bulk_vdj"
 

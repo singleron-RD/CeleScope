@@ -9,11 +9,37 @@ import os
 from celescope.tools import utils, step
 from celescope.vdj import mapping_vdj as super_vdj
 from celescope.vdj.__init__ import CHAINS
-from celescope.bulk_rna.starsolo import get_barcode_sample
+from celescope.bulk_rna.starsolo import get_barcode_sample, get_well_barcode
 import celescope.tools.parse_chemistry as parse_chemistry
 from celescope.__init__ import HELP_DICT
 from celescope.chemistry_dict import chemistry_dict
 import pandas as pd
+
+
+def simpson_diversity(data):
+    """Given a hash { 'species': count } , returns the Simpson Diversity Index
+    >>> simpson_di({'a': 10, 'b': 20, 'c': 30,})
+    0.3888888888888889
+    """
+
+    def p(n, N):
+        """Relative abundance"""
+        if n == 0:
+            return 0
+        else:
+            return float(n) / N
+
+    N = sum(data.values())
+
+    return sum(p(n, N) ** 2 for n in data.values() if n != 0)
+
+
+def inverse_simpson_diversity(data):
+    """Given a hash { 'species': count } , returns the inverse Simpson Diversity Index
+    >>> inverse_simpson_diversity({'a': 10, 'b': 20, 'c': 30,})
+    2.571428571428571
+    """
+    return float(1) / simpson_diversity(data)
 
 
 class Mapping_vdj(step.Step):
@@ -38,13 +64,23 @@ class Mapping_vdj(step.Step):
             chemistry, args.pattern, args.whitelist
         )
         self.barcode_sample = get_barcode_sample(bc[0], args.well_sample)
+        well_barcode = get_well_barcode(bc[0])
+        self.barcode_well = {v: k for k, v in well_barcode.items()}
 
         # out
-        self.sample_productive_dir = f"{self.outdir}/sample_productive"
-        if not os.path.exists(self.sample_productive_dir):
-            os.makedirs(self.sample_productive_dir)
+        self.productive_dir = f"{self.outdir}/productive"
+        if not os.path.exists(self.productive_dir):
+            os.makedirs(self.productive_dir)
+        self.annotation_dir = f"{self.outdir}/annotation"
+        if not os.path.exists(self.annotation_dir):
+            os.makedirs(self.annotation_dir)
+        self.clonotypes_dir = f"{self.outdir}/clonotypes"
+        if not os.path.exists(self.clonotypes_dir):
+            os.makedirs(self.clonotypes_dir)
         self.airr_out = f"{self.out_prefix}_airr.tsv"
-        self.productive_file = f"{self.out_prefix}_productive.tsv"
+        self.annotation_csv = f"{self.out_prefix}_filtered_annotations.csv"
+        self.clonotypes_csv = f"{self.out_prefix}_clonotypes.csv"
+        self.outs = [self.annotation_csv, self.clonotypes_csv]
 
     @utils.add_log
     def igblast(self):
@@ -76,12 +112,13 @@ class Mapping_vdj(step.Step):
         """
 
         tsv_handles = {
-            barcode: open(f"{self.sample_productive_dir}/{sample}_productive.tsv", "wt")
+            barcode: open(f"{self.productive_dir}/{sample}_productive.tsv", "wt")
             for barcode, sample in self.barcode_sample.items()
         }
-        headers = [
-            "sample",
+        tsv_headers = [
             "barcode",
+            "well",
+            "sample",
             "umi",
             "chain",
             "bestVGene",
@@ -91,7 +128,7 @@ class Mapping_vdj(step.Step):
             "aaSeqCDR3",
         ]
         for f in tsv_handles.values():
-            f.write("\t".join(headers) + "\n")
+            f.write("\t".join(tsv_headers) + "\n")
 
         consensus_metrics_df = pd.read_csv(
             self.args.consensus_metrics_file, sep="\t", index_col=0
@@ -100,10 +137,19 @@ class Mapping_vdj(step.Step):
         metrics = utils.nested_defaultdict(dim=2)
         for barcode in consensus_metrics_dict:
             if barcode in self.barcode_sample:
+                metrics[barcode]["well"] = self.barcode_well[barcode]
                 metrics[barcode]["sample"] = self.barcode_sample[barcode]
             else:
+                metrics[barcode]["well"] = ""
                 metrics[barcode]["sample"] = ""
+            metrics[barcode]["n_clonotypes"] = 0
+            metrics[barcode]["diversity"] = 0
             metrics[barcode]["read"] = consensus_metrics_dict[barcode]["n_read"]
+            metrics[barcode]["umi"] = 0
+            metrics[barcode]["umi_mapped"] = 0
+            metrics[barcode]["umi_confident"] = 0
+            for chain in self.chains:
+                metrics[barcode][f"umi_confident_{chain}"] = 0
 
         total_umi = 0
         with open(self.airr_out, "rt") as infile:
@@ -111,20 +157,28 @@ class Mapping_vdj(step.Step):
             for row in reader:
                 total_umi += 1
                 barcode, umi = row["sequence_id"].split(":")[0:2]
-                metrics[barcode]["UMI"] += 1
+                metrics[barcode]["umi"] += 1
                 if row["v_call"] != "" or row["d_call"] != "" or row["j_call"] != "":
-                    metrics[barcode]["UMI_mapped_to_any_vdj"] += 1
+                    metrics[barcode]["umi_mapped"] += 1
                 else:
                     continue
-                if row["productive"] == "T" and "N" not in row["junction"]:
-                    metrics[barcode]["UMI_confident"] += 1
-                    metrics[barcode][f"UMI_confident_{row['locus']}"] += 1
+                if (
+                    row["productive"] == "T"
+                    and row["junction"] != ""
+                    and "N" not in row["junction"]
+                ):
+                    metrics[barcode]["umi_confident"] += 1
+                    if row["locus"] in self.chains:
+                        metrics[barcode][f"umi_confident_{row['locus']}"] += 1
                 else:
                     continue
                 if barcode in self.barcode_sample:
+                    for gene in ["v_call", "d_call", "j_call"]:
+                        row[gene] = row[gene].split("*")[0]
                     line = [
-                        self.barcode_sample[barcode],
                         barcode,
+                        str(self.barcode_well[barcode]),
+                        self.barcode_sample[barcode],
                         umi,
                         row["locus"],
                         row["v_call"],
@@ -135,18 +189,16 @@ class Mapping_vdj(step.Step):
                     ]
                     tsv_handles[barcode].write("\t".join(line) + "\n")
 
-        umi_mapped_to_any_vdj = sum(
-            v for barcode, k in metrics.items() for v in [k["UMI_mapped_to_any_vdj"]]
-        )
+        umi_mapped = sum(v for barcode, k in metrics.items() for v in [k["umi_mapped"]])
         self.add_metric(
             name="UMIs Mapped to Any VDJ Gene",
-            value=umi_mapped_to_any_vdj,
+            value=umi_mapped,
             total=total_umi,
             help_info="UMIs Mapped to any germline VDJ gene segments",
         )
 
         umi_confident = sum(
-            v for barcode, k in metrics.items() for v in [k["UMI_confident"]]
+            v for barcode, k in metrics.items() for v in [k["umi_confident"]]
         )
         self.add_metric(
             name="UMIs Mapped Confidently to VJ Gene",
@@ -156,29 +208,181 @@ class Mapping_vdj(step.Step):
         )
 
         for chain in self.chains:
-            UMI_confident_chain = sum(
+            umi_confident_chain = sum(
                 v
                 for barcode, k in metrics.items()
-                for v in [k[f"UMI_confident_{chain}"]]
+                for v in [k[f"umi_confident_{chain}"]]
             )
             self.add_metric(
                 name=f"UMIs Mapped Confidently to {chain}",
-                value=UMI_confident_chain,
+                value=umi_confident_chain,
                 total=total_umi,
-                help_info=f"UMIs with productive rearrangement mapped to {chain}",
             )
 
-        metrics_df = pd.DataFrame.from_dict(metrics, orient="index")
-        metrics_df.index.name = "barcode"
-        metrics_df.reset_index(inplace=True)
-        metrics_df = metrics_df.sort_values(by="read", ascending=False)
+        self.metrics = metrics
 
-        metrics_df.to_csv(f"{self.out_prefix}_well_metrics.tsv", sep="\t", index=False)
+    @staticmethod
+    def create_well_annotation(productive_file, out_file):
+        df = pd.read_csv(productive_file, sep="\t")
+        df.fillna("None", inplace=True)
+        df = (
+            df.groupby(
+                [
+                    "barcode",
+                    "well",
+                    "sample",
+                    "chain",
+                    "bestVGene",
+                    "bestDGene",
+                    "bestJGene",
+                    "nSeqCDR3",
+                    "aaSeqCDR3",
+                ]
+            )
+            .size()
+            .reset_index(name="umis")
+        )
+        out_df = df.assign(
+            is_cell=True,
+            high_confidence=True,
+            c_gene="None",
+            full_length=True,
+            productive=True,
+        ).rename(
+            columns={
+                "bestVGene": "v_gene",
+                "bestDGene": "d_gene",
+                "bestJGene": "j_gene",
+                "aaSeqCDR3": "cdr3",
+                "nSeqCDR3": "cdr3_nt",
+            }
+        )[
+            [
+                "barcode",
+                "well",
+                "sample",
+                "is_cell",
+                "high_confidence",
+                "chain",
+                "v_gene",
+                "d_gene",
+                "j_gene",
+                "c_gene",
+                "full_length",
+                "productive",
+                "cdr3",
+                "cdr3_nt",
+                "umis",
+            ]
+        ]
+
+        out_df.sort_values(by=["umis"], ascending=False, inplace=True)
+        out_df.to_csv(out_file, sep=",", index=False)
+
+    @utils.add_log
+    def create_annotation(self):
+        for barcode, sample in self.barcode_sample.items():
+            productive_file = f"{self.productive_dir}/{sample}_productive.tsv"
+            out_file = f"{self.annotation_dir}/{sample}_annotation.csv"
+            self.create_well_annotation(productive_file, out_file)
+
+        annotation_files = [
+            f"{self.annotation_dir}/{sample}_annotation.csv"
+            for sample in self.barcode_sample.values()
+        ]
+        utils.merge_table_files(annotation_files, self.annotation_csv)
+
+    @staticmethod
+    def create_well_clonotypes(annotation_file, out_file):
+        df = pd.read_csv(annotation_file)
+        df = (
+            df.groupby(["barcode", "well", "sample", "chain", "cdr3"])["umis"]
+            .sum()
+            .reset_index(name="umis")
+        )
+        total_umis = sum(df["umis"])
+        df["percent"] = df["umis"].apply(lambda x: f"{x / total_umis * 100:.2f}%")
+        df.sort_values(by=["umis"], ascending=False, inplace=True)
+        df.to_csv(out_file, index=False)
+        diversity = inverse_simpson_diversity(dict(zip(df["cdr3"], df["umis"])))
+        n_clonotypes = len(df)
+        return n_clonotypes, diversity
+
+    @utils.add_log
+    def create_clonotypes(self):
+        for barcode, sample in self.barcode_sample.items():
+            annotation_file = f"{self.annotation_dir}/{sample}_annotation.csv"
+            out_file = f"{self.clonotypes_dir}/{sample}_clonotypes.csv"
+            n_clonotypes, diversity = self.create_well_clonotypes(
+                annotation_file, out_file
+            )
+            self.metrics[barcode]["n_clonotypes"] = n_clonotypes
+            self.metrics[barcode]["diversity"] = round(diversity, 2)
+
+        clonotypes_files = [
+            f"{self.clonotypes_dir}/{sample}_clonotypes.csv"
+            for sample in self.barcode_sample.values()
+        ]
+        utils.merge_table_files(clonotypes_files, self.clonotypes_csv)
+
+        df = pd.read_csv(self.clonotypes_csv, sep=",")
+        df = df.drop(["barcode"], axis=1)
+        df = df.groupby("sample", group_keys=False).apply(
+            lambda x: x.sort_values("umis", ascending=False).head(10)
+        )
+        self.add_table(
+            title="Top 10 Clonotypes",
+            table_id="clonotypes",
+            df=df,
+        )
+
+    @utils.add_log
+    def add_metrics(self):
+        metrics_df = pd.DataFrame.from_dict(self.metrics, orient="index")
+        # add percent
+        umi_cols = [
+            "umi_mapped",
+            "umi_confident",
+        ]
+        umi_cols.extend([f"umi_confident_{chain}" for chain in self.chains])
+        for col in umi_cols:
+            metrics_df[col] = metrics_df.apply(
+                lambda row: f"{row[col]}({round(row[col]/row['umi']*100, 2)}%)", axis=1
+            )
+
+        metrics_df.sort_values("read", inplace=True)
+        metrics_df.to_csv(f"{self.out_prefix}_well_metrics.tsv", sep="\t")
+        well_metrics_df = metrics_df[
+            metrics_df["sample"].isin(self.barcode_sample.values())
+        ]
+        well_reads = well_metrics_df["read"].sum()
+        total_reads = metrics_df["read"].sum()
+
+        self.add_metric(
+            name="Fraction of Reads in Wells",
+            value=well_reads / total_reads,
+            value_type="fraction",
+            help_info="Lower value indicates wrong well_sample file or high ambient contamination.",
+        )
+        well_metrics_df.sort_values("well", inplace=True)
+
+        cols = ["well", "sample", "n_clonotypes", "diversity"]
+        well_metrics_df = well_metrics_df[
+            cols + [col for col in well_metrics_df.columns if col not in cols]
+        ]
+        self.add_table(
+            title="Well Metrics",
+            table_id="well_metrics",
+            df=well_metrics_df,
+            help="Diversity: inverse Simpson diversity index",
+        )
 
     def run(self):
-        # run igblstn
-        # self.igblast()
+        self.igblast()
         self.process_airr()
+        self.create_annotation()
+        self.create_clonotypes()
+        self.add_metrics()
 
 
 def mapping_vdj(args):

@@ -194,7 +194,7 @@ def get_opts_consensus(parser, sub_program):
     parser.add_argument(
         "--min_consensus_read",
         help="Minimum number of reads to support a base. ",
-        default=1,
+        default=2,
     )
     if sub_program:
         parser.add_argument("--fq", help="Required. Fastq file.", required=True)

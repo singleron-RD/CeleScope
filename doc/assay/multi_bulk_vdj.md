@@ -37,8 +37,6 @@ multi_bulk_vdj \
     --ref_path {path to Homo sapiens or Mus musculus} \
     --species {human or mouse} \
     --type TCR \
-    --min_consensus_read 2 \
-    --thread 8 \
     --mod shell
 ``` 
 `--mapfile` Required.  Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
@@ -69,8 +67,6 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 `--species` Required. Human or Mouse.
 
 `--type` Required. TCR or BCR.
-
-`--thread` Threads to use. The recommended setting is 8, and the maximum should not exceed 20.
 
 `--mod` Create `sjm`(simple job manager https://github.com/StanfordBioinformatics/SJM) or `shell` scripts. 
 

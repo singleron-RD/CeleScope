@@ -275,13 +275,15 @@ class Step:
         return self.__content_dict[slot][step_name + "_summary"]
 
     @utils.add_log
-    def add_table(self, title, table_id, df, script=None):
+    def add_table(self, title, table_id, df, help="", script=""):
         if not script:
             script = """
             <script>
             $(document).ready(function () {{
                 var table = $('#{table_id}').DataTable({{
                     "order": [],
+                    "scrollX": true,
+                    "autoWidth": false,
                     dom: 'Bfrtip',
                     buttons: ['excel']
                 }});
@@ -295,6 +297,7 @@ class Step:
             "df": df.to_html(
                 escape=False, index=False, table_id=table_id, justify="center"
             ),
+            "help": help,
             "script": script,
         }
 

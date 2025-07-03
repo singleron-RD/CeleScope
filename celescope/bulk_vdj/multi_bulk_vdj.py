@@ -62,22 +62,6 @@ class Multi_bulk_vdj(Multi):
         cmd = f"{cmd_line} " f"--fasta {fasta} " f"--consensus_metrics_file {metrics}"
         self.process_cmd(cmd, step, sample, m=15, x=self.args.thread)
 
-    def count_vdj(self, sample):
-        step = "count_vdj"
-        cmd_line = self.get_cmd_line(step, sample)
-        productive_file = (
-            f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_productive.tsv'
-        )
-        airr_file = f'{self.outdir_dic[sample]["mapping_vdj"]}/{sample}_airr.tsv'
-        fq = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
-        cmd = (
-            f"{cmd_line} "
-            f"--productive_file {productive_file} "
-            f"--airr_file {airr_file} "
-            f"--fq {fq} "
-        )
-        self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
-
 
 def main():
     multi = Multi_bulk_vdj(__ASSAY__)
