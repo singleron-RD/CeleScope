@@ -41,18 +41,18 @@ pip install celescope
 CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for all assays. Assays can be one of:
 |assay|data|kit|
 |---|------|--------------|
-|[rna](./assay/multi_rna.md)|single-cell RNA-Seq|GEXSCOPE<sup>TM</sup>|
-|[dynaseq](./assay/multi_dynaseq.md)|single-cell dynamic RNA-Seq|DynaSCOPE<sup>TM</sup>|
-|[tag](./assay/multi_tag.md)|single-cell sample multiplexing|CLindex<sup>TM</sup>|
-|[vdj](./assay/multi_vdj.md)|single-cell VDJ|GEXSCOPE<sup>TM</sup> IR|
-|[flv_trust4](./assay/multi_flv_trust4.md)|single-cell full length VDJ|sCircle<sup>TM</sup>|
-|[capture_virus](./assay/multi_capture_virus.md)|single-cell virus|FocuSCOPE<sup>TM</sup> mRNA × EBV|
-|[snp](./assay/multi_snp.md)|single-cell variant|FocuSCOPE<sup>TM</sup>|
-|[fusion](./assay/multi_fusion.md)|single-cell fusion|FocuSCOPE<sup>TM</sup>|
-|[sweetseq](assay/multi_sweetseq.md)|single-cell glycosylation|ProMoSCOPE<sup>TM</sup>|
+|[rna](./assay/multi_rna.md)|single-cell RNA-Seq|GEXSCOPE|
+|[dynaseq](./assay/multi_dynaseq.md)|single-cell dynamic RNA-Seq|DynaSCOPE|
+|[tag](./assay/multi_tag.md)|single-cell sample multiplexing|CLindex|
+|[vdj](./assay/multi_vdj.md)|single-cell VDJ|GEXSCOPE IR|
+|[flv_trust4](./assay/multi_flv_trust4.md)|single-cell full length VDJ|sCircle|
+|[capture_virus](./assay/multi_capture_virus.md)|single-cell virus|FocuSCOPE mRNA × EBV|
+|[snp](./assay/multi_snp.md)|single-cell variant|FocuSCOPE|
+|[fusion](./assay/multi_fusion.md)|single-cell fusion|FocuSCOPE|
+|[sweetseq](assay/multi_sweetseq.md)|single-cell glycosylation|ProMoSCOPE|
 |[citeseq](assay/multi_citeseq.md)|single-cell CITE-Seq|NA|
-|[bulk_vdj](assay/multi_bulk_vdj.md)|bulk_vdj|NA|
-|[bulk_rna](assay/multi_bulk_rna.md)|bulk_rna|NA|
+|[bulk_vdj](assay/multi_bulk_vdj.md)|bulk_vdj|AccuraCode|
+|[bulk_rna](assay/multi_bulk_rna.md)|bulk_rna|AccuraCode|
 
 
 Click on the hyperlinks above to view the uasge for each assay. Run `multi_{assay} -h` in the command line to display available arguments. For example：
