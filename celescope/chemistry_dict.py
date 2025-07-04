@@ -81,6 +81,10 @@ chemistry_dict = {
         "pattern": "L9C9U12",
         "bc": ["bc.txt"],
     },
+    "bulk_rna-V3": {
+        "pattern": "C6U16",
+        "bc": ["bc.txt"],
+    },
     "bulk_rna-bulk_vdj_match": {
         "pattern": "L18C6U16",
         "bc": ["bc.txt"],

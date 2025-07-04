@@ -327,7 +327,7 @@ class Mapping_vdj(step.Step):
         )
 
     def run(self):
-        # self.igblast()
+        self.igblast()
         self.process_airr()
         self.create_clonotypes()
         self.merge_files()

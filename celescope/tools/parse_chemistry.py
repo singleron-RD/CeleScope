@@ -388,8 +388,10 @@ class AutoBulkRNA(Auto):
         """
         Returns: chemistry or None
         """
+        if seq[:18] == "GTGGTATCAACGCAGAGT":
+            return "bulk_rna-bulk_vdj_match"
         # V2 9bp linker is ATACGCGGA, which is a valid barcode of V1; so must detect V2 first, otherwise it is a valid V1
-        for chemistry in ["bulk_rna-V2", "bulk_rna-V1", "bulk_rna-bulk_vdj_match"]:
+        for chemistry in ["bulk_rna-V2", "bulk_rna-V1", "bulk_rna-V3"]:
             if self.is_chemistry(seq, chemistry):
                 return chemistry
 
