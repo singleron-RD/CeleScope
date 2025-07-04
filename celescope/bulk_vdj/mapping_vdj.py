@@ -14,32 +14,19 @@ import celescope.tools.parse_chemistry as parse_chemistry
 from celescope.__init__ import HELP_DICT
 from celescope.chemistry_dict import chemistry_dict
 import pandas as pd
+import numpy as np
 
 
-def simpson_diversity(data):
-    """Given a hash { 'species': count } , returns the Simpson Diversity Index
-    >>> simpson_di({'a': 10, 'b': 20, 'c': 30,})
-    0.3888888888888889
+def inverse_simpson(counts):
     """
-
-    def p(n, N):
-        """Relative abundance"""
-        if n == 0:
-            return 0
-        else:
-            return float(n) / N
-
-    N = sum(data.values())
-
-    return sum(p(n, N) ** 2 for n in data.values() if n != 0)
-
-
-def inverse_simpson_diversity(data):
-    """Given a hash { 'species': count } , returns the inverse Simpson Diversity Index
-    >>> inverse_simpson_diversity({'a': 10, 'b': 20, 'c': 30,})
-    2.571428571428571
+    >>> inverse_simpson([10,20,30])
+    2.57
     """
-    return float(1) / simpson_diversity(data)
+    counts = np.array(counts)
+    if np.sum(counts) == 0:
+        return 0.0
+    proportions = counts / np.sum(counts)
+    return round(1.0 / np.sum(proportions**2), 2)
 
 
 class Mapping_vdj(step.Step):
@@ -68,9 +55,6 @@ class Mapping_vdj(step.Step):
         self.barcode_well = {v: k for k, v in well_barcode.items()}
 
         # out
-        self.productive_dir = f"{self.outdir}/productive"
-        if not os.path.exists(self.productive_dir):
-            os.makedirs(self.productive_dir)
         self.annotation_dir = f"{self.outdir}/annotation"
         if not os.path.exists(self.annotation_dir):
             os.makedirs(self.annotation_dir)
@@ -117,7 +101,7 @@ class Mapping_vdj(step.Step):
         """
 
         tsv_handles = {
-            barcode: open(f"{self.productive_dir}/{sample}_productive.tsv", "wt")
+            barcode: open(f"{self.annotation_dir}/{sample}_annotation.csv", "wt")
             for barcode, sample in self.barcode_sample.items()
         }
         tsv_headers = [
@@ -126,14 +110,17 @@ class Mapping_vdj(step.Step):
             "sample",
             "umi",
             "chain",
-            "bestVGene",
-            "bestDGene",
-            "bestJGene",
-            "nSeqCDR3",
-            "aaSeqCDR3",
+            "v_gene",
+            "d_gene",
+            "j_gene",
+            "c_gene",
+            "productive",
+            "cdr3",
+            "cdr3_nt",
+            "umis",
         ]
         for f in tsv_handles.values():
-            f.write("\t".join(tsv_headers) + "\n")
+            f.write(",".join(tsv_headers) + "\n")
 
         consensus_metrics_df = pd.read_csv(
             self.args.consensus_metrics_file, sep="\t", index_col=0
@@ -189,10 +176,13 @@ class Mapping_vdj(step.Step):
                         row["v_call"],
                         row["d_call"],
                         row["j_call"],
-                        row["junction"],
+                        "None",
+                        "True",
                         row["junction_aa"],
+                        row["junction"],
+                        "1",  # umis
                     ]
-                    tsv_handles[barcode].write("\t".join(line) + "\n")
+                    tsv_handles[barcode].write(",".join(line) + "\n")
 
         umi_mapped = sum(v for barcode, k in metrics.items() for v in [k["umi_mapped"]])
         self.add_metric(
@@ -227,69 +217,11 @@ class Mapping_vdj(step.Step):
         self.metrics = metrics
 
     @staticmethod
-    def create_well_annotation(productive_file, out_file):
-        df = pd.read_csv(productive_file, sep="\t")
-        df.fillna("None", inplace=True)
-        df = (
-            df.groupby(
-                [
-                    "barcode",
-                    "well",
-                    "sample",
-                    "chain",
-                    "bestVGene",
-                    "bestDGene",
-                    "bestJGene",
-                    "nSeqCDR3",
-                    "aaSeqCDR3",
-                ]
-            )
-            .size()
-            .reset_index(name="umis")
-        )
-        out_df = df.assign(
-            c_gene="None",
-            productive=True,
-        ).rename(
-            columns={
-                "bestVGene": "v_gene",
-                "bestDGene": "d_gene",
-                "bestJGene": "j_gene",
-                "aaSeqCDR3": "cdr3",
-                "nSeqCDR3": "cdr3_nt",
-            }
-        )[
-            [
-                "barcode",
-                "well",
-                "sample",
-                "chain",
-                "v_gene",
-                "d_gene",
-                "j_gene",
-                "c_gene",
-                "productive",
-                "cdr3",
-                "cdr3_nt",
-                "umis",
-            ]
-        ]
-
-        out_df.to_csv(out_file, sep=",", index=False)
-
-    @utils.add_log
-    def create_annotation(self):
-        for barcode, sample in self.barcode_sample.items():
-            productive_file = f"{self.productive_dir}/{sample}_productive.tsv"
-            out_file = f"{self.annotation_dir}/{sample}_annotation.csv"
-            self.create_well_annotation(productive_file, out_file)
-
-    @staticmethod
     def create_well_clonotypes(annotation_file, out_file):
         df_anno = pd.read_csv(annotation_file)
         df_clono = (
-            df_anno.groupby(["barcode", "well", "sample", "chain", "cdr3"])["umis"]
-            .sum()
+            df_anno.groupby(["barcode", "well", "sample", "chain", "cdr3"])
+            .size()
             .reset_index(name="umis")
         )
         sample = df_anno["sample"][0]
@@ -305,6 +237,8 @@ class Mapping_vdj(step.Step):
             on=["barcode", "well", "sample", "chain", "cdr3"],
             how="left",
         )
+        # add umi to treat each umi as a single cell;compatible with immunarch
+        df_anno["barcode"] = df_anno["barcode"] + "_" + df_anno["umi"]
         df_anno.to_csv(annotation_file, index=False)
 
         total_umis = sum(df_clono["umis"])
@@ -313,9 +247,7 @@ class Mapping_vdj(step.Step):
         )
 
         df_clono.to_csv(out_file, index=False)
-        diversity = inverse_simpson_diversity(
-            dict(zip(df_clono["cdr3"], df_clono["umis"]))
-        )
+        diversity = inverse_simpson(df_clono["umis"])
         n_clonotypes = len(df_clono)
         return n_clonotypes, diversity
 
@@ -395,9 +327,8 @@ class Mapping_vdj(step.Step):
         )
 
     def run(self):
-        self.igblast()
+        # self.igblast()
         self.process_airr()
-        self.create_annotation()
         self.create_clonotypes()
         self.merge_files()
         self.add_metrics()

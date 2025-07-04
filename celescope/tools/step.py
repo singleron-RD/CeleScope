@@ -325,7 +325,7 @@ class Step:
             elif os.path.isfile(f):
                 cmd = f"mv -f {f} {self.outs_dir}"
             elif os.path.isdir(f):
-                cmd = f"set -e; cp -r {f} {self.outs_dir}; rm -r {f}"
+                cmd = f"set -e; cp -r {f} {self.outs_dir}; "
             subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
