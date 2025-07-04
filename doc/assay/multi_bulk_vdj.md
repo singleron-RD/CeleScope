@@ -37,9 +37,10 @@ multi_bulk_vdj \
     --ref_path {path to Homo sapiens or Mus musculus} \
     --species {human or mouse} \
     --type TCR \
+    --well_sample well_sample.tsv \
     --mod shell
 ``` 
-`--mapfile` Required.  Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
+`--mapfile` Required.  Mapfile is a tab-delimited text file with three columns. Each line of mapfile represents paired-end fastq files.
 
 1st column: Fastq file prefix.  
 2nd column: Fastq file directory path.  
@@ -68,6 +69,25 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--type` Required. TCR or BCR.
 
+`--well_sample` (Required): A TSV file containing well numbers and sample names of wells.  
+
+  Column structure:   
+    1st column: Well numbers  
+    2nd column: Corresponding sample names
+
+  96 well number(8 * 12)
+  
+  ![](../images/96-well.png)
+  
+  Example:
+  ```tsv
+  1 control1
+  2 control2
+  3 treatment1
+  4 treatment2
+  ...
+  ```
+
 `--mod` Create `sjm`(simple job manager https://github.com/StanfordBioinformatics/SJM) or `shell` scripts. 
 
 After you `sh run.sh`, a `shell` directory containing `{sample}.sh` files will be generated.
@@ -79,7 +99,17 @@ bash ./shell/{sample}.sh
 Note that the `./shell/{sample}.sh` must be run under the working directory(You shouldn't run them under the `shell` directory)
 
 ## Main output
-- `count_vdj/{sample}_clonetypes.csv` The frequency and proportion of each cdr3 amino acid sequence.
-- `count_vdj/{sample}_clonetypes_by_nt.csv` The frequency and proportion of each cdr3 nucleotide sequence.
-- `count_vdj/{sample}_mapping_metrics.tsv` Mapping metrics of each index.
-- `count_vdj/{sample}_filtered_annotations.csv` Annotation for each chain.
+
+- `outs/annotation` This directory contains V(D)J annotations for each well/sample. This directory can be imported into [immunarch](https://github.com/immunomind/immunarch) for downstream analysis using the following code:
+
+```r
+library(immunarch)
+immdata <- repLoad("path to outs/annotation")
+```
+
+* `outs/clonotypes` This directory contains clonotype information for each well/sample, aggregated based on `cdr3` amino acid sequence.
+
+* `outs/{sample}_filtered_annotations.csv` contains combined V(D)J annotations across all wells/samples.
+
+* `outs/{sample}_clonotypes.csv` contains combined clonotype information across all wells/samples.
+

@@ -80,7 +80,12 @@ class Mapping_vdj(step.Step):
         self.airr_out = f"{self.out_prefix}_airr.tsv"
         self.annotation_csv = f"{self.out_prefix}_filtered_annotations.csv"
         self.clonotypes_csv = f"{self.out_prefix}_clonotypes.csv"
-        self.outs = [self.annotation_csv, self.clonotypes_csv]
+        self.outs = [
+            self.annotation_csv,
+            self.clonotypes_csv,
+            self.annotation_dir,
+            self.clonotypes_dir,
+        ]
 
     @utils.add_log
     def igblast(self):
@@ -243,10 +248,7 @@ class Mapping_vdj(step.Step):
             .reset_index(name="umis")
         )
         out_df = df.assign(
-            is_cell=True,
-            high_confidence=True,
             c_gene="None",
-            full_length=True,
             productive=True,
         ).rename(
             columns={
@@ -261,14 +263,11 @@ class Mapping_vdj(step.Step):
                 "barcode",
                 "well",
                 "sample",
-                "is_cell",
-                "high_confidence",
                 "chain",
                 "v_gene",
                 "d_gene",
                 "j_gene",
                 "c_gene",
-                "full_length",
                 "productive",
                 "cdr3",
                 "cdr3_nt",
@@ -276,7 +275,6 @@ class Mapping_vdj(step.Step):
             ]
         ]
 
-        out_df.sort_values(by=["umis"], ascending=False, inplace=True)
         out_df.to_csv(out_file, sep=",", index=False)
 
     @utils.add_log
@@ -286,26 +284,39 @@ class Mapping_vdj(step.Step):
             out_file = f"{self.annotation_dir}/{sample}_annotation.csv"
             self.create_well_annotation(productive_file, out_file)
 
-        annotation_files = [
-            f"{self.annotation_dir}/{sample}_annotation.csv"
-            for sample in self.barcode_sample.values()
-        ]
-        utils.merge_table_files(annotation_files, self.annotation_csv)
-
     @staticmethod
     def create_well_clonotypes(annotation_file, out_file):
-        df = pd.read_csv(annotation_file)
-        df = (
-            df.groupby(["barcode", "well", "sample", "chain", "cdr3"])["umis"]
+        df_anno = pd.read_csv(annotation_file)
+        df_clono = (
+            df_anno.groupby(["barcode", "well", "sample", "chain", "cdr3"])["umis"]
             .sum()
             .reset_index(name="umis")
         )
-        total_umis = sum(df["umis"])
-        df["percent"] = df["umis"].apply(lambda x: f"{x / total_umis * 100:.2f}%")
-        df.sort_values(by=["umis"], ascending=False, inplace=True)
-        df.to_csv(out_file, index=False)
-        diversity = inverse_simpson_diversity(dict(zip(df["cdr3"], df["umis"])))
-        n_clonotypes = len(df)
+        sample = df_anno["sample"][0]
+        df_clono.sort_values("umis", ascending=False, inplace=True)
+        df_clono["raw_clonotype_id"] = [
+            "{}_{}".format(sample, i + 1) for i in range(len(df_clono))
+        ]
+
+        df_anno = df_anno.merge(
+            df_clono[
+                ["barcode", "well", "sample", "chain", "cdr3", "raw_clonotype_id"]
+            ],
+            on=["barcode", "well", "sample", "chain", "cdr3"],
+            how="left",
+        )
+        df_anno.to_csv(annotation_file, index=False)
+
+        total_umis = sum(df_clono["umis"])
+        df_clono["percent"] = df_clono["umis"].apply(
+            lambda x: f"{x / total_umis * 100:.2f}%"
+        )
+
+        df_clono.to_csv(out_file, index=False)
+        diversity = inverse_simpson_diversity(
+            dict(zip(df_clono["cdr3"], df_clono["umis"]))
+        )
+        n_clonotypes = len(df_clono)
         return n_clonotypes, diversity
 
     @utils.add_log
@@ -319,22 +330,19 @@ class Mapping_vdj(step.Step):
             self.metrics[barcode]["n_clonotypes"] = n_clonotypes
             self.metrics[barcode]["diversity"] = round(diversity, 2)
 
+    @utils.add_log
+    def merge_files(self):
+        annotation_files = [
+            f"{self.annotation_dir}/{sample}_annotation.csv"
+            for sample in self.barcode_sample.values()
+        ]
+        utils.merge_table_files(annotation_files, self.annotation_csv)
+
         clonotypes_files = [
             f"{self.clonotypes_dir}/{sample}_clonotypes.csv"
             for sample in self.barcode_sample.values()
         ]
         utils.merge_table_files(clonotypes_files, self.clonotypes_csv)
-
-        df = pd.read_csv(self.clonotypes_csv, sep=",")
-        df = df.drop(["barcode"], axis=1)
-        df = df.groupby("sample", group_keys=False).apply(
-            lambda x: x.sort_values("umis", ascending=False).head(10)
-        )
-        self.add_table(
-            title="Top 10 Clonotypes",
-            table_id="clonotypes",
-            df=df,
-        )
 
     @utils.add_log
     def add_metrics(self):
@@ -377,11 +385,21 @@ class Mapping_vdj(step.Step):
             help="Diversity: inverse Simpson diversity index",
         )
 
+        df = pd.read_csv(self.clonotypes_csv, sep=",")
+        df = df.drop(["barcode"], axis=1)
+        df = df.groupby("sample", group_keys=False).head(10)
+        self.add_table(
+            title="Top 10 Clonotypes",
+            table_id="clonotypes",
+            df=df,
+        )
+
     def run(self):
         self.igblast()
         self.process_airr()
         self.create_annotation()
         self.create_clonotypes()
+        self.merge_files()
         self.add_metrics()
 
 
