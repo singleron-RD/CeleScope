@@ -314,7 +314,7 @@ class Mapping_vdj(step.Step):
             title="Well Metrics",
             table_id="well_metrics",
             df=well_metrics_df,
-            help="Diversity: inverse Simpson diversity index",
+            help="n_clonotypes: total number of clonotypes<\br>diversity: inverse Simpson diversity index<\br>",
         )
 
         df = pd.read_csv(self.clonotypes_csv, sep=",")

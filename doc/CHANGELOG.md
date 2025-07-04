@@ -1,3 +1,10 @@
+## [2.7.0] - 2025-07-04
+ - Added: support for `bulk_rna-V3` auto detection.
+ - Added: well metrics in `bulk_vdj` HTML report.
+ - Changed: introduced the required `--well_sample` parameter in `bulk_vdj`. 
+ - Changed: optimized the consensus algorithm so that leading Ns no longer affect the downstream base calls. This improvement can increase the V(D)J mapping rate after consensus.
+ - Removed: `cutadapt` step in `vdj` and `bulk_vdj`.
+
 ## [2.6.1] - 2025-06-10
  - Added: log output support for shell mode.
 
