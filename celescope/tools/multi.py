@@ -411,9 +411,9 @@ job_end
 
     def guide(self):
         if self.args.mod == "shell":
-            msg = "nohup bash ./shell/sample.sh &"
+            msg = "nohup bash ./shell/{sample}.sh &"
             sys.stderr.write(
-                f"The run shell for each sample has been successfully generated. Execute the following command to start running in the background(replace 'sample' with the actual sample name):\n{msg}\n"
+                f"The run shell for each sample has been successfully generated. Execute the following command to start running in the background(replace '{{sample}}' with the actual sample name):\n{msg}\n"
             )
 
     def run(self):

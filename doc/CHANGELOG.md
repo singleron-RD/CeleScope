@@ -1,3 +1,6 @@
+## [2.7.1] - 2025-07-08
+ - Added: `--outSAMtype None` for no BAM output.
+
 ## [2.7.0] - 2025-07-04
  - Added: support for `bulk_rna-V3` auto detection.
  - Added: well metrics in `bulk_vdj` HTML report.

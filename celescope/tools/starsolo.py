@@ -103,6 +103,7 @@ def create_solo_args(
     clip3pAdapterSeq: str,
     outFilterMatchNmin: Union[str, int],
     soloFeatures: str,
+    outSAMtype: str,
     outSAMattributes: str,
     soloCBmatchWLtype: str,
     limitBAMsortRAM: Union[str, int],
@@ -123,14 +124,15 @@ def create_solo_args(
         f"--clip3pAdapterSeq {clip3pAdapterSeq} \\\n"
         f"--outFilterMatchNmin {outFilterMatchNmin} \\\n"
         f"--soloFeatures {soloFeatures} \\\n"
-        f"--outSAMattributes {outSAMattributes} \\\n"
         f"--soloCBmatchWLtype {soloCBmatchWLtype} \\\n"
         f"--limitBAMsortRAM {limitBAMsortRAM} \\\n"
-        "--outSAMtype BAM SortedByCoordinate \\\n"
+        f"--outSAMtype {outSAMtype} \\\n"
         "--soloCellReadStats Standard \\\n"
         "--soloBarcodeReadLength 0 \\\n"
         f"{extra_starsolo_args} \\\n"
     )
+    if outSAMtype != "None":
+        cmd += f"--outSAMattributes {outSAMattributes} \\\n"
     return cmd
 
 
@@ -200,6 +202,7 @@ class Starsolo(Step):
             clip3pAdapterSeq=self.args.adapter_3p,
             outFilterMatchNmin=self.args.outFilterMatchNmin,
             soloFeatures=soloFeatures,
+            outSAMtype=self.args.outSAMtype,
             outSAMattributes=self.outSAMattributes,
             soloCBmatchWLtype=self.args.soloCBmatchWLtype,
             limitBAMsortRAM=self.args.limitBAMsortRAM,
@@ -521,16 +524,22 @@ is higher than or equal to this value.""",
     )
     parser.add_argument(
         "--soloCellFilter",
-        help="The same as the argument in STARsolo",
+        help="Same as the argument in STARsolo",
         default="EmptyDrops_CR 3000 0.99 10 45000 90000 500 0.01 20000 0.001 10000",
     )
     parser.add_argument(
         "--limitBAMsortRAM",
-        help="The same as the argument in STARsolo",
+        help="Same as the argument in STARsolo",
         default=32000000000,
         type=int,
     )
     parser.add_argument("--STAR_param", help=HELP_DICT["additional_param"], default="")
+    parser.add_argument(
+        "--outSAMtype",
+        help="Same as the argument in STARsolo. Set to 'None' to skip BAM file output.",
+        default="BAM SortedByCoordinate",
+        type=str,
+    )
     parser.add_argument(
         "--SAM_attributes",
         help=f"Additional attributes(other than {SAM_attributes}) to be added to SAM file",
@@ -538,12 +547,12 @@ is higher than or equal to this value.""",
     )
     parser.add_argument(
         "--soloFeatures",
-        help="The same as the argument in STARsolo",
+        help="Same as the argument in STARsolo",
         default="GeneFull_Ex50pAS Gene",
     )
     parser.add_argument(
         "--soloCBmatchWLtype",
-        help="The same as the argument in STARsolo. Please note `EditDist 2` only works with `--soloType CB UMI Complex`. ",
+        help="Same as the argument in STARsolo. Please note `EditDist 2` only works with `--soloType CB UMI Complex`. ",
         default="1MM",
     )
     parser.add_argument(

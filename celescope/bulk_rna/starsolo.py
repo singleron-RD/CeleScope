@@ -4,22 +4,21 @@ import sys
 import numpy as np
 import pandas as pd
 
-from celescope.__init__ import HELP_DICT
 from celescope.tools.__init__ import COUNTS_FILE_NAME
-from celescope.chemistry_dict import chemistry_dict
 from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.starsolo import (
     Demultiplexing,
     Mapping as ToolsMapping,
     create_solo_args,
     create_soloFeatures,
+    get_opts_starsolo as tools_opts,
 )
 from celescope.tools.starsolo import (
     Starsolo as tools_Starsolo,
 )
 from celescope.tools.matrix import CountMatrix
 from celescope.tools import utils
-from celescope.tools.step import Step, s_common
+from celescope.tools.step import Step
 
 SAM_attributes = "NH HI nM AS CR UR CB UB GX GN "
 
@@ -65,11 +64,12 @@ class Starsolo(tools_Starsolo):
             fq1=self.args.fq1,
             fq2=self.args.fq2,
             genomeDir=self.args.genomeDir,
-            soloCellFilter=self.args.soloCellFilter,
+            soloCellFilter="None",  # only use raw matrix
             runThreadN=self.args.thread,
             clip3pAdapterSeq=self.args.adapter_3p,
             outFilterMatchNmin=self.args.outFilterMatchNmin,
             soloFeatures=soloFeatures,
+            outSAMtype=self.args.outSAMtype,
             outSAMattributes=self.outSAMattributes,
             soloCBmatchWLtype=self.args.soloCBmatchWLtype,
             limitBAMsortRAM=self.args.limitBAMsortRAM,
@@ -303,88 +303,10 @@ def starsolo(args):
 
 
 def get_opts_starsolo(parser, sub_program=True):
-    parser.add_argument(
-        "--chemistry",
-        help=HELP_DICT["chemistry"],
-        choices=list(chemistry_dict.keys()),
-        default="auto",
-    )
-    parser.add_argument(
-        "--pattern",
-        help="""The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
-        of bases.  
-        - `C`: cell barcode  
-        - `L`: linker(common sequences)  
-        - `U`: UMI    
-        - `T`: poly T""",
-    )
-    parser.add_argument(
-        "--whitelist",
-        help="whitelist file path.",
-    )
-    parser.add_argument(
-        "--adapter_3p",
-        help="Adapter sequence to clip from 3 prime. Multiple sequences are seperated by space",
-        default="AAAAAAAAAAAA",
-    )
-    parser.add_argument(
-        "--genomeDir",
-        help=HELP_DICT["genomeDir"],
-    )
-    parser.add_argument(
-        "--outFilterMatchNmin",
-        help="""Alignment will be output only if the number of matched bases 
-is higher than or equal to this value.""",
-        default=50,
-    )
-    parser.add_argument(
-        "--soloCellFilter",
-        help="The same as the argument in STARsolo",
-        default="None",
-    )
-    parser.add_argument("--STAR_param", help=HELP_DICT["additional_param"], default="")
-    parser.add_argument(
-        "--SAM_attributes",
-        help=f"Additional attributes(other than {SAM_attributes}) to be added to SAM file",
-        default="",
-    )
-    parser.add_argument(
-        "--soloFeatures",
-        help="The same as the argument in STARsolo",
-        default="GeneFull_Ex50pAS Gene",
-    )
-    parser.add_argument(
-        "--report_soloFeature",
-        help="Specify which soloFeatures to use in the HTML report and the outs directory.",
-        default="GeneFull_Ex50pAS",
-    )
-    parser.add_argument(
-        "--soloCBmatchWLtype",
-        help="The same as the argument in STARsolo. Please note `EditDist 2` only works with `--soloType CB UMI Complex`. ",
-        default="1MM",
-    )
-    parser.add_argument(
-        "--limitBAMsortRAM",
-        help="The same as the argument in STARsolo",
-        default=32000000000,
-        type=int,
-    )
+    tools_opts(parser, sub_program)
     parser.add_argument(
         "--well_sample",
         help="tsv file of well numbers and sample names. The first column is well numbers and the second column is sample names.",
         required=True,
     )
-    if sub_program:
-        parser.add_argument(
-            "--fq1",
-            help="R1 fastq file. Multiple files are separated by comma.",
-            required=True,
-        )
-        parser.add_argument(
-            "--fq2",
-            help="R2 fastq file. Multiple files are separated by comma.",
-            required=True,
-        )
-        parser = s_common(parser)
-
     return parser
