@@ -17,7 +17,18 @@ import pandas as pd
 import numpy as np
 
 
-def inverse_simpson(counts):
+def cal_chao1(counts):
+    F1 = sum(1 for c in counts if c == 1)
+    F2 = sum(1 for c in counts if c == 2)
+    S_obs = len([c for c in counts if c > 0])
+
+    if F2 == 0:
+        return S_obs + F1 * (F1 - 1) / (2 * (F2 + 1))
+    else:
+        return S_obs + F1**2 / (2 * F2)
+
+
+def cal_inverse_simpson(counts):
     """
     >>> inverse_simpson([10,20,30])
     2.57
@@ -135,7 +146,7 @@ class Mapping_vdj(step.Step):
                 metrics[barcode]["well"] = ""
                 metrics[barcode]["sample"] = ""
             metrics[barcode]["n_clonotypes"] = 0
-            metrics[barcode]["diversity"] = 0
+            metrics[barcode]["inverse_simpson"] = 0
             metrics[barcode]["read"] = consensus_metrics_dict[barcode]["n_read"]
             metrics[barcode]["umi"] = 0
             metrics[barcode]["umi_mapped"] = 0
@@ -158,6 +169,8 @@ class Mapping_vdj(step.Step):
                     row["productive"] == "T"
                     and row["junction"] != ""
                     and "N" not in row["junction"]
+                    and len(row["junction_aa"]) > 5
+                    and row["junction_aa"][0] == "C"
                 ):
                     metrics[barcode]["umi_confident"] += 1
                     if row["locus"] in self.chains:
@@ -199,7 +212,7 @@ class Mapping_vdj(step.Step):
             name="UMIs Mapped Confidently to VJ Gene",
             value=umi_confident,
             total=total_umi,
-            help_info="UMIs with productive rearrangement mapped to VJ gene pairs and without N in the junction sequence",
+            help_info="UMIs with productive rearrangement mapped to VJ gene pairs and with correct juntion sequence(no N in nt, aa length > 5, aa starts with C)",
         )
 
         for chain in self.chains:
@@ -247,20 +260,20 @@ class Mapping_vdj(step.Step):
         )
 
         df_clono.to_csv(out_file, index=False)
-        diversity = inverse_simpson(df_clono["umis"])
+        inverse_simpson = cal_inverse_simpson(df_clono["umis"])
         n_clonotypes = len(df_clono)
-        return n_clonotypes, diversity
+        return n_clonotypes, inverse_simpson
 
     @utils.add_log
     def create_clonotypes(self):
         for barcode, sample in self.barcode_sample.items():
             annotation_file = f"{self.annotation_dir}/{sample}_annotation.csv"
             out_file = f"{self.clonotypes_dir}/{sample}_clonotypes.csv"
-            n_clonotypes, diversity = self.create_well_clonotypes(
+            n_clonotypes, inverse_simpson = self.create_well_clonotypes(
                 annotation_file, out_file
             )
             self.metrics[barcode]["n_clonotypes"] = n_clonotypes
-            self.metrics[barcode]["diversity"] = round(diversity, 2)
+            self.metrics[barcode]["inverse_simpson"] = round(inverse_simpson, 2)
 
     @utils.add_log
     def merge_files(self):
@@ -306,7 +319,7 @@ class Mapping_vdj(step.Step):
         )
         well_metrics_df.sort_values("well", inplace=True)
 
-        cols = ["well", "sample", "n_clonotypes", "diversity"]
+        cols = ["well", "sample", "n_clonotypes", "inverse_simpson"]
         well_metrics_df = well_metrics_df[
             cols + [col for col in well_metrics_df.columns if col not in cols]
         ]
@@ -314,7 +327,7 @@ class Mapping_vdj(step.Step):
             title="Well Metrics",
             table_id="well_metrics",
             df=well_metrics_df,
-            help="n_clonotypes: total number of clonotypes<\br>diversity: inverse Simpson diversity index<\br>",
+            help="n_clonotypes: total number of clonotypes<br>inverse_simpson: inverse Simpson diversity index<br>",
         )
 
         df = pd.read_csv(self.clonotypes_csv, sep=",")

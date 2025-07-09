@@ -1,3 +1,6 @@
+## [2.7.2] - 2025-07-09
+ - Changed: In `bulk_vdj` analysis, retain only UMIs whose CDR3 amino acid sequence is longer than 5 residues and starts with 'C'.
+
 ## [2.7.1] - 2025-07-08
  - Added: `--outSAMtype None` for no BAM output.
 

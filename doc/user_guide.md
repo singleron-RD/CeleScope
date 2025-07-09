@@ -10,9 +10,8 @@
 
 ### Docker image
 
-```
 https://quay.io/repository/singleron-rd/celescope?tab=tags
-```
+
 If you are unable to use Docker, you can install it using mamba/conda and pip as follows.
 
 ### Create conda environment and install conda packages. 
