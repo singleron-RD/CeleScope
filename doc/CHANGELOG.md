@@ -1,3 +1,6 @@
+## [2.7.3] - 2025-07-09
+- Changed: The method used for automatic chemistry detection (`--chemistry auto`) has been updated. Previously, the 6 bp linker sequence following the UMI was used to distinguish between GEXSCOPE-V1 and flv_rna. This version now uses the presence of a 'C' at the 57th base instead, providing more robust classification in cases where the 6 bp linker may be affected by sequencing errors.
+
 ## [2.7.2] - 2025-07-09
  - Changed: In `bulk_vdj` analysis, retain only UMIs whose CDR3 amino acid sequence is longer than 5 residues and starts with 'C'.
 

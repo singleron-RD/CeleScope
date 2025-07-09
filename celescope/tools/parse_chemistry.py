@@ -368,10 +368,7 @@ class AutoRNA(Auto):
         for chemistry in ["GEXSCOPE-V2", "GEXSCOPE-V1"]:
             if self.is_chemistry(seq, chemistry):
                 if chemistry == "GEXSCOPE-V1":
-                    if (
-                        seq[self.chemistry_dict["flv_rna"]["pattern_dict"]["L"][2]]
-                        == "CTGTCT"
-                    ):
+                    if seq[56] != "C":
                         return "flv_rna"
                 return chemistry
 
