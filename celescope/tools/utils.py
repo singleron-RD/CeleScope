@@ -208,7 +208,7 @@ def read_fasta(fasta_file, equal=False):
     length = None
     with pysam.FastxFile(fasta_file) as infile:
         for index, record in enumerate(infile):
-            seq = record.sequence
+            seq = str(record.sequence).upper()
             if index == 0:
                 length = len(seq)
             if equal:

@@ -67,8 +67,8 @@ class Split(Step):
             if self.split_fastq:
                 umi = segment.get_tag("UB")
                 name = segment.query_name + UMI_SEPARATOR + umi
-                seq = segment.query_sequence
-                qual = "".join(chr(q + 33) for q in segment.query_qualities)
+                seq = segment.get_forward_sequence()
+                qual = "".join(chr(q + 33) for q in segment.get_forward_qualities())
                 fq_dict[cb].write(utils.fastq_line(name, seq, qual).encode())
 
 

@@ -1,3 +1,6 @@
+## [2.7.4] - 2025-07-14
+- Fixed: In `bulk_rna split_fastq`, the sequences are now the original sequences from the FASTQ file. Previously, if a read was mapped to the reverse strand, the split FASTQ contained the reverse-complemented sequence.
+
 ## [2.7.3] - 2025-07-09
 - Changed: The method used for automatic chemistry detection (`--chemistry auto`) has been updated. Previously, the 6 bp linker sequence following the UMI was used to distinguish between GEXSCOPE-V1 and flv_rna. This version now uses the presence of a 'C' at the 57th base instead, providing more robust classification in cases where the 6 bp linker may be affected by sequencing errors.
 
@@ -30,7 +33,7 @@
  - Fixed: "customized" option in chemistry was not working.
 
 ## [2.3.2] - 2025-03-11
- - Fix: `bulk_rna-V2` was auto-detected as `bulk_rna-V1`.
+ - Fixed: `bulk_rna-V2` was auto-detected as `bulk_rna-V1`.
 
 ## [2.3.1] - 2025-03-06
  - Changed: Improve the split_fastq speed of `bulk_rna`.
