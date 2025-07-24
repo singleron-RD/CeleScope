@@ -3,7 +3,9 @@ import re
 import sys
 import unittest
 from collections import Counter, defaultdict
+import itertools
 from itertools import combinations, product
+from importlib import resources
 
 import pysam
 from xopen import xopen
@@ -14,6 +16,139 @@ from celescope.__init__ import ROOT_PATH, HELP_DICT
 from celescope.tools.step import Step, s_common
 
 MIN_T = 10
+chemistry_dir = str(resources.files("celescope.data.chemistry"))
+
+
+def check_seq_mismatch(seq_list, raw_list, mismatch_list):
+    """
+    Returns
+        valid: True if seq in mismatch_list or mismatch_list is empty
+        corrected: True if seq in mismatch_list but not in raw_list
+        res: joined seq
+
+    >>> seq_list = ['ATA', 'AAT', 'ATA']
+    >>> correct_set_list = [{'AAA'},{'AAA'},{'AAA'}]
+    >>> mismatch_dict_list = [create_mismatch_origin_dict(['AAA'])] * 3
+
+    >>> check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
+    (True, True, 'AAAAAAAAA')
+
+    >>> seq_list = ['AAA', 'AAA', 'AAA']
+    >>> check_seq_mismatch(seq_list, correct_set_list, mismatch_dict_list)
+    (True, False, 'AAAAAAAAA')
+
+    >>> seq_list = ['AAA', 'AAA', 'AAA']
+    >>> raw_list, mismatch_list = [], []
+    >>> check_seq_mismatch(seq_list, raw_list, mismatch_list)
+    (True, False, 'AAAAAAAAA')
+    """
+    if not mismatch_list:
+        return True, False, "".join(seq_list)
+    valid = True
+    corrected = False
+    res = []
+    for index, seq in enumerate(seq_list):
+        if seq not in raw_list[index]:
+            if seq not in mismatch_list[index]:
+                valid = False
+                res.append("")
+            else:
+                corrected = True
+                res.append(mismatch_list[index][seq])
+        else:
+            res.append(seq)
+
+    return valid, corrected, "".join(res)
+
+
+def parse_pattern(pattern: str, allowed: str = "CLUNT") -> dict[str, list[slice]]:
+    """Parse a pattern string into a dictionary of slices.
+
+    >>> pattern_dict = parse_pattern("C8L16C8L16C8L1U12T18")
+    >>> pattern_dict['C']
+    [slice(0, 8, None), slice(24, 32, None), slice(48, 56, None)]
+    >>> pattern_dict['L']
+    [slice(8, 24, None), slice(32, 48, None), slice(56, 57, None)]
+    """
+    pattern_slices: dict[str, list[slice]] = {}
+    p = re.compile(r"([A-Z])(\d+)")  # Compile the regex
+
+    start = 0
+    for char, length in p.findall(pattern):
+        if char not in allowed:
+            raise ValueError(f"Invalid character '{char}' in pattern: {pattern}")
+        if char not in pattern_slices:
+            pattern_slices[char] = []
+        end = start + int(length)
+        pattern_slices[char].append(slice(start, end))
+        start = end
+    return pattern_slices
+
+
+def create_mismatch_seqs(seq: str, max_mismatch=1, allowed_bases="ACGTN") -> set[str]:
+    """Create all sequences within a specified number of mismatches from the input sequence.
+
+    >>> answer = set(["TCG", "AAG", "ACC", "ATG", "ACT", "ACN", "GCG", "ANG", "ACA", "ACG", "CCG", "AGG", "NCG"])
+    >>> seq_set = create_mismatch_seqs("ACG")
+    >>> seq_set == answer
+    True
+    """
+    if max_mismatch < 0:
+        raise ValueError("max_mismatch must be non-negative")
+    if max_mismatch > len(seq):
+        raise ValueError(
+            f"max_mismatch ({max_mismatch}) cannot be greater than the sequence length ({len(seq)})"
+        )
+
+    result = set()
+    for locs in itertools.combinations(range(len(seq)), max_mismatch):
+        seq_locs = [
+            list(allowed_bases) if i in locs else [base] for i, base in enumerate(seq)
+        ]
+        result.update("".join(p) for p in itertools.product(*seq_locs))
+    return result
+
+
+def create_mismatch_origin_dict(origin_seqs: list, n_mismatch=1) -> dict[str, str]:
+    """Create a dictionary mapping sequences with mismatches to their original sequences(in whitelist).
+
+    >>> origin_seqs = ["AACGTGAT", "AAACATCG"]
+    >>> mismatch_dict = create_mismatch_origin_dict(origin_seqs)
+    >>> mismatch_dict["AACGTGAA"] == "AACGTGAT"
+    True
+    """
+    result = {}
+    for origin_seq in origin_seqs:
+        origin_seq = origin_seq.strip()
+        if origin_seq == "":
+            continue
+        for mismatch_seq in create_mismatch_seqs(origin_seq, n_mismatch):
+            result[mismatch_seq] = origin_seq
+    return result
+
+
+def create_mismatch_origin_dicts_from_whitelists(
+    whitelists: list, n_mismatch: int = 1
+) -> tuple[list, list]:
+    """Returns raw dict list and mismatch dict list.
+
+    >>> whitelists = [chemistry_dir + "/scopeV2.2.1/bclist"]
+    >>> raw_list, mismatch_list = create_mismatch_origin_dicts_from_whitelists(whitelists)
+    >>> len(raw_list) == len(mismatch_list)
+    True
+    """
+    raw_list, mismatch_list = [], []
+    for f in whitelists:
+        barcodes = utils.one_col_to_list(f)
+        raw_list.append(set(barcodes))
+        barcode_mismatch_dict = create_mismatch_origin_dict(barcodes, n_mismatch)
+        mismatch_list.append(barcode_mismatch_dict)
+
+    return raw_list, mismatch_list
+
+
+V3_LINKER1 = "ACGATG"
+V3_LINKER2 = "CATAGT"
 
 
 class Chemistry:
@@ -63,6 +198,14 @@ class Chemistry:
             self.linker_flv_rna_mismatch_list,
         ) = Barcode.parse_chemistry("flv_rna")
 
+        self.v3_linker_mismatch = create_mismatch_origin_dicts_from_whitelists(
+            [
+                f"{chemistry_dir}/GEXSCOPE-V3/linker1.txt",
+                f"{chemistry_dir}/GEXSCOPE-V3/linker2.txt",
+            ],
+            1,
+        )
+
     @utils.add_log
     def check_chemistry(self):
         """check chemistry in the fq1_list"""
@@ -77,6 +220,38 @@ class Chemistry:
             )
         return chemistry_list
 
+    def v3_offset(self, seq):
+        """
+        return -1 if not v3
+
+        >>> seq = "AT" + "TCGACTGTC" + "ACGATG" + "TTCTAGGAT" + "CATAGT" + "TGCACGAGA" + "C" + "CATATCAATGGG" + "TTTTTTTTTT"
+        >>> runner = Chemistry("fake_fq1")
+        >>> runner.v3_offset(seq)
+        2
+        >>> seq = "TCGACTGTC" + "ACGATG" + "TTCTAGGAT" + "CATAGT" + "TGCACGAGA" + "C" + "CATATCAATGGG" + "TTTTTTTTTT"
+        >>> runner.v3_offset(seq)
+        0
+        >>> seq = "TCGACTGTC" + "ATATAT" + "TTCTAGGAT" + "CATAGT" + "TGCACGAGA" + "C" + "CATATCAATGGG" + "TTTTTTTTTT"
+        >>> runner.v3_offset(seq)
+        -1
+        """
+        bc_len = 9
+        linker_len = 6
+        max_offset_len = 3 + 1  # allow for extra 1 bases
+        for offset in range(max_offset_len + 1):
+            first_linker_start = offset + bc_len
+            second_linker_start = first_linker_start + linker_len + bc_len
+            first_linker_seq = seq[first_linker_start : first_linker_start + linker_len]
+            second_linker_seq = seq[
+                second_linker_start : second_linker_start + linker_len
+            ]
+            valid, _, _ = check_seq_mismatch(
+                [first_linker_seq, second_linker_seq], *self.v3_linker_mismatch
+            )
+            if valid:
+                return offset
+        return -1
+
     def seq_chemistry(self, seq):
         """
         Returns: chemistry or None
@@ -86,39 +261,22 @@ class Chemistry:
         >>> runner.seq_chemistry(seq)
         'scopeV3.0.1'
 
-        >>> seq = "GTCGTAGAATCCACGTGCTTGAGACTCAATGATCAGCATGCGGCTACGGCGATTAACGTTGAATGTTTTTTTTTTTTTTTTTTTTT"
-        >>> runner.seq_chemistry(seq)
-        'scopeV2.0.1'
-
-        >>> seq = "NCAGATTC" + "ATCCACGTGCTTGAGA" + "GTACGCAA" + "TCAGCATGCGGCTACG" + "CTGAGCCA" + "C" + "TCCGAAGCCCAT" + "TTTTTTTTTTTTTTTTTTTTTTTTTTATTGC"
-        >>> runner.seq_chemistry(seq)
-        'scopeV2.1.1'
-
         >>> seq = "NCAGATTC" + "TCGGTGACAGCCATAT" + "GTACGCAA" + "CGTAGTCAGAAGCTGA" + "CTGAGCCA" + "C" + "TCCGAAGCCCAT" + "TTTTTTTTTTTTTTTTTTTTTTTTTTATTGC"
         >>> runner.seq_chemistry(seq)
         'scopeV2.2.1'
 
         """
-
-        # check flv_rna first. otherwise it may be considered as scopeV2.1.1 and scopeV2.2.1
-        linker_flv_rna = Barcode.get_seq_str(seq, self.pattern_dict_flv_rna["L"])
-        bool_valid, _, _ = Barcode.check_seq_mismatch(
-            [linker_flv_rna],
-            self.linker_flv_rna_set_list,
-            self.linker_flv_rna_mismatch_list,
-        )
-        if bool_valid:
-            return "flv_rna"
+        if self.v3_offset(seq) != -1:
+            return "GEXSCOPE-V3"
 
         linker_v2 = Barcode.get_seq_str(seq, self.pattern_dict_v2["L"])
         bool_valid, _, _ = Barcode.check_seq_mismatch(
-            [linker_v2], self.linker_1_v2_set_list, self.linker_1_v2_mismatch_list
+            [linker_v2], self.linker_4_v2_set_list, self.linker_4_v2_mismatch_list
         )
         if bool_valid:
-            if seq[65:69] == "TTTT":
-                return "scopeV2.0.1"
-            else:
-                return "scopeV2.1.1"
+            if seq[56] != "C":
+                return "flv_rna"
+            return "scopeV2.2.1"
 
         linker_v3 = Barcode.get_seq_str(seq, self.pattern_dict_v3["L"])
         bool_valid, _, _ = Barcode.check_seq_mismatch(
@@ -126,13 +284,6 @@ class Chemistry:
         )
         if bool_valid:
             return "scopeV3.0.1"
-
-        linker_v2 = Barcode.get_seq_str(seq, self.pattern_dict_v2["L"])
-        bool_valid, _, _ = Barcode.check_seq_mismatch(
-            [linker_v2], self.linker_4_v2_set_list, self.linker_4_v2_mismatch_list
-        )
-        if bool_valid:
-            return "scopeV2.2.1"
 
         linker_flv = Barcode.get_seq_str(seq, self.pattern_dict_flv["L"])
         bool_valid, _, _ = Barcode.check_seq_mismatch(
@@ -317,7 +468,6 @@ class Barcode(Step):
         return [seq[item[0] : item[1]] for item in pattern_dict[abbr]]
 
     @staticmethod
-    @utils.add_log
     def parse_pattern(pattern):
         """
         >>> pattern_dict = Barcode.parse_pattern("C8L16C8L16C8L1U12T18")
@@ -355,14 +505,18 @@ class Barcode(Step):
         return length
 
     @staticmethod
-    def get_scope_bc(chemistry):
+    def get_scope_bc(chemistry) -> tuple[list, list]:
         """Return (linker file path, whitelist file path)"""
         try:
-            linker_f = glob.glob(f"{ROOT_PATH}/data/chemistry/{chemistry}/linker*")[0]
-            whitelist_f = f"{ROOT_PATH}/data/chemistry/{chemistry}/bclist"
+            linkers = sorted(
+                glob.glob(f"{ROOT_PATH}/data/chemistry/{chemistry}/linker*")
+            )
+            whitelists = sorted(
+                glob.glob(f"{ROOT_PATH}/data/chemistry/{chemistry}/bc*")
+            )
         except IndexError:
             return None, None
-        return linker_f, whitelist_f
+        return linkers, whitelists
 
     @staticmethod
     def ord2chr(q, offset=33):
@@ -408,7 +562,6 @@ class Barcode(Step):
         return seq_set
 
     @staticmethod
-    @utils.add_log
     def get_mismatch_dict(seq_list, n_mismatch=1):
         """
         Return:
@@ -495,13 +648,13 @@ class Barcode(Step):
         """
         pattern = PATTERN_DICT[chemistry]
         pattern_dict = Barcode.parse_pattern(pattern)
-        linker_file, whitelist_file = Barcode.get_scope_bc(chemistry)
+        linkers, whitelists = Barcode.get_scope_bc(chemistry)
 
         barcode_set_list, barcode_mismatch_list = Barcode.parse_whitelist_file(
-            [whitelist_file], n_pattern=len(pattern_dict["C"]), n_mismatch=1
+            whitelists, n_pattern=len(pattern_dict["C"]), n_mismatch=1
         )
         linker_set_list, linker_mismatch_list = Barcode.parse_whitelist_file(
-            [linker_file], n_pattern=1, n_mismatch=2
+            linkers, n_pattern=1, n_mismatch=2
         )
 
         return (
@@ -682,6 +835,7 @@ class Barcode(Step):
                 filter
                 write valid R2 read to file
         """
+        self.offset_runner = Chemistry(self.args.fq1)
 
         for i in range(self.fq_number):
             chemistry = self.chemistry_list[i]
@@ -694,21 +848,21 @@ class Barcode(Step):
             # get linker and whitelist
             bc_pattern = PATTERN_DICT[chemistry]
             if bc_pattern:
-                linker_file, whitelist_file = self.get_scope_bc(chemistry)
-                whitelist_files = [whitelist_file]
+                linker_files, whitelist_files = self.get_scope_bc(chemistry)
             else:
                 bc_pattern = self.pattern
-                linker_file = self.linker
-                whitelist_file = self.whitelist
-                whitelist_files = whitelist_file.split(",")
+                linker_files = self.linker.split(",")
+                whitelist_files = self.whitelist.split(",")
             if not bc_pattern:
                 raise Exception("invalid bc_pattern!")
 
             pattern_dict = self.parse_pattern(bc_pattern)
 
             bool_T = True if "T" in pattern_dict else False
-            bool_L = True if "L" in pattern_dict else False
-            bool_whitelist = (whitelist_file is not None) and whitelist_file != "None"
+            bool_L = (
+                True if ("L" in pattern_dict and chemistry != "GEXSCOPE-V3") else False
+            )
+            bool_whitelist = len(whitelist_files) > 0
             C_len = sum([item[1] - item[0] for item in pattern_dict["C"]])
 
             if bool_whitelist:
@@ -717,7 +871,7 @@ class Barcode(Step):
                 )
             if bool_L:
                 linker_set_list, linker_mismatch_list = Barcode.parse_whitelist_file(
-                    [linker_file], n_pattern=1, n_mismatch=2
+                    linker_files, n_pattern=1, n_mismatch=2
                 )
 
             with pysam.FastxFile(
@@ -727,6 +881,10 @@ class Barcode(Step):
                     header1, seq1, qual1 = entry1.name, entry1.sequence, entry1.quality
                     header2, seq2, qual2 = entry2.name, entry2.sequence, entry2.quality
                     self.total_num += 1
+
+                    if chemistry == "GEXSCOPE-V3":
+                        offset = self.offset_runner.v3_offset(seq1)
+                        seq1 = seq1[offset:]
 
                     # polyT filter
                     if bool_T and self.filterNoPolyT:

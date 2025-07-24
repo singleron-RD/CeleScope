@@ -204,6 +204,16 @@ def get_gene_region_from_bed(panel):
     return genes, position_df
 
 
+def one_col_to_list(file) -> list:
+    """
+    Read file with one column. Strip each line.
+    Returns col_list
+    """
+    df = pd.read_csv(file, header=None)
+    col1 = list(df.iloc[:, 0])
+    return [item.strip() for item in col1]
+
+
 def read_fasta(fasta_file, equal=False):
     """
     Args:
