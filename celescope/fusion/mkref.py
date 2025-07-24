@@ -1,5 +1,5 @@
-
 from celescope.tools.mkref import Mkref, super_opts
+
 
 class Mkref_fusion(Mkref):
     """
@@ -26,13 +26,16 @@ class Mkref_fusion(Mkref):
 
     @staticmethod
     def parse_genomeDir(genomeDir):
-        return Mkref.parse_genomeDir(genomeDir, files=('fusion_pos',))
-
+        return Mkref.parse_genomeDir(genomeDir, files=("fusion_pos",))
 
 
 def mkref(args):
-    genome_type = 'fusion'
-    with Mkref_fusion(genome_type, args, files=('fusion_pos',), ) as runner:
+    genome_type = "fusion"
+    with Mkref_fusion(
+        genome_type,
+        args,
+        files=("fusion_pos",),
+    ) as runner:
         runner.run()
 
 
@@ -51,5 +54,5 @@ PML_4\t254
 PML_5\t326  
 PML_6\t204   
 """,
-            required=True,)
-
+            required=True,
+        )

@@ -1,6 +1,6 @@
-__STEPS__ = ['sample', 'barcode', 'convert', 'cellranger'] 
-__ASSAY__ = 'convert10X'
+__STEPS__ = ["sample", "barcode", "convert", "cellranger"]
+__ASSAY__ = "convert10X"
 
 IMPORT_DICT = {
-    'convert': 'celescope.flv_CR',
+    "convert": "celescope.flv_CR",
 }

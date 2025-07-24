@@ -4,16 +4,19 @@ from celescope.tools import utils
 from celescope.__init__ import __VERSION__, ASSAY_LIST
 
 
-class ArgFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
+class ArgFormatter(
+    argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter
+):
     pass
 
 
 def main():
-    """celescope cli
-    """
-    parser = argparse.ArgumentParser(description='CeleScope', formatter_class=ArgFormatter)
-    parser.add_argument('-v', '--version', action='version', version=__VERSION__)
-    subparsers = parser.add_subparsers(dest='subparser_assay')
+    """celescope cli"""
+    parser = argparse.ArgumentParser(
+        description="CeleScope", formatter_class=ArgFormatter
+    )
+    parser.add_argument("-v", "--version", action="version", version=__VERSION__)
+    subparsers = parser.add_subparsers(dest="subparser_assay")
 
     for assay in ASSAY_LIST:
         text = utils.get_assay_text(assay)
@@ -44,5 +47,5 @@ def main():
         args.func(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

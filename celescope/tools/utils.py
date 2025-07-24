@@ -18,19 +18,21 @@ from Bio.Seq import Seq
 import pandas as pd
 import pysam
 
-from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME 
+from celescope.tools.__init__ import FILTERED_MATRIX_DIR_SUFFIX, BARCODE_FILE_NAME
 from celescope.__init__ import ROOT_PATH
 
 
 def add_log(func):
-    '''
+    """
     logging start and done.
-    '''
-    logFormatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    """
+    logFormatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     module = func.__module__
     name = func.__name__
-    logger_name = f'{module}.{name}'
+    logger_name = f"{module}.{name}"
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
 
@@ -40,13 +42,12 @@ def add_log(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-
-        logger.info('start...')
+        logger.info("start...")
         start = time.time()
         result = func(*args, **kwargs)
         end = time.time()
         used = timedelta(seconds=end - start)
-        logger.info('done. time used: %s', used)
+        logger.info("done. time used: %s", used)
         return result
 
     wrapper.logger = logger
@@ -55,22 +56,21 @@ def add_log(func):
 
 def using(point=""):
     usage = resource.getrusage(resource.RUSAGE_SELF)
-    return '''%s: usertime=%s systime=%s mem=%s mb
-        ''' % (point, usage[0], usage[1],
-               usage[2]/1024.0)
+    return """%s: usertime=%s systime=%s mem=%s mb
+        """ % (point, usage[0], usage[1], usage[2] / 1024.0)
 
 
 def add_mem(func):
-    '''
+    """
     logging mem.
-    '''
+    """
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     module = func.__module__
     name = func.__name__
-    logger_name = f'{module}.{name}'
+    logger_name = f"{module}.{name}"
     logger = logging.getLogger(logger_name)
 
     @wraps(func)
@@ -85,7 +85,7 @@ def add_mem(func):
 
 
 def generic_open(file_name, *args, **kwargs):
-    if file_name.endswith('.gz'):
+    if file_name.endswith(".gz"):
         file_obj = gzip.open(file_name, *args, **kwargs)
     else:
         file_obj = open(file_name, *args, **kwargs)
@@ -93,19 +93,18 @@ def generic_open(file_name, *args, **kwargs):
 
 
 class Gtf_dict(dict):
-    '''
+    """
     key: gene_id
     value: gene_name
     If the key does not exist, return key. This is to avoid the error:
-        The gtf file contains one exon lines with a gene_id, but do not contain a gene line with the same gene_id. FeatureCounts 
+        The gtf file contains one exon lines with a gene_id, but do not contain a gene line with the same gene_id. FeatureCounts
         work correctly under this condition, but the gene_id will not appear in the Gtf_dict.
-    '''
+    """
 
     def __init__(self, gtf_file):
         super().__init__()
         self.gtf_file = gtf_file
         self.load_gtf()
-
 
     @add_log
     def load_gtf(self):
@@ -124,15 +123,15 @@ class Gtf_dict(dict):
         gene_name_pattern = re.compile(r'gene_name "(\S+)"')
         id_name = {}
         c = Counter()
-        with generic_open(self.gtf_file, mode='rt') as f:
+        with generic_open(self.gtf_file, mode="rt") as f:
             for line in f:
                 if not line.strip():
                     continue
-                if line.startswith('#'):
+                if line.startswith("#"):
                     continue
-                tabs = line.split('\t')
+                tabs = line.split("\t")
                 gtf_type, attributes = tabs[2], tabs[-1]
-                if gtf_type == 'gene':
+                if gtf_type == "gene":
                     try:
                         gene_id = gene_id_pattern.findall(attributes)[-1]
                     except IndexError:
@@ -146,24 +145,24 @@ class Gtf_dict(dict):
                     if c[gene_name] > 1:
                         if gene_id in id_name:
                             assert id_name[gene_id] == gene_name, (
-                                'one gene_id with multiple gene_name '
-                                f'gene_id: {gene_id}, '
-                                f'gene_name this line: {gene_name}'
-                                f'gene_name previous line: {id_name[gene_id]}'
+                                "one gene_id with multiple gene_name "
+                                f"gene_id: {gene_id}, "
+                                f"gene_name this line: {gene_name}"
+                                f"gene_name previous line: {id_name[gene_id]}"
                             )
                             self.load_gtf.logger.warning(
-                                'duplicated (gene_id, gene_name)'
-                                f'gene_id: {gene_id}, '
-                                f'gene_name {gene_name}'
+                                "duplicated (gene_id, gene_name)"
+                                f"gene_id: {gene_id}, "
+                                f"gene_name {gene_name}"
                             )
                             c[gene_name] -= 1
                         else:
-                            gene_name = f'{gene_name}_{c[gene_name]}'
+                            gene_name = f"{gene_name}_{c[gene_name]}"
                     id_name[gene_id] = gene_name
         self.update(id_name)
 
     def __getitem__(self, key):
-        '''if key not exist, return key'''
+        """if key not exist, return key"""
         return dict.get(self, key, key)
 
 
@@ -180,7 +179,7 @@ def read_one_col(file):
 
 
 def get_bed_file_path(panel):
-    bed_file_path = f'{ROOT_PATH}/data/snp/panel/{panel}.bed'
+    bed_file_path = f"{ROOT_PATH}/data/snp/panel/{panel}.bed"
     if not os.path.exists(bed_file_path):
         return None
     else:
@@ -189,17 +188,19 @@ def get_bed_file_path(panel):
 
 def get_gene_region_from_bed(panel):
     """
-    Returns 
+    Returns
     - genes
     - position_df with 'Chromosome', 'Start', 'End'
     """
     file_path = get_bed_file_path(panel)
-    bed_file_df = pd.read_table(file_path,
-                                usecols=[0, 1, 2, 3],
-                                names=['Chromosome', 'Start', 'End', 'Gene'],
-                                sep="\t")
-    position_df = bed_file_df.loc[:, ['Chromosome', 'Start', 'End']]
-    genes = set(bed_file_df.loc[:, 'Gene'].to_list())
+    bed_file_df = pd.read_table(
+        file_path,
+        usecols=[0, 1, 2, 3],
+        names=["Chromosome", "Start", "End", "Gene"],
+        sep="\t",
+    )
+    position_df = bed_file_df.loc[:, ["Chromosome", "Start", "End"]]
+    genes = set(bed_file_df.loc[:, "Gene"].to_list())
     return genes, position_df
 
 
@@ -235,8 +236,10 @@ def hamming_distance(string1, string2):
     distance = 0
     length = len(string1)
     length2 = len(string2)
-    if (length != length2):
-        raise Exception(f"string1({length}) and string2({length2}) do not have same length")
+    if length != length2:
+        raise Exception(
+            f"string1({length}) and string2({length2}) do not have same length"
+        )
     for i in range(length):
         if string1[i] != string2[i]:
             distance += 1
@@ -257,6 +260,7 @@ def genDict(dim=3, valType=int):
 class MultipleFileFoundError(Exception):
     pass
 
+
 def glob_file(pattern_list: list):
     """
     glob file among pattern list
@@ -267,7 +271,7 @@ def glob_file(pattern_list: list):
         MultipleFileFound: if more than one file is found
     """
     if not isinstance(pattern_list, list):
-        raise TypeError('pattern_list must be a list')
+        raise TypeError("pattern_list must be a list")
 
     match_list = []
     for pattern in pattern_list:
@@ -275,16 +279,16 @@ def glob_file(pattern_list: list):
         if files:
             for f in files:
                 match_list.append(f)
-    
+
     if len(match_list) == 0:
-        raise FileNotFoundError(f'No file found for {pattern_list}')
-    
+        raise FileNotFoundError(f"No file found for {pattern_list}")
+
     if len(match_list) > 1:
         raise MultipleFileFoundError(
-            f'More than one file found for pattern: {pattern_list}\n'
-            f'File found: {match_list}'
+            f"More than one file found for pattern: {pattern_list}\n"
+            f"File found: {match_list}"
         )
-    
+
     return match_list[0]
 
 
@@ -292,7 +296,7 @@ def get_matrix_file_path(matrix_dir, file_name):
     """
     compatible with gzip file
     """
-    file_path_list = [f'{matrix_dir}/{file_name}', f'{matrix_dir}/{file_name}.gz']
+    file_path_list = [f"{matrix_dir}/{file_name}", f"{matrix_dir}/{file_name}.gz"]
     for file_path in file_path_list:
         if os.path.exists(file_path):
             return file_path
@@ -305,7 +309,7 @@ def get_barcode_from_matrix_dir(matrix_dir):
         match_barcode: list
         no_match_barcode: int
     """
-  
+
     match_barcode_file = get_matrix_file_path(matrix_dir, BARCODE_FILE_NAME)
     match_barcode, n_match_barcode = read_one_col(match_barcode_file)
 
@@ -321,7 +325,7 @@ def get_matrix_dir_from_match_dir(match_dir):
     matrix_dir_pattern_list = []
     for matrix_dir_suffix in FILTERED_MATRIX_DIR_SUFFIX:
         matrix_dir_pattern_list.append(f"{match_dir}/*count/*{matrix_dir_suffix}")
-  
+
     matrix_dir = glob_file(matrix_dir_pattern_list)
     get_matrix_dir_from_match_dir.logger.info(f"Matrix_dir :{matrix_dir}")
 
@@ -330,32 +334,32 @@ def get_matrix_dir_from_match_dir(match_dir):
 
 @add_log
 def get_barcode_from_match_dir(match_dir):
-    '''
+    """
     multi version compatible
     Returns:
         match_barcode: list
         no_match_barcode: int
-    '''
+    """
     matrix_dir = get_matrix_dir_from_match_dir(match_dir)
     return get_barcode_from_matrix_dir(matrix_dir)
 
 
 @add_log
 def parse_match_dir(match_dir):
-    '''
+    """
     return dict
     keys: 'match_barcode', 'n_match_barcode', 'matrix_dir', 'tsne_coord'
-    '''
+    """
     match_dict = {}
 
     pattern_dict = {
-        'tsne_coord': [f'{match_dir}/*analysis*/*tsne_coord.tsv'],
-        'markers': [f'{match_dir}/*analysis*/*markers.tsv'],
-        'h5ad': [f'{match_dir}/*analysis*/*.h5ad'],
+        "tsne_coord": [f"{match_dir}/*analysis*/*tsne_coord.tsv"],
+        "markers": [f"{match_dir}/*analysis*/*markers.tsv"],
+        "h5ad": [f"{match_dir}/*analysis*/*.h5ad"],
     }
 
     for file_key in pattern_dict:
-        file_pattern= pattern_dict[file_key]
+        file_pattern = pattern_dict[file_key]
         try:
             match_file = glob_file(file_pattern)
         except FileNotFoundError:
@@ -363,20 +367,20 @@ def parse_match_dir(match_dir):
         else:
             match_dict[file_key] = match_file
 
-    match_dict['matrix_dir'] = get_matrix_dir_from_match_dir(match_dir)
+    match_dict["matrix_dir"] = get_matrix_dir_from_match_dir(match_dir)
     match_barcode, n_match_barcode = get_barcode_from_match_dir(match_dir)
-    match_dict['match_barcode'] = match_barcode
-    match_dict['n_match_barcode'] = n_match_barcode
+    match_dict["match_barcode"] = match_barcode
+    match_dict["n_match_barcode"] = n_match_barcode
 
     return match_dict
 
 
 def fastq_line(name, seq, qual):
-    return f'@{name}\n{seq}\n+\n{qual}\n'
+    return f"@{name}\n{seq}\n+\n{qual}\n"
 
 
 def fasta_line(name, seq):
-    return f'>{name}\n{seq}\n'
+    return f">{name}\n{seq}\n"
 
 
 def find_assay_init(assay):
@@ -386,17 +390,17 @@ def find_assay_init(assay):
 
 def find_step_module(assay, step):
     file_path_dict = {
-        'assay': f'{ROOT_PATH}/{assay}/{step}.py',
-        'tools': f'{ROOT_PATH}/tools/{step}.py',
+        "assay": f"{ROOT_PATH}/{assay}/{step}.py",
+        "tools": f"{ROOT_PATH}/tools/{step}.py",
     }
 
     init_module = find_assay_init(assay)
-    if os.path.exists(file_path_dict['assay']):
+    if os.path.exists(file_path_dict["assay"]):
         step_module = importlib.import_module(f"celescope.{assay}.{step}")
-    elif hasattr(init_module, 'IMPORT_DICT') and step in init_module.IMPORT_DICT:
+    elif hasattr(init_module, "IMPORT_DICT") and step in init_module.IMPORT_DICT:
         module_path = init_module.IMPORT_DICT[step]
         step_module = importlib.import_module(f"{module_path}.{step}")
-    elif os.path.exists(file_path_dict['tools']):
+    elif os.path.exists(file_path_dict["tools"]):
         step_module = importlib.import_module(f"celescope.tools.{step}")
     else:
         raise ModuleNotFoundError(f"No module found for {assay}.{step}")
@@ -413,21 +417,21 @@ def find_step_module_with_folder(assay, step):
     except ModuleNotFoundError:
         try:
             step_module = importlib.import_module(f"celescope.tools.{step}")
-            folder = 'tools'
+            folder = "tools"
         except ModuleNotFoundError:
             module_path = init_module.IMPORT_DICT[step]
             step_module = importlib.import_module(f"{module_path}.{step}")
-            folder = module_path.split('.')[1]
+            folder = module_path.split(".")[1]
 
     return step_module, folder
 
 
-def sort_bam(input_bam, output_bam, threads=1, by='coord'):
+def sort_bam(input_bam, output_bam, threads=1, by="coord"):
     cmd = (
-        f'samtools sort {input_bam} '
-        f'-o {output_bam} '
-        f'--threads {threads} '
-        '2>&1 '
+        f"samtools sort {input_bam} "
+        f"-o {output_bam} "
+        f"--threads {threads} "
+        "2>&1 "
     )
     if by == "name":
         cmd += " -n"
@@ -445,7 +449,7 @@ def check_mkdir(dir_name):
         os.system(f"mkdir -p {dir_name}")
 
 
-class Samtools():
+class Samtools:
     def __init__(self, in_bam, out_bam, threads=1, debug=False):
         self.in_bam = in_bam
         self.out_bam = out_bam
@@ -454,7 +458,7 @@ class Samtools():
         self.debug = debug
 
     @add_log
-    def samtools_sort(self, in_file, out_file, by='coord'):
+    def samtools_sort(self, in_file, out_file, by="coord"):
         cmd = f"samtools sort {in_file} -o {out_file} --threads {self.threads}"
         if by == "name":
             cmd += " -n"
@@ -467,7 +471,7 @@ class Samtools():
         self.samtools_index.logger.debug(cmd)
         subprocess.check_call(cmd, shell=True)
 
-    def sort_bam(self, by='coord'):
+    def sort_bam(self, by="coord"):
         """sort in_bam"""
         self.samtools_sort(self.in_bam, self.out_bam, by=by)
 
@@ -487,25 +491,27 @@ class Samtools():
 
         with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
             header = original_bam.header
-            with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
+            with pysam.AlignmentFile(
+                self.temp_sam_file, "w", header=header
+            ) as temp_sam:
                 for read in original_bam:
-                    attr = read.query_name.split('_')
+                    attr = read.query_name.split("_")
                     barcode = attr[0]
                     umi = attr[1]
-                    read.set_tag(tag='CB', value=barcode, value_type='Z')
-                    read.set_tag(tag='UB', value=umi, value_type='Z')
+                    read.set_tag(tag="CB", value=barcode, value_type="Z")
+                    read.set_tag(tag="UB", value=umi, value_type="Z")
                     # assign to some gene
-                    if read.has_tag('XT'):
-                        gene_id = read.get_tag('XT')
+                    if read.has_tag("XT"):
+                        gene_id = read.get_tag("XT")
                         # if multi-mapping reads are included in original bam,
                         # there are multiple gene_ids
-                        if ',' in gene_id:
-                            gene_name = [gtf_dict[i] for i in gene_id.split(',')]
-                            gene_name = ','.join(gene_name)
+                        if "," in gene_id:
+                            gene_name = [gtf_dict[i] for i in gene_id.split(",")]
+                            gene_name = ",".join(gene_name)
                         else:
                             gene_name = gtf_dict[gene_id]
-                        read.set_tag(tag='GN', value=gene_name, value_type='Z')
-                        read.set_tag(tag='GX', value=gene_id, value_type='Z')
+                        read.set_tag(tag="GN", value=gene_name, value_type="Z")
+                        read.set_tag(tag="GX", value=gene_id, value_type="Z")
                     temp_sam.write(read)
 
     @add_log
@@ -516,16 +522,20 @@ class Samtools():
 
         with pysam.AlignmentFile(self.in_bam, "rb") as original_bam:
             header = original_bam.header.to_dict()
-            header['RG'] = []
+            header["RG"] = []
             for index, barcode in enumerate(barcodes):
-                header['RG'].append({
-                    'ID': barcode,
-                    'SM': index + 1,
-                })
+                header["RG"].append(
+                    {
+                        "ID": barcode,
+                        "SM": index + 1,
+                    }
+                )
 
-            with pysam.AlignmentFile(self.temp_sam_file, "w", header=header) as temp_sam:
+            with pysam.AlignmentFile(
+                self.temp_sam_file, "w", header=header
+            ) as temp_sam:
                 for read in original_bam:
-                    read.set_tag(tag='RG', value=read.get_tag('CB'), value_type='Z')
+                    read.set_tag(tag="RG", value=read.get_tag("CB"), value_type="Z")
                     temp_sam.write(read)
 
     def temp_sam2bam(self, by=None):
@@ -541,8 +551,8 @@ def read_CID(CID_file):
     """
     return df_index, df_valid
     """
-    df_index = pd.read_csv(CID_file, sep='\t', index_col=0).reset_index()
-    df_valid = df_index[df_index['valid'] == True]
+    df_index = pd.read_csv(CID_file, sep="\t", index_col=0).reset_index()
+    df_valid = df_index[df_index["valid"] == True]
     return df_index, df_valid
 
 
@@ -550,7 +560,7 @@ def get_assay_text(assay):
     """
     add sinlge cell prefix
     """
-    return 'Single-cell ' + assay
+    return "Single-cell " + assay
 
 
 def check_arg_not_none(args, arg_name):
@@ -563,7 +573,7 @@ def check_arg_not_none(args, arg_name):
         bool
     """
     arg_value = getattr(args, arg_name, None)
-    if arg_value and arg_value.strip() != 'None':
+    if arg_value and arg_value.strip() != "None":
         return True
     else:
         return False
@@ -577,6 +587,7 @@ def reverse_complement(seq):
     """
     return str(Seq(seq).reverse_complement())
 
+
 def get_fastx_read_number(fastx_file):
     """
     get read number using pysam
@@ -587,24 +598,33 @@ def get_fastx_read_number(fastx_file):
             n += 1
     return n
 
+
 @add_log
 def dump_dict_to_json(d, json_file):
-    with open(json_file, 'w') as f:
+    with open(json_file, "w") as f:
         json.dump(d, f, indent=4)
 
 
 class Test_utils(unittest.TestCase):
     def test_gtf_dict(self):
         import tempfile
-        fp = tempfile.NamedTemporaryFile(suffix='.gtf')
-        fp.write(b'1\tprocessed_transcript\tgene\t11869\t14409\t.\t+\t.\tgene_id "gene_id_with_gene_name"; gene_name "gene_name";\n')
-        fp.write(b'1\tprocessed_transcript\tgene\t11869\t14409\t.\t+\t.\tgene_id "gene_id_without_gene_name"; \n')
+
+        fp = tempfile.NamedTemporaryFile(suffix=".gtf")
+        fp.write(
+            b'1\tprocessed_transcript\tgene\t11869\t14409\t.\t+\t.\tgene_id "gene_id_with_gene_name"; gene_name "gene_name";\n'
+        )
+        fp.write(
+            b'1\tprocessed_transcript\tgene\t11869\t14409\t.\t+\t.\tgene_id "gene_id_without_gene_name"; \n'
+        )
         fp.seek(0)
         gtf_dict = Gtf_dict(fp.name)
-        self.assertEqual(gtf_dict['gene_id_with_gene_name'], 'gene_name')
-        self.assertEqual(gtf_dict['gene_id_without_gene_name'], 'gene_id_without_gene_name')
-        self.assertEqual(gtf_dict['gene_id_not_exist'], 'gene_id_not_exist')
+        self.assertEqual(gtf_dict["gene_id_with_gene_name"], "gene_name")
+        self.assertEqual(
+            gtf_dict["gene_id_without_gene_name"], "gene_id_without_gene_name"
+        )
+        self.assertEqual(gtf_dict["gene_id_not_exist"], "gene_id_not_exist")
         fp.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

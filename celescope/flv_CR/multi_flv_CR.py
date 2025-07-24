@@ -34,82 +34,76 @@ class Multi_flv_CR(Multi):
     """
 
     def convert(self, sample):
-        step = 'convert'
+        step = "convert"
         cmd_line = self.get_cmd_line(step, sample)
         fq2 = f'{self.outdir_dic[sample]["barcode"]}/{sample}_2.fq'
-        cmd = (
-            f'{cmd_line} '
-            f'--fq2 {fq2} '
-        )
+        cmd = f"{cmd_line} " f"--fq2 {fq2} "
         self.process_cmd(cmd, step, sample, m=5, x=1)
 
     def assemble(self, sample):
-        step = 'assemble'
+        step = "assemble"
         cmd_line = self.get_cmd_line(step, sample)
         fqs_dir = f'{self.outdir_dic[sample]["convert"]}'
-        cmd = (
-            f'{cmd_line} '
-            f'--fqs_dir {fqs_dir} '
-        )
+        cmd = f"{cmd_line} " f"--fqs_dir {fqs_dir} "
         self.process_cmd(cmd, step, sample, m=self.args.mem, x=self.args.thread)
 
-    def summarize(self,sample):
-        step = 'summarize'
+    def summarize(self, sample):
+        step = "summarize"
         cmd_line = self.get_cmd_line(step, sample)
-        barcode_convert_json = f'{self.outdir_dic[sample]["convert"]}/barcode_convert.json'
+        barcode_convert_json = (
+            f'{self.outdir_dic[sample]["convert"]}/barcode_convert.json'
+        )
         assemble_out = f'{self.outdir_dic[sample]["assemble"]}/{sample}/outs'
         cmd = (
-            f'{cmd_line} '
-            f'--barcode_convert_json {barcode_convert_json} '
-            f'--assemble_out {assemble_out} '
+            f"{cmd_line} "
+            f"--barcode_convert_json {barcode_convert_json} "
+            f"--assemble_out {assemble_out} "
         )
         self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
 
-    def match(self,sample):
-        step = 'match'
+    def match(self, sample):
+        step = "match"
         cmd_line = self.get_cmd_line(step, sample)
         summarize_out = f'{self.outdir_dic[sample]["summarize"]}'
-        match_dir = f'{self.col4_dict[sample]}'
+        match_dir = f"{self.col4_dict[sample]}"
         cmd = (
-            f'{cmd_line} '
-            f'--match_dir {match_dir} '
-            f'--summarize_out {summarize_out} '
+            f"{cmd_line} "
+            f"--match_dir {match_dir} "
+            f"--summarize_out {summarize_out} "
         )
-        self.process_cmd(cmd, step, sample, m=8, x= self.args.thread)
-    
-    def mapping(self,sample):
-        step = 'mapping'
-        cmd_line = self.get_cmd_line(step,sample)
-        match_dir = f'{self.col4_dict[sample]}'
+        self.process_cmd(cmd, step, sample, m=8, x=self.args.thread)
+
+    def mapping(self, sample):
+        step = "mapping"
+        cmd_line = self.get_cmd_line(step, sample)
+        match_dir = f"{self.col4_dict[sample]}"
         match_out = f'{self.outdir_dic[sample]["match"]}'
-        cmd = (
-            f'{cmd_line} '
-            f'--match_dir {match_dir} '
-            f'--match_out {match_out} '
-        )
+        cmd = f"{cmd_line} " f"--match_dir {match_dir} " f"--match_out {match_out} "
         self.process_cmd(cmd, step, sample, m=5, x=1)
-    
+
     def merge_report(self):
         step = "merge_report"
-        _index = self.__STEPS__.index('assemble') + 1
-        steps_str = ",".join(self.__STEPS__[:_index] + __SUB_STEPS__ + self.__STEPS__[_index:-1])
-        samples = ','.join(self.fq_dict.keys())
-        app = TOOLS_DIR + '/merge_table.py'
+        _index = self.__STEPS__.index("assemble") + 1
+        steps_str = ",".join(
+            self.__STEPS__[:_index] + __SUB_STEPS__ + self.__STEPS__[_index:-1]
+        )
+        samples = ",".join(self.fq_dict.keys())
+        app = TOOLS_DIR + "/merge_table.py"
         cmd = (
-            f'python {app} --samples {samples} '
-            f'--steps {steps_str} --outdir {self.args.outdir}'
+            f"python {app} --samples {samples} "
+            f"--steps {steps_str} --outdir {self.args.outdir}"
         )
         if self.args.rm_files:
-            cmd += ' --rm_files'
+            cmd += " --rm_files"
         self.generate_cmd(cmd, step, sample="")
         for sample in self.fq_dict:
-            self.sjm_order += f'order {step} after {self.last_step}_{sample}\n'
+            self.sjm_order += f"order {step} after {self.last_step}_{sample}\n"
+
 
 def main():
     multi = Multi_flv_CR(__ASSAY__)
     multi.run()
-    
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
-

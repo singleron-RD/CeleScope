@@ -31,28 +31,25 @@ class Mkref_rna(Mkref):
     ```
     """
 
-
     @utils.add_log
     def build_rna_star_index(self):
         cmd = (
-            f'STAR \\\n'
-            f'--runMode genomeGenerate \\\n'
-            f'--runThreadN {self.thread} \\\n'
-            f'--genomeDir ./ \\\n'
-            f'--genomeFastaFiles {self.fasta} \\\n'
-            f'--sjdbGTFfile {self.gtf} \\\n'
-            f'--sjdbOverhang 100 \\\n'
+            f"STAR \\\n"
+            f"--runMode genomeGenerate \\\n"
+            f"--runThreadN {self.thread} \\\n"
+            f"--genomeDir ./ \\\n"
+            f"--genomeFastaFiles {self.fasta} \\\n"
+            f"--sjdbGTFfile {self.gtf} \\\n"
+            f"--sjdbOverhang 100 \\\n"
         )
         if self.STAR_param:
-            cmd += (" " + self.STAR_param)
+            cmd += " " + self.STAR_param
         self.build_star_index.logger.info(cmd)
         self.debug_subprocess_call(cmd)
 
-
     @staticmethod
     def parse_genomeDir(genomeDir):
-        return Mkref.parse_genomeDir(genomeDir, files=('gtf', 'mt_gene_list'))
-
+        return Mkref.parse_genomeDir(genomeDir, files=("gtf", "mt_gene_list"))
 
     @utils.add_log
     def run(self):
@@ -60,11 +57,10 @@ class Mkref_rna(Mkref):
         self.build_star_index()
 
 
-
 def mkref(args):
-    genome_type = 'rna'
+    genome_type = "rna"
     # files do not contain refflat because refflat is not input argument
-    with Mkref_rna(genome_type, args, files=('gtf', 'mt_gene_list')) as runner:
+    with Mkref_rna(genome_type, args, files=("gtf", "mt_gene_list")) as runner:
         runner.run()
 
 
@@ -74,12 +70,12 @@ def get_opts_mkref(parser, sub_program):
         parser.add_argument(
             "--gtf",
             help="Required. Genome gtf file. Use absolute path or relative path to `genomeDir`.",
-            required=True
+            required=True,
         )
         parser.add_argument(
             "--mt_gene_list",
             help="""Mitochondria gene list file. Use absolute path or relative path to `genomeDir`.
 It is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
-            default="None"
+            default="None",
         )

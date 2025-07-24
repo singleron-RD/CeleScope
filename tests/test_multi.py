@@ -9,13 +9,13 @@ from concurrent import futures
 from celescope.tools import utils
 
 ASSAYS = [
-    'fusion',
-    'vdj',
-    'tag',
-    'capture_virus',
-    'snp',
-    'rna',
-    'dynaseq',
+    "fusion",
+    "vdj",
+    "tag",
+    "capture_virus",
+    "snp",
+    "rna",
+    "dynaseq",
 ]
 
 
@@ -26,10 +26,10 @@ def run_single(assay, test_dir):
     """
     os.chdir(os.path.join(test_dir, assay))
     print("*" * 20 + "running " + assay + "*" * 20)
-    subprocess.check_call('sh run_shell.sh', shell=True)
-    subprocess.check_call('sh sjm.sh', shell=True)
+    subprocess.check_call("sh run_shell.sh", shell=True)
+    subprocess.check_call("sh sjm.sh", shell=True)
     try:
-        subprocess.check_call('sh ./shell/test1.sh', shell=True)
+        subprocess.check_call("sh ./shell/test1.sh", shell=True)
     except subprocess.CalledProcessError:
         return f"{assay} failed"
     print("*" * 20 + "success " + assay + "*" * 20)
@@ -48,7 +48,7 @@ def test_mutiple(assays, test_dir):
     if not assays:
         assays = ASSAYS
     else:
-        assays = assays.split(',')
+        assays = assays.split(",")
     print("assays to run: ", assays)
     thread = len(assays)
     executor = futures.ProcessPoolExecutor(max_workers=thread)

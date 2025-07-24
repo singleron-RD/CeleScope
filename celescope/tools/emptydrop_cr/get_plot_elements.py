@@ -8,64 +8,113 @@ import plotly.offline as pltoff
 
 from celescope.tools.utils import add_log
 
-BarcodeRankPlotSegment = collections.namedtuple('BarcodeRankPlotSegment', ['start', 'end', 'cell_density', 'legend'])
+BarcodeRankPlotSegment = collections.namedtuple(
+    "BarcodeRankPlotSegment", ["start", "end", "cell_density", "legend"]
+)
 
 CHARTS_PLOTLY_MODEBAR_TRANSFORM_BUTTONS = [
-    'zoom2d',
-    'pan2d',
-    'zoomIn2d',
-    'zoomOut2d',
-    'autoScale2d',
+    "zoom2d",
+    "pan2d",
+    "zoomIn2d",
+    "zoomOut2d",
+    "autoScale2d",
     # 'resetScale2d'  can't totally disable interaction, it seems-- keep reset option
 ]
 
 CHARTS_PLOTLY_EXPORT_BUTTONS = [
-    'toImage',
-    'sendDataToCloud',
+    "toImage",
+    "sendDataToCloud",
 ]
 
 CHARTS_PLOTLY_FIXED_CONFIG = {
-    'modeBarButtonsToRemove': CHARTS_PLOTLY_MODEBAR_TRANSFORM_BUTTONS+CHARTS_PLOTLY_EXPORT_BUTTONS,
-    'displaylogo': False,
-    'showLink': False
+    "modeBarButtonsToRemove": CHARTS_PLOTLY_MODEBAR_TRANSFORM_BUTTONS
+    + CHARTS_PLOTLY_EXPORT_BUTTONS,
+    "displaylogo": False,
+    "showLink": False,
 }
 
 CHARTS_PLOTLY_MOVABLE_CONFIG = {
-    'modeBarButtonsToRemove': CHARTS_PLOTLY_EXPORT_BUTTONS,
-    'displaylogo': False,
-    'showLink': False
+    "modeBarButtonsToRemove": CHARTS_PLOTLY_EXPORT_BUTTONS,
+    "displaylogo": False,
+    "showLink": False,
 }
 BC_RANK_PLOT_LINE_WIDTH = 3
 # Gradient scheme used in the barcode rank plot
-BC_PLOT_COLORS = ['#dddddd', '#d1d8dc', '#c6d3dc', '#bacfdb', '#aecada', '#a3c5d9', '#97c0d9', '#8cbbd8', '#80b7d7',
-                  '#74b2d7', '#6aadd6', '#66abd4', '#62a8d2', '#5ea5d1', '#59a2cf', '#559fce', '#519ccc', '#4d99ca',
-                  '#4997c9', '#4594c7', '#4191c5', '#3d8dc4', '#3a8ac2', '#3787c0', '#3383be', '#3080bd', '#2c7cbb',
-                  '#2979b9', '#2676b7', '#2272b6', '#1f6eb3', '#1d6ab0', '#1a65ac', '#1861a9', '#155ca6', '#1358a2',
-                  '#10539f', '#0e4f9b', '#0b4a98', '#094695', '#09438f', '#0a4189', '#0c3f83', '#0d3d7c', '#0e3b76',
-                  '#103970', '#11366a', '#123463', '#14325d', '#153057']
+BC_PLOT_COLORS = [
+    "#dddddd",
+    "#d1d8dc",
+    "#c6d3dc",
+    "#bacfdb",
+    "#aecada",
+    "#a3c5d9",
+    "#97c0d9",
+    "#8cbbd8",
+    "#80b7d7",
+    "#74b2d7",
+    "#6aadd6",
+    "#66abd4",
+    "#62a8d2",
+    "#5ea5d1",
+    "#59a2cf",
+    "#559fce",
+    "#519ccc",
+    "#4d99ca",
+    "#4997c9",
+    "#4594c7",
+    "#4191c5",
+    "#3d8dc4",
+    "#3a8ac2",
+    "#3787c0",
+    "#3383be",
+    "#3080bd",
+    "#2c7cbb",
+    "#2979b9",
+    "#2676b7",
+    "#2272b6",
+    "#1f6eb3",
+    "#1d6ab0",
+    "#1a65ac",
+    "#1861a9",
+    "#155ca6",
+    "#1358a2",
+    "#10539f",
+    "#0e4f9b",
+    "#0b4a98",
+    "#094695",
+    "#09438f",
+    "#0a4189",
+    "#0c3f83",
+    "#0d3d7c",
+    "#0e3b76",
+    "#103970",
+    "#11366a",
+    "#123463",
+    "#14325d",
+    "#153057",
+]
 
 CHARTS = [
     {
-        'layout': {
-            'title': 'Barcode Rank',
-            'width': 470,
-            'height': 313,
-            'margin': {'l': 60, 'r': 0, 't': 30, 'b': 40},
-            'hovermode': 'closest',
-            'xaxis': {
-                'title': 'Barcodes',
-                'type': 'log',
+        "layout": {
+            "title": "Barcode Rank",
+            "width": 470,
+            "height": 313,
+            "margin": {"l": 60, "r": 0, "t": 30, "b": 40},
+            "hovermode": "closest",
+            "xaxis": {
+                "title": "Barcodes",
+                "type": "log",
             },
-            'yaxis': {
-                'title': 'UMI counts',
-                'type': 'log',
+            "yaxis": {
+                "title": "UMI counts",
+                "type": "log",
             },
         },
-        'data': [],
-        'config': CHARTS_PLOTLY_FIXED_CONFIG,
-        'function': '_plot_barcode_rank',
-        'description': 'The plot shows the count of filtered UMIs mapped to each barcode.  Barcodes can be determined to be cell-associated based on their UMI counts or by their expression profiles. Therefore some regions of the graph can contain both cell-associated and background-associated barcodes. The color of the graph represents the local density of barcodes that are cell-associated.',
-        'name': 'barcode_rank',
+        "data": [],
+        "config": CHARTS_PLOTLY_FIXED_CONFIG,
+        "function": "_plot_barcode_rank",
+        "description": "The plot shows the count of filtered UMIs mapped to each barcode.  Barcodes can be determined to be cell-associated based on their UMI counts or by their expression profiles. Therefore some regions of the graph can contain both cell-associated and background-associated barcodes. The color of the graph represents the local density of barcodes that are cell-associated.",
+        "name": "barcode_rank",
     },
 ]
 
@@ -77,8 +126,8 @@ def BC_PLOT_CMAP(density):
     Input
     - density : A real number in the range [0,1]
     """
-    assert density >= 0.
-    assert density <= 1.
+    assert density >= 0.0
+    assert density <= 1.0
     levels = len(BC_PLOT_COLORS)
     ind = min(levels - 1, int(math.floor(levels * density)))
     return BC_PLOT_COLORS[ind]
@@ -89,9 +138,13 @@ def get_plot_segment(start_index, end_index, sorted_bc, cell_barcodes, legend=Fa
     Helper function to build a plot segment.
     """
     assert end_index > start_index
-    num_cells = sum([1 for i in range(start_index, end_index) if sorted_bc[i] in cell_barcodes])
-    density = float(num_cells)/float(end_index-start_index)
-    return BarcodeRankPlotSegment(start=start_index, end=end_index, cell_density=density, legend=legend)
+    num_cells = sum(
+        [1 for i in range(start_index, end_index) if sorted_bc[i] in cell_barcodes]
+    )
+    density = float(num_cells) / float(end_index - start_index)
+    return BarcodeRankPlotSegment(
+        start=start_index, end=end_index, cell_density=density, legend=legend
+    )
 
 
 def segment_log_plot_by_length(y_data, x_start, x_end):
@@ -115,12 +168,14 @@ def segment_log_plot_by_length(y_data, x_start, x_end):
     segment_idx = [x_start]
 
     for i in range(x_start, x_end):
-        last_i = max(x_start, i-1)
+        last_i = max(x_start, i - 1)
         dx = (np.log(i) - np.log(last_i)) / log_max_x
         dy = (np.log(y_data[i]) - np.log(y_data[last_i])) / log_max_y
         this_segment_len += np.linalg.norm([dx, dy])
-        if this_segment_len >= SEGMENT_NORMALIZED_MAX_LEN and i > (segment_idx[-1] + MIN_X_SPAN):
-            segment_idx.append(i+1)
+        if this_segment_len >= SEGMENT_NORMALIZED_MAX_LEN and i > (
+            segment_idx[-1] + MIN_X_SPAN
+        ):
+            segment_idx.append(i + 1)
             this_segment_len = 0.0
 
     if segment_idx[-1] != x_end:
@@ -141,15 +196,15 @@ def segment_log_plot_by_length_log_uniform(x_start, x_end):
     MIN_BARCODE = 20
     MAX_N = 100
     segment_idx = [x_start]
-    span = np.log10(x_end-x_start) / MAX_N
+    span = np.log10(x_end - x_start) / MAX_N
     if span < MIN_X_LOG10_SPAN:
         span = MIN_X_LOG10_SPAN
-        
+
     span_sum = 1
     idx = x_start
     while True:
         span_sum += span
-        idx = int(x_start + 10 ** span_sum)
+        idx = int(x_start + 10**span_sum)
         if idx - segment_idx[-1] < MIN_BARCODE:
             continue
         if idx > x_end:
@@ -168,7 +223,7 @@ def convert_numpy_array_to_line_chart(array, ntype):
     rows = []
     previous_count = None
     for (index,), count in np.ndenumerate(array):
-        if index == 0 or index == len(array)-1:
+        if index == 0 or index == len(array) - 1:
             rows.append([index, ntype(count)])
         elif previous_count != count:
             previous_index = rows[-1][0]
@@ -186,10 +241,10 @@ def counter_barcode_rank_plot_data(count_data_path, log_uniform=False):
     :param count_data_path:
     :return: sorted_counts, plot_segments, cell_nums
     """
-    count_data = pd.read_csv(count_data_path, index_col=0, sep='\t')
-    cell_bc = np.array(count_data[count_data['mark'] == 'CB'].index)
+    count_data = pd.read_csv(count_data_path, index_col=0, sep="\t")
+    cell_bc = np.array(count_data[count_data["mark"] == "CB"].index)
     sorted_bc = np.array(count_data.index)
-    sorted_counts = np.array(count_data['UMI'])
+    sorted_counts = np.array(count_data["UMI"])
     cell_nums = len(cell_bc)
     total_bc = len(sorted_bc)
     # find the first barcode which is not a cell
@@ -206,10 +261,16 @@ def counter_barcode_rank_plot_data(count_data_path, log_uniform=False):
             last_cell = i
             break
 
-    ranges = [0, first_non_cell, last_cell+1, total_bc]
+    ranges = [0, first_non_cell, last_cell + 1, total_bc]
     plot_segments = []
-    plot_segments.append(BarcodeRankPlotSegment(start=0, end=ranges[1], cell_density=1.0, legend=True))
-    plot_segments.append(BarcodeRankPlotSegment(start=ranges[2], end=ranges[3], cell_density=0.0, legend=True))
+    plot_segments.append(
+        BarcodeRankPlotSegment(start=0, end=ranges[1], cell_density=1.0, legend=True)
+    )
+    plot_segments.append(
+        BarcodeRankPlotSegment(
+            start=ranges[2], end=ranges[3], cell_density=0.0, legend=True
+        )
+    )
 
     if not log_uniform:
         mixed_segments = segment_log_plot_by_length(sorted_counts, ranges[1], ranges[2])
@@ -217,34 +278,41 @@ def counter_barcode_rank_plot_data(count_data_path, log_uniform=False):
         mixed_segments = segment_log_plot_by_length_log_uniform(ranges[1], ranges[2])
     for i in range(len(mixed_segments) - 1):
         plot_segments.append(
-            get_plot_segment(mixed_segments[i], mixed_segments[i + 1], sorted_bc, cell_bc, legend=False))
+            get_plot_segment(
+                mixed_segments[i],
+                mixed_segments[i + 1],
+                sorted_bc,
+                cell_bc,
+                legend=False,
+            )
+        )
 
     return sorted_counts, plot_segments, cell_nums
 
 
 def _plot_barcode_rank(chart, counts, num_cells):
-    """ Generate a generic barcode rank plot """
+    """Generate a generic barcode rank plot"""
     rows = convert_numpy_array_to_line_chart(counts, int)
 
     for _i, row in enumerate(rows):
         index, count = row[0], row[1]
         if index < num_cells:
-            series_list = [chart['data'][0]]
+            series_list = [chart["data"][0]]
         elif index == num_cells:
             # Connect the two lines
-            series_list = [chart['data'][0], chart['data'][1]]
+            series_list = [chart["data"][0], chart["data"][1]]
         else:
-            series_list = [chart['data'][1]]
+            series_list = [chart["data"][1]]
 
         for series in series_list:
-            series['x'].append(index)
-            series['y'].append(count)
+            series["x"].append(index)
+            series["y"].append(count)
 
     # Handle case where there is no background
-    bg_series = chart['data'][1]
-    if len(bg_series['x']) == 0:
-        bg_series['x'].append(0)
-        bg_series['y'].append(0)
+    bg_series = chart["data"][1]
+    if len(bg_series["x"]) == 0:
+        bg_series["x"].append(0)
+        bg_series["y"].append(0)
 
     return chart
 
@@ -262,13 +330,15 @@ def build_plot_data_dict(plot_segment, counts):
     start = max(0, plot_segment.start - 1)  # -1 for continuity between two charts
     end = plot_segment.end
     plot_rows = convert_numpy_array_to_line_chart(counts[start:end], int)
-    name = 'Cells' if plot_segment.cell_density > 0 else 'Background'
+    name = "Cells" if plot_segment.cell_density > 0 else "Background"
 
     # Setup the tooltip
-    if plot_segment.cell_density > 0.:
+    if plot_segment.cell_density > 0.0:
         n_barcodes = plot_segment.end - plot_segment.start
         n_cells = int(round(plot_segment.cell_density * n_barcodes))
-        hover = "{:.0f}% Cells<br>({}/{})".format(100 * plot_segment.cell_density, n_cells, n_barcodes)
+        hover = "{:.0f}% Cells<br>({}/{})".format(
+            100 * plot_segment.cell_density, n_cells, n_barcodes
+        )
     else:
         hover = "Background"
 
@@ -324,31 +394,62 @@ def get_plot_data(plot_segments, counts):
 
 
 def plot_barcode_rank(count_file_path, log_uniform=False):
-    sorted_counts, plot_segments, _cell_nums = counter_barcode_rank_plot_data(count_file_path, log_uniform=log_uniform)
+    sorted_counts, plot_segments, _cell_nums = counter_barcode_rank_plot_data(
+        count_file_path, log_uniform=log_uniform
+    )
     plot_data = get_plot_data(plot_segments, sorted_counts)
 
-    plotly_data = [go.Scatter(x=dat['x'], y=dat['y'], name=dat['name'], mode=dat['mode'], showlegend=dat['showlegend'],
-                              marker={'color': dat['line']['color']}, line=dat['line'], text=dat['text']) for dat in
-                   plot_data]
+    plotly_data = [
+        go.Scatter(
+            x=dat["x"],
+            y=dat["y"],
+            name=dat["name"],
+            mode=dat["mode"],
+            showlegend=dat["showlegend"],
+            marker={"color": dat["line"]["color"]},
+            line=dat["line"],
+            text=dat["text"],
+        )
+        for dat in plot_data
+    ]
 
-    layout = go.Layout(width=470, height=313,
-                       title={"text": "Barcode rank", "font": {"color": "black"}, "x": 0.5},
-                       xaxis={"type": "log", "title": "Barcode", "titlefont": {"color": "black"},
-                              "color": "black", "gridcolor": "gainsboro", "linecolor": "black"},
-                       yaxis={"type": "log", "title": "UMI counts", "titlefont": {"color": "black"},
-                              "color": "black", "gridcolor": "gainsboro", "linecolor": "black"},
-                       margin=dict(l=50, r=0, t=30, b=30),
-                       plot_bgcolor="#FFFFFF")
+    layout = go.Layout(
+        width=470,
+        height=313,
+        title={"text": "Barcode rank", "font": {"color": "black"}, "x": 0.5},
+        xaxis={
+            "type": "log",
+            "title": "Barcode",
+            "titlefont": {"color": "black"},
+            "color": "black",
+            "gridcolor": "gainsboro",
+            "linecolor": "black",
+        },
+        yaxis={
+            "type": "log",
+            "title": "UMI counts",
+            "titlefont": {"color": "black"},
+            "color": "black",
+            "gridcolor": "gainsboro",
+            "linecolor": "black",
+        },
+        margin=dict(l=50, r=0, t=30, b=30),
+        plot_bgcolor="#FFFFFF",
+    )
 
-    config = dict({"displayModeBar": True,
-                   "staticPlot": False,
-                   "showAxisDragHandles": False,
-                   "modeBarButtons": [["toImage", "resetScale2d"]],
-                   "scrollZoom": False,
-                   "displaylogo": False})
+    config = dict(
+        {
+            "displayModeBar": True,
+            "staticPlot": False,
+            "showAxisDragHandles": False,
+            "modeBarButtons": [["toImage", "resetScale2d"]],
+            "scrollZoom": False,
+            "displaylogo": False,
+        }
+    )
 
     fig = go.Figure(data=plotly_data, layout=layout)
 
-    chart = pltoff.plot(fig, include_plotlyjs=True, output_type='div', config=config)
+    chart = pltoff.plot(fig, include_plotlyjs=True, output_type="div", config=config)
 
     return chart

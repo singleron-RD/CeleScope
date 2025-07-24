@@ -1,5 +1,5 @@
-
 from celescope.tools.mkref import Mkref, super_opts
+
 
 class Mkref_virus(Mkref):
     """
@@ -31,9 +31,13 @@ class Mkref_virus(Mkref):
         super().run()
         self.build_star_index()
 
+
 def mkref(args):
-    genome_type = 'virus'
-    with Mkref_virus(genome_type, args, ) as runner:
+    genome_type = "virus"
+    with Mkref_virus(
+        genome_type,
+        args,
+    ) as runner:
         runner.run()
 
 

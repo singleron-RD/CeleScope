@@ -13,7 +13,7 @@ class Analysis_rna_virus(Step):
         self.virus_df = pd.read_csv(args.virus_file, sep="\t")
 
         self.auto_assign_bool = False
-        if args.type_marker_tsv and args.type_marker_tsv != 'None':
+        if args.type_marker_tsv and args.type_marker_tsv != "None":
             self.auto_assign_bool = True
             self.save_rds = True
 
@@ -44,7 +44,6 @@ class Analysis_rna_virus(Step):
 
 @utils.add_log
 def analysis_rna_virus(args):
-
     with Analysis_rna_virus(args) as runner:
         runner.run()
 
@@ -52,7 +51,4 @@ def analysis_rna_virus(args):
 def get_opts_analysis_rna_virus(parser, sub_program):
     get_opts_analysis(parser, sub_program)
     if sub_program:
-        parser.add_argument(
-            '--virus_file',
-            help='virus UMI count file',
-            required=True)
+        parser.add_argument("--virus_file", help="virus UMI count file", required=True)

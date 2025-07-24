@@ -9,7 +9,9 @@ ROOT_DIR = os.path.dirname(__file__)
 class Test_variant_calling(unittest.TestCase):
     def setUp(self):
         os.chdir(ROOT_DIR)
-        Args = namedtuple("Args", "thread outdir sample assay debug " + "genomeDir vcf bam match_dir")
+        Args = namedtuple(
+            "Args", "thread outdir sample assay debug " + "genomeDir vcf bam match_dir"
+        )
         self.args = Args(
             thread=10,
             outdir="./test_output/07.variant_calling",
@@ -24,7 +26,7 @@ class Test_variant_calling(unittest.TestCase):
 
     def test_run(self):
         obj = Variant_calling(self.args, "variant_calling")
-        '''
+        """
         obj.SplitNCigarReads()
         obj.split_bam()
         obj.call_all_snp()
@@ -32,9 +34,8 @@ class Test_variant_calling(unittest.TestCase):
             obj.add_VID()
         else:
             obj.merge_vcf()
-        '''
+        """
         obj.write_VID_file()
         obj.get_UMI()
         obj.write_support_matrix()
         obj._clean_up()
-

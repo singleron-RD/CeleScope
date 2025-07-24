@@ -20,15 +20,17 @@ class SimpleGoodTuringError(Exception):
 
 def _averaging_transform(r, nr):
     d = np.concatenate((np.ones(1, dtype=int), np.diff(r)))
-    dr = np.concatenate((
-        0.5 * (d[1:] + d[0:-1]),
-        np.array((d[-1],), dtype=float),
-    ))
-    return nr.astype(float)/dr
+    dr = np.concatenate(
+        (
+            0.5 * (d[1:] + d[0:-1]),
+            np.array((d[-1],), dtype=float),
+        )
+    )
+    return nr.astype(float) / dr
 
 
 def _rstest(r, coef):
-    return r * np.power(1 + 1/r, 1 + coef)
+    return r * np.power(1 + 1 / r, 1 + coef)
 
 
 def simple_good_turing(xr, xnr):
@@ -45,7 +47,7 @@ def simple_good_turing(xr, xnr):
     xr = xr.astype(float)
     xnr = xnr.astype(float)
 
-    xN = np.sum(xr*xnr)
+    xN = np.sum(xr * xnr)
 
     # Get Linear Good-Turing estimate
     xnrz = _averaging_transform(xr, xnr)
@@ -53,21 +55,30 @@ def simple_good_turing(xr, xnr):
 
     if slope > -1:
         raise SimpleGoodTuringError(
-            "The log-log slope is > -1 (%d); the SGT estimator is not applicable to these data." % slope)
+            "The log-log slope is > -1 (%d); the SGT estimator is not applicable to these data."
+            % slope
+        )
 
     xrst = _rstest(xr, slope)
-    xrstrel = xrst/xr
+    xrstrel = xrst / xr
 
     # Get traditional Good-Turing estimate
-    xrtry = xr == np.concatenate((xr[1:]-1, np.zeros(1)))
+    xrtry = xr == np.concatenate((xr[1:] - 1, np.zeros(1)))
     xrstarel = np.zeros(len(xr))
-    xrstarel[xrtry] = (xr[xrtry]+1) / xr[xrtry] * np.concatenate((xnr[1:], np.zeros(1)))[xrtry] / xnr[xrtry]
+    xrstarel[xrtry] = (
+        (xr[xrtry] + 1)
+        / xr[xrtry]
+        * np.concatenate((xnr[1:], np.zeros(1)))[xrtry]
+        / xnr[xrtry]
+    )
 
     # Determine when to switch from GT to LGT estimates
     tursd = np.ones(len(xr))
     for i in range(len(xr)):
         if xrtry[i]:
-            tursd[i] = float(i+2) / xnr[i] * np.sqrt(xnr[i+1] * (1 + xnr[i+1]/xnr[i]))
+            tursd[i] = (
+                float(i + 2) / xnr[i] * np.sqrt(xnr[i + 1] * (1 + xnr[i + 1] / xnr[i]))
+            )
 
     xrstcmbrel = np.zeros(len(xr))
     useturing = True
@@ -75,7 +86,7 @@ def simple_good_turing(xr, xnr):
         if not useturing:
             xrstcmbrel[r] = xrstrel[r]
         else:
-            if np.abs(xrstrel[r]-xrstarel[r]) * (1+r)/tursd[r] > 1.65:
+            if np.abs(xrstrel[r] - xrstarel[r]) * (1 + r) / tursd[r] > 1.65:
                 xrstcmbrel[r] = xrstarel[r]
             else:
                 useturing = False
@@ -85,7 +96,7 @@ def simple_good_turing(xr, xnr):
     sumpraw = np.sum(xrstcmbrel * xr * xnr / xN)
 
     xrstcmbrel = xrstcmbrel * (1 - xnr[0] / xN) / sumpraw
-    p0 = xnr[0]/xN
+    p0 = xnr[0] / xN
 
     return (xr * xrstcmbrel, p0)
 
@@ -109,7 +120,9 @@ def sgt_proportions(frequencies):
     use_freqs = np.flatnonzero(freqfreqs)
 
     if len(use_freqs) < 10:
-        raise SimpleGoodTuringError("Too few non-zero frequency items (%d). Aborting SGT." % len(use_freqs))
+        raise SimpleGoodTuringError(
+            "Too few non-zero frequency items (%d). Aborting SGT." % len(use_freqs)
+        )
 
     rstar, p0 = simple_good_turing(use_freqs, freqfreqs[use_freqs])
 
@@ -118,8 +131,9 @@ def sgt_proportions(frequencies):
     rstar_dict = dict(zip(use_freqs, rstar))
 
     rstar_sum = np.sum(freqfreqs[use_freqs] * rstar)
-    rstar_i = np.fromiter((rstar_dict[f] for f in frequencies),
-                          dtype=float, count=len(frequencies))
+    rstar_i = np.fromiter(
+        (rstar_dict[f] for f in frequencies), dtype=float, count=len(frequencies)
+    )
     pstar = (1 - p0) * (rstar_i / rstar_sum)
 
     assert np.isclose(p0 + np.sum(pstar), 1)
@@ -194,70 +208,72 @@ def test_prosody():
 
     # Computed using R 3.5.1 w/ the Gale S code
     expect_p0 = 0.003883244
-    expect_rstar = np.array((
-        0.7628079,
-        1.706448,
-        2.679796,
-        3.663988,
-        4.653366,
-        5.645628,
-        6.63966,
-        7.634856,
-        8.63086,
-        9.627446,
-        11.62182,
-        13.61725,
-        14.61524,
-        15.61336,
-        16.6116,
-        18.60836,
-        19.60685,
-        20.6054,
-        22.60264,
-        23.60133,
-        24.60005,
-        25.5988,
-        26.59759,
-        27.59639,
-        30.59294,
-        31.59183,
-        32.59073,
-        33.58964,
-        35.58751,
-        40.58235,
-        42.58035,
-        44.57836,
-        45.57738,
-        46.57641,
-        49.57351,
-        70.55399,
-        83.54229,
-        100.5272,
-        104.5237,
-        120.5097,
-        123.507,
-        145.4879,
-        161.474,
-        192.4472,
-        198.4421,
-        223.4205,
-        225.4188,
-        253.3947,
-        256.3922,
-        338.3218,
-        420.2514,
-        455.2215,
-        480.2,
-        482.1983,
-        1138.636,
-        1254.537,
-        1320.48,
-        1528.302,
-        2128.788,
-        2392.562,
-        6918.687,
-        7838.899,
-    ))
+    expect_rstar = np.array(
+        (
+            0.7628079,
+            1.706448,
+            2.679796,
+            3.663988,
+            4.653366,
+            5.645628,
+            6.63966,
+            7.634856,
+            8.63086,
+            9.627446,
+            11.62182,
+            13.61725,
+            14.61524,
+            15.61336,
+            16.6116,
+            18.60836,
+            19.60685,
+            20.6054,
+            22.60264,
+            23.60133,
+            24.60005,
+            25.5988,
+            26.59759,
+            27.59639,
+            30.59294,
+            31.59183,
+            32.59073,
+            33.58964,
+            35.58751,
+            40.58235,
+            42.58035,
+            44.57836,
+            45.57738,
+            46.57641,
+            49.57351,
+            70.55399,
+            83.54229,
+            100.5272,
+            104.5237,
+            120.5097,
+            123.507,
+            145.4879,
+            161.474,
+            192.4472,
+            198.4421,
+            223.4205,
+            225.4188,
+            253.3947,
+            256.3922,
+            338.3218,
+            420.2514,
+            455.2215,
+            480.2,
+            482.1983,
+            1138.636,
+            1254.537,
+            1320.48,
+            1528.302,
+            2128.788,
+            2392.562,
+            6918.687,
+            7838.899,
+        )
+    )
 
     xr = np.array([d[0] for d in data], dtype=int)
     xnr = np.array([d[1] for d in data], dtype=int)
@@ -266,4 +282,4 @@ def test_prosody():
 
     assert np.abs(p0 - expect_p0) < 1e-9
     assert np.all(np.abs(rstar - expect_rstar) < 1e-3)
-    assert np.all((np.abs(rstar - expect_rstar))/expect_rstar < 1e-4)
+    assert np.all((np.abs(rstar - expect_rstar)) / expect_rstar < 1e-4)

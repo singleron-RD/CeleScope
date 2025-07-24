@@ -2,10 +2,14 @@ import scipy.io
 import scipy.sparse
 import pandas as pd
 
-from celescope.tools.__init__ import (BARCODE_FILE_NAME, FEATURE_FILE_NAME, MATRIX_FILE_NAME)
+from celescope.tools.__init__ import (
+    BARCODE_FILE_NAME,
+    FEATURE_FILE_NAME,
+    MATRIX_FILE_NAME,
+)
 from celescope.tools import utils
 
-  
+
 class Features:
     def __init__(self, gene_id: list, gene_name=None, gene_type=None):
         """
@@ -19,14 +23,19 @@ class Features:
             self.gene_name = self.gene_id
         else:
             self.gene_name = list(gene_name)
-        self.gene_type = gene_type 
+        self.gene_type = gene_type
 
     @classmethod
     def from_tsv(cls, tsv_file):
-        df = pd.read_csv(tsv_file, sep='\t', on_bad_lines='skip', names=['gene_id', 'gene_name', 'type'])
-        gene_id = df['gene_id'].tolist()
-        gene_name = df['gene_name'].tolist()
-        gene_type = df['type'].tolist()
+        df = pd.read_csv(
+            tsv_file,
+            sep="\t",
+            on_bad_lines="skip",
+            names=["gene_id", "gene_name", "type"],
+        )
+        gene_id = df["gene_id"].tolist()
+        gene_name = df["gene_name"].tolist()
+        gene_type = df["type"].tolist()
         return cls(gene_id, gene_name, gene_type)
 
     def to_tsv(self, tsv_file):
@@ -34,10 +43,16 @@ class Features:
         if gene_type is None and add to dataframe, will cause Seurat::Read10X error: Error in FUN(X[[i]], ...) : subscript out of bounds
         """
         if self.gene_type:
-            df = pd.DataFrame({'gene_id': self.gene_id, 'gene_name': self.gene_name, 'gene_type': self.gene_type})
+            df = pd.DataFrame(
+                {
+                    "gene_id": self.gene_id,
+                    "gene_name": self.gene_name,
+                    "gene_type": self.gene_type,
+                }
+            )
         else:
-            df = pd.DataFrame({'gene_id': self.gene_id, 'gene_name': self.gene_name})
-        df.to_csv(tsv_file, sep='\t', index=False, header=False)
+            df = pd.DataFrame({"gene_id": self.gene_id, "gene_name": self.gene_name})
+        df.to_csv(tsv_file, sep="\t", index=False, header=False)
 
 
 class CountMatrix:
@@ -61,19 +76,29 @@ class CountMatrix:
         barcode_file = utils.get_matrix_file_path(matrix_dir, BARCODE_FILE_NAME)
         barcodes, _ = utils.read_one_col(barcode_file)
         matrix_path = utils.get_matrix_file_path(matrix_dir, MATRIX_FILE_NAME)
-        matrix= scipy.io.mmread(matrix_path)
+        matrix = scipy.io.mmread(matrix_path)
 
         return cls(features, barcodes, matrix)
 
     def to_matrix_dir(self, matrix_dir):
         utils.check_mkdir(dir_name=matrix_dir)
-        self.__features.to_tsv(f'{matrix_dir}/{FEATURE_FILE_NAME}')
-        pd.Series(self.__barcodes).to_csv(f'{matrix_dir}/{BARCODE_FILE_NAME}', index=False, sep='\t', header=False)
-        matrix_path = f'{matrix_dir}/{MATRIX_FILE_NAME}'
+        self.__features.to_tsv(f"{matrix_dir}/{FEATURE_FILE_NAME}")
+        pd.Series(self.__barcodes).to_csv(
+            f"{matrix_dir}/{BARCODE_FILE_NAME}", index=False, sep="\t", header=False
+        )
+        matrix_path = f"{matrix_dir}/{MATRIX_FILE_NAME}"
         scipy.io.mmwrite(matrix_path, self.__matrix)
 
     @classmethod
-    def from_dataframe(cls, df, features: Features, barcodes=None, row='geneID', column='Barcode', value="UMI"):
+    def from_dataframe(
+        cls,
+        df,
+        features: Features,
+        barcodes=None,
+        row="geneID",
+        column="Barcode",
+        value="UMI",
+    ):
         """
         Use all gene_id from features even if it is not in df
         Args:
@@ -83,10 +108,10 @@ class CountMatrix:
             type: type of features, e.g. [gene, protein]
         """
 
-        df = df.groupby([row, column]).agg({value: 'count'})
+        df = df.groupby([row, column]).agg({value: "count"})
         if not barcodes:
             barcodes = df.index.levels[1].tolist()
-        
+
         feature_index_dict = {}
         for index, gene_id in enumerate(features.gene_id):
             feature_index_dict[gene_id] = index
@@ -96,11 +121,19 @@ class CountMatrix:
             barcode_index_dict[barcode] = index
 
         # use all barcodes
-        barcode_codes = [barcode_index_dict[barcode] for barcode in df.index.get_level_values(level=1)]
+        barcode_codes = [
+            barcode_index_dict[barcode]
+            for barcode in df.index.get_level_values(level=1)
+        ]
         # use all gene_id from features even if it is not in df
-        gene_id_codes = [feature_index_dict[gene_id] for gene_id in df.index.get_level_values(level=0)]
-        mtx = scipy.sparse.coo_matrix((df[value], (gene_id_codes, barcode_codes)), 
-            shape=(len(features.gene_id), len(barcodes)))
+        gene_id_codes = [
+            feature_index_dict[gene_id]
+            for gene_id in df.index.get_level_values(level=0)
+        ]
+        mtx = scipy.sparse.coo_matrix(
+            (df[value], (gene_id_codes, barcode_codes)),
+            shape=(len(features.gene_id), len(barcodes)),
+        )
 
         return cls(features, barcodes, mtx)
 
@@ -108,16 +141,17 @@ class CountMatrix:
         n_row, n_col = self.shape[0], self.shape[1]
         return f"CountMatrix object\n {n_row} x {n_col} coo_matrix"
 
-
     def __repr__(self):
         return self.__str__()
 
     def concat_by_barcodes(self, other):
         if other.get_barcodes() != self.get_barcodes():
-            raise ValueError('barcodes are not the same')
+            raise ValueError("barcodes are not the same")
 
-        if inter := set(self.get_features().gene_id).intersection(set(other.get_features().gene_id)):
-            raise ValueError(f'deuplicated gene_id: {inter}')
+        if inter := set(self.get_features().gene_id).intersection(
+            set(other.get_features().gene_id)
+        ):
+            raise ValueError(f"deuplicated gene_id: {inter}")
 
         gene_id = self.get_features().gene_id + other.get_features().gene_id
         gene_name = self.get_features().gene_name + other.get_features().gene_name
@@ -147,7 +181,6 @@ class CountMatrix:
 
     def get_features(self):
         return self.__features
-    
+
     def get_matrix(self):
         return self.__matrix
-

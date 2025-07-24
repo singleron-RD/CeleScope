@@ -4,6 +4,7 @@ import subprocess
 from celescope.tools import utils
 from celescope.tools.mkref import Mkref, super_opts
 
+
 class Mkref_snp(Mkref):
     """
     ## Features
@@ -24,20 +25,15 @@ class Mkref_snp(Mkref):
     ```
     """
 
-
     @utils.add_log
     def build_fasta_index(self):
-        cmd = (
-            f'samtools faidx {self.fasta}'
-        )
+        cmd = f"samtools faidx {self.fasta}"
         self.build_fasta_index.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
     def build_fasta_dict(self):
-        cmd = (
-            f'gatk CreateSequenceDictionary -R {self.fasta}'
-        )
+        cmd = f"gatk CreateSequenceDictionary -R {self.fasta}"
         self.build_fasta_dict.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
@@ -53,8 +49,11 @@ class Mkref_snp(Mkref):
 
 
 def mkref(args):
-    genome_type = 'snp'
-    with Mkref_snp(genome_type, args, ) as runner:
+    genome_type = "snp"
+    with Mkref_snp(
+        genome_type,
+        args,
+    ) as runner:
         runner.run()
 
 

@@ -1,5 +1,13 @@
-__STEPS__ = ["mkref", "sample", "barcode", "cutadapt", "consensus", "mapping_vdj", "count_vdj"]
-__ASSAY__ = 'vdj'
+__STEPS__ = [
+    "mkref",
+    "sample",
+    "barcode",
+    "cutadapt",
+    "consensus",
+    "mapping_vdj",
+    "count_vdj",
+]
+__ASSAY__ = "vdj"
 
 CHAINS = {
     "TCR": ["TRA", "TRB"],

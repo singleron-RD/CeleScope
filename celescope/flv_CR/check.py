@@ -19,7 +19,7 @@ import pandas as pd
     #         f'--html {html}'
     #     )
     #     self.process_cmd(cmd, step, sample, m=5, x=1)
-    
+
 The warning metrics of samples' analysis result are marked in red in the report
 '''
 
@@ -33,7 +33,7 @@ warnings = {
     'Median used TRB UMIs per Cell':0.1,
     'Median used IGH UMIs per Cell':0.1,
     'Median used IGL UMIs per Cell':0.1,
-    'Median used IGK UMIs per Cell':0.1  
+    'Median used IGK UMIs per Cell':0.1
            }
 
 warnings_help = {
@@ -51,16 +51,16 @@ warnings_help = {
 
 
 class Check(Step):
-    
+
     def __init__(self, args, step_name):
         Step.__init__(self, args, step_name)
-    
+
     # input
         self.rep_bc = args.rep_bc
         self.rep = args.rep
         self.seqtype = args.seqtype
         self.html = args.html
-        
+
         self.warning_list=[]
 
 
@@ -87,7 +87,7 @@ class Check(Step):
             lines = (line.strip().split(':') for line in f)
             for line in lines:
                 rep[line[0]] = line[1]
-        
+
         rep1 = {key:value for key,value in rep.items() if key in self.target}
 
         for i in rep1.keys():
@@ -108,7 +108,7 @@ class Check(Step):
                     'count': rep1[key],
                     'total_count': np.nan
                 })
-                
+
                 self.warning_list.append(key)
 
         if len(self.warning_list) > 0:
@@ -143,11 +143,11 @@ class Check(Step):
                     i.b.next_sibling.string.replace_with(new_tag1)
             except StopIteration:
                 pass
-        
+
         with open(f'{self.outdir}/{self.sample}_report.html','w',encoding='utf-8') as fp:
             fp.write(sp.prettify())
 
-    def run(self):    
+    def run(self):
         self.run_check()
         if len(self.warning_list)>0:
             self.check_html()

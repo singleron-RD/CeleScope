@@ -40,62 +40,50 @@ class Multi_snp(Multi):
     """
 
     def star(self, sample):
-        step = 'star'
+        step = "star"
         cmd_line = self.get_cmd_line(step, sample)
         if self.args.not_consensus:
             fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq{self.fq_suffix}'
         else:
             fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'
-            cmd_line += ' --consensus_fq '
+            cmd_line += " --consensus_fq "
 
-        cmd = (
-            f'{cmd_line} '
-            f'--fq {fq} '
-        )
+        cmd = f"{cmd_line} " f"--fq {fq} "
         self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
 
     def target_metrics(self, sample):
-        step = 'target_metrics'
+        step = "target_metrics"
         cmd_line = self.get_cmd_line(step, sample)
         bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_Aligned.sortedByCoord.out.bam.featureCounts.bam'
         cmd = (
-            f'{cmd_line} '
-            f'--bam {bam} '
-            f'--match_dir {self.col4_dict[sample]} '
-            f'--add_RG '
+            f"{cmd_line} "
+            f"--bam {bam} "
+            f"--match_dir {self.col4_dict[sample]} "
+            f"--add_RG "
         )
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
     def variant_calling(self, sample):
-        step = 'variant_calling'
+        step = "variant_calling"
         cmd_line = self.get_cmd_line(step, sample)
-        bam = f'{self.outdir_dic[sample]["target_metrics"]}/{sample}_filtered_sorted.bam'
-        cmd = (
-            f'{cmd_line} '
-            f'--bam {bam} '
-            f'--match_dir {self.col4_dict[sample]} '
+        bam = (
+            f'{self.outdir_dic[sample]["target_metrics"]}/{sample}_filtered_sorted.bam'
         )
+        cmd = f"{cmd_line} " f"--bam {bam} " f"--match_dir {self.col4_dict[sample]} "
         self.process_cmd(cmd, step, sample, m=8, x=1)
 
     def filter_snp(self, sample):
-        step ='filter_snp'
+        step = "filter_snp"
         vcf = f'{self.outdir_dic[sample]["variant_calling"]}/{sample}_norm.vcf'
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = (
-            f'{cmd_line} '
-            f'--vcf {vcf} '
-        )
+        cmd = f"{cmd_line} " f"--vcf {vcf} "
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def analysis_snp(self, sample):
-        step = 'analysis_snp'
+        step = "analysis_snp"
         vcf = f'{self.outdir_dic[sample]["filter_snp"]}/{sample}_filtered.vcf'
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = (
-            f'{cmd_line} '
-            f'--match_dir {self.col4_dict[sample]} '
-            f'--vcf {vcf} '
-        )
+        cmd = f"{cmd_line} " f"--match_dir {self.col4_dict[sample]} " f"--vcf {vcf} "
         self.process_cmd(cmd, step, sample, m=2, x=1)
 
 
@@ -104,5 +92,5 @@ def main():
     multi.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

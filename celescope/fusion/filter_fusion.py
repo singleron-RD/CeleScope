@@ -1,19 +1,17 @@
-
 from celescope.tools.capture.filter import Filter, get_opts_filter
 
 
 def get_opts_filter_fusion(parser, sub_program):
-
     get_opts_filter(parser, sub_program)
 
-def filter_fusion(args):
 
+def filter_fusion(args):
     with Filter_fusion(args) as runner:
         runner.run()
 
 
 class Filter_fusion(Filter):
-    """    
+    """
     ## Features
     - Correct single-base errors in UMIs due to sequencing, amplification, etc.
     - Filter background UMIs base on a UMI threshold.

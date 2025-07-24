@@ -1,4 +1,3 @@
-
 from collections import defaultdict
 from itertools import groupby
 
@@ -10,7 +9,6 @@ from celescope.tools.count import Count, get_opts_count
 
 
 class Count_capture_rna(Count):
-
     def bam2table(self):
         """
         read probe file
@@ -18,25 +16,27 @@ class Count_capture_rna(Count):
         probe_gene_count_dict = utils.genDict(dim=4, valType=int)
 
         samfile = pysam.AlignmentFile(self.bam, "rb")
-        with open(self.count_detail_file, 'wt') as fh1:
-            fh1.write('\t'.join(['Barcode', 'geneID', 'UMI', 'count']) + '\n')
+        with open(self.count_detail_file, "wt") as fh1:
+            fh1.write("\t".join(["Barcode", "geneID", "UMI", "count"]) + "\n")
 
-            def keyfunc(x): return x.query_name.split('_', 1)[0]
+            def keyfunc(x):
+                return x.query_name.split("_", 1)[0]
+
             for _, g in groupby(samfile, keyfunc):
                 gene_umi_dict = defaultdict(lambda: defaultdict(int))
                 for seg in g:
-                    (barcode, umi, probe) = seg.query_name.split('_')[:3]
-                    if probe != 'None':
-                        probe_gene_count_dict[probe]['total'][barcode][umi] += 1
-                        if seg.has_tag('XT'):
-                            geneID = seg.get_tag('XT')
+                    (barcode, umi, probe) = seg.query_name.split("_")[:3]
+                    if probe != "None":
+                        probe_gene_count_dict[probe]["total"][barcode][umi] += 1
+                        if seg.has_tag("XT"):
+                            geneID = seg.get_tag("XT")
                             geneName = self.gtf_dict[geneID]
                             probe_gene_count_dict[probe][geneName][barcode][umi] += 1
                         else:
-                            probe_gene_count_dict[probe]['None'][barcode][umi] += 1
-                    if not seg.has_tag('XT'):
+                            probe_gene_count_dict[probe]["None"][barcode][umi] += 1
+                    if not seg.has_tag("XT"):
                         continue
-                    geneID = seg.get_tag('XT')
+                    geneID = seg.get_tag("XT")
                     gene_umi_dict[geneID][umi] += 1
                 for gene_id in gene_umi_dict:
                     Count.correct_umi(gene_umi_dict[gene_id])
@@ -44,8 +44,10 @@ class Count_capture_rna(Count):
                 # output
                 for gene_id in gene_umi_dict:
                     for umi in gene_umi_dict[gene_id]:
-                        fh1.write('%s\t%s\t%s\t%s\n' % (barcode, gene_id, umi,
-                                                        gene_umi_dict[gene_id][umi]))
+                        fh1.write(
+                            "%s\t%s\t%s\t%s\n"
+                            % (barcode, gene_id, umi, gene_umi_dict[gene_id][umi])
+                        )
 
         # out probe
         row_list = []
@@ -56,26 +58,36 @@ class Count_capture_rna(Count):
                 read_count = 0
                 for barcode in probe_gene_count_dict[probe][geneName]:
                     for umi in probe_gene_count_dict[probe][geneName][barcode]:
-                        umi_count += len(probe_gene_count_dict[probe][geneName][barcode])
-                        read_count += probe_gene_count_dict[probe][geneName][barcode][umi]
-                row_list.append({
-                    'probe': probe,
-                    'gene': geneName,
-                    'barcode_count': barcode_count,
-                    'read_count': read_count,
-                    'UMI_count': umi_count
-                })
+                        umi_count += len(
+                            probe_gene_count_dict[probe][geneName][barcode]
+                        )
+                        read_count += probe_gene_count_dict[probe][geneName][barcode][
+                            umi
+                        ]
+                row_list.append(
+                    {
+                        "probe": probe,
+                        "gene": geneName,
+                        "barcode_count": barcode_count,
+                        "read_count": read_count,
+                        "UMI_count": umi_count,
+                    }
+                )
 
-        df_probe = pd.DataFrame(row_list,
-                                columns=['probe', 'gene', 'barcode_count', 'read_count', 'UMI_count'])
-        df_probe = df_probe.groupby(['probe']).apply(
-            lambda x: x.sort_values('UMI_count', ascending=False)
+        df_probe = pd.DataFrame(
+            row_list,
+            columns=["probe", "gene", "barcode_count", "read_count", "UMI_count"],
+        )
+        df_probe = df_probe.groupby(["probe"]).apply(
+            lambda x: x.sort_values("UMI_count", ascending=False)
         )
         return df_probe
 
     def run(self):
         df_probe = self.bam2table()
-        df_probe.to_csv(f'{self.outdir}/{self.sample}_probe_gene_count.tsv', sep='\t', index=False)
+        df_probe.to_csv(
+            f"{self.outdir}/{self.sample}_probe_gene_count.tsv", sep="\t", index=False
+        )
 
         df = pd.read_table(self.count_detail_file, header=0)
         # df_sum
@@ -91,22 +103,24 @@ class Count_capture_rna(Count):
         CB_describe = self.get_cell_stats(df_sum, cell_bc)
 
         # export cell matrix
-        df_cell = df.loc[df['Barcode'].isin(cell_bc), :]
+        df_cell = df.loc[df["Barcode"].isin(cell_bc), :]
         self.write_matrix_10X(df_cell, self.cell_matrix_dir)
-        (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = self.cell_summary(
-            df, cell_bc)
+        (CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome) = (
+            self.cell_summary(df, cell_bc)
+        )
 
         # downsampling
         cell_bc = set(cell_bc)
         self.downsample(df_cell)
 
         # summary
-        self.get_summary(CB_describe, CB_total_Genes,
-                         CB_reads_count, reads_mapped_to_transcriptome)
+        self.get_summary(
+            CB_describe, CB_total_Genes, CB_reads_count, reads_mapped_to_transcriptome
+        )
 
         self.report_prepare()
 
-        self.add_content_item('metric', downsample_dict=self.downsample_dict)
+        self.add_content_item("metric", downsample_dict=self.downsample_dict)
         self._clean_up()
 
 
