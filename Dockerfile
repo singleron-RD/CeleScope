@@ -5,7 +5,8 @@ WORKDIR /usr/src/celescope
 USER root
 
 # conda pkgs
-RUN micromamba create --name runtime --always-copy --file conda_pkgs.txt
+RUN micromamba create --name runtime --always-copy --file conda_pkgs.txt \
+    && micromamba clean --all --yes
 
 # Runtime stage
 FROM mambaorg/micromamba:0.22.0 AS runtime
