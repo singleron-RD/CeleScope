@@ -379,6 +379,8 @@ class Barcode(Step):
         self.output_R1 = args.output_R1
         self.bool_flv = False
 
+        self.offset_runner = Chemistry(self.args.fq1)
+
         self._assay = self.get_slot_key(
             slot="metrics",
             step_name="sample",
@@ -835,7 +837,6 @@ class Barcode(Step):
                 filter
                 write valid R2 read to file
         """
-        self.offset_runner = Chemistry(self.args.fq1)
 
         for i in range(self.fq_number):
             chemistry = self.chemistry_list[i]
