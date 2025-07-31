@@ -139,11 +139,10 @@ class Mapping_vdj(step.Step):
         consensus_metrics_dict = consensus_metrics_df.to_dict(orient="index")
         metrics = utils.nested_defaultdict(dim=2)
         for barcode in consensus_metrics_dict:
+            metrics[barcode]["well"] = self.barcode_well[barcode]
             if barcode in self.barcode_sample:
-                metrics[barcode]["well"] = self.barcode_well[barcode]
                 metrics[barcode]["sample"] = self.barcode_sample[barcode]
             else:
-                metrics[barcode]["well"] = ""
                 metrics[barcode]["sample"] = ""
             metrics[barcode]["n_clonotypes"] = 0
             metrics[barcode]["inverse_simpson"] = 0
@@ -300,10 +299,15 @@ class Mapping_vdj(step.Step):
         umi_cols.extend([f"umi_confident_{chain}" for chain in self.chains])
         for col in umi_cols:
             metrics_df[col] = metrics_df.apply(
-                lambda row: f"{row[col]}({round(row[col]/row['umi']*100, 2)}%)", axis=1
+                lambda row: (
+                    f"{row[col]}(0.0%)"
+                    if row["umi"] == 0
+                    else f"{row[col]}({round(row[col] / row['umi'] * 100, 2)}%)"
+                ),
+                axis=1,
             )
 
-        metrics_df.sort_values("read", inplace=True)
+        metrics_df.sort_values("read", ascending=False, inplace=True)
         metrics_df.to_csv(f"{self.out_prefix}_well_metrics.tsv", sep="\t")
         well_metrics_df = metrics_df[
             metrics_df["sample"].isin(self.barcode_sample.values())

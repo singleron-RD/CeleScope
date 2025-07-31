@@ -1,3 +1,6 @@
+## [2.7.5] - 2025-07-31
+- Fixed: Fixed a bug in bulk_vdj where an error would occur when the read count for empty wells was zero.
+
 ## [2.7.4] - 2025-07-14
 - Fixed: In `bulk_rna split_fastq`, the sequences are now the original sequences from the FASTQ file. Previously, if a read was mapped to the reverse strand, the split FASTQ contained the reverse-complemented sequence.
 
