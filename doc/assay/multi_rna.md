@@ -50,11 +50,11 @@ Under your working directory, write a shell script `run.sh` as
 
 ```
 multi_rna \
-	--mapfile ./rna.mapfile \
-	--genomeDir {path to hs_ensembl_99 or mmu_ensembl_99} \
-	--thread 16 \
+    --mapfile ./rna.mapfile \
+    --genomeDir {path to hs_ensembl_99 or mmu_ensembl_99} \
+    --thread 16 \
     --soloCellFilter EmptyDrops_CR \
-	--mod shell
+    --mod shell
 ```
 `--mapfile` Required.  Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
 
