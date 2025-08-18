@@ -21,6 +21,12 @@ The following command will download the conda_pkgs.txt required for the latest v
 wget https://raw.githubusercontent.com/singleron-RD/CeleScope/master/conda_pkgs.txt
 ```
 
+Note: Accessing raw files from GitHub can be unstable within mainland China. A Gitee mirror is provided for more reliable downloading:
+```
+wget https://gitee.com/singleron-rd/celescope/raw/master/conda_pkgs.txt
+```
+
+
 Then, start creating the conda environment and install the conda package.It is recommended to use [mamba](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html) (which is a faster replacement for Conda) to install conda packages.
 The following command will create a conda environment named `celescope` and install the dependency packages contained in conda_pkgs.txt.
 ```
