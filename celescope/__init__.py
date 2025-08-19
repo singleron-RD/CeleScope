@@ -17,7 +17,6 @@ ASSAY_LIST = [
     "utils",
     "bulk_vdj",
     "bulk_rna",
-    "rna_5p3p",
     "pathseq",
     "probe",
 ]
