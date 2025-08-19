@@ -1,3 +1,6 @@
+## [2.7.6] - 2025-08-19
+- Removed: remove `rna_5p3p`. Use [celescope-mobiu](https://github.com/singleron-RD/celescope-mobiu) instead.
+
 ## [2.7.5] - 2025-07-31
 - Fixed: Fixed a bug in bulk_vdj where an error would occur when the read count for empty wells was zero.
 
