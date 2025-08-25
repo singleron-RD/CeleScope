@@ -40,7 +40,7 @@ def s_common(parser):
     """subparser common arguments"""
     parser.add_argument("--outdir", help="Output diretory.", required=True)
     parser.add_argument("--sample", help="Sample name.", required=True)
-    parser.add_argument("--thread", help=HELP_DICT["thread"], default=4)
+    parser.add_argument("--thread", help=HELP_DICT["thread"], default=16)
     parser.add_argument("--debug", help=HELP_DICT["debug"], action="store_true")
     return parser
 

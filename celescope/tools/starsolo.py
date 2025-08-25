@@ -552,7 +552,7 @@ is higher than or equal to this value.""",
     )
     parser.add_argument(
         "--soloCBmatchWLtype",
-        help="Same as the argument in STARsolo. Please note `EditDist 2` only works with `--soloType CB UMI Complex`. ",
+        help="Same as the argument in STARsolo. Please note `EditDist_2` only works with `--soloType CB UMI Complex`. ",
         default="1MM",
     )
     parser.add_argument(

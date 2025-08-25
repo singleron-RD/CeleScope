@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "2.7.6"
+__VERSION__ = "2.7.7dev"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
@@ -19,6 +19,7 @@ ASSAY_LIST = [
     "bulk_rna",
     "pathseq",
     "probe",
+    "ffpe",
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

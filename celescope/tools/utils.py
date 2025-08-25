@@ -1,3 +1,4 @@
+import argparse
 import glob
 import gzip
 import importlib
@@ -668,6 +669,23 @@ def merge_table_files(
         df = pd.concat([df, temp_df], axis=0)
 
     df.to_csv(output_file, sep=sep, index=False)
+
+
+def get_action(parser: argparse.ArgumentParser, option_string: str) -> argparse.Action:
+    """
+    根据 option_string 找到对应的 argparse.Action 对象。
+
+    参数:
+        parser: argparse.ArgumentParser 实例
+        option_string: 参数名，例如 '--foo' 或 '-f'
+
+    返回:
+        对应的 argparse.Action 对象，如果没找到返回 None
+    """
+    for action in parser._actions:
+        if option_string in action.option_strings:
+            return action
+    raise ValueError(f"{option_string} not found in parser")
 
 
 class Test_utils(unittest.TestCase):
