@@ -1,9 +1,17 @@
+# Chemistry and Kit Version
 
-### Chemistry in CeleScope >= v2.3.0 Matches Kit Version  
+> [!NOTE] 
+> Only **CeleScope v2.3.0 or higher** supports analysis of **GEXSCOPE-V3** data.  
 
-Starting from CeleScope v2.3.0, the **chemistry** field in the HTML report has been updated to align with the **Kit Version**.  
+Upgrade command:  
+```bash
+conda activate celescope
+pip install --upgrade celescope
+```
 
-#### Mapping of Kit Version to Chemistry  
+## Mapping of Kit Version to Chemistry  
+
+Starting from CeleScope v2.3.0, the **chemistry** field in the HTML report is aligned with the **Kit Version**.  
 
 | Kit Version | CeleScope >= v2.3.0  | CeleScope < v2.3.0 |
 |------------|----------------------|--------------------|
@@ -12,7 +20,7 @@ Starting from CeleScope v2.3.0, the **chemistry** field in the HTML report has b
 | **V2**       | `GEXSCOPE-V2`        | `scopeV3.0.1`      |
 | **V3**       | `GEXSCOPE-V3`        | *Not supported*    |
 
-#### Chemistry Patterns  
+## Chemistry Patterns  
 
 Chemistry patterns can be found [here](https://github.com/singleron-RD/CeleScope/blob/master/celescope/chemistry_dict.py).  
 

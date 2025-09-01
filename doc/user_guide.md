@@ -41,6 +41,9 @@ mamba activate celescope
 pip install celescope
 ```
 
+> [!NOTE] 
+> Only **CeleScope v2.3.0 or higher** supports analysis of **GEXSCOPE-V3** data. For details, see [here](./chemistry.md).
+
 ## Usage
 
 CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for all assays. Assays can be one of:
@@ -55,7 +58,6 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 |[snp](./assay/multi_snp.md)|single-cell variant|FocuSCOPE|
 |[fusion](./assay/multi_fusion.md)|single-cell fusion|FocuSCOPE|
 |[sweetseq](assay/multi_sweetseq.md)|single-cell glycosylation|ProMoSCOPE|
-|[citeseq](assay/multi_citeseq.md)|single-cell CITE-Seq|NA|
 |[bulk_vdj](assay/multi_bulk_vdj.md)|bulk_vdj|AccuraCode|
 |[bulk_rna](assay/multi_bulk_rna.md)|bulk_rna|AccuraCode|
 
