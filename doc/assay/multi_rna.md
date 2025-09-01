@@ -4,44 +4,47 @@
 ### Homo sapiens
 
 ```
-mkdir hs_ensembl_99
-cd hs_ensembl_99
+mkdir hs_ensembl_110
+cd hs_ensembl_110
 
-wget ftp://ftp.ensembl.org/pub/release-99/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-wget ftp://ftp.ensembl.org/pub/release-99/gtf/homo_sapiens/Homo_sapiens.GRCh38.99.gtf.gz
+wget https://ftp.ensembl.org/pub/release-110/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
+wget https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz
 
 gunzip Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz
-gunzip Homo_sapiens.GRCh38.99.gtf.gz
+gunzip Homo_sapiens.GRCh38.110.gtf.gz
 
 conda activate celescope
-celescope utils mkgtf Homo_sapiens.GRCh38.99.gtf Homo_sapiens.GRCh38.99.filtered.gtf
+celescope utils mkgtf Homo_sapiens.GRCh38.110.gtf Homo_sapiens.GRCh38.110.filtered.gtf
+
 celescope rna mkref \
- --genome_name Homo_sapiens_ensembl_99_filtered \
+ --genome_name Homo_sapiens_ensembl_110_filtered \
  --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \
- --gtf Homo_sapiens.GRCh38.99.filtered.gtf \
+ --gtf Homo_sapiens.GRCh38.110.filtered.gtf \
  --mt_gene_list mt_gene_list.txt
+
 ```
 
 ### Mus musculus
 
 ```
-mkdir mmu_ensembl_99
-cd mmu_ensembl_99
+mkdir mmu_ensembl_110
+cd mmu_ensembl_110
 
-wget ftp://ftp.ensembl.org/pub/release-99/fasta/mus_musculus/dna/Mus_musculus.GRCm38.dna.primary_assembly.fa.gz
-wget ftp://ftp.ensembl.org/pub/release-99/gtf/mus_musculus/Mus_musculus.GRCm38.99.gtf.gz
+wget https://ftp.ensembl.org/pub/release-110/fasta/mus_musculus/dna/Mus_musculus.GRCm39.dna.primary_assembly.fa.gz
+wget https://ftp.ensembl.org/pub/release-110/gtf/mus_musculus/Mus_musculus.GRCm39.110.gtf.gz
 
-gunzip Mus_musculus.GRCm38.dna.primary_assembly.fa.gz 
-gunzip Mus_musculus.GRCm38.99.gtf.gz
+gunzip Mus_musculus.GRCm39.dna.primary_assembly.fa.gz
+gunzip Mus_musculus.GRCm39.110.gtf.gz
 
 conda activate celescope
-celescope utils mkgtf Mus_musculus.GRCm38.99.gtf Mus_musculus.GRCm38.99.filtered.gtf
+celescope utils mkgtf Mus_musculus.GRCm39.110.gtf Mus_musculus.GRCm39.110.filtered.gtf
 
 celescope rna mkref \
- --genome_name Mus_musculus_ensembl_99_filtered \
- --fasta Mus_musculus.GRCm38.dna.primary_assembly.fa \
- --gtf Mus_musculus.GRCm38.99.filtered.gtf \
+ --genome_name Mus_musculus_ensembl_110_filtered \
+ --fasta Mus_musculus.GRCm39.dna.primary_assembly.fa \
+ --gtf Mus_musculus.GRCm39.110.filtered.gtf \
  --mt_gene_list mt_gene_list.txt
+
 ```
 
 2. Generate scripts for each sample.
