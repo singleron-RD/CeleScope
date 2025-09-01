@@ -5,7 +5,7 @@
 
 Upgrade command:  
 ```bash
-conda activate celescope
+mamba activate celescope # or source activate celescope
 pip install --upgrade celescope
 ```
 
