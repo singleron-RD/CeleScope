@@ -9,7 +9,7 @@ In your working directory, create a shell script named `run.sh` with the followi
 ```bash
 multi_bulk_rna \
     --mapfile ./rna.mapfile \
-    --genomeDir {path to hs_ensembl_99 or mmu_ensembl_99} \
+    --genomeDir {path to hs_ensembl_110 or mmu_ensembl_110} \
     --well_sample well_sample.tsv \
     --thread 16 \
     --mod shell

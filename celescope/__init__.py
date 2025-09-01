@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "2.7.7dev"
+__VERSION__ = "2.8.0"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
@@ -37,6 +37,7 @@ RELEASED_ASSAYS = [
     "sweetseq",
     "bulk_vdj",
     "bulk_rna",
+    "ffpe",
 ]
 
 # argument help

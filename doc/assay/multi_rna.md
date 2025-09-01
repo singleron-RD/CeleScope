@@ -21,7 +21,6 @@ celescope rna mkref \
  --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa \
  --gtf Homo_sapiens.GRCh38.110.filtered.gtf \
  --mt_gene_list mt_gene_list.txt
-
 ```
 
 ### Mus musculus
@@ -54,7 +53,7 @@ Under your working directory, write a shell script `run.sh` as
 ```
 multi_rna \
     --mapfile ./rna.mapfile \
-    --genomeDir {path to hs_ensembl_99 or mmu_ensembl_99} \
+    --genomeDir {path to hs_ensembl_110 or mmu_ensembl_110} \
     --thread 16 \
     --soloCellFilter EmptyDrops_CR \
     --mod shell

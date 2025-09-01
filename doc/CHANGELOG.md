@@ -1,3 +1,7 @@
+## [2.8.0] - 2025-09-01
+- Added: FFPE pipeline.
+- Changed: Updated the genome links in the tutorial from Ensembl 99 to Ensembl 110
+
 ## [2.7.6] - 2025-08-19
 - Removed: remove `rna_5p3p`. Use [celescope-mobiu](https://github.com/singleron-RD/celescope-mobiu) instead.
 

@@ -7,25 +7,6 @@ from celescope.tools.make_ref import MakeRef, GENOME_CONFIG
 
 
 class Mkref_snp:
-    """
-    ## Features
-    - Create dictionary file and fasta index for gatk SplitNCigarReads.
-    (https://gatk.broadinstitute.org/hc/en-us/articles/360035531652-FASTA-Reference-genome-format) 
-    Need to run `celescope rna mkref` first
-
-    ## Output
-    - fasta index
-    - gatk dictionary file
-
-    ## Usage
-    ```
-    # run celescope rna mkref first
-    celescope snp mkref \\
-     --genome_name Homo_sapiens_ensembl_99 \\
-     --fasta Homo_sapiens.GRCh38.dna.primary_assembly.fa
-    ```
-    """
-
     def __init__(self):
         pass
 
