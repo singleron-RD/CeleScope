@@ -422,3 +422,108 @@ def get_pattern_dict_and_bc(
         pattern_dict = parse_pattern(pattern)
         bc = whitelist.split(" ")
     return pattern_dict, bc
+
+
+def invalid_debug(chemistry, fq1_list, output_file, max_read=10000):
+    cur = CHEMISTRY_DICT[chemistry]
+    fq1 = fq1_list[0]
+    fq = pysam.FastxFile(fq1)
+    bcs, linkers = [], []
+    if "bc" in cur:
+        for x in cur["bc"]:
+            bc = utils.one_col_to_list(x)
+            if chemistry.split("-")[0] == "flv":
+                bc = [utils.reverse_complement(x) for x in bc]
+            bcs.append(bc)
+    if "linker" in cur:
+        for x in cur["linker"]:
+            linker = utils.one_col_to_list(x)
+            if chemistry.split("-")[0] == "flv":
+                linker = [utils.reverse_complement(x) for x in linker]
+            linkers.extend(linker)
+    runner = BcUmi(chemistry)
+    html_sequences = []
+    n_invalid = 0
+    n_read = 0
+    for read in fq:
+        n_read += 1
+        if n_read > max_read:
+            break
+        seq = read.sequence
+        valid, _corrected, _corrected_seq, _umi = runner.get_bc_umi(seq)
+        if valid:
+            continue
+        n_invalid += 1
+        for bc, color in zip(bcs, ["red", "green", "blue"]):
+            seq = add_color_in_html(seq, bc, background_color=color)
+        seq = add_color_in_html(seq, linkers, background_color="yellow")
+        html_sequences.append(f"{n_invalid}--{read.name}")
+        html_sequences.append(seq)
+
+    MAX_SEQ = 100
+    joined_sequences = "<br>".join(html_sequences[: MAX_SEQ * 2])
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <h3>Color Legend</h3>
+            <p>
+                bc1: <span style="background-color:red;">red</span><br>
+                bc2: <span style="background-color:green;">green</span><br>
+                bc3: <span style="background-color:blue;">blue</span><br>
+                linker: <span style="background-color:yellow;">yellow</span>
+            </p>
+        <h3> First {MAX_SEQ} invalid reads </h3>
+        {joined_sequences}
+    </body>
+    </html>
+    """
+
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(html_content)
+    sys.stderr.write(f"invalid reads in first 10000 reads:{n_invalid}\n")
+
+
+def add_color_in_html(seq, items, color="black", background_color="white"):
+    for item in items:
+        seq = seq.replace(
+            item,
+            f'<span style="color:{color};background-color:{background_color};">{item}</span>',
+        )
+    return seq
+
+
+class BcUmi:
+    def __init__(self, chemistry, pattern=None, whitelist=None):
+        self.chemistry = chemistry
+        self.pattern_dict, self.bc = get_pattern_dict_and_bc(
+            self.chemistry, pattern, whitelist
+        )
+        self.raw_list, self.mismatch_list = (
+            create_mismatch_origin_dicts_from_whitelists(self.bc, 1)
+        )
+        # v3
+        self.offset_runner = AutoRNA([])
+
+    def get_bc_umi(self, seq):
+        if self.chemistry == "GEXSCOPE-V3":
+            offset = self.offset_runner.v3_offset(seq)
+            seq = seq[offset:]
+        elif self.chemistry == "flv_rna-V2":
+            offset = self.offset_runner.flv_rna_v2_offset(seq)
+            seq = seq[offset:]
+        bc_list = [seq[x] for x in self.pattern_dict["C"]]
+        if self.chemistry == "flv":
+            bc_list = [utils.reverse_complement(bc) for bc in bc_list[::-1]]
+        valid, corrected, corrected_seq = check_seq_mismatch(
+            bc_list, self.raw_list, self.mismatch_list
+        )
+        if not valid:
+            umi = None
+        else:
+            umi = seq[self.pattern_dict["U"][0]]
+        return valid, corrected, corrected_seq, umi

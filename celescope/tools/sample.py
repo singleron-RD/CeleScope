@@ -2,15 +2,18 @@ from celescope.tools import utils
 from celescope.__init__ import __VERSION__
 from celescope.chemistry_dict import chemistry_dict
 
+
 from celescope.tools.step import Step, s_common
 
-from celescope.tools.parse_chemistry import get_chemistry
+from celescope.tools.parse_chemistry import get_chemistry, invalid_debug
 
 
 class Sample(Step):
     def __init__(self, args):
         Step.__init__(self, args)
         self.fq1_list = args.fq1.split(",")
+        # out
+        self.invalid_debug_file = f"{self.out_prefix}_invalid_debug.html"
 
     @utils.add_log
     def run(self):
@@ -33,6 +36,9 @@ class Sample(Step):
             name="Software Version",
             value=__VERSION__,
         )
+
+        if self.args.debug:
+            invalid_debug(chemistry, self.fq1_list, self.invalid_debug_file)
 
 
 @utils.add_log

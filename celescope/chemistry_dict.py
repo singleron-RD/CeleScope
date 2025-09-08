@@ -28,6 +28,7 @@ chemistry_dict = {
     "flv_rna": {
         "pattern": "C8L16C8L16C8U9L6",
         "bc": ["bc.txt", "bc.txt", "bc.txt"],
+        "linker": ["linker1.txt", "linker2.txt"],
     },
     "flv_rna-V2": {
         # 0-3 bases offset at the begining
@@ -38,6 +39,7 @@ chemistry_dict = {
     "flv": {
         "pattern": "U9C8L16C8L16C8",
         "bc": ["bc.txt", "bc.txt", "bc.txt"],
+        "linker": ["linker1.txt", "linker2.txt"],
     },
     "bulk_vdj": {
         "pattern": "L18C6U16",
