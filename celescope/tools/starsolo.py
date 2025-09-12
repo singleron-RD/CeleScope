@@ -149,7 +149,6 @@ def create_solo_str(
     if args_dict["soloType"] == "CB_UMI_Simple":
         args_dict["soloCBmatchWLtype"] = "1MM"
     args_dict.update(cmd_to_dict(extra_starsolo_args))
-    print(args_dict)
     cmd = "STAR \\\n"
     for key, value in args_dict.items():
         cmd += f"--{key} {value} \\\n"

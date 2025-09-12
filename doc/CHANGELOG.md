@@ -1,3 +1,17 @@
+## [2.9.0] - 2025-09-12
+
+- Added: Support automatic detection of `flv-V2` chemistry.
+
+- Changed: Default value of `--soloCBmatchWLtype` changed from 1MM to EditDist_2, which increases the percentage of valid reads.
+
+- Changed: Clonotype definition in bulk_vdj changed from CDR3_aa to (v_gene, d_gene, j_gene, CDR3_nt).
+
+- Changed: Annotation file in bulk_vdj is now merged by clonotype, helping reduce file size.
+
+- Changed: In rna, ffpe, dynaseq, and bulk_rna pipelines, the number of sampled reads for calculating barcode and UMI Q30 was increased from the first 100k to the first 1M reads.
+
+- Fixed: Set OPENBLAS_NUM_THREADS to 1 in shell scripts to avoid #293
+
 ## [2.8.0] - 2025-09-01
 - Added: FFPE pipeline.
 - Changed: Updated the genome links in the tutorial from Ensembl 99 to Ensembl 110
