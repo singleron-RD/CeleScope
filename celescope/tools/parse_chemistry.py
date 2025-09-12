@@ -229,6 +229,8 @@ class Auto:
         """check if seq matches the barcode of chemistry"""
         raw_list, mismatch_list = self.mismatch_dict[chemistry]
         bc_list = [seq[x] for x in self.chemistry_dict[chemistry]["pattern_dict"]["C"]]
+        if chemistry.split("-")[0] == "flv":
+            bc_list = [utils.reverse_complement(bc) for bc in bc_list[::-1]]
         valid, _corrected, _res = check_seq_mismatch(bc_list, raw_list, mismatch_list)
         return valid
 
@@ -395,13 +397,26 @@ class AutoBulkRNA(Auto):
                 return chemistry
 
 
+class AutoFlv(Auto):
+    def __init__(self, fq1_list, max_read=10000):
+        super().__init__(fq1_list, CHEMISTRY_DICT, max_read)
+
+    def seq_chemistry(self, seq):
+        """
+        Returns: chemistry or None
+        """
+        for chemistry in ["flv", "flv-V2"]:
+            if self.is_chemistry(seq, chemistry):
+                return chemistry
+
+
 @utils.add_log
 def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
     """Auto detect chemistry. If customized, return 'customized'"""
     if assay in ["bulk_vdj"]:
         return assay
     elif assay == "flv_trust4":
-        return "flv"
+        return AutoFlv(fq1_list).get_chemistry()
     elif args_chemistry == "auto":
         if assay == "bulk_rna":
             return AutoBulkRNA(fq1_list).get_chemistry()

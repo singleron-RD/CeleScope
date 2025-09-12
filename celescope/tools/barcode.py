@@ -31,7 +31,8 @@ class Barcode(Step):
         self.offset_runner = parse_chemistry.AutoRNA(self.fq1_list)
         # output
         self.out_fq2 = f"{self.outdir}/{self.sample}_2.fq"
-        if self.chemistry == "flv":
+        self.isflv = self.assay == "flv_trust4"
+        if self.isflv:
             self.out_fq1 = f"{self.outdir}/{self.sample}_1.fq"
             self.match_barcodes = set(
                 utils.get_barcode_from_match_dir(args.match_dir)[0]
@@ -45,7 +46,7 @@ class Barcode(Step):
             offset = self.offset_runner.flv_rna_v2_offset(seq)
             seq = seq[offset:]
         bc_list = [seq[x] for x in self.pattern_dict["C"]]
-        if self.chemistry == "flv":
+        if self.isflv:
             bc_list = [utils.reverse_complement(bc) for bc in bc_list[::-1]]
         valid, corrected, corrected_seq = parse_chemistry.check_seq_mismatch(
             bc_list, self.raw_list, self.mismatch_list
@@ -62,7 +63,7 @@ class Barcode(Step):
         # quality
         cb_quality_counter = Counter()
         umi_quality_counter = Counter()
-        if self.chemistry == "flv":
+        if self.isflv:
             out_fh1 = utils.generic_open(self.out_fq1, "wt")
             bc_read_counter = Counter()
             match_reads = 0
@@ -79,7 +80,7 @@ class Barcode(Step):
                         if corrected:
                             corrected_reads += 1
                         read_name = f"{corrected_seq}:{umi}:{raw_reads}"
-                        if self.chemistry != "flv":
+                        if not self.isflv:
                             out_fh2.write(
                                 utils.fastq_line(read_name, e2.sequence, e2.quality)
                             )  # type: ignore
