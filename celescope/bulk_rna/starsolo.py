@@ -9,7 +9,7 @@ from celescope.tools.emptydrop_cr import get_plot_elements
 from celescope.tools.starsolo import (
     Demultiplexing,
     Mapping as ToolsMapping,
-    create_solo_args,
+    create_solo_str,
     create_soloFeatures,
     get_opts_starsolo as tools_opts,
 )
@@ -57,7 +57,7 @@ class Starsolo(tools_Starsolo):
         soloFeatures = create_soloFeatures(
             self.args.soloFeatures, self.args.report_soloFeature
         )
-        cmd = create_solo_args(
+        cmd = create_solo_str(
             pattern_args=self.pattern_args,
             whitelist_args=self.whitelist_args,
             outFileNamePrefix=self.out_prefix + "_",

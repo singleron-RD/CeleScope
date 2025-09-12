@@ -28,8 +28,8 @@ MIN_BEAD = 100000
 MAX_BEAD = 300000
 
 
-def create_pattern_args(pattern_dict: dict) -> str:
-    """Create starsolo args relate to pattern"""
+def create_pattern_args(pattern_dict: dict) -> dict:
+    """Create starsolo args related to pattern and return as a dictionary."""
     if len(pattern_dict["U"]) != 1:
         raise ValueError(
             f"Error: Wrong pattern:{pattern_dict}. \n Solution: fix pattern so that UMI only have 1 position.\n"
@@ -44,19 +44,28 @@ def create_pattern_args(pattern_dict: dict) -> str:
         cb_start = start + 1
         cb_len = stop - start
         umi_start = ul + 1
-        cb_str = f"--soloCBstart {cb_start} --soloCBlen {cb_len} "
-        umi_str = f"--soloUMIstart {umi_start} --soloUMIlen {umi_len} "
+        result = {
+            "soloType": solo_type,
+            "soloCBstart": cb_start,
+            "soloCBlen": cb_len,
+            "soloUMIstart": umi_start,
+            "soloUMIlen": umi_len,
+        }
     else:
         solo_type = "CB_UMI_Complex"
         cb_pos = " ".join([f"0_{x.start}_0_{x.stop-1}" for x in pattern_dict["C"]])
         umi_pos = f"0_{ul}_0_{ur-1}"
-        cb_str = f"--soloCBposition {cb_pos} "
-        umi_str = f"--soloUMIposition {umi_pos} --soloUMIlen {umi_len} "
+        result = {
+            "soloType": solo_type,
+            "soloCBposition": cb_pos,
+            "soloUMIposition": umi_pos,
+            "soloUMIlen": umi_len,
+        }
 
-    return " ".join([f"--soloType {solo_type} ", cb_str, umi_str])
+    return result
 
 
-def create_v3_pattern_args() -> str:
+def create_v3_pattern_args() -> dict:
     """Can also be used to create flv_rna-V2
     https://github.com/alexdobin/STAR/issues/1607#issuecomment-1210096785
     2: adapter start
@@ -67,33 +76,36 @@ def create_v3_pattern_args() -> str:
     bc = "N" * 9
     linker_len = 6
     bc2_start = 9 + linker_len
-    pattern_args = (
-        "--soloType CB_UMI_Complex "
-        f"--soloCBposition 2_0_2_8 2_{bc2_start}_2_{bc2_start+8} 3_1_3_9 "
-        "--soloUMIposition 3_10_3_21 "
-        f"--soloAdapterSequence {bc}{linker1}{bc}{linker2} "
-        "--soloAdapterMismatchesNmax 1 "
-    )
-    return pattern_args
+    result = {
+        "soloType": "CB_UMI_Complex",
+        "soloCBposition": " ".join(
+            ["2_0_2_8", f"2_{bc2_start}_2_{bc2_start+8}", "3_1_3_9"]
+        ),
+        "soloUMIposition": "3_10_3_21",
+        "soloAdapterSequence": f"{bc}{linker1}{bc}{linker2}",
+        "soloAdapterMismatchesNmax": 1,
+    }
+    return result
 
 
-def create_whitelist_args(whitelist_str) -> str:
+def create_whitelist_args(whitelist_str) -> dict:
+    """Create whitelist arguments."""
     if not whitelist_str:
-        res = "None"
+        whitelist = "None"
     else:
-        res = whitelist_str.strip()
+        whitelist = whitelist_str.strip()
         # nextflow copy remote file to current folder, so only keep file name.
-        if res.startswith("http"):
-            res = res.split("/")[-1]
-        if res.endswith(".gz"):
-            res = f"<(gzip -cdf {res})"
-    res = f" --soloCBwhitelist {res} "
-    return res
+        if whitelist.startswith("http"):
+            whitelist = whitelist.split("/")[-1]
+        if whitelist.endswith(".gz"):
+            whitelist = f"<(gzip -cdf {whitelist})"
+    result = {"soloCBwhitelist": whitelist}
+    return result
 
 
-def create_solo_args(
-    pattern_args: str,
-    whitelist_args: str,
+def create_solo_str(
+    pattern_args: dict,
+    whitelist_args: dict,
     outFileNamePrefix: str,
     fq1: str,
     fq2: str,
@@ -109,31 +121,51 @@ def create_solo_args(
     limitBAMsortRAM: Union[str, int],
     extra_starsolo_args: str,
 ) -> str:
-    """Create all starsolo args"""
+    """
+    Create all starsolo args as a dictionary.
+    extra_starsolo_args overrides any default args.
+    """
     read_command = "zcat" if fq1.strip().endswith(".gz") else "cat"
-    cmd = (
-        "STAR \\\n"
-        f"{pattern_args} \\\n"
-        f"{whitelist_args} \\\n"
-        f"--outFileNamePrefix {outFileNamePrefix} \\\n"
-        f"--readFilesIn {fq2} {fq1} \\\n"
-        f"--readFilesCommand {read_command} \\\n"
-        f"--genomeDir {genomeDir} \\\n"
-        f"--soloCellFilter {soloCellFilter} \\\n"
-        f"--runThreadN {runThreadN} \\\n"
-        f"--clip3pAdapterSeq {clip3pAdapterSeq} \\\n"
-        f"--outFilterMatchNmin {outFilterMatchNmin} \\\n"
-        f"--soloFeatures {soloFeatures} \\\n"
-        f"--soloCBmatchWLtype {soloCBmatchWLtype} \\\n"
-        f"--limitBAMsortRAM {limitBAMsortRAM} \\\n"
-        f"--outSAMtype {outSAMtype} \\\n"
-        "--soloCellReadStats Standard \\\n"
-        "--soloBarcodeReadLength 0 \\\n"
-        f"{extra_starsolo_args} \\\n"
-    )
+    args_dict = {
+        "outFileNamePrefix": outFileNamePrefix,
+        "readFilesIn": f"{fq2} {fq1}",
+        "readFilesCommand": read_command,
+        "genomeDir": genomeDir,
+        "soloCellFilter": soloCellFilter,
+        "runThreadN": runThreadN,
+        "clip3pAdapterSeq": clip3pAdapterSeq,
+        "outFilterMatchNmin": outFilterMatchNmin,
+        "soloFeatures": soloFeatures,
+        "soloCBmatchWLtype": soloCBmatchWLtype,
+        "limitBAMsortRAM": limitBAMsortRAM,
+        "outSAMtype": outSAMtype,
+        "soloCellReadStats": "Standard",
+        "soloBarcodeReadLength": 0,
+    }
+    for arg in [pattern_args, whitelist_args]:
+        args_dict.update(arg)
     if outSAMtype != "None":
-        cmd += f"--outSAMattributes {outSAMattributes} \\\n"
+        args_dict["outSAMattributes"] = outSAMattributes
+    if args_dict["soloType"] == "CB_UMI_Simple":
+        args_dict["soloCBmatchWLtype"] = "1MM"
+    args_dict.update(cmd_to_dict(extra_starsolo_args))
+    print(args_dict)
+    cmd = "STAR \\\n"
+    for key, value in args_dict.items():
+        cmd += f"--{key} {value} \\\n"
     return cmd
+
+
+def cmd_to_dict(cmd: str) -> dict:
+    res = {}
+    for part in cmd.split("--"):
+        if not part.strip():
+            continue
+        attr = part.strip().split()
+        key = attr[0]
+        value = " ".join(attr[1:]) if len(attr) > 1 else ""
+        res[key] = value
+    return res
 
 
 def create_soloFeatures(args_soloFeatures, report_soloFeature):
@@ -190,7 +222,7 @@ class Starsolo(Step):
         soloFeatures = create_soloFeatures(
             self.args.soloFeatures, self.args.report_soloFeature
         )
-        cmd = create_solo_args(
+        cmd = create_solo_str(
             pattern_args=self.pattern_args,
             whitelist_args=self.whitelist_args,
             outFileNamePrefix=self.out_prefix + "_",
@@ -552,8 +584,9 @@ is higher than or equal to this value.""",
     )
     parser.add_argument(
         "--soloCBmatchWLtype",
-        help="Same as the argument in STARsolo. Please note `EditDist_2` only works with `--soloType CB UMI Complex`. ",
-        default="1MM",
+        help="Same as the argument in STARsolo. Please note `EditDist_2` only works with `--soloType CB_UMI_Complex`. ",
+        default="EditDist_2",
+        type=str,
     )
     parser.add_argument(
         "--report_soloFeature",
