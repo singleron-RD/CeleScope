@@ -72,6 +72,8 @@ usage: rna multi-samples [-h] --mapfile MAPFILE [--mod {sjm,shell}] [--queue QUE
 ```
 
 
+## [Chemistry](./chemistry.md)
+
 ## [Test scripts and data](https://github.com/singleron-RD/celescope_test_script)
 
 ## [Change log](./CHANGELOG.md)
