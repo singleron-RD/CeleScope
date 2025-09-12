@@ -107,7 +107,7 @@ library(immunarch)
 immdata <- repLoad("path to outs/annotation")
 ```
 
-* `outs/clonotypes` This directory contains clonotype information for each well/sample, aggregated based on `cdr3` amino acid sequence.
+* `outs/clonotypes` This directory contains clonotype information for each well/sample, aggregated based on (v_gene, d_gene, j_gene, cdr3_nt).
 
 * `outs/{sample}_filtered_annotations.csv` contains combined V(D)J annotations across all wells/samples.
 

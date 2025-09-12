@@ -66,6 +66,9 @@ class Mapping_vdj(step.Step):
         self.barcode_well = {v: k for k, v in well_barcode.items()}
 
         # out
+        self.raw_dir = f"{self.outdir}/raw"
+        if not os.path.exists(self.raw_dir):
+            os.makedirs(self.raw_dir)
         self.annotation_dir = f"{self.outdir}/annotation"
         if not os.path.exists(self.annotation_dir):
             os.makedirs(self.annotation_dir)
@@ -111,8 +114,8 @@ class Mapping_vdj(step.Step):
         read airr line by line, collect metrics, write productive to seperate wells
         """
 
-        tsv_handles = {
-            barcode: open(f"{self.annotation_dir}/{sample}_annotation.csv", "wt")
+        raw_handles = {
+            barcode: open(f"{self.raw_dir}/{sample}_raw.csv", "wt")
             for barcode, sample in self.barcode_sample.items()
         }
         tsv_headers = [
@@ -128,9 +131,8 @@ class Mapping_vdj(step.Step):
             "productive",
             "cdr3",
             "cdr3_nt",
-            "umis",
         ]
-        for f in tsv_handles.values():
+        for f in raw_handles.values():
             f.write(",".join(tsv_headers) + "\n")
 
         consensus_metrics_df = pd.read_csv(
@@ -192,9 +194,8 @@ class Mapping_vdj(step.Step):
                         "True",
                         row["junction_aa"],
                         row["junction"],
-                        "1",  # umis
                     ]
-                    tsv_handles[barcode].write(",".join(line) + "\n")
+                    raw_handles[barcode].write(",".join(line) + "\n")
 
         umi_mapped = sum(v for barcode, k in metrics.items() for v in [k["umi_mapped"]])
         self.add_metric(
@@ -229,36 +230,54 @@ class Mapping_vdj(step.Step):
         self.metrics = metrics
 
     @staticmethod
-    def create_well_clonotypes(annotation_file, out_file):
-        df_anno = pd.read_csv(annotation_file)
-        df_clono = (
-            df_anno.groupby(["barcode", "well", "sample", "chain", "cdr3"])
+    def create_well_annotation_clono(raw_file, annotation_file, clono_file):
+        df = pd.read_csv(raw_file)
+        df = (
+            df.groupby(
+                [
+                    "barcode",
+                    "well",
+                    "sample",
+                    "chain",
+                    "v_gene",
+                    "d_gene",
+                    "j_gene",
+                    "productive",
+                    "cdr3_nt",
+                    "cdr3",
+                ],
+                dropna=False,
+            )
             .size()
             .reset_index(name="umis")
         )
-        sample = df_anno["sample"][0]
-        df_clono.sort_values("umis", ascending=False, inplace=True)
-        df_clono["raw_clonotype_id"] = [
-            "{}_{}".format(sample, i + 1) for i in range(len(df_clono))
+        sample = df["sample"][0]
+        df.sort_values("umis", ascending=False, inplace=True)
+        df["raw_clonotype_id"] = ["{}_{}".format(sample, i + 1) for i in range(len(df))]
+        df["barcode"] = [
+            "{}_{}".format(barcode, i + 1)
+            for barcode, i in zip(df["barcode"], range(len(df)))
         ]
+        total_umis = sum(df["umis"])
+        df["percent"] = df["umis"].apply(lambda x: f"{x / total_umis * 100:.2f}%")
+        df.to_csv(annotation_file, index=False)
 
-        df_anno = df_anno.merge(
-            df_clono[
-                ["barcode", "well", "sample", "chain", "cdr3", "raw_clonotype_id"]
-            ],
-            on=["barcode", "well", "sample", "chain", "cdr3"],
-            how="left",
-        )
-        # add umi to treat each umi as a single cell;compatible with immunarch
-        df_anno["barcode"] = df_anno["barcode"] + "_" + df_anno["umi"]
-        df_anno.to_csv(annotation_file, index=False)
-
-        total_umis = sum(df_clono["umis"])
-        df_clono["percent"] = df_clono["umis"].apply(
-            lambda x: f"{x / total_umis * 100:.2f}%"
-        )
-
-        df_clono.to_csv(out_file, index=False)
+        df_clono = df[
+            [
+                "well",
+                "sample",
+                "chain",
+                "v_gene",
+                "d_gene",
+                "j_gene",
+                "cdr3_nt",
+                "cdr3",
+                "raw_clonotype_id",
+                "umis",
+                "percent",
+            ]
+        ]
+        df_clono.to_csv(clono_file, index=False)
         inverse_simpson = cal_inverse_simpson(df_clono["umis"])
         n_clonotypes = len(df_clono)
         return n_clonotypes, inverse_simpson
@@ -266,10 +285,11 @@ class Mapping_vdj(step.Step):
     @utils.add_log
     def create_clonotypes(self):
         for barcode, sample in self.barcode_sample.items():
+            raw_file = f"{self.raw_dir}/{sample}_raw.csv"
             annotation_file = f"{self.annotation_dir}/{sample}_annotation.csv"
-            out_file = f"{self.clonotypes_dir}/{sample}_clonotypes.csv"
-            n_clonotypes, inverse_simpson = self.create_well_clonotypes(
-                annotation_file, out_file
+            clono_file = f"{self.clonotypes_dir}/{sample}_clonotypes.csv"
+            n_clonotypes, inverse_simpson = self.create_well_annotation_clono(
+                raw_file, annotation_file, clono_file
             )
             self.metrics[barcode]["n_clonotypes"] = n_clonotypes
             self.metrics[barcode]["inverse_simpson"] = round(inverse_simpson, 2)
@@ -335,7 +355,6 @@ class Mapping_vdj(step.Step):
         )
 
         df = pd.read_csv(self.clonotypes_csv, sep=",")
-        df = df.drop(["barcode"], axis=1)
         df = df.groupby("sample", group_keys=False).head(10)
         self.add_table(
             title="Top 10 Clonotypes",
