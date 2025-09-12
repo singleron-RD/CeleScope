@@ -399,6 +399,7 @@ job_end
             for sample in self.shell_dict:
                 with open(f"./shell/{sample}.sh", "w") as f:
                     f.write("set -euo pipefail\n")
+                    f.write("export OPENBLAS_NUM_THREADS=1\n")
                     f.write(self.shell_dict[sample])
                     f.write(
                         f'echo -e "Celescope finished successfully.\\n" 2>&1 | tee -a {sample}_celescope_log.txt\n'
