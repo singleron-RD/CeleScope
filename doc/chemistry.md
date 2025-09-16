@@ -1,7 +1,10 @@
 # Chemistry and Kit Version
 
 > [!NOTE] 
-> Only **CeleScope v2.3.0 or higher** supports analysis of **GEXSCOPE-V3** data.  
+> Analysis of scRNA **GEXSCOPE-V3** is supported only in **CeleScope v2.3.0 or later**.
+>
+> Analysis of scRNA combined with full-length VDJ **flv_rna-V2** and **flv-V2** is supported only in **CeleScope v2.9.0 or later**.
+
 
 Upgrade command:  
 ```bash
@@ -37,4 +40,4 @@ For example, in the pattern:
 - Then, another **8 bp** of **cell barcode**, and so on.  
 
 > [!NOTE] 
-> To maintain sequencing base balance, `GEXSCOPE-V3` includes an additional **0–3 bp** sequence before the first barcode segment.  
+> To maintain sequencing base balance, `GEXSCOPE-V3` and `flv_rna-V2` includes an additional **0–3 bp** sequence before the first barcode segment.  
