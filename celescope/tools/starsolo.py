@@ -603,7 +603,6 @@ is higher than or equal to this value.""",
         parser.add_argument(
             "--fq2",
             help="R2 fastq file. Multiple files are separated by comma.",
-            required=True,
         )
         parser = s_common(parser)
 

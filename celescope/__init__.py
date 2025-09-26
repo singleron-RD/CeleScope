@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "2.9.0"
+__VERSION__ = "2.10.0"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
@@ -20,6 +20,7 @@ ASSAY_LIST = [
     "pathseq",
     "probe",
     "ffpe",
+    "space",
 ]
 
 ROOT_PATH = os.path.dirname(__file__)

@@ -40,6 +40,9 @@ def create_mismatch_seqs(seq: str, max_mismatch=1, allowed_bases="ACGTN") -> set
     >>> seq_set = create_mismatch_seqs("ACG")
     >>> seq_set == answer
     True
+    >>> seq_set = create_mismatch_seqs("ACG", max_mismatch=0)
+    >>> seq_set == set(["ACG"])
+    True
     """
     if max_mismatch < 0:
         raise ValueError("max_mismatch must be non-negative")
@@ -49,11 +52,13 @@ def create_mismatch_seqs(seq: str, max_mismatch=1, allowed_bases="ACGTN") -> set
         )
 
     result = set()
-    for locs in itertools.combinations(range(len(seq)), max_mismatch):
-        seq_locs = [
-            list(allowed_bases) if i in locs else [base] for i, base in enumerate(seq)
-        ]
-        result.update("".join(p) for p in itertools.product(*seq_locs))
+    for n_mismatch in range(max_mismatch + 1):  # 包括0到max_mismatch
+        for locs in itertools.combinations(range(len(seq)), n_mismatch):
+            seq_locs = [
+                list(allowed_bases) if i in locs else [base]
+                for i, base in enumerate(seq)
+            ]
+            result.update("".join(p) for p in itertools.product(*seq_locs))
     return result
 
 
@@ -356,7 +361,7 @@ class AutoRNA(Auto):
         >>> seq = "NCAGATTC" + "TCGGTGACAGCCATAT" + "GTACGCAA" + "CGTAGTCAGAAGCTGA" + "CTGAGCCA"  + "TCCGAAGCC" + "CTGTCT"
         >>> runner.seq_chemistry(seq)
         'flv_rna'
-        >>> seq = "NCAGATTC" + "TCGGTGACAGCCATAT" + "GTACGCAA" + "CGTAGTCAGAAGCTGA" + "CTGAGCCA"  + "TCCGAAGCC"
+        >>> seq = "NCAGATTC" + "TCGGTGACAGCCATAT" + "GTACGCAA" + "CGTAGTCAGAAGCTGA" + "CTGAGCCA"  + "C" + "TCCGAAGCC"
         >>> runner.seq_chemistry(seq)
         'GEXSCOPE-V1'
         >>> seq = "ATCGATCGATCG" + "ATCGATCG" + "C" + "TTTTTTTTTT"
@@ -415,6 +420,8 @@ def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
     """Auto detect chemistry. If customized, return 'customized'"""
     if assay in ["bulk_vdj"]:
         return assay
+    elif assay == "space":
+        return "space-V1"
     elif assay == "flv_trust4":
         return AutoFlv(fq1_list).get_chemistry()
     elif args_chemistry == "auto":
