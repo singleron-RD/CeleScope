@@ -124,20 +124,23 @@ class Barcode(Step):
             total=raw_reads,
             help_info="Reads with barcodes that are not in the whitelist but are within one Hamming distance of it",
         )
-        q30_cb = sum(
-            [
-                cb_quality_counter[k]
-                for k in cb_quality_counter
-                if Barcode.chr_to_int(k) >= 30
-            ]
-        ) / float(sum(cb_quality_counter.values()))
-        q30_umi = sum(
-            [
-                umi_quality_counter[k]
-                for k in umi_quality_counter
-                if Barcode.chr_to_int(k) >= 30
-            ]
-        ) / float(sum(umi_quality_counter.values()))
+        if not cb_quality_counter:
+            q30_cb = q30_umi = 0
+        else:
+            q30_cb = sum(
+                [
+                    cb_quality_counter[k]
+                    for k in cb_quality_counter
+                    if Barcode.chr_to_int(k) >= 30
+                ]
+            ) / float(sum(cb_quality_counter.values()))
+            q30_umi = sum(
+                [
+                    umi_quality_counter[k]
+                    for k in umi_quality_counter
+                    if Barcode.chr_to_int(k) >= 30
+                ]
+            ) / float(sum(umi_quality_counter.values()))
         self.add_metric(
             name="Q30 of Barcode",
             value=f"{round(q30_cb * 100,2)}%",
