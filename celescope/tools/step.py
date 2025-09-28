@@ -373,12 +373,9 @@ class Step:
     def _remove_outs_before_run(self):
         for f in self.outs:
             f = Path(f)
-            if f.exists():
-                sys.stderr.write(f"Remove {f} before run\n")
-                if f.is_file():
-                    f.unlink()
-                elif f.is_dir():
-                    shutil.rmtree(f)
+            if f.exists() and f.is_dir():
+                sys.stderr.write(f"Remove folder {f} before run\n")
+                shutil.rmtree(f)
 
     @abc.abstractmethod
     def run(self):

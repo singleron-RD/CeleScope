@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from skimage.color import gray2rgb
 from celescope.tools.utils import add_log
+from celescope.tools.plotly_plot import StaticPlot
 
 
 class Analysis(Step):
@@ -14,7 +15,7 @@ class Analysis(Step):
         self.outs = [self.counts_png, self.cluster_png]
 
     @add_log
-    def run(self):
+    def run_scanpy(self):
         adata = sc.read_visium(
             self.args.outs_dir, count_file="filtered_feature_bc_matrix.h5"
         )
@@ -66,6 +67,15 @@ class Analysis(Step):
         )
         plt.savefig(self.cluster_png, dpi=300, bbox_inches="tight")
         plt.close()
+
+    @add_log
+    def run(self):
+        # self.run_scanpy()
+        self.add_plot_to_html()
+
+    @add_log
+    def add_plot_to_html(self):
+        self.add_data(plotly_count=StaticPlot(self.counts_png).get_div())
 
 
 def analysis(args):

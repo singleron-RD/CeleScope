@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from PIL import Image
 
 import plotly
 import plotly.express as px
@@ -531,4 +532,55 @@ class Violin_plot(Plotly_plot):
             ticks="outside",
             title_text=self.y,
             rangemode="tozero",
+        )
+
+
+class StaticPlot:
+    def __init__(self, img_path):
+        img = Image.open(img_path)
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+        fig = go.Figure()
+        width, height = img.size
+        # 添加图片
+        fig.add_layout_image(
+            dict(
+                source=img,
+                xref="x",
+                yref="y",
+                x=0,
+                y=height,
+                sizex=width,
+                sizey=height,
+                sizing="stretch",
+                opacity=1,
+                layer="below",
+            )
+        )
+
+        # 隐藏坐标轴
+        fig.update_xaxes(visible=False, range=[0, width], fixedrange=False)
+        fig.update_yaxes(
+            visible=False,
+            range=[0, height],
+            scaleanchor="x",
+            autorange="reversed",
+            fixedrange=False,
+        )
+
+        # 设置 Figure 尺寸，并去掉边距
+        fig.update_layout(
+            width=1000,
+            height=1000,
+            dragmode="pan",
+            margin=dict(l=0, r=0, t=0, b=0),  # 左右上下边距都设为0
+        )
+        self._fig = fig
+
+    def get_div(self):
+        return plotly.offline.plot(
+            self._fig,
+            include_plotlyjs=False,
+            output_type="div",
+            config=dict(scrollZoom=True),
         )
