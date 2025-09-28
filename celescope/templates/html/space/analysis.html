@@ -4,7 +4,13 @@
 
         {% include "html/utils/help_info.html" %}
 
-        {{step_summary.plotly_count|safe}}
+        <div style="float: left; margin-left: 1%; margin-top: 1%;margin-right:0%; width: 49%">
+            {{ step_summary.plotly_count|safe }}
+        </div>
+
+        <div style="float: left; margin-left: 1%; margin-top: 1%;margin-right:0%; width: 49%">
+            {{ step_summary.plotly_cluster|safe }}
+        </div>
         
     <div class="clear" ></div>
     </div>

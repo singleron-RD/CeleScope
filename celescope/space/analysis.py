@@ -31,6 +31,7 @@ class Analysis(Step):
             adata.uns["spatial"][lib_id]["images"]["hires"] = gray2rgb(img)
 
         # 1. QC 图片
+        plt.figure(figsize=(8, 8))
         sc.pl.spatial(
             adata,
             img_key="hires",
@@ -54,8 +55,7 @@ class Analysis(Step):
         sc.pp.neighbors(adata)
         sc.tl.umap(adata)
         sc.tl.leiden(adata, resolution=0.8)
-
-        plt.rcParams["figure.figsize"] = (8, 8)
+        plt.figure(figsize=(8, 8))
         sc.pl.spatial(
             adata,
             color=["leiden"],
@@ -70,12 +70,13 @@ class Analysis(Step):
 
     @add_log
     def run(self):
-        # self.run_scanpy()
+        self.run_scanpy()
         self.add_plot_to_html()
 
     @add_log
     def add_plot_to_html(self):
         self.add_data(plotly_count=StaticPlot(self.counts_png).get_div())
+        self.add_data(plotly_cluster=StaticPlot(self.cluster_png).get_div())
 
 
 def analysis(args):

@@ -570,10 +570,11 @@ class StaticPlot:
 
         # 设置 Figure 尺寸，并去掉边距
         fig.update_layout(
-            width=1000,
-            height=1000,
+            autosize=True,
             dragmode="pan",
             margin=dict(l=0, r=0, t=0, b=0),  # 左右上下边距都设为0
+            paper_bgcolor="white",  # 整个图纸背景
+            plot_bgcolor="white",
         )
         self._fig = fig
 
