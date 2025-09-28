@@ -52,6 +52,12 @@ class Multi_space(Multi):
             x=self.args.thread,
         )
 
+    def analysis(self, sample):
+        step = "analysis"
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = f"{cmd_line} --outs_dir {self.outdir_dic[sample]['outs']}"
+        self.process_cmd(cmd, step, sample)
+
 
 def main():
     multi = Multi_space(__ASSAY__)

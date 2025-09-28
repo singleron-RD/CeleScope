@@ -402,6 +402,19 @@ class AutoBulkRNA(Auto):
                 return chemistry
 
 
+class AutoSpace(Auto):
+    def __init__(self, fq1_list, max_read=10000):
+        super().__init__(fq1_list, CHEMISTRY_DICT, max_read)
+
+    def seq_chemistry(self, seq):
+        """
+        Returns: chemistry or None
+        """
+        for chemistry in ["space-V1"]:
+            if self.is_chemistry(seq, chemistry):
+                return chemistry
+
+
 class AutoFlv(Auto):
     def __init__(self, fq1_list, max_read=10000):
         super().__init__(fq1_list, CHEMISTRY_DICT, max_read)
@@ -418,16 +431,17 @@ class AutoFlv(Auto):
 @utils.add_log
 def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
     """Auto detect chemistry. If customized, return 'customized'"""
-    if assay in ["bulk_vdj"]:
-        return assay
-    elif assay == "space":
-        return "space-V1"
-    elif assay == "flv_trust4":
-        return AutoFlv(fq1_list).get_chemistry()
-    elif args_chemistry == "auto":
-        if assay == "bulk_rna":
+    if args_chemistry == "auto":
+        if assay in ["bulk_vdj"]:
+            return assay
+        elif assay == "space":
+            return AutoSpace(fq1_list).get_chemistry()
+        elif assay == "flv_trust4":
+            return AutoFlv(fq1_list).get_chemistry()
+        elif assay == "bulk_rna":
             return AutoBulkRNA(fq1_list).get_chemistry()
-        return AutoRNA(fq1_list).get_chemistry()
+        else:
+            return AutoRNA(fq1_list).get_chemistry()
     else:
         return args_chemistry
 

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import sys
 import subprocess
 from collections import Counter
@@ -209,10 +210,10 @@ class Starsolo(Step):
         # output files
         self.solo_out_dir = f"{self.outdir}/{self.sample}_Solo.out/"
         solo_dir = f"{self.outdir}/{self.sample}_Solo.out/{args.report_soloFeature}"
-        self.raw_matrix = f"{solo_dir}/raw"
-        self.filtered_matrix = f"{solo_dir}/filtered"
+        self.raw_matrix = Path(f"{solo_dir}/raw")
+        self.filtered_matrix = Path(f"{solo_dir}/filtered")
         self.summary_file = f"{solo_dir}/Summary.csv"
-        bam = f"{self.outdir}/{self.sample}_Aligned.sortedByCoord.out.bam"
+        bam = Path(f"{self.outdir}/{self.sample}_Aligned.sortedByCoord.out.bam")
 
         # outs
         self.outs = [self.raw_matrix, self.filtered_matrix, bam]

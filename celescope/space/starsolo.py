@@ -1,3 +1,4 @@
+import shutil
 from celescope.tools.matrix import CountMatrix
 from celescope.tools.starsolo import (
     Starsolo as tools_Starsolo,
@@ -5,12 +6,12 @@ from celescope.tools.starsolo import (
     Mapping,
     Demultiplexing,
 )
-from celescope.space.utils import Spatial
+from celescope.space.utils import Spatial, convert_10x_h5
 from celescope.tools.__init__ import COUNTS_FILE_NAME
 import pandas as pd
 from celescope.tools.emptydrop_cr import get_plot_elements
 import numpy as np
-from celescope.tools import utils
+from celescope.tools.utils import add_log
 from celescope.tools.step import Step
 
 
@@ -19,8 +20,12 @@ class Starsolo(tools_Starsolo):
         args.fq2 = args.fq1  # single end
         super().__init__(args)
         self.extra_starsolo_args += " --soloStrand Reverse --clip5pNbases 44 "
+        self.raw_h5 = f"{self.outdir}/raw_feature_bc_matrix.h5"
+        self.filtered_h5 = f"{self.outdir}/filtered_feature_bc_matrix.h5"
+        self.spatial_dir = f"{self.outdir}/spatial"
+        self.outs += [self.raw_h5, self.filtered_h5, self.spatial_dir]
 
-    @utils.add_log
+    @add_log
     def keep_barcodes(self):
         matrix = CountMatrix.from_matrix_dir(self.raw_matrix)
         in_tissue_barcodes = Spatial(self.args.spatial).get_in_tissue_barcodes()
@@ -28,10 +33,21 @@ class Starsolo(tools_Starsolo):
         filtered.to_matrix_dir(self.filtered_matrix)
         return filtered
 
+    @add_log
+    def convert_h5(self):
+        convert_10x_h5(self.raw_matrix, self.raw_h5)
+        convert_10x_h5(self.filtered_matrix, self.filtered_h5)
+
+    @add_log
+    def make_spatial_dir(self):
+        shutil.copytree(self.args.spatial, self.spatial_dir, dirs_exist_ok=True)
+
     def run(self):
         self.run_starsolo()
         filtered = self.keep_barcodes()
         self.gzip_matrix()
+        self.convert_h5()
+        self.make_spatial_dir()
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
         return q30_cb, q30_umi, filtered
 
@@ -45,7 +61,7 @@ class Spots(Step):
         self.summary_file = f"{solo_dir}/Summary.csv"
         self.counts_file = f"{self.outs_dir}/{COUNTS_FILE_NAME}"
 
-    @utils.add_log
+    @add_log
     def parse_summary(self):
         df = pd.read_csv(self.summary_file, index_col=0, header=None)
         s = df.iloc[:, 0]
@@ -81,7 +97,7 @@ class Spots(Step):
         self.add_metric(
             "In Tissue Spots",
             n_spots,
-            help_info="Number of Spots in tissue",
+            help_info="Number of spots in tissue determined based on the image",
         )
         self.add_metric(
             "Fraction of Reads in Spots",
@@ -92,17 +108,17 @@ class Spots(Step):
         self.add_metric(
             "Mean Used Reads per Spot",
             mean_used_reads_per_spot,
-            help_info="The number of uniquely-mapped-to-transcriptome reads per spot",
+            help_info="The number of uniquely-mapped-to-transcriptome reads per in tissue spot",
         )
         self.add_metric(
             "Median UMI per Spot",
             median_umi_per_spot,
-            help_info="Median UMI count per barcode",
+            help_info="Median UMI count per spot",
         )
         self.add_metric(
             "Median Genes per Spot",
             median_genes_per_spot,
-            help_info="Median number of genes per barcode",
+            help_info="Median number of genes per spot",
         )
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.counts_file))
 

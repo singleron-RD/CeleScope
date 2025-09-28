@@ -1,4 +1,6 @@
 import abc
+from pathlib import Path
+import shutil
 import sys
 import io
 import json
@@ -367,11 +369,23 @@ class Step:
     def set_metric_list(self, metric_list):
         self.__metric_list = metric_list
 
+    @utils.add_log
+    def _remove_outs_before_run(self):
+        for f in self.outs:
+            f = Path(f)
+            if f.exists():
+                sys.stderr.write(f"Remove {f} before run\n")
+                if f.is_file():
+                    f.unlink()
+                elif f.is_dir():
+                    shutil.rmtree(f)
+
     @abc.abstractmethod
     def run(self):
         sys.exit("Please implement run() method.")
 
     def __enter__(self):
+        self._remove_outs_before_run()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
