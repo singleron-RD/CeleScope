@@ -53,16 +53,6 @@ class Scanpy_wrapper(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-        # data
-        self.adata = sc.read_10x_mtx(
-            args.matrix_file,
-            var_names="gene_symbols",
-        )
-        self.adata.layers["raw"] = self.adata.X.copy()
-        self.mt_gene_list = Mkref_rna.get_config(args.genomeDir)["files"][
-            "mt_gene_list"
-        ]
-
         # out
         self.df_marker_file = f"{self.outdir}/markers.tsv"
         self.df_marker_raw_file = f"{self.outdir}/markers_raw.tsv"
@@ -71,9 +61,20 @@ class Scanpy_wrapper(Step):
         self.outs = [self.df_marker_file, self.df_tsne_file, self.h5ad_file]
 
     @utils.add_log
+    def read_data(self):
+        self.adata = sc.read_10x_mtx(
+            self.args.matrix_file,
+            var_names="gene_symbols",
+        )
+        self.adata.layers["raw"] = self.adata.X.copy()
+
+    @utils.add_log
     def calculate_qc_metrics(self):
-        if self.mt_gene_list:
-            mito_genes, _ = utils.read_one_col(self.mt_gene_list)
+        mt_gene_list = Mkref_rna.get_config(self.args.genomeDir)["files"][
+            "mt_gene_list"
+        ]
+        if mt_gene_list:
+            mito_genes, _ = utils.read_one_col(mt_gene_list)
             self.adata.var[MITO_VAR] = self.adata.var_names.map(
                 lambda x: True if x in mito_genes else False
             )
@@ -235,24 +236,14 @@ class Scanpy_wrapper(Step):
         )
 
     @utils.add_log
-    def leiden(self):
+    def leiden(self, resolution=RESOLUTION):
         """
         Wrapper function for sc.tl.leiden
         """
         sc.tl.leiden(
             self.adata,
-            resolution=RESOLUTION,
-            restrict_to=None,
-            random_state=0,
+            resolution=resolution,
             key_added="cluster",
-            adjacency=None,
-            directed=True,
-            use_weights=True,
-            n_iterations=-1,
-            partition_type=None,
-            neighbors_key=None,
-            obsp=None,
-            copy=False,
         )
 
     @utils.add_log
@@ -324,6 +315,7 @@ class Scanpy_wrapper(Step):
 
     @utils.add_log
     def run(self):
+        self.read_data()
         self.calculate_qc_metrics()
         self.write_mito_stats()
         self.normalize()

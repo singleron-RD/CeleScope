@@ -20,5 +20,10 @@
     {% include "html/space/analysis.html"%}
     {% endif %}
 
+    {% if marker_genes is defined %}
+    {% set table = marker_genes %}
+    {% include "html/utils/table.html"%}
+    {% endif %}
+
 {% include "html/utils/end.html"%}
 
