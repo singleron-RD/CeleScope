@@ -104,7 +104,7 @@ class Multi_capture_virus(Multi):
 
 
 def main():
-    multi = Multi_capture_virus(__ASSAY__)
+    multi = Multi_capture_virus(__ASSAY__, min_col=4)
     multi.run()
 
 

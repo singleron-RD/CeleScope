@@ -64,7 +64,7 @@ class Multi_tag(Multi):
 
 
 def main():
-    multi = Multi_tag(__ASSAY__)
+    multi = Multi_tag(__ASSAY__, min_col=4)
     multi.run()
 
 

@@ -70,7 +70,7 @@ class Multi_flv_trust4(Multi):
 
 
 def main():
-    multi = Multi_flv_trust4(__ASSAY__)
+    multi = Multi_flv_trust4(__ASSAY__, min_col=4)
     multi.run()
 
 

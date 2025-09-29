@@ -89,7 +89,7 @@ class Multi_snp(Multi):
 
 
 def main():
-    multi = Multi_snp(__ASSAY__)
+    multi = Multi_snp(__ASSAY__, min_col=4)
     multi.run()
 
 

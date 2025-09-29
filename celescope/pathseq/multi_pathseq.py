@@ -54,7 +54,7 @@ class Multi_pathseq(Multi):
 
 
 def main():
-    multi = Multi_pathseq(__ASSAY__)
+    multi = Multi_pathseq(__ASSAY__, min_col=4)
     multi.run()
 
 

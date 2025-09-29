@@ -78,7 +78,7 @@ class Multi_vdj(Multi):
 
 
 def main():
-    multi = Multi_vdj(__ASSAY__)
+    multi = Multi_vdj(__ASSAY__, min_col=4)
     multi.run()
 
 

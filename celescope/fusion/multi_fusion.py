@@ -75,7 +75,7 @@ class Multi_fusion(Multi):
 
 
 def main():
-    multi = Multi_fusion(__ASSAY__)
+    multi = Multi_fusion(__ASSAY__, min_col=4)
     multi.run()
 
 

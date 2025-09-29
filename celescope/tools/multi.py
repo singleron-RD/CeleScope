@@ -5,6 +5,8 @@ import os
 import sys
 from collections import defaultdict
 
+import pandas as pd
+
 import celescope
 from celescope.tools.__init__ import STAR_BAM_SUFFIX
 from celescope.tools import utils
@@ -16,8 +18,10 @@ TOOLS_DIR = os.path.dirname(celescope.tools.__file__)
 
 
 class Multi:
-    def __init__(self, assay):
+    def __init__(self, assay, min_col=3, pair=(1, 2)):
         self.__ASSAY__ = assay
+        self.min_col = min_col
+        self.pair = pair
         init_module = utils.find_assay_init(assay)
         self.STEPS = init_module.STEPS
         self.REMOVE_FROM_MULTI = getattr(init_module, "REMOVE_FROM_MULTI", set())
@@ -139,36 +143,37 @@ use `--steps_run barcode,cutadapt`
 
     @staticmethod
     @utils.add_log
-    def parse_mapfile(mapfile, default_val):
+    def parse_mapfile(mapfile, min_col=3, pair=(1, 2)):
         fq_dict = defaultdict(lambda: defaultdict(list))
         col4_dict = {}
         col5_dict = {}
-        with open(mapfile) as fh:
-            for line in fh:
-                line = line.strip()
-                if not line or line.startswith("#"):
-                    continue
-                line_split = line.split()
-                library_id, library_path, sample_name = line_split[:3]
-                if len(line_split) >= 4:
-                    col4 = line_split[3]
-                else:
-                    col4 = default_val
-                fq1, fq2 = get_fq(library_id, library_path)
-
-                fq_dict[sample_name]["fq1"].append(fq1)
-                fq_dict[sample_name]["fq2"].append(fq2)
+        df = pd.read_csv(mapfile, sep="\t", header=None)
+        if df.shape[1] < min_col:
+            sys.exit(
+                f"Error: mapfile should have at least {min_col} columns! But got {df.shape[1]} columns."
+            )
+        for _, row in df.iterrows():
+            library_id = str(row[0])
+            library_path = str(row[1])
+            sample_name = str(row[2])
+            for p in pair:
+                fq_dict[sample_name][f"fq{p}"].append(
+                    get_read(library_id, library_path, read=p)
+                )
+            if min_col >= 4:
+                col4 = str(row[3])
                 fq_dict[sample_name]["col4"].append(col4)
                 col4_dict[sample_name] = col4
-                if len(line_split) == 5:
-                    col5_dict[sample_name] = line_split[4]
+            if min_col >= 5:
+                col5 = str(row[4])
+                col5_dict[sample_name] = col5
 
         for sample_name in fq_dict:
-            fq_dict[sample_name]["fq1_str"] = ",".join(fq_dict[sample_name]["fq1"])
-            fq_dict[sample_name]["fq2_str"] = ",".join(fq_dict[sample_name]["fq2"])
+            for p in pair:
+                fq_dict[sample_name][f"fq{p}_str"] = ",".join(
+                    fq_dict[sample_name][f"fq{p}"]
+                )
 
-        if not fq_dict:
-            raise Exception("empty mapfile!")
         return fq_dict, col4_dict, col5_dict
 
     def link_data(self):
@@ -200,9 +205,8 @@ use `--steps_run barcode,cutadapt`
             self.sjm_file = f"{self.sjm_dir}/sjm.job"
             self.sjm_cmd = f"log_dir {self.logdir}\n"
 
-        # parse_mapfile
         self.fq_dict, self.col4_dict, self.col5_dict = self.parse_mapfile(
-            self.args.mapfile, self.col4_default
+            self.args.mapfile, self.min_col, self.pair
         )
 
         for sample in self.fq_dict:
@@ -424,7 +428,7 @@ job_end
         self.guide()
 
 
-def get_read(library_id, library_path, read="1"):
+def get_read(library_id, library_path, read=1):
     read1_list = [f"_{read}", f"R{read}", f"R{read}_001"]
     fq_list = ["fq", "fastq"]
     suffix_list = ["", ".gz"]
@@ -447,14 +451,4 @@ def get_read(library_id, library_path, read="1"):
             f"library_id: {library_id}\n"
             f"library_path: {library_path}\n"
         )
-    return fq_list
-
-
-def get_fq(library_id, library_path):
-    fq1_list = get_read(library_id, library_path, read="1")
-    fq2_list = get_read(library_id, library_path, read="2")
-    if len(fq1_list) != len(fq2_list):
-        raise Exception("Read1 and Read2 fastq number do not match!")
-    fq1 = ",".join(fq1_list)
-    fq2 = ",".join(fq2_list)
-    return fq1, fq2
+    return ",".join(fq_list)
