@@ -147,8 +147,9 @@ use `--steps_run barcode,cutadapt`
         fq_dict = defaultdict(lambda: defaultdict(list))
         col4_dict = {}
         col5_dict = {}
-        df = pd.read_csv(mapfile, sep="\t", header=None)
+        df = pd.read_csv(mapfile, sep=r"\s+", header=None, engine="python")
         if df.shape[1] < min_col:
+            print(df)
             sys.exit(
                 f"Error: mapfile should have at least {min_col} columns! But got {df.shape[1]} columns."
             )
@@ -160,11 +161,11 @@ use `--steps_run barcode,cutadapt`
                 fq_dict[sample_name][f"fq{p}"].append(
                     get_read(library_id, library_path, read=p)
                 )
-            if min_col >= 4:
+            if df.shape[1] >= 4:
                 col4 = str(row[3])
                 fq_dict[sample_name]["col4"].append(col4)
                 col4_dict[sample_name] = col4
-            if min_col >= 5:
+            if df.shape[1] >= 5:
                 col5 = str(row[4])
                 col5_dict[sample_name] = col5
 

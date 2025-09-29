@@ -217,6 +217,7 @@ class Starsolo(Step):
 
         # outs
         self.outs = [self.raw_matrix, self.filtered_matrix, bam]
+        self.remove_outs_before_run()
 
     def run_starsolo(self):
         soloFeatures = create_soloFeatures(

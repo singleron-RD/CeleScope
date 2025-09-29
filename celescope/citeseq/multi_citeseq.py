@@ -43,7 +43,7 @@ class Multi_citeseq(Multi):
 
 
 def main():
-    multi = Multi_citeseq(__ASSAY__)
+    multi = Multi_citeseq(__ASSAY__, min_col=4)
     multi.run()
 
 

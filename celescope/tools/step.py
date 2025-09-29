@@ -370,7 +370,7 @@ class Step:
         self.__metric_list = metric_list
 
     @utils.add_log
-    def _remove_outs_before_run(self):
+    def remove_outs_before_run(self):
         for f in self.outs:
             f = Path(f)
             if f.exists() and f.is_dir():
@@ -382,7 +382,6 @@ class Step:
         sys.exit("Please implement run() method.")
 
     def __enter__(self):
-        self._remove_outs_before_run()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
