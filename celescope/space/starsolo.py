@@ -1,4 +1,3 @@
-import shutil
 from celescope.tools.matrix import CountMatrix
 from celescope.tools.starsolo import (
     Starsolo as tools_Starsolo,
@@ -40,10 +39,11 @@ class Starsolo(tools_Starsolo):
 
     @add_log
     def make_spatial_dir(self):
-        shutil.copytree(self.args.spatial, self.spatial_dir, dirs_exist_ok=True)
+        spatial = Spatial(self.args.spatial)
+        spatial.output_spatial(self.spatial_dir)
 
     def run(self):
-        self.run_starsolo()
+        # self.run_starsolo()
         filtered = self.keep_barcodes()
         self.gzip_matrix()
         self.convert_h5()

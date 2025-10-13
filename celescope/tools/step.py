@@ -38,6 +38,27 @@ def cap_str_except_preposition(my_string):
     return final_words
 
 
+def safe_move(source, dest_dir):
+    source = Path(source)
+    dest_dir = Path(dest_dir)
+
+    if not source.exists():
+        raise FileNotFoundError(f"Source not found: {source}")
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / source.name
+
+    if dest.exists():
+        if dest.is_dir():
+            shutil.rmtree(dest)
+        else:
+            dest.unlink()
+
+    shutil.move(str(source), str(dest))
+
+    return dest
+
+
 def s_common(parser):
     """subparser common arguments"""
     parser.add_argument("--outdir", help="Output diretory.", required=True)
@@ -316,19 +337,11 @@ class Step:
         return table_dict
 
     def _move_files(self):
-        if self.outs:
-            utils.check_mkdir(self.outs_dir)
         for f in self.outs:
-            cmd = ""
-            if not os.path.exists(f):
-                sys.stderr.write(
-                    f"WARNING: output file {f} not found! The pipeline may have failed.\n"
-                )
-            elif os.path.isfile(f):
-                cmd = f"mv -f {f} {self.outs_dir}"
-            elif os.path.isdir(f):
-                cmd = f"set -e; cp -r {f} {self.outs_dir}; "
-            subprocess.check_call(cmd, shell=True)
+            try:
+                safe_move(f, self.outs_dir)
+            except FileNotFoundError as e:
+                sys.stderr.write(f"WARNING: {e}\n")
 
     @utils.add_log
     def _add_parameters(self):
@@ -368,14 +381,6 @@ class Step:
 
     def set_metric_list(self, metric_list):
         self.__metric_list = metric_list
-
-    @utils.add_log
-    def remove_outs_before_run(self):
-        for f in self.outs:
-            f = Path(f)
-            if f.exists() and f.is_dir():
-                sys.stderr.write(f"Remove folder {f} before run\n")
-                shutil.rmtree(f)
 
     @abc.abstractmethod
     def run(self):
