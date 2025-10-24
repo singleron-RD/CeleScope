@@ -357,6 +357,18 @@ class Step:
                 self.__content_dict["data"]["parameters"][key] = value
 
     @utils.add_log
+    def _create_outs_link(self):
+        if self.outs:
+            os.makedirs(self.outs_dir, exist_ok=True)
+        for f in self.outs:
+            src = Path(f)
+            dest = Path(self.outs_dir) / src.name
+            if dest.exists() or dest.is_symlink():
+                dest.unlink()
+            relative_src = os.path.relpath(src, start=dest.parent)
+            os.symlink(relative_src, dest)
+
+    @utils.add_log
     def _clean_up(self):
         self._add_content_data()
         self._add_content_metric()
@@ -364,7 +376,7 @@ class Step:
         self._write_stat()
         self._dump_content()
         self._render_html()
-        self._move_files()
+        self._create_outs_link()
 
     @utils.add_log
     def debug_subprocess_call(self, cmd):

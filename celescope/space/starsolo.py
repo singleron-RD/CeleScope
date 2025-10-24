@@ -43,7 +43,7 @@ class Starsolo(tools_Starsolo):
         spatial.output_spatial(self.spatial_dir)
 
     def run(self):
-        # self.run_starsolo()
+        self.run_starsolo()
         filtered = self.keep_barcodes()
         self.gzip_matrix()
         self.convert_h5()

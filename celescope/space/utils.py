@@ -26,8 +26,8 @@ class Spatial:
             "in_tissue",
             "array_row",
             "array_col",
-            "pxl_col_in_fullres",
             "pxl_row_in_fullres",
+            "pxl_col_in_fullres",
         ]
 
     def get_in_tissue_barcodes(self) -> list[str]:
@@ -39,9 +39,6 @@ class Spatial:
     def output_spatial(self, outdir):
         outdir = Path(outdir)
         shutil.copytree(self.input_dir, outdir, dirs_exist_ok=True)
-        self.positions.to_csv(
-            outdir / "tissue_positions_list.csv", header=True, index=False
-        )
         parquet = outdir / "tissue_positions.parquet"
         self.positions.to_parquet(parquet, index=False)
 

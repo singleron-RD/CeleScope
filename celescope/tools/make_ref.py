@@ -69,7 +69,7 @@ class MakeRef:
     def opts(parser, sub_program):
         if sub_program:
             parser.add_argument(
-                "--thread", help="Default=6. Threads to use.", default=6
+                "--thread", help="Default=6. Threads to use.", default=16
             )
             parser.add_argument(
                 "--genome_name", help="Required, genome name. ", required=True
