@@ -51,6 +51,12 @@ class Spatial:
         with open(scalefactors, "w") as f:
             json.dump(data, f, indent=4)
 
+    def remove_tissue_positions_csv(self, outdir):
+        outdir = Path(outdir)
+        csv_file = outdir / "tissue_positions_list.csv"
+        if csv_file.exists():
+            csv_file.unlink()
+
 
 def convert_10x_h5(mtx_dir, outfile, library_id="library0"):
     """

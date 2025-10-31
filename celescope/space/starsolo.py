@@ -5,7 +5,7 @@ from celescope.tools.starsolo import (
     Mapping,
     Demultiplexing,
 )
-from celescope.space.utils import Spatial, convert_10x_h5
+from celescope.space.utils import Spatial
 from celescope.tools.__init__ import COUNTS_FILE_NAME
 import pandas as pd
 from celescope.tools.emptydrop_cr import get_plot_elements
@@ -19,10 +19,6 @@ class Starsolo(tools_Starsolo):
         args.fq2 = args.fq1  # single end
         super().__init__(args)
         self.extra_starsolo_args += " --soloStrand Reverse --clip5pNbases 44 "
-        self.raw_h5 = f"{self.outdir}/raw_feature_bc_matrix.h5"
-        self.filtered_h5 = f"{self.outdir}/filtered_feature_bc_matrix.h5"
-        self.spatial_dir = f"{self.outdir}/spatial"
-        self.outs += [self.raw_h5, self.filtered_h5, self.spatial_dir]
 
     @add_log
     def keep_barcodes(self):
@@ -32,22 +28,10 @@ class Starsolo(tools_Starsolo):
         filtered.to_matrix_dir(self.filtered_matrix)
         return filtered
 
-    @add_log
-    def convert_h5(self):
-        convert_10x_h5(self.raw_matrix, self.raw_h5)
-        convert_10x_h5(self.filtered_matrix, self.filtered_h5)
-
-    @add_log
-    def make_spatial_dir(self):
-        spatial = Spatial(self.args.spatial)
-        spatial.output_spatial(self.spatial_dir)
-
     def run(self):
         self.run_starsolo()
         filtered = self.keep_barcodes()
         self.gzip_matrix()
-        self.convert_h5()
-        self.make_spatial_dir()
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
         return q30_cb, q30_umi, filtered
 

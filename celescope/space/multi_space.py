@@ -21,7 +21,12 @@ class Multi_space(Multi):
     def analysis(self, sample):
         step = "analysis"
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = f"{cmd_line} --outs_dir {self.outdir_dic[sample]['outs']}"
+        cmd = (
+            f"{cmd_line} "
+            f"--raw {self.outdir_dic[sample]['outs']}/raw "
+            f"--filtered {self.outdir_dic[sample]['outs']}/filtered "
+            f"--spatial {self.col4_dict[sample]} "
+        )
         self.process_cmd(cmd, step, sample)
 
 

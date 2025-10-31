@@ -8,6 +8,7 @@ from celescope.tools.utils import add_log
 from celescope.tools.plotly_plot import StaticPlot
 from celescope.tools.analysis_wrapper import Scanpy_wrapper, format_df_marker
 from celescope.__init__ import HELP_DICT
+from celescope.space.utils import Spatial, convert_10x_h5
 
 
 class Analysis(Scanpy_wrapper):
@@ -16,17 +17,23 @@ class Analysis(Scanpy_wrapper):
 
         self.counts_png = f"{self.outdir}/counts.png"
         self.cluster_png = f"{self.outdir}/cluster.png"
+        self.raw_h5 = f"{self.outdir}/raw_feature_bc_matrix.h5"
+        self.filtered_h5 = f"{self.outdir}/filtered_feature_bc_matrix.h5"
+        self.spatial_dir = f"{self.outdir}/spatial"
         self.outs = [
             self.df_marker_raw_file,
             self.h5ad_file,
             self.counts_png,
             self.cluster_png,
+            self.raw_h5,
+            self.filtered_h5,
+            self.spatial_dir,
         ]
 
     @add_log
     def read_data(self):
         self.adata = sc.read_visium(
-            self.args.outs_dir, count_file="filtered_feature_bc_matrix.h5"
+            self.outdir, count_file="filtered_feature_bc_matrix.h5"
         )
 
         lib_id = list(self.adata.uns["spatial"].keys())[0]
@@ -41,7 +48,15 @@ class Analysis(Scanpy_wrapper):
         sc.pp.filter_cells(self.adata, min_genes=self.args.min_genes, inplace=True)
 
     @add_log
+    def convert_h5(self):
+        convert_10x_h5(self.args.raw, self.raw_h5)
+        convert_10x_h5(self.args.filtered, self.filtered_h5)
+
+    @add_log
     def run(self):
+        self.convert_h5()
+        spatial = Spatial(self.args.spatial)
+        spatial.output_spatial(self.spatial_dir)
         self.read_data()
         self.calculate_qc_metrics()
         self.add_count_plot()
@@ -59,6 +74,7 @@ class Analysis(Scanpy_wrapper):
         self.write_markers()
         self.write_h5ad()
         self.add_marker_to_html()
+        spatial.remove_tissue_positions_csv(self.spatial_dir)
 
     @add_log
     def add_count_plot(self):
@@ -151,5 +167,7 @@ def get_opts_analysis(parser, sub_program):
     )
     parser.add_argument("--genomeDir", help=HELP_DICT["genomeDir"], required=True)
     if sub_program:
-        parser.add_argument("--outs_dir", help="celescope outs dir", required=True)
+        parser.add_argument("--raw", help="raw matrix", required=True)
+        parser.add_argument("--filtered", help="filtered matrix", required=True)
+        parser.add_argument("--spatial", help="spatial directory", required=True)
         parser = s_common(parser)
