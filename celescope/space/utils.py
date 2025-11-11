@@ -1,10 +1,27 @@
 import shutil
+import sys
 import h5py
 import numpy as np
 import pandas as pd
 from pathlib import Path
 import scanpy as sc
 import json
+from PIL import Image
+
+from celescope.tools import utils
+
+
+def resize_by_longest_side(img, target_longest):
+    """将图片最长边缩放到 target_longest 像素"""
+    w, h = img.size
+    if w >= h:
+        # 横图：宽是最长边
+        scale = target_longest / w
+    else:
+        # 竖图：高是最长边
+        scale = target_longest / h
+    new_size = (int(w * scale), int(h * scale))
+    return img.resize(new_size, Image.LANCZOS)
 
 
 class Spatial:
@@ -16,9 +33,15 @@ class Spatial:
         self.input_dir = Path(input_dir)
         self.tissue_positions_list = self.input_dir / "tissue_positions_list.csv"
         self.scalefactors = self.input_dir / "scalefactors_json.json"
-        self.tissue_loweres = self.input_dir / "tissue_lowres.png"
-        self.tissue_hires = self.input_dir / "tissue_hires.png"
+        self.tissue_loweres = self.input_dir / "tissue_lowres_image.png"
+        self.tissue_hires = self.input_dir / "tissue_hires_image.png"
         self.parquet = self.input_dir / "tissue_positions.parquet"
+        figure_dir = self.input_dir / "figure"
+        self.he_image = list(figure_dir.glob("*.png")) + list(figure_dir.glob("*.jpg"))
+        if self.he_image:
+            self.he_image = self.he_image[0]
+        else:
+            sys.exit("No HE .png or .jpg found in figure folder!")
 
         self.positions = pd.read_csv(self.tissue_positions_list, header=None)
         self.positions.columns = [
@@ -36,6 +59,7 @@ class Spatial:
         ].tolist()
         return barcodes_in_tissue
 
+    @utils.add_log
     def output_spatial(self, outdir):
         outdir = Path(outdir)
         shutil.copytree(self.input_dir, outdir, dirs_exist_ok=True)
@@ -50,6 +74,17 @@ class Spatial:
         data["regist_target_img_scalef"] = 1.0
         with open(scalefactors, "w") as f:
             json.dump(data, f, indent=4)
+
+        ## output 2000 pixel HE hires and 600 pixel lowres
+        Image.MAX_IMAGE_PIXELS = None
+        he_image = Image.open(self.he_image)
+        img_4000 = resize_by_longest_side(he_image, 2000)
+        hires_path = outdir / "tissue_hires_image.png"
+        img_4000.save(hires_path)
+
+        img_600 = resize_by_longest_side(he_image, 600)
+        lowres_path = outdir / "tissue_lowres_image.png"
+        img_600.save(lowres_path)
 
     def remove_tissue_positions_csv(self, outdir):
         outdir = Path(outdir)

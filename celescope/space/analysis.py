@@ -33,7 +33,7 @@ class Analysis(Scanpy_wrapper):
     @add_log
     def read_data(self):
         self.adata = sc.read_visium(
-            self.outdir, count_file="filtered_feature_bc_matrix.h5"
+            self.outdir, count_file=f"{self.args.use_matrix}_feature_bc_matrix.h5"
         )
 
         lib_id = list(self.adata.uns["spatial"].keys())[0]
@@ -166,6 +166,12 @@ def get_opts_analysis(parser, sub_program):
         default=200,
     )
     parser.add_argument("--genomeDir", help=HELP_DICT["genomeDir"], required=True)
+    parser.add_argument(
+        "--use_matrix",
+        choices=["raw", "filtered"],
+        default="filtered",
+        help="Which matrix to use for analysis.",
+    )
     if sub_program:
         parser.add_argument("--raw", help="raw matrix", required=True)
         parser.add_argument("--filtered", help="filtered matrix", required=True)
