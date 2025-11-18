@@ -113,6 +113,7 @@ class Scanpy_wrapper(Step):
         """
         sc.pp.normalize_per_cell() and sc.pp.log1p()
         """
+        self.adata.layers["counts"] = self.adata.X.copy()
 
         sc.pp.normalize_total(
             self.adata,
