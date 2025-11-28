@@ -8,7 +8,8 @@ class Multi_space(Multi):
         arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
-            f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} --spatial {self.col4_dict[sample]} '
+            f'{cmd_line} '
+            f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]}  --spatial {self.col4_dict[sample]} '
         )
         self.process_cmd(
             cmd,
@@ -31,7 +32,7 @@ class Multi_space(Multi):
 
 
 def main():
-    multi = Multi_space(__ASSAY__, min_col=4, pair=(1,))
+    multi = Multi_space(__ASSAY__, min_col=4, pair=(1, 2))
     multi.run()
 
 

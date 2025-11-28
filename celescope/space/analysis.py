@@ -74,7 +74,7 @@ class Analysis(Scanpy_wrapper):
         self.write_markers()
         self.write_h5ad()
         self.add_marker_to_html()
-        spatial.remove_tissue_positions_csv(self.spatial_dir)
+        spatial.rename_tissue_positions_csv(self.spatial_dir)
 
     @add_log
     def add_count_plot(self):

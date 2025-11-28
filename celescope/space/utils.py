@@ -86,11 +86,11 @@ class Spatial:
         lowres_path = outdir / "tissue_lowres_image.png"
         img_600.save(lowres_path)
 
-    def remove_tissue_positions_csv(self, outdir):
+    def rename_tissue_positions_csv(self, outdir):
         outdir = Path(outdir)
         csv_file = outdir / "tissue_positions_list.csv"
         if csv_file.exists():
-            csv_file.unlink()
+            csv_file.rename(outdir / "positions_list.csv")
 
 
 def convert_10x_h5(mtx_dir, outfile, library_id="library0"):

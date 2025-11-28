@@ -61,6 +61,7 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 |[bulk_vdj](assay/multi_bulk_vdj.md)|bulk VDJ|AccuraCode|
 |[bulk_rna](assay/multi_bulk_rna.md)|bulk RNA|AccuraCode|
 |[ffpe](assay/multi_ffpe.md)|single-cell FFPE||
+|[space](assay/multi_space.md)|single-cell Spatial||
 
 
 Click on the hyperlinks above to view the uasge for each assay. Run `multi_{assay} -h` in the command line to display available arguments. For example：

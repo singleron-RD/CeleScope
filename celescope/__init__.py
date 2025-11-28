@@ -39,6 +39,7 @@ RELEASED_ASSAYS = [
     "bulk_vdj",
     "bulk_rna",
     "ffpe",
+    "space",
 ]
 
 # argument help

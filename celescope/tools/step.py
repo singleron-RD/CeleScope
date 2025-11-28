@@ -345,6 +345,9 @@ class Step:
 
     @utils.add_log
     def _add_parameters(self):
+        if "parameters" not in self.__content_dict["data"]:
+            sys.stderr.write("parameters not in {sample}/.data.json\n")
+            self.__content_dict["data"]["parameters"] = {}
         for key, value in vars(self.args).items():
             if key not in {
                 "func",

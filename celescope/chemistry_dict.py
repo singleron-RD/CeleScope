@@ -66,7 +66,12 @@ chemistry_dict = {
         "pattern": "L18C6U16",
         "bc": ["bc.txt"],
     },
-    "space-V1": {
+    "space-ffpe": {
+        "pattern": "U12C8L8C8L8",
+        "bc": ["bc.txt", "bc.txt"],
+    },
+    # fresh frozen
+    "space-ff": {
         "pattern": "U12C8L8C8L8",
         "bc": ["bc.txt", "bc.txt"],
     },
