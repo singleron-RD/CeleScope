@@ -379,7 +379,7 @@ class Step:
         self._write_stat()
         self._dump_content()
         self._render_html()
-        self._create_outs_link()
+        self._move_files()
 
     @utils.add_log
     def debug_subprocess_call(self, cmd):

@@ -1,12 +1,11 @@
+import subprocess
+import sys
 import pysam
 
 from celescope.tools import utils
 from celescope.tools.capture.threshold import Threshold
 from celescope.tools.step import Step, s_common
 from celescope.__init__ import HELP_DICT
-
-# variant allele frequency (VAF) threshold
-VAF = 0.2
 
 
 class Filter_snp(Step):
@@ -21,7 +20,6 @@ class Filter_snp(Step):
 
     def __init__(self, args, display_title="Filtering"):
         super().__init__(args, display_title)
-        self.vcf = args.vcf
 
         self.add_metric(
             "reference allele threshold method",
@@ -34,7 +32,13 @@ class Filter_snp(Step):
         )
 
         # out
+        self.bcftools_vcf_file = f"{self.out_prefix}_bcftools_filtered.vcf"
         self.out_vcf_file = f"{self.out_prefix}_filtered.vcf"
+
+    def bcftools_filter(self):
+        cmd = f"bcftools filter -i '{self.args.bcftools_filter}' {self.args.vcf} -o {self.bcftools_vcf_file} -Ov"
+        sys.stderr.write(f"{cmd}\n")
+        subprocess.check_call(cmd, shell=True)
 
     @staticmethod
     def get_count_array(record):
@@ -70,12 +74,12 @@ class Filter_snp(Step):
         return [x if x >= threshold else 0 for x in count_array]
 
     @staticmethod
-    def get_genotype(ref_count, alt_count):
+    def get_genotype(ref_count, alt_count, vaf):
         if ref_count > 0 and alt_count > 0:
             af = alt_count / (alt_count + ref_count)
-            if VAF <= af <= 1 - VAF:
+            if vaf <= af <= 1 - vaf:
                 return (0, 1)
-            elif af < VAF:
+            elif af < vaf:
                 return (0, 0)
             else:
                 return (1, 1)
@@ -88,6 +92,8 @@ class Filter_snp(Step):
 
     @utils.add_log
     def run(self):
+        self.bcftools_filter()
+
         if self.args.ref_threshold_method == "otsu":
             ref_otsu_plot_dir = f"{self.outdir}/ref_otsu_plots/"
             utils.check_mkdir(ref_otsu_plot_dir)
@@ -96,7 +102,7 @@ class Filter_snp(Step):
             alt_otsu_plot_dir = f"{self.outdir}/alt_otsu_plots/"
             utils.check_mkdir(alt_otsu_plot_dir)
 
-        with pysam.VariantFile(self.vcf) as vcf_in:
+        with pysam.VariantFile(self.bcftools_vcf_file) as vcf_in:
             header = vcf_in.header
             header.add_meta(
                 "ref_threshold_method", value=self.args.ref_threshold_method
@@ -164,7 +170,9 @@ class Filter_snp(Step):
                         ref_count = ref_filtered_count_array[index]
                         alt_count = alt_filtered_count_array[index]
                         new_record.samples[sample]["AD"] = (ref_count, alt_count)
-                        genotype = self.get_genotype(ref_count, alt_count)
+                        genotype = self.get_genotype(
+                            ref_count, alt_count, self.args.vaf
+                        )
                         new_record.samples[sample]["GT"] = genotype
 
                     vcf_out.write(new_record)
@@ -177,15 +185,20 @@ def filter_snp(args):
 
 def get_opts_filter_snp(parser, sub_program):
     parser.add_argument(
+        "--bcftools_filter",
+        help="bcftools filter -i expression",
+        default="QUAL>=1000 && AF>=0.01",
+    )
+    parser.add_argument(
         "--ref_threshold_method",
-        default="otsu",
-        choices=["otsu", "auto", "none"],
+        default="none",
+        choices=["otsu", "none"],
         help=HELP_DICT["threshold_method"],
     )
     parser.add_argument(
         "--alt_threshold_method",
-        default="otsu",
-        choices=["otsu", "auto", "none"],
+        default="none",
+        choices=["otsu", "none"],
         help=HELP_DICT["threshold_method"],
     )
     parser.add_argument(
@@ -199,6 +212,12 @@ def get_opts_filter_snp(parser, sub_program):
         type=int,
         help="minimum supporting read number for alt.",
         default=2,
+    )
+    parser.add_argument(
+        "--vaf",
+        help="VAF threshold. For each cell, if VAF_threshold <= ALT/DP <= 1 - VAF_threshold, then the genotype is called heterozygous; otherwise, it is called homozygous.",
+        type=float,
+        default=0.2,
     )
     if sub_program:
         parser.add_argument("--vcf", help="norm vcf file")

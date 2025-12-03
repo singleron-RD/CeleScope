@@ -1,11 +1,7 @@
 STEPS = [
     "mkref",
     "sample",
-    "barcode",
-    "cutadapt",
-    "consensus",
-    "star",
-    "featureCounts",
+    "starsolo",
     "target_metrics",
     "variant_calling",
     "filter_snp",
@@ -14,3 +10,7 @@ STEPS = [
 __ASSAY__ = "snp"
 
 PANEL = {"lung_1", "blood_1", "CHIP"}
+
+REMOVE_FROM_MULTI = {
+    "mkref",
+}

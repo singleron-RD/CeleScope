@@ -98,8 +98,6 @@ class Filter(Step):
         self.filter_read_count_file = f"{self.out_prefix}_filtered_read_count.json"
         self.filter_umi_file = f"{self.out_prefix}_filtered_UMI.csv"
 
-        self.outs = [self.filter_umi_file]
-
     @utils.add_log
     def correct_umi(self):
         for barcode in self.count_dict:

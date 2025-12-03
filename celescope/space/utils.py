@@ -37,11 +37,15 @@ class Spatial:
         self.tissue_hires = self.input_dir / "tissue_hires_image.png"
         self.parquet = self.input_dir / "tissue_positions.parquet"
         figure_dir = self.input_dir / "figure"
-        self.he_image = list(figure_dir.glob("*.png")) + list(figure_dir.glob("*.jpg"))
+        self.he_image = (
+            list(figure_dir.glob("*.png"))
+            + list(figure_dir.glob("*.jpg"))
+            + list(figure_dir.glob("*.jpeg"))
+        )
         if self.he_image:
             self.he_image = self.he_image[0]
         else:
-            sys.exit("No HE .png or .jpg found in figure folder!")
+            sys.exit("No HE .png, .jpg, .jpeg found in figure folder!")
 
         self.positions = pd.read_csv(self.tissue_positions_list, header=None)
         self.positions.columns = [

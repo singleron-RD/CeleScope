@@ -10,14 +10,18 @@ from celescope.__init__ import HELP_DICT
 from celescope.snp.__init__ import PANEL
 
 
-def get_gene_list(args):
-    if args.panel:
-        gene_list = utils.get_gene_region_from_bed(args.panel)[0]
-        n_gene = len(gene_list)
+def get_genes(args) -> set:
+    if args.bed:
+        genes, _ = utils.get_gene_region_from_bed(args.bed)
+    elif args.panel:
+        bed = utils.get_bed_file_path(args.panel)
+        genes, _ = utils.get_gene_region_from_bed(bed)
+    elif args.gene_list:
+        genes = utils.read_one_col(args.gene_list)
     else:
-        gene_list, n_gene = utils.read_one_col(args.gene_list)
+        sys.exit("You must provide one of --panel, --bed, --gene_list!")
 
-    return set(gene_list), n_gene
+    return set(genes)
 
 
 class Target_metrics(Step):
@@ -42,10 +46,7 @@ class Target_metrics(Step):
         )
         self.match_barcode = set(self.match_barcode_list)
 
-        self.gene_list, self.n_gene = get_gene_list(args)
-
-        if not self.gene_list:
-            sys.exit("You must provide either --panel or --gene_list!")
+        self.gene_list = get_genes(args)
 
         self.count_dict = utils.nested_defaultdict(dim=3, valType=int)
         self.dup_dict = utils.nested_defaultdict(dim=4, valType=int)
@@ -53,7 +54,7 @@ class Target_metrics(Step):
 
         self.add_metric(
             name="Number of Target Genes",
-            value=self.n_gene,
+            value=len(self.gene_list),
         )
         self.add_metric(
             name="Number of Cells",
@@ -151,20 +152,24 @@ class Target_metrics(Step):
             name="Enriched Reads",
             value=enriched_reads,
             total=total_reads,
+            help_info="Reads mapped to the target genes.",
         )
         self.add_metric(
             name="Enriched Reads in Cells",
             value=enriched_reads_in_cells,
             total=total_reads,
+            help_info="Reads mapped to the target genes and belong to cells(from scRNA match_dir).",
         )
         self.add_metric(
             name="Median Enriched Reads per Valid Cell",
             value=np.median(valid_enriched_reads_per_cell_list),
+            help_info="Median number of reads mapped to the target genes per cell.",
         )
 
         self.add_metric(
             name="Median Used Reads per Valid Cell",
             value=np.median(list(self.used_dict.values())),
+            help_info="Median number of reads per cell after deduplication. Deduplication is performed using the combination (CB, UB, reference_name, reference_start). For each unique combination, at most max_duplicate reads are retained.",
         )
 
     def run(self):
@@ -189,6 +194,7 @@ def target_metrics(args):
 def get_opts_target_metrics(parser, sub_program):
     parser.add_argument("--gene_list", help=HELP_DICT["gene_list"])
     parser.add_argument("--panel", help=HELP_DICT["panel"], choices=list(PANEL))
+    parser.add_argument("--bed", help="custom bed file.")
     parser.add_argument("--max_duplicate", type=int, default=5)
     if sub_program:
         parser.add_argument("--bam", help="Input bam file", required=True)

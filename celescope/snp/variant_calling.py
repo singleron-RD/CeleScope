@@ -22,8 +22,12 @@ class Variant_calling(Step):
         self.barcodes, _num = utils.get_barcode_from_match_dir(args.match_dir)
         self.fasta = Mkref_rna.get_config(args.genomeDir)["files"]["fasta"]
         self.df_vcf = None
-        self.panel = args.panel
-        self.bed = utils.get_bed_file_path(self.panel)
+        if args.bed:
+            self.bed = args.bed
+        elif args.panel:
+            self.bed = utils.get_bed_file_path(args.panel)
+        else:
+            self.bed = None
 
         # out
         self.splitN_bam = f"{self.out_prefix}_splitN.bam"
@@ -110,6 +114,7 @@ def variant_calling(args):
 def get_opts_variant_calling(parser, sub_program):
     parser.add_argument("--genomeDir", help=HELP_DICT["genomeDir"], required=True)
     parser.add_argument("--panel", help=HELP_DICT["panel"], choices=list(PANEL))
+    parser.add_argument("--bed", help="custom bed file.")
     if sub_program:
         parser.add_argument(
             "--bam", help="Input BAM file from step `target_metrics`. ", required=True

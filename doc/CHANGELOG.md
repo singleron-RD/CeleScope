@@ -1,6 +1,7 @@
 ## [2.10.0]
-- Added: Support spatial analysis.
-- Changed: save raw counts to adata.layers['counts'] before normalization.
+- Added: Spatial pipeline.
+- Added: `--bed` parameter for `multi_snp`.
+- Changed: Save raw counts to adata.layers['counts'] before normalization.
 
 ## [2.9.0] - 2025-09-12
 

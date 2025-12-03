@@ -1,6 +1,5 @@
 from celescope.snp.__init__ import __ASSAY__
 from celescope.tools.multi import Multi
-from celescope.tools.__init__ import TAG_BAM_SUFFIX
 
 
 class Multi_snp(Multi):
@@ -40,22 +39,10 @@ class Multi_snp(Multi):
 
     """
 
-    def star(self, sample):
-        step = "star"
-        cmd_line = self.get_cmd_line(step, sample)
-        if self.args.not_consensus:
-            fq = f'{self.outdir_dic[sample]["cutadapt"]}/{sample}_clean_2.fq'
-        else:
-            fq = f'{self.outdir_dic[sample]["consensus"]}/{sample}_consensus.fq'
-            cmd_line += " --consensus_fq "
-
-        cmd = f"{cmd_line} " f"--fq {fq} "
-        self.process_cmd(cmd, step, sample, m=self.args.starMem, x=self.args.thread)
-
     def target_metrics(self, sample):
         step = "target_metrics"
         cmd_line = self.get_cmd_line(step, sample)
-        bam = f'{self.outdir_dic[sample]["featureCounts"]}/{sample}_{TAG_BAM_SUFFIX}'
+        bam = f'{self.outdir_dic[sample]["starsolo"]}/{sample}_Aligned.sortedByCoord.out.bam'
         cmd = (
             f"{cmd_line} "
             f"--bam {bam} "

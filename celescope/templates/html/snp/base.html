@@ -1,18 +1,13 @@
 {% include "html/utils/start.html"%}
 
-    {% if consensus_summary is defined %}
-    {% set step_summary = consensus_summary %}
-    {% include "html/utils/step.html" %}
-    {% endif %}
-    
-    {% if star_summary is defined %}
-    {% set step_summary = star_summary %}
-    {% include "html/utils/step.html" %}
+    {% if demultiplexing_summary is defined %}
+    {% set step_summary = demultiplexing_summary %}
+    {% include "html/utils/step.html"%}
     {% endif %}
 
-    {% if featureCounts_summary is defined %}
-    {% set step_summary = featureCounts_summary %}
-    {% include "html/utils/step.html"%}
+    {% if mapping_summary is defined %}
+    {% set step_summary = mapping_summary %}
+    {% include "html/utils/step.html" %}
     {% endif %}
 
     {% if target_metrics_summary is defined %}
@@ -20,7 +15,7 @@
     {% include "html/utils/step.html"%}
     {% endif %}
 
-    {% if variant_celling_summary is defined %}
+    {% if variant_calling_summary is defined %}
     {% set step_summary = variant_calling_summary %}
     {% include "html/utils/step.html"%}
     {% endif %}

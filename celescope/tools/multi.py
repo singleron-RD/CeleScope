@@ -271,7 +271,7 @@ job_end
                 cmd_line += f"--{arg} "
             else:
                 if args_dict[arg]:
-                    matches = [" ", "-"]
+                    matches = [" ", "-", ">", "<"]
                     arg_string = str(args_dict[arg])
                     if any(char in arg_string for char in matches):  # need quote
                         cmd_line += f'--{arg} "{arg_string}" '

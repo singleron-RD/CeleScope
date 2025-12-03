@@ -180,15 +180,14 @@ def get_bed_file_path(panel):
         return bed_file_path
 
 
-def get_gene_region_from_bed(panel):
+def get_gene_region_from_bed(bed) -> tuple[set, pd.DataFrame]:
     """
     Returns
-    - genes
+    - genes: set
     - position_df with 'Chromosome', 'Start', 'End'
     """
-    file_path = get_bed_file_path(panel)
     bed_file_df = pd.read_table(
-        file_path,
+        bed,
         usecols=[0, 1, 2, 3],
         names=["Chromosome", "Start", "End", "Gene"],
         sep="\t",

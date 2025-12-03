@@ -83,7 +83,7 @@ class Analysis(Scanpy_wrapper):
             self.adata,
             img_key="hires",
             color=["total_counts"],
-            color_map="jet",
+            color_map="Reds",
             size=1.5,
             norm=colors.LogNorm(vmin=1),
             show=False,

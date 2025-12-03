@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from celescope.tools import utils
 from celescope.tools.step import Step
 from celescope.tools.step import s_common
-from celescope.tools.target_metrics import get_gene_list
+from celescope.tools.target_metrics import get_genes
 from celescope.__init__ import HELP_DICT
 from celescope.snp.__init__ import PANEL
 
@@ -162,7 +162,7 @@ class Analysis_snp(Step):
         self.vcf_file = args.vcf
 
         # parse
-        self.gene_list, self.n_gene = get_gene_list(args)
+        self.genes = get_genes(args)
         self.database = args.database
 
         # data
@@ -194,7 +194,10 @@ class Analysis_snp(Step):
 
     @utils.add_log
     def run_snpEff(self):
-        cmd = f"snpEff -Xmx8g -v {self.database} {os.path.abspath(self.vcf_file)} > variants_ann.vcf "
+        args = f"-Xmx8g -v {self.database} {os.path.abspath(self.vcf_file)} "
+        if self.args.snpeff_cache:
+            args += f" -dataDir {self.args.snpeff_cache} "
+        cmd = f"snpEff {args} > variants_ann.vcf "
         self.run_snpEff.logger.info(cmd)
 
         cwd = os.getcwd()
@@ -215,7 +218,7 @@ class Analysis_snp(Step):
                 self.final_vcf_file, "w", header=vcf_in.header
             ) as vcf_out:
                 for i, record in enumerate(vcf_in.fetch()):
-                    if gene_list[i] in self.gene_list:
+                    if gene_list[i] in self.genes:
                         vcf_out.write(record)
 
     def get_variant_table(self):
@@ -244,7 +247,7 @@ class Analysis_snp(Step):
         ]
         cols = [col for col in cols if col in df_vcf.columns]
         df_vcf = df_vcf.loc[:, cols]
-        is_in_gene_list = df_vcf.Gene.isin(self.gene_list)
+        is_in_gene_list = df_vcf.Gene.isin(self.genes)
         df_vcf = df_vcf[is_in_gene_list]
 
         self.variant_table = df_vcf
@@ -351,6 +354,8 @@ def get_opts_analysis_snp(parser, sub_program):
         help="snpEff database. Common choices are GRCh38.mane.1.0.ensembl(human) and GRCm38.99(mouse)",
         default="GRCh38.mane.1.0.ensembl",
     )
+    parser.add_argument("--snpeff_cache", help="snpEff cache directory.")
+    parser.add_argument("--bed", help="custom bed file.")
     parser.add_argument("--panel", help=HELP_DICT["panel"], choices=list(PANEL))
     parser.add_argument(
         "--plot_top_n", type=int, help="plot UMAP of at most n variants ", default=20
