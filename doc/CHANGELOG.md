@@ -1,3 +1,10 @@
+## [2.10.2] - 2025-12-05
+- Fixed: Pin bioconda::snpeff==5.2 in conda_pkgs.txt to avoid java version issues.
+- Fixed: Replace awk with pandas for report filtering to avoid awk issues in docker image.
+
+## [2.10.1] - 2025-12-05
+- Fixed: Add `pyarrow` to requirements.txt.
+
 ## [2.10.0] - 2025-12-05
 - Added: Spatial pipeline.
 - Added: `--bed` parameter for `multi_snp`.

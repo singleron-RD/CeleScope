@@ -9,4 +9,4 @@ bioconda::igblast
 bioconda::pysam
 bioconda::gatk4
 bioconda::picard
-bioconda::snpeff
+bioconda::snpeff==5.2

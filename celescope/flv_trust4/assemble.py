@@ -251,9 +251,17 @@ class Assemble(Step):
     @staticmethod
     @utils.add_log
     def filter_trust_report(filedir, sample):
-        cmd = f""" awk '$4!~"_" && $4!~"?"' {filedir}/{sample}_report.tsv > {filedir}/{sample}_filter_report.tsv 2>&1"""
-        Assemble.filter_trust_report.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
+        input_file = f"{filedir}/{sample}_report.tsv"
+        output_file = f"{filedir}/{sample}_filter_report.tsv"
+
+        df = pd.read_csv(input_file, sep="\t", header=None)
+
+        filtered = df[
+            (~df[3].str.contains("_", na=False))
+            & (~df[3].str.contains("?", na=False, regex=False))
+        ]
+
+        filtered.to_csv(output_file, sep="\t", header=False, index=False)
 
     @staticmethod
     @utils.add_log
