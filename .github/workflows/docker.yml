@@ -16,6 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Free disk space before building
+      - name: Free Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
       - name: Build Image
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -24,8 +35,6 @@ jobs:
           tags: ${{ github.event.inputs.tag_name || github.event.release.tag_name }}
           containerfiles: Dockerfile
 
-      # Podman Login action (https://github.com/redhat-actions/podman-login) also be used to log in,
-      # in which case 'username' and 'password' can be omitted.
       - name: Push To quay.io
         id: push-to-quay
         uses: redhat-actions/push-to-registry@v2
