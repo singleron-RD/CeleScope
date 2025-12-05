@@ -1,82 +1,83 @@
-## [2.10.0]
+## [2.10.0] - 2025-12-05
 - Added: Spatial pipeline.
 - Added: `--bed` parameter for `multi_snp`.
-- Changed: Save raw counts to adata.layers['counts'] before normalization.
+- Changed: Merge the barcode, cutadapt, and featureCounts steps in the SNP pipeline into a single STARsolo step, and remove the consensus step.
+- Changed: Save raw counts to `adata.layers['counts']` before normalization.
 
 ## [2.9.0] - 2025-09-12
-
 - Added: Support automatic detection of `flv-V2` chemistry.
-- Changed: Default value of `--soloCBmatchWLtype` changed from 1MM to EditDist_2, which increases the percentage of valid reads.
-- Changed: Clonotype definition in bulk_vdj changed from CDR3_aa to (v_gene, d_gene, j_gene, CDR3_nt).
-- Changed: Annotation file in bulk_vdj is now merged by clonotype, helping reduce file size.
-- Changed: In rna, ffpe, dynaseq, and bulk_rna pipelines, the number of sampled reads for calculating barcode and UMI Q30 was increased from the first 100k to the first 1M reads.
-- Fixed: Set OPENBLAS_NUM_THREADS to 1 in shell scripts to avoid #293
+- Changed: The default value of `--soloCBmatchWLtype` changes from 1MM to EditDist_2, which increases the percentage of valid reads.
+- Changed: The clonotype definition in bulk_vdj changes from CDR3_aa to (v_gene, d_gene, j_gene, CDR3_nt).
+- Changed: The annotation file in bulk_vdj is now merged by clonotype, which helps reduce file size.
+- Changed: In rna, ffpe, dynaseq, and bulk_rna pipelines, the number of sampled reads for calculating barcode and UMI Q30 increases from the first 100k to the first 1M reads.
+- Fixed: Set `OPENBLAS_NUM_THREADS` to 1 in shell scripts to avoid #293.
 
 ## [2.8.0] - 2025-09-01
 - Added: FFPE pipeline.
-- Changed: Updated the genome links in the tutorial from Ensembl 99 to Ensembl 110
+- Changed: Update the genome links in the tutorial from Ensembl 99 to Ensembl 110.
 
 ## [2.7.6] - 2025-08-19
-- Removed: remove `rna_5p3p`. Use [celescope-mobiu](https://github.com/singleron-RD/celescope-mobiu) instead.
+- Removed: Remove `rna_5p3p`. Use `celescope-mobiu` instead.
 
 ## [2.7.5] - 2025-07-31
-- Fixed: Fixed a bug in bulk_vdj where an error would occur when the read count for empty wells was zero.
+- Fixed: Fix a bug in bulk_vdj where an error occurs when the read count for empty wells is zero.
 
 ## [2.7.4] - 2025-07-14
-- Fixed: In `bulk_rna split_fastq`, the sequences are now the original sequences from the FASTQ file. Previously, if a read was mapped to the reverse strand, the split FASTQ contained the reverse-complemented sequence.
+- Fixed: In `bulk_rna split_fastq`, the sequences are now the original sequences from the FASTQ file. Previously, if a read maps to the reverse strand, the split FASTQ contains the reverse-complemented sequence.
 
 ## [2.7.3] - 2025-07-09
-- Changed: The method used for automatic chemistry detection (`--chemistry auto`) has been updated. Previously, the 6 bp linker sequence following the UMI was used to distinguish between GEXSCOPE-V1 and flv_rna. This version now uses the presence of a 'C' at the 57th base instead, providing more robust classification in cases where the 6 bp linker may be affected by sequencing errors.
+- Changed: Update the method used for automatic chemistry detection (`--chemistry auto`). Previously, the 6 bp linker sequence following the UMI is used to distinguish GEXSCOPE-V1 from flv_rna. This version instead uses the presence of a 'C' at the 57th base, which provides more robust classification when the 6 bp linker is affected by sequencing errors.
 
 ## [2.7.2] - 2025-07-09
- - Changed: In `bulk_vdj` analysis, retain only UMIs whose CDR3 amino acid sequence is longer than 5 residues and starts with 'C'.
+- Changed: In `bulk_vdj` analysis, retain only UMIs whose CDR3 amino acid sequence is longer than 5 residues and starts with 'C'.
 
 ## [2.7.1] - 2025-07-08
- - Added: `--outSAMtype None` for no BAM output.
+- Added: `--outSAMtype None` for no BAM output.
 
 ## [2.7.0] - 2025-07-04
- - Added: support for `bulk_rna-V3` auto detection.
- - Added: well metrics in `bulk_vdj` HTML report.
- - Changed: introduced the required `--well_sample` parameter in `bulk_vdj`. 
- - Changed: optimized the consensus algorithm so that leading Ns no longer affect the downstream base calls. This improvement can increase the V(D)J mapping rate after consensus.
- - Removed: `cutadapt` step in `vdj` and `bulk_vdj`.
+- Added: Support for `bulk_rna-V3` auto detection.
+- Added: Well metrics in `bulk_vdj` HTML report.
+- Changed: Introduce the required `--well_sample` parameter in `bulk_vdj`.
+- Changed: Optimize the consensus algorithm so that leading Ns no longer affect downstream base calls, which increases the V(D)J mapping rate after consensus.
+- Removed: Remove the `cutadapt` step in `vdj` and `bulk_vdj`.
 
 ## [2.6.1] - 2025-06-10
- - Added: log output support for shell mode.
+- Added: Log output support for shell mode.
 
 ## [2.6.0] - 2025-05-29
- - Added: `--report_soloFeature` in `starsolo`. If you do not want to include intron reads in the analysis, use `--report_soloFeature Gene`.
- - Added: parameters in the HTML report.
+- Added: `--report_soloFeature` in `starsolo`. If intron reads should not be included, use `--report_soloFeature Gene`.
+- Added: Parameters in the HTML report.
 
 ## [2.5.0] - 2025-05-13
- - Added: BAM splitting functionality and read-level metrics in `bulk_rna`.
- - Added: `--limitBAMsortRAM` parameter in `starsolo`.
+- Added: BAM splitting functionality and read-level metrics in `bulk_rna`.
+- Added: `--limitBAMsortRAM` parameter in `starsolo`.
 
 ## [2.4.0] - 2025-04-02
- - Added: support for `flv_rna-V2` chemistry.
- - Fixed: "customized" option in chemistry was not working.
+- Added: Support for `flv_rna-V2` chemistry.
+- Fixed: The "customized" option in chemistry does not work.
 
 ## [2.3.2] - 2025-03-11
- - Fixed: `bulk_rna-V2` was auto-detected as `bulk_rna-V1`.
+- Fixed: `bulk_rna-V2` is auto-detected as `bulk_rna-V1`.
 
 ## [2.3.1] - 2025-03-06
- - Changed: Improve the split_fastq speed of `bulk_rna`.
+- Changed: Improve the `split_fastq` speed of `bulk_rna`.
 
 ## [2.3.0] - 2025-03-04
- - Changed: `bulk_rna` added automatic chemistry detection and FASTQ splitting functionality, replaced featureCounts with STARsolo for quantification, introduced the required `--well_sample` parameter.
+- Changed: `bulk_rna` adds automatic chemistry detection and FASTQ splitting, replaces featureCounts with STARsolo, and introduces the required `--well_sample` parameter.
 
 ## [2.2.2] - 2025-02-12
- - Fixed: Pin plotly version == 5.24.1 to avoid compatibility issues.
- 
+- Fixed: Pin plotly version at 5.24.1 to avoid compatibility issues.
+
 ## [2.2.0] - 2025-02-05
- - Added: pathSeq workflow for single-cell 16S.
- - Added: support for species other than human or mouse in `flv_trust4`.
+- Added: pathSeq workflow for single-cell 16S.
+- Added: Support for species other than human or mouse in `flv_trust4`.
 
 ## [2.1.0] - 2024-09-10
- - Added: support for `rna_5p3p`.
- - Fixed: Pin numpy version==1.26.0.
- - Fixed: Wrong delimiter results in empty filter_contig.fasta.
- - Changed: When some read lengths in R1 read are shorter than required, no error is reported.
+- Added: Support for `rna_5p3p`.
+- Fixed: Pin numpy version at 1.26.0.
+- Fixed: Wrong delimiter results in an empty `filter_contig.fasta`.
+- Changed: When some R1 read lengths are shorter than required, no error is reported.
+
 
 ## [2.0.7] - 2023-12-01
  ### `rna` and `dynaseq`
