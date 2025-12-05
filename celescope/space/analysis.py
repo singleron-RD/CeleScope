@@ -3,7 +3,6 @@ from celescope.tools.step import s_common
 import scanpy as sc
 import matplotlib.pyplot as plt
 from matplotlib import colors
-from skimage.color import gray2rgb
 from celescope.tools.utils import add_log
 from celescope.tools.plotly_plot import StaticPlot
 from celescope.tools.analysis_wrapper import Scanpy_wrapper, format_df_marker
@@ -35,13 +34,6 @@ class Analysis(Scanpy_wrapper):
         self.adata = sc.read_visium(
             self.outdir, count_file=f"{self.args.use_matrix}_feature_bc_matrix.h5"
         )
-
-        lib_id = list(self.adata.uns["spatial"].keys())[0]
-        img = self.adata.uns["spatial"][lib_id]["images"]["hires"]
-
-        # 如果是灰度图
-        if img.ndim == 2:
-            self.adata.uns["spatial"][lib_id]["images"]["hires"] = gray2rgb(img)
 
     @add_log
     def filter_cells(self):
