@@ -47,11 +47,10 @@ celescope rna mkref \
 Under your working directory, write a shell script `run.sh` as
 
 ```
-multi_rna \
+multi_space \
     --mapfile ./sample.mapfile \
     --genomeDir {path to hs_ensembl_110 or mmu_ensembl_110} \
     --thread 16 \
-    --soloCellFilter EmptyDrops_CR \
     --mod shell
 ```
 `--mapfile` Required.  Mapfile is a tab-delimited text file with four columns. Each line of mapfile represents paired-end fastq files.
