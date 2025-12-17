@@ -136,7 +136,7 @@ class Cells(Cells_metrics):
             value=n_filtered_cells,
             show=False,
         )
-        return filtered.slice_matrix(bc_indices)
+        return filtered.slice_matrix_bc(bc_indices)
 
     @utils.add_log
     def metrics_report(self, filtered: CountMatrix):

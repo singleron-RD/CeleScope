@@ -14,7 +14,8 @@ class Analysis(Scanpy_wrapper):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
-        self.counts_png = f"{self.outdir}/counts.png"
+        self.filtered_counts_png = f"{self.outdir}/counts.png"
+        self.raw_counts_png = f"{self.outdir}/raw_counts.png"
         self.cluster_png = f"{self.outdir}/cluster.png"
         self.raw_h5 = f"{self.outdir}/raw_feature_bc_matrix.h5"
         self.filtered_h5 = f"{self.outdir}/filtered_feature_bc_matrix.h5"
@@ -22,7 +23,7 @@ class Analysis(Scanpy_wrapper):
         self.outs = [
             self.df_marker_raw_file,
             self.h5ad_file,
-            self.counts_png,
+            self.filtered_counts_png,
             self.cluster_png,
             self.raw_h5,
             self.filtered_h5,
@@ -31,9 +32,7 @@ class Analysis(Scanpy_wrapper):
 
     @add_log
     def read_data(self):
-        self.adata = sc.read_visium(
-            self.outdir, count_file=f"{self.args.use_matrix}_feature_bc_matrix.h5"
-        )
+        self.adata = sc.read_visium(self.outdir, count_file="raw_feature_bc_matrix.h5")
 
     @add_log
     def filter_cells(self):
@@ -45,13 +44,21 @@ class Analysis(Scanpy_wrapper):
         convert_10x_h5(self.args.filtered, self.filtered_h5)
 
     @add_log
+    def get_filtered_data(self):
+        adata_filtered = self.adata[self.adata.obs["in_tissue"] == 1, :].copy()
+        self.adata = adata_filtered
+
+    @add_log
     def run(self):
         self.convert_h5()
         spatial = Spatial(self.args.spatial)
         spatial.output_spatial(self.spatial_dir)
         self.read_data()
         self.calculate_qc_metrics()
-        self.add_count_plot()
+        self.add_count_plot(self.raw_counts_png)
+        self.get_filtered_data()
+        self.add_count_plot(self.filtered_counts_png)
+        self.add_data(plotly_count=StaticPlot(self.filtered_counts_png).get_div())
         self.write_mito_stats()
         self.filter_cells()
         self.normalize()
@@ -69,7 +76,7 @@ class Analysis(Scanpy_wrapper):
         spatial.rename_tissue_positions_csv(self.spatial_dir)
 
     @add_log
-    def add_count_plot(self):
+    def add_count_plot(self, plot_path):
         plt.figure(figsize=(8, 8))
         sc.pl.spatial(
             self.adata,
@@ -81,9 +88,8 @@ class Analysis(Scanpy_wrapper):
             show=False,
             save=None,
         )
-        plt.savefig(self.counts_png, dpi=300, bbox_inches="tight")
+        plt.savefig(plot_path, dpi=300, bbox_inches="tight")
         plt.close()
-        self.add_data(plotly_count=StaticPlot(self.counts_png).get_div())
 
     @add_log
     def add_cluster_plot(self):
@@ -158,12 +164,6 @@ def get_opts_analysis(parser, sub_program):
         default=200,
     )
     parser.add_argument("--genomeDir", help=HELP_DICT["genomeDir"], required=True)
-    parser.add_argument(
-        "--use_matrix",
-        choices=["raw", "filtered"],
-        default="filtered",
-        help="Which matrix to use for analysis.",
-    )
     if sub_program:
         parser.add_argument("--raw", help="raw matrix", required=True)
         parser.add_argument("--filtered", help="filtered matrix", required=True)

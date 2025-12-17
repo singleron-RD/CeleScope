@@ -1,3 +1,8 @@
+## [unreleased] 
+- Fixed: Fix gene_list support and export gene_count.tsv.
+- Changed: Relax default --bcftools_filter from "QUAL>=1000 && AF>=0.01" to "QUAL>=100".
+- Added: 
+
 ## [2.10.2] - 2025-12-05
 - Fixed: Pin bioconda::snpeff==5.2 in conda_pkgs.txt to avoid java version issues.
 - Fixed: Replace awk with pandas for report filtering to avoid awk issues in docker image.

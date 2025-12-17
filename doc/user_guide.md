@@ -72,6 +72,15 @@ usage: rna multi-samples [-h] --mapfile MAPFILE [--mod {sjm,shell}] [--queue QUE
 ...
 ```
 
+To avoid dependency conflicts, certain workflows have been kept out of CeleScope and hosted in their own standalone repositories:
+
+|data|kit|repo|
+|---|------|--------------|
+|single cell 3′ and 5′ RNA-seq|MobiuSCOPE|[celescope-mobiu](https://github.com/singleron-RD/celescope-mobiu)|
+|single cell DNA + RNA|AccuraSCOPE|[AccuraSCOPE](https://github.com/singleron-RD/AccuraSCOPE)|
+|single cell ATAC| |[CeleScope_ATAC](https://github.com/singleron-RD/CeleScope_ATAC)|
+
+
 
 ## [Chemistry](./chemistry.md)
 

@@ -15,10 +15,6 @@
     {% include "html/utils/step.html"%}
     {% endif %}
 
-    {% if variant_calling_summary is defined %}
-    {% set step_summary = variant_calling_summary %}
-    {% include "html/utils/step.html"%}
-    {% endif %}
 
     {% if analysis_snp_summary is defined %}
     {% set step_summary = analysis_snp_summary %}

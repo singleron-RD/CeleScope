@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pysam
 import sys
 import subprocess
@@ -17,7 +18,7 @@ def get_genes(args) -> set:
         bed = utils.get_bed_file_path(args.panel)
         genes, _ = utils.get_gene_region_from_bed(bed)
     elif args.gene_list:
-        genes = utils.read_one_col(args.gene_list)
+        genes, _ = utils.read_one_col(args.gene_list)
     else:
         sys.exit("You must provide one of --panel, --bed, --gene_list!")
 
@@ -46,7 +47,7 @@ class Target_metrics(Step):
         )
         self.match_barcode = set(self.match_barcode_list)
 
-        self.gene_list = get_genes(args)
+        self.genes = get_genes(args)
 
         self.count_dict = utils.nested_defaultdict(dim=3, valType=int)
         self.dup_dict = utils.nested_defaultdict(dim=4, valType=int)
@@ -54,7 +55,7 @@ class Target_metrics(Step):
 
         self.add_metric(
             name="Number of Target Genes",
-            value=len(self.gene_list),
+            value=len(self.genes),
         )
         self.add_metric(
             name="Number of Cells",
@@ -64,6 +65,7 @@ class Target_metrics(Step):
         # out file
         self.out_bam_file = f"{self.out_prefix}_filtered.bam"
         self.out_bam_file_sorted = f"{self.out_prefix}_filtered_sorted.bam"
+        self.gene_count_tsv = f"{self.out_prefix}_gene_count.tsv"
 
     @utils.add_log
     def read_bam_write_filtered(self):
@@ -97,7 +99,7 @@ class Target_metrics(Step):
                     except KeyError:
                         continue
                     self.count_dict[barcode][gene_name][UMI] += 1
-                    if barcode in self.match_barcode and gene_name in self.gene_list:
+                    if barcode in self.match_barcode and gene_name in self.genes:
                         rn, rs = record.reference_name, record.reference_start
                         self.dup_dict[barcode][UMI][rn][rs] += 1
                         if self.dup_dict[barcode][UMI][rn][rs] > max_duplicate:
@@ -118,13 +120,15 @@ class Target_metrics(Step):
         enriched_reads = 0
         enriched_reads_in_cells = 0
         enriched_reads_per_cell_list = []
+        gene_count_dict = defaultdict(int)
 
         for barcode in self.count_dict:
             cell_enriched_read = 0
             for gene_name in self.count_dict[barcode]:
                 gene_read = sum(self.count_dict[barcode][gene_name].values())
                 total_reads += gene_read
-                if gene_name in self.gene_list:
+                gene_count_dict[gene_name] += gene_read
+                if gene_name in self.genes:
                     enriched_reads += gene_read
                     if barcode in self.match_barcode:
                         enriched_reads_in_cells += gene_read
@@ -171,6 +175,13 @@ class Target_metrics(Step):
             value=np.median(list(self.used_dict.values())),
             help_info="Median number of reads per cell after deduplication. Deduplication is performed using the combination (CB, UB, reference_name, reference_start). For each unique combination, at most max_duplicate reads are retained.",
         )
+
+        # write gene count tsv
+        df = pd.DataFrame.from_dict(gene_count_dict, orient="index", columns=["count"])
+        df.index.name = "gene_name"
+        df = df.sort_values(by="count", ascending=False)
+        df["pencent"] = round(df["count"] / total_reads * 100, 2)
+        df.to_csv(self.gene_count_tsv, sep="\t")
 
     def run(self):
         self.read_bam_write_filtered()

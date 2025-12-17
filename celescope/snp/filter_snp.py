@@ -187,7 +187,7 @@ def get_opts_filter_snp(parser, sub_program):
     parser.add_argument(
         "--bcftools_filter",
         help="bcftools filter -i expression",
-        default="QUAL>=1000 && AF>=0.01",
+        default="QUAL>=100",
     )
     parser.add_argument(
         "--ref_threshold_method",
