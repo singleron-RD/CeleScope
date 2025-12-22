@@ -1,7 +1,9 @@
-## [unreleased] 
+## [2.10.3] - unreleased
+- Added: Add --barcode support to rna cells.
 - Fixed: Fix gene_list support and export gene_count.tsv.
+- Fixed: Fix broken `celescope rna cells` command.
 - Changed: Relax default --bcftools_filter from "QUAL>=1000 && AF>=0.01" to "QUAL>=100".
-- Added: 
+- Changed: Preserve Scanpy cluster IDs (remove +1 offset) in markers and tSNE exports.
 
 ## [2.10.2] - 2025-12-05
 - Fixed: Pin bioconda::snpeff==5.2 in conda_pkgs.txt to avoid java version issues.

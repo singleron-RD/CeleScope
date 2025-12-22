@@ -281,7 +281,7 @@ class Scanpy_wrapper(Step):
             "pct_nz_reference": "pct.2",
         }
         df_markers = df_markers.rename(markers_name_dict, axis="columns")
-        df_markers["cluster"] = df_markers["cluster"].map(lambda x: int(x) + 1)
+        df_markers["cluster"] = df_markers["cluster"].map(lambda x: int(x))
         df_markers = df_markers.loc[df_markers["p_val_adj"] < PVAL_CUTOFF,]
         df_markers.to_csv(self.df_marker_raw_file, index=None, sep="\t")
 
@@ -307,7 +307,7 @@ class Scanpy_wrapper(Step):
         df_tsne["Gene_Counts"] = self.adata.obs.n_genes_by_counts
         tsne_name_dict = {"X_tsne1": "tSNE_1", "X_tsne2": "tSNE_2"}
         df_tsne = df_tsne.rename(tsne_name_dict, axis="columns")
-        df_tsne["cluster"] = df_tsne["cluster"].map(lambda x: int(x) + 1)
+        df_tsne["cluster"] = df_tsne["cluster"].map(lambda x: int(x))
         df_tsne.to_csv(self.df_tsne_file, sep="\t")
 
     @utils.add_log

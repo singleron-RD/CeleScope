@@ -240,11 +240,20 @@ class Cells(Cells_metrics):
         return filtered
 
     @utils.add_log
+    def force_barcode(self):
+        raw = CountMatrix.from_matrix_dir(self.raw_matrix)
+        bcs = utils.one_col_to_list(self.args.barcode)
+        filtered = raw.slice_matrix_bc(bcs)
+        return filtered
+
+    @utils.add_log
     def run(self):
         if self.args.max_mito > 1.0:
             sys.exit("max_mito should be less than 1.0")
         filtered = CountMatrix.from_matrix_dir(self.old_filtered_matrix)
-        if self.args.force_cells > 0:
+        if self.args.barcode:
+            filtered = self.force_barcode()
+        elif self.args.force_cells > 0:
             filtered = self.force_cells()
         elif self.args.soloCellFilter:
             filtered = self.soloCellFilter(filtered)
@@ -295,5 +304,9 @@ def get_opts_cells(parser, sub_program=True):
         parser.add_argument(
             "--genomeDir",
             help=HELP_DICT["genomeDir"],
+        )
+        parser.add_argument(
+            "--barcode",
+            help="User defined barcode file. One barcode per line.",
         )
         parser = s_common(parser)
