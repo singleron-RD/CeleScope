@@ -147,7 +147,7 @@ use `--steps_run barcode,cutadapt`
         fq_dict = defaultdict(lambda: defaultdict(list))
         col4_dict = {}
         col5_dict = {}
-        df = pd.read_csv(mapfile, sep=r"\s+", header=None, engine="python")
+        df = pd.read_csv(mapfile, sep="\t", header=None)
         if df.shape[1] < min_col:
             print(df)
             sys.exit(
@@ -171,8 +171,8 @@ use `--steps_run barcode,cutadapt`
 
         for sample_name in fq_dict:
             for p in pair:
-                fq_dict[sample_name][f"fq{p}_str"] = ",".join(
-                    fq_dict[sample_name][f"fq{p}"]
+                fq_dict[sample_name][f"fq{p}_str"] = utils.add_quotes_if_needed(
+                    ",".join((fq_dict[sample_name][f"fq{p}"]))
                 )
 
         return fq_dict, col4_dict, col5_dict
@@ -271,12 +271,9 @@ job_end
                 cmd_line += f"--{arg} "
             else:
                 if args_dict[arg]:
-                    matches = [" ", "-", ">", "<"]
                     arg_string = str(args_dict[arg])
-                    if any(char in arg_string for char in matches):  # need quote
-                        cmd_line += f'--{arg} "{arg_string}" '
-                    else:
-                        cmd_line += f"--{arg} {arg_string} "
+                    arg_string = utils.add_quotes_if_needed(arg_string)
+                    cmd_line += f"--{arg} {arg_string} "
 
         return cmd_line
 

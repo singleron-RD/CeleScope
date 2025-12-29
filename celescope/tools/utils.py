@@ -687,6 +687,14 @@ def get_action(parser: argparse.ArgumentParser, option_string: str) -> argparse.
     raise ValueError(f"{option_string} not found in parser")
 
 
+def add_quotes_if_needed(s: str) -> str:
+    s = s.strip()
+    matches = [" ", "-", ">", "<"]
+    if any(char in s for char in matches):
+        return f'"{s}"'
+    return s
+
+
 class Test_utils(unittest.TestCase):
     def test_gtf_dict(self):
         import tempfile
