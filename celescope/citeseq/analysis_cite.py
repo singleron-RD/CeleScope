@@ -38,6 +38,6 @@ class Analysis_cite(Step):
         tsne_cluster = Tsne_plot(df_tsne, "cluster").get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
         tsne_citeseq = Tsne_dropdown_plot(
-            df_tsne, "Citeseq", keep_antibody
+            df_tsne, "log2 antibody UMI", keep_antibody
         ).get_plotly_div()
         self.add_data(tsne_citeseq=tsne_citeseq)

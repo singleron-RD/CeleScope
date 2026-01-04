@@ -1,5 +1,6 @@
-## [2.10.3] - unreleased
+## [2.10.3] - 2025-12-31
 - Added: Add --barcode support to rna cells.
+- Added: Add raw_counts_png output in spatial analysis.
 - Fixed: Fix gene_list support and export gene_count.tsv.
 - Fixed: Fix broken `celescope rna cells` command.
 - Changed: Relax default --bcftools_filter from "QUAL>=1000 && AF>=0.01" to "QUAL>=100".
