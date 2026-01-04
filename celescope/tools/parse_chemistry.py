@@ -461,8 +461,21 @@ def get_pattern_dict_and_bc(
     return pattern_dict, bc
 
 
-def invalid_debug(chemistry, fq1_list, output_file, max_read=10000):
+def invalid_debug(
+    chemistry,
+    fq1_list,
+    output_file,
+    use_read=100,
+    pattern: str = None,
+    whitelist: str = None,
+    linker: str = None,
+):
+    SKIP_READ = 10000
     cur = CHEMISTRY_DICT[chemistry]
+    if chemistry == "customized":
+        cur["bc"] = whitelist.split(" ") if whitelist else []
+        cur["pattern"] = pattern
+        cur["linker"] = linker.split(" ") if linker else []
     fq1 = fq1_list[0]
     fq = pysam.FastxFile(fq1)
     bcs, linkers = [], []
@@ -478,13 +491,15 @@ def invalid_debug(chemistry, fq1_list, output_file, max_read=10000):
             if chemistry.split("-")[0] == "flv":
                 linker = [utils.reverse_complement(x) for x in linker]
             linkers.extend(linker)
-    runner = BcUmi(chemistry)
+    runner = BcUmi(chemistry, pattern, whitelist)
     html_sequences = []
     n_invalid = 0
     n_read = 0
     for read in fq:
         n_read += 1
-        if n_read > max_read:
+        if n_read < SKIP_READ:
+            continue
+        if n_read >= SKIP_READ + use_read:
             break
         seq = read.sequence
         valid, _corrected, _corrected_seq, _umi = runner.get_bc_umi(seq)
@@ -497,8 +512,7 @@ def invalid_debug(chemistry, fq1_list, output_file, max_read=10000):
         html_sequences.append(f"{n_invalid}--{read.name}")
         html_sequences.append(seq)
 
-    MAX_SEQ = 100
-    joined_sequences = "<br>".join(html_sequences[: MAX_SEQ * 2])
+    joined_sequences = "<br>".join(html_sequences)
 
     html_content = f"""
     <!DOCTYPE html>
@@ -514,7 +528,7 @@ def invalid_debug(chemistry, fq1_list, output_file, max_read=10000):
                 bc3: <span style="background-color:blue;">blue</span><br>
                 linker: <span style="background-color:yellow;">yellow</span>
             </p>
-        <h3> First {MAX_SEQ} invalid reads </h3>
+        <h3> invalid reads in number {SKIP_READ} to {SKIP_READ + use_read} reads</h3>
         {joined_sequences}
     </body>
     </html>
@@ -522,7 +536,7 @@ def invalid_debug(chemistry, fq1_list, output_file, max_read=10000):
 
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    sys.stderr.write(f"invalid reads in first 10000 reads:{n_invalid}\n")
+    sys.stderr.write(f"invalid reads in 100 reads:{n_invalid}\n")
 
 
 def add_color_in_html(seq, items, color="black", background_color="white"):

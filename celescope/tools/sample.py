@@ -38,7 +38,14 @@ class Sample(Step):
         )
 
         if self.args.debug:
-            invalid_debug(chemistry, self.fq1_list, self.invalid_debug_file)
+            invalid_debug(
+                chemistry,
+                self.fq1_list,
+                self.invalid_debug_file,
+                pattern=self.args.pattern,
+                whitelist=self.args.whitelist,
+                linker=self.args.linker,
+            )
 
 
 @utils.add_log
@@ -51,10 +58,16 @@ def get_opts_sample(parser, sub_program):
     if sub_program:
         parser = s_common(parser)
         parser.add_argument("--fq1", help="read1 fq file")
+        parser.add_argument("--linker")
+
     parser.add_argument(
         "--chemistry",
         choices=list(chemistry_dict.keys()),
         help="chemistry version",
         default="auto",
+    )
+    parser.add_argument("--pattern")
+    parser.add_argument(
+        "--whitelist",
     )
     return parser
