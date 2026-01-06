@@ -80,36 +80,11 @@ To avoid dependency conflicts, certain workflows have been kept out of CeleScope
 |single cell DNA + RNA|AccuraSCOPE|[AccuraSCOPE](https://github.com/singleron-RD/AccuraSCOPE)|
 |single cell ATAC| |[CeleScope_ATAC](https://github.com/singleron-RD/CeleScope_ATAC)|
 
-
+## [FAQ](./FAQ.md)
 
 ## [Chemistry](./chemistry.md)
 
-## [Test scripts and data](https://github.com/singleron-RD/celescope_test_script)
-
 ## [Change log](./CHANGELOG.md)
-
-## Frequently asked questions
-
-### What if CeleScope reports an error?
-
-When CeleScope reports an error, using GitHub Issues can be an effective way to solve or report the error.
-
-Before creating a new issue, search the existing issues with keywords(e.g., error message) to see if someone else has already reported the same problem. 
-
-### How to install a previous version instead of the latest version?
-
-1. Download an earlier version of `conda_pkgs.txt`: just change `master` to the version number(e.g. v.15.0) in the link to that version 
-```
-wget https://raw.githubusercontent.com/singleron-RD/CeleScope/v1.15.0/conda_pkgs.txt
-# create the env
-mamba create -n celescope1.15.0 -y --file conda_pkgs.txt
-```
-
-2. Install celescope
-```
-mamba activate celescope1.15.0
-pip install celescope==1.15.0
-```
 
 
 
