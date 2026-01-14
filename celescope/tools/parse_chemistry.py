@@ -465,7 +465,7 @@ def invalid_debug(
     chemistry,
     fq1_list,
     output_file,
-    use_read=100,
+    use_read=1000,
     pattern: str = None,
     whitelist: str = None,
     linker: str = None,
@@ -490,7 +490,7 @@ def invalid_debug(
             linker = utils.one_col_to_list(x)
             if chemistry.split("-")[0] == "flv":
                 linker = [utils.reverse_complement(x) for x in linker]
-            linkers.extend(linker)
+            linkers.append(linker)
     runner = BcUmi(chemistry, pattern, whitelist)
     html_sequences = []
     n_invalid = 0
@@ -508,7 +508,8 @@ def invalid_debug(
         n_invalid += 1
         for bc, color in zip(bcs, ["red", "green", "blue"]):
             seq = add_color_in_html(seq, bc, background_color=color)
-        seq = add_color_in_html(seq, linkers, background_color="yellow")
+        for linker, color in zip(linkers, ["yellow", "pink"]):
+            seq = add_color_in_html(seq, linker, background_color=color)
         html_sequences.append(f"{n_invalid}--{read.name}")
         html_sequences.append(seq)
 
@@ -523,10 +524,11 @@ def invalid_debug(
     <body>
         <h3>Color Legend</h3>
             <p>
-                bc1: <span style="background-color:red;">red</span><br>
-                bc2: <span style="background-color:green;">green</span><br>
+                bc1: <span style="background-color:red;">red</span>
+                bc2: <span style="background-color:green;">green</span>
                 bc3: <span style="background-color:blue;">blue</span><br>
-                linker: <span style="background-color:yellow;">yellow</span>
+                linker1: <span style="background-color:yellow;">yellow</span>
+                linker2: <span style="background-color:pink;">pink</span>
             </p>
         <h3> invalid reads in number {SKIP_READ} to {SKIP_READ + use_read} reads</h3>
         {joined_sequences}
@@ -536,7 +538,7 @@ def invalid_debug(
 
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    sys.stderr.write(f"invalid reads in 100 reads:{n_invalid}\n")
+    sys.stderr.write(f"invalid reads in {use_read} reads:{n_invalid}\n")
 
 
 def add_color_in_html(seq, items, color="black", background_color="white"):

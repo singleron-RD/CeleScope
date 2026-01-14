@@ -69,11 +69,13 @@ chemistry_dict = {
     "space-ffpe": {
         "pattern": "U12C8L8C8L8",
         "bc": ["bc.txt", "bc.txt"],
+        "linker": ["linker1.txt", "linker2.txt"],
     },
     # fresh frozen
     "space-ff": {
         "pattern": "U12C8L8C8L8",
         "bc": ["bc.txt", "bc.txt"],
+        "linker": ["linker1.txt", "linker2.txt"],
     },
 }
 
