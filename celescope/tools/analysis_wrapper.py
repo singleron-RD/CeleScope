@@ -66,7 +66,7 @@ class Scanpy_wrapper(Step):
             self.args.matrix_file,
             var_names="gene_symbols",
         )
-        self.adata.layers["raw"] = self.adata.X.copy()
+        self.adata.raw = self.adata.copy()
 
     @utils.add_log
     def calculate_qc_metrics(self):
@@ -113,7 +113,6 @@ class Scanpy_wrapper(Step):
         """
         sc.pp.normalize_per_cell() and sc.pp.log1p()
         """
-        self.adata.layers["counts"] = self.adata.X.copy()
 
         sc.pp.normalize_total(
             self.adata,

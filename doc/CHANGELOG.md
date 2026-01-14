@@ -1,3 +1,8 @@
+## [2.11.0] - 2026-01-14
+
+- Changed: Change the normalization method in spatial analysis to pearson_residuals, similar to sctransform in Seurat.
+- Changed: Change min_genes from 200 to 1 and resolution from 0.8 to 0.5 in spatial analysis.
+
 ## [2.10.3] - 2025-12-31
 - Added: Add --barcode support to rna cells.
 - Added: Add raw_counts_png output in spatial analysis.

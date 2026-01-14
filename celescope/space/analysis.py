@@ -1,6 +1,8 @@
+import numpy as np
 import pandas as pd
 from celescope.tools.step import s_common
 import scanpy as sc
+import scanpy.experimental as skp
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from celescope.tools.utils import add_log
@@ -33,10 +35,10 @@ class Analysis(Scanpy_wrapper):
     @add_log
     def read_data(self):
         self.adata = sc.read_visium(self.outdir, count_file="raw_feature_bc_matrix.h5")
-
-    @add_log
-    def filter_cells(self):
-        sc.pp.filter_cells(self.adata, min_genes=self.args.min_genes, inplace=True)
+        self.adata.raw = self.adata.copy()
+        sc.pp.filter_genes(self.adata, min_cells=3)
+        sc.pp.filter_cells(self.adata, min_genes=self.args.min_genes)
+        self.adata.layers["normalized"] = self.adata.X.copy()
 
     @add_log
     def convert_h5(self):
@@ -60,16 +62,32 @@ class Analysis(Scanpy_wrapper):
         self.add_count_plot(self.filtered_counts_png)
         self.add_data(plotly_count=StaticPlot(self.filtered_counts_png).get_div())
         self.write_mito_stats()
-        self.filter_cells()
-        self.normalize()
-        self.hvg()
-        self.scale()
+        # similar to Seurat sctransform
+        skp.pp.normalize_pearson_residuals(self.adata)
+        skp.pp.highly_variable_genes(
+            self.adata, flavor="pearson_residuals", n_top_genes=2000
+        )
+        if np.isnan(self.adata.X).any():
+            self.adata.X[np.isnan(self.adata.X)] = 0
         self.pca()
         self.neighbors()
         self.umap()
-        self.leiden(resolution=0.8)
+        self.leiden(resolution=0.3)
         self.add_cluster_plot()
-        self.find_marker_genes()
+
+        sc.pp.normalize_total(
+            self.adata, target_sum=1e4, inplace=True, layer="normalized"
+        )
+        sc.pp.log1p(self.adata, layer="normalized")
+        sc.tl.rank_genes_groups(
+            self.adata,
+            "cluster",
+            reference="rest",
+            pts=True,
+            use_raw=False,
+            layer="normalized",
+            method="wilcoxon",
+        )
         self.write_markers()
         self.write_h5ad()
         self.add_marker_to_html()
@@ -95,12 +113,7 @@ class Analysis(Scanpy_wrapper):
     def add_cluster_plot(self):
         plt.figure(figsize=(8, 8))
         sc.pl.spatial(
-            self.adata,
-            color=["cluster"],
-            img_key="hires",
-            size=1.5,
-            show=False,
-            save=None,
+            self.adata, color=["cluster"], img_key="hires", size=1.5, show=False
         )
         plt.savefig(self.cluster_png, dpi=300, bbox_inches="tight")
         plt.close()
@@ -161,7 +174,7 @@ def get_opts_analysis(parser, sub_program):
         "--min_genes",
         help="Minimum number of genes expressed required for a cell to pass filtering.",
         type=int,
-        default=200,
+        default=1,
     )
     parser.add_argument("--genomeDir", help=HELP_DICT["genomeDir"], required=True)
     if sub_program:

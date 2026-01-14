@@ -530,7 +530,7 @@ def invalid_debug(
                 linker1: <span style="background-color:yellow;">yellow</span>
                 linker2: <span style="background-color:pink;">pink</span>
             </p>
-        <h3> invalid reads in number {SKIP_READ} to {SKIP_READ + use_read} reads</h3>
+        <h3> invalid reads in number {SKIP_READ+1} to {SKIP_READ + use_read} reads</h3>
         {joined_sequences}
     </body>
     </html>
