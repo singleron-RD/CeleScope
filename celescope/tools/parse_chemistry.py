@@ -466,11 +466,11 @@ def invalid_debug(
     fq1_list,
     output_file,
     use_read=1000,
+    skip_read=10000,
     pattern: str = None,
     whitelist: str = None,
     linker: str = None,
 ):
-    SKIP_READ = 10000
     cur = CHEMISTRY_DICT[chemistry]
     if chemistry == "customized":
         cur["bc"] = whitelist.split(" ") if whitelist else []
@@ -497,9 +497,9 @@ def invalid_debug(
     n_read = 0
     for read in fq:
         n_read += 1
-        if n_read < SKIP_READ:
+        if n_read < skip_read:
             continue
-        if n_read >= SKIP_READ + use_read:
+        if n_read >= skip_read + use_read:
             break
         seq = read.sequence
         valid, _corrected, _corrected_seq, _umi = runner.get_bc_umi(seq)
@@ -530,7 +530,7 @@ def invalid_debug(
                 linker1: <span style="background-color:yellow;">yellow</span>
                 linker2: <span style="background-color:pink;">pink</span>
             </p>
-        <h3> invalid reads in number {SKIP_READ+1} to {SKIP_READ + use_read} reads</h3>
+        <h3> invalid reads in number {skip_read+1} to {skip_read + use_read} reads</h3>
         {joined_sequences}
     </body>
     </html>

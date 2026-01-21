@@ -36,7 +36,6 @@ class Sample(Step):
             name="Software Version",
             value=__VERSION__,
         )
-
         if self.args.debug:
             invalid_debug(
                 chemistry,
@@ -45,6 +44,8 @@ class Sample(Step):
                 pattern=self.args.pattern,
                 whitelist=self.args.whitelist,
                 linker=self.args.linker,
+                use_read=self.args.use_read,
+                skip_read=self.args.skip_read,
             )
 
 
@@ -59,7 +60,15 @@ def get_opts_sample(parser, sub_program):
         parser = s_common(parser)
         parser.add_argument("--fq1", help="read1 fq file")
         parser.add_argument("--linker")
-
+        parser.add_argument(
+            "--use_read", help="number of reads used for debug", default=1000, type=int
+        )
+        parser.add_argument(
+            "--skip_read",
+            help="Number of reads to skip for debugging. The R1 FASTQ contains N bases in the first hundred reads, so it is better to skip them during debugging",
+            default=10000,
+            type=int,
+        )
     parser.add_argument(
         "--chemistry",
         choices=list(chemistry_dict.keys()),

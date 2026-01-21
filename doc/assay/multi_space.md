@@ -109,6 +109,8 @@ obj <- Load10X_Spatial(data.dir = "./outs")
 
 Seurat v4 does not recognize the `tissue_positions.parquet` file in the spatial directory and requires the `tissue_positions_list.csv` file. You can first rename the `positions_list.csv` file to `tissue_positions_list.csv`:
 ```
+# rename parquet to avoid conflict
+mv outs/spatial/tissue_positions.parquet outs/spatial/parquet.bak
 mv outs/spatial/positions_list.csv outs/spatial/tissue_positions_list.csv
 ```
 then 
