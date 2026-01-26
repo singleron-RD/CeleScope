@@ -1,3 +1,7 @@
+## [2.11.1] - 2026-01-26
+
+- Added: Add read debug functions in the `sample` step.
+
 ## [2.11.0] - 2026-01-14
 
 - Changed: Change the normalization method in spatial analysis to pearson_residuals, similar to sctransform in Seurat.

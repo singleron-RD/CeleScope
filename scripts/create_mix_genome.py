@@ -6,13 +6,10 @@ def process_fasta(prefix1, fasta1, prefix2, fasta2):
     print("Processing FASTA files")
     out_fa = f"{prefix1}_{prefix2}.fasta"
     with open(out_fa, "w") as f_out:
-        # 处理物种 1
         print(f"    - Processing species 1: {fasta1}")
         with pysam.FastxFile(fasta1) as fh1:
             for entry in fh1:
                 f_out.write(f">{prefix1}_{entry.name}\n{entry.sequence}\n")
-
-        # 处理物种 2
         print(f"    - Processing species 2: {fasta2}")
         with pysam.FastxFile(fasta2) as fh2:
             for entry in fh2:
@@ -26,7 +23,6 @@ def process_gtf(prefix1, gtf1, prefix2, gtf2):
         g_out.write(f"#mixed gtf of {prefix1} and {prefix2}\n")
         g_out.write(f"#{gtf1}\n")
         g_out.write(f"#{gtf2}\n")
-        # 处理物种 1
         print(f"    - Processing species 1 GTF: {gtf1}")
         with open(gtf1, "r") as g1:
             for line in g1:
@@ -37,7 +33,6 @@ def process_gtf(prefix1, gtf1, prefix2, gtf2):
                     cols[0] = f"{prefix1}_{cols[0]}"
                     g_out.write("\t".join(cols))
 
-        # 处理物种 2
         print(f"    - Processing species 2 GTF: {gtf2}")
         with open(gtf2, "r") as g2:
             for line in g2:
@@ -54,7 +49,6 @@ def main():
         description="Combine genomic references with species prefixes."
     )
 
-    # 命令行参数定义
     parser.add_argument("--prefix1", required=True, help="Prefix for species 1")
     parser.add_argument("--fasta1", required=True, help="Path to species 1 FASTA")
     parser.add_argument("--gtf1", required=True, help="Path to species 1 GTF")
@@ -67,7 +61,6 @@ def main():
 
     args = parser.parse_args()
 
-    # 调用函数，直接传入平铺的参数
     process_fasta(args.prefix1, args.fasta1, args.prefix2, args.fasta2)
     process_gtf(args.prefix1, args.gtf1, args.prefix2, args.gtf2)
 

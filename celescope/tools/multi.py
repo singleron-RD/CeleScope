@@ -281,7 +281,7 @@ job_end
         step = "sample"
         arr = self.fq_dict[sample]
         cmd_line = self.get_cmd_line(step, sample)
-        cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} '
+        cmd = f'{cmd_line} ' f'--fq1 {arr["fq1_str"]} ' f'--fq2 {arr["fq2_str"]} '
         self.process_cmd(cmd, step, sample, m=1, x=1)
 
     def barcode(self, sample):
