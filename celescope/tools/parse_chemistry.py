@@ -463,7 +463,7 @@ def get_pattern_dict_and_bc(
 
 def invalid_debug(
     chemistry,
-    fq1_list,
+    fq1,
     output_file,
     use_read=1000,
     skip_read=10000,
@@ -476,7 +476,6 @@ def invalid_debug(
         cur["bc"] = whitelist.split(" ") if whitelist else []
         cur["pattern"] = pattern
         cur["linker"] = linker.split(" ") if linker else []
-    fq1 = fq1_list[0]
     fq = pysam.FastxFile(fq1)
     bcs, linkers = [], []
     if "bc" in cur:

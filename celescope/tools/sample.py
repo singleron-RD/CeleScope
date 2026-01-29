@@ -21,7 +21,7 @@ class Sample(Step):
         self.fq1_list = args.fq1.split(",")
         self.fq2_list = args.fq2.split(",")
         # out
-        self.invalid_debug_file = f"{self.out_prefix}_invalid_debug.html"
+        self.invalid_htmls: list[Path] = []
         self.subsample_fqs: list[Path] = []
 
     @utils.add_log
@@ -45,18 +45,10 @@ class Sample(Step):
             name="Software Version",
             value=__VERSION__,
         )
-        invalid_debug(
-            chemistry,
-            self.fq1_list,
-            self.invalid_debug_file,
-            pattern=self.args.pattern,
-            whitelist=self.args.whitelist,
-            linker=self.args.linker,
-            use_read=self.args.use_read,
-            skip_read=self.args.skip_read,
-        )
+
         self.subsample(self.fq1_list)
         self.subsample(self.fq2_list)
+        self.debug_invalid(chemistry)
         self.pack_files()
 
     def subsample(self, fq_list):
@@ -68,9 +60,24 @@ class Sample(Step):
 
     def pack_files(self):
         with tarfile.open(f"{self.out_prefix}_debug.tar", "w") as tar:
-            tar.add(self.invalid_debug_file, arcname=Path(self.invalid_debug_file).name)
-            for file in self.subsample_fqs:
+            for file in self.subsample_fqs + self.invalid_htmls:
                 tar.add(file, arcname=file.name)
+
+    def debug_invalid(self, chemistry):
+        for fq1 in self.fq1_list:
+            fq1 = Path(fq1)
+            out_html = Path(self.outdir) / f"{fq1.stem}.invalid.html"
+            invalid_debug(
+                chemistry,
+                fq1,
+                out_html,
+                use_read=self.args.use_read,
+                skip_read=self.args.skip_read,
+                pattern=self.args.pattern,
+                whitelist=self.args.whitelist,
+                linker=self.args.linker,
+            )
+            self.invalid_htmls.append(out_html)
 
 
 @utils.add_log
