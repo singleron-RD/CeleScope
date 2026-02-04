@@ -96,7 +96,11 @@ Note that the `./shell/{sample}.sh` must be run under the working directory(You 
 
 ## Main output
 
-In the outs folder, there is a `filtered_feature_bc_matrix.h5` file and a `spatial` directory. This format is consistent with 10X Visium output and can be directly loaded into Seurat.
+In the outs folder, there is a `filtered_feature_bc_matrix.h5` file and a `spatial` directory. This format is consistent with [10X Visium output](https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/spatial-outputs) and can be directly loaded into Seurat.
+
+The spatial directory contains two coordinate files: `positions_list.csv` and `tissue_positions.parquet`. The contents of these two files are identical; they are provided simultaneously to maintain compatibility with [different versions of 10x Space Ranger formats](https://www.10xgenomics.com/support/software/space-ranger/latest/analysis/outputs/spatial-outputs#tissue-positions) and to facilitate data loading across various versions of Seurat.
+
+> From Space Ranger v2.0 onwards, this file, which was previously named `tissue_positions_list.csv`, is renamed and includes a header column. This file was changed to a parquet format for Visium HD datasets (`tissue_positions.parquet`). The columns are the same, but the format requires third party tools (e.g. R/Python packages) to read. 
 
 **Seurat v5**
 
