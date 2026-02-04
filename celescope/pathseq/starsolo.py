@@ -1,10 +1,34 @@
 from celescope.tools.starsolo import (
-    Starsolo,
-    Mapping,
-    Cells,
+    Starsolo as tools_starsolo,
+    Mapping as tools_mapping,
+    Cells as tools_cells,
     Demultiplexing,
     get_opts_starsolo as opts_super,
+    COUNTS_FILE_NAME,
 )
+
+
+class Starsolo(tools_starsolo):
+    def __init__(self, args):
+        super().__init__(args)
+        self.outs = []
+
+
+class Mapping(tools_mapping):
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title=display_title)
+        self.outs = []
+        solo_dir = f"{self.outdir}/{self.sample}_Solo.out/{args.report_soloFeature}"
+        self.filtered_matrix = f"{solo_dir}/filtered"
+
+
+class Cells(tools_cells):
+    def __init__(self, args):
+        super().__init__(args)
+        solo_dir = solo_dir = (
+            f"{self.outdir}/{self.sample}_Solo.out/{args.report_soloFeature}"
+        )
+        self.counts_file = f"{solo_dir}/{COUNTS_FILE_NAME }"
 
 
 def starsolo(args):

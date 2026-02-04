@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "2.11.1"
+__VERSION__ = "2.11.2"
 __version__ = __VERSION__
 
 ASSAY_LIST = [

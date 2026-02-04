@@ -102,6 +102,7 @@ class Analysis(Scanpy_wrapper):
             color=["total_counts"],
             color_map="Reds",
             size=1.5,
+            alpha=0.5,
             norm=colors.LogNorm(vmin=1),
             show=False,
             save=None,

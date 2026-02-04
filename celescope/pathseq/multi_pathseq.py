@@ -19,9 +19,7 @@ class Multi_pathseq(Multi):
     def pathseq(self, sample):
         step = "pathseq"
         cmd_line = self.get_cmd_line(step, sample)
-        input_bam = (
-            f'{self.outdir_dic[sample]["outs"]}/{sample}_Aligned.sortedByCoord.out.bam'
-        )
+        input_bam = f'{self.outdir_dic[sample]["starsolo"]}/{sample}_Aligned.sortedByCoord.out.bam'
         cmd = f"{cmd_line} " f"--input_bam {input_bam} "
         self.process_cmd(cmd, step, sample, m=100, x=self.args.thread)
 
@@ -47,7 +45,7 @@ class Multi_pathseq(Multi):
         cmd_line = self.get_cmd_line(step, sample)
         cmd = (
             f"{cmd_line} "
-            f"--umi_matrix_file {self.outdir_dic[sample]['outs']}/{sample}_raw_UMI_matrix.tsv.gz "
+            f"--umi_matrix_file {self.outdir_dic[sample]['outs']}/{sample}_filtered_UMI_matrix.tsv.gz "
             f"--match_dir {self.col4_dict[sample]} "
         )
         self.process_cmd(cmd, step, sample, m=1, x=1)

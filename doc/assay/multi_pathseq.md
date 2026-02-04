@@ -78,7 +78,11 @@ bash ./shell/{sample}.sh
 
 ## Main Output Files
 
-- `outs/{sample}_raw_UMI_matrix.tsv.gz`  UMI matrix, where rows represent microbes and columns correspond to cell barcodes.
+The `multi_pathseq` pipeline generates two primary UMI (Unique Molecular Identifier) count matrices representing the microbial load across individual cells. In both files, rows represent identified microbial taxa and columns represent cell barcodes.
+
+- `outs/{sample}_raw_UMI_matrix.tsv.gz` This is the unfiltered microbial detection matrix. It contains UMI counts for every cell barcode where at least one microbial read was detected.
+
+- `outs/{sample}_filtered_UMI_matrix.tsv.gz`  This is the integrated, cell-matched matrix intended for downstream biological analysis. It is cross-referenced with your single-cell transcriptome (scRNA-seq) data. To ensure a complete dataset for comparative analysis, cells that are present in the scRNA-seq data but show no microbial expression are retained in this matrix with their values set to 0.
 
 An examples of downstream analysis using `Seurat` can be found at [github](https://github.com/singleron-RD/analysis_guide/blob/main/PathSeq_analysis.ipynb) or [gitee](https://gitee.com/singleron-rd/analysis_guide/blob/main/PathSeq_analysis.ipynb) for chinese users.
 

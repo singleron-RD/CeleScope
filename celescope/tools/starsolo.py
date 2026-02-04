@@ -324,7 +324,7 @@ class Mapping(Step):
     # only add metrics
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
-        solo_dir = f"{self.outdir}/{self.sample}_Solo.out/GeneFull_Ex50pAS"
+        solo_dir = f"{self.outdir}/{self.sample}_Solo.out/{args.report_soloFeature}"
         self.cellReadsStats = f"{solo_dir}/CellReads.stats"
         self.filtered_matrix = f"{self.outs_dir}/{FILTERED_MATRIX_DIR_SUFFIX}"
         self.counts_file = f"{solo_dir}/{COUNTS_FILE_NAME }"
