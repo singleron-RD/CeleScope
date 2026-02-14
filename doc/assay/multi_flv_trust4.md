@@ -11,7 +11,7 @@ multi_flv_trust4 \
 
 
 ## Arguments
-`--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
+`--mapfile` Mapfile is a tab-delimited text file with four columns. Each line of mapfile represents paired-end fastq files.
 
 1st column: Fastq file prefix.  
 2nd column: Fastq file directory path.  

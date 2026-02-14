@@ -20,6 +20,55 @@ multi_snp\
     --panel lung_1\
 ```
 
+`--mapfile` Required.  Mapfile is a tab-delimited text file with for columns. Each line of mapfile represents paired-end fastq files.
+
+1st column: Fastq file prefix.  
+2nd column: Fastq file directory path.  
+3rd column: Sample name, which is the prefix of all output files. 
+4th column: The single cell rna directory after running CeleScope.
+
+Example
+
+```tsv
+R230630009      ./fastqs        TCR_sample_name  some_path/celescope_scrna_root/sample_name/
+```
+
+**Gene Selection Parameters & Priority**
+
+--panel
+
+    Description: Selects a predefined target gene panel (shortcut). The pipeline maps the panel name to its corresponding internal BED file to extract the gene list for downstream filtering and analysis.
+
+    Available Options: e.g., lung_1, blood_1, CHIP.
+
+    Use Case: Ideal when using standard gene sets without providing manual files.
+
+--gene_list
+
+    Description: A user-provided text file containing a list of gene symbols (one gene per line).
+
+    Function: The program reads this file directly to define the gene set used for filtering, annotation, and variant retention.
+
+--bed
+
+    Description: Directly specifies a BED file containing genomic coordinates of genes or regions of interest.
+
+    Function: The program extracts the gene names/regions directly from the BED file.
+
+Logic and Impact
+Priority Level
+
+The pipeline selects the gene source based on the following order of precedence:
+
+    --bed (Highest priority)
+
+    --panel (Used if no BED is provided)
+
+    --gene_list (Used if neither BED nor Panel is provided)
+
+    Note: At least one of these three parameters must be provided, or the program will return an error.
+
+
 **snpeff database**
 
 We have identified an issue regarding variant annotation where SnpEff fails to download or access databases due to a change in their official repository URLs. This is a known issue discussed in the SnpEff GitHub community [Issue#602](https://github.com/pcingola/SnpEff/issues/602).
