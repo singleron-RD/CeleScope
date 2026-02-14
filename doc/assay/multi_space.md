@@ -107,6 +107,7 @@ The spatial directory contains two coordinate files: `positions_list.csv` and `t
 ```R
 library(Seurat) # v5
 obj <- Load10X_Spatial(data.dir = "./outs")
+obj@meta.data$orig.ident = 'sample1'
 ```
 
 **Seurat v4**
@@ -121,4 +122,5 @@ then
 ```R
 library(Seurat) # v4
 obj <- Load10X_Spatial(data.dir = "./outs")
+obj@meta.data$orig.ident = 'sample1'
 ```
