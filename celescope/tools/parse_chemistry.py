@@ -410,10 +410,9 @@ class AutoSpace(Auto):
         """
         Returns: chemistry or None
         """
-        if self.is_chemistry(seq, "space-ffpe"):
-            if seq[44:54].count("T") >= 8:
-                return "space-ff"
-            return "space-ffpe"
+        for chemistry in ["space-ffpe", "space-ff"]:
+            if self.is_chemistry(seq, chemistry):
+                return chemistry
 
 
 class AutoFlv(Auto):

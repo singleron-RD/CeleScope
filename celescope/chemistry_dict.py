@@ -74,7 +74,7 @@ chemistry_dict = {
     # fresh frozen
     "space-ff": {
         "pattern": "U12C8L8C8L8",
-        "bc": ["bc.txt", "bc.txt"],
+        "bc": ["bc1.txt", "bc2.txt"],
         "linker": ["linker1.txt", "linker2.txt"],
     },
 }
