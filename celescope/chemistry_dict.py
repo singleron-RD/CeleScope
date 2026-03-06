@@ -44,7 +44,7 @@ chemistry_dict = {
     "flv-V2": {
         "pattern": "U12C9L6C9L6C9L18",
         "bc": ["bc1.txt", "bc2.txt", "bc3.txt"],
-        "linker": ["linker1.txt", "linker2.txt"],
+        "linker": ["linker1.txt", "linker2.txt", "linker3.txt"],
     },
     "bulk_vdj": {
         "pattern": "L18C6U16",

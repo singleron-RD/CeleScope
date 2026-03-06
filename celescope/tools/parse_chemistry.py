@@ -506,7 +506,7 @@ def invalid_debug(
         n_invalid += 1
         for bc, color in zip(bcs, ["red", "green", "blue"]):
             seq = add_color_in_html(seq, bc, background_color=color)
-        for linker, color in zip(linkers, ["yellow", "pink"]):
+        for linker, color in zip(linkers, ["yellow", "pink", "orange"]):
             seq = add_color_in_html(seq, linker, background_color=color)
         html_sequences.append(f"{n_invalid}--{read.name}")
         html_sequences.append(seq)
@@ -527,6 +527,7 @@ def invalid_debug(
                 bc3: <span style="background-color:blue;">blue</span><br>
                 linker1: <span style="background-color:yellow;">yellow</span>
                 linker2: <span style="background-color:pink;">pink</span>
+                linker3: <span style="background-color:orange;">orange</span>
             </p>
         <h3> invalid reads in number {skip_read+1} to {skip_read + use_read} reads</h3>
         {joined_sequences}
@@ -568,7 +569,7 @@ class BcUmi:
             offset = self.offset_runner.flv_rna_v2_offset(seq)
             seq = seq[offset:]
         bc_list = [seq[x] for x in self.pattern_dict["C"]]
-        if self.chemistry == "flv":
+        if self.chemistry.split("-")[0] == "flv":
             bc_list = [utils.reverse_complement(bc) for bc in bc_list[::-1]]
         valid, corrected, corrected_seq = check_seq_mismatch(
             bc_list, self.raw_list, self.mismatch_list
