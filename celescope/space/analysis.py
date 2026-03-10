@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import pandas as pd
 from celescope.tools.step import s_common
@@ -79,18 +81,24 @@ class Analysis(Scanpy_wrapper):
             self.adata, target_sum=1e4, inplace=True, layer="normalized"
         )
         sc.pp.log1p(self.adata, layer="normalized")
-        sc.tl.rank_genes_groups(
-            self.adata,
-            "cluster",
-            reference="rest",
-            pts=True,
-            use_raw=False,
-            layer="normalized",
-            method="wilcoxon",
-        )
-        self.write_markers()
+        n_clusters = len(self.adata.obs["cluster"].unique())
+        if n_clusters > 1:
+            sc.tl.rank_genes_groups(
+                self.adata,
+                "cluster",
+                reference="rest",
+                pts=True,
+                use_raw=False,
+                layer="normalized",
+                method="wilcoxon",
+            )
+            self.write_markers()
+            self.add_marker_to_html()
+        else:
+            sys.stderr.write(
+                "Warning: Only one cluster found. Skipping rank_genes_groups."
+            )
         self.write_h5ad()
-        self.add_marker_to_html()
         spatial.rename_tissue_positions_csv(self.spatial_dir)
 
     @add_log

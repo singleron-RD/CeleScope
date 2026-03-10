@@ -1,6 +1,7 @@
 import gzip
 import os
 from collections import defaultdict
+import sys
 
 import scipy.io
 import scipy.sparse
@@ -209,7 +210,30 @@ class CountMatrix:
         Returns:
             CountMatrix object
         """
-        barcodes_indices = [self.__barcodes.index(barcode) for barcode in bcs]
+        # Create a dictionary for faster lookup
+        barcode_to_index = {barcode: i for i, barcode in enumerate(self.__barcodes)}
+
+        # Find indices for barcodes that exist, skip those that don't
+        barcodes_indices = []
+        missing_barcodes = []
+
+        for barcode in bcs:
+            if barcode in barcode_to_index:
+                barcodes_indices.append(barcode_to_index[barcode])
+            else:
+                missing_barcodes.append(barcode)
+
+        # Log warning about missing barcodes
+        if missing_barcodes:
+            sys.stderr.write(
+                f"Warning: {len(missing_barcodes)} barcodes not found in matrix\n"
+            )
+            sys.stderr.write(f"Missing barcodes: {missing_barcodes}\n")
+
+        if not barcodes_indices:
+            sys.stderr.write("No valid barcodes found to slice")
+            return None
+
         barcodes_indices.sort()
         return self.slice_matrix(barcodes_indices)
 
