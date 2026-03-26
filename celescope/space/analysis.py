@@ -14,6 +14,26 @@ from celescope.__init__ import HELP_DICT
 from celescope.space.utils import Spatial, convert_10x_h5
 
 
+def hires_nocrop_spatial(adata, **kwargs):
+    """
+    sc.pl.spatial wrapper: show full hires image (no crop)
+    """
+    spatial = adata.uns["spatial"]["library0"]
+    img = spatial["images"]["hires"]
+    h, w = img.shape[:2]
+
+    # scale factor (align coords)
+    scale = spatial["scalefactors"].get("tissue_hires_scalef", 1.0)
+
+    return sc.pl.spatial(
+        adata,
+        img_key="hires",
+        show=False,
+        crop_coord=(0, w / scale, 0, h / scale),
+        **kwargs,
+    )
+
+
 class Analysis(Scanpy_wrapper):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
@@ -104,16 +124,13 @@ class Analysis(Scanpy_wrapper):
     @add_log
     def add_count_plot(self, plot_path):
         plt.figure(figsize=(8, 8))
-        sc.pl.spatial(
+        hires_nocrop_spatial(
             self.adata,
-            img_key="hires",
             color=["total_counts"],
             color_map="Reds",
             size=1.5,
             alpha=0.5,
             norm=colors.LogNorm(vmin=1),
-            show=False,
-            save=None,
         )
         plt.savefig(plot_path, dpi=300, bbox_inches="tight")
         plt.close()
@@ -121,9 +138,7 @@ class Analysis(Scanpy_wrapper):
     @add_log
     def add_cluster_plot(self):
         plt.figure(figsize=(8, 8))
-        sc.pl.spatial(
-            self.adata, color=["cluster"], img_key="hires", size=1.5, show=False
-        )
+        hires_nocrop_spatial(self.adata, color=["cluster"], size=1.5)
         plt.savefig(self.cluster_png, dpi=300, bbox_inches="tight")
         plt.close()
         self.add_data(plotly_cluster=StaticPlot(self.cluster_png).get_div())

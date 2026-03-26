@@ -82,9 +82,9 @@ class Spatial:
         ## output 2000 pixel HE hires and 600 pixel lowres
         Image.MAX_IMAGE_PIXELS = None
         he_image = Image.open(self.he_image)
-        img_4000 = resize_by_longest_side(he_image, 2000)
+        img_2000 = resize_by_longest_side(he_image, 2000)
         hires_path = outdir / "tissue_hires_image.png"
-        img_4000.save(hires_path)
+        img_2000.save(hires_path)
 
         img_600 = resize_by_longest_side(he_image, 600)
         lowres_path = outdir / "tissue_lowres_image.png"

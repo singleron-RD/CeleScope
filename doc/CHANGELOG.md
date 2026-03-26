@@ -2,6 +2,7 @@
 
 - Added: Add a raw UMI matrix covering all detected barcodes into the pathseq pipeline. The original raw matrix was renamed to `filtered UMI matrix` to match the filtered cell barcodes used in the transcriptomic analysis.
 - Changed: Allow multiple tag_barcode.
+- Changed: Do not use crop in spatial plots.
 - Removed: Remove the `flv_trust4` pipeline.
 
 ## [2.11.1] - 2026-01-26
