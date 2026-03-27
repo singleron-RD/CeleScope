@@ -25,7 +25,7 @@ celescope vdj mkref mouse IG
 
 ## Usage
 
-Please note `multi_vdj` is only used for CDR3 vdj data(not full length). For full length vdj data, please use  `multi_flv_trust4`.
+Please note `multi_vdj` is only used for CDR3 vdj data(not full length). For full length vdj data, please use [SingleCell_VDJ](https://github.com/singleron-RD/SingleCell_VDJ).
 
 ```
 multi_vdj \

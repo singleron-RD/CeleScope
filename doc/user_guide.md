@@ -52,7 +52,7 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 |[rna](./assay/multi_rna.md)|single-cell RNA-Seq|GEXSCOPE|
 |[dynaseq](./assay/multi_dynaseq.md)|single-cell dynamic RNA-Seq|DynaSCOPE|
 |[tag](./assay/multi_tag.md)|single-cell sample multiplexing|CLindex|
-|[vdj](./assay/multi_vdj.md)|single-cell VDJ|GEXSCOPE IR|
+|[vdj](./assay/multi_vdj.md)|single-cell VDJ(CDR3)|GEXSCOPE IR|
 |[capture_virus](./assay/multi_capture_virus.md)|single-cell virus|FocuSCOPE mRNA × EBV|
 |[snp](./assay/multi_snp.md)|single-cell variant|FocuSCOPE|
 |[fusion](./assay/multi_fusion.md)|single-cell fusion|FocuSCOPE|
@@ -76,7 +76,7 @@ To avoid dependency conflicts, certain workflows have been kept out of CeleScope
 
 |data|kit|repo|
 |---|------|--------------|
-|single-cell VDJ|sCircle|[SingleCell_VDJ](https://github.com/singleron-RD/SingleCell_VDJ)|
+|single-cell full length VDJ|sCircle|[SingleCell_VDJ](https://github.com/singleron-RD/SingleCell_VDJ)|
 |single-cell 3′ and 5′ RNA-seq|MobiuSCOPE|[celescope-mobiu](https://github.com/singleron-RD/celescope-mobiu)|
 |single-cell DNA + RNA|AccuraSCOPE|[AccuraSCOPE](https://github.com/singleron-RD/AccuraSCOPE)|
 |single-cell ATAC| |[CeleScope_ATAC](https://github.com/singleron-RD/CeleScope_ATAC)|
