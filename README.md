@@ -9,7 +9,11 @@ https://gitee.com/singleron-rd/celescope/
 [User guide](./doc/user_guide.md)
 
 # Support
-Please use the issue tracker for questions and malfunctions.
+For instant technical assistance and deep-dive queries into the CeleScope source code, you can now interact with this [NotebookLM](https://notebooklm.google.com/notebook/864dd33a-68a3-4f17-85fd-2a781aed4f64 ).
+
+This notebook has been indexed with the complete CeleScope codebase, allowing you to ask specific questions about command-line arguments, algorithm implementations, or error troubleshooting.
+
+Still need help? If the AI does not resolve your query, please use the GitHub Issue Tracker to report malfunctions or ask further questions.
 
 # About
 CeleScope is currently developed by Singleron Biotechnologies.
