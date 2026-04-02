@@ -5,16 +5,6 @@ from celescope.tools import utils
 from celescope.tools.make_ref import MakeRef_STAR
 
 
-def parse_attributes(attrs):
-    dic = {}
-    for attr_str in attrs.split(";"):
-        if attr_str:
-            attr, val = attr_str.split("=")
-            val = set(val.split(","))
-            dic[attr] = val
-    return dic
-
-
 class Mkref_rna(MakeRef_STAR):
     def __init__(self, genome_type, args):
         super().__init__(genome_type, args)
@@ -60,9 +50,4 @@ def get_opts_mkref(parser, sub_program):
             help="""Mitochondria gene list file name. This file is a plain text file with one gene per line. 
 If not provided, will use `MT-` and `mt-` to determine mitochondria genes.""",
             default="None",
-        )
-        parser.add_argument(
-            "--attributes",
-            help="Attributes to keep. Example: `gene_biotype=protein_coding,lncRNA,antisense;`",
-            default="gene_biotype=protein_coding,lncRNA,antisense,IG_LV_gene,IG_V_gene,IG_V_pseudogene,IG_D_gene,IG_J_gene,IG_J_pseudogene,IG_C_gene,IG_C_pseudogene,TR_V_gene,TR_V_pseudogene,TR_D_gene,TR_J_gene,TR_J_pseudogene,TR_C_gene;",
         )
