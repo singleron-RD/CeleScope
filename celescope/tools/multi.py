@@ -177,15 +177,6 @@ use `--steps_run barcode,cutadapt`
 
         return fq_dict, col4_dict, col5_dict
 
-    def link_data(self):
-        raw_dir = f"{self.args.outdir}/data_give/rawdata"
-        os.system("mkdir -p %s" % (raw_dir))
-        with open(raw_dir + "/ln.sh", "w") as fh:
-            fh.write("cd %s\n" % (raw_dir))
-            for s, arr in self.fq_dict.items():
-                fh.write("ln -sf %s %s\n" % (arr["fq1_str"], s + "_1.fq.gz"))
-                fh.write("ln -sf %s %s\n" % (arr["fq2_str"], s + "_2.fq.gz"))
-
     def prepare(self):
         """
         parse_mapfile, make log dir, init script variables, init outdir_dic
