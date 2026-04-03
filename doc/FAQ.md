@@ -54,12 +54,6 @@ pip install {package_name} --only-binary :all:
 
 Using the --only-binary :all: flag forces pip to download a version that is already "built," bypassing the compilation step entirely and ensuring a smooth installation.
 
-## Create .loom file from celescope output
-
-You can use the Python code in the gist below to create a .loom file for analysis with [Veloctyo](https://velocyto.org/):
-
-https://gist.github.com/zhouyiqi91/8535eed2c8fa8b415d252163efde7a18
-
 ## Doublet rate
 
 For standard Singleron chips (cell number ≤ 20k), the doublet rate can be estimated as:

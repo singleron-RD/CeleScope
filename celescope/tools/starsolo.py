@@ -6,6 +6,8 @@ from collections import Counter
 
 import pandas as pd
 import pysam
+import anndata
+import scanpy as sc
 import celescope.tools.parse_chemistry as parse_chemistry
 from celescope.chemistry_dict import chemistry_dict
 from typing import Union
@@ -168,7 +170,7 @@ def cmd_to_dict(cmd: str) -> dict:
     return res
 
 
-def create_soloFeatures(args_soloFeatures, report_soloFeature):
+def create_soloFeatures(args_soloFeatures, report_soloFeature, create_loom=False):
     """
     BAM uses first feature in soloFeatures, so move report_soloFeature to the first position.
     GeneFull_Ex50pAS is also need for intron region metrics.
@@ -179,6 +181,8 @@ def create_soloFeatures(args_soloFeatures, report_soloFeature):
     features = [report_soloFeature] + features
     if "GeneFull_Ex50pAS" not in features:
         features.append("GeneFull_Ex50pAS")
+    if create_loom and "Velocyto" not in features:
+        features.append("Velocyto")
     return " ".join(features)
 
 
@@ -218,9 +222,14 @@ class Starsolo(Step):
         # outs
         self.outs = [self.raw_matrix, self.filtered_matrix, bam]
 
+        # loom
+        if self.args.create_loom:
+            self.loom_path = Path(f"{self.outdir}/{self.sample}.loom")
+            self.outs.append(self.loom_path)
+
     def run_starsolo(self):
         soloFeatures = create_soloFeatures(
-            self.args.soloFeatures, self.args.report_soloFeature
+            self.args.soloFeatures, self.args.report_soloFeature, self.args.create_loom
         )
         cmd = create_solo_str(
             pattern_args=self.pattern_args,
@@ -299,9 +308,68 @@ class Starsolo(Step):
         ) / float(sum(umi_qual_counter.values()))
         return q30_cb, q30_umi
 
+    @utils.add_log
+    def create_loom(self):
+        """
+        Build a Loom file from output files.
+        """
+
+        solo_outdir = self.solo_out_dir
+        barcodes_path = os.path.join(self.filtered_matrix, "barcodes.tsv.gz")
+
+        X = sc.read_mtx(os.path.join(solo_outdir, "Gene/raw/matrix.mtx")).X.transpose()
+        spliced = sc.read_mtx(
+            os.path.join(solo_outdir, "Velocyto/raw/spliced.mtx")
+        ).X.transpose()
+        unspliced = sc.read_mtx(
+            os.path.join(solo_outdir, "Velocyto/raw/unspliced.mtx")
+        ).X.transpose()
+        ambiguous = sc.read_mtx(
+            os.path.join(solo_outdir, "Velocyto/raw/ambiguous.mtx")
+        ).X.transpose()
+
+        obs = pd.read_csv(
+            os.path.join(solo_outdir, "Velocyto/raw/barcodes.tsv"),
+            header=None,
+            index_col=0,
+        )
+
+        var = pd.read_csv(
+            os.path.join(solo_outdir, "Velocyto/raw/features.tsv"),
+            sep="\t",
+            names=("gene_ids", "feature_types"),
+            index_col=1,
+        )
+
+        # === Create AnnData ===
+        sys.stderr.write("[INFO] Building AnnData object...")
+
+        adata = anndata.AnnData(
+            X=X,
+            obs=obs,
+            var=var,
+            layers={"spliced": spliced, "unspliced": unspliced, "ambiguous": ambiguous},
+        )
+
+        adata.obs.index.names = ["CellID"]
+        adata.var.index.names = ["Gene"]
+        adata.var_names_make_unique()
+
+        cells_used = pd.read_table(barcodes_path, header=None, index_col=0)
+
+        adata = adata[list(cells_used.index), :]
+
+        # === Add prefix to cell IDs ===
+        adata.obs.index = [f"{self.sample}:{cell}x" for cell in adata.obs.index]
+
+        sys.stderr.write("[INFO] Writing loom file...")
+        adata.write_loom(self.loom_path)
+
     def run(self):
         self.run_starsolo()
         self.gzip_matrix()
+        if self.args.create_loom:
+            self.create_loom()
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
         return q30_cb, q30_umi, self.chemistry
 
@@ -593,6 +661,11 @@ is higher than or equal to this value.""",
         "--report_soloFeature",
         help="Specify which soloFeatures to use in the HTML report and the outs directory.",
         default="GeneFull_Ex50pAS",
+    )
+    parser.add_argument(
+        "--create_loom",
+        help="Create .loom file from the output. Requires Velocyto in soloFeatures.",
+        action="store_true",
     )
 
     if sub_program:
