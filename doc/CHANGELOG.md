@@ -1,3 +1,7 @@
+## [2.11.4] - 2026-04-07
+- Added: Added `--create_loom` argument to command-line interface for enabling Loom file creation.
+- Added: `bulk_rna` added saturation for each well.
+
 ## [2.11.3] - 2026-03-26
 - Changed: Do not use crop in spatial plots.
 

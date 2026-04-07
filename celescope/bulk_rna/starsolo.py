@@ -113,39 +113,50 @@ class Mapping(ToolsMapping):
     def parse_cellReadsStats(self) -> tuple[dict[str, int], pd.DataFrame]:
         df = pd.read_csv(self.cellReadsStats, sep="\t", header=0, index_col=0)
         df = df.iloc[1:,]  # skip first line cb not pass whitelist
-        df_count = df.loc[:, ["nUMIunique", "countedU"]]  # keep dataframe format
-        df_count.rename(columns={"nUMIunique": "UMI"}, inplace=True)
-        df_count.sort_values(by="UMI", ascending=False, inplace=True)
-        cbs = CountMatrix.read_barcodes(self.filtered_matrix)
-        df_count["mark"] = "UB"
-        for cb in cbs:
-            df_count.loc[cb, "mark"] = "CB"
-        df_count.to_csv(self.counts_file, sep="\t", index=True)
+        df.rename(columns={"nUMIunique": "UMI"}, inplace=True)
+        df["Saturation"] = np.where(
+            df["countedU"] != 0,
+            (1 - df["UMI"] / df["countedU"]).round(4),
+            np.nan,
+        )
 
-        df = df.loc[
+        df_counts = df.loc[:, ["UMI", "countedU"]]  # keep dataframe format
+        df_counts.sort_values(by="UMI", ascending=False, inplace=True)
+        cbs = CountMatrix.read_barcodes(self.filtered_matrix)
+        df_counts["mark"] = "UB"
+        for cb in cbs:
+            df_counts.loc[cb, "mark"] = "CB"
+
+        df_counts.to_csv(self.counts_file, sep="\t", index=True)
+        sum_metrics = (
+            df.loc[
+                :,
+                [
+                    "cbMatch",
+                    "cbPerfect",
+                    "genomeU",
+                    "genomeM",
+                    "exonic",
+                    "intronic",
+                    "exonicAS",
+                    "intronicAS",
+                    "countedU",
+                ],
+            ]
+            .sum()
+            .to_dict()
+        )
+
+        df_metrics = df.loc[
             :,
             [
                 "cbMatch",
-                "cbPerfect",
                 "genomeU",
                 "genomeM",
-                "exonic",
-                "intronic",
-                "exonicAS",
-                "intronicAS",
-                "countedU",
+                "Saturation",
             ],
         ]
-        metrics = df.sum().to_dict()
-        df = df.loc[
-            :,
-            [
-                "cbMatch",
-                "genomeU",
-                "genomeM",
-            ],
-        ]
-        df.rename(
+        df_metrics.rename(
             columns={
                 "cbMatch": "Reads",
                 "genomeU": "Unique-mapping Reads",
@@ -153,23 +164,33 @@ class Mapping(ToolsMapping):
             },
             inplace=True,
         )
-        df["Unique-mapping Reads"] = np.where(
-            df["Reads"] != 0,
-            (df["Unique-mapping Reads"] / df["Reads"] * 100).round(2).astype(str) + "%",
-            np.nan,
-        )
-        df["Multiple-mapping Reads"] = np.where(
-            df["Reads"] != 0,
-            (df["Multiple-mapping Reads"] / df["Reads"] * 100).round(2).astype(str)
+        df_metrics["Unique-mapping Reads"] = np.where(
+            df_metrics["Reads"] != 0,
+            (df_metrics["Unique-mapping Reads"] / df_metrics["Reads"] * 100)
+            .round(2)
+            .astype(str)
             + "%",
             np.nan,
         )
-        return metrics, df
+        df_metrics["Multiple-mapping Reads"] = np.where(
+            df_metrics["Reads"] != 0,
+            (df_metrics["Multiple-mapping Reads"] / df_metrics["Reads"] * 100)
+            .round(2)
+            .astype(str)
+            + "%",
+            np.nan,
+        )
+        df_metrics["Saturation"] = np.where(
+            df_metrics["Reads"] != 0,
+            (df_metrics["Saturation"] * 100).round(2).astype(str) + "%",
+            np.nan,
+        )
+        return sum_metrics, df_metrics
 
     @utils.add_log
     def run(self):
-        metrics, df = self.parse_cellReadsStats()
-        return self.add_metrics_to_report(metrics), df
+        metrics, df_metrics = self.parse_cellReadsStats()
+        return self.add_metrics_to_report(metrics), df_metrics
 
 
 class Cells(Step):
@@ -271,10 +292,13 @@ class Cells(Step):
                 "Reads",
                 "Unique-mapping Reads",
                 "Multiple-mapping Reads",
+                "Saturation",
                 "UMI",
                 "Genes",
             ],
         ]
+        df_cells.fillna("0", inplace=True)
+        df_cells["Reads"] = df_cells["Reads"].astype(int)
 
         table_dict = self.get_table_dict(
             title="Metrics for a Single Well",
