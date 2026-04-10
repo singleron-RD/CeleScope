@@ -142,7 +142,7 @@ def check_seq_mismatch(seq_list, raw_list, mismatch_list):
     return valid, corrected, "_".join(res)
 
 
-def get_chemistry_dict():
+def get_parsed_chemistry_dict():
     """
     Return:
     chemistry_dict. Key: chemistry name, value: chemistry dict
@@ -164,7 +164,7 @@ def get_chemistry_dict():
     return chemistry_dict
 
 
-CHEMISTRY_DICT = get_chemistry_dict()
+CHEMISTRY_DICT = get_parsed_chemistry_dict()
 
 
 def get_raw_umi_bc_and_quality(
@@ -207,6 +207,7 @@ class Auto:
                         self.chemistry_dict[chemistry]["bc"], 1
                     )
                 )
+        self.chemistry_count = defaultdict(int)
 
     def run(self):
         """
@@ -230,7 +231,7 @@ class Auto:
         chemistry = list(fq_chemistry.values())[0]
         return chemistry
 
-    def is_chemistry(self, seq, chemistry):
+    def is_valid_bc(self, seq, chemistry):
         """check if seq matches the barcode of chemistry"""
         raw_list, mismatch_list = self.mismatch_dict[chemistry]
         bc_list = [seq[x] for x in self.chemistry_dict[chemistry]["pattern_dict"]["C"]]
@@ -242,35 +243,37 @@ class Auto:
     def seq_chemistry(self, seq):
         """check if seq matches any chemistry in chemistry_dict"""
         for chemistry in self.chemistry_dict:
-            if self.is_chemistry(seq, chemistry):
+            if self.is_valid_bc(seq, chemistry):
                 return chemistry
         return None
 
-    def get_fq_chemistry(self, fq1):
-        chemistry_readcount = defaultdict(int)
+    def count_chemistry(self, fq1):
+        with pysam.FastxFile(fq1) as fq:
+            n = 0
+            for read in fq:
+                seq = read.sequence
+                n += 1
+                chemistry = self.seq_chemistry(seq)
+                if chemistry:
+                    self.chemistry_count[chemistry] += 1
+                if n == self.max_read:
+                    break
 
-        fq = pysam.FastxFile(fq1)
-        n = 0
-        for read in fq:
-            seq = read.sequence
-            n += 1
-            chemistry = self.seq_chemistry(seq)
-            if chemistry:
-                chemistry_readcount[chemistry] += 1
-            if n == self.max_read:
-                break
+    def get_fq_chemistry(self, fq1):
+        self.count_chemistry(fq1)
+
         sorted_counts = sorted(
-            chemistry_readcount.items(), key=lambda x: x[1], reverse=True
+            self.chemistry_count.items(), key=lambda x: x[1], reverse=True
         )
         print(sorted_counts)
 
         chemistry, read_counts = sorted_counts[0]
-        percent = float(read_counts) / n
-        if percent < 0.1:
-            print("Valid chemistry read counts percent < 0.1")
+        percent = round(float(read_counts) / self.max_read * 100, 2)
+        if percent < 10:
+            print("Valid chemistry read counts percent < 10%")
             raise Exception("Auto chemistry detection failed! ")
-        elif percent < 0.5:
-            print("Valid chemistry read counts percent < 0.5")
+        elif percent < 50:
+            print("Valid chemistry read counts percent < 50%")
         print(f"{fq1}: {chemistry}")
 
         return chemistry
@@ -375,7 +378,7 @@ class AutoRNA(Auto):
             return "flv_rna-V2"
 
         for chemistry in ["GEXSCOPE-V2", "GEXSCOPE-V1"]:
-            if self.is_chemistry(seq, chemistry):
+            if self.is_valid_bc(seq, chemistry):
                 if chemistry == "GEXSCOPE-V1":
                     if seq[56] != "C":
                         return "flv_rna"
@@ -398,7 +401,7 @@ class AutoBulkRNA(Auto):
             return "bulk_rna-bulk_vdj_match"
         # V2 9bp linker is ATACGCGGA, which is a valid barcode of V1; so must detect V2 first, otherwise it is a valid V1
         for chemistry in ["bulk_rna-V2", "bulk_rna-V1", "bulk_rna-V3"]:
-            if self.is_chemistry(seq, chemistry):
+            if self.is_valid_bc(seq, chemistry):
                 return chemistry
 
 
@@ -406,13 +409,40 @@ class AutoSpace(Auto):
     def __init__(self, fq1_list, max_read=10000):
         super().__init__(fq1_list, CHEMISTRY_DICT, max_read)
 
-    def seq_chemistry(self, seq):
-        """
-        Returns: chemistry or None
-        """
-        for chemistry in ["space-ffpe", "space-ff"]:
-            if self.is_chemistry(seq, chemistry):
+    def seq_chemistry(self, seq: str):
+        if seq[44 : 44 + 16] == "CTGTCTCTTATACACA" and self.is_valid_bc(
+            seq, "space-ff"
+        ):
+            return "space-ff"
+        for chemistry in ["space-ffpe", "space-ffpe-V1.1"]:
+            if self.is_valid_bc(seq, chemistry):
                 return chemistry
+
+    def get_fq_chemistry(self, fq1):
+        self.count_chemistry(fq1)
+        if self.chemistry_count["space-ffpe-V1.1"] >= self.max_read * 0.1:
+            print(
+                "Enough space-ffpe-V1.1 reads detected. Add space-ffpe chemistry count to space-ffpe-V1.1 chemistry count"
+            )
+            self.chemistry_count["space-ffpe-V1.1"] += self.chemistry_count[
+                "space-ffpe"
+            ]
+
+        sorted_counts = sorted(
+            self.chemistry_count.items(), key=lambda x: x[1], reverse=True
+        )
+        print(sorted_counts)
+
+        chemistry, read_counts = sorted_counts[0]
+        percent = round(float(read_counts) / self.max_read * 100, 2)
+        if percent < 10:
+            print("Valid chemistry read counts percent < 10%")
+            raise Exception("Auto chemistry detection failed! ")
+        elif percent < 50:
+            print("Valid chemistry read counts percent < 50%")
+        print(f"{fq1}: {chemistry}")
+
+        return chemistry
 
 
 class AutoFlv(Auto):
@@ -424,7 +454,7 @@ class AutoFlv(Auto):
         Returns: chemistry or None
         """
         for chemistry in ["flv", "flv-V2"]:
-            if self.is_chemistry(seq, chemistry):
+            if self.is_valid_bc(seq, chemistry):
                 return chemistry
 
 
@@ -451,7 +481,7 @@ def get_pattern_dict_and_bc(
     chemistry, pattern: str = "", whitelist: str = ""
 ) -> tuple[dict, list]:
     if chemistry != "customized":
-        chemistry_dict = get_chemistry_dict()
+        chemistry_dict = get_parsed_chemistry_dict()
         pattern_dict = chemistry_dict[chemistry]["pattern_dict"]
         bc = chemistry_dict[chemistry]["bc"]
     else:

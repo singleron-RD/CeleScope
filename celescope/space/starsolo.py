@@ -17,7 +17,7 @@ from celescope.tools.step import Step
 class Starsolo(tools_Starsolo):
     def __init__(self, args):
         super().__init__(args)
-        if self.chemistry == "space-ffpe":
+        if self.chemistry.startswith("space-ffpe"):
             self.extra_starsolo_args += " --soloStrand Reverse --clip5pNbases 44 "
             args.fq2 = args.fq1  # single end
 
