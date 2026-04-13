@@ -81,6 +81,12 @@ To avoid dependency conflicts, certain workflows have been kept out of CeleScope
 |single-cell DNA + RNA|AccuraSCOPE|[AccuraSCOPE](https://github.com/singleron-RD/AccuraSCOPE)|
 |single-cell ATAC| |[CeleScope_ATAC](https://github.com/singleron-RD/CeleScope_ATAC)|
 
+## Batch Analysis
+
+When analyzing multiple transcriptome samples, users can utilize the nextflow wrapper [nf-celescope](https://github.com/singleron-RD/nf-celescope) for streamlined pipeline execution. 
+
+Additionally, [multiqc-celescope](./multiqc-celescope.md) can be employed to aggregate metrics from multiple samples into a comprehensive report for convenient review.
+
 ## [FAQ](./FAQ.md)
 
 ## [Chemistry](./chemistry.md)
