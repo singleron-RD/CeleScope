@@ -148,6 +148,7 @@ use `--steps_run barcode,cutadapt`
         col4_dict = {}
         col5_dict = {}
         df = pd.read_csv(mapfile, sep="\t", header=None)
+        df = df.drop_duplicates()
         if df.shape[1] < min_col:
             print(df)
             sys.exit(

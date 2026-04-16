@@ -8,13 +8,17 @@
 
 ## Installation
 
-### Docker image
+### Docker and Nextflow wrapper
 
-https://quay.io/repository/singleron-rd/celescope?tab=tags
+The docker images are available at https://quay.io/repository/singleron-rd/celescope?tab=tags
 
+When analyzing multiple transcriptome samples, users can utilize the nextflow wrapper [nf-celescope](https://github.com/singleron-RD/nf-celescope) for streamlined pipeline execution. 
+
+
+### Conda/mamba and pip
 If you are unable to use Docker, you can install it using mamba/conda and pip as follows.
 
-### Create conda environment and install conda packages. 
+- Create conda environment and install conda packages. 
 First, you need to get the txt file from the github repository containing the name of the conda package you need to install. You can download it directly from the github repository interface, or use a download link.
 The following command will download the conda_pkgs.txt required for the latest version.
 ```
@@ -33,7 +37,7 @@ The following command will create a conda environment named `celescope` and inst
 mamba create -n celescope -y --file conda_pkgs.txt
 ```
 
-### Install celescope
+- Install celescope
 
 Make sure you have activated the conda environment before running `pip install celescope`. The following command will install the latest version of celescope.
 ```
@@ -81,11 +85,9 @@ To avoid dependency conflicts, certain workflows have been kept out of CeleScope
 |single-cell DNA + RNA|AccuraSCOPE|[AccuraSCOPE](https://github.com/singleron-RD/AccuraSCOPE)|
 |single-cell ATAC| |[CeleScope_ATAC](https://github.com/singleron-RD/CeleScope_ATAC)|
 
-## Batch Analysis
+## Multiqc-celescope
 
-When analyzing multiple transcriptome samples, users can utilize the nextflow wrapper [nf-celescope](https://github.com/singleron-RD/nf-celescope) for streamlined pipeline execution. 
-
-Additionally, [multiqc-celescope](./multiqc-celescope.md) can be employed to aggregate metrics from multiple samples into a comprehensive report for convenient review.
+[multiqc-celescope](./multiqc-celescope.md) can be employed to aggregate metrics from multiple samples into a single HTML report for convenient review.
 
 ## [FAQ](./FAQ.md)
 
