@@ -1,5 +1,6 @@
 import subprocess
 import json
+import shutil
 
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
@@ -74,10 +75,16 @@ class Cutadapt(Step):
     def run(self):
         input_file = self.args.fq
         output_file = self.out_fq2
-        cmd = get_cutadapt_cmd(self.args, input_file, output_file)
-        self.run.logger.info(cmd)
-        subprocess.check_call(cmd, shell=True)
-        self.add_cutadapt_metrics()
+        if self.args.skip_cutadapt:
+            shutil.copy(input_file, output_file)
+            self.run.logger.info(
+                f"Skipped cutadapt, copied {input_file} to {output_file}"
+            )
+        else:
+            cmd = get_cutadapt_cmd(self.args, input_file, output_file)
+            self.run.logger.info(cmd)
+            subprocess.check_call(cmd, shell=True)
+            self.add_cutadapt_metrics()
 
 
 @utils.add_log
@@ -115,6 +122,11 @@ at least {overlap} bases match between adapter and read. """,
         "--cutadapt_param",
         help='Other cutadapt parameters. For example, --cutadapt_param "-a p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA" ',
         default="",
+    )
+    parser.add_argument(
+        "--skip_cutadapt",
+        action="store_true",
+        help="Skip cutadapt and copy input fq to output fq directly.",
     )
     if sub_program:
         parser.add_argument(
