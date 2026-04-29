@@ -109,13 +109,7 @@ class Spots(Step):
         )
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.counts_file))
 
-        n_reads, q30_RNA, saturation = self.parse_summary()
-        self.add_metric(
-            "Saturation",
-            saturation,
-            value_type="fraction",
-            help_info="the fraction of read originating from an already-observed UMI.",
-        )
+        n_reads, q30_RNA, _saturation = self.parse_summary()
 
         return n_reads, q30_RNA
 

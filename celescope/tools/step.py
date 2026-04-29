@@ -298,6 +298,16 @@ class Step:
         return self.__content_dict[slot][step_name + "_summary"]
 
     @utils.add_log
+    def remove_slot_step(self, slot, step_name):
+        """remove slot in json"""
+        if step_name + "_summary" in self.__content_dict[slot]:
+            del self.__content_dict[slot][step_name + "_summary"]
+        else:
+            self.remove_slot_step.logger.warning(
+                f"{step_name}_summary not found in {slot}"
+            )
+
+    @utils.add_log
     def add_table(self, title, table_id, df, help="", script=""):
         if not script:
             script = """

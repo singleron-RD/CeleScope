@@ -541,6 +541,11 @@ class Cells(Cells_metrics):
             valid_reads
         )
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.counts_file))
+        self.add_metric(
+            name="soloCellFilter",
+            value=self.args.soloCellFilter,
+            show=False,
+        )
         return n_reads, q30_RNA
 
 

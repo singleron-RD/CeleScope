@@ -93,20 +93,21 @@ class Cells(Cells_metrics):
         args.outdir = f"{args.sample}/cells"
         super().__init__(args, display_title=display_title)
         self.raw_matrix = f"{self.outs_dir}/{RAW_MATRIX_DIR_SUFFIX}"
-        self.old_filtered_matrix = f"{self.outs_dir}/{FILTERED_MATRIX_DIR_SUFFIX}"
         self.counts_file = f"{self.outs_dir}/{COUNTS_FILE_NAME}"
 
         # out
-        self.filter_matrix = f"{self.outdir}/{FILTERED_MATRIX_DIR_SUFFIX}"
         self.default_filter_matrix = (
             f"{self.outs_dir}/default_{FILTERED_MATRIX_DIR_SUFFIX}"
         )
-        self.default_report_html = f"{self.outdir}/../default_{self.sample}_report.html"
+        self.default_report_html = (
+            f"{self.outs_dir}/../default_{self.sample}_report.html"
+        )
+        self.filter_matrix = f"{self.outs_dir}/{FILTERED_MATRIX_DIR_SUFFIX}"
+        self.report_html = f"{self.outs_dir}/../{self.sample}_report.html"
 
-        if os.path.exists(self.default_filter_matrix):
-            self.old_filtered_matrix = self.default_filter_matrix
-
-        self.outs = [self.filter_matrix]
+        if not os.path.exists(self.default_filter_matrix):
+            shutil.move(self.filter_matrix, self.default_filter_matrix)
+            shutil.move(self.report_html, self.default_report_html)
 
     @utils.add_log
     def force_cells(self):
@@ -140,25 +141,20 @@ class Cells(Cells_metrics):
 
     @utils.add_log
     def metrics_report(self, filtered: CountMatrix):
-        p_default_dict = {
-            self.old_filtered_matrix: self.default_filter_matrix,
-            self.report_html: self.default_report_html,
-        }
-        for p, default_p in p_default_dict.items():
-            if not os.path.exists(default_p):
-                shutil.move(p, default_p)
+        try:
+            self.get_slot_step("metrics", "default_cells")
+        except KeyError:
+            self.add_slot_step(
+                slot="metrics",
+                step_name="default_cells",
+                val=self.old_step_dict["metrics"],
+            )
 
-        self.add_slot_step(
-            slot="metrics",
-            step_name="default_cells",
-            val=self.old_step_dict["metrics"],
-        )
-
-        self.add_slot_step(
-            slot="data",
-            step_name="default_cells",
-            val=self.old_step_dict["data"],
-        )
+            self.add_slot_step(
+                slot="data",
+                step_name="default_cells",
+                val=self.old_step_dict["data"],
+            )
         bcs = filtered.get_barcodes()
         n_cells = len(bcs)
 
@@ -221,7 +217,7 @@ class Cells(Cells_metrics):
         return filtered
 
     @utils.add_log
-    def soloCellFilter(self, filtered: CountMatrix) -> CountMatrix:
+    def soloCellFilter(self) -> CountMatrix:
         temp_raw = f"{self.outdir}/raw"
         cmd = f"cp -r {self.raw_matrix} {self.outdir}; gunzip {temp_raw}/*.gz"  # STAR do not recognize gzip matrix
         if not os.path.exists(temp_raw):
@@ -250,13 +246,14 @@ class Cells(Cells_metrics):
     def run(self):
         if self.args.max_mito > 1.0:
             sys.exit("max_mito should be less than 1.0")
-        filtered = CountMatrix.from_matrix_dir(self.old_filtered_matrix)
+        filtered = CountMatrix.from_matrix_dir(self.default_filter_matrix)
         if self.args.barcode:
             filtered = self.force_barcode()
         elif self.args.force_cells > 0:
             filtered = self.force_cells()
         elif self.args.soloCellFilter:
-            filtered = self.soloCellFilter(filtered)
+            filtered = self.soloCellFilter()
+
         if self.args.max_mito < 1.0:
             filtered = self.filter_mito(filtered)
         if self.args.min_gene > 0:
@@ -264,6 +261,9 @@ class Cells(Cells_metrics):
 
         filtered.to_matrix_dir(self.filter_matrix)
         self.metrics_report(filtered)
+
+        self.remove_slot_step("metrics", "analysis")
+        self.remove_slot_step("data", "analysis")
 
 
 def cells(args):

@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "2.11.4"
+__VERSION__ = "2.11.5"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
@@ -12,7 +12,6 @@ ASSAY_LIST = [
     "capture_virus",
     "fusion",
     "citeseq",
-    "flv_trust4",
     "sweetseq",
     "utils",
     "bulk_vdj",
@@ -34,7 +33,6 @@ RELEASED_ASSAYS = [
     "capture_virus",
     "fusion",
     "citeseq",
-    "flv_trust4",
     "sweetseq",
     "bulk_vdj",
     "bulk_rna",
