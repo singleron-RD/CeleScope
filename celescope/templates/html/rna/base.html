@@ -20,5 +20,10 @@
     {% include "html/rna/analysis.html"%}
     {% endif %}
 
+    {% if celltypist_summary is defined %}
+    {% set step_summary = celltypist_summary %}
+    {% include "html/utils/step.html"%}
+    {% endif %}
+
 {% include "html/utils/end.html"%}
 

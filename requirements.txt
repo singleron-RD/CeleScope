@@ -19,3 +19,4 @@ biopython
 anndata==0.7.6
 kaleido
 pyarrow
+celltypist

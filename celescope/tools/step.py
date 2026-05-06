@@ -102,7 +102,7 @@ class Step:
             self._display_title = class_name
         else:
             self._display_title = display_title
-        self._step_name = class_name[0].lower() + class_name[1:]
+        self._step_name = self._display_title.lower()
         self.__slots = ["data", "metrics"]
         self._step_summary_name = f"{self._step_name}_summary"
 
@@ -386,7 +386,6 @@ class Step:
         self._add_content_data()
         self._add_content_metric()
         self._add_parameters()
-        self._write_stat()
         self._dump_content()
         self._render_html()
         self._move_files()
@@ -406,6 +405,9 @@ class Step:
 
     def set_metric_list(self, metric_list):
         self.__metric_list = metric_list
+
+    def add_metric_list(self, metric_list):
+        self.__metric_list.extend(metric_list)
 
     @abc.abstractmethod
     def run(self):

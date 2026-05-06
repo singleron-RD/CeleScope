@@ -40,9 +40,11 @@ def add_log(func):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.INFO)
 
-    consoleHandler = logging.StreamHandler(sys.stderr)
-    consoleHandler.setFormatter(logFormatter)
-    logger.addHandler(consoleHandler)
+    if not logger.handlers:
+        consoleHandler = logging.StreamHandler(sys.stderr)
+        consoleHandler.setFormatter(logFormatter)
+        logger.addHandler(consoleHandler)
+    logger.propagate = False
 
     @wraps(func)
     def wrapper(*args, **kwargs):

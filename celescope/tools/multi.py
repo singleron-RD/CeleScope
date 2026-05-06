@@ -327,6 +327,8 @@ job_end
         matrix_file = f'{self.outdir_dic[sample]["outs"]}/filtered'
         cmd_line = self.get_cmd_line(step, sample)
         cmd = f"{cmd_line} " f"--matrix_file {matrix_file} "
+        if self.col4_dict.get(sample):
+            cmd += f"--celltypist_model {self.col4_dict[sample]} "
         self.process_cmd(cmd, step, sample, m=10, x=1)
 
     def consensus(self, sample):

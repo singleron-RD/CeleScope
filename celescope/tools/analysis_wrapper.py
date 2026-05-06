@@ -1,11 +1,13 @@
 import scanpy as sc
 import numpy as np
 import pandas as pd
+import celltypist
 
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
 from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
+from celescope.tools.plotly_plot import Tsne_plot
 
 # markers adjust p_value
 PVAL_CUTOFF = 0.05
@@ -17,6 +19,14 @@ N_PCS = 25
 MITO_GENE_PERCENT_LIST = [5, 10, 15, 20, 50]
 # output marker top n in html
 MARKER_TOP_N = 100
+
+help_name_content_dict = {
+    "Marker Genes by Cluster": "differential expression analysis based on the non-parameteric Wilcoxon rank sum test",
+    "avg_log2FC": "log fold-change of the average expression between the cluster and the rest of the sample",
+    "pct.1": "The percentage of cells where the gene is detected in the cluster",
+    "pct.2": "The percentage of cells where the gene is detected in the rest of the sample",
+    "p_val_adj": "Adjusted p-value, based on bonferroni correction using all genes in the dataset",
+}
 
 
 def read_tsne(tsne_file):
@@ -45,6 +55,10 @@ def get_opts_analysis(parser, sub_program):
             "--matrix_file",
             help="Required. Matrix directory path.",
             required=True,
+        )
+        parser.add_argument(
+            "--celltypist_model",
+            help="Celltypist model name for cell type annotation. If not provided, cell type annotation will not be performed.",
         )
         parser = s_common(parser)
 
@@ -122,7 +136,7 @@ class Scanpy_wrapper(Step):
         sc.pp.log1p(
             self.adata,
         )
-        self.adata.layers[NORMALIZED_LAYER] = self.adata.X
+        self.adata.layers[NORMALIZED_LAYER] = self.adata.X.copy()
 
     @utils.add_log
     def hvg(self):
@@ -331,6 +345,7 @@ class Scanpy_wrapper(Step):
         self.write_markers()
         self.write_tsne()
         self.write_h5ad()
+        self.add_report_data()
 
     def get_df(self):
         """
@@ -340,6 +355,24 @@ class Scanpy_wrapper(Step):
         df_marker = pd.read_csv(self.df_marker_file, sep="\t")
         df_marker = format_df_marker(df_marker)
         return df_tsne, df_marker
+
+    def add_report_data(self):
+        df_tsne, df_marker = self.get_df()
+        tsne_cluster = Tsne_plot(df_tsne, "cluster").get_plotly_div()
+        self.add_data(tsne_cluster=tsne_cluster)
+
+        tsne_gene = Tsne_plot(df_tsne, "Gene_Counts", discrete=False).get_plotly_div()
+        self.add_data(tsne_gene=tsne_gene)
+
+        table_dict = self.get_table_dict(
+            title="Marker Genes by Cluster",
+            table_id="marker_genes",
+            df_table=df_marker,
+        )
+        self.add_data(table_dict=table_dict)
+
+        for name, content in help_name_content_dict.items():
+            self.add_help_content(name=name, content=content)
 
 
 def get_opts_analysis_match(parser, sub_program):
@@ -359,26 +392,8 @@ class Report_runner(Step):
         super().__init__(args, display_title=display_title)
 
     def add_marker_help(self):
-        self.add_help_content(
-            name="Marker Genes by Cluster",
-            content="differential expression analysis based on the non-parameteric Wilcoxon rank sum test",
-        )
-        self.add_help_content(
-            name="avg_log2FC",
-            content="log fold-change of the average expression between the cluster and the rest of the sample",
-        )
-        self.add_help_content(
-            name="pct.1",
-            content="The percentage of cells where the gene is detected in the cluster",
-        )
-        self.add_help_content(
-            name="pct.2",
-            content="The percentage of cells where the gene is detected in the rest of the sample",
-        )
-        self.add_help_content(
-            name="p_val_adj",
-            content="Adjusted p-value, based on bonferroni correction using all genes in the dataset",
-        )
+        for name, content in help_name_content_dict.items():
+            self.add_help_content(name=name, content=content)
 
     @staticmethod
     def get_df_file(match_dir):
@@ -411,3 +426,50 @@ class Report_runner(Step):
 
     def run(self):
         pass
+
+
+class Celltypist_wrapper(Step):
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title=display_title)
+        h5ad_file = f"{self.outs_dir}/rna.h5ad"
+        self.adata = sc.read_h5ad(h5ad_file)
+
+    @utils.add_log
+    def predict_cell_types(self):
+        self.adata.X = self.adata.layers[NORMALIZED_LAYER].copy()
+        if self.args.celltypist_model:
+            predictions = celltypist.annotate(
+                self.adata,
+                model=self.args.celltypist_model,
+                majority_voting=True,
+                over_clustering="cluster",
+            )
+
+            self.adata.obs["predicted_cell_type"] = predictions.predicted_labels[
+                "majority_voting"
+            ].values
+            self.adata.obs["cell_type_confidence"] = predictions.probability_matrix.max(
+                axis=1
+            ).values
+
+    @utils.add_log
+    def add_cell_type_metrics(self):
+        if "predicted_cell_type" in self.adata.obs:
+            cell_type_counts = self.adata.obs["predicted_cell_type"].value_counts()
+            total_cells = self.adata.n_obs
+            for cell_type, count in cell_type_counts.items():
+                self.add_metric(
+                    name=cell_type,
+                    value=count,
+                    total=total_cells,
+                )
+
+    @utils.add_log
+    def download_celltypist_model(self):
+        celltypist.models.download_models(model=self.args.celltypist_model)
+
+    @utils.add_log
+    def run(self):
+        self.download_celltypist_model()
+        self.predict_cell_types()
+        self.add_cell_type_metrics()
