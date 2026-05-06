@@ -36,12 +36,13 @@ class Starsolo(tools_Starsolo):
         filtered = self.keep_barcodes()
         self.gzip_matrix()
         q30_cb, q30_umi = self.get_Q30_cb_UMI()
-        return q30_cb, q30_umi, filtered
+        return q30_cb, q30_umi, self.chemistry, filtered
 
 
 class Spots(Step):
-    def __init__(self, args, display_title=None):
+    def __init__(self, args, chemistry, display_title=None):
         super().__init__(args, display_title=display_title)
+        self.chemistry = chemistry
         solo_dir = (
             f"{self.outdir}/{self.sample}_Solo.out/{self.args.report_soloFeature}"
         )
@@ -109,19 +110,27 @@ class Spots(Step):
         )
         self.add_data(chart=get_plot_elements.plot_barcode_rank(self.counts_file))
 
-        n_reads, q30_RNA, _saturation = self.parse_summary()
+        n_reads, q30_RNA, saturation = self.parse_summary()
+
+        if self.chemistry == "space-ff":
+            self.add_metric(
+                "Saturation",
+                saturation,
+                value_type="fraction",
+                help_info="the fraction of read originating from an already-observed UMI.",
+            )
 
         return n_reads, q30_RNA
 
 
 def starsolo(args):
     with Starsolo(args) as runner:
-        q30_cb, q30_umi, filtered = runner.run()
+        q30_cb, q30_umi, chemistry, filtered = runner.run()
 
     with Mapping(args) as runner:
         valid_reads, corrected = runner.run()
 
-    with Spots(args) as runner:
+    with Spots(args, chemistry) as runner:
         n_reads, q30_RNA = runner.run(filtered)
 
     with Demultiplexing(args) as runner:
