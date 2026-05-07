@@ -575,21 +575,21 @@ class Demultiplexing(Step):
             name="Q30 of Barcodes",
             value=q30_cb,
             value_type="fraction",
-            help_info="Fraction of barcode bases with quality score >= 30",
+            help_info="Fraction of barcode bases with quality score ≥ 30, calculated using reads 10,001 to 1,000,000.",
         )
 
         self.add_metric(
             name="Q30 of UMI",
             value=q30_umi,
             value_type="fraction",
-            help_info="Fraction of UMI bases with quality score >= 30",
+            help_info="Fraction of UMI bases with quality score ≥ 30, calculated using reads 10,001 to 1,000,000.",
         )
 
         self.add_metric(
             name="Q30 of RNA Reads",
             value=q30_RNA,
             value_type="fraction",
-            help_info="Fraction of RNA read bases with quality score >= 30",
+            help_info="Fraction of RNA read bases with quality score ≥ 30, calculated using all reads.",
         )
 
 

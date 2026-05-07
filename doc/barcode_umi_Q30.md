@@ -1,0 +1,5 @@
+When sufficient reads are available, the first reads in the FASTQ file are excluded from the Barcode Q30 and UMI Q30 calculation. This is because the beginning of a sequencing output may not fully represent the overall sequencing quality of the library.
+
+In practice, the first several thousand reads can sometimes show lower or less stable quality scores. This may be related to sequencing run start-up effects, early focus or intensity calibration, phasing/pre-phasing correction, and signal normalization during the initial sequencing cycles.
+
+For this reason, when more than 10,000 reads are available, this implementation skips the first 10,000 reads and calculates Barcode Q30 and UMI Q30 using reads 10,001 to 1,000,000 from R1. Sampling up to 1,000,000 reads is sufficient to provide a representative estimate of barcode and UMI base quality for routine quality control, while avoiding unnecessary computational overhead from processing the entire FASTQ file.
