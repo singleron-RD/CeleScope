@@ -1,4 +1,4 @@
-The `celescope utils mkgtf` command is primarily used to refine genome annotation files by retaining only selected gene attributes. It is often an essential preprocessing step before running `mkref` for assays such as `rna` or `snp`, where a clean and standardized GTF file is required for genome indexing.
+The `celescope utils mkgtf` command is primarily used to refine genome annotation files by retaining only selected gene attributes.
 
 For example, in the mouse Ensembl release 110 GTF file, the following `gene_biotype` values are present:
 
@@ -46,11 +46,13 @@ unitary_pseudogene
 unprocessed_pseudogene
 ```
 
+By default, the retained gene_biotype categories include protein-coding, lncRNA and multiple V(D)J-related gene segments.
+
 Depending on the research objective, additional `gene_biotype` categories can be retained using the `--attributes` parameter. For example:
 
 ```bash
 celescope utils mkgtf \
-  --attributes "gene_biotype=protein_coding,lncRNA,antisense,IG_LV_gene,IG_V_gene,IG_V_pseudogene,IG_D_gene,IG_J_gene,IG_J_pseudogene,IG_C_gene,IG_C_pseudogene,TR_V_gene,TR_V_pseudogene,TR_D_gene,TR_J_gene,TR_J_pseudogene,TR_C_gene,miRNA,snoRNA,snRNA,scaRNA;" \
+  --attributes "gene_biotype=protein_coding,lncRNA,IG_LV_gene,IG_V_gene,IG_V_pseudogene,IG_D_gene,IG_J_gene,IG_J_pseudogene,IG_C_gene,IG_C_pseudogene,TR_V_gene,TR_V_pseudogene,TR_D_gene,TR_J_gene,TR_J_pseudogene,TR_C_gene,miRNA,snoRNA,snRNA,scaRNA;" \
   Mus_musculus.GRCm39.110.gtf \
   Mus_musculus.GRCm39.110.filtered.gtf
 ```
@@ -76,7 +78,7 @@ Path to the raw input GTF file. This argument is required.
 Path to the processed output GTF file. This argument is required.
 
 **`--attributes`**
-A semicolon-separated string specifying the gene attributes to retain. By default, the retained categories include protein-coding genes, long non-coding RNAs (`lncRNA`), antisense genes, and multiple V(D)J-related gene segments.
+A string specifying the gene attributes to retain.The default value is `--attributes "gene_biotype=protein_coding,lncRNA,antisense,IG_LV_gene,IG_V_gene,IG_V_pseudogene,IG_D_gene,IG_J_gene,IG_J_pseudogene,IG_C_gene,IG_C_pseudogene,TR_V_gene,TR_V_pseudogene,TR_D_gene,TR_J_gene,TR_J_pseudogene,TR_C_gene;"`
 
 **`--skip_intron`**
 By default, the tool adds intron entries to the output GTF based on the existing gene and exon structures. If this flag is provided, intron entries will not be added to the output GTF.
