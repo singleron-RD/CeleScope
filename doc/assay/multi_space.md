@@ -77,6 +77,8 @@ $ls fastq_dir2
 fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 ```
 
+**Note for FFPE samples:** In FFPE data, the first 44 bp of R1 consist of barcode + linker + UMI, and the remaining sequence is cDNA used for analysis. R2 begins with a poly(T) stretch and the rest of R2 is typically low quality and not used. Therefore only the R1 fastq is required for analysis; the R2 fastq can be a placeholder and may be an empty file.
+
 **Spatial directory** 
 The fourth column of the mapfile is the path to the spatial directory, which can be generated using [AtlasXbrowser](https://github.com/singleron-RD/AtlasXbrowser).
 
