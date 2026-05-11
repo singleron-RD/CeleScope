@@ -31,7 +31,7 @@ class Barcode(Step):
         self.offset_runner = parse_chemistry.AutoRNA(self.fq1_list)
         # output
         self.out_fq2 = f"{self.outdir}/{self.sample}_2.fq"
-        self.isflv = self.assay == "flv_trust4"
+        self.isflv = self.chemistry in ["flv", "flv-V2"]
         if self.isflv:
             self.out_fq1 = f"{self.outdir}/{self.sample}_1.fq"
             self.match_barcodes = set(

@@ -1,3 +1,5 @@
+import sys
+
 import scanpy as sc
 import numpy as np
 import pandas as pd
@@ -431,23 +433,26 @@ class Report_runner(Step):
 class Celltypist_wrapper(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
-        h5ad_file = f"{self.outs_dir}/rna.h5ad"
-        self.adata = sc.read_h5ad(h5ad_file)
+        self.h5ad_file = f"{self.outs_dir}/rna.h5ad"
+        self.adata = sc.read_h5ad(self.h5ad_file)
 
     @utils.add_log
     def predict_cell_types(self):
         self.adata.X = self.adata.layers[NORMALIZED_LAYER].copy()
+
         if self.args.celltypist_model:
             predictions = celltypist.annotate(
                 self.adata,
                 model=self.args.celltypist_model,
-                majority_voting=True,
-                over_clustering="cluster",
+                majority_voting=False,
             )
 
+            # 单个细胞原始预测结果
             self.adata.obs["predicted_cell_type"] = predictions.predicted_labels[
-                "majority_voting"
+                "predicted_labels"
             ].values
+
+            # 每个细胞预测概率最大值，作为置信度
             self.adata.obs["cell_type_confidence"] = predictions.probability_matrix.max(
                 axis=1
             ).values
@@ -466,10 +471,20 @@ class Celltypist_wrapper(Step):
 
     @utils.add_log
     def download_celltypist_model(self):
-        celltypist.models.download_models(model=self.args.celltypist_model)
+        try:
+            celltypist.models.download_models(model=self.args.celltypist_model)
+        except ValueError as e:
+            sys.stderr.write(
+                f"Failed to download celltypist model {self.args.celltypist_model}: {e}\n"
+            )
+
+    @utils.add_log
+    def write_h5ad(self):
+        self.adata.write_h5ad(self.h5ad_file)
 
     @utils.add_log
     def run(self):
         self.download_celltypist_model()
         self.predict_cell_types()
         self.add_cell_type_metrics()
+        self.write_h5ad()
