@@ -84,7 +84,6 @@ the read name is `{barcode}_{UMI}_{read ID}`.
 - `capture_virus` Required, matched_dir.
 - `fusion` Required, matched_dir.
 - `citeseq` Required, matched_dir.
-- `flv_trust4` Required, matched_dir.
 - `sweetseq` Required, matched_dir.
  
 5th column:

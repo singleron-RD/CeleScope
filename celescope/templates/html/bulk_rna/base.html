@@ -10,9 +10,9 @@
     {% include "html/utils/step.html" %}
     {% endif %}
 
-    {% if cells_summary is defined%}
-    {% set step_summary = cells_summary %}
-    {% include "html/bulk_rna/cells.html" %}
+    {% if wells_summary is defined%}
+    {% set step_summary = wells_summary %}
+    {% include "html/bulk_rna/wells.html" %}
     {% endif %}
 
 

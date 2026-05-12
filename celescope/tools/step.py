@@ -102,9 +102,8 @@ class Step:
             self._display_title = class_name
         else:
             self._display_title = display_title
-        self._step_name = self._display_title.lower()
         self.__slots = ["data", "metrics"]
-        self._step_summary_name = f"{self._step_name}_summary"
+        self._step_summary_name = f"{self._display_title.lower()}_summary"
 
         self.__metric_list = []
         self.__help_content = []

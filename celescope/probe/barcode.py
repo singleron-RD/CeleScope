@@ -276,9 +276,6 @@ def get_opts_barcode(parser, sub_program=True):
             help="R2 fastq file. Multiple files are separated by comma.",
             required=True,
         )
-        parser.add_argument(
-            "--match_dir", help="Matched scRNA-seq directory, required for flv_trust4"
-        )
         parser = s_common(parser)
 
     return parser

@@ -469,8 +469,6 @@ def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
             return assay
         elif assay == "space":
             return AutoSpace(fq1_list).get_chemistry()
-        elif assay == "flv_trust4":
-            return AutoFlv(fq1_list).get_chemistry()
         elif assay == "bulk_rna":
             return AutoBulkRNA(fq1_list).get_chemistry()
         else:
@@ -562,7 +560,7 @@ def invalid_debug(
                 linker2: <span style="background-color:pink;">pink</span>
                 linker3: <span style="background-color:orange;">orange</span>
             </p>
-        <h3> invalid reads in number {skip_read+1} to {skip_read + use_read} reads</h3>
+        <h3> invalid reads in number {skip_read+1} to {skip_read + use_read} reads({n_invalid}/{use_read})</h3>
         {joined_sequences}
     </body>
     </html>

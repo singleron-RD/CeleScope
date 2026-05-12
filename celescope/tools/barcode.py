@@ -9,8 +9,6 @@ from celescope.chemistry_dict import chemistry_dict
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
 
-MAX_TRUST4_READ_PER_BARCODE = 80000
-
 
 class Barcode(Step):
     def __init__(self, args, display_title=None):
@@ -32,11 +30,6 @@ class Barcode(Step):
         # output
         self.out_fq2 = f"{self.outdir}/{self.sample}_2.fq"
         self.isflv = self.chemistry in ["flv", "flv-V2"]
-        if self.isflv:
-            self.out_fq1 = f"{self.outdir}/{self.sample}_1.fq"
-            self.match_barcodes = set(
-                utils.get_barcode_from_match_dir(args.match_dir)[0]
-            )
 
     def get_bc_umi(self, seq):
         if self.chemistry == "GEXSCOPE-V3":
@@ -63,10 +56,6 @@ class Barcode(Step):
         # quality
         cb_quality_counter = Counter()
         umi_quality_counter = Counter()
-        if self.isflv:
-            out_fh1 = utils.generic_open(self.out_fq1, "wt")
-            bc_read_counter = Counter()
-            match_reads = 0
 
         with utils.generic_open(self.out_fq2, "wt") as out_fh2:
             for fq1, fq2 in zip(self.fq1_list, self.fq2_list):
@@ -80,25 +69,9 @@ class Barcode(Step):
                         if corrected:
                             corrected_reads += 1
                         read_name = f"{corrected_seq}:{umi}:{raw_reads}"
-                        if not self.isflv:
-                            out_fh2.write(
-                                utils.fastq_line(read_name, e2.sequence, e2.quality)
-                            )  # type: ignore
-                        else:
-                            if corrected_seq not in self.match_barcodes:
-                                continue
-                            match_reads += 1
-                            bc_read_counter[corrected_seq] += 1
-                            seq1 = corrected_seq + umi
-                            qual1 = "F" * len(seq1)
-                            if (
-                                bc_read_counter[corrected_seq]
-                                <= MAX_TRUST4_READ_PER_BARCODE
-                            ):
-                                out_fh1.write(utils.fastq_line(read_name, seq1, qual1))
-                                out_fh2.write(
-                                    utils.fastq_line(read_name, e2.sequence, e2.quality)
-                                )  # type: ignore
+                        out_fh2.write(
+                            utils.fastq_line(read_name, e2.sequence, e2.quality)
+                        )  # type: ignore
 
                     cb_quality_counter.update(
                         "".join([e1.quality[slice] for slice in self.pattern_dict["C"]])  # type: ignore
@@ -144,27 +117,13 @@ class Barcode(Step):
         self.add_metric(
             name="Q30 of Barcode",
             value=f"{round(q30_cb * 100,2)}%",
-            help_info="percent of barcode base pairs with quality scores over Q30",
+            help_info="Fraction of barcode bases with quality score ≥ 30.",
         )
         self.add_metric(
             name="Q30 of UMI",
             value=f"{round(q30_umi * 100, 2)}%",
-            help_info="percent of UMI base pairs with quality scores over Q30",
+            help_info="Fraction of UMI bases with quality score ≥ 30.",
         )
-
-        if self.assay == "flv_trust4":
-            self.add_metric(
-                name="Valid Matched Reads",
-                value=match_reads,
-                total=valid_reads,
-                help_info="reads match with flv_rna cell barcodes",
-            )
-
-            self.add_metric(
-                name="Matched Barcodes",
-                value=len(bc_read_counter),
-                help_info="barcodes match with flv_rna",
-            )
 
     @staticmethod
     def chr_to_int(chr, offset=33):
@@ -208,9 +167,6 @@ def get_opts_barcode(parser, sub_program=True):
             "--fq2",
             help="R2 fastq file. Multiple files are separated by comma.",
             required=True,
-        )
-        parser.add_argument(
-            "--match_dir", help="Matched scRNA-seq directory, required for flv_trust4"
         )
         parser = s_common(parser)
 

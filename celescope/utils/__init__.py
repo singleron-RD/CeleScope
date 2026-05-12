@@ -1,2 +1,2 @@
-STEPS = ["mkgtf", "mapping_vdj"]
+STEPS = ["mkgtf"]
 __ASSAY__ = "utils"
