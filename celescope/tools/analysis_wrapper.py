@@ -65,7 +65,7 @@ def get_opts_analysis(parser, sub_program):
         parser = s_common(parser)
 
 
-class Scanpy_wrapper(Step):
+class Analysis(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 
@@ -430,7 +430,7 @@ class Report_runner(Step):
         pass
 
 
-class Celltypist_wrapper(Step):
+class Celltypist(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
         self.h5ad_file = f"{self.outs_dir}/rna.h5ad"

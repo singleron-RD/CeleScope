@@ -193,7 +193,7 @@ class Mapping(ToolsMapping):
         return self.add_metrics_to_report(metrics), df_metrics
 
 
-class Cells(Step):
+class Wells(Step):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
         solo_dir = (
@@ -317,7 +317,7 @@ def starsolo(args):
     with Mapping(args) as runner:
         (valid_reads, corrected), df_metrics = runner.run()
 
-    with Cells(args, display_title="Wells") as runner:
+    with Wells(args) as runner:
         n_reads, q30_RNA = runner.run(
             filtered, barcode_sample, well_barcode, df_metrics
         )

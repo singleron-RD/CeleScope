@@ -9,7 +9,10 @@ import matplotlib.pyplot as plt
 from matplotlib import colors
 from celescope.tools.utils import add_log
 from celescope.tools.plotly_plot import StaticPlot
-from celescope.tools.analysis_wrapper import Scanpy_wrapper, format_df_marker
+from celescope.tools.analysis_wrapper import (
+    Analysis as Tools_analysis,
+    format_df_marker,
+)
 from celescope.__init__ import HELP_DICT
 from celescope.space.utils import Spatial, convert_10x_h5
 
@@ -34,7 +37,7 @@ def hires_nocrop_spatial(adata, **kwargs):
     )
 
 
-class Analysis(Scanpy_wrapper):
+class Analysis(Tools_analysis):
     def __init__(self, args, display_title=None):
         super().__init__(args, display_title=display_title)
 

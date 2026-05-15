@@ -103,7 +103,7 @@ class Step:
         else:
             self._display_title = display_title
         self.__slots = ["data", "metrics"]
-        self._step_summary_name = f"{self._display_title.lower()}_summary"
+        self._step_summary_name = f"{class_name.lower()}_summary"
 
         self.__metric_list = []
         self.__help_content = []
