@@ -1,4 +1,5 @@
 import sys
+import os
 
 import scanpy as sc
 import numpy as np
@@ -11,11 +12,14 @@ from celescope.rna.mkref import Mkref_rna
 from celescope.tools.step import Step, s_common
 from celescope.tools.plotly_plot import Tsne_plot
 
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
 # markers adjust p_value
 PVAL_CUTOFF = 0.05
 # scanpy mitochonrial variable name
 MITO_VAR = "mito"
 NORMALIZED_LAYER = "normalised"
+COUNTS_LAYER = "counts"
 RESOLUTION = 1.2
 N_PCS = 25
 MITO_GENE_PERCENT_LIST = [5, 10, 15, 20, 50]
@@ -82,7 +86,7 @@ class Analysis(Step):
             self.args.matrix_file,
             var_names="gene_symbols",
         )
-        self.adata.raw = self.adata.copy()
+        self.adata.layers[COUNTS_LAYER] = self.adata.X.copy()
 
     @utils.add_log
     def calculate_qc_metrics(self):
@@ -122,7 +126,15 @@ class Analysis(Step):
             self.add_metric(
                 name=f"Fraction of cells have mito gene percent>{mito_gene_percent}%",
                 value=f"{fraction}%",
+                show=False,
             )
+        median_mito_pct = self.adata.obs[mt_pct_var].astype("float64").median()
+        median_mito_pct = f"{median_mito_pct:.4f}"
+        self.add_metric(
+            name="Median of mito gene percent",
+            value=f"{median_mito_pct}%",
+            show=False,
+        )
 
     @utils.add_log
     def normalize(self):

@@ -27,7 +27,7 @@ class Multi:
         self.REMOVE_FROM_MULTI = getattr(init_module, "REMOVE_FROM_MULTI", set())
         self.REMOVE_FROM_MULTI.add("mkref")
         try:
-            self.__CONDA__ = os.path.basename(os.environ["CONDA_DEFAULT_ENV"])
+            self.__CONDA__ = os.environ["CONDA_DEFAULT_ENV"]
         except KeyError:
             print("CONDA_DEFAULT_ENV is not set. sjm mode may not available.")
             self.__CONDA__ = "celescope"

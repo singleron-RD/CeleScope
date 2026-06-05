@@ -17,6 +17,7 @@
 
     {% if analysis_summary is defined %}
     {% set step_summary = analysis_summary %}
+    {% include "html/utils/col2_metrics.html" %}
     {% include "html/rna/analysis.html"%}
     {% endif %}
 
