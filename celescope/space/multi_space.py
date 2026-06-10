@@ -19,6 +19,17 @@ class Multi_space(Multi):
             x=self.args.thread,
         )
 
+    def mirna(self, sample):
+        step = "mirna"
+        arr = self.fq_dict[sample]
+        cmd_line = self.get_cmd_line(step, sample)
+        cmd = (
+            f'{cmd_line} '
+            f'--fq1 {arr["fq1_str"]} --fq2 {arr["fq2_str"]} '
+            f'--spatial {self.col4_dict[sample]} '
+        )
+        self.process_cmd(cmd, step, sample, m=10, x=self.args.thread)
+
     def analysis(self, sample):
         step = "analysis"
         cmd_line = self.get_cmd_line(step, sample)

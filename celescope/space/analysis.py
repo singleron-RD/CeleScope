@@ -12,6 +12,8 @@ from celescope.tools.plotly_plot import StaticPlot
 from celescope.tools.analysis_wrapper import (
     Analysis as Tools_analysis,
     format_df_marker,
+    NORMALIZED_LAYER,
+    COUNTS_LAYER,
 )
 from celescope.__init__ import HELP_DICT
 from celescope.space.utils import Spatial, convert_10x_h5
@@ -60,10 +62,10 @@ class Analysis(Tools_analysis):
     @add_log
     def read_data(self):
         self.adata = sc.read_visium(self.outdir, count_file="raw_feature_bc_matrix.h5")
-        self.adata.raw = self.adata.copy()
+        self.adata.layers[COUNTS_LAYER] = self.adata.X.copy()
         sc.pp.filter_genes(self.adata, min_cells=3)
         sc.pp.filter_cells(self.adata, min_genes=self.args.min_genes)
-        self.adata.layers["normalized"] = self.adata.X.copy()
+        self.adata.layers[NORMALIZED_LAYER] = self.adata.X.copy()
 
     @add_log
     def convert_h5(self):
@@ -101,9 +103,9 @@ class Analysis(Tools_analysis):
         self.add_cluster_plot()
 
         sc.pp.normalize_total(
-            self.adata, target_sum=1e4, inplace=True, layer="normalized"
+            self.adata, target_sum=1e4, inplace=True, layer=NORMALIZED_LAYER
         )
-        sc.pp.log1p(self.adata, layer="normalized")
+        sc.pp.log1p(self.adata, layer=NORMALIZED_LAYER)
         n_clusters = len(self.adata.obs["cluster"].unique())
         if n_clusters > 1:
             sc.tl.rank_genes_groups(
@@ -112,7 +114,7 @@ class Analysis(Tools_analysis):
                 reference="rest",
                 pts=True,
                 use_raw=False,
-                layer="normalized",
+                layer=NORMALIZED_LAYER,
                 method="wilcoxon",
             )
             self.write_markers()

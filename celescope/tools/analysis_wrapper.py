@@ -18,7 +18,7 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 PVAL_CUTOFF = 0.05
 # scanpy mitochonrial variable name
 MITO_VAR = "mito"
-NORMALIZED_LAYER = "normalised"
+NORMALIZED_LAYER = "normalized"
 COUNTS_LAYER = "counts"
 RESOLUTION = 1.2
 N_PCS = 25

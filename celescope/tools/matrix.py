@@ -168,24 +168,51 @@ class CountMatrix:
     def __repr__(self):
         return self.__str__()
 
+    @utils.add_log
     def concat_by_barcodes(self, other):
+        """
+        Concatenate two CountMatrix objects along the feature (gene) axis.
+
+        Both matrices must have identical barcodes (columns). The features (rows) will be
+        combined, and the resulting matrix will have a shape of
+        (n_features_self + n_features_other, n_barcodes).
+
+        Args:
+            other (CountMatrix): Another CountMatrix object to concatenate.
+
+        Returns:
+            CountMatrix: A new CountMatrix containing features from both matrices.
+
+        Raises:
+            ValueError: If barcodes are not identical between the two matrices.
+            ValueError: If there are duplicated gene_ids between the two matrices.
+        """
+        # Validate barcodes are identical
         if other.get_barcodes() != self.get_barcodes():
             raise ValueError("barcodes are not the same")
 
+        # Validate no duplicate gene_ids between matrices
         if inter := set(self.get_features().gene_id).intersection(
             set(other.get_features().gene_id)
         ):
             raise ValueError(f"deuplicated gene_id: {inter}")
 
+        # Concatenate gene_id and gene_name lists from both matrices
         gene_id = self.get_features().gene_id + other.get_features().gene_id
         gene_name = self.get_features().gene_name + other.get_features().gene_name
+
+        # Concatenate gene_type lists if both matrices have gene_type information
         gene_type = None
         if self.get_features().gene_type and other.get_features().gene_type:
             gene_type = self.get_features().gene_type + other.get_features().gene_type
+
+        # Create combined Features object
         features = Features(gene_id, gene_name, gene_type)
 
+        # Vertically stack the sparse matrices (along the feature axis)
         matrix = scipy.sparse.vstack([self.get_matrix(), other.get_matrix()])
 
+        # Return new CountMatrix with combined features and original barcodes
         return CountMatrix(features, self.__barcodes, matrix)
 
     @utils.add_log
