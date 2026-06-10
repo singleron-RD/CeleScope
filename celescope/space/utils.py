@@ -74,8 +74,8 @@ class Spatial:
         scalefactors = outdir / "scalefactors_json.json"
         with open(scalefactors) as f:
             data = json.load(f)
-        data["microns_per_pixel"] = 1.0
-        data["regist_target_img_scalef"] = 1.0
+        data["microns_per_pixel"] = 20 / data["spot_diameter_fullres"]
+        data["regist_target_img_scalef"] = 0.0
         with open(scalefactors, "w") as f:
             json.dump(data, f, indent=4)
 
