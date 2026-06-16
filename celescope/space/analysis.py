@@ -49,6 +49,8 @@ class Analysis(Tools_analysis):
         self.raw_h5 = f"{self.outdir}/raw_feature_bc_matrix.h5"
         self.filtered_h5 = f"{self.outdir}/filtered_feature_bc_matrix.h5"
         self.spatial_dir = f"{self.outdir}/spatial"
+        self.bad_channel_row_col_png = f"{self.outdir}/bad_channel_row_col.png"
+        self.bad_channel_spatial_png = f"{self.outdir}/bad_channel_spatial.png"
         self.outs = [
             self.df_marker_raw_file,
             self.h5ad_file,
@@ -86,6 +88,8 @@ class Analysis(Tools_analysis):
         self.calculate_qc_metrics()
         self.add_count_plot(self.raw_counts_png)
         self.get_filtered_data()
+        if self.args.debug:
+            self.bad_channel_analysis()
         self.add_count_plot(self.filtered_counts_png)
         self.add_data(plotly_count=StaticPlot(self.filtered_counts_png).get_div())
         self.write_mito_stats()
@@ -125,6 +129,141 @@ class Analysis(Tools_analysis):
             )
         self.write_h5ad()
         spatial.rename_tissue_positions_csv(self.spatial_dir)
+
+    @add_log
+    def bad_channel_analysis(self):
+        """
+        Detect bad channels (rows/columns) with abnormally low UMI/gene counts
+        and output images and metrics when args.debug is True.
+        """
+        X_dense = self.adata.layers[COUNTS_LAYER]
+        self.adata.obs["total_UMI"] = np.array(X_dense.sum(axis=1)).flatten()
+        self.adata.obs["n_genes"] = np.array((X_dense > 0).sum(axis=1)).flatten()
+
+        # Step 1: aggregate by array_row
+        row_stats = []
+        for row, group in self.adata.obs.groupby("array_row"):
+            if len(group) < 10:
+                continue
+            row_stats.append(
+                [
+                    row,
+                    group["total_UMI"].median(),
+                    group["n_genes"].median(),
+                ]
+            )
+        row_stats = pd.DataFrame(
+            row_stats,
+            columns=["array_row", "median_total_UMI", "median_n_genes"],
+        )
+        umi_thresh_row = row_stats["median_total_UMI"].median() * 0.3
+        gene_thresh_row = row_stats["median_n_genes"].median() * 0.3
+        row_stats["bad_channel"] = (row_stats["median_total_UMI"] < umi_thresh_row) | (
+            row_stats["median_n_genes"] < gene_thresh_row
+        )
+
+        # Step 2: aggregate by array_col
+        col_stats = []
+        for col, group in self.adata.obs.groupby("array_col"):
+            if len(group) < 10:
+                continue
+            col_stats.append(
+                [
+                    col,
+                    group["total_UMI"].median(),
+                    group["n_genes"].median(),
+                ]
+            )
+        col_stats = pd.DataFrame(
+            col_stats,
+            columns=["array_col", "median_total_UMI", "median_n_genes"],
+        )
+        umi_thresh_col = col_stats["median_total_UMI"].median() * 0.3
+        gene_thresh_col = col_stats["median_n_genes"].median() * 0.3
+        col_stats["bad_channel"] = (col_stats["median_total_UMI"] < umi_thresh_col) | (
+            col_stats["median_n_genes"] < gene_thresh_col
+        )
+
+        # Step 3: mark spots in bad channels
+        self.adata.obs["bad_row_channel"] = self.adata.obs["array_row"].isin(
+            row_stats.loc[row_stats["bad_channel"], "array_row"]
+        )
+        self.adata.obs["bad_col_channel"] = self.adata.obs["array_col"].isin(
+            col_stats.loc[col_stats["bad_channel"], "array_col"]
+        )
+        self.adata.obs["bad_channel"] = (
+            self.adata.obs["bad_row_channel"] | self.adata.obs["bad_col_channel"]
+        )
+
+        # Step 4: visualize
+        plt.figure(figsize=(12, 4))
+        plt.subplot(1, 2, 1)
+        plt.bar(
+            row_stats["array_row"],
+            row_stats["median_total_UMI"],
+            color=np.where(row_stats["bad_channel"], "red", "gray"),
+        )
+        plt.xlabel("array_row")
+        plt.ylabel("Median total UMI")
+        plt.title("Row (X) UMI")
+
+        plt.subplot(1, 2, 2)
+        plt.bar(
+            col_stats["array_col"],
+            col_stats["median_total_UMI"],
+            color=np.where(col_stats["bad_channel"], "red", "gray"),
+        )
+        plt.xlabel("array_col")
+        plt.ylabel("Median total UMI")
+        plt.title("Column (Y) UMI")
+        plt.tight_layout()
+        plt.savefig(self.bad_channel_row_col_png, dpi=300, bbox_inches="tight")
+        plt.close()
+
+        x = self.adata.obs["array_col"]
+        y = self.adata.obs["array_row"]
+        spot_colors = self.adata.obs["bad_channel"].map({True: "red", False: "gray"})
+        plt.figure(figsize=(8, 8))
+        plt.scatter(x, y, c=spot_colors, s=10, edgecolor="k", linewidth=0.2)
+        plt.gca().invert_yaxis()
+        plt.xlabel("array_col")
+        plt.ylabel("array_row")
+        plt.title("Spatial plot of bad channels")
+        plt.axis("equal")
+        plt.savefig(self.bad_channel_spatial_png, dpi=300, bbox_inches="tight")
+        plt.close()
+
+        # Step 5: output stats
+        bad_channel_percent = (
+            self.adata.obs["bad_channel"].sum() / self.adata.n_obs * 100
+        )
+        bad_row_str = f"{row_stats['bad_channel'].sum()} / {len(row_stats)}"
+        bad_col_str = f"{col_stats['bad_channel'].sum()} / {len(col_stats)}"
+        bad_spot_str = (
+            f"{self.adata.obs['bad_channel'].sum()} / {self.adata.n_obs} "
+            f"({bad_channel_percent:.2f}%)"
+        )
+        self.add_metric(
+            name="bad row channels",
+            value=bad_row_str,
+            help_info="Number of row channels flagged as bad vs total rows",
+            show=False,
+        )
+        self.add_metric(
+            name="bad column channels",
+            value=bad_col_str,
+            help_info="Number of column channels flagged as bad vs total columns",
+            show=False,
+        )
+        self.add_metric(
+            name="bad channel spots",
+            value=bad_spot_str,
+            help_info="Number of spots flagged as bad channels vs total spots",
+            show=False,
+        )
+
+        row_stats.to_csv(f"{self.outdir}/bad_channel_row_stats.csv", index=False)
+        col_stats.to_csv(f"{self.outdir}/bad_channel_col_stats.csv", index=False)
 
     @add_log
     def add_count_plot(self, plot_path):
