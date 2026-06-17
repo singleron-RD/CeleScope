@@ -6,24 +6,54 @@ multi_fusion\
 --mod shell\
 ```
 
-Use `celescope/data/fusion/{panel}/mkref.sh` to generate the fusion genomeDir. 
+Use [`mkref.sh`](../../celescope/data/fusion/blood_1/mkref.sh) to generate the fusion genomeDir. 
 ```
 source activate celescope
 celescope fusion mkref \
 --genome_name BCR_ABL1_PML_RARA_all \
---fasta BCR_ABL1_PML_RARA_all.fasta \
---fusion_pos BCR_ABL1_PML_RARA_all_pos.txt\
+--fasta celescope/data/fusion/blood_1/BCR_ABL1_PML_RARA_all.fasta \
+--fusion_pos celescope/data/fusion/blood_1/BCR_ABL1_PML_RARA_all_pos.txt\
+```
+
+### mkref Input Files Description
+
+#### fasta file
+The fasta file contains sequences of known fusion genes. Each sequence represents a specific fusion transcript. The sequence name format is `{gene1}{exon}_{gene2}{exon}`, for example:
+- `BCRe1_ABL1a2`: BCR gene exon 1 fused with ABL1 gene exon 2
+- `PML6_RARA3`: PML gene exon 6 fused with RARA gene exon 3
+
+Example file: [`BCR_ABL1_PML_RARA_all.fasta`](../../celescope/data/fusion/blood_1/BCR_ABL1_PML_RARA_all.fasta)
+
+#### fusion_pos file
+The fusion_pos file is a tab-delimited text file with two columns:
+- **tag**: Sequence name from the fasta file (column 1)
+- **pos**: Fusion position (column 2, 1-based coordinate indicating the end position of the first gene sequence)
+
+The `count_fusion` step uses this position information to filter reads spanning the fusion site, requiring reads to contain flanking sequences of a certain length (default 5bp) on both sides of the fusion position.
+
+Example file: [`BCR_ABL1_PML_RARA_all_pos.txt`](../../celescope/data/fusion/blood_1/BCR_ABL1_PML_RARA_all_pos.txt)
+
+**Example fusion_pos file content:**
+```
+tag	pos
+BCRe1_ABL1a2	115
+BCRe13_ABL1a2	78
+BCRe14_ABL1a2	75
+BCRe19_ABL1a2	83
+PML6_RARA3	259
+PML3_RARA3	190
+PML6_BP_RARA3	141
+PML4_RARA3	254
 ```
 
 ## Main Output
 - `05.filter_fusion/{sample}_filtered_UMI.csv`: Filtered fusion UMI counts of each cell barcode.
+
 ## Features
 ### mkref
 - Create a fusion genome directory.
 
-
 ### barcode
-
 - Demultiplex barcodes.
 - Filter invalid R1 reads, which includes:
     - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
@@ -31,80 +61,80 @@ celescope fusion mkref \
     - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
     - Low quality reads: low sequencing quality in barcode and UMI regions.
 
-
 ### cutadapt
 - Trim adapters in R2 reads with cutadapt. Default adapters includes:
     - polyT=A{18}, 18 A bases. 
     - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
 
 ### star_fusion
-- The reads were aligned to the known fusion sites(specified by `--fusion_genomeDir`) using STAR. 
-Please note that [STAR-Fusion](https://github.com/STAR-Fusion/STAR-Fusion/wiki) is not used here.
+- Align reads to the known fusion sites (specified by `--fusion_genomeDir`) using STAR.
+- The fusion genome index is built from a custom fasta file containing fusion sequences.
+- Please note that [STAR-Fusion](https://github.com/STAR-Fusion/STAR-Fusion/wiki) is not used here.
 
 ### count_fusion
-- Count the number of reads and umis that 
-    1. originate from cell barcodes;
-    2. align to the fusion site and include flanking sequences of a certain length(default 20bp) on both sides of the fusion site.
+- Count the number of reads and UMIs that:
+    1. originate from valid cell barcodes (from matched scRNA-seq data);
+    2. align to the fusion site and include flanking sequences of a certain length (default 5bp) on both sides of the fusion position.
+- Output raw fusion read counts before filtering.
 
 ### filter_fusion
 - Correct single-base errors in UMIs due to sequencing, amplification, etc.
-- Filter background UMIs base on a UMI threshold.
-There are three methods to determine the UMI threshold:
-    - 'auto' : Using a method similar to cell calling method.
-    - 'otsu' : UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
-    - 'hard' : Using User provided UMI threshold.
+- Filter background UMIs based on a UMI threshold.
+- Three methods to determine the UMI threshold:
+    - `auto`: Using a method similar to cell calling method.
+    - `otsu`: UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
+    - `hard`: Using user provided UMI threshold.
 
+### analysis_fusion
+- Generate interactive HTML report with t-SNE visualization colored by fusion expression.
+- Calculate fusion positive cell counts and percentages.
+- Merge fusion UMI counts with scRNA-seq analysis results.
 
 ## Output files
 ### mkref
-
 - STAR genome index files
 - Genome config file
 
-
 ### barcode
-
-- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
-the read name is `{barcode}_{UMI}_{read ID}`.
+- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of the read name is `{barcode}_{UMI}_{read ID}`.
 
 ### cutadapt
 - `cutadapt.log` Cutadapt output log file.
 - `{sample}_clean_2.fq.gz` R2 reads file without adapters.
 
+### star_fusion
+- `Aligned.sortedByCoord.out.bam` Aligned BAM file.
+- `Log.final.out` STAR alignment statistics.
+- `SJ.out.tab` Splice junction output.
+
+### count_fusion
+- `{sample}_raw_fusion.bam` BAM file containing only reads spanning fusion sites.
+- `{sample}_raw_read_count.json` Raw read counts before filtering.
+
 ### filter_fusion
 - `{sample}_corrected_read_count.json` Read counts after UMI correction.
 - `{sample}_filtered_read_count.json` Filtered read counts.
-- `{sample}_filtered_UMI.csv` Filtered UMI counts.
+- `{sample}_filtered_UMI.csv` Filtered UMI counts per cell barcode.
+
+### analysis_fusion
+- `{sample}_fusion_count.csv` Fusion positive cell count and percentage.
+- `{sample}_UMI_tsne.csv` t-SNE coordinates with fusion UMI counts.
+- `{sample}_report.html` Interactive HTML report.
 
 ## Arguments
-`--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
+`--mapfile` Mapfile is a tab-delimited text file with at least four columns. Each line of mapfile represents paired-end fastq files.
 
 1st column: Fastq file prefix.  
 2nd column: Fastq file directory path.  
 3rd column: Sample name, which is the prefix of all output files.  
-4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
-
-- `rna` Optional, forced cell number.
-- `vdj` Required, matched_dir.
-- `tag` Required, matched_dir.
-- `dynaseq` Optional, forced cell number.
-- `snp` Required, matched_dir.
-- `capture_virus` Required, matched_dir.
-- `fusion` Required, matched_dir.
-- `citeseq` Required, matched_dir.
-- `sweetseq` Required, matched_dir.
- 
-5th column:
-- `dynaseq` Required, background snp file.
+4th column: Required. The matched single cell RNA-seq directory (`matched_dir`).
 
 Example
-
-Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
 ```
 $cat ./my.mapfile
-fastq_prefix1	fastq_dir1	sample1
-fastq_prefix2	fastq_dir2	sample1
-fastq_prefix3	fastq_dir1	sample2
+fastq_prefix1	fastq_dir1	sample1	/path/to/rna_sample1
+fastq_prefix2	fastq_dir2	sample1	/path/to/rna_sample1
+fastq_prefix3	fastq_dir1	sample2	/path/to/rna_sample2
 
 $ls fastq_dir1
 fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
@@ -120,8 +150,7 @@ fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 
 `--rm_files` Remove redundant fastq and bam files after running.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
-use `--steps_run barcode,cutadapt`.
+`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, use `--steps_run barcode,cutadapt`.
 
 `--outdir` Output directory.
 
@@ -129,12 +158,11 @@ use `--steps_run barcode,cutadapt`.
 
 `--use_R3` ATAC libraries use R3 reads instead of R2.
 
-`--debug` If this argument is used, celescope may output addtional file for debugging.
+`--debug` If this argument is used, celescope may output additional file for debugging.
 
 `--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
 
-`--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
-        of bases.  
+`--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number of bases.  
 - `C`: cell barcode  
 - `L`: linker(common sequences)  
 - `U`: UMI    
@@ -160,57 +188,44 @@ use `--steps_run barcode,cutadapt`.
 
 `--gzip` Output gzipped fastq files.
 
-`--adapter_fasta` Addtional adapter fasta file.
+`--adapter_fasta` Additional adapter fasta file.
 
 `--minimum_length` Discard processed reads that are shorter than LENGTH.
 
-`--nextseq_trim` Quality trimming of reads using two-color chemistry (NextSeq). 
-Some Illumina instruments use a two-color chemistry to encode the four bases. 
-This includes the NextSeq and the NovaSeq. 
-In those instruments, a ‘dark cycle’ (with no detected color) encodes a G. 
-However, dark cycles also occur when sequencing “falls off” the end of the fragment.
-The read then contains a run of high-quality, but incorrect “G” calls at its 3’ end.
+`--nextseq_trim` Quality trimming of reads using two-color chemistry (NextSeq). Some Illumina instruments use a two-color chemistry to encode the four bases. This includes the NextSeq and the NovaSeq. In those instruments, a 'dark cycle' (with no detected color) encodes a G. However, dark cycles also occur when sequencing "falls off" the end of the fragment. The read then contains a run of high-quality, but incorrect "G" calls at its 3' end.
 
-`--overlap` Since Cutadapt allows partial matches between the read and the adapter sequence,
-short matches can occur by chance, leading to erroneously trimmed bases. 
-For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. 
-To reduce the number of falsely trimmed bases, the alignment algorithm requires that 
-at least {overlap} bases match between adapter and read.
+`--overlap` Since Cutadapt allows partial matches between the read and the adapter sequence, short matches can occur by chance, leading to erroneously trimmed bases. For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. To reduce the number of falsely trimmed bases, the alignment algorithm requires that at least {overlap} bases match between adapter and read.
 
 `--insert` Read2 insert length.
 
 `--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
 
-`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
+`--fusion_genomeDir` Required. Fusion genome directory generated by running `celescope fusion mkref`. Contains STAR index files and fusion position configuration.
 
-`--outFilterMatchNmin` Alignment will be output only if the number of matched bases 
-is higher than or equal to this value.
+`--outFilterMatchNmin` Alignment will be output only if the number of matched bases is higher than or equal to this value.
 
 `--out_unmapped` Output unmapped reads.
 
-`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
+`--STAR_param` Additional parameters for STAR. Need to be enclosed in quotation marks. For example, `--STAR_param "--param1 value1 --param2 value2"`.
 
 `--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
 
-`--starMem` Default `30`. Maximum memory that STAR can use.
+`--starMem` Default `30`. Maximum memory that STAR can use (GB).
 
-`--flanking_base` Number of bases flanking the fusion position.
+`--flanking_base` Default `5`. Number of bases flanking the fusion position on both sides.
 
 `--min_query_length` Minimum query length.
 
 `--not_correct_UMI` Do not perform UMI correction.
 
-`--read_threshold_method` method to find read threshold. UMIs with `support reads` < `read threshold` are filtered.
+`--read_threshold_method` Method to find read threshold. UMIs with `support reads` < `read threshold` are filtered.
 
 `--read_hard_threshold` int, use together with `--read_threshold_method hard`.
 
-`--umi_threshold_method` method to find UMI threshold. Cell barcode with `UMI` < `UMI threshold` are considered negative.
+`--umi_threshold_method` Method to find UMI threshold. Cell barcode with `UMI` < `UMI threshold` are considered negative.
 
 `--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
 
 `--auto_coef` int, threshold = top 1 percent positive cell count / auto_coef.
 
 `--otsu_log_base` raw counts are first log transformed before thresholding. This argument is the log base. Commonly used values are 2 and 10.
-
-`--fusion_genomeDir` Fusion genome directory.
-

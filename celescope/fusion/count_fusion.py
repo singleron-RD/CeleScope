@@ -12,17 +12,38 @@ class Count_fusion(Count_bam):
     ## Features
     - Count the number of reads and umis that
         1. originate from cell barcodes;
-        2. align to the fusion site and include flanking sequences of a certain length(default 20bp) on both sides of the fusion site.
+        2. align to the fusion site and include flanking sequences of a certain length on both sides of the fusion site.
     """
 
     def __init__(self, args, display_title="Count"):
+        """
+        Initialize Count_fusion instance.
+
+        Args:
+            args: Command line arguments containing fusion_genomeDir and flanking_base
+            display_title: Display title for the step (default: "Count")
+
+        Attributes:
+            flanking_base: Number of bases flanking the fusion position on both sides
+            pos_dict: Dictionary mapping fusion sequence names to their positions
+                      (key: sequence name, value: 1-based fusion position)
+            posSorted_bam: Path to position-sorted BAM file
+            fusion_bam: Path to output BAM file containing only fusion reads
+        """
         super().__init__(args, display_title)
 
+        # Get flanking base number from arguments
         self.flanking_base = int(args.flanking_base)
+
+        # Retrieve fusion position file path from genome config
         fusion_pos_file = Mkref_fusion.get_config(args.fusion_genomeDir)["files"][
             "fusion_pos"
         ]
+
+        # Parse fusion positions from the config file
         self.pos_dict = self.read_pos_file(fusion_pos_file)
+
+        # Initialize output file paths
         self.posSorted_bam = f"{self.out_prefix}_posSorted.bam"
         self.fusion_bam = f"{self.out_prefix}_raw_fusion.bam"
 
