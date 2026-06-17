@@ -1,6 +1,6 @@
 import os
 
-__VERSION__ = "2.11.6dev1"
+__VERSION__ = "2.11.6dev2"
 __version__ = __VERSION__
 
 ASSAY_LIST = [
@@ -20,6 +20,7 @@ ASSAY_LIST = [
     "probe",
     "ffpe",
     "space",
+    "space_tag",
 ]
 
 ROOT_PATH = os.path.dirname(__file__)
@@ -38,6 +39,7 @@ RELEASED_ASSAYS = [
     "bulk_rna",
     "ffpe",
     "space",
+    "space_tag",
 ]
 
 # argument help

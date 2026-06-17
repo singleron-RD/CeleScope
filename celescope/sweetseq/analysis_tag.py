@@ -1,8 +1,8 @@
 import numpy as np
+import pandas as pd
 
 from celescope.tools import utils, analysis_wrapper, plotly_plot
 from celescope.tools.tag.analysis_tag import (
-    Analysis_tag as At,
     get_opts_analysis_tag as opts,
 )
 
@@ -10,9 +10,27 @@ from celescope.tools.tag.analysis_tag import (
 DEFAULT_COLS = ["", "tSNE_1", "tSNE_2", "cluster", "Gene_Counts"]
 
 
-class Analysis_tag(At):
+class Analysis_tag(analysis_wrapper.Report_runner):
+    def __init__(self, args, display_title=None):
+        super().__init__(args, display_title)
+        self.umi_tag_file = args.umi_tag_file
+
+        # out files
+        self.tsne_tag_file = f"{self.outdir}/{self.sample}_tsne_tag.tsv"
+
     def run(self):
-        colnames = list(self.df_tsne_tag.columns)
+        df_tsne, _df_marker = self.get_df()
+
+        # read umi_tag file and merge with tsne
+        df_umi_tag = pd.read_csv(self.umi_tag_file, sep="\t", index_col=0)
+        df_tsne_tag = pd.merge(
+            df_tsne, df_umi_tag, how="left", left_index=True, right_index=True
+        )
+
+        # write tsne_tag file
+        df_tsne_tag.to_csv(self.tsne_tag_file, sep="\t")
+
+        colnames = list(df_tsne_tag.columns)
         tag_cols = set(colnames) - set(DEFAULT_COLS)
         if len(tag_cols) > 1:
             raise ValueError(
@@ -21,18 +39,13 @@ class Analysis_tag(At):
         tag_col = list(tag_cols)[0]
 
         log_tag_col = tag_col + "_log2"
-        self.df_tsne_tag[log_tag_col] = np.log2(self.df_tsne_tag[tag_col] + 1)
-
-        report_runner = analysis_wrapper.Report_runner(
-            self.args, display_title=self.display_title
-        )
-        df_tsne, _df_marker = report_runner.get_df()
+        df_tsne_tag[log_tag_col] = np.log2(df_tsne_tag[tag_col] + 1)
 
         tsne_cluster = plotly_plot.Tsne_plot(df_tsne, "cluster").get_plotly_div()
         self.add_data(tsne_cluster=tsne_cluster)
 
         tsne_tag = plotly_plot.Tsne_plot(
-            self.df_tsne_tag, log_tag_col, discrete=False
+            df_tsne_tag, log_tag_col, discrete=False
         ).get_plotly_div()
         self.add_data(tsne_tag=tsne_tag)
 

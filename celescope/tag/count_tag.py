@@ -7,7 +7,6 @@ from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 import matplotlib
 
@@ -32,7 +31,7 @@ Cell barcodes with UMI >=UMI_min and SNR < SNR_min are classified as *multiplet*
         default="auto",
     )
     parser.add_argument(
-        "--combine_cluster", help="Conbine cluster tsv file.", default=None
+        "--combine_cluster", help="Combine cluster tsv file.", default=None
     )
     parser.add_argument(
         "--coefficient",
@@ -47,7 +46,6 @@ Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
         )
         parser.add_argument("--match_dir", help=HELP_DICT["match_dir"])
         parser.add_argument("--matrix_dir", help=HELP_DICT["matrix_dir"])
-        parser.add_argument("--tsne_file", help=HELP_DICT["tsne_file"])
 
         s_common(parser)
 
@@ -70,10 +68,6 @@ class Count_tag(Step):
         `last column`  assigned tag
         `columns between first and last` UMI count for each tag
 
-    - `{sample}_tsne_tag.tsv` it is `{sample}_umi_tag.tsv` with t-SNE coordinates, gene_counts and cluster infomation
-
-    - `{sample}_cluster_count.tsv` cell barcode number assigned to *undeterminded*, *multiplet* and *each tag*
-
     """
 
     def __init__(self, args, display_title=None):
@@ -92,13 +86,11 @@ class Count_tag(Step):
             match_dict = utils.parse_match_dir(args.match_dir)
             self.match_barcode = match_dict["match_barcode"]
             self.n_match_barcode = match_dict["n_match_barcode"]
-            self.tsne_file = match_dict["tsne_coord"]
             self.matrix_dir = match_dict["matrix_dir"]
         elif utils.check_arg_not_none(args, "matrix_dir"):
             self.match_barcode, self.n_match_barcode = (
                 utils.get_barcode_from_matrix_dir(args.matrix_dir)
             )
-            self.tsne_file = args.tsne_file
             self.matrix_dir = args.matrix_dir
         else:
             raise ValueError("--match_dir or --matrix_dir is required.")
@@ -108,16 +100,6 @@ class Count_tag(Step):
 
         # out files
         self.UMI_tag_file = f"{self.outdir}/{self.sample}_umi_tag.tsv"
-        self.tsne_tag_file = f"{self.outdir}/{self.sample}_tsne_tag.tsv"
-        self.cluster_count_file = f"{self.outdir}/{self.sample}_cluster_count.tsv"
-        self.cluster_plot = f"{self.outdir}/{self.sample}_cluster_plot.pdf"
-        if self.combine_cluster:
-            self.combine_cluster_count_file = (
-                f"{self.outdir}/{self.sample}_combine_cluster_count.tsv"
-            )
-            self.combine_cluster_plot = (
-                f"{self.outdir}/{self.sample}_combine_cluster_plot.pdf"
-            )
 
     @staticmethod
     def get_UMI(row):
@@ -177,43 +159,6 @@ class Count_tag(Step):
         signal_tags = sorted(row.sort_values(ascending=False).index[0:dim])
         signal_tags_str = "_".join(signal_tags)
         return signal_tags_str
-
-    @utils.add_log
-    def write_and_plot(self, df, column_name, count_file, plot_file):
-        df_count = df.groupby(["tag", column_name]).size().unstack()
-        df_count.fillna(0, inplace=True)
-        df_count.to_csv(count_file, sep="\t")
-        df_percent = df_count / df_count.sum()
-        df_plot = df_percent.stack().reset_index()
-        df_plot.rename({0: "percent"}, axis=1, inplace=True)
-
-        # plot
-        colors = list(matplotlib.colors.cnames.keys())
-        fig, ax = plt.subplots(figsize=(20, 10))
-        types = df_plot["tag"].drop_duplicates()
-        margin_bottom = np.zeros(len(df_plot[column_name].drop_duplicates()))
-
-        for num, tag_type in enumerate(types):
-            try:
-                color = colors[num * 3 + 1]
-            except IndexError:
-                print("not enough colors")
-                return
-            values = list(df_plot.loc[df_plot["tag"] == tag_type, "percent"])
-            df_plot[df_plot["tag"] == tag_type].plot.bar(
-                x=column_name,
-                y="percent",
-                ax=ax,
-                stacked=True,
-                bottom=margin_bottom,
-                label=tag_type,
-                color=color,
-            )
-
-            margin_bottom += values
-        ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-        plt.title("tag fraction")
-        fig.savefig(plot_file)
 
     @utils.add_log
     def run(self):
@@ -280,43 +225,6 @@ class Count_tag(Step):
             axis=1,
         )
         df_UMI_cell.to_csv(self.UMI_tag_file, sep="\t")
-
-        df_tsne = pd.read_csv(self.tsne_file, sep="\t", index_col=0)
-        df_tsne_tag = pd.merge(
-            df_tsne, df_UMI_cell, how="left", left_index=True, right_index=True
-        )
-        df_tsne.fillna(0, inplace=True)
-
-        if self.combine_cluster:
-            df_combine_cluster = pd.read_csv(
-                self.combine_cluster, sep="\t", header=None
-            )
-            df_combine_cluster.columns = ["cluster", "combine_cluster"]
-            df_tsne_combine_cluster_tag = pd.merge(
-                df_tsne_tag,
-                df_combine_cluster,
-                on=["cluster"],
-                how="left",
-                left_index=True,
-            ).set_index(df_tsne_tag.index)
-            df_tsne_combine_cluster_tag.to_csv(self.tsne_tag_file, sep="\t")
-        else:
-            df_tsne_tag.to_csv(self.tsne_tag_file, sep="\t")
-
-        self.write_and_plot(
-            df=df_tsne_tag,
-            column_name="cluster",
-            count_file=self.cluster_count_file,
-            plot_file=self.cluster_plot,
-        )
-
-        if self.combine_cluster:
-            self.write_and_plot(
-                df=df_tsne_combine_cluster_tag,
-                column_name="combine_cluster",
-                count_file=self.combine_cluster_count_file,
-                plot_file=self.combine_cluster_plot,
-            )
 
         sr_tag_count = df_UMI_cell[
             "tag"
