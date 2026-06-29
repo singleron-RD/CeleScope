@@ -1,12 +1,14 @@
 """
-assign cell identity based on SNR and UMI_min
+assign cell identity based on snr and UMI_min
 """
 
 from celescope.__init__ import HELP_DICT
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
+from celescope.tools.capture.threshold import Otsu
 import pandas as pd
 import numpy as np
+import os
 
 import matplotlib
 
@@ -25,9 +27,9 @@ def get_opts_count_tag(parser, sub_program):
         default=1,
     )
     parser.add_argument(
-        "--SNR_min",
+        "--snr_min",
         help="""Default='auto'. Minimum signal-to-noise ratio. 
-Cell barcodes with UMI >=UMI_min and SNR < SNR_min are classified as *multiplet*. """,
+Cell barcodes with UMI >=UMI_min and snr < snr_min are classified as *multiplet*. """,
         default="auto",
     )
     parser.add_argument(
@@ -35,10 +37,20 @@ Cell barcodes with UMI >=UMI_min and SNR < SNR_min are classified as *multiplet*
     )
     parser.add_argument(
         "--coefficient",
-        help="""Default=0.1. If `SNR_min` is 'auto', minimum signal-to-noise ratio is calulated as 
-`SNR_min = max(median(SNRs) * coefficient, 2)`. 
+        help="""Default=0.1. If `snr_min` is 'auto', minimum signal-to-noise ratio is calulated as
+`snr_min = max(median(snrs) * coefficient, 2)`.
 Smaller `coefficient` will cause less *multiplet* in the tag assignment.""",
         default=0.1,
+    )
+    parser.add_argument(
+        "--tag_threshold_method",
+        help="""Default='snr'. Method to determine tag positivity for each cell.
+'snr': use snr and UMI_min (original method).
+'otsu': use Otsu's method to calculate a threshold for each tag independently.
+Cells with multiple tags above their respective thresholds are classified as *multiplet*.
+Cells with no tags above threshold are classified as *undetermined*.""",
+        default="snr",
+        choices=["snr", "otsu"],
     )
     if sub_program:
         parser.add_argument(
@@ -74,10 +86,11 @@ class Count_tag(Step):
         Step.__init__(self, args, display_title=display_title)
         self.read_count_file = args.read_count_file
         self.UMI_min = args.UMI_min
-        self.SNR_min = args.SNR_min
+        self.snr_min = args.snr_min
         self.combine_cluster = args.combine_cluster
         self.dim = int(args.dim)
         self.coefficient = float(args.coefficient)
+        self.tag_threshold_method = args.tag_threshold_method
 
         # read
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)
@@ -100,6 +113,7 @@ class Count_tag(Step):
 
         # out files
         self.UMI_tag_file = f"{self.outdir}/{self.sample}_umi_tag.tsv"
+        self.otsu_plot_dir = f"{self.outdir}/otsu_plot"
 
     @staticmethod
     def get_UMI(row):
@@ -117,7 +131,7 @@ class Count_tag(Step):
             return int(UMI_min)
 
     @staticmethod
-    def get_SNR(row, dim):
+    def get_snr(row, dim):
         row_sorted = sorted(row, reverse=True)
         noise = row_sorted[dim]
         signal = row_sorted[dim - 1]
@@ -128,37 +142,84 @@ class Count_tag(Step):
         return float(signal) / noise
 
     @utils.add_log
-    def get_SNR_min(self, df_cell_UMI, SNR_min, UMI_min):
+    def get_snr_min(self, df_cell_UMI, snr_min, UMI_min):
         UMIs = df_cell_UMI.apply(Count_tag.get_UMI, axis=1)
         df_valid_cell_UMI = df_cell_UMI[UMIs >= UMI_min]
-        if SNR_min == "auto":
+        if snr_min == "auto":
             # no noise
             if df_valid_cell_UMI.shape[1] <= self.dim:
-                Count_tag.get_SNR_min.logger.warning("*** No NOISE FOUND! ***")
+                Count_tag.get_snr_min.logger.warning("*** No NOISE FOUND! ***")
                 self.no_noise = True
                 return 0
-            SNRs = df_valid_cell_UMI.apply(Count_tag.get_SNR, dim=self.dim, axis=1)
-            if np.median(SNRs) == np.inf:
+            snrs = df_valid_cell_UMI.apply(Count_tag.get_snr, dim=self.dim, axis=1)
+            if np.median(snrs) == np.inf:
                 return 10
-            return max(np.median(SNRs) * self.coefficient, 2)
+            return max(np.median(snrs) * self.coefficient, 2)
         else:
-            return float(SNR_min)
+            return float(snr_min)
 
     @staticmethod
-    def tag_type(row, UMI_min, SNR_min, dim, no_noise=False):
+    def tag_type(row, UMI_min, snr_min, dim, no_noise=False):
         if no_noise:
-            SNR = 1
+            snr = 1
         else:
-            SNR = Count_tag.get_SNR(row, dim)
+            snr = Count_tag.get_snr(row, dim)
         UMI = Count_tag.get_UMI(row)
         if UMI < UMI_min:
             return "Undetermined"
-        if SNR < SNR_min:
+        if snr < snr_min:
             return "Multiplet"
         # get tag
         signal_tags = sorted(row.sort_values(ascending=False).index[0:dim])
         signal_tags_str = "_".join(signal_tags)
         return signal_tags_str
+
+    @staticmethod
+    def get_tag_thresholds(df_UMI_cell, tag_threshold_method, otsu_plot_dir=None):
+        """
+        Calculate threshold for each tag column using Otsu's method.
+        Returns a dict: {tag_name: threshold}
+        If otsu_plot_dir is provided, save Otsu plots and threshold info.
+        """
+        if tag_threshold_method != "otsu":
+            return {}
+        thresholds = {}
+        threshold_info_lines = ["tag\tthreshold"]
+        for tag_name in df_UMI_cell.columns:
+            array = df_UMI_cell[tag_name].values
+            otsu_plot_path = None
+            if otsu_plot_dir:
+                otsu_plot_path = f"{otsu_plot_dir}/{tag_name}_otsu.png"
+            otsu = Otsu(array, otsu_plot_path=otsu_plot_path)
+            threshold = otsu.run()
+            thresholds[tag_name] = threshold
+            threshold_info_lines.append(f"{tag_name}\t{threshold}")
+        if otsu_plot_dir:
+            threshold_file = f"{otsu_plot_dir}/threshold.tsv"
+            with open(threshold_file, "w") as f:
+                f.write("\n".join(threshold_info_lines) + "\n")
+        return thresholds
+
+    @staticmethod
+    def tag_type_otsu(row, thresholds):
+        """
+        Determine tag type using per-tag Otsu thresholds.
+        - Multiple tags above threshold -> Multiplet
+        - Single tag above threshold -> that tag
+        - No tags above threshold -> Undetermined
+        """
+        positive_tags = []
+        for tag_name, threshold in thresholds.items():
+            if row[tag_name] >= threshold:
+                positive_tags.append(tag_name)
+
+        n_positive = len(positive_tags)
+        if n_positive == 0:
+            return "Undetermined"
+        elif n_positive > 1:
+            return "Multiplet"
+        else:
+            return positive_tags[0]
 
     @utils.add_log
     def run(self):
@@ -212,18 +273,30 @@ class Count_tag(Step):
             help_info="Mean UMI per scRNA-Seq cell barcode",
         )
 
-        UMI_min = Count_tag.get_UMI_min(df_UMI_cell, self.UMI_min)
-        Count_tag.run.logger.info(f"UMI_min: {UMI_min}")
-        SNR_min = self.get_SNR_min(df_UMI_cell, self.SNR_min, UMI_min)
-        Count_tag.run.logger.info(f"SNR_min: {SNR_min}")
-        df_UMI_cell["tag"] = df_UMI_cell.apply(
-            Count_tag.tag_type,
-            UMI_min=UMI_min,
-            SNR_min=SNR_min,
-            dim=self.dim,
-            no_noise=self.no_noise,
-            axis=1,
-        )
+        if self.tag_threshold_method == "otsu":
+            os.makedirs(self.otsu_plot_dir, exist_ok=True)
+            thresholds = Count_tag.get_tag_thresholds(
+                df_UMI_cell, self.tag_threshold_method, otsu_plot_dir=self.otsu_plot_dir
+            )
+            Count_tag.run.logger.info(f"Otsu thresholds: {thresholds}")
+            df_UMI_cell["tag"] = df_UMI_cell.apply(
+                Count_tag.tag_type_otsu,
+                thresholds=thresholds,
+                axis=1,
+            )
+        else:
+            UMI_min = Count_tag.get_UMI_min(df_UMI_cell, self.UMI_min)
+            Count_tag.run.logger.info(f"UMI_min: {UMI_min}")
+            snr_min = self.get_snr_min(df_UMI_cell, self.snr_min, UMI_min)
+            Count_tag.run.logger.info(f"snr_min: {snr_min}")
+            df_UMI_cell["tag"] = df_UMI_cell.apply(
+                Count_tag.tag_type,
+                UMI_min=UMI_min,
+                snr_min=snr_min,
+                dim=self.dim,
+                no_noise=self.no_noise,
+                axis=1,
+            )
         df_UMI_cell.to_csv(self.UMI_tag_file, sep="\t")
 
         sr_tag_count = df_UMI_cell[
