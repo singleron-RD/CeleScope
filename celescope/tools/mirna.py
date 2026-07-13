@@ -81,10 +81,4 @@ def get_opts_mirna(parser, sub_program=True):
         outFilterMatchNmin=15,
         soloCellFilter="None",
     )
-    if sub_program:
-        parser.add_argument(
-            "--spatial",
-            help="spatial directory.",
-            required=True,
-        )
     return parser

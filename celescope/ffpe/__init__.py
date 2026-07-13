@@ -1,6 +1,7 @@
 STEPS = [
     "sample",
     "starsolo",
+    "mirna",
     "analysis",
     "cells",
 ]
