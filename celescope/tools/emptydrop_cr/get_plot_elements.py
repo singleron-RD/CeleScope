@@ -261,7 +261,7 @@ def counter_barcode_rank_plot_data(df_UMI_path, log_uniform=False):
             last_cell = i
             break
 
-    ranges = [0, first_non_cell, last_cell + 1, total_bc]
+    ranges = [0, first_non_cell + 1, last_cell + 1, total_bc]
     plot_segments = []
     plot_segments.append(
         BarcodeRankPlotSegment(start=0, end=ranges[1], cell_density=1.0, legend=True)
