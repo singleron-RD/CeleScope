@@ -495,8 +495,8 @@ def invalid_debug(
     chemistry,
     fq1,
     output_file,
-    use_read=1000,
-    skip_read=10000,
+    debug_use_read=1000,
+    debug_skip_read=10000,
     pattern: str = None,
     whitelist: str = None,
     linker: str = None,
@@ -526,9 +526,9 @@ def invalid_debug(
     n_read = 0
     for read in fq:
         n_read += 1
-        if n_read < skip_read:
+        if n_read < debug_skip_read:
             continue
-        if n_read >= skip_read + use_read:
+        if n_read >= debug_skip_read + debug_use_read:
             break
         seq = read.sequence
         valid, _corrected, _corrected_seq, _umi = runner.get_bc_umi(seq)
@@ -560,7 +560,7 @@ def invalid_debug(
                 linker2: <span style="background-color:pink;">pink</span>
                 linker3: <span style="background-color:orange;">orange</span>
             </p>
-        <h3> invalid reads in number {skip_read+1} to {skip_read + use_read} reads({n_invalid}/{use_read})</h3>
+        <h3> invalid reads in number {debug_skip_read+1} to {debug_skip_read + debug_use_read} reads({n_invalid}/{debug_use_read})</h3>
         {joined_sequences}
     </body>
     </html>
@@ -568,7 +568,7 @@ def invalid_debug(
 
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    sys.stderr.write(f"invalid reads in {use_read} reads:{n_invalid}\n")
+    sys.stderr.write(f"invalid reads in {debug_use_read} reads:{n_invalid}\n")
 
 
 def add_color_in_html(seq, items, color="black", background_color="white"):

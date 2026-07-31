@@ -1,3 +1,23 @@
+## [2.12.0] - 2026-07-31
+- Added: Celltypist support for cell type annotation in RNA and FFPE workflows.
+- Added: New `space_tag` pipeline for spatial tag analysis.
+- Added: miRNA alignment support in the space pipeline and FFPE pipeline.
+- Added: Bad channel analysis and visualization in spatial analysis.
+- Added: Linker anchor script for barcode and UMI extraction.
+- Added: Otsu thresholding methods to `count_tag`.
+- Added: Mitochondrial gene percentage metrics in analysis reports.
+- Changed: Included chemistry parameter in Starsolo and Spots run methods; added saturation metric for `space-ff` chemistry.
+- Changed: Set `microns_per_pixel` and `regist_target_img_scalef` to 0.0 in `scalefactors_json`.
+- Fixed: Adjusted barcode rank plot range calculation for accurate plotting.
+- Changed: Updated documentation for `multi_bulk_rna`, `mkgtf`, Q30 metrics, and FFPE samples in `multi_space`.
+
+## [2.11.5] - 2026-04-29
+- Added: Support for `space-ffpe-V1.1` chemistry.
+- Added: Option to skip cutadapt in the space pipeline and copy input file directly.
+- Changed: Updated `bulk_rna-bulk_vdj_match` chemistry detection.
+- Changed: Improved metrics and slot management in the `Cells` class; removed saturation from the space report.
+- Changed: Added batch analysis documentation to the user guide.
+
 ## [2.11.4] - 2026-04-07
 - Added: Added `--create_loom` argument to command-line interface for enabling Loom file creation.
 - Added: `bulk_rna` added saturation for each well.

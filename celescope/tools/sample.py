@@ -10,8 +10,8 @@ from celescope.tools.step import Step, s_common
 from celescope.tools.parse_chemistry import get_chemistry, invalid_debug
 
 
-def sub_fq(fq, out_fq, use_read=1000, skip_read=10000):
-    cmd = f"zcat {fq} | head -n {(use_read + skip_read) * 4} | tail -n {use_read * 4} | gzip > {out_fq}"
+def sub_fq(fq, out_fq, debug_use_read=1000, debug_skip_read=10000):
+    cmd = f"zcat {fq} | head -n {(debug_use_read + debug_skip_read) * 4} | tail -n {debug_use_read * 4} | gzip > {out_fq}"
     subprocess.check_call(cmd, shell=True)
 
 
@@ -55,7 +55,7 @@ class Sample(Step):
         for fq in fq_list:
             fq = Path(fq)
             out_fq = Path(self.outdir) / f"{fq.stem}.subsample.gz"
-            sub_fq(fq, out_fq, self.args.use_read, self.args.skip_read)
+            sub_fq(fq, out_fq, self.args.debug_use_read, self.args.debug_skip_read)
             self.subsample_fqs.append(out_fq)
 
     def pack_files(self):
@@ -71,8 +71,8 @@ class Sample(Step):
                 chemistry,
                 fq1,
                 out_html,
-                use_read=self.args.use_read,
-                skip_read=self.args.skip_read,
+                debug_use_read=self.args.debug_use_read,
+                debug_skip_read=self.args.debug_skip_read,
                 pattern=self.args.pattern,
                 whitelist=self.args.whitelist,
                 linker=self.args.linker,
@@ -93,10 +93,13 @@ def get_opts_sample(parser, sub_program):
         parser.add_argument("--fq2", help="read2 fq file")
         parser.add_argument("--linker")
         parser.add_argument(
-            "--use_read", help="number of reads used for debug", default=1000, type=int
+            "--debug_use_read",
+            help="number of reads used for debug",
+            default=1000,
+            type=int,
         )
         parser.add_argument(
-            "--skip_read",
+            "--debug_skip_read",
             help="Number of reads to skip for debugging. The R1 FASTQ contains N bases in the first hundred reads, so it is better to skip them during debugging",
             default=10000,
             type=int,
