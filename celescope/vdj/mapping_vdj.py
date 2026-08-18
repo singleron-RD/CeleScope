@@ -252,9 +252,12 @@ def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--type", help="TCR or BCR", required=True)
     parser.add_argument(
         "--species",
-        choices=["human", "mouse"],
-        help="Default human. human or mouse.",
+        help="Default human. If not human or mouse, aux file is required.",
         default="human",
+    )
+    parser.add_argument(
+        "--aux_file",
+        help="aux file for customized species.",
     )
     parser.add_argument(
         "--split_fasta",
