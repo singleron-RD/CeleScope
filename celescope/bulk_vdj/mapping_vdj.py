@@ -95,9 +95,7 @@ class Mapping_vdj(step.Step):
             ig_seqtype = "Ig"
         cmd = (
             f"igblastn -query {self.args.fasta} "
-            f"-organism {self.args.species} "
             f"-ig_seqtype {ig_seqtype} "
-            f"-auxiliary_data optional_file/{self.args.species}_gl.aux "
             f"-num_threads {self.args.thread} "
             f"-germline_db_V {self.args.ref_path}/{chain}V.fa "
             f"-germline_db_D {self.args.ref_path}/{chain}D.fa "
@@ -105,6 +103,12 @@ class Mapping_vdj(step.Step):
             "-domain_system imgt -show_translation -outfmt 19 "  # outfmt19 is an AIRR tab-delimited file, IgBLAST v1.9.0 or higher required.
             f"-out {self.airr_out} "
         )
+        if self.args.species in ["human", "mouse"]:
+            cmd += f" -organism {self.args.species} "
+            auxiliary_data = f"optional_file/{self.species}_gl.aux"
+        else:
+            auxiliary_data = self.args.aux_file
+        cmd += f" -auxiliary_data {auxiliary_data} "
         self.igblast.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
 
