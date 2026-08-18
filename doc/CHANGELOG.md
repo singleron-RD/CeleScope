@@ -1,3 +1,7 @@
+## [2.13.0] - 2026-08-18
+- Added: Support for customized species in `vdj` and `bulk_vdj` mapping; added `--aux_file` argument for non-human/mouse species.
+- Fixed: Return early for empty wells in `bulk_vdj mapping_vdj` to avoid downstream errors.
+
 ## [2.12.0] - 2026-07-31
 - Added: Celltypist support for cell type annotation in RNA and FFPE workflows.
 - Added: New `space_tag` pipeline for spatial tag analysis.
