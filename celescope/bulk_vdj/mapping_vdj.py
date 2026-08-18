@@ -251,6 +251,8 @@ class Mapping_vdj(step.Step):
             .size()
             .reset_index(name="umis")
         )
+        if len(df) == 0:
+            return 0, 0
         sample = df["sample"][0]
         df.sort_values("umis", ascending=False, inplace=True)
         df["raw_clonotype_id"] = ["{}_{}".format(sample, i + 1) for i in range(len(df))]

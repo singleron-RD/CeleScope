@@ -39,7 +39,11 @@ def main():
 
     fq1 = pysam.FastxFile(args.fq1)
     fq2 = pysam.FastxFile(args.fq2)
+    n_read = 0
     for read1, read2 in zip(fq1, fq2):
+        n_read += 1
+        if n_read % 1000000 == 0:
+            print(f"Processed {n_read} reads")
         bc = read2.sequence[:barcode_length]
         sample = barcode_sample.get(bc, "other")
         if sample not in sample_fh:
