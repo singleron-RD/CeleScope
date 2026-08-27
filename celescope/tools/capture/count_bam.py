@@ -38,8 +38,12 @@ class Count_bam(Step):
         # data
         self.total_corrected_umi = 0
         self.count_dict = utils.nested_defaultdict(dim=3)
+        self.background_count_dict = utils.nested_defaultdict(dim=3)
 
         # out
+        self.background_read_count_file = (
+            f"{self.out_prefix}_background_read_count.json"
+        )
         self.raw_read_count_file = f"{self.out_prefix}_raw_read_count.json"
 
     @utils.add_log
@@ -52,10 +56,12 @@ class Count_bam(Step):
             attr = read.query_name.split(":")
             barcode = attr[0]
             umi = attr[1]
-            if (barcode in self.match_barcode) and (
-                query_length >= self.min_query_length
-            ):
+            if query_length < self.min_query_length:
+                continue
+            if barcode in self.match_barcode:
                 self.count_dict[barcode][ref][umi] += 1
+            else:
+                self.background_count_dict[barcode][ref][umi] += 1
 
     @utils.add_log
     def add_some_metrics(self):
@@ -84,6 +90,8 @@ class Count_bam(Step):
     def write_count_file(self):
         with open(self.raw_read_count_file, "w") as fp:
             json.dump(self.count_dict, fp, indent=4)
+        with open(self.background_read_count_file, "w") as fp:
+            json.dump(self.background_count_dict, fp, indent=4)
 
     @utils.add_log
     def run(self):
