@@ -65,6 +65,10 @@ bulk_rna_dict = {
         "pattern": "C6U16",
         "bc": ["bc.txt"],
     },
+    "bulk_rna-V3-384": {
+        "pattern": "C6U16",
+        "bc": ["bc.txt"],
+    },
     "bulk_rna-bulk_vdj_match": {
         "pattern": "L18C6U16",
         "bc": ["bc.txt"],

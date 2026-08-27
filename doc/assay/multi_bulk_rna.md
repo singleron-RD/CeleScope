@@ -55,7 +55,9 @@ Required. A TSV file containing well numbers and sample names of wells.
 
 ![](../images/96-well.png)
 
-**384 well number (16 × 24), only used in `bulk_rna-V1`**
+**384 well number (16 × 24), used in `bulk_rna-V1` and `bulk_rna-V3-384`
+
+![](../images/384-well.png)
 
 Example:
 
@@ -75,9 +77,10 @@ Chemistry version. Available choices:
 | `bulk_rna-V1` | C9U12 | 384-well format |
 | `bulk_rna-V2` | L9C9U12 | |
 | `bulk_rna-V3` | C6U16 | |
+| `bulk_rna-V3-384` | C6U16 | 384-well format |
 | `bulk_rna-bulk_vdj_match` | L18C6U16 | Matched with bulk_vdj |
 
-Default is `auto`, which automatically detects the chemistry from the FASTQ files.
+Default is `auto`, which automatically detects the chemistry from the FASTQ files. Please note that `bulk_rna-V3-384` can not be auto detected and you need to specify `--chemistry bulk_rna-V3-384` explicitly.
 
 `--thread`
 The recommended number of threads is 16. Using more than 20 threads is generally not recommended, because [the mapping speed of STAR tends to saturate above approximately 20 threads](https://github.com/singleron-RD/CeleScope/issues/197).
