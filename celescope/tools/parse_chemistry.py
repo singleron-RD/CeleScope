@@ -223,12 +223,13 @@ class Auto:
         for fastq1 in self.fq1_list:
             chemistry = self.get_fq_chemistry(fastq1)
             fq_chemistry[fastq1] = chemistry
-        if len(set(fq_chemistry.values())) != 1:
+        chemistrys = list(set(fq_chemistry.values()))
+        if len(chemistrys) != 1:
             sys.exit(
                 f"Error: multiple chemistrys are not allowed for one sample: {self.fq1_list}! \n"
                 + str(fq_chemistry)
             )
-        chemistry = list(fq_chemistry.values())[0]
+        chemistry = chemistrys[0]
         return chemistry
 
     def is_valid_bc(self, seq, chemistry):
@@ -249,10 +250,8 @@ class Auto:
 
     def count_chemistry(self, fq1):
         with pysam.FastxFile(fq1) as fq:
-            n = 0
-            for read in fq:
+            for n, read in enumerate(fq, start=1):
                 seq = read.sequence
-                n += 1
                 chemistry = self.seq_chemistry(seq)
                 if chemistry:
                     self.chemistry_count[chemistry] += 1
@@ -269,9 +268,10 @@ class Auto:
 
         chemistry, read_counts = sorted_counts[0]
         percent = round(float(read_counts) / self.max_read * 100, 2)
+
         if percent < 10:
             print("Valid chemistry read counts percent < 10%")
-            raise Exception("Auto chemistry detection failed! ")
+            raise ValueError("Auto chemistry detection failed! ")
         elif percent < 50:
             print("Valid chemistry read counts percent < 50%")
         print(f"{fq1}: {chemistry}")
@@ -379,9 +379,8 @@ class AutoRNA(Auto):
 
         for chemistry in ["GEXSCOPE-V2", "GEXSCOPE-V1"]:
             if self.is_valid_bc(seq, chemistry):
-                if chemistry == "GEXSCOPE-V1":
-                    if seq[56] != "C":
-                        return "flv_rna"
+                if chemistry == "GEXSCOPE-V1" and seq[56] != "C":
+                    return "flv_rna"
                 return chemistry
 
         # check if it is MicroBead
