@@ -1,3 +1,9 @@
+## [2.14.0] - 2026-08-27
+- Added: Support for `bulk_rna-V3-384` chemistry.
+- Added: `split_bulk_fastq` utility for splitting paired-end bulk FASTQ files.
+- Added: Background barcode count tracking and output file in `Count_virus` and `Count_fusion`.
+
+
 ## [2.13.0] - 2026-08-18
 - Added: Support for customized species in `vdj` and `bulk_vdj` mapping; added `--aux_file` argument for non-human/mouse species.
 - Fixed: Return early for empty wells in `bulk_vdj mapping_vdj` to avoid downstream errors.
