@@ -43,8 +43,8 @@ Custom cell barcode whitelist file path, used when `--chemistry customized` is s
 
 For each sample listed in `--well_sample`, the following files are written to `--outdir`:
 
-- `{sample}_barcode_R1.fastq.gz`: R1 reads assigned to this sample.
-- `{sample}_barcode_R2.fastq.gz`: R2 reads assigned to this sample.
+- `{sample}_{barcode}_R1.fastq.gz`: R1 reads assigned to this sample.
+- `{sample}_{barcode}_R2.fastq.gz`: R2 reads assigned to this sample.
 
 Reads with barcodes that are not present in the whitelist or not included in `--well_sample` are discarded.
 
