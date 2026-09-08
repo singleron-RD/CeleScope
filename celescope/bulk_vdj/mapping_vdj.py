@@ -93,6 +93,8 @@ class Mapping_vdj(step.Step):
         elif self.args.type == "BCR":
             chain = "IG"
             ig_seqtype = "Ig"
+        else:
+            raise ValueError(f"Unknown type {self.args.type}")
         cmd = (
             f"igblastn -query {self.args.fasta} "
             f"-ig_seqtype {ig_seqtype} "
@@ -105,7 +107,7 @@ class Mapping_vdj(step.Step):
         )
         if self.args.species in ["human", "mouse"]:
             cmd += f" -organism {self.args.species} "
-            auxiliary_data = f"optional_file/{self.species}_gl.aux"
+            auxiliary_data = f"optional_file/{self.args.species}_gl.aux"
         else:
             auxiliary_data = self.args.aux_file
         cmd += f" -auxiliary_data {auxiliary_data} "
@@ -174,8 +176,10 @@ class Mapping_vdj(step.Step):
                     row["productive"] == "T"
                     and row["junction"] != ""
                     and "N" not in row["junction"]
+                    and "*" not in row["junction_aa"]
                     and len(row["junction_aa"]) > 5
                     and row["junction_aa"][0] == "C"
+                    and row["locus"] in self.chains
                 ):
                     metrics[barcode]["umi_confident"] += 1
                     if row["locus"] in self.chains:

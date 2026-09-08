@@ -101,9 +101,7 @@ class Mapping_vdj(Step):
 
         cmd = (
             f"igblastn -query {fasta} "
-            f"-organism {self.species} "
             f"-ig_seqtype {ig_seqtype} "
-            f"-auxiliary_data optional_file/{self.species}_gl.aux "
             f"-num_threads {self.args.thread} "
             f"-germline_db_V {self.ref_path}/{chain}V.fa "
             f"-germline_db_D {self.ref_path}/{chain}D.fa "
@@ -111,6 +109,13 @@ class Mapping_vdj(Step):
             "-domain_system imgt -show_translation -outfmt 19 "  # outfmt19 is an AIRR tab-delimited file, IgBLAST v1.9.0 or higher required.
             f"-out {airr_out} "
         )
+
+        if self.args.species in ["human", "mouse"]:
+            cmd += f" -organism {self.args.species} "
+            auxiliary_data = f"optional_file/{self.args.species}_gl.aux"
+        else:
+            auxiliary_data = self.args.aux_file
+        cmd += f" -auxiliary_data {auxiliary_data} "
 
         self.igblast.logger.info(cmd)
         subprocess.check_call(cmd, shell=True)
@@ -146,7 +151,15 @@ class Mapping_vdj(Step):
             ]
             correct_cdr3_num += df.shape[0]
             # UMIs Mapped Confidently To VJ Gene
-            df = df[df["productive"] == "T"]
+            df = df[
+                (df["productive"] == "T")
+                & (df["junction"] != "")
+                & (~df["junction"].str.contains("N"))
+                & (~df["junction_aa"].str.contains(r"\*"))
+                & (df["junction_aa"].str.len() > 5)
+                & (df["junction_aa"].str.startswith("C"))
+                & (df["locus"].isin(self.chains))
+            ]
             confident_num += df.shape[0]
 
             df_total_confident = pd.concat([df_total_confident, df])
@@ -173,7 +186,7 @@ class Mapping_vdj(Step):
             name="UMIs Mapped Confidently to VJ Gene",
             value=confident_num,
             total=total_reads,
-            help_info="UMIs with productive rearrangement mapped to VJ gene pairs and with correct CDR3",
+            help_info="UMIs with productive rearrangement, valid junction (no N), CDR3 > 5 aa starting with C, and locus in expected chains",
         )
 
         # UMIs Mapped Confidently to each chain
@@ -249,7 +262,9 @@ def mapping_vdj(args):
 
 def get_opts_mapping_vdj(parser, sub_program):
     parser.add_argument("--ref_path", help="reference path for igblast")
-    parser.add_argument("--type", help="TCR or BCR", required=True)
+    parser.add_argument(
+        "--type", help="TCR or BCR", required=True, choices=["TCR", "BCR"]
+    )
     parser.add_argument(
         "--species",
         help="Default human. If not human or mouse, aux file is required.",
