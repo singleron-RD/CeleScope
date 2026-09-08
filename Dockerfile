@@ -1,7 +1,7 @@
 # =========================
 # Build stage
 # =========================
-FROM mambaorg/micromamba:0.22.0 AS build
+FROM mambaorg/micromamba:latest AS build
 
 # Set working directory
 WORKDIR /usr/src/celescope
@@ -17,12 +17,12 @@ RUN micromamba create --name runtime --always-copy --file conda_pkgs.txt \
     && micromamba clean --all --yes
 
 # Install Python dependencies in the conda environment
-RUN micromamba run -n runtime pip install --verbose --no-cache-dir .
+RUN micromamba run -n runtime pip install --verbose --no-cache-dir --no-build-isolation .
 
 # =========================
 # Runtime stage
 # =========================
-FROM mambaorg/micromamba:0.22.0 AS runtime
+FROM mambaorg/micromamba:latest AS runtime
 
 WORKDIR /usr/src/celescope
 
