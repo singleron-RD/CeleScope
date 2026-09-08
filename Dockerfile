@@ -17,7 +17,7 @@ RUN micromamba create --name runtime --always-copy --file conda_pkgs.txt \
     && micromamba clean --all --yes
 
 # Install Python dependencies in the conda environment
-RUN micromamba run -n runtime pip install --verbose --no-cache-dir .
+RUN micromamba run -n runtime pip install --verbose --no-cache-dir --no-build-isolation .
 
 # =========================
 # Runtime stage
