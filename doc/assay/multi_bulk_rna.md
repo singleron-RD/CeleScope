@@ -89,7 +89,9 @@ The recommended number of threads is 16. Using more than 20 threads is generally
 Specifies the script type to generate. Available options include `sjm`, which uses [Simple Job Manager](https://github.com/StanfordBioinformatics/SJM), and `shell`, which generates standard shell scripts.
 
 `--split_fastq`
-Split FASTQ file according to well barcodes. Appends UMI to read name with UMI separator `:`.
+Splits R2 FASTQ files by well barcodes and appends the UMI to the read header (separated by :).
+
+Note: Only R2 reads are extracted from the BAM file, and sequences are always output in the forward strand orientation (reverse-complemented if aligned to the reverse strand). R1 reads are omitted because they contain barcode and UMI sequences. To split raw R1 and R2 files, use [split_bulk_fastq](../split_bulk_fastq.md).
 
 `--split_bam`
 Split BAM file according to well barcodes.

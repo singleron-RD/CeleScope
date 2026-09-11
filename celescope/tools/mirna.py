@@ -32,6 +32,12 @@ class StarsoloMirna(tools_Starsolo):
             " --alignIntronMax 1"
         )
 
+        if self.chemistry.startswith("space-ffpe"):
+            self.extra_starsolo_args += " --soloStrand Reverse --clip5pNbases 44 "
+            args.fq2 = args.fq1  # single end
+        elif self.chemistry == "space-ff":
+            self.extra_starsolo_args += " --clip5pNbases 20 "
+
         self.mrna_raw = CountMatrix.from_matrix_dir(f"{self.outs_dir}/raw/")
         self.mrna_filtered = CountMatrix.from_matrix_dir(f"{self.outs_dir}/filtered/")
 
