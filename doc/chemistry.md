@@ -40,4 +40,38 @@ For example, in the pattern:
 - Then, another **8 bp** of **cell barcode**, and so on.  
 
 > [!NOTE] 
-> To maintain sequencing base balance, `GEXSCOPE-V3` and `flv_rna-V2` includes an additional **0–3 bp** sequence before the first barcode segment.  
+> To maintain sequencing base balance, `GEXSCOPE-V3` and `flv_rna-V2` includes an additional **0–3 bp** sequence before the first barcode segment.
+
+## GEXSCOPE-V3 Structure
+
+### Sequence Pattern
+
+```plaintext
+C9L6C9L6C9L1U12
+```
+
+Due to the **0–3 bp staggered offset** at the beginning of Read 1 (for base balance and sequence diversity), the actual pattern in Read 1 is:
+
+```plaintext
+[0-3 bp offset] + C9 + L6 + C9 + L6 + C9 + L1(1bp C) + U12
+```
+
+### Region Breakdown
+
+| Region | Pattern | Length | Description |
+|--------|---------|--------|-------------|
+| Initial Offset | — | 0–3 bp | Staggered random nucleotides at the start of R1 |
+| Barcode 1 (C1) | C9 | 9 bp | First cell barcode segment (matched against `bc1.txt`) |
+| Linker 1 (L1) | L6 | 6 bp | Fixed sequence: `ACGATG` |
+| Barcode 2 (C2) | C9 | 9 bp | Second cell barcode segment (matched against `bc2.txt`) |
+| Linker 2 (L2) | L6 | 6 bp | Fixed sequence: `CATAGT` |
+| Barcode 3 (C3) | C9 | 9 bp | Third cell barcode segment (matched against `bc3.txt`) |
+| Spacer | L1(1bp C) | 1 bp | Spacer nucleotide following Barcode 3 |
+| UMI | U12 | 12 bp | Unique Molecular Identifier for transcript deduplication |
+
+### Key Specifications
+
+- **Total Cell Barcode**: 27 bp across three 9 bp segments (`C9 + C9 + C9`)
+- **UMI**: 12 bp fixed length
+- **Dynamic Location Handling**: Because of the 0–3 bp offset, tools like STARsolo process GEXSCOPE-V3 under `CB_UMI_Complex` mode using `soloAdapterSequence` (`NNNNNNNNNACGATGNNNNNNNNNCATAGT`) to anchor and locate the barcode segments relative to the linkers
+
