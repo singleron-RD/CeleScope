@@ -58,20 +58,19 @@ Due to the **0–3 bp staggered offset** at the beginning of Read 1 (for base ba
 
 ### Region Breakdown
 
-| Region | Pattern | Length | Description |
-|--------|---------|--------|-------------|
-| Initial Offset | — | 0–3 bp | Staggered random nucleotides at the start of R1 |
-| Barcode 1 (C1) | C9 | 9 bp | First cell barcode segment (matched against `bc1.txt`) |
-| Linker 1 (L1) | L6 | 6 bp | Fixed sequence: `ACGATG` |
-| Barcode 2 (C2) | C9 | 9 bp | Second cell barcode segment (matched against `bc2.txt`) |
-| Linker 2 (L2) | L6 | 6 bp | Fixed sequence: `CATAGT` |
-| Barcode 3 (C3) | C9 | 9 bp | Third cell barcode segment (matched against `bc3.txt`) |
-| Spacer | L1(1bp C) | 1 bp | Spacer nucleotide following Barcode 3 |
-| UMI | U12 | 12 bp | Unique Molecular Identifier for transcript deduplication |
+| Region | Pattern | Length | Description | Whitelist |
+|--------|---------|--------|-------------|-----------|
+| Initial Offset | — | 0–3 bp | Staggered random nucleotides at the start of R1 | — |
+| Barcode 1 (C1) | C9 | 9 bp | First cell barcode segment | [bc1.txt](../celescope/data/chemistry/GEXSCOPE-V3/bc1.txt) |
+| Linker 1 (L1) | L6 | 6 bp | Fixed sequence: `ACGATG` | [linker1.txt](../celescope/data/chemistry/GEXSCOPE-V3/linker1.txt) |
+| Barcode 2 (C2) | C9 | 9 bp | Second cell barcode segment | [bc2.txt](../celescope/data/chemistry/GEXSCOPE-V3/bc2.txt) |
+| Linker 2 (L2) | L6 | 6 bp | Fixed sequence: `CATAGT` | [linker2.txt](../celescope/data/chemistry/GEXSCOPE-V3/linker2.txt) |
+| Barcode 3 (C3) | C9 | 9 bp | Third cell barcode segment | [bc3.txt](../celescope/data/chemistry/GEXSCOPE-V3/bc3.txt) |
+| Spacer | L1(1bp C) | 1 bp | Spacer nucleotide following Barcode 3 | — |
+| UMI | U12 | 12 bp | Unique Molecular Identifier for transcript deduplication | — |
 
 ### Key Specifications
 
 - **Total Cell Barcode**: 27 bp across three 9 bp segments (`C9 + C9 + C9`)
 - **UMI**: 12 bp fixed length
 - **Dynamic Location Handling**: Because of the 0–3 bp offset, tools like STARsolo process GEXSCOPE-V3 under `CB_UMI_Complex` mode using `soloAdapterSequence` (`NNNNNNNNNACGATGNNNNNNNNNCATAGT`) to anchor and locate the barcode segments relative to the linkers
-
