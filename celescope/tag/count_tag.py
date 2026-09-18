@@ -302,17 +302,36 @@ class Count_tag(Step):
         sr_tag_count = df_UMI_cell[
             "tag"
         ].value_counts()  # series(index:tag name, value:tag count)
+
+        tag_table_rows = []
         for tag_name in ("Undetermined", "Multiplet"):
             if tag_name in sr_tag_count:
-                self.add_metric(
-                    name=tag_name + " Cells",
-                    value=int(sr_tag_count[tag_name]),
-                    total=self.n_match_barcode,
+                cell_number = int(sr_tag_count[tag_name])
+                percent = round(cell_number / self.n_match_barcode * 100, 2)
+                tag_table_rows.append(
+                    {
+                        "name": tag_name,
+                        "cell_number": cell_number,
+                        "percent": percent,
+                    }
                 )
                 sr_tag_count.drop(tag_name, inplace=True)
         for tag_name in sorted(sr_tag_count.index):
-            self.add_metric(
-                name=tag_name + " Cells",
-                value=int(sr_tag_count[tag_name]),
-                total=self.n_match_barcode,
+            cell_number = int(sr_tag_count[tag_name])
+            percent = round(cell_number / self.n_match_barcode * 100, 2)
+            tag_table_rows.append(
+                {
+                    "name": tag_name,
+                    "cell_number": cell_number,
+                    "percent": percent,
+                }
             )
+        df_tag_table = pd.DataFrame(
+            tag_table_rows, columns=["name", "cell_number", "percent"]
+        )
+        self.add_table(
+            title="Tag Cells",
+            table_id="tag_cells",
+            df=df_tag_table,
+            help="Cell counts and percentages for each tag.",
+        )
