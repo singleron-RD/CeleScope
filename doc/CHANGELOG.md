@@ -1,3 +1,11 @@
+## [2.15.1] - 2026-09-20
+
+### `tag`
+- Changed: Replaced per-tag `add_metric` calls in `count_tag` with a single `add_table` output (`Tag Cells` table containing `name`, `cell_number`, `percent` columns). 
+
+### `space`
+- Added: Enhance StarsoloMirna with chemistry-specific arguments.
+
 ## [2.15.0] - 2026-09-08
 
 ### `vdj` and `bulk_vdj`
