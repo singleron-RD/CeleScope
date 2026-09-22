@@ -1,3 +1,9 @@
+## [2.15.2] - 2026-09-22
+
+### `tag`
+- Added: Support for multi-segment barcodes to match against separate barcode FASTA files independently.
+- Added: Support for customized `--mismatch` value in `mapping_tag`.
+
 ## [2.15.1] - 2026-09-20
 
 ### `tag`
