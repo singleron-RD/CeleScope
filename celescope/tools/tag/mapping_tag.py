@@ -198,7 +198,7 @@ class Mapping_tag(Step):
         for i, seq_barcode in enumerate(seq_barcode_list):
             if seq_barcode not in self.mismatch_dict_list[i]:
                 self.reads_unmapped_invalid_barcode += 1
-                self.invalid_barcode_dict[seq_barcode] += 1
+                self.invalid_barcode_dict[tuple(seq_barcode_list)] += 1
                 return
             matched_names.append(self.mismatch_dict_list[i][seq_barcode])
 
@@ -257,11 +257,24 @@ class Mapping_tag(Step):
 
         # write invalid seq_barcode to file
         with open(self.invalid_barcode_file, "w") as f:
-            f.write("tag_barcode\tread_count\n")
-            for seq_barcode, count in sorted(
+            header = []
+            for i in range(self.n_c):
+                header.append(f"tag_barcode_{i + 1}")
+                header.append(f"valid_{i + 1}")
+            header.append("read_count")
+            f.write("\t".join(header) + "\n")
+            for seq_barcode_tuple, count in sorted(
                 self.invalid_barcode_dict.items(), key=lambda x: x[1], reverse=True
             ):
-                f.write(f"{seq_barcode}\t{count}\n")
+                row = []
+                for i, seq_barcode in enumerate(seq_barcode_tuple):
+                    valid = (
+                        "True" if seq_barcode in self.mismatch_dict_list[i] else "False"
+                    )
+                    row.append(seq_barcode)
+                    row.append(valid)
+                row.append(str(count))
+                f.write("\t".join(row) + "\n")
 
     def add_metrics(self):
         # add metrics

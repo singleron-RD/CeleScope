@@ -1,3 +1,8 @@
+## [2.15.3] - 2026-10-10
+
+### `tag`
+- Changed: `invalid_barcode.tsv` now outputs each `C` segment in its own columns with a `valid` flag indicating whether that segment matched the corresponding barcode FASTA.
+
 ## [2.15.2] - 2026-09-22
 
 ### `tag`
