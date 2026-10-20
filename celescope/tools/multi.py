@@ -131,6 +131,9 @@ use `--steps_run barcode,cutadapt`
         parser.add_argument("--outdir", help="Output directory.", default="./")
         parser.add_argument("--thread", help=HELP_DICT["thread"], default=16)
         parser.add_argument("--debug", help=HELP_DICT["debug"], action="store_true")
+        parser.add_argument(
+            "--remove_logo", help=HELP_DICT["remove_logo"], action="store_true"
+        )
         self.parser = parser
         return parser
 
@@ -255,6 +258,8 @@ job_end
         cmd_line = step_prefix
         if self.args.debug:
             cmd_line += " --debug "
+        if self.args.remove_logo:
+            cmd_line += " --remove_logo "
         for arg in args_dict:
             if args_dict[arg] is False:
                 continue

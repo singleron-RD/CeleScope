@@ -65,6 +65,9 @@ def s_common(parser):
     parser.add_argument("--sample", help="Sample name.", required=True)
     parser.add_argument("--thread", help=HELP_DICT["thread"], default=16)
     parser.add_argument("--debug", help=HELP_DICT["debug"], action="store_true")
+    parser.add_argument(
+        "--remove_logo", help=HELP_DICT["remove_logo"], action="store_true"
+    )
     return parser
 
 
@@ -140,6 +143,7 @@ class Step:
             loader=FileSystemLoader(os.path.dirname(__file__) + "/../templates/"),
             autoescape=select_autoescape(["html", "xml"]),
         )
+        self.env.globals["remove_logo"] = args.remove_logo
 
         # out file
         self.__stat_file = f"{self.outdir}/stat.txt"
@@ -360,11 +364,11 @@ class Step:
         for key, value in vars(self.args).items():
             if key not in {
                 "func",
-                "thread",
                 "outdir",
                 "sample",
                 "subparser_assay",
                 "debug",
+                "remove_logo",
             }:
                 self.__content_dict["data"]["parameters"][key] = value
 
