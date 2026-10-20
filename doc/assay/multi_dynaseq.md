@@ -89,82 +89,107 @@ Please note that `./shell/{sample}.sh` must be executed from the working directo
 
 ### conversion step
 
+Detects T-to-C conversion sites from aligned reads and calls candidate SNPs.
+
 `--basequalilty`
-Min base quality of the read sequence. Default: `20`
+Min base quality of the read sequence. Bases below this threshold are excluded from conversion detection. Default: `20`
 
 `--snp_min_depth`
-Minimum depth to call a SNP. Default: `20`
+Minimum read depth at a site to be considered a candidate SNP. Sites with coverage below this value are filtered out from the SNP list. Default: `20`
 
 `--snp_threshold`
-SNP threshold filter. Greater than `snp_threshold` will be recognized as SNP. Default: `0.5`
+Allelic ratio threshold for SNP calling. Sites where the conversion ratio (`convs` / `covers`) is greater than or equal to this value are marked as candidate SNPs. Default: `0.5`
 
 `--readsplit`
-Split to have approximately N reads per output file. Default: `1000000`
+Split the input BAM into smaller chunks with approximately N reads each, for parallel processing via Picard SplitSamByNumberOfReads. Default: `1000000`
 
 `--conversionMem`
-Set conversion memory (G). Default: `5`
+Memory allocation (GB) for the conversion step. Default: `5`
 
 ### substitution step
 
+Computes overall nucleotide substitution rates from the PosTag BAM.
+
 `--all_type_plot`
-Plot substitution rate for all conversion types.
+If set, outputs substitution rates for all 12 conversion types (A_to_C, A_to_G, A_to_T, C_to_A, ...) in addition to the T-to-C substitution rate. Without this flag, only the T-to-C labeled and background substitution rates are reported.
 
 ### replacement step
 
+Quantifies labeled and unlabeled RNA by distinguishing T-to-C converted reads from background SNPs, then calculates the RNA turnover rate (TOR) at both cell and gene levels.
+
 `--control`
-For control samples to generate background SNP files and skip replacement.
+For control samples (e.g., unlabeled input RNA). When set, generates the background SNP files (conversion step still runs) but skips the replacement step entirely, since there is no labeled RNA to quantify.
 
 `--replacementMem`
-Set replacement memory (G). Default: `50`
+Memory allocation (GB) for the replacement step, which reads the full filtered matrix and parallelizes over BAM chunks. Default: `50`
 
 ---
 
 ## Main output
 
-### Gene expression matrix
+### Gene expression matrix (from STARsolo)
 
 * `outs/{sample}_Aligned.sortedByCoord.out.bam`
-  Coordinate-sorted BAM file containing reads aligned to the genome.
+  Coordinate-sorted BAM file containing reads aligned to the genome. This BAM must have the `MD` tag, which is set automatically by the dynaseq starsolo step.
 
 * `outs/raw`
   Gene expression matrix containing all barcodes from the barcode whitelist, including both background and cell-associated barcodes.
 
 * `outs/filtered`
-  Gene expression matrix containing only cell-associated barcodes.
+  Gene expression matrix containing only cell-associated barcodes, used as input for the downstream dynaseq steps.
 
-* `outs/labeled`
-  Labeled gene expression matrix.
-
-* `outs/unlabeled`
-  Unlabeled gene expression matrix.
-
-* `outs/{sample}.h5ad`
-  H5AD file containing `['total', 'labeled', 'unlabeled']` layers and TOR rate of each cell/gene.
-
-### Conversion outputs
+### conversion step outputs
 
 * `conversion/{sample}.PosTag.bam`
-  BAM file with conversion info.
+  BAM file derived from the STARsolo output BAM, with additional custom tags annotated for every read that maps to a gene (has a valid `GX` tag):
+    * `SC` — per-read nucleotide substitution counts across all 12 conversion types, e.g. `cA0;gA0;tA0;aC0;gC0;tC3;aG1;cG0;tG0;aT0;cT0;gT0;`
+    * `TC` — per-read reference base composition, e.g. `a15;c10;g12;t8;`
+    * `TL` — positions of T-to-C conversions on the forward strand (empty reads are marked with `0`)
+    * `AL` — positions of A-to-G conversions on the reverse strand (empty reads are marked with `0`)
+    * `ST` — gene strand (`+` or `-`)
 
 * `conversion/{sample}.PosTag.csv`
-  TC conversion sites info in CSV format.
+  All detected T-to-C conversion sites across the genome, one row per site:
+    * `chrom`: Chromosome name
+    * `pos`: 0-based genomic position
+    * `convs`: Number of reads supporting a T-to-C conversion at this position
+    * `covers`: Total read coverage at this position
+    * `posratio`: Conversion ratio (`convs` / `covers`)
 
 * `conversion/{sample}.snp.csv`
-  Candidate SNP sites.
+  Candidate SNP sites filtered from `PosTag.csv` using `--snp_threshold` and `--snp_min_depth`. These sites are treated as biological background variation and removed from the labeled signal in the replacement step. Columns are the same as `PosTag.csv`.
 
-### Substitution outputs
+### substitution step outputs
 
 * `substitution/{sample}.TC_substitution.txt`
-  Substitution rate of labeled and background sites.
+  Tab-separated table (no header) of T-to-C substitution rates, with two rows:
+    * `Labeled` — substitution rate after subtracting background SNPs (forward + reverse combined), representing true labeled signal
+    * `Background` — substitution rate attributable to biological SNPs and sequencing errors
 
-* `substitution/{sample}.substitution.txt`
-  Tab-separated table of the overall conversion rates.
+  Each row has three columns: `label|plus_strand_rate|minus_strand_rate`.
 
-### Replacement outputs
+* `substitution/{sample}.substitution.txt` (only when `--all_type_plot` is set)
+  Tab-separated table (no header) of substitution rates for all 12 conversion types. Three columns: `conversion_type|plus_strand_rate|minus_strand_rate`.
+
+### replacement step outputs
+
+* `outs/labeled`
+  Labeled gene expression matrix (UMIs with at least one T-to-C conversion after removing background SNPs), in 10x Genomics Matrix Market format.
+
+* `outs/unlabeled`
+  Unlabeled gene expression matrix (UMIs with zero T-to-C conversion after removing background SNPs), in 10x Genomics Matrix Market format.
+
+* `outs/{sample}.h5ad`
+  Annotated H5AD object (scanpy AnnData) containing:
+    * Layers: `total`, `labeled`, `unlabeled` — corresponding expression matrices
+    * `.obs['TOR']` — RNA turnover rate per cell (fraction of labeled transcripts)
+    * `.var['TOR']` — RNA turnover rate per gene (fraction of labeled transcripts)
+    * `.var['total_counts']` — total UMI count per gene
+    * `.obs['tSNE_1']`, `.obs['tSNE_2']` — t-SNE coordinates from the upstream analysis step
 
 * `replacement/{sample}_labeled_detail.csv`
-  Comma-delimited file:
+  Per-UMI T-to-C conversion counts after background SNP removal, one row per deduplicated UMI:
     * `Barcode`: Cell barcode sequence
     * `UMI`: UMI sequence
-    * `geneID`: Gene ID
-    * `TC`: TC site number in a read (background SNP removed)
+    * `geneID`: Gene ID (matches the filtered matrix feature IDs)
+    * `TC`: Number of T-to-C conversion sites in this read after filtering out background SNP positions. A value of `0` means the UMI is classified as unlabeled.
