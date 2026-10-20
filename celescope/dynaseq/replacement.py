@@ -25,7 +25,7 @@ class Replacement(Step):
     - TSNE plot for TOR rate
 
     Output
-    - `{sample}.labeled.h5ad` h5ad file contains ['total', 'labeled', 'unlabeled'] layers and TOR rate of each cell/gene.
+    - `{sample}.h5ad` h5ad file contains ['total', 'labeled', 'unlabeled'] layers and TOR rate of each cell/gene.
     - `{sample}_labeled_feature_bc_matrix` The labeled expression matrix of cell barcodes & all features in Matrix Market Exchange Formats. (will be deprecated in future versions)
     - `{sample}_unlabeled_feature_bc_matrix` The unlabeled expression matrix of cell barcodes & all features in Matrix Market Exchange Formats. (will be deprecated in future versions)
     - `{sample}_labeled_detail.txt`  tab-delimited  file:
@@ -68,7 +68,7 @@ class Replacement(Step):
         self.tmp_dir = f"{args.outdir}/../tmp/"
         utils.check_mkdir(self.tmp_dir)
         ## final outputs
-        self.h5ad = f"{self.out_prefix}.labeled.h5ad"
+        self.h5ad = f"{self.out_prefix}.h5ad"
         self.detail_txt = f"{self.out_prefix}_labeled_detail.csv"
         self.dir_labeled = f"{self.outdir}/{DYNA_MATRIX_DIR_SUFFIX[0]}"
         self.dir_unlabeled = f"{self.outdir}/{DYNA_MATRIX_DIR_SUFFIX[1]}"

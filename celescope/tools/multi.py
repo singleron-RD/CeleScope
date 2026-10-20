@@ -86,7 +86,7 @@ Mapfile is a tab-delimited text file with as least three columns. Each line of m
 - `sweetseq` Required, matched_dir.
  
 5th column:
-- `dynaseq` Required, background snp file.
+- `dynaseq` Optional, background snp file.
 
 Example
 
