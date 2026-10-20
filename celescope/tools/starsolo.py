@@ -261,7 +261,7 @@ class Starsolo(Step):
             sys.exit(
                 f"{self.filtered_matrix} not found. This error indicates that StarSolo did not generate the gene expression matrix correctly. The specific cause of this error can usually be found in the log above. A common cause of the error is that the fastq file was truncated due to incomplete download."
             )
-        cmd = f"gzip {self.raw_matrix}/*; gzip {self.filtered_matrix}/*"
+        cmd = f"gzip -f {self.raw_matrix}/*; gzip -f {self.filtered_matrix}/*"
         subprocess.check_call(cmd, shell=True)
 
     @utils.add_log
