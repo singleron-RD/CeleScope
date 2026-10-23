@@ -222,6 +222,8 @@ Assign tag identity to each cell barcode and summarize cell counts per tag.
 
 Filter mapped reads to scRNA-Seq filtered cell barcodes, then collapse reads by cell and tag to obtain per-cell per-tag UMI counts. Every scRNA-Seq cell is included even if it has no tag UMIs. Two tag-assignment methods are available.
 
+The **SNR method** is the default and works well for most experiments. It relies on the relative gap between the top and the second tag within each cell, so it is robust when all tag intensities are comparable. When tags show highly uneven labeling strength — for example, one tag consistently produces many more UMIs than the others — the SNR of cells carrying the weaker tag may become indistinguishable from background. In that case, consider switching to the **Otsu method**, which fits an independent threshold per tag and therefore tolerates large absolute differences in tag intensity.
+
 **SNR method (`--tag_threshold_method snr`, default)**
 
 **1. Per-cell signal-to-noise ratio (SNR)**
