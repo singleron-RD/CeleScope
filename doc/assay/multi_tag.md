@@ -216,32 +216,31 @@ Filter mapped reads to scRNA-Seq filtered cell barcodes, then collapse reads by 
 
 **1. Per-cell signal-to-noise ratio (SNR)**
 
-For each cell, let its per-tag UMI counts be sorted in descending order: $x_1 \geq x_2 \geq \cdots \geq x_K$. With `dim = d` (default 1),
+For each cell, let its per-tag UMI counts be sorted in descending order: x₁ ≥ x₂ ≥ ... ≥ xₖ. With `dim = d` (default 1),
 
-$$
-\text{SNR} =
-\begin{cases}
-x_d / x_{d+1} & \text{if } x_d > 0 \text{ and } x_{d+1} > 0 \\[4pt]
-\infty & \text{if } x_{d+1} = 0 \text{ (no noise)} \\[4pt]
-0 & \text{if } x_d = 0
-\end{cases}
-$$
+```
+             ⎧ x_d / x_(d+1)     if x_d > 0 and x_(d+1) > 0
+  SNR =      ⎨ ∞                 if x_(d+1) = 0  (no noise)
+             ⎩ 0                 if x_d = 0
+```
 
-The signal is the $d$-th highest tag and the noise is the $(d+1)$-th highest. With `dim=1`, SNR is simply the ratio of the top tag to the second tag.
+The signal is the d-th highest tag and the noise is the (d+1)-th highest. With `dim=1`, SNR is simply the ratio of the top tag to the second tag.
 
 **2. Automatic `UMI_min`**
 
-$UMI_{\text{min}} = \max\!\big(\min(\text{percentile}_{5}(\text{UMIs}),\ \operatorname{median}(\text{UMIs}) / 10),\ 1\big)$
+```
+UMI_min = max( min( percentile₅(UMIs), median(UMIs) / 10 ), 1 )
+```
 
 where UMIs are the per-cell total tag UMI counts across all scRNA-Seq cells. A cell whose total tag UMI is below this threshold is too sparse for reliable calling.
 
 **3. Automatic `snr_min`**
 
-Restrict to cells satisfying $\text{UMI} \geq UMI_{\text{min}}$. If the median SNR among these cells is infinite (no noise observed), set $snr_{\text{min}} = 10$; otherwise,
+Restrict to cells satisfying UMI ≥ UMI_min. If the median SNR among these cells is infinite (no noise observed), set snr_min = 10; otherwise,
 
-$$
-snr_{\text{min}} = \max\!\big(\operatorname{median}(\text{SNRs}) \times \text{coefficient},\ 2\big)
-$$
+```
+snr_min = max( median(SNRs) × coefficient, 2 )
+```
 
 The default `coefficient` is 0.1; a smaller value produces fewer Multiplet calls.
 
@@ -249,9 +248,9 @@ The default `coefficient` is 0.1; a smaller value produces fewer Multiplet calls
 
 | Condition | Assignment |
 |---|---|
-| $\text{UMI} < UMI_{\text{min}}$ | **Undetermined** — too few tag UMIs |
-| $\text{UMI} \geq UMI_{\text{min}}$ and $\text{SNR} < snr_{\text{min}}$ | **Multiplet** — multiple tags at comparable levels |
-| $\text{UMI} \geq UMI_{\text{min}}$ and $\text{SNR} \geq snr_{\text{min}}$ | Assigned to the top `dim` tag names (joined with `_` when `dim > 1`) |
+| UMI < UMI_min | **Undetermined** — too few tag UMIs |
+| UMI ≥ UMI_min and SNR < snr_min | **Multiplet** — multiple tags at comparable levels |
+| UMI ≥ UMI_min and SNR ≥ snr_min | Assigned to the top `dim` tag names (joined with `_` when `dim > 1`) |
 
 **Otsu method (`--tag_threshold_method otsu`)**
 
@@ -262,15 +261,15 @@ Compute a positive/negative threshold for each tag independently, then classify 
 For each tag's UMI-count column:
 * Remove cells with zero UMI for that tag; if fewer than 50 cells remain, set the threshold to 1.
 * Log10-transform the remaining counts.
-* Build a histogram of the log-space values with bin width 0.2, spanning from 0 to $\max(\text{log-counts}) + 0.2$.
-* Find the bin threshold $\tau$ that maximizes the between-class variance:
+* Build a histogram of the log-space values with bin width 0.2, spanning from 0 to max(log-counts) + 0.2.
+* Find the bin threshold τ that maximizes the between-class variance:
 
-$$
-w_1(\tau)\, w_2(\tau)\, \big(\mu_1(\tau) - \mu_2(\tau)\big)^2
-$$
+```
+w₁(τ) × w₂(τ) × (μ₁(τ) − μ₂(τ))²
+```
 
-where $w_1, \mu_1$ are the weight and mean of counts falling below $\tau$, and $w_2, \mu_2$ are those above $\tau$.
-* The final threshold in UMI space is $\lceil 10^{\tau} \rceil$, i.e. the ceiling of 10 raised to the log-space threshold.
+where w₁, μ₁ are the weight and mean of counts falling below τ, and w₂, μ₂ are those above τ.
+* The final threshold in UMI space is ⌈10^τ⌉, i.e. the ceiling of 10 raised to the log-space threshold.
 
 **2. Cell classification**
 
@@ -279,7 +278,7 @@ For each cell, compare each tag's UMI count to its per-tag Otsu threshold:
 | Tags above their threshold | Assignment |
 |---|---|
 | 0 | **Undetermined** — no tag is significantly expressed |
-| $\geq 2$ | **Multiplet** — multiple tags are significantly expressed |
+| ≥ 2 | **Multiplet** — multiple tags are significantly expressed |
 | exactly 1 | Assigned to that tag |
 
 Both methods conclude by summarizing the number and percentage of cells falling into `Undetermined`, `Multiplet`, and each specific tag.
@@ -421,4 +420,3 @@ Per-tag full-length VDJ files.
 * `{tag}_{seqtype}_contig.fasta` — FASTA of filtered contig sequences
 * `{tag}_{seqtype}_clonotypes.csv` — Clonotype table with columns `clonotype_id`, `cdr3s_aa`, `frequency`, and `proportion`
 * `{tag}_metrics.json` — VDJ annotation metrics (e.g. `Cells With Productive V-J Spanning Pair`, `Cells With TRA Contig`, etc.)
-
