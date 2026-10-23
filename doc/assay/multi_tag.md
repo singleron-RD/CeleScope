@@ -1,8 +1,18 @@
+## Introduction to CLindex®
+
+[CLindex® Sample Multiplexing Kit](https://singleron.bio/products/clindex/) is a sample multiplexing kit developed by Singleron Biotechnologies for single-cell RNA-seq experiments. Prior to single-cell capture, a known DNA tag sequence is covalently attached to all cells in each sample via a chemical reaction. The tagged cells are then pooled into a single GEXSCOPE® library construction reaction, where the tag sequences are co-sequenced together with the cellular transcriptome.
+
+During data analysis, the CeleScope `multi_tag` pipeline extracts tag sequences from R2 reads and aligns them against a reference FASTA to determine the sample (or treatment group) of origin for each cell. In this way, up to **16 samples** can be processed in a single run with the 16-plex Kit, and higher-order encoding can be achieved by combining multiple orthogonal tags. This dramatically increases cell throughput while reducing batch effects and sequencing cost per sample.
+
+The `multi_tag` pipeline provides two tag-assignment algorithms (**SNR** and **Otsu**), integrates tag assignments with scRNA-Seq clustering results, and can split downstream files — expression matrices, FASTQ, BAM, and VDJ tables — by tag.
+
+---
+
 ## Usage
 
 ### Prerequisites
 
-Before running `multi_tag`, you must first complete the scRNA-Seq analysis using `multi_rna` (or another compatible CeleScope scRNA-Seq pipeline). The tag pipeline depends on the cell barcode calling and clustering results from the RNA pipeline.
+Before running `multi_tag`, you must first complete the scRNA-Seq analysis using `multi_rna`. The tag pipeline depends on the cell barcode calling and clustering results from the RNA pipeline.
 
 ---
 
