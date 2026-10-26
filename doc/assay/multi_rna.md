@@ -158,34 +158,6 @@ seurat.object = CreateSeuratObject(
 
 ## Additional matrix filtering
 
-After completing the `multi_rna` workflow, you can run `celescope rna cells` on the existing results to perform cell calling again. This step supports forced cell number filtering, minimum gene number filtering, and maximum mitochondrial gene fraction filtering. It will generate a new expression matrix and HTML report. The original expression matrix and HTML report will be renamed with the prefix `default_`.
+After completing the `multi_rna` workflow, you can run `celescope rna cells` on the existing results to re-perform cell calling (forced cell number, `min_gene`, `max_mito`, or `soloCellFilter`). 
 
-### Example 1: Adjust cell-calling parameters
-
-For more details about STARsolo EmptyDrops-like filtering, please refer to:
-[https://github.com/alexdobin/STAR/blob/master/docs/STARsolo.md#emptydrop-like-filtering](https://github.com/alexdobin/STAR/blob/master/docs/STARsolo.md#emptydrop-like-filtering)
-
-```bash
-# In CeleScope v1.*, the default FDR for cell calling is 0.01.
-# In CeleScope v2.*, the default FDR is 0.001.
-# The following parameters set the FDR to 0.01:
-
-celescope rna cells \
-  --soloCellFilter "EmptyDrops_CR 3000 0.99 10 45000 90000 500 0.01 20000 0.01 10000" \
-  --outdir test1/cells \
-  --sample test1
-```
-
-### Example 2: Force cell number and apply QC filters
-
-The following command forces the cell number to 10,000, then retains cells with at least 200 detected genes and a mitochondrial gene fraction no greater than 0.05.
-
-```bash
-celescope rna cells \
-  --force_cells 10000 \
-  --min_gene 200 \
-  --max_mito 0.05 \
-  --genomeDir /genome/rna/celescope2/mmu \
-  --outdir test1/cells \
-  --sample test1
-```
+For a full reference of arguments and usage examples, see [cells.md](cells.md).
