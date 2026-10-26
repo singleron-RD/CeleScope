@@ -1,3 +1,20 @@
+## Introduction
+
+`multi_snp` is a CeleScope pipeline for single-cell SNP/variant detection. It combines scRNA-Seq data with targeted gene panels to identify genetic variants at single-cell resolution.
+
+This pipeline is designed to work with targeted capture technologies such as [FocuSCOPE](https://singleron.bio/products/focuscope-single-cell-targeted-capture-kit/), a single-cell targeted capture kit that enriches specific gene regions of interest while retaining full transcriptome information.
+
+The pipeline runs the following steps in order:
+
+1. **sample** — inspect FASTQ files and detect chemistry.
+2. **starsolo** — align reads with STARsolo and generate expression matrices.
+3. **target_metrics** — filter BAM to cell-associated reads mapped to target genes, and perform UMI deduplication.
+4. **variant_calling** — call variants with bcftools after GATK SplitNCigarReads.
+5. **filter_snp** — filter low-confidence alleles and update genotypes.
+6. **analysis_snp** — annotate variants with snpEff and generate genotype matrices.
+
+---
+
 ## Usage
 
 ### Make a snp reference genomeDir
@@ -165,15 +182,46 @@ Identifies genetic variations (SNPs/Indels) directly from the processed RNA-seq 
 #### Purpose
 
 Ensures high confidence in cell-specific genotypes by removing low-quality calls.
-#### Process
 
-    Filters out low-confidence alleles using statistical methods (e.g., Otsu thresholding or minimum read support).
+#### Parameters
 
-    Updates Allele Depths (AD) and Genotypes (GT) to minimize false positives caused by sequencing errors.
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `--bcftools_filter` | bcftools filter expression applied before allele-level filtering. | `QUAL>=100` |
+| `--ref_threshold_method` | Threshold method for reference allele: `otsu` or `none`. | `none` |
+| `--alt_threshold_method` | Threshold method for alternate allele: `otsu` or `none`. | `none` |
+| `--ref_min_support_read` | Minimum supporting reads for reference allele. | `2` |
+| `--alt_min_support_read` | Minimum supporting reads for alternate allele. | `2` |
+| `--vaf` | VAF threshold for genotype calling. If `vaf <= ALT/(REF+ALT) <= 1-vaf`, genotype is heterozygous (`0/1`); otherwise homozygous (`0/0` or `1/1`). | `0.2` |
+
+#### Algorithm
+
+1. **Variant-level filtering**: Apply `bcftools filter -i` with `--bcftools_filter` to remove low-quality variant sites.
+
+2. **Allele-level filtering**: For each variant site, collect reference and alternate allele depths (AD) across all cells. Determine a threshold for each allele using the specified method:
+   - **`none`**: No statistical thresholding; only `--min_support_read` is applied.
+   - **`otsu`**: Apply Otsu's method on the log-transformed positive allele counts to separate signal from noise. The threshold is computed per variant and per allele. When `otsu` is selected, histogram plots are saved to `ref_otsu_plots/` and `alt_otsu_plots/`.
+
+   The final threshold is the maximum of the statistical threshold and `--min_support_read`.
+
+3. **Count filtering**: Set AD counts below the final threshold to zero.
+
+4. **Genotype calling**: Update genotypes (GT) based on the filtered AD counts:
+
+   | Condition | Result (GT) |
+   |-----------|-------------|
+   | REF = 0, ALT = 0 | `NA` |
+   | REF > 0, ALT = 0 | `0/0` |
+   | REF = 0, ALT > 0 | `1/1` |
+   | REF > 0, ALT > 0, `vaf <= AF <= 1 - vaf` | `0/1` |
+   | REF > 0, ALT > 0, `AF < vaf` | `0/0` |
+   | REF > 0, ALT > 0, `AF > 1 - vaf` | `1/1` |
+
+   `AF = ALT / (REF + ALT)` is the alternate allele frequency after filtering.
 
 #### Output
 
-    {sample}_filtered.vcf: A high-quality, filtered VCF file.
+    {sample}_filtered.vcf: A filtered VCF file with updated AD and GT fields.
 
 ### Analysis SNP (Annotation & Visualization)
 #### Purpose
