@@ -6,6 +6,12 @@ During data analysis, the CeleScope `multi_tag` pipeline extracts tag sequences 
 
 The `multi_tag` pipeline provides two tag-assignment algorithms (**SNR** and **Otsu**), integrates tag assignments with scRNA-Seq clustering results, and can split downstream files — expression matrices, FASTQ, BAM, and VDJ tables — by tag.
 
+## Beyond CLindex® — general-purpose cell identity assignment
+
+Although originally designed for CLindex® sample multiplexing, `multi_tag` is a **general-purpose pipeline for assigning cell identities based on any kind of DNA tag sequence that is co-sequenced alongside the cellular transcriptome**. The pipeline operates purely on the relationship between R2 read sequences and a user-supplied tag barcode FASTA reference, and does not make any assumptions about the biological origin of those tags. As a result, it can be directly applied — with only a custom `--barcode_fasta` and `--fq_pattern` — to a wide range of experiments that require per-cell identity calling, including but not limited to Perturb-seq / CRISPR.
+
+For these use cases, simply replace the CLindex®-specific `--barcode_fasta` with your own tag reference FASTA, and adjust `--fq_pattern` to match the structure of your R2 reads. The rest of the pipeline — tag alignment, UMI collapsing, SNR/Otsu cell calling, visualization, and data splitting — works identically.
+
 ---
 
 ## Usage
@@ -308,7 +314,17 @@ Default: `auto`. Minimum signal-to-noise ratio. Cell barcodes with UMI ≥ `UMI_
 Default: `0.1`. Only used when `snr_min` is `auto`. A smaller coefficient results in fewer *Multiplet* assignments.
 
 `--dim`
-Default: `1`. Tag dimensions. Usually 1-dimensional tag is used.
+Default: `1`. Number of expected orthogonal tag dimensions per cell.
+
+`dim` controls two behaviors in the **SNR method** (it has **no effect** on the Otsu method):
+
+1. **SNR calculation**. With per-cell tag UMI counts sorted descending as x₁ ≥ x₂ ≥ ... ≥ xₖ, SNR is computed as x_d / x_(d+1) where d = `dim`. The signal is the d-th highest tag and the noise is the (d+1)-th. With `dim=1` (default), SNR is the ratio of highest tag to the second-highest tag — optimal when each cell should carry exactly **one** tag. With `dim=2`, SNR becomes the ratio of the **second** tag to the third — appropriate when each cell legitimately carries **two** orthogonal tags and you want the pipeline to distinguish true double-positive cells from background (e.g., combinatorial 2D CLindex, dual-pool hashing, or Perturb-seq with two orthogonal gRNA sets).
+
+2. **Final tag assignment**. When a cell passes the SNR threshold, its identity is the top d tag names joined with `_`. For example with `dim=2`, a cell whose two highest tags are `A` and `B` is labeled `A_B` rather than just `A`.
+
+Set `dim` to the number of independent tag encoding dimensions in your experiment. For CLindex® single-plex or simple Perturb-seq / hashing experiments, keep the default `dim=1`.
+
+> **Note — Otsu method limitation**: `dim` is **only honored by the SNR method**. The Otsu method currently treats any cell with ≥2 tags above their respective per-tag thresholds as a *Multiplet* and cannot join multiple positive tag names into a combined identity (e.g. `A_B`). Therefore Otsu is only appropriate for experiments where `dim=1` (one tag per cell). If your experiment has `dim≥2`, you must use the SNR method.
 
 `--tag_threshold_method`
 Default: `snr`. Method to determine tag positivity for each cell. Choices:
