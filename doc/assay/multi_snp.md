@@ -7,7 +7,7 @@ This pipeline is designed to work with targeted capture technologies such as [Fo
 The pipeline runs the following steps in order:
 
 1. **sample** — inspect FASTQ files and detect chemistry.
-2. **starsolo** — align reads with STARsolo and generate expression matrices.
+2. **starsolo** — align reads with STARsolo and generate BAM file.
 3. **target_metrics** — filter BAM to cell-associated reads mapped to target genes, and perform UMI deduplication.
 4. **variant_calling** — call variants with bcftools after GATK SplitNCigarReads.
 5. **filter_snp** — filter low-confidence alleles and update genotypes.
