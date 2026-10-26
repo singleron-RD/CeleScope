@@ -183,9 +183,11 @@ Optional. If provided, it checks mismatches between the linker sequence in R2 re
 
 `--mismatch`
 Optional. Maximum number of mismatches allowed between tag barcode in R2 reads and `barcode_fasta`. Comma-separated if there are multiple `C` segments (one value per segment). If a single value is given, it applies to all `C` segments. If not specified, auto-determined per segment based on barcode count:
-* > 100,000 barcodes: 0
-* > 10,000 barcodes: 1
-* ≤ 10,000 barcodes: 2
+```
+> 100,000 barcodes: 0
+10,001 - 100,000 barcodes: 1
+≤ 10,000 barcodes: 2
+```
 
 #### Output
 
