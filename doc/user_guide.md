@@ -63,6 +63,7 @@ CeleScope contains interfaces `multi_{assay}` to generate pipeline scripts for a
 |[sweetseq](assay/multi_sweetseq.md)|single-cell glycosylation|ProMoSCOPE|
 |[bulk_vdj](assay/multi_bulk_vdj.md)|bulk VDJ|AccuraCode|
 |[bulk_rna](assay/multi_bulk_rna.md)|bulk RNA|AccuraCode|
+|[bulk_dynaseq](assay/multi_bulk_dynaseq.md)|bulk dynamic RNA-Seq|AccuraCode|
 |[pathseq](assay/multi_pathseq.md)|single-cell 16S||
 |[ffpe](assay/multi_ffpe.md)|single-cell FFPE||
 |[space](assay/multi_space.md)|single-cell Spatial||
