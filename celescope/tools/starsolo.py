@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 import sys
+import gzip
+import shutil
 import subprocess
 from collections import Counter
 
@@ -261,8 +263,22 @@ class Starsolo(Step):
             sys.exit(
                 f"{self.filtered_matrix} not found. This error indicates that StarSolo did not generate the gene expression matrix correctly. The specific cause of this error can usually be found in the log above. A common cause of the error is that the fastq file was truncated due to incomplete download."
             )
-        cmd = f"gzip -f {self.raw_matrix}/*; gzip -f {self.filtered_matrix}/*"
-        subprocess.check_call(cmd, shell=True)
+        for matrix_dir in (self.raw_matrix, self.filtered_matrix):
+            for file_path in sorted(Path(matrix_dir).iterdir()):
+                if not file_path.is_file():
+                    sys.stderr.write(f"[INFO] Skip {file_path}: not a regular file\n")
+                    continue
+                if file_path.suffix == ".gz":
+                    sys.stderr.write(
+                        f"[INFO] Skip {file_path}: already gzip compressed\n"
+                    )
+                    continue
+                with open(file_path, "rb") as f_in, gzip.open(
+                    f"{file_path}.gz", "wb"
+                ) as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                sys.stderr.write(f"[INFO] Compressed {file_path} to {file_path}.gz\n")
+                file_path.unlink()
 
     @utils.add_log
     def get_Q30_cb_UMI(self):
