@@ -97,9 +97,7 @@ class Conversion(Step):
         conv_df.to_csv(
             os.path.join(well_outdir, f"{well_name}.PosTag.csv"), index=False
         )
-        snp_df.to_csv(
-            os.path.join(well_outdir, f"{well_name}.snp.csv"), index=False
-        )
+        snp_df.to_csv(os.path.join(well_outdir, f"{well_name}.snp.csv"), index=False)
 
 
 @utils.add_log

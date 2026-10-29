@@ -13,9 +13,7 @@ from multiprocessing import Pool
 from celescope.tools.step import Step, s_common
 from celescope.tools import utils
 from celescope.__init__ import HELP_DICT
-from celescope.dynaseq.__init__ import DYNA_MATRIX_DIR_SUFFIX
 from celescope.tools.plotly_plot import Shared_box_plot
-from celescope.tools.matrix import CountMatrix, Features
 
 
 class Replacement(Step):
@@ -62,7 +60,7 @@ class Replacement(Step):
         if self.bg is not None:
             self.bg_external.extend(self.bg)
         if self.control_well is not None:
-            control_wells = self.control_well.split(',')
+            control_wells = self.control_well.split(",")
             control_samples = [self.well_sample[well] for well in control_wells]
             for sample in control_samples:
                 if not os.path.exists(f"{self.bamdir}/{sample}/{sample}.snp.csv"):
@@ -114,16 +112,16 @@ class Replacement(Step):
         # merge matrix
         for i in self.dfs:
             self.totaldf = pd.concat([self.totaldf, i])
-        self.newdf = self.totaldf[self.totaldf['TC'] == 1]
-        self.olddf = self.totaldf[self.totaldf['TC'] == 0]
-        outnewdf = self.newdf.groupby(['Well', 'gene']).agg({'UMI': 'count'})
-        outolddf = self.olddf.groupby(['Well', 'gene']).agg({'UMI': 'count'})
+        self.newdf = self.totaldf[self.totaldf["TC"] == 1]
+        self.olddf = self.totaldf[self.totaldf["TC"] == 0]
+        outnewdf = self.newdf.groupby(["Well", "gene"]).agg({"UMI": "count"})
+        outolddf = self.olddf.groupby(["Well", "gene"]).agg({"UMI": "count"})
 
         # output as matrix: rows=gene, columns=Well
-        matrix_new = outnewdf['UMI'].unstack('Well').fillna(0).astype(int)
-        matrix_old = outolddf['UMI'].unstack('Well').fillna(0).astype(int)
-        matrix_new.index.name = ''
-        matrix_old.index.name = ''
+        matrix_new = outnewdf["UMI"].unstack("Well").fillna(0).astype(int)
+        matrix_old = outolddf["UMI"].unstack("Well").fillna(0).astype(int)
+        matrix_new.index.name = ""
+        matrix_old.index.name = ""
         matrix_new.to_csv(self.labeled_matrix, sep="\t")
         matrix_old.to_csv(self.unlabeled_matrix, sep="\t")
 
@@ -138,25 +136,25 @@ class Replacement(Step):
     @staticmethod
     def extract_dem(bam, bg, sample):
         save = pysam.set_verbosity(0)
-        bamfile = pysam.AlignmentFile(bam, 'rb')
+        bamfile = pysam.AlignmentFile(bam, "rb")
         pysam.set_verbosity(save)
         countarr = []
         for read in bamfile.fetch():
             try:
                 chro = read.reference_name
-                ub = read.get_tag('UB')
-                gene = read.get_tag('GX')
+                ub = read.get_tag("UB")
+                gene = read.get_tag("GX")
 
-                if read.get_tag('ST') == '+':
-                    stag = read.get_tag('TL')
+                if read.get_tag("ST") == "+":
+                    stag = read.get_tag("TL")
                 else:
-                    stag = read.get_tag('AL')
+                    stag = read.get_tag("AL")
                 if len(stag) == 1 and stag[0] == 0:
                     tctag = 0
                 else:
                     fcount = 0
                     for si in range(0, len(stag)):
-                        pos = chro + '_' + str(stag[si])
+                        pos = chro + "_" + str(stag[si])
                         if pos in bg:
                             fcount += 1
                     if fcount == len(stag):
@@ -169,10 +167,12 @@ class Replacement(Step):
         bamfile.close()
 
         totaldf = pd.DataFrame(countarr)
-        totaldf.columns = ['gene', 'Well', 'UMI', 'TC']
-        df_unique = totaldf.groupby(['gene', 'Well', 'UMI']).apply(
-            lambda x: x.loc[x['TC'].idxmax()]
-        ).reset_index(drop=True)
+        totaldf.columns = ["gene", "Well", "UMI", "TC"]
+        df_unique = (
+            totaldf.groupby(["gene", "Well", "UMI"])
+            .apply(lambda x: x.loc[x["TC"].idxmax()])
+            .reset_index(drop=True)
+        )
 
         return df_unique
 
@@ -180,47 +180,41 @@ class Replacement(Step):
     def background_snp(bgfiles):
         outdict = {}
         for bgfile in bgfiles:
-            if bgfile.endswith('.csv'):
+            if bgfile.endswith(".csv"):
                 df = pd.read_csv(bgfile, dtype={"chrom": str})
                 if df.shape[0] == 0:
                     continue
-                df['chrpos'] = df['chrom'] + '_' + df['pos'].astype(str)
-                df1 = df[['chrpos', 'posratio']]
-                df1.set_index('chrpos', inplace=True)
+                df["chrpos"] = df["chrom"] + "_" + df["pos"].astype(str)
+                df1 = df[["chrpos", "posratio"]]
+                df1.set_index("chrpos", inplace=True)
                 if len(df1.index) > 0:
-                    outdict.update(df1.to_dict(orient='index'))
-            elif bgfile.endswith('.vcf'):
+                    outdict.update(df1.to_dict(orient="index"))
+            elif bgfile.endswith(".vcf"):
                 bcf_in = pysam.VariantFile(bgfile)
                 for rec in bcf_in.fetch():
                     try:
                         chrom, pos = rec.chrom, rec.pos
-                        chr_pos = chrom + '_' + str(pos - 1)
+                        chr_pos = chrom + "_" + str(pos - 1)
                         outdict[chr_pos] = 1
                     except (ValueError, KeyError):
                         continue
                 bcf_in.close()
             else:
                 sys.exit(
-                    'Background snp file format cannot be recognized! Only csv or vcf format.'
+                    "Background snp file format cannot be recognized! Only csv or vcf format."
                 )
         return outdict
 
     @utils.add_log
     def label_rate(self):
-        df_sum = self.totaldf.groupby('Well').agg({
-            'UMI': 'count',
-            'gene': 'nunique'
-        })
-        df_new_sum = self.newdf.groupby('Well').agg({
-            'UMI': 'count',
-            'gene': 'nunique'
-        })
+        df_sum = self.totaldf.groupby("Well").agg({"UMI": "count", "gene": "nunique"})
+        df_new_sum = self.newdf.groupby("Well").agg({"UMI": "count", "gene": "nunique"})
         self.df = pd.concat([df_sum, df_new_sum], axis=1)
-        self.df.columns = ['UMI', 'gene', 'labeled_UMI', 'labeled_gene']
-        self.df.loc[:, 'UMI_rate'] = self.df['labeled_UMI'] / self.df['UMI']
-        self.df.loc[:, 'gene_rate'] = self.df['labeled_gene'] / self.df['gene']
-        self.df = self.df[['UMI_rate', 'gene_rate']]
-        self.df.to_csv(self.detail_txt, sep='\t')
+        self.df.columns = ["UMI", "gene", "labeled_UMI", "labeled_gene"]
+        self.df.loc[:, "UMI_rate"] = self.df["labeled_UMI"] / self.df["UMI"]
+        self.df.loc[:, "gene_rate"] = self.df["labeled_gene"] / self.df["gene"]
+        self.df = self.df[["UMI_rate", "gene_rate"]]
+        self.df.to_csv(self.detail_txt, sep="\t")
 
     @utils.add_log
     def quant_plot(self):
@@ -231,8 +225,8 @@ class Replacement(Step):
     @utils.add_log
     def quant_table(self):
         table_dict = self.get_table_dict(
-            title='',
-            table_id='bulk_replacement',
+            title="",
+            table_id="bulk_replacement",
             df_table=self.df.reset_index(),
         )
         self.add_data(table_dict=table_dict)
@@ -240,8 +234,8 @@ class Replacement(Step):
     @utils.add_log
     def add_help(self):
         self.add_help_content(
-            name='labeled_rate',
-            content='Fraction of labeled UMI rate and gene label rate per well'
+            name="labeled_rate",
+            content="Fraction of labeled UMI rate and gene label rate per well",
         )
 
 

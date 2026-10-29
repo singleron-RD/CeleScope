@@ -588,33 +588,38 @@ class StaticPlot:
 
 
 class Substitution_plot_bulk(Plotly_plot):
-    def __init__(self, df_sub, plot_type='bar', header=None):
+    def __init__(self, df_sub, plot_type="bar", header=None):
         super().__init__(df_sub)
         self.plot_type = plot_type
         self.header = header
         self.set_fig()
 
     def set_fig(self):
-        if self.plot_type == 'bar':
+        if self.plot_type == "bar":
             self._fig = px.bar(
                 self._df,
-                x='well',
-                y='ratio',
-                color='type',
-                title='Substitution rate proportion per well',
-                labels={'well': 'Well', 'ratio': 'Proportion', 'type': 'Substitution type'},
-                color_discrete_sequence=px.colors.qualitative.Plotly + ['#17BECF','#BCBD22'],
-                category_orders={'type': self.header}
+                x="well",
+                y="ratio",
+                color="type",
+                title="Substitution rate proportion per well",
+                labels={
+                    "well": "Well",
+                    "ratio": "Proportion",
+                    "type": "Substitution type",
+                },
+                color_discrete_sequence=px.colors.qualitative.Plotly
+                + ["#17BECF", "#BCBD22"],
+                category_orders={"type": self.header},
             )
             self._fig.update_layout(showlegend=True)
-        elif self.plot_type == 'heatmap':
+        elif self.plot_type == "heatmap":
             self._fig = px.imshow(
                 self._df,
                 labels=dict(x="Well", y="Substitution type", color="Rate%"),
                 x=self._df.columns,
                 y=self._df.index,
-                color_continuous_scale='Viridis',
-                title='Substitution rate per well',
+                color_continuous_scale="Viridis",
+                title="Substitution rate per well",
             )
             self._fig.update_layout(showlegend=False)
             self._fig.update_layout(
@@ -622,8 +627,8 @@ class Substitution_plot_bulk(Plotly_plot):
                 height=500,
             )
 
-class Shared_box_plot(Plotly_plot):
 
+class Shared_box_plot(Plotly_plot):
     def __init__(self, df_box):
         super().__init__(df_box)
         self.set_fig()
@@ -631,12 +636,24 @@ class Shared_box_plot(Plotly_plot):
     def set_fig(self):
         self._fig = go.Figure()
         self._fig.add_trace(
-            go.Box(y=self._df['UMI_rate'], text=self._df.index, name="UMI",
-            hovertemplate ="%{text}:%{y}",showlegend = False))
+            go.Box(
+                y=self._df["UMI_rate"],
+                text=self._df.index,
+                name="UMI",
+                hovertemplate="%{text}:%{y}",
+                showlegend=False,
+            )
+        )
         self._fig.add_trace(
-            go.Box(y=self._df['gene_rate'], text=self._df.index, name="gene",
-            hovertemplate ="%{text}:%{y}",showlegend = False))
-        self._fig.update_traces(boxpoints='all')
+            go.Box(
+                y=self._df["gene_rate"],
+                text=self._df.index,
+                name="gene",
+                hovertemplate="%{text}:%{y}",
+                showlegend=False,
+            )
+        )
+        self._fig.update_traces(boxpoints="all")
         self._fig.update_yaxes(title_text="Fraction of labeled")
-        self._fig.update_layout(title_text=f'Labeled fraction per well')
-        self._fig.update_layout(width=500,plot_bgcolor = 'rgba(1,1,1,0.03)')
+        self._fig.update_layout(title_text="Labeled fraction per well")
+        self._fig.update_layout(width=500, plot_bgcolor="rgba(1,1,1,0.03)")
