@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 import scanpy as sc
 import matplotlib.pyplot as plt
@@ -17,7 +18,8 @@ class Analysis_tag(Step):
 
     ## Output
 
-    - `{sample}_spatial_tag.png` - Spatial plot showing tag abundance
+    - `{sample}_spatial_tag.png` - Spatial plot showing RNA-normalized tag abundance
+    - `{sample}_spatial_tag_unnormalized.png` - Spatial plot showing raw tag abundance
     - `{sample}_cluster_spatial.png` - Spatial plot showing clusters
 
     """
@@ -28,6 +30,9 @@ class Analysis_tag(Step):
 
         # out files
         self.spatial_tag_png = f"{self.outdir}/{self.sample}_spatial_tag.png"
+        self.spatial_tag_unnormalized_png = (
+            f"{self.outdir}/{self.sample}_spatial_tag_unnormalized.png"
+        )
         self.cluster_spatial_png = f"{self.outdir}/{self.sample}_cluster_spatial.png"
 
     def hires_nocrop_spatial(self, adata, **kwargs):
@@ -77,6 +82,11 @@ class Analysis_tag(Step):
             df_umi_tag["total_tag_umi"].reindex(adata.obs_names).fillna(0)
         )
 
+        # Normalize tag UMI by RNA total counts
+        adata.obs["rna_normalized_tag_umi"] = np.log1p(
+            adata.obs["total_tag_umi"] / adata.obs["total_counts"] * 1e4
+        )
+
         # Save modified h5ad
         adata.write(f"{self.outdir}/{self.sample}_tag.h5ad")
 
@@ -88,18 +98,27 @@ class Analysis_tag(Step):
             plt.close()
             self.add_data(plotly_cluster=StaticPlot(self.cluster_spatial_png).get_div())
 
-        # Generate spatial plot for total tag UMI
+        # Generate spatial plot for RNA-normalized tag UMI (default)
         plt.figure(figsize=(8, 8))
         self.hires_nocrop_spatial(
             adata,
-            color=["total_tag_umi"],
-            size=1.5,
-            color_map="Reds",
-            norm=colors.LogNorm(vmin=1),
+            color=["rna_normalized_tag_umi"],
+            size=1.8,
         )
         plt.savefig(self.spatial_tag_png, dpi=300, bbox_inches="tight")
         plt.close()
         self.add_data(plotly_tag=StaticPlot(self.spatial_tag_png).get_div())
+
+        # Generate spatial plot for raw tag UMI
+        plt.figure(figsize=(8, 8))
+        self.hires_nocrop_spatial(
+            adata,
+            color=["total_tag_umi"],
+            size=1.8,
+            norm=colors.LogNorm(vmin=1),
+        )
+        plt.savefig(self.spatial_tag_unnormalized_png, dpi=300, bbox_inches="tight")
+        plt.close()
 
 
 def get_opts_analysis_tag(parser, sub_program):
