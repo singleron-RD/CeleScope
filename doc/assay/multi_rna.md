@@ -173,7 +173,7 @@ Please note that `./shell/{sample}.sh` must be executed from the working directo
 
 ## The `rna.h5ad` file
 
-The optional `analysis` step (see `--celltypist_model`) writes an AnnData object to `outs/{sample}/analysis/rna.h5ad`, which can be loaded directly with Scanpy:
+The `analysis` step writes an AnnData object to `outs/{sample}/analysis/rna.h5ad`, which can be loaded directly with Scanpy:
 
 ```python
 import scanpy as sc
