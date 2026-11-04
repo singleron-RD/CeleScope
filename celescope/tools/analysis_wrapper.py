@@ -35,6 +35,12 @@ help_name_content_dict = {
 }
 
 
+def ensure_pkl_suffix(model):
+    if not model.endswith(".pkl"):
+        model += ".pkl"
+    return model
+
+
 def read_tsne(tsne_file):
     df = pd.read_csv(tsne_file, sep="\t", index_col=0)
     df.index.names = ["barcode"]
@@ -483,12 +489,12 @@ class Celltypist(Step):
 
     @utils.add_log
     def download_celltypist_model(self):
+        model = ensure_pkl_suffix(self.args.celltypist_model)
+        self.args.celltypist_model = model
         try:
-            celltypist.models.download_models(model=self.args.celltypist_model)
+            celltypist.models.download_models(model=model)
         except ValueError as e:
-            sys.stderr.write(
-                f"Failed to download celltypist model {self.args.celltypist_model}: {e}\n"
-            )
+            sys.stderr.write(f"Failed to download celltypist model {model}: {e}\n")
 
     @utils.add_log
     def write_h5ad(self):
