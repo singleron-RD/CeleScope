@@ -166,6 +166,44 @@ Please note that `./shell/{sample}.sh` must be executed from the working directo
 * `outs/{sample}_report.html`
   Integrated HTML report for the whole pipeline.
 
+* `outs/{sample}/analysis/rna.h5ad`
+  AnnData object written by the `analysis` step, containing the expression matrix, QC metrics, clustering results and embeddings. See [The `rna.h5ad` file](#the-rnah5ad-file) below for its detailed structure.
+
+---
+
+## The `rna.h5ad` file
+
+The optional `analysis` step (see `--celltypist_model`) writes an AnnData object to `outs/{sample}/analysis/rna.h5ad`, which can be loaded directly with Scanpy:
+
+```python
+import scanpy as sc
+
+adata = sc.read_h5ad("./outs/{sample}/analysis/rna.h5ad")
+```
+
+Contents:
+
+- `adata.X`: log1p-normalized expression after scaling (`sc.pp.scale`, `max_value=10`, i.e. the z-scored expression used for PCA). Note that this matrix is **not** the raw counts.
+- `adata.layers["counts"]`: raw UMI counts.
+- `adata.layers["normalized"]`: size-factor-normalized (10,000 counts/cell) log1p-transformed expression, which is used for marker gene detection (`sc.tl.rank_genes_groups`).
+- `adata.var["mito"]`: boolean flag marking mitochondrial genes (from the reference's `mt_gene_list`, otherwise cell names starting with `MT-`).
+- `adata.obs["total_counts"]`, `adata.obs["n_genes_by_counts"]`: total UMI and detected gene number per cell.
+- `adata.obs["pct_counts_mito"]`: mitochondrial UMI fraction per cell.
+- `adata.obs["cluster"]`: Leiden cluster assignments (resolution `1.2`, key `cluster`).
+- `adata.obsm["X_pca"]`: 50-component PCA embedding.
+- `adata.obsm["X_tsne1"]`, `adata.obsm["X_tsne2"]`: t-SNE coordinates (Seurat-style names, as used in `tsne_coord.tsv`).
+- `adata.obsm["X_umap"]`: UMAP embedding.
+- `adata.uns["rank_genes_groups"]`: Wilcoxon marker gene testing results (same content as `outs/{sample}/analysis/markers.tsv`).
+- `adata.obs["predicted_cell_type"]`, `adata.obs["cell_type_confidence"]`: present only when Celltypist annotation was run, giving the predicted cell type per cell and the corresponding maximum prediction probability.
+
+Since `adata.X` is the scaled matrix, use `adata.layers["counts"]` when starting a new analysis from raw counts:
+
+```python
+adata.X = adata.layers["counts"].copy()
+sc.pp.normalize_total(adata, target_sum=1e4)
+sc.pp.log1p(adata)
+```
+
 ---
 
 ## Seurat `CreateSeuratObject`
