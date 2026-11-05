@@ -78,7 +78,7 @@ class Multi_dynaseq(Multi_rna):
         cmd_line = self.get_cmd_line(step, sample)
         bg_para = ""
         if sample in self.col5_dict:
-            bg_para = f"--bg {self.col5_dict[sample]} "
+            bg_para = f" {self.col5_dict[sample]} "
         cmd = (
             f"{cmd_line} "
             f"--bam {bam} "
