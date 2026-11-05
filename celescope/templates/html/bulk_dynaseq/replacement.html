@@ -1,0 +1,19 @@
+{% with step_summary = replacement_summary %}
+<div class="abc" style="float: left; margin-left: 15%; margin-right:15%; width: 70%" >
+  <h2>{{ step_summary.display_title}}    <i class="icon-help-circled" onClick="toggle1(this.parentNode.parentNode)" style="cursor:pointer;"></i></h2>
+  <div class="box">
+    {% include "html/utils/help_info.html" %}
+    {% include "html/utils/col2_metrics.html" %}
+
+    <div id="myDivBox1" style="float: left; margin-left: 0%; margin-right:3%; margin-top: 0%;width: 40%">
+      {{ step_summary.quant_box |safe }}
+    </div>
+
+    <div id="myDivBox2" style="float: left; margin-left: 3%; margin-right:0%; margin-top: 0%;width: 54%">
+      {% include "html/utils/table_dict.html" %}
+    </div>
+
+    <div class="clear" ></div>
+  </div>
+</div>
+{% endwith %}
