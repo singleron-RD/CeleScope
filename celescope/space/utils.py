@@ -7,8 +7,12 @@ from pathlib import Path
 import scanpy as sc
 import json
 from PIL import Image
-
+import math
 from celescope.tools import utils
+
+
+SPOT_SIDE_LENGTH = 20  # 20 micrometers
+SPOT_DIAMETER = SPOT_SIDE_LENGTH * math.sqrt(2)
 
 
 def resize_by_longest_side(img, target_longest):
@@ -74,7 +78,7 @@ class Spatial:
         scalefactors = outdir / "scalefactors_json.json"
         with open(scalefactors) as f:
             data = json.load(f)
-        data["microns_per_pixel"] = 20 / data["spot_diameter_fullres"]
+        data["microns_per_pixel"] = SPOT_DIAMETER / data["spot_diameter_fullres"]
         data["regist_target_img_scalef"] = 0.0
         with open(scalefactors, "w") as f:
             json.dump(data, f, indent=4)
