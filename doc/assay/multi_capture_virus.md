@@ -1,238 +1,424 @@
+## Introduction to virus capture sequencing
+
+`multi_capture_virus` is a CeleScope assay for **detecting viral RNA in single cells**. A single-cell RNA-seq library is used as the host transcriptome reference, while the same cell barcodes and UMIs are leveraged to count reads that map to a viral genome. In this way, each cell can be described simultaneously by its host gene expression profile (from the matched scRNA-Seq run) and by the abundance of viral transcripts it contains.
+
+Typical applications include:
+
+* Determining which cell types / clusters are infected by a virus.
+* Measuring viral load per cell and per cluster.
+* Studying host–virus interactions by projecting viral UMI counts onto the scRNA-Seq t-SNE embedding.
+
+Because the assay only needs a viral genome reference and an existing scRNA-Seq result to match against, it works with any virus whose reference FASTA and GTF annotation are available.
+
+---
+
 ## Usage
-1. Make a virus genomeDir using `celescope capture_virus mkref`
 
-2. Generate shell scripts
+### Prerequisites
+
+Before running `multi_capture_virus`, you must first:
+
+1. **Build a viral genome reference** using `celescope capture_virus mkref` (see [Step 0. mkref](#step-0-mkref)).
+2. **Complete the host scRNA-Seq analysis** using `multi_rna`. The virus pipeline depends on the cell barcode calling (filtered cell barcodes), clustering and t-SNE results from the RNA pipeline, which are located through the `matched_dir` (4th column of the mapfile).
+
+### Build the viral genome reference
+
+Place the viral reference FASTA in a directory, then run:
+
+```bash
+celescope capture_virus mkref \
+  --genome_name virus \
+  --fasta ./virus.fasta \
 ```
+
+Then pass the viral GTF separately to `featureCounts` / `count` via `--gtf` if gene-level counting is needed.
+
+### Generate scripts for each sample
+
+In your working directory, create a shell script named `run.sh`:
+
+```bash
 multi_capture_virus \
---mapfile {mapfile} \
---virus_genomeDir {virus_genomeDir} \
---not_consensus \
---thread 4 \
---mod shell
+  --mapfile ./virus.mapfile \
+  --virus_genomeDir ./virus \
+  --not_consensus \
+  --mod shell
 ```
 
-3. Run shell scripts
+If you want to keep the consensus step (make sure all the reads of the same UMI are aligned to the same position), simply drop `--not_consensus`:
+
+```bash
+multi_capture_virus \
+  --mapfile ./virus.mapfile \
+  --virus_genomeDir ./virus \
+  --mod shell
 ```
-bash ./shell/{sample}.sh
-```
-## Features
-### mkref
-- Create a virus genome reference directory.
 
+#### Arguments
 
-### barcode
+`--mapfile`
+Required. Tab-delimited text file with at least 4 columns. Each line represents one pair of FASTQ files.
 
-- Demultiplex barcodes.
-- Filter invalid R1 reads, which includes:
-    - Reads without linker: the mismatch between linkers and all linkers in the whitelist is greater than 2.  
-    - Reads without correct barcode: the mismatch between barcodes and all barcodes in the whitelist is greater than 1.  
-    - Reads without polyT: the number of T bases in the defined polyT region is less than 10.
-    - Low quality reads: low sequencing quality in barcode and UMI regions.
+* 1st column: FASTQ file prefix
+* 2nd column: FASTQ file directory
+* 3rd column: Sample name, which will be used as the prefix for all output files
+* 4th column: Required, matched directory (`match_dir`). The output directory path from the previously completed CeleScope scRNA-Seq (`multi_rna`) run.
 
+Example:
 
-### cutadapt
-- Trim adapters in R2 reads with cutadapt. Default adapters includes:
-    - polyT=A{18}, 18 A bases. 
-    - p5=AGATCGGAAGAGCACACGTCTGAACTCCAGTCA, Illumina p5 adapter.
+Sample 1 has two paired-end FASTQ files located in two different directories, `fastq_dir1` and `fastq_dir2`. Sample 2 has one paired-end FASTQ file located in `fastq_dir1`.
 
-### consensus
-- Consensus all the reads of the same (barcode, UMI) combinations into one read(UMI). It will go through the sequence residue by residue and 
-count up the number of each type of residue (ie. A or G or T or C for DNA) in all sequences in the
-alignment. If the following conditions are met, the consensus sequence will be the most common residue in the alignment:
-1. the percentage of the most common residue type > threshold(default: 0.5);
-2. most common residue reads >= min_consensus_read;
-otherwise an ambiguous character(N) will be added.
+```bash
+$ cat ./virus.mapfile
+fastq_prefix1	fastq_dir1	sample1	/path/to/rna/sample1
+fastq_prefix2	fastq_dir2	sample1	/path/to/rna/sample1
+fastq_prefix3	fastq_dir1	sample2	/path/to/rna/sample2
 
-
-### star_virus
-- Map reads to the viral genome using STAR.
-
-
-### count_virus
-
-- Taking the bam file as input, count the number of UMIs and reads mapped to the viral genome.
-
-
-### filter_virus
-- Correct single-base errors in UMIs due to sequencing, amplification, etc.
-- Filter background UMIs base on a UMI threshold.
-There are three methods to determine the UMI threshold:
-    - 'auto' : Using a method similar to cell calling method.
-    - 'otsu' : UMI counts are first log 2 transformed and then the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method)
-    - 'hard' : Using User provided UMI threshold.
-
-
-## Output files
-### mkref
-
-- STAR genome index files
-- Genome config file
-
-
-### barcode
-
-- `01.barcode/{sample}_2.fq(.gz)` Demultiplexed R2 reads. Barcode and UMI are contained in the read name. The format of 
-the read name is `{barcode}_{UMI}_{read ID}`.
-
-### cutadapt
-- `cutadapt.log` Cutadapt output log file.
-- `{sample}_clean_2.fq.gz` R2 reads file without adapters.
-
-### consensus
-- `{sample}_consensus.fq` Fastq file after consensus.
-
-### star_virus
-- `{sample}_virus_Aligned.sortedByCoord.out.bam` : Aligned BAM sorted by coordinate.
-
-### count_virus
-- {sample_raw_read_count.json} : barcode - UMI - raw_reads_count
-
-### filter_virus
-- `{sample}_corrected_read_count.json` Read counts after UMI correction.
-- `{sample}_filtered_read_count.json` Filtered read counts.
-- `{sample}_filtered_UMI.csv` Filtered UMI counts.
-
-## Arguments
-`--mapfile` Mapfile is a tab-delimited text file with as least three columns. Each line of mapfile represents paired-end fastq files.
-
-1st column: Fastq file prefix.  
-2nd column: Fastq file directory path.  
-3rd column: Sample name, which is the prefix of all output files.  
-4th column: The 4th column has different meaning for each assay. The single cell rna directory after running CeleScope is called `matched_dir`.
-
-- `rna` Optional, forced cell number.
-- `vdj` Required, matched_dir.
-- `tag` Required, matched_dir.
-- `dynaseq` Optional, forced cell number.
-- `snp` Required, matched_dir.
-- `capture_virus` Required, matched_dir.
-- `fusion` Required, matched_dir.
-- `citeseq` Required, matched_dir.
-- `sweetseq` Required, matched_dir.
- 
-5th column:
-- `dynaseq` Required, background snp file.
-
-Example
-
-Sample1 has 2 paired-end fastq files located in 2 different directories(fastq_dir1 and fastq_dir2). Sample2 has 1 paired-end fastq file located in fastq_dir1.
-```
-$cat ./my.mapfile
-fastq_prefix1	fastq_dir1	sample1
-fastq_prefix2	fastq_dir2	sample1
-fastq_prefix3	fastq_dir1	sample2
-
-$ls fastq_dir1
+$ ls fastq_dir1
 fastq_prefix1_1.fq.gz	fastq_prefix1_2.fq.gz
 fastq_prefix3_1.fq.gz	fastq_prefix3_2.fq.gz
 
-$ls fastq_dir2
+$ ls fastq_dir2
 fastq_prefix2_1.fq.gz	fastq_prefix2_2.fq.gz
 ```
 
-`--mod` Which type of script to generate, `sjm` or `shell`.
+`--virus_genomeDir`
+Required. Virus genome directory generated by `celescope capture_virus mkref`. It contains the STAR index built from the viral FASTA.
 
-`--queue` Only works if the `--mod` selects `sjm`.
+`--not_consensus`
+If set, skip the `consensus` step. `star_virus` then maps the adapter-trimmed R2 reads (`{sample}_clean_2.fq`) directly instead of the consensus reads, and STAR metrics are reported under the `Reads` prefix instead of `UMIs`.
 
-`--rm_files` Remove redundant fastq and bam files after running.
+`--gtf`
+Optional. Viral genome GTF file, used by `featureCounts` and `count`. When it is not provided, both steps are skipped entirely and the HTML report has no featureCounts section. Use an absolute path or a path relative to `genomeDir`.
 
-`--steps_run` Steps to run. Multiple Steps are separated by comma. For example, if you only want to run `barcode` and `cutadapt`, 
-use `--steps_run barcode,cutadapt`.
+`--thread`
+Number of threads used by `barcode`, `cutadapt`, `star_virus`, `featureCounts` and `count` (propagated to every step, including STAR's `runThreadN`).
 
-`--outdir` Output directory.
+`--mod`
+Specifies the script type to generate. Available options are `sjm`, which uses [Simple Job Manager](https://github.com/StanfordBioinformatics/SJM), and `shell`, which generates standard shell scripts. Default: `sjm`.
 
-`--thread` Thread to use.
+After running:
 
-`--use_R3` ATAC libraries use R3 reads instead of R2.
+```bash
+sh run.sh
+```
 
-`--debug` If this argument is used, celescope may output addtional file for debugging.
+a `shell` directory containing `{sample}.sh` files will be generated.
 
-`--chemistry` Predefined (pattern, barcode whitelist, linker whitelist) combinations. `--chemistry auto` can auto-detect scopeV2 mRNA, scopeV3 mRNA, full length VDJ mRNA(flv_rna) and full length VDJ(flv). You need to explicitly use `--chemistry scopeV1` for legacy chemistry scopeV1. `--chemistry customized` is used for user defined combinations that you need to provide `--pattern`, `--whitelist` and `--linker` at the same time.
+Start the analysis by running:
 
-`--pattern` The pattern of R1 reads, e.g. `C8L16C8L16C8L1U12T18`. The number after the letter represents the number 
-        of bases.  
-- `C`: cell barcode  
-- `L`: linker(common sequences)  
-- `U`: UMI    
-- `T`: poly T.
+```bash
+bash ./shell/{sample}.sh
+```
 
-`--whitelist` Cell barcode whitelist file path, one cell barcode per line.
+Please note that `./shell/{sample}.sh` must be executed from the working directory. It should not be run from inside the `shell` directory.
 
-`--linker` Linker whitelist file path, one linker per line.
+---
 
-`--lowQual` Default 0. Bases in cell barcode and UMI whose phred value are lower than lowQual will be regarded as low-quality bases.
+## Pipeline Steps
 
-`--lowNum` The maximum allowed lowQual bases in cell barcode and UMI.
+The pipeline consists of the following steps, executed in order:
 
-`--nopolyT` Outputs R1 reads without polyT.
+`mkref → sample → barcode → cutadapt → consensus → star_virus → count_virus → filter_virus → analysis_virus → featureCounts → count`
 
-`--noLinker` Outputs R1 reads without correct linker.
+`sample` is an internal bookkeeping step that only assembles the FASTQ paths and produces no output files. `barcode` and `cutadapt` are shared CeleScope steps documented in [common_barcode_cutadapt.md](./common_barcode_cutadapt.md). `mkref` is run manually once; all other steps are driven by `multi_capture_virus`.
 
-`--filterNoPolyT` Filter reads without PolyT.
+---
 
-`--allowNoLinker` Allow valid reads without correct linker.
+### Step 0. mkref
 
-`--output_R1` Output valid R1 reads.
+Build the STAR genome index for the viral reference.
 
-`--gzip` Output gzipped fastq files.
+#### Process
 
-`--adapter_fasta` Addtional adapter fasta file.
+Write the genome configuration file (`celescope.config`), automatically scale down `--genomeSAindexNbases` based on the FASTA size (small viral genomes need a smaller SA index; a too-large value may cause core dumps), then build the STAR index.
 
-`--minimum_length` Discard processed reads that are shorter than LENGTH.
+#### Arguments
 
-`--nextseq_trim` Quality trimming of reads using two-color chemistry (NextSeq). 
-Some Illumina instruments use a two-color chemistry to encode the four bases. 
-This includes the NextSeq and the NovaSeq. 
-In those instruments, a ‘dark cycle’ (with no detected color) encodes a G. 
-However, dark cycles also occur when sequencing “falls off” the end of the fragment.
-The read then contains a run of high-quality, but incorrect “G” calls at its 3’ end.
+`--genome_name`
+Required. Name of the genome.
 
-`--overlap` Since Cutadapt allows partial matches between the read and the adapter sequence,
-short matches can occur by chance, leading to erroneously trimmed bases. 
-For example, roughly 0.25 of all reads end with a base that is identical to the first base of the adapter. 
-To reduce the number of falsely trimmed bases, the alignment algorithm requires that 
-at least {overlap} bases match between adapter and read.
+`--fasta`
+Required. Path to the viral reference FASTA.
 
-`--insert` Read2 insert length.
+`--gtf`
+Optional. Path to the viral GTF annotation. Required only when the `count` step is used to build a virus gene-level count matrix.
 
-`--cutadapt_param` Other cutadapt parameters. For example, --cutadapt_param "-g AAA".
+`--thread`
+Default: `16`. Threads to use.
 
-`--threshold` Default 0.5. Valid base threshold.
+#### Output
 
-`--not_consensus` Skip the consensus step.
+`{virus_genomeDir}/` — STAR genome index files plus the genome configuration file (`celescope.config`). Note that `mkref` only builds the index; the viral GTF is **not** passed to `mkref` but to the `featureCounts` / `count` steps via `--gtf`.
 
-`--min_consensus_read` Minimum number of reads to support a base.
+---
 
-`--genomeDir` Required. Genome directory after running `celescope {assay} mkref`.
+### Step 1. barcode
 
-`--outFilterMatchNmin` Alignment will be output only if the number of matched bases 
-is higher than or equal to this value.
+`barcode` is a shared CeleScope step. It demultiplexes R1 reads, extracts cell barcodes and UMIs, corrects barcodes against a whitelist, and writes demultiplexed R2 reads whose header is `{corrected_barcode}:{umi}:{read_index}`.
 
-`--out_unmapped` Output unmapped reads.
+For the full description of the process, arguments (`--chemistry`, `--pattern`, `--whitelist`), output and HTML metrics, see [common_barcode_cutadapt.md](./common_barcode_cutadapt.md#barcode).
 
-`--STAR_param` Additional parameters for the called software. Need to be enclosed in quotation marks. For example, `--{software}_param "--param1 value1 --param2 value2"`.
+---
 
-`--outFilterMultimapNmax` Default `1`. How many places are allowed to match a read at most.
+### Step 2. cutadapt
 
-`--starMem` Default `30`. Maximum memory that STAR can use.
+`cutadapt` is a shared CeleScope step. It trims the default `polyA=A{18}` adapter (and any user-supplied adapters) from the demultiplexed R2 reads.
 
-`--virus_genomeDir` Virus genome directory.
+For the full description of the process, arguments (`--minimum_length`, `--overlap`, `--nextseq_trim`, `--cutadapt_param`, `--skip_cutadapt`), output and HTML metrics, see [common_barcode_cutadapt.md](./common_barcode_cutadapt.md#cutadapt).
 
-`--min_query_length` Minimum query length.
+---
 
-`--not_correct_UMI` Do not perform UMI correction.
+### Step 3. consensus
 
-`--read_threshold_method` method to find read threshold. UMIs with `support reads` < `read threshold` are filtered.
+Merge all reads sharing the same (barcode, UMI) into a single consensus read.
 
-`--read_hard_threshold` int, use together with `--read_threshold_method hard`.
+#### Process
 
-`--umi_threshold_method` method to find UMI threshold. Cell barcode with `UMI` < `UMI threshold` are considered negative.
+For every (barcode, UMI) group, the reads are aligned residue by residue and the number of each type of base is counted. The consensus base is set to the most common residue when:
+1. the percentage of the most common residue exceeds `--threshold` (strictly greater than, default `0.5`), and
+2. the number of reads supporting the most common residue is at least `--min_consensus_read` (default `2`).
 
-`--umi_hard_threshold` int, use together with `--umi_threshold_method hard`.
+Otherwise the ambiguous character `N` is written, and the quality string of the consensus read is a uniform `F`. This step reduces sequencing errors and UMI collisions before mapping.
 
-`--auto_coef` int, threshold = top 1 percent positive cell count / auto_coef.
+This step is skipped when `--not_consensus` is used.
 
-`--otsu_log_base` raw counts are first log transformed before thresholding. This argument is the log base. Commonly used values are 2 and 10.
+#### Arguments
 
-`--gtf` Optional. Genome gtf file. Use absolute path or relative path to `genomeDir`.
+`--threshold`
+Default: `0.5`. Valid base threshold.
 
+`--min_consensus_read`
+Default: `2`. Minimum number of reads supporting a base.
+
+#### Output
+
+`{outdir}/{sample}_consensus.fq` — consensus FASTQ (one read per (barcode, UMI)).
+
+---
+
+### Step 4. star_virus
+
+Map reads to the viral genome using STAR.
+
+#### Process
+
+Align the consensus reads (or `{sample}_clean_2.fq` when `--not_consensus` is used) to the STAR index built in `mkref`. Only reads with a matched length ≥ `--outFilterMatchNmin` are output. Up to `--outFilterMultimapNmax` loci per read are allowed by STAR, but at most one alignment (highest score) and one multimapping record per read are reported (`--outSAMmultNmax 1`).
+
+#### Arguments
+
+`--outFilterMatchNmin`
+Default: `50`. Alignment will be output only if the number of matched bases is higher than or equal to this value.
+
+`--outFilterMultimapNmax`
+Default: `1`. How many places a read is allowed to match at most. Note that even if this value is greater than 1, at most one alignment (with the highest score) will be written to the BAM file.
+
+`--STAR_param`
+Additional STAR parameters, enclosed in quotation marks.
+
+#### Output
+
+`{outdir}/{sample}_virus_Aligned.sortedByCoord.out.bam` — aligned BAM, sorted by coordinate.
+
+#### Metrics (added to HTML report)
+
+| Metric Name | Description |
+|---|---|
+| Genome | Genome name recorded in the genome configuration file |
+| Uniquely Mapped Reads / UMIs | Input reads (or consensus UMIs) mapped to exactly one viral locus. The prefix is `UMIs` when `--consensus_fq` is used, i.e. when the consensus step was kept |
+| Multi-Mapped Reads / UMIs | Input reads (or consensus UMIs) mapped to multiple loci (including "too many loci") |
+
+---
+
+### Step 5. count_virus
+
+Count UMIs and reads mapped to the viral genome.
+
+#### Process
+
+Take the aligned BAM as input. For each read, extract barcode and UMI from the read name, and discard reads whose query length is shorter than `--min_query_length`. Reads whose barcode belongs to the `matched_dir` filtered cell set are accumulated as `(barcode, reference, UMI) → read_count`; the remaining reads are recorded separately as background.
+
+#### Arguments
+
+`--min_query_length`
+Default: `35`. Minimum query length; shorter reads are ignored.
+
+#### Output
+
+`{outdir}/{sample}_raw_read_count.json` — nested JSON `barcode → reference → UMI → raw read count`, for matched cell barcodes.
+
+`{outdir}/{sample}_background_read_count.json` — same structure, for barcodes not in the matched cell set.
+
+#### Metrics (added to HTML report)
+
+| Metric Name | Description |
+|---|---|
+| Matched Barcode Number | Number of filtered cell barcodes in the `matched_dir` |
+| Mead Read Count per UMI | Average read support per UMI; use this value to pick `--read_hard_threshold`. (The metric name in the HTML report is spelled `Mead` in the current code) |
+| Number of positive cells | Cells with at least one viral UMI (computed on raw counts, before filtering). Hidden (`show=False`) in the HTML report |
+
+---
+
+### Step 6. filter_virus
+
+Correct UMI errors and filter background UMIs.
+
+#### Process
+
+**1. UMI correction.** For every (barcode, reference) pair, UMIs are sorted by support count. A low-count UMI is merged into a high-count UMI when their Hamming distance is 1 and `low_count / high_count < 0.1`. Sequenced errors in UMIs are therefore collapsed onto their true UMI. Skipped when `--not_correct_UMI` is used.
+
+**2. Read threshold.** A read-support threshold is computed per reference; UMIs whose supporting read count is below the threshold are set to zero (removed). Three methods (`--read_threshold_method`):
+* `otsu` (default) — counts are first log-transformed with base `--otsu_log_base`, and the threshold is determined by [Otsu's method](https://en.wikipedia.org/wiki/Otsu%27s_method).
+* `auto` — a cell-calling-like rule: `threshold = top 1% positive count / --auto_coef`.
+* `hard` — a user-provided `--read_hard_threshold`.
+* `none` — no filtering.
+
+**3. UMI threshold.** A per-reference UMI threshold is computed (`--umi_threshold_method`, same choices and the same `auto` / `otsu` / `hard` / `none` semantics); barcodes whose UMI count for that reference is below the threshold are considered negative (set to 0). The threshold is always at least 1.
+
+**4. Summary.** The filtered UMI table is written for all `matched_dir` cell barcodes, together with the total (`sum_UMI`) across references.
+
+#### Arguments
+
+`--read_threshold_method` / `--umi_threshold_method`
+Default: `otsu`. Method to determine the read / UMI threshold. Choices: `otsu`, `auto`, `hard`, `none`.
+
+`--read_hard_threshold` / `--umi_hard_threshold`
+Integer. Used together with the corresponding `hard` method.
+
+`--auto_coef`
+Default: `3`. Only used when the method is `auto`; `threshold = top 1% positive count / auto_coef`. A larger coefficient gives a lower (more permissive) threshold.
+
+`--otsu_log_base`
+Default: `10`. Base of the log transformation applied to counts before Otsu's method. Only used when the method is `otsu`.
+
+Thresholds are floored at 1; a computed threshold below 1 is raised to 1.
+
+`--not_correct_UMI`
+If set, skip UMI correction.
+
+#### Output
+
+`{outdir}/{sample}_corrected_read_count.json` — read counts after UMI correction.
+
+`{outdir}/{sample}_filtered_read_count.json` — read counts after read-threshold filtering.
+
+`{outdir}/{sample}_filtered_UMI.csv` — filtered UMI matrix with one row per matched cell barcode, one column per viral reference, plus `sum_UMI`.
+
+Otsu plots (when the corresponding method is `otsu`):
+* `{sample}_{ref}_read_otsu.png` — histogram of log-transformed read counts for a reference, with the Otsu threshold marked.
+* `{sample}_{ref}_UMI_otsu.png` — histogram of log-transformed UMI counts for a reference.
+
+#### Metrics (added to HTML report)
+
+| Metric Name | Description |
+|---|---|
+| Number of Raw UMI | Total UMIs before correction |
+| Number of Corrected UMI | UMIs merged during correction |
+| Read Threshold Method | The method used for the read threshold |
+| {ref} Read Threshold | Read-support threshold computed for each reference |
+| UMI Threshold Method | The method used for the UMI threshold |
+| {ref} UMI Threshold | UMI threshold computed for each reference |
+| Number of Positive Cells after Filtering | Cells with `sum_UMI > 0` after all filtering |
+
+---
+
+### Step 7. analysis_virus
+
+Project viral UMI counts onto the scRNA-Seq t-SNE embedding.
+
+#### Process
+
+Read the t-SNE coordinates and cluster labels from the `matched_dir` scRNA-Seq run, merge them with the filtered UMI table on cell barcode, and add a `sum_UMI_log2` column (= `log2(sum_UMI + 1)`). Then: generate a t-SNE plot colored by cluster, generate a t-SNE plot colored by `sum_UMI_log2` (light grey → orange → red colour scale), and summarize the number of viral-positive cells in each cluster. Clusters containing no viral-positive cell are not reported.
+
+#### Output
+
+`{outdir}/{sample}_UMI_tsne.csv` — t-SNE coordinates, cluster label, per-reference UMI counts, `sum_UMI`, and `sum_UMI_log2` for each cell.
+
+#### HTML Report Plots
+
+| Plot | Description |
+|---|---|
+| t-SNE plot colored by cluster | Plotly scatter plot of t-SNE coordinates colored by scRNA-Seq Leiden cluster |
+| t-SNE plot colored by viral UMI | Plotly scatter plot of t-SNE coordinates colored by `sum_UMI_log2`, with a grey-orange-red continuous scale |
+
+#### Metrics (added to HTML report)
+
+| Metric Name | Description |
+|---|---|
+| cluster {n} | Number of viral-positive cells (`sum_UMI > 0`) in cluster `n`, out of the total cells in that cluster. Only clusters with at least one viral-positive cell are shown |
+
+---
+
+### Step 8. featureCounts
+
+Assign each read to a viral gene feature.
+
+#### Process
+
+Build the set of valid barcodes (`sum_UMI > 0` in the filtered UMI table) and, for each valid barcode, the set of valid UMIs (those with a positive filtered read count). Reads whose barcode and UMI both belong to the valid sets are written to a filtered BAM. `featureCounts` is then run on this BAM using the viral GTF with `-t gene -s 1 -R BAM` to assign each read to a gene, and the resulting BAM is sorted by read name.
+
+#### Arguments
+
+`--gtf`
+Optional. Viral genome GTF file. Use an absolute path or a path relative to `genomeDir`. The step is skipped when `--gtf` is not provided.
+
+#### Output
+
+`{outdir}/{sample}_filter.bam` — BAM filtered to valid barcode–UMI pairs.
+
+`{outdir}/{sample}_filter.bam.featureCounts.bam` — featureCounts output BAM (coordinate-sorted).
+
+`{outdir}/{sample}_filter_name_sorted.bam` — featureCounts output BAM sorted by read name.
+
+`{outdir}/{sample}.summary` — featureCounts assignment summary.
+
+#### Metrics (added to HTML report)
+
+| Metric Name | Description |
+|---|---|
+| Reads Assigned | Reads successfully assigned to a viral gene |
+| Reads Unassigned_NoFeatures | Reads that overlap no feature |
+| Reads Unassigned_Ambiguity | Reads that overlap two or more features |
+
+---
+
+### Step 9. count
+
+Build a virus gene-level count matrix.
+
+#### Process
+
+Iterate over the name-sorted featureCounts BAM, grouping reads by barcode. Within each barcode, per-gene UMI counts are collected, UMIs are corrected with the same Hamming-distance rule used in `filter_virus`, and UMIs assigned to multiple genes are discarded. For every (barcode, gene, UMI) that survives, the UMI is counted once. The resulting table is pivoted into a genes × cell-barcodes matrix, whose barcode axis covers **all** barcodes present in the filtered UMI table (i.e. all cells from `matched_dir` that appear in the merged table, not only `sum_UMI > 0` cells), and written in 10x Genomics matrix format.
+
+This step only runs when `--gtf` is provided.
+
+#### Arguments
+
+`--gtf`
+Optional. Viral genome GTF file used for the gene-level count matrix. The step is skipped when it is not provided.
+
+#### Output
+
+`{outdir}/{sample}_count_detail.txt` — tab-delimited table with columns `Barcode`, `geneID`, `UMI`, `count`.
+
+`{outdir}/{sample}_virus_matrix/` — gene-level expression matrix in 10x Genomics format:
+* `matrix.mtx.gz` — sparse UMI count matrix (genes × cells)
+* `barcodes.tsv.gz` — cell barcodes (all matched cells in the filtered UMI table)
+* `features.tsv.gz` — viral gene IDs and names
+
+---
+
+## Output files
+
+| Step | Output |
+|---|---|
+| mkref | STAR genome index files and genome config file |
+| barcode | `01.barcode/{sample}_2.fq` — demultiplexed R2 reads; the read name format is `{barcode}:{umi}:{read_index}`. Full details in [common_barcode_cutadapt.md](./common_barcode_cutadapt.md#barcode) |
+| cutadapt | `{sample}_cutadapt.json` (JSON log), `{sample}_clean_2.fq` — R2 reads without adapters. Full details in [common_barcode_cutadapt.md](./common_barcode_cutadapt.md#cutadapt) |
+| consensus | `{sample}_consensus.fq` — consensus FASTQ |
+| star_virus | `{sample}_virus_Aligned.sortedByCoord.out.bam` — aligned BAM sorted by coordinate |
+| count_virus | `{sample}_raw_read_count.json` (barcode–reference–UMI–raw read count), `{sample}_background_read_count.json` |
+| filter_virus | `{sample}_corrected_read_count.json`, `{sample}_filtered_read_count.json`, `{sample}_filtered_UMI.csv`, Otsu plots |
+| analysis_virus | `{sample}_UMI_tsne.csv` |
+| featureCounts | `{sample}_filter.bam`, `{sample}_filter.bam.featureCounts.bam`, `{sample}_filter_name_sorted.bam`, `{sample}.summary` (skipped without `--gtf`) |
+| count | `{sample}_count_detail.txt`, `{sample}_virus_matrix/` (skipped without `--gtf`) |
