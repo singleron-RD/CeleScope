@@ -121,7 +121,7 @@ The pipeline consists of the following steps, executed in order:
 
 `mkref → sample → barcode → cutadapt → consensus → star_virus → count_virus → filter_virus → analysis_virus → featureCounts → count`
 
-`sample` is an internal bookkeeping step that only assembles the FASTQ paths and produces no output files. `barcode` and `cutadapt` are shared CeleScope steps documented in [common_barcode_cutadapt.md](./common_barcode_cutadapt.md). `mkref` is run manually once; all other steps are driven by `multi_capture_virus`.
+`sample`, `barcode` and `cutadapt` are shared CeleScope steps documented in [common_sample.md](./common_sample.md), [common_barcode.md](./common_barcode.md) and [common_cutadapt.md](./common_cutadapt.md). `sample` detects the chemistry, writes the report header and produces a debug bundle (`subsample.gz` files plus a colour-coded `invalid.html` of reads whose barcodes failed), but produces no FASTQ consumed downstream. `mkref` is run manually once; all other steps are driven by `multi_capture_virus`.
 
 ---
 
@@ -157,7 +157,7 @@ Default: `16`. Threads to use.
 
 `barcode` is a shared CeleScope step. It demultiplexes R1 reads, extracts cell barcodes and UMIs, corrects barcodes against a whitelist, and writes demultiplexed R2 reads whose header is `{corrected_barcode}:{umi}:{read_index}`.
 
-For the full description of the process, arguments (`--chemistry`, `--pattern`, `--whitelist`), output and HTML metrics, see [common_barcode_cutadapt.md](./common_barcode_cutadapt.md#barcode).
+For the full description of the process, arguments (`--chemistry`, `--pattern`, `--whitelist`), output and HTML metrics, see [common_barcode.md](./common_barcode.md).
 
 ---
 
@@ -165,7 +165,7 @@ For the full description of the process, arguments (`--chemistry`, `--pattern`, 
 
 `cutadapt` is a shared CeleScope step. It trims the default `polyA=A{18}` adapter (and any user-supplied adapters) from the demultiplexed R2 reads.
 
-For the full description of the process, arguments (`--minimum_length`, `--overlap`, `--nextseq_trim`, `--cutadapt_param`, `--skip_cutadapt`), output and HTML metrics, see [common_barcode_cutadapt.md](./common_barcode_cutadapt.md#cutadapt).
+For the full description of the process, arguments (`--minimum_length`, `--overlap`, `--nextseq_trim`, `--cutadapt_param`, `--skip_cutadapt`), output and HTML metrics, see [common_cutadapt.md](./common_cutadapt.md).
 
 ---
 
@@ -413,8 +413,8 @@ Optional. Viral genome GTF file used for the gene-level count matrix. The step i
 | Step | Output |
 |---|---|
 | mkref | STAR genome index files and genome config file |
-| barcode | `01.barcode/{sample}_2.fq` — demultiplexed R2 reads; the read name format is `{barcode}:{umi}:{read_index}`. Full details in [common_barcode_cutadapt.md](./common_barcode_cutadapt.md#barcode) |
-| cutadapt | `{sample}_cutadapt.json` (JSON log), `{sample}_clean_2.fq` — R2 reads without adapters. Full details in [common_barcode_cutadapt.md](./common_barcode_cutadapt.md#cutadapt) |
+| barcode | `01.barcode/{sample}_2.fq` — demultiplexed R2 reads; the read name format is `{barcode}:{umi}:{read_index}`. Full details in [common_barcode.md](./common_barcode.md) |
+| cutadapt | `{sample}_cutadapt.json` (JSON log), `{sample}_clean_2.fq` — R2 reads without adapters. Full details in [common_cutadapt.md](./common_cutadapt.md) |
 | consensus | `{sample}_consensus.fq` — consensus FASTQ |
 | star_virus | `{sample}_virus_Aligned.sortedByCoord.out.bam` — aligned BAM sorted by coordinate |
 | count_virus | `{sample}_raw_read_count.json` (barcode–reference–UMI–raw read count), `{sample}_background_read_count.json` |
