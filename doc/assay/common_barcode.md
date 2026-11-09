@@ -25,6 +25,38 @@ Optional. R1 read pattern, e.g. `C8L16C8L16C8L1U12T18`. The number after each le
 `--whitelist`
 Optional. Cell barcode whitelist file, one barcode per line. Needed when overriding the chemistry's built-in whitelist or when using `--chemistry customized`.
 
+### Running this step standalone
+
+`barcode` can be run on its own, without going through the `multi_*` driver or the mapfile. This is useful for checking one library, re-running a single sample, or running on a subset of FASTQ files.
+
+The command has the form `celescope {assay} barcode`, where `{assay}` must be a valid assay name (e.g. `multi_rna`, `multi_capture_virus`, `multi_tag`). The assay name is recorded in the report and passed to chemistry detection, but it does **not** change what `barcode` does: for every `multi_*` assay the implementation is identical, so if your only goal is to extract cell barcodes and UMIs from FASTQ files, any `multi_*` assay gives the same output. Pick one that exists and is relevant to your library purely for convenience; the difference only appears in the steps after `barcode`.
+
+```shell
+celescope multi_capture_virus barcode \
+  --fq1 {sample}_R1_001.fastq.gz \
+  --fq2 {sample}_R2_001.fastq.gz \
+  --sample {sample} \
+  --outdir {outdir}/01.barcode \
+  --chemistry GEXSCOPE-V3
+```
+
+Required arguments:
+
+| Argument | Description |
+|---|---|
+| `--fq1` / `--fq2` | R1 and R2 FASTQ files. Multiple files belonging to the same library are separated by commas, in matched order |
+| `--sample` | Sample name; used as the `{sample}` prefix of the output files |
+| `--outdir` | Output directory. The run writes `{outdir}/{sample}_2.fq` and the report files |
+
+
+Notes:
+
+* Create `{outdir}` yourself or let CeleScope create it; the directory is created if missing.
+* The step writes a `{sample}_report.html` and `.data.json` in the parent directory of `--outdir`, so a single standalone run still yields a browsable report for the metrics listed below.
+* If you later hand the output to the driver, put `--outdir` under the sample directory with the `NN.{step}` naming the driver expects (e.g. `{outdir}/{sample}/01.barcode`), so that the downstream steps find `{sample}_2.fq`. This only matters if you continue with that assay's pipeline; for barcode extraction alone the layout is irrelevant.
+* Because `--chemistry` defaults to `auto`, it can be omitted when the library is a standard GEXSCOPE product; detection then scans up to 10,000 R1 reads. 
+* When several R1 files are given, their order must match the order of the corresponding R2 files.
+
 ### Output
 
 `{outdir}/{sample}_2.fq` — demultiplexed R2 FASTQ (no `.gz` suffix). Only reads with valid or correctable cell barcodes are kept, and the header is `{corrected_barcode}:{umi}:{read_index}`. In assays with a trimming step this file is the input of `cutadapt` (see [common_cutadapt.md](./common_cutadapt.md)); assays without trimming consume it directly.
