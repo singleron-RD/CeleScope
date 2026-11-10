@@ -1,3 +1,21 @@
+## [2.15.5] - 2026-11-10
+
+### `ffpe`
+- Added: Four STAR alignment metrics to the `starsolo` report: `Average input read length`, `Reads unmapped: too many mismatches`, `Reads unmapped: too short` and `Reads unmapped: other`. The three unmapped metrics are shown with both read counts and percentages of the input reads.
+
+### `space`
+- Changed: `microns_per_pixel` is now calculated with `SPOT_SIDE_LENGTH = 20` (micrometers) and its diagonal `SPOT_DIAMETER = SPOT_SIDE_LENGTH * sqrt(2)` instead of a hard-coded `20`, and `space.utils` exposes these two constants.
+
+### `space_tag`
+- Added: `Analysis_tag` normalizes tag UMI by RNA total counts: `rna_normalized_tag_umi = log1p(total_tag_umi / total_counts * 1e4)` is stored in `obs`.
+- Changed: `{sample}_spatial_tag.png` now shows RNA-normalized tag abundance; the raw tag abundance plot is written to `{sample}_spatial_tag_unnormalized.png`.
+
+### `dynaseq`
+- Fixed: `multi_dynaseq` passed the background file with a duplicated `--bg` flag, so multiple bg files were not forwarded correctly. The column 5 value is now appended as a bare argument.
+
+### General improvements
+- Added: `analysis_wrapper.ensure_pkl_suffix` — append `.pkl` to a Celltypist model name when the suffix is missing, applied in `Celltypist.download_celltypist_model` before downloading.
+
 ## [2.15.4] - 2026-10-28
 
 ### `space`
