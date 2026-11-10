@@ -120,43 +120,13 @@ Please note that `./shell/{sample}.sh` must be executed from the working directo
 
 ## Pipeline Steps
 
+`sample` is a shared CeleScope step that runs ahead of `barcode`. It detects the chemistry, writes the report header and produces a debug bundle; it is documented in [common_sample.md](./common_sample.md).
+
 ### Step 1. barcode
 
-Demultiplex R1 reads: extract cell barcodes and UMIs from R1, correct barcodes against a whitelist, and write corrected R2 with demultiplexed read names.
+`barcode` is a shared CeleScope step. It demultiplexes R1 reads, extracts cell barcodes and UMIs, corrects barcodes against a whitelist, and writes demultiplexed R2 reads whose header is `{corrected_barcode}:{umi}:{read_index}`. This file is consumed by `mapping_tag`.
 
-#### Process
-
-Detect single-cell chemistry (default `auto`) and parse the R1 pattern into cell barcode (`C`), linker (`L`), UMI (`U`), and poly-T (`T`) segments against the corresponding whitelist. Build a precomputed lookup table allowing up to 1 Hamming distance from each whitelist barcode so that observed barcode sequences can be corrected in constant time. For each paired R1–R2 read, extract the cell barcode and UMI from R1, correct the barcode via the lookup table, and write the read to a demultiplexed R2 FASTQ whose header is reformatted as `corrected_barcode:umi:read_index`. Reads whose barcode cannot be corrected are discarded.
-
-#### Arguments
-
-`--chemistry`
-Default: `auto`. Single-cell chemistry. Choices: keys from `chemistry_dict` (e.g. `auto`, `GEXSCOPE-V1`, `GEXSCOPE-V2`, `GEXSCOPE-V3`, `flv`, etc.).
-
-`--pattern`
-Optional. R1 read pattern (e.g. `C8L16C8L16C8L1U12T18`). The number after each letter represents the number of bases. Only needed when `--chemistry` is `auto` or overriding the default.
-* `C` — cell barcode
-* `L` — linker (common sequence)
-* `U` — UMI
-* `T` — poly-T
-
-`--whitelist`
-Optional. Path to a cell barcode whitelist file, one barcode per line. Only needed when overriding the chemistry's built-in whitelist.
-
-#### Output
-
-`{outdir}/{sample}_2.fq`
-Demultiplexed R2 FASTQ. Only reads with valid (or correctable) cell barcodes are kept. The read header is reformatted as `{corrected_barcode}:{umi}:{read_index}`. This file is consumed by `mapping_tag`.
-
-#### Metrics (added to HTML report)
-
-| Metric Name | Description |
-|---|---|
-| Raw Reads | Total paired reads input |
-| Valid Reads | Reads whose cell barcode exactly matches the whitelist |
-| Corrected Reads | Reads whose cell barcode was not in the whitelist but was within 1 Hamming distance and was corrected |
-| Q30 of Barcode | Fraction of cell barcode bases with Phred quality score ≥ 30 |
-| Q30 of UMI | Fraction of UMI bases with Phred quality score ≥ 30 |
+For the full description of the process, arguments (`--chemistry`, `--pattern`, `--whitelist`), output and HTML metrics, see [common_barcode.md](./common_barcode.md).
 
 ---
 
