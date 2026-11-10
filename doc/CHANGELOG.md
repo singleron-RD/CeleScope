@@ -13,6 +13,9 @@
 ### `dynaseq`
 - Fixed: `multi_dynaseq` passed the background file with a duplicated `--bg` flag, so multiple bg files were not forwarded correctly. The column 5 value is now appended as a bare argument.
 
+### `sweetseq`
+- Fixed: no `--mismatch` argument in `sweetseq`.
+
 ### General improvements
 - Added: `analysis_wrapper.ensure_pkl_suffix` — append `.pkl` to a Celltypist model name when the suffix is missing, applied in `Celltypist.download_celltypist_model` before downloading.
 
