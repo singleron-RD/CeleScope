@@ -135,7 +135,8 @@ Please note that `./shell/{sample}.sh` must be executed from the working directo
 
 ## Pipeline Steps
 
-`sample` is a shared CeleScope step that runs ahead of `starsolo`. It detects the chemistry, writes the report header and produces a debug bundle; it is documented in [common_sample.md](./common_sample.md). The `cells` step is listed in the assay definition but is removed from the `multi_*` driver, so cell calling is not repeated here.
+`sample` is a shared CeleScope step that runs ahead of `starsolo`. It detects the chemistry, writes the report header and produces a debug bundle; it is documented in [common_sample.md](./common_sample.md). 
+
 
 ### Step 1. starsolo
 
