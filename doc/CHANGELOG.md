@@ -1,3 +1,8 @@
+## [2.15.6] - 2026-11-11
+
+### `utils`
+- Added: `split_bulk_fastq --with_umi` appends the UMI parsed from R1 to the R2 read name as `{read_name}:{umi}`. Without this flag the R2 read name is left unchanged.
+
 ## [2.15.5] - 2026-11-10
 
 ### `ffpe`
