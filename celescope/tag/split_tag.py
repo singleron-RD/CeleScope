@@ -150,31 +150,30 @@ def get_clonotypes_table(df):
 
 
 def read_10X_h5(filename):
-    """Read 10X HDF5 files, support both gene expression and peaks.
-    """
+    """Read 10X HDF5 files, support both gene expression and peaks."""
     with h5py.File(filename, "r") as f:
         if "matrix" not in f:
             print("Matrix group does not exist in this file.")
             return None
-        
+
         group = f["matrix"]
-        
+
         # features
         feature_group = group["features"]
-        ids = feature_group["id"][()].astype(str) # 或 .astype("U")
+        ids = feature_group["id"][()].astype(str)
         names = feature_group["name"][()].astype(str)
-        
+
         # barcodes
         barcodes = group["barcodes"][()].astype(str)
-        
+
         # 稀疏矩阵数据 (CSC)
         data = group["data"][()]
         indices = group["indices"][()]
         indptr = group["indptr"][()]
         shape = group["shape"][()]
-        
+
         matrix = sp_sparse.csc_matrix((data, indices, indptr), shape=shape)
-        
+
         return FeatureBCMatrix(ids, names, barcodes, matrix)
 
 
@@ -230,14 +229,10 @@ class Split_tag(Step):
             return
 
         # set
-        # df_umi_tag = pd.read_csv(args.umi_tag_file, sep="\t", index_col=0)
-        # df_umi_tag = df_umi_tag.rename_axis("barcode").reset_index()
-        # self.tag_barcode_dict = {
-        #     tag: set(row["barcode"].tolist()) for tag, row in df_umi_tag.groupby("tag")
-        # }
+        df_umi_tag = pd.read_csv(args.umi_tag_file, sep="\t", index_col=0)
+        df_umi_tag = df_umi_tag.rename_axis("barcode").reset_index()
         self.tag_barcode_dict = {
-            'test1':set(['CTCTTACC_GTCTGTCA']),
-            'test2':set(['CTCTTACC_GTCTGTCA']),
+            tag: set(row["barcode"].tolist()) for tag, row in df_umi_tag.groupby("tag")
         }
 
         if args.split_matrix:
@@ -292,17 +287,13 @@ class Split_tag(Step):
             self.fasta_file = glob.glob(
                 f"{args.vdj_dir}/04.summarize/*filtered_contig*.fasta"
             )[0]
-        
+
         if args.split_atac:
             self.atac_outdir = f"{args.outdir}/atac"
             if not os.path.exists(self.atac_outdir):
                 os.system(f"mkdir -p {self.atac_outdir}")
-            self.fragment = glob.glob(
-                f"{args.atac_dir}/outs/fragments*.tsv.gz"
-            )[0]
-            self.cell_qc = glob.glob(
-                f"{args.atac_dir}/outs/cell_qc_metrics.tsv"
-            )[0]
+            self.fragment = glob.glob(f"{args.atac_dir}/outs/fragments*.tsv.gz")[0]
+            self.cell_qc = glob.glob(f"{args.atac_dir}/outs/cell_qc_metrics.tsv")[0]
             self.peak_count = glob.glob(
                 f"{args.atac_dir}/outs/*_filtered_peak_count.h5"
             )[0]
@@ -481,7 +472,7 @@ class Split_tag(Step):
                     f"{self.atac_outdir}/{tag}_fragments.tsv",
                     sep="\t",
                     index=False,
-                    header=None
+                    header=None,
                 )
                 cmd = (
                     f"bgzip -c {self.atac_outdir}/{tag}_fragments.tsv > {self.atac_outdir}/{tag}_fragments.tsv.gz;"
@@ -507,7 +498,7 @@ class Split_tag(Step):
                     barcodes=passed_barcodes,
                     datatype="Peak",
                 )
-    
+
     @utils.add_log
     def run(self):
         if self.args.split_matrix:
