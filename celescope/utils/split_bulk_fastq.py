@@ -13,19 +13,24 @@ from celescope.__init__ import HELP_DICT
 from celescope.tools import utils
 
 
+UMI_SEPARATOR = ":"
+
+
 class Split_bulk_fastq:
     """
     ## Features
     - Split R1 and R2 fastq files according to well barcodes.
     - Supports both `bulk_rna` and `bulk_vdj` workflows.
+    - Append UMI to R2 read name with umi_separator colon ':' when `--with_umi` is set.
 
     ## Output
     - `{sample}_barcode_R1.fastq.gz` R1 fastq file for each well sample.
-    - `{sample}_barcode_R2.fastq.gz` R2 fastq file for each well sample.
+    - `{sample}_barcode_R2.fastq.gz` R2 fastq file for each well sample, with UMI appended to the read name when `--with_umi` is set.
     """
 
     def __init__(self, args):
         self.args = args
+        self.with_umi = args.with_umi
 
     @utils.add_log
     def run(self):
@@ -76,6 +81,8 @@ class Split_bulk_fastq:
                 if total_reads % 1000000 == 0:
                     sys.stderr.write(f"Processed {total_reads} reads\n")
                 bc_list = [e1.sequence[x] for x in pattern_dict["C"]]
+                if self.with_umi:
+                    umi = "".join(e1.sequence[x] for x in pattern_dict["U"])
                 valid, corrected, corrected_bc = parse_chemistry.check_seq_mismatch(
                     bc_list, raw_list, mismatch_list
                 )
@@ -84,8 +91,11 @@ class Split_bulk_fastq:
                     r1_fh_dict[corrected_bc].write(
                         utils.fastq_line(e1.name, e1.sequence, e1.quality).encode()
                     )
+                    name = e2.name
+                    if self.with_umi:
+                        name = name + UMI_SEPARATOR + umi
                     r2_fh_dict[corrected_bc].write(
-                        utils.fastq_line(e2.name, e2.sequence, e2.quality).encode()
+                        utils.fastq_line(name, e2.sequence, e2.quality).encode()
                     )
 
         for fh in r1_fh_dict.values():
@@ -133,6 +143,11 @@ def get_opts_split_bulk_fastq(parser, sub_program=True):
         "--well_sample",
         help="tsv file of well numbers and sample names. The first column is well numbers and the second column is sample names.",
         required=True,
+    )
+    parser.add_argument(
+        "--with_umi",
+        help="Append UMI to R2 read name with umi_separator colon ':'.",
+        action="store_true",
     )
     if sub_program:
         parser.add_argument(

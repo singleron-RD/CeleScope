@@ -12,7 +12,8 @@ celescope utils split_bulk_fastq \
   --well_sample well_sample.tsv \
   --fq1 R1.fq.gz \
   --fq2 R2.fq.gz \
-  --outdir ./split_out
+  --outdir ./split_out \
+  --with_umi
 ```
 
 **`--assay`**  
@@ -39,12 +40,14 @@ Custom pattern of R1 reads, used when `--chemistry customized` is selected. For 
 **`--whitelist`**  
 Custom cell barcode whitelist file path, used when `--chemistry customized` is selected. One cell barcode per line.
 
+**`--with_umi`**  
+Append the UMI extracted from R1 to the R2 read name, separated by a colon. Without this flag the R2 read name is left unchanged.
+
 ## Output
 
 For each sample listed in `--well_sample`, the following files are written to `--outdir`:
 
 - `{sample}_{barcode}_R1.fastq.gz`: R1 reads assigned to this sample.
-- `{sample}_{barcode}_R2.fastq.gz`: R2 reads assigned to this sample.
+- `{sample}_{barcode}_R2.fastq.gz`: R2 reads assigned to this sample. With `--with_umi`, the UMI is appended to the read name as `{read_name}:{umi}`; otherwise the read name is unchanged.
 
 Reads with barcodes that are not present in the whitelist or not included in `--well_sample` are discarded.
-

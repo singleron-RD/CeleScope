@@ -622,6 +622,36 @@ def reverse_complement(dna: str) -> str:
     return "".join(complement.get(base, "N") for base in reversed(dna))
 
 
+def parse_star_log_file(star_log_file: str) -> dict:
+    """
+    Parse STAR Log.final.out file into a dict.
+
+    Each line of the log is "name | value", e.g.
+        "Number of input reads |    317216711"
+    Returns:
+        {name: value}. Value is int for counts, float for percentages
+        (the trailing '%' is stripped), str for the rest.
+    """
+    log_dict = {}
+    with open(star_log_file, "r") as f:
+        for line in f:
+            if "|" not in line:
+                continue
+            name, value = line.split("|", 1)
+            name = name.strip()
+            value = value.strip()
+            if not name or not value:
+                continue
+            if value.endswith("%"):
+                log_dict[name] = float(value.rstrip("%"))
+            else:
+                try:
+                    log_dict[name] = int(value)
+                except ValueError:
+                    log_dict[name] = value
+    return log_dict
+
+
 def get_fastx_read_number(fastx_file):
     """
     get read number using pysam
