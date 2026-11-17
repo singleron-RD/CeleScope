@@ -5,11 +5,15 @@ split scRNA-Seq fastq file(01.barcode/{sample}_2.fq)
 import glob
 import os
 import itertools
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, namedtuple
 import sys
+import subprocess
+import h5py
+import scipy.sparse as sp_sparse
 
 import pysam
 import pandas as pd
+import numpy as np
 
 from celescope.tools import utils
 from celescope.tools.step import Step, s_common
@@ -20,6 +24,7 @@ from celescope.tools.matrix import CountMatrix
 
 CHAIN = {"TCR": ["TRA", "TRB"], "BCR": ["IGH", "IGL", "IGK"]}
 PAIRED_CHAIN = {"TCR": ["TRA_TRB"], "BCR": ["IGK_IGH", "IGL_IGH"]}
+FeatureBCMatrix = namedtuple("FeatureBCMatrix", ["ids", "names", "barcodes", "matrix"])
 
 
 def gen_vj_annotation_metrics(df, seqtype):
@@ -144,6 +149,63 @@ def get_clonotypes_table(df):
         return clonotypes, "BCR"
 
 
+def read_10X_h5(filename):
+    """Read 10X HDF5 files, support both gene expression and peaks."""
+    with h5py.File(filename, "r") as f:
+        if "matrix" not in f:
+            print("Matrix group does not exist in this file.")
+            return None
+
+        group = f["matrix"]
+
+        # features
+        feature_group = group["features"]
+        ids = feature_group["id"][()].astype(str)
+        names = feature_group["name"][()].astype(str)
+
+        # barcodes
+        barcodes = group["barcodes"][()].astype(str)
+
+        # 稀疏矩阵数据 (CSC)
+        data = group["data"][()]
+        indices = group["indices"][()]
+        indptr = group["indptr"][()]
+        shape = group["shape"][()]
+
+        matrix = sp_sparse.csc_matrix((data, indices, indptr), shape=shape)
+
+        return FeatureBCMatrix(ids, names, barcodes, matrix)
+
+
+def write_10X_h5(
+    filename, matrix, features, barcodes, genome="GRCh38", datatype="Peak"
+):
+    """Write 10X HDF5 files, support both gene expression and peaks."""
+    f = h5py.File(filename, "w")
+    if datatype == "Peak":
+        M = sp_sparse.csc_matrix(matrix, dtype=np.int32)
+    else:
+        M = sp_sparse.csc_matrix(matrix, dtype=np.float32)
+    B = np.array(barcodes, dtype="|S200")
+    P = np.array(features, dtype="|S100")
+    GM = np.array([genome] * len(features), dtype="|S10")
+    FT = np.array([datatype] * len(features), dtype="|S100")
+    AT = np.array(["genome"], dtype="|S10")
+    mat = f.create_group("matrix")
+    mat.create_dataset("barcodes", data=B)
+    mat.create_dataset("data", data=M.data)
+    mat.create_dataset("indices", data=M.indices)
+    mat.create_dataset("indptr", data=M.indptr)
+    mat.create_dataset("shape", data=M.shape)
+    fet = mat.create_group("features")
+    fet.create_dataset("_all_tag_keys", data=AT)
+    fet.create_dataset("feature_type", data=FT)
+    fet.create_dataset("genome", data=GM)
+    fet.create_dataset("id", data=P)
+    fet.create_dataset("name", data=P)
+    f.close()
+
+
 class Split_tag(Step):
     """
     ## Features
@@ -162,6 +224,7 @@ class Split_tag(Step):
             or args.split_fastq
             or args.split_vdj
             or args.split_fl_vdj
+            or args.split_atac
         ):
             return
 
@@ -219,10 +282,20 @@ class Split_tag(Step):
                 os.system(f"mkdir -p {self.fl_vdj_outdir}")
 
             self.anno_file = glob.glob(
-                f"{args.vdj_dir}/04.summarize/*_filtered_contig.csv"
+                f"{args.vdj_dir}/04.summarize/*filtered_contig*.csv"
             )[0]
             self.fasta_file = glob.glob(
-                f"{args.vdj_dir}/04.summarize/*_filtered_contig.fasta"
+                f"{args.vdj_dir}/04.summarize/*filtered_contig*.fasta"
+            )[0]
+
+        if args.split_atac:
+            self.atac_outdir = f"{args.outdir}/atac"
+            if not os.path.exists(self.atac_outdir):
+                os.system(f"mkdir -p {self.atac_outdir}")
+            self.fragment = glob.glob(f"{args.atac_dir}/outs/fragments*.tsv.gz")[0]
+            self.cell_qc = glob.glob(f"{args.atac_dir}/outs/cell_qc_metrics.tsv")[0]
+            self.peak_count = glob.glob(
+                f"{args.atac_dir}/outs/*_filtered_peak_count.h5"
             )[0]
 
     @utils.add_log
@@ -344,8 +417,8 @@ class Split_tag(Step):
                 with pysam.FastxFile(self.fasta_file) as raw_fasta:
                     for entry in raw_fasta:
                         name = entry.name
-                        attrs = name.split(":")
-                        cb = attrs[0]
+                        attrs = name.split("_")
+                        cb = "_".join(attrs[:3])
                         if cb in tag_barcodes:
                             seq = entry.sequence
                             fasta_temp.write(f">{name}\n{seq}\n")
@@ -366,6 +439,67 @@ class Split_tag(Step):
                 )
 
     @utils.add_log
+    def split_atac(self):
+        df_fragment = pd.read_csv(
+            self.fragment,
+            header=None,
+            sep="\t",
+            names=["chrom", "chromStart", "chromEnd", "barcode", "count"],
+        )
+        df_cell_qc = pd.read_csv(self.cell_qc, sep="\t")
+        peak_count = read_10X_h5(self.peak_count)
+        peakmatrix = peak_count.matrix
+        features = peak_count.names.tolist()
+        barcodes = peak_count.barcodes.tolist()
+        if isinstance(features[0], bytes):
+            features = [i.decode() for i in features]
+        if isinstance(barcodes[0], bytes):
+            barcodes = [i.decode() for i in barcodes]
+        for tag in self.tag_barcode_dict:
+            tag_barcodes = list(self.tag_barcode_dict[tag])
+            tag_barcodes = set([item.replace("_", "") for item in tag_barcodes])
+            df_fragment_temp = df_fragment[df_fragment.barcode.isin(tag_barcodes)]
+            df_cell_qc_temp = df_cell_qc[df_cell_qc.barcode.isin(tag_barcodes)]
+            if not df_cell_qc_temp.empty:
+                df_cell_qc_temp.to_csv(
+                    f"{self.atac_outdir}/{tag}_cell_qc_metrics.tsv",
+                    sep="\t",
+                    index=False,
+                )
+
+            if not df_fragment_temp.empty:
+                df_fragment_temp.to_csv(
+                    f"{self.atac_outdir}/{tag}_fragments.tsv",
+                    sep="\t",
+                    index=False,
+                    header=None,
+                )
+                cmd = (
+                    f"bgzip -c {self.atac_outdir}/{tag}_fragments.tsv > {self.atac_outdir}/{tag}_fragments.tsv.gz;"
+                    f"tabix -p bed {self.atac_outdir}/{tag}_fragments.tsv.gz;"
+                    f"rm {self.atac_outdir}/{tag}_fragments.tsv"
+                )
+                subprocess.check_call(cmd, shell=True)
+
+            filtered_barcodes = list(set(barcodes).intersection(tag_barcodes))
+            if filtered_barcodes:
+                filename = f"{self.atac_outdir}/{tag}_peak_count.h5"
+                barcode_arr = np.asarray(barcodes).astype(str)
+                mask = np.isin(barcode_arr, list(map(str, filtered_barcodes)))
+
+                passed_cell_matrix = peakmatrix[:, mask]
+                passed_barcodes = barcode_arr[mask].tolist()
+                passed_peaks = list(features)
+
+                write_10X_h5(
+                    filename,
+                    matrix=passed_cell_matrix,
+                    features=passed_peaks,
+                    barcodes=passed_barcodes,
+                    datatype="Peak",
+                )
+
+    @utils.add_log
     def run(self):
         if self.args.split_matrix:
             self.split_matrix()
@@ -378,6 +512,8 @@ class Split_tag(Step):
             self.split_vdj()
         if self.args.split_fl_vdj:
             self.split_fl_vdj()
+        if self.args.split_atac:
+            self.split_atac()
 
 
 def split_tag(args):
@@ -415,6 +551,15 @@ def get_opts_split_tag(parser, sub_program):
     parser.add_argument(
         "--vdj_dir",
         help="Match celescope vdj directory. Required when --split_vdj or --split_fl_vdj is specified.",
+    )
+    parser.add_argument(
+        "--split_atac",
+        help="If used, will split scRNA-Seq atac cell_qc, peak-count h5, fragment file according to tag assignment.",
+        action="store_true",
+    )
+    parser.add_argument(
+        "--atac_dir",
+        help="Match celescope atac directory. Required when --split_atac is specified.",
     )
     if sub_program:
         parser.add_argument("--umi_tag_file", help="UMI tag file.", required=True)
