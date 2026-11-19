@@ -468,7 +468,7 @@ def get_chemistry(assay: str, args_chemistry: str, fq1_list: list) -> str:
             return assay
         elif assay.startswith("space"):
             return AutoSpace(fq1_list).get_chemistry()
-        elif assay == "bulk_rna":
+        elif assay == "bulk_rna" or assay == "bulk_dynaseq":
             return AutoBulkRNA(fq1_list).get_chemistry()
         else:
             return AutoRNA(fq1_list).get_chemistry()
