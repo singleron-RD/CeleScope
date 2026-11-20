@@ -108,7 +108,7 @@ class Count_tag(Step):
                 ].tolist()
                 self.n_match_barcode = len(self.match_barcode)
             else:
-            # rna
+                # rna
                 match_dict = utils.parse_match_dir(args.match_dir)
                 self.match_barcode = match_dict["match_barcode"]
                 self.n_match_barcode = match_dict["n_match_barcode"]
