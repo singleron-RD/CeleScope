@@ -103,9 +103,7 @@ class Count_tag(Step):
                     "_", "", regex=False
                 )
                 df_cell = pd.read_csv(cell_qc_path, sep="\t")
-                self.match_barcode = df_cell[df_cell["cell_called"]][
-                    "barcode"
-                ].tolist()
+                self.match_barcode = df_cell[df_cell["cell_called"]]["barcode"].tolist()
                 self.n_match_barcode = len(self.match_barcode)
             else:
                 # rna
