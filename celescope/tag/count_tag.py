@@ -96,10 +96,21 @@ class Count_tag(Step):
         self.df_read_count = pd.read_csv(self.read_count_file, sep="\t", index_col=0)
 
         if utils.check_arg_not_none(args, "match_dir"):
-            match_dict = utils.parse_match_dir(args.match_dir)
-            self.match_barcode = match_dict["match_barcode"]
-            self.n_match_barcode = match_dict["n_match_barcode"]
-            self.matrix_dir = match_dict["matrix_dir"]
+            # ATAC
+            cell_qc_path = f"{args.match_dir}/outs/cell_qc_metrics.tsv"
+            if os.path.exists(cell_qc_path):
+                self.df_read_count.index = self.df_read_count.index.str.replace(
+                    "_", "", regex=False
+                )
+                df_cell = pd.read_csv(cell_qc_path, sep="\t")
+                self.match_barcode = df_cell[df_cell["cell_called"]]["barcode"].tolist()
+                self.n_match_barcode = len(self.match_barcode)
+            else:
+                # rna
+                match_dict = utils.parse_match_dir(args.match_dir)
+                self.match_barcode = match_dict["match_barcode"]
+                self.n_match_barcode = match_dict["n_match_barcode"]
+                self.matrix_dir = match_dict["matrix_dir"]
         elif utils.check_arg_not_none(args, "matrix_dir"):
             self.match_barcode, self.n_match_barcode = (
                 utils.get_barcode_from_matrix_dir(args.matrix_dir)
