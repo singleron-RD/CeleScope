@@ -99,9 +99,13 @@ class Count_tag(Step):
             # ATAC
             cell_qc_path = f"{args.match_dir}/outs/cell_qc_metrics.tsv"
             if os.path.exists(cell_qc_path):
-                self.df_read_count.index = self.df_read_count.index.str.replace("_", "", regex=False)
+                self.df_read_count.index = self.df_read_count.index.str.replace(
+                    "_", "", regex=False
+                )
                 df_cell = pd.read_csv(cell_qc_path, sep="\t")
-                self.match_barcode = df_cell[df_cell["cell_called"] == True]["barcode"].tolist()
+                self.match_barcode = df_cell[df_cell["cell_called"] == True][
+                    "barcode"
+                ].tolist()
                 self.n_match_barcode = len(self.match_barcode)
             else:
             # rna
